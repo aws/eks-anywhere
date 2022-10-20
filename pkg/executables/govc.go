@@ -1049,12 +1049,14 @@ func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
 		name,
 	}
 
-	response, err := g.exec(ctx, params...)
-	if err != nil {
+	_, err := g.exec(ctx, params...)
+	if err != nil && strings.Contains(err.Error(), fmt.Sprintf("role \"%s\" not found", name)) {
+		return false, nil
+	} else if err != nil {
 		return false, err
 	}
 
-	return response.Len() > 0, nil
+	return true, nil
 }
 
 // CreateRole creates a role with specified privileges.

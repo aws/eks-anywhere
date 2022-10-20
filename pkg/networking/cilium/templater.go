@@ -9,6 +9,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -24,6 +25,7 @@ const (
 
 type Helm interface {
 	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
+	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
 
 type Templater struct {
@@ -118,6 +120,20 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 
 	uri, version := getChartUriAndVersion(spec)
 	var manifest []byte
+
+	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return nil, err
+			}
+			endpoint := spec.Cluster.RegistryMirror()
+			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	err = c.retrier.Retry(func() error {
 		manifest, err = t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
 		return err
@@ -148,20 +164,6 @@ func (t *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces
 		if spec.GitOpsConfig != nil {
 			values["fluxNamespace"] = spec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
 		}
-	}
-
-	/* k8s versions 1.21 and higher label each namespace with key `kubernetes.io/metadata.name:` and value is the namespace's name.
-	This can be used to create a networkPolicy that allows traffic only between pods within kube-system ns, which is ideal for workload clusters. (not needed
-	for mgmt clusters).
-	So we will create networkPolicy using this default label as namespaceSelector for all versions 1.21 and higher
-	For 1.20 we will create a networkPolicy that allows allow traffic to/from kube-system pods, and document this. Users can still modify it and add new policies
-	as needed*/
-	k8sVersion, err := getKubeVersion(spec)
-	if err != nil {
-		return nil, err
-	}
-	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
-		values["kubeSystemNSHasLabel"] = true
 	}
 
 	return templater.Execute(networkPolicyAllowAll, values)
@@ -211,6 +213,10 @@ func templateValues(spec *cluster.Spec) values {
 				"enabled": true,
 			},
 		},
+	}
+
+	if len(spec.Cluster.Spec.WorkerNodeGroupConfigurations) == 0 && spec.Cluster.Spec.ControlPlaneConfiguration.Count == 1 {
+		val["operator"].(values)["replicas"] = 1
 	}
 
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != "" {

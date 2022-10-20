@@ -34,6 +34,10 @@ const (
 	vsphereTemplateUbuntu122Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_22"
 	vsphereTemplateUbuntu123Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_23"
 	vsphereTemplateUbuntu124Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_24"
+	vsphereTemplateRedhat120Var = "T_VSPHERE_TEMPLATE_REDHAT_1_20"
+	vsphereTemplateRedhat121Var = "T_VSPHERE_TEMPLATE_REDHAT_1_21"
+	vsphereTemplateRedhat122Var = "T_VSPHERE_TEMPLATE_REDHAT_1_22"
+	vsphereTemplateRedhat123Var = "T_VSPHERE_TEMPLATE_REDHAT_1_23"
 	vsphereTemplateBR120Var     = "T_VSPHERE_TEMPLATE_BR_1_20"
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTemplateBR122Var     = "T_VSPHERE_TEMPLATE_BR_1_22"
@@ -66,6 +70,10 @@ var requiredEnvVars = []string{
 	vsphereTemplateUbuntu122Var,
 	vsphereTemplateUbuntu123Var,
 	vsphereTemplateUbuntu124Var,
+	vsphereTemplateRedhat120Var,
+	vsphereTemplateRedhat121Var,
+	vsphereTemplateRedhat122Var,
+	vsphereTemplateRedhat123Var,
 	vsphereTemplateBR120Var,
 	vsphereTemplateBR121Var,
 	vsphereTemplateBR122Var,
@@ -165,6 +173,46 @@ func WithUbuntu124() VSphereOpt {
 		v.fillers = append(v.fillers,
 			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu124Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithRedHat120VSphere vsphere test with redhat 1.20.
+func WithRedHat120VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithVSphereStringFromEnvVar(vsphereTemplateRedhat120Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat121VSphere vsphere test with redhat 1.21.
+func WithRedHat121VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithVSphereStringFromEnvVar(vsphereTemplateRedhat121Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat122VSphere vsphere test with redhat 1.22.
+func WithRedHat122VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithVSphereStringFromEnvVar(vsphereTemplateRedhat122Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat123VSphere vsphere test with redhat 1.23.
+func WithRedHat123VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithVSphereStringFromEnvVar(vsphereTemplateRedhat123Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
 		)
 	}
 }

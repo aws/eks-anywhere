@@ -95,6 +95,10 @@ spec:
                 value: "2"
               - name: address
                 value: 1.2.3.4
+                # kube-vip daemon in worker node watches for LoadBalancer services.
+                # When there is no worker node, make kube-vip in control-plane nodes watch
+              - name: svc_enable
+                value: "true"
               image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
               imagePullPolicy: IfNotPresent
               name: kube-vip

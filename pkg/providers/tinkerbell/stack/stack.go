@@ -36,7 +36,6 @@ const (
 	grpcPort       = "42113"
 	kubevip        = "kubevip"
 	envoy          = "envoy"
-	loadBalancer   = "loadBalancer"
 )
 
 type Docker interface {
@@ -60,6 +59,7 @@ type Installer struct {
 	bootsOnDocker   bool
 	hostPort        bool
 	loadBalancer    bool
+	envoy           bool
 }
 
 type InstallOption func(s *Installer)
@@ -98,10 +98,16 @@ func WithHostPortEnabled(enabled bool) InstallOption {
 	}
 }
 
-// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server
-func WithLoadBalancer() InstallOption {
+func WithEnvoyEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
-		s.loadBalancer = true
+		s.envoy = enabled
+	}
+}
+
+// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server
+func WithLoadBalancerEnabled(enabled bool) InstallOption {
+	return func(s *Installer) {
+		s.loadBalancer = enabled
 	}
 }
 
@@ -184,15 +190,14 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			deploy: true,
 			image:  bundle.TinkerbellStack.Rufio.URI,
 		},
-		loadBalancer: map[string]interface{}{
-			"enabled": s.loadBalancer,
-			"ip":      tinkerbellIP,
-		},
 		kubevip: map[string]interface{}{
-			image: bundle.KubeVip.URI,
+			image:  bundle.KubeVip.URI,
+			deploy: s.loadBalancer,
 		},
 		envoy: map[string]interface{}{
-			image: bundle.Envoy.URI,
+			image:        bundle.Envoy.URI,
+			deploy:       s.envoy,
+			"externalIp": tinkerbellIP,
 		},
 	}
 

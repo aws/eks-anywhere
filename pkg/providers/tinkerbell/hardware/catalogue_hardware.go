@@ -314,6 +314,7 @@ func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 						Hostname:    m.Hostname,
 						NameServers: m.Nameservers,
 						UEFI:        true,
+						VLANID:      m.VLANID,
 					},
 				},
 			},

@@ -6,6 +6,11 @@ metadata:
     pool: {{.workerNodeGroupName}}
   name: {{.clusterName}}-{{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
+{{- if .autoscalingConfig }}
+  annotations:
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ .autoscalingConfig.MinCount }}"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ .autoscalingConfig.MaxCount }}"
+{{- end }}
 spec:
   clusterName: {{.clusterName}}
   replicas: {{.workerReplicas}}

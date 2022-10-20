@@ -40,9 +40,14 @@ func (m *MulticlusterE2ETest) RunInWorkloadClusters(flow func(*WorkloadCluster))
 	}
 }
 
-func (m *MulticlusterE2ETest) CreateManagementCluster() {
+func (m *MulticlusterE2ETest) CreateManagementClusterForVersion(eksaVersion string, opts ...CommandOpt) {
+	m.ManagementCluster.GenerateClusterConfigForVersion(eksaVersion)
+	m.ManagementCluster.CreateCluster(opts...)
+}
+
+func (m *MulticlusterE2ETest) CreateManagementCluster(opts ...CommandOpt) {
 	m.ManagementCluster.GenerateClusterConfig()
-	m.ManagementCluster.CreateCluster()
+	m.ManagementCluster.CreateCluster(opts...)
 }
 
 func (m *MulticlusterE2ETest) DeleteManagementCluster() {

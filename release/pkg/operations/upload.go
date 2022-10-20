@@ -95,8 +95,14 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 					trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 
 					fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
-					helmDest, err := helm.GetHelmDest(helmDriver, artifact.Image.SourceImageURI, trimmedAsset)
+					helmDriver, err := helm.NewHelm()
 					if err != nil {
+						return fmt.Errorf("creating helm client: %v", err)
+					}
+
+					helmDest, err := helm.GetHelmDest(helmDriver, r, artifact.Image.SourceImageURI, trimmedAsset)
+
+          if err != nil {
 						return fmt.Errorf("getting Helm destination: %v", err)
 					}
 

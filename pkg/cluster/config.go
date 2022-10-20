@@ -15,9 +15,11 @@ type Config struct {
 	VSphereDatacenter        *anywherev1.VSphereDatacenterConfig
 	DockerDatacenter         *anywherev1.DockerDatacenterConfig
 	SnowDatacenter           *anywherev1.SnowDatacenterConfig
+	NutanixDatacenter        *anywherev1.NutanixDatacenterConfig
 	VSphereMachineConfigs    map[string]*anywherev1.VSphereMachineConfig
 	CloudStackMachineConfigs map[string]*anywherev1.CloudStackMachineConfig
 	SnowMachineConfigs       map[string]*anywherev1.SnowMachineConfig
+	NutanixMachineConfigs    map[string]*anywherev1.NutanixMachineConfig
 	OIDCConfigs              map[string]*anywherev1.OIDCConfig
 	AWSIAMConfigs            map[string]*anywherev1.AWSIamConfig
 	GitOpsConfig             *anywherev1.GitOpsConfig
@@ -45,12 +47,18 @@ func (c *Config) AWSIamConfig(name string) *anywherev1.AWSIamConfig {
 	return c.AWSIAMConfigs[name]
 }
 
+func (c *Config) NutanixMachineConfig(name string) *anywherev1.NutanixMachineConfig {
+	return c.NutanixMachineConfigs[name]
+}
+
 func (c *Config) DeepCopy() *Config {
 	c2 := &Config{
 		Cluster:              c.Cluster.DeepCopy(),
 		CloudStackDatacenter: c.CloudStackDatacenter.DeepCopy(),
 		VSphereDatacenter:    c.VSphereDatacenter.DeepCopy(),
+		NutanixDatacenter:    c.NutanixDatacenter.DeepCopy(),
 		DockerDatacenter:     c.DockerDatacenter.DeepCopy(),
+		SnowDatacenter:       c.SnowDatacenter.DeepCopy(),
 		GitOpsConfig:         c.GitOpsConfig.DeepCopy(),
 		FluxConfig:           c.FluxConfig.DeepCopy(),
 	}
@@ -84,6 +92,20 @@ func (c *Config) DeepCopy() *Config {
 		c2.AWSIAMConfigs[k] = v.DeepCopy()
 	}
 
+	if c.NutanixMachineConfigs != nil {
+		c2.NutanixMachineConfigs = make(map[string]*anywherev1.NutanixMachineConfig, len(c.NutanixMachineConfigs))
+	}
+	for k, v := range c.NutanixMachineConfigs {
+		c2.NutanixMachineConfigs[k] = v.DeepCopy()
+	}
+
+	if c.SnowMachineConfigs != nil {
+		c2.SnowMachineConfigs = make(map[string]*anywherev1.SnowMachineConfig, len(c.SnowMachineConfigs))
+	}
+	for k, v := range c.SnowMachineConfigs {
+		c2.SnowMachineConfigs[k] = v.DeepCopy()
+	}
+
 	return c2
 }
 
@@ -99,6 +121,7 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 	objs = appendIfNotNil(objs,
 		c.CloudStackDatacenter,
 		c.VSphereDatacenter,
+		c.NutanixDatacenter,
 		c.DockerDatacenter,
 		c.SnowDatacenter,
 		c.GitOpsConfig,
@@ -114,6 +137,10 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 	}
 
 	for _, e := range c.SnowMachineConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.NutanixMachineConfigs {
 		objs = appendIfNotNil(objs, e)
 	}
 

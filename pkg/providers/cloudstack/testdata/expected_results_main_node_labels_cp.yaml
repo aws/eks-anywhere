@@ -39,8 +39,10 @@ spec:
   failureDomains:
   - name: default-az-0
     zone:
+      id: 
       name: zone1
       network:
+        id: 
         name: net1
     domain: domain1
     account: admin
@@ -183,7 +185,7 @@ spec:
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
-        apiVersion: audit.k8s.io/v1
+        apiVersion: audit.k8s.io/v1beta1
         kind: Policy
         rules:
         # Log aws-auth configmap changes
@@ -349,7 +351,7 @@ spec:
           anonymous-auth: "false"
           node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -359,14 +361,14 @@ spec:
           anonymous-auth: "false"
           node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a
-    - hostname "{{ ds.meta_data.local_hostname }}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     diskSetup:
       filesystems:
         - device: /dev/vdb1
@@ -414,11 +416,11 @@ spec:
       - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
     preEtcdadmCommands:
     - swapoff -a
-    - hostname "{{ ds.meta_data.local_hostname }}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     - >-
       echo "type=83" | sfdisk /dev/vdb &&
       mkfs -t ext4 /dev/vdb1 &&

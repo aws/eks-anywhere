@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestClusterDefault(t *testing.T) {
@@ -293,17 +294,11 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroup
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t *testing.T) {
 	cOld := createCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: &v1alpha1.Ref{Name: "test1", Kind: "MachineConfig"},
-		Count:           3,
-	}
+	cOld.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test1", Kind: "MachineConfig"}
 	cOld.SetManagedBy("management-cluster")
 
 	c := cOld.DeepCopy()
-	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: &v1alpha1.Ref{Name: "test2", Kind: "MachineConfig"},
-		Count:           3,
-	}
+	c.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test2", Kind: "MachineConfig"}
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
@@ -330,17 +325,11 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroup
 
 func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefNilSuccess(t *testing.T) {
 	cOld := createCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: nil,
-		Count:           3,
-	}
+	cOld.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
 	cOld.SetManagedBy("management-cluster")
 
 	c := cOld.DeepCopy()
-	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
-		Count:           3,
-	}
+	c.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"}
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
@@ -365,22 +354,56 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationNewMachineGroup
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilSuccess(t *testing.T) {
+func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefChangedSuccess(t *testing.T) {
 	cOld := createCluster()
-	cOld.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+	cOld.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"}
+	cOld.SetManagedBy("management-cluster")
+
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "test-2", Kind: "MachineConfig"}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilError(t *testing.T) {
+	cOld := createCluster()
+	cOld.SetManagedBy("management-cluster")
+
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).ToNot(Succeed())
+}
+
+func TestWorkloadClusterValidateUpdateWorkerNodeConfigurationNewMachineGroupRefNilError(t *testing.T) {
+	cOld := createCluster()
+	cOld.SetManagedBy("management-cluster")
+
+	c := cOld.DeepCopy()
+	c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = nil
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).ToNot(Succeed())
+}
+
+func TestWorkloadClusterValidateUpdateExternalEtcdConfigurationNewMachineGroupRefNilError(t *testing.T) {
+	cOld := createCluster()
+	cOld.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 		MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 		Count:           3,
 	}
 	cOld.SetManagedBy("management-cluster")
 
 	c := cOld.DeepCopy()
-	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+	c.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 		MachineGroupRef: nil,
 		Count:           3,
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).ToNot(Succeed())
 }
 
 func TestClusterValidateUpdateDatacenterRefImmutableEqual(t *testing.T) {
@@ -944,7 +967,7 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 			}},
 		},
@@ -959,7 +982,7 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 			}},
 		},
@@ -1074,11 +1097,12 @@ func TestClusterValidateUpdateInvalidType(t *testing.T) {
 }
 
 func TestClusterValidateUpdateSuccess(t *testing.T) {
-	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test"})
+	features.ClearCache()
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}})
 	cOld := createCluster()
 	cOld.Spec.WorkerNodeGroupConfigurations = workerConfiguration
 	c := cOld.DeepCopy()
-	c.Spec.WorkerNodeGroupConfigurations[0].Count = 10
+	c.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(10)
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
@@ -1087,7 +1111,7 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 func TestClusterCreateManagementCluster(t *testing.T) {
 	features.ClearCache()
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5})
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
 	cluster := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: workerConfiguration,
@@ -1105,12 +1129,11 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 
 func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := createCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
-		v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test"},
-		v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test2"})
+		v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}},
+		v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test2", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}})
 
 	cluster.Spec.ManagementCluster.Name = "management-cluster"
 
@@ -1124,15 +1147,18 @@ func TestClusterCreateWorkloadCluster(t *testing.T) {
 	cluster := createCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
 		v1alpha1.WorkerNodeGroupConfiguration{
-			Count: 5,
+			Count: ptr.Int(5),
 			Name:  "md-0",
+			MachineGroupRef: &v1alpha1.Ref{
+				Name: "test",
+			},
 		})
 	cluster.Spec.KubernetesVersion = v1alpha1.Kube119
 	cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
-		Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+		Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"}, MachineGroupRef: &v1alpha1.Ref{Name: "test"},
 	}
 
-	cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+	cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test"}}
 	cluster.Spec.ManagementCluster.Name = "management-cluster"
 
 	g := NewWithT(t)
@@ -1152,7 +1178,10 @@ func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
 		Labels: map[string]string{
 			"test": "val1",
 		},
-		Count: 1,
+		Count: ptr.Int(1),
+		MachineGroupRef: &v1alpha1.Ref{
+			Name: "test",
+		},
 	}}
 
 	c := cOld.DeepCopy()
@@ -1167,7 +1196,7 @@ func TestClusterUpdateWorkerNodeGroupTaintsInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 				Taints: []v1.Taint{{
 					Key:    "test",
@@ -1188,7 +1217,7 @@ func TestClusterUpdateWorkerNodeGroupNameInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 			}},
 		},
@@ -1200,11 +1229,29 @@ func TestClusterUpdateWorkerNodeGroupNameInvalid(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
+func TestClusterUpdateWorkerNodeNewMachineGroupRefNilError(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Count:           ptr.Int(1),
+				Name:            "test",
+				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
+			}},
+		},
+	}
+
+	c := cOld.DeepCopy()
+	c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).ToNot(Succeed())
+}
+
 func TestClusterUpdateWorkerNodeGroupLabelsInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 				Labels: map[string]string{
 					"test": "val1",
@@ -1339,7 +1386,7 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			}
 
 			// Invalid control plane configuration
-			tt.cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{}
+			tt.cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{Endpoint: &v1alpha1.Endpoint{Host: "test-ip"}, MachineGroupRef: &v1alpha1.Ref{Name: "test"}}
 
 			g := NewWithT(t)
 			err := tt.cluster.ValidateCreate()
@@ -1397,7 +1444,7 @@ func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
 
 			g := NewWithT(t)
 			err := tt.clusterNew.ValidateUpdate(clusterOld)
-			g.Expect(err).To(MatchError(ContainSubstring("worker node count must be positive")))
+			g.Expect(err).To(MatchError(ContainSubstring("worker node count must be >= 0")))
 		})
 	}
 }
@@ -1579,7 +1626,7 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 
 			tt.oldCluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
-				Count: 4,
+				Count: ptr.Int(4),
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",
@@ -1644,7 +1691,7 @@ func TestClusterValidateUpdateValidWorkloadCluster(t *testing.T) {
 			clusterOld.SetManagedBy("my-management-cluster")
 			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
-				Count: 4,
+				Count: ptr.Int(4),
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",
@@ -1710,7 +1757,7 @@ func createCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
-				Count: 1,
+				Count: ptr.Int(1),
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",

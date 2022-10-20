@@ -15,7 +15,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package emissary --source cluster > emissary.yaml
+   eksctl anywhere generate package emissary --cluster clusterName > emissary.yaml
    ```
 
 1. Add the desired configuration to `emissary.yaml`
@@ -33,13 +33,13 @@ description: >
       packageName: emissary
     ```
 
-2. Install Emissary
+1. Install Emissary
 
    ```bash
    eksctl anywhere create packages -f emissary.yaml
    ```
 
-3. Validate the installation
+1. Validate the installation
 
    ```bash
    eksctl anywhere get packages
@@ -51,6 +51,11 @@ description: >
    eksa-packages emissary   emissary   2m57s   installed   3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467   3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467 (latest)
    ```
 
+## Update
+To update package configuration, update emissary.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f emissary.yaml
+```
 
 ## Upgrade
 

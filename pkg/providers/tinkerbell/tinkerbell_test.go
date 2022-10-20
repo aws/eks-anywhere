@@ -2,10 +2,12 @@ package tinkerbell
 
 import (
 	"context"
+	"errors"
 	"path"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -101,6 +103,32 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
 }
 
+func TestTinkerbellProviderWithExternalEtcdFail(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.Error(t, err, "expect validation to fail because external etcd is not supported")
+
+	err = provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
+	assert.Error(t, err, "expect validation to fail because external etcd is not supported")
+}
+
 func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_missing_ssh_keys.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -173,6 +201,46 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_stacked_etcd.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
+}
+
+func TestTinkerbellProviderGenerateDeploymentFileWithAutoscalerConfiguration(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	wng := &clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+	ca := &v1alpha1.AutoScalingConfiguration{
+		MaxCount: 5,
+		MinCount: 3,
+	}
+	wng.AutoScalingConfiguration = ca
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_stacked_etcd.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_autoscaler_md.yaml")
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithNodeLabels(t *testing.T) {
@@ -340,6 +408,7 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
+		gomock.Any(),
 	)
 	stackInstaller.EXPECT().UninstallLocal(ctx)
 
@@ -368,11 +437,115 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	if err := provider.readCSVToCatalogue(); err != nil {
+		t.Fatalf("failed to read hardware csv: %v", err)
+	}
 
 	err := provider.PostBootstrapSetup(ctx, provider.clusterConfig, cluster)
 	if err != nil {
 		t.Fatalf("failed PostBootstrapSetup: %v", err)
 	}
+}
+
+func TestPostBootstrapSetupWaitForBaseboardManagementsFail(t *testing.T) {
+	wantError := errors.New("test error")
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	if err := provider.readCSVToCatalogue(); err != nil {
+		t.Fatalf("failed to read hardware csv: %v", err)
+	}
+
+	err := provider.PostBootstrapSetup(ctx, provider.clusterConfig, cluster)
+	assert.Error(t, err, "PostBootstrapSetup should fail")
+}
+
+func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(nil).MaxTimes(2)
+
+	tt := []struct {
+		name            string
+		hardwareCSVFile string
+	}{
+		{
+			name:            "bmc in hardware csv",
+			hardwareCSVFile: "./testdata/hardware.csv",
+		},
+		{
+			name:            "no bmc in hardware csv",
+			hardwareCSVFile: "./testdata/hardware_nobmc.csv",
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			provider.hardwareCSVFile = test.hardwareCSVFile
+			if err := provider.readCSVToCatalogue(); err != nil {
+				t.Fatalf("failed to read hardware csv: %v", err)
+			}
+
+			err := provider.PostMoveManagementToBootstrap(ctx, cluster)
+			if err != nil {
+				t.Fatalf("failed PostMoveManagementToBootstrap: %v", err)
+			}
+		})
+	}
+}
+
+func TestPostMoveManagementToBootstrapWaitForBaseboardManagementsFail(t *testing.T) {
+	wantError := errors.New("test error")
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
+	if err := provider.readCSVToCatalogue(); err != nil {
+		t.Fatalf("failed to read hardware csv: %v", err)
+	}
+
+	err := provider.PostMoveManagementToBootstrap(ctx, cluster)
+	assert.Error(t, err, "PostMoveManagementToBootstrap should fail")
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithFullOIDC(t *testing.T) {
@@ -647,4 +820,40 @@ func TestProviderGenerateDeploymentFileForSingleNodeCluster(t *testing.T) {
 		t.Fatalf("expect nothing to be generated for worker node")
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_single_node.yaml")
+}
+
+func TestProviderGenerateDeploymentFileForSingleNodeClusterSkipLB(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_single_node_skip_lb.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	if len(md) != 0 {
+		t.Fatalf("expect nothing to be generated for worker node")
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_single_node_skip_lb.yaml")
 }

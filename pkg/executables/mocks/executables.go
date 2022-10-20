@@ -173,6 +173,20 @@ func (mr *MockDockerClientMockRecorder) Execute(arg0 interface{}, arg1 ...interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockDockerClient)(nil).Execute), varargs...)
 }
 
+// Login mocks base method.
+func (m *MockDockerClient) Login(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Login", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Login indicates an expected call of Login.
+func (mr *MockDockerClientMockRecorder) Login(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockDockerClient)(nil).Login), arg0, arg1, arg2, arg3)
+}
+
 // PullImage mocks base method.
 func (m *MockDockerClient) PullImage(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()

@@ -99,6 +99,14 @@ type InstallCuratedPackagesTask struct{}
 
 func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.BootstrapCluster != nil {
+		if commandContext.ClusterSpec.AWSIamConfig != nil {
+			logger.Info("Creating aws-iam-authenticator certificate and key pair secret on bootstrap cluster")
+			if err := commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec.Cluster.Name); err != nil {
+				commandContext.SetError(err)
+				return &CollectMgmtClusterDiagnosticsTask{}
+			}
+		}
+
 		return &CreateWorkloadClusterTask{}
 	}
 	logger.Info("Creating new bootstrap cluster")
@@ -130,7 +138,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 
 	if commandContext.ClusterSpec.AWSIamConfig != nil {
 		logger.Info("Creating aws-iam-authenticator certificate and key pair secret on bootstrap cluster")
-		if err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster); err != nil {
+		if err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster, commandContext.ClusterSpec.Cluster.Name); err != nil {
 			commandContext.SetError(err)
 			return &CollectMgmtClusterDiagnosticsTask{}
 		}

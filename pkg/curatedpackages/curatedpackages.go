@@ -3,7 +3,6 @@ package curatedpackages
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -81,25 +79,6 @@ func PrintCertManagerDoesNotExistMsg() {
 	fmt.Println(userMsgSeparator)
 	fmt.Println(certManagerDoesNotExistMsg)
 	fmt.Println(userMsgSeparator)
-}
-
-func VerifyCertManagerExists(ctx context.Context, kubectl KubectlRunner, kubeConfig string) error {
-	// Note although we passed in a namespace parameter in the kubectl command, the GetResource command will be
-	// performed in all namespaces since CRDs are not bounded by namespaces.
-	certManagerExists, err := kubectl.HasResource(ctx, "crd", "certificates.cert-manager.io", kubeConfig,
-		constants.CertManagerNamespace)
-	if err != nil {
-		return err
-	}
-
-	// If cert-manager does not exist, instruct users to follow instructions in
-	// PrintCertManagerDoesNotExistMsg to install packages manually.
-	if !certManagerExists {
-		PrintCertManagerDoesNotExistMsg()
-		return errors.New("cert-manager is not present in the cluster")
-	}
-
-	return nil
 }
 
 func PullLatestBundle(ctx context.Context, art string) ([]byte, error) {

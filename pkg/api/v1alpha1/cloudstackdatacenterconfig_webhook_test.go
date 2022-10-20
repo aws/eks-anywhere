@@ -10,18 +10,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 )
 
-func TestCloudStackDatacenterValidateCreateFeatureDisabled(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "false")
-
-	c := cloudstackDatacenterConfig()
-	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
-}
-
 func TestCloudStackDatacenterValidateCreateLifecycleApiDisabled(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	t.Setenv(features.FullLifecycleAPIEnvVar, "false")
 
 	c := cloudstackDatacenterConfig()
@@ -32,14 +22,10 @@ func TestCloudStackDatacenterValidateCreateLifecycleApiDisabled(t *testing.T) {
 
 func TestCloudStackDatacenterValidateCreateLifecycleApiEnabled(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 
 	c := cloudstackDatacenterConfig()
 	g := NewWithT(t)
-	err := c.ValidateCreate()
-	if err != nil {
-	}
 
 	g.Expect(c.ValidateCreate()).To(Succeed())
 }

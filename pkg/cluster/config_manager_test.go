@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestConfigManagerParseSuccess(t *testing.T) {
@@ -43,7 +44,7 @@ func TestConfigManagerParseSuccess(t *testing.T) {
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
 					Name:  "workers-1",
-					Count: 1,
+					Count: ptr.Int(1),
 				},
 			},
 			DatacenterRef: anywherev1.Ref{

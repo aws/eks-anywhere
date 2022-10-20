@@ -182,7 +182,13 @@ spec:
                 value: "2"
               - name: address
                 value: {{.controlPlaneEndpointIp}}
-              image: {{.kubeVipImage}}
+{{- if and (not .workerNodeGroupConfigurations) (not .skipLoadBalancerDeployment) }}
+                # kube-vip daemon in worker node watches for LoadBalancer services.
+                # When there is no worker node, make kube-vip in control-plane nodes watch
+              - name: svc_enable
+                value: "true"
+{{- end }}
+              image: {{ .kubeVipImage }}
               imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
@@ -226,14 +232,14 @@ spec:
         path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
       - contentFrom:
           secret:
-            name: aws-iam-authenticator-ca
+            name: {{.clusterName}}-aws-iam-authenticator-ca
             key: cert.pem
         permissions: "0640"
         owner: root:root
         path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
       - contentFrom:
           secret:
-            name: aws-iam-authenticator-ca
+            name: {{.clusterName}}-aws-iam-authenticator-ca
             key: key.pem
         permissions: "0640"
         owner: root:root

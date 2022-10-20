@@ -94,84 +94,27 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
-	// TODO: move this to api Cluster validations
-	if len(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
-		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
-	}
-
-	if vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-		return errors.New("must specify machineGroupRef for control plane")
-	}
-
 	controlPlaneMachineConfig := vsphereClusterSpec.controlPlaneMachineConfig()
 	if controlPlaneMachineConfig == nil {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
-	if len(controlPlaneMachineConfig.Spec.Datastore) <= 0 {
-		return errors.New("VSphereMachineConfig datastore for control plane is not set or is empty")
-	}
-	if len(controlPlaneMachineConfig.Spec.Folder) <= 0 {
-		logger.Info("VSphereMachineConfig folder for control plane is not set or is empty. Will default to root vSphere folder.")
-	}
-	if len(controlPlaneMachineConfig.Spec.ResourcePool) <= 0 {
-		return errors.New("VSphereMachineConfig VM resourcePool for control plane is not set or is empty")
-	}
-	if controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-		return fmt.Errorf("control plane osFamily: %s is not supported, please use one of the following: %s, %s", controlPlaneMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
-	}
 
-	workerNodeGroupConfigs := vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
-	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
-		if workerNodeGroupConfig.Name == "" {
-			return errors.New("must specify name for worker nodes")
-		}
-	}
-
-	var workerNodeGroupMachineConfigs []*anywherev1.VSphereMachineConfig
 	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if workerNodeGroupConfiguration.MachineGroupRef == nil {
-			return errors.New("must specify machineGroupRef for worker nodes")
-		}
 		workerNodeGroupMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
-		workerNodeGroupMachineConfigs = append(workerNodeGroupMachineConfigs, workerNodeGroupMachineConfig)
 		if workerNodeGroupMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
 		}
-		if len(workerNodeGroupMachineConfig.Spec.Datastore) <= 0 {
-			return errors.New("VSphereMachineConfig datastore for worker nodes is not set or is empty")
-		}
-		if len(workerNodeGroupMachineConfig.Spec.Folder) <= 0 {
-			logger.Info("VSphereMachineConfig folder for worker nodes is not set or is empty. Will default to root vSphere folder.")
-		}
-		if len(workerNodeGroupMachineConfig.Spec.ResourcePool) <= 0 {
-			return errors.New("VSphereMachineConfig VM resourcePool for worker nodes is not set or is empty")
-		}
-		if workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-			return fmt.Errorf("worker node osFamily: %s is not supported, please use one of the following: %s, %s", workerNodeGroupMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
-		}
-		if controlPlaneMachineConfig.Spec.OSFamily != workerNodeGroupMachineConfig.Spec.OSFamily {
-			return errors.New("control plane and worker nodes must have the same osFamily specified")
-		}
-		if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
-			return errors.New("control plane and worker nodes must have the same template specified")
-		}
 	}
 	if vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		if vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return errors.New("must specify machineGroupRef for etcd machines")
-		}
 		etcdMachineConfig = vsphereClusterSpec.etcdMachineConfig()
 		if etcdMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for etcd machines", vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 		}
-		if len(etcdMachineConfig.Spec.Datastore) <= 0 {
-			return errors.New("VSphereMachineConfig datastore for etcd machines is not set or is empty")
+		if !v.sameOSFamily(vsphereClusterSpec.VSphereMachineConfigs) {
+			return errors.New("all VSphereMachineConfigs must have the same osFamily specified")
 		}
-		if len(etcdMachineConfig.Spec.Folder) <= 0 {
-			logger.Info("VSphereMachineConfig folder for etcd machines is not set or is empty. Will default to root vSphere folder.")
-		}
-		if len(etcdMachineConfig.Spec.ResourcePool) <= 0 {
-			return errors.New("VSphereMachineConfig VM resourcePool for etcd machines is not set or is empty")
+		if !v.sameTemplate(vsphereClusterSpec.VSphereMachineConfigs) {
+			return errors.New("all VSphereMachineConfigs must have the same template specified")
 		}
 	}
 
@@ -180,45 +123,12 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return err
 	}
 
-	for _, config := range vsphereClusterSpec.machineConfigsLookup {
-		var b bool                                                                                            // Temporary until we remove the need to pass a bool pointer
-		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
+	for _, config := range vsphereClusterSpec.VSphereMachineConfigs {
+		var b bool                                                                                             // Temporary until we remove the need to pass a bool pointer
+		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.VSphereDatacenter, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
 			return fmt.Errorf("validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
-	}
-
-	if etcdMachineConfig != nil && etcdMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && etcdMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-		return fmt.Errorf("etcd node osFamily: %s is not supported, please use one of the following: %s, %s", etcdMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
-	}
-
-	if etcdMachineConfig != nil && controlPlaneMachineConfig.Spec.OSFamily != etcdMachineConfig.Spec.OSFamily {
-		return errors.New("control plane and etcd machines must have the same osFamily specified")
-	}
-
-	if err := v.validateSSHUsername(controlPlaneMachineConfig); err == nil {
-		for _, wnConfig := range workerNodeGroupMachineConfigs {
-			if err = v.validateSSHUsername(wnConfig); err != nil {
-				return fmt.Errorf("validating SSHUsername for worker node VSphereMachineConfig %v: %v", wnConfig.Name, err)
-			}
-		}
-		if etcdMachineConfig != nil {
-			if err = v.validateSSHUsername(etcdMachineConfig); err != nil {
-				return fmt.Errorf("validating SSHUsername for etcd VSphereMachineConfig %v: %v", etcdMachineConfig.Name, err)
-			}
-		}
-	} else {
-		return fmt.Errorf("validating SSHUsername for control plane VSphereMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
-	}
-
-	for _, machineConfig := range vsphereClusterSpec.machineConfigsLookup {
-		if machineConfig.Namespace != vsphereClusterSpec.Cluster.Namespace {
-			return errors.New("VSphereMachineConfig and Cluster objects must have the same namespace specified")
-		}
-	}
-
-	if vsphereClusterSpec.datacenterConfig.Namespace != vsphereClusterSpec.Cluster.Namespace {
-		return errors.New("VSphereDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
 	if err := v.validateTemplate(ctx, vsphereClusterSpec, controlPlaneMachineConfig); err != nil {
@@ -226,12 +136,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return err
 	}
 	logger.MarkPass("Control plane and Workload templates validated")
-
-	if etcdMachineConfig != nil {
-		if etcdMachineConfig.Spec.Template != controlPlaneMachineConfig.Spec.Template {
-			return errors.New("control plane and etcd machines must have the same template specified")
-		}
-	}
 
 	return v.validateDatastoreUsage(ctx, vsphereClusterSpec, controlPlaneMachineConfig, etcdMachineConfig)
 }
@@ -245,15 +149,8 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 	return nil
 }
 
-func (v *Validator) validateSSHUsername(machineConfig *anywherev1.VSphereMachineConfig) error {
-	if machineConfig.Spec.OSFamily == anywherev1.Bottlerocket && machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
-		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
-	}
-	return nil
-}
-
 func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	if err := v.validateTemplatePresence(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig); err != nil {
+	if err := v.validateTemplatePresence(ctx, spec.VSphereDatacenter.Spec.Datacenter, machineConfig); err != nil {
 		return err
 	}
 
@@ -319,7 +216,7 @@ func (v *Validator) validateDatastoreUsage(ctx context.Context, vsphereClusterSp
 		if err != nil {
 			return fmt.Errorf("getting datastore details: %v", err)
 		}
-		workerNeedGiB := workerMachineConfig.Spec.DiskGiB * workerNodeGroupConfiguration.Count
+		workerNeedGiB := workerMachineConfig.Spec.DiskGiB * *workerNodeGroupConfiguration.Count
 		_, ok := usage[workerMachineConfig.Spec.Datastore]
 		if ok {
 			usage[workerMachineConfig.Spec.Datastore].needGiBSpace += workerNeedGiB
@@ -449,7 +346,7 @@ func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *conf
 		{
 			objectType:   govmomi.VSphereTypeNetwork,
 			privsContent: config.VSphereUserPrivsFile,
-			path:         spec.datacenterConfig.Spec.Network,
+			path:         spec.VSphereDatacenter.Spec.Network,
 		},
 	}
 
@@ -508,15 +405,15 @@ func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *conf
 		}
 	}
 
-	host := spec.datacenterConfig.Spec.Server
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+	host := spec.VSphereDatacenter.Spec.Server
+	datacenter := spec.VSphereDatacenter.Spec.Datacenter
 
 	vsc, err := v.vSphereClientBuilder.Build(
 		ctx,
 		host,
 		vuc.EksaVsphereUsername,
 		vuc.EksaVspherePassword,
-		spec.datacenterConfig.Spec.Insecure,
+		spec.VSphereDatacenter.Spec.Insecure,
 		datacenter,
 	)
 	if err != nil {
@@ -574,15 +471,15 @@ func (v *Validator) validateCSIUserPrivs(ctx context.Context, spec *Spec, vuc *c
 		requiredPrivAssociations = append(requiredPrivAssociations, pas...)
 	}
 
-	host := spec.datacenterConfig.Spec.Server
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+	host := spec.VSphereDatacenter.Spec.Server
+	datacenter := spec.VSphereDatacenter.Spec.Datacenter
 
 	vsc, err := v.vSphereClientBuilder.Build(
 		ctx,
 		host,
 		vuc.EksaVsphereCSIUsername,
 		vuc.EksaVsphereCSIPassword,
-		spec.datacenterConfig.Spec.Insecure,
+		spec.VSphereDatacenter.Spec.Insecure,
 		datacenter,
 	)
 	if err != nil {
@@ -602,15 +499,15 @@ func (v *Validator) validateCPUserPrivs(ctx context.Context, spec *Spec, vuc *co
 		},
 	}
 
-	host := spec.datacenterConfig.Spec.Server
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+	host := spec.VSphereDatacenter.Spec.Server
+	datacenter := spec.VSphereDatacenter.Spec.Datacenter
 
 	vsc, err := v.vSphereClientBuilder.Build(
 		ctx,
 		host,
 		vuc.EksaVsphereCPUsername,
 		vuc.EksaVsphereCPPassword,
-		spec.datacenterConfig.Spec.Insecure,
+		spec.VSphereDatacenter.Spec.Insecure,
 		datacenter,
 	)
 	if err != nil {
@@ -693,4 +590,37 @@ func (v *Validator) getMissingPrivs(ctx context.Context, vsc govmomi.VSphereClie
 	missingPrivs := checkRequiredPrivs(requiredPrivs, hasPrivs)
 
 	return missingPrivs, nil
+}
+
+func (v *Validator) sameOSFamily(configs map[string]*anywherev1.VSphereMachineConfig) bool {
+	c := getRandomMachineConfig(configs)
+	osFamily := c.Spec.OSFamily
+
+	for _, machineConfig := range configs {
+		if machineConfig.Spec.OSFamily != osFamily {
+			return false
+		}
+	}
+	return true
+}
+
+func (v *Validator) sameTemplate(configs map[string]*anywherev1.VSphereMachineConfig) bool {
+	c := getRandomMachineConfig(configs)
+	template := c.Spec.Template
+
+	for _, machineConfig := range configs {
+		if machineConfig.Spec.Template != template {
+			return false
+		}
+	}
+	return true
+}
+
+func getRandomMachineConfig(configs map[string]*anywherev1.VSphereMachineConfig) *anywherev1.VSphereMachineConfig {
+	var machineConfig *anywherev1.VSphereMachineConfig
+	for _, c := range configs {
+		machineConfig = c
+		break
+	}
+	return machineConfig
 }

@@ -16,9 +16,11 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -197,6 +199,11 @@ func (v *CloudStackDatacenterConfig) Validate() error {
 	}
 	azSet := make(map[string]bool)
 	for _, az := range v.Spec.AvailabilityZones {
+		errorMessages := validation.IsValidLabelValue(az.Name)
+		if len(errorMessages) > 0 {
+			return fmt.Errorf("availabilityZone names must be a valid label value since it is used to label nodes: %s",
+				strings.Join(errorMessages, ";"))
+		}
 		if exists := azSet[az.Name]; exists {
 			return fmt.Errorf("availabilityZone names must be unique. Duplicate name: %s", az.Name)
 		}

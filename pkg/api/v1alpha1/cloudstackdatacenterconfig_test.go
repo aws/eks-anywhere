@@ -291,30 +291,52 @@ func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
 func TestCloudStackDatacenterConfigValidate(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
-		Spec: *cloudStackDatacenterConfigSpec1.DeepCopy(),
+		Spec: *cloudStackDatacenterConfigSpecAzs.DeepCopy(),
 	}
 
-	// Spec.Accout validation
+	// Spec validation
 	err := cloudStackDatacenterConfig.Validate()
+	g.Expect(err).To(BeNil())
+
+	// Spec.Accout validation
+	cloudStackDatacenterConfig.Spec.Account = "admin"
+	err = cloudStackDatacenterConfig.Validate()
 	g.Expect(err).NotTo(BeNil())
 
 	// Spec.Domain validation
-	cloudStackDatacenterConfig.Spec.Account = ""
+	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
+	cloudStackDatacenterConfig.Spec.Domain = "root"
 	err = cloudStackDatacenterConfig.Validate()
 	g.Expect(err).NotTo(BeNil())
 
 	// Spec.ManagementApiEndpoint validation
-	cloudStackDatacenterConfig.Spec.Domain = ""
+	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
+	cloudStackDatacenterConfig.Spec.ManagementApiEndpoint = "http://192.168.1.141:8080/client"
 	err = cloudStackDatacenterConfig.Validate()
 	g.Expect(err).NotTo(BeNil())
 
 	// Spec.Zones validation
-	cloudStackDatacenterConfig.Spec.ManagementApiEndpoint = ""
+	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
+	cloudStackDatacenterConfig.Spec.Zones = []CloudStackZone{
+		{
+			Name: "zone1",
+			Network: CloudStackResourceIdentifier{
+				Name: "net1",
+			},
+		},
+	}
 	err = cloudStackDatacenterConfig.Validate()
 	g.Expect(err).NotTo(BeNil())
 
 	// Spec.AvailabilityZones validation #1 (Length)
-	cloudStackDatacenterConfig.Spec.Zones = []CloudStackZone{}
+	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
+	cloudStackDatacenterConfig.Spec.AvailabilityZones = []CloudStackAvailabilityZone{}
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.AvailabilityZones validation #2 (Name)
+	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
+	cloudStackDatacenterConfig.Spec.AvailabilityZones[0].Name = "_az-1"
 	err = cloudStackDatacenterConfig.Validate()
 	g.Expect(err).NotTo(BeNil())
 }

@@ -33,14 +33,14 @@ const (
 	maxSurgeForRollingUpgrade = 1
 )
 
-// ErrExternalEtcdUnsupported is returned from create or update when the user attempts to create
-// or upgrade a cluster with an external etcd configuration.
-var ErrExternalEtcdUnsupported = errors.New("external etcd configuration is unsupported")
-
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	tinkerbellStackPorts                 = []int{42113, 50051, 50061}
+
+	// errExternalEtcdUnsupported is returned from create or update when the user attempts to create
+	// or upgrade a cluster with an external etcd configuration.
+	errExternalEtcdUnsupported = errors.New("external etcd configuration is unsupported")
 )
 
 type Provider struct {

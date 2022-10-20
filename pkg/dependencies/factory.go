@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
+	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
@@ -36,6 +38,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -63,7 +66,7 @@ type Dependencies struct {
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	CiliumTemplater           *cilium.Templater
-	AwsIamAuth                clustermanager.AwsIamAuth
+	AwsIamAuth                *awsiamauth.Installer
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	GitOpsFlux                *flux.Flux
@@ -85,6 +88,7 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	NutanixPrismClient        *v3.Client
 	SnowValidator             *snow.AwsClientValidator
 }
 
@@ -103,7 +107,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
-		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
+		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror(), clusterSpec.Cluster.RegistryAuth()).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -111,7 +115,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 
 type Factory struct {
 	executablesConfig        *executablesConfig
-	registryMirror           string
+	registryMirror           *registryMirror
 	proxyConfiguration       map[string]string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -125,6 +129,11 @@ type executablesConfig struct {
 	useDockerContainer bool
 	dockerClient       executables.DockerClient
 	mountDirs          []string
+}
+
+type registryMirror struct {
+	endpoint string
+	auth     bool
 }
 
 type buildStep func(ctx context.Context) error
@@ -160,8 +169,10 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
-func (f *Factory) WithRegistryMirror(mirror string) *Factory {
-	f.registryMirror = mirror
+// WithRegistryMirror configures the factory to use registry mirror wherever applicable.
+func (f *Factory) WithRegistryMirror(endpoint string, auth bool) *Factory {
+	f.registryMirror = &registryMirror{endpoint: endpoint, auth: auth}
+
 	return f
 }
 
@@ -235,9 +246,27 @@ func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *F
 	return f
 }
 
+// WithDockerLogin performs a docker login with the ENV VARS.
+func (f *Factory) WithDockerLogin() *Factory {
+	f.WithDocker()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		username, password, _ := config.ReadCredentials()
+		err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.endpoint, username, password)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return f
+}
+
 func (f *Factory) WithExecutableBuilder() *Factory {
 	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
+		if f.registryMirror != nil && f.registryMirror.auth {
+			f.WithDockerLogin()
+		}
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -246,7 +275,10 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		}
 
 		if f.executablesConfig.useDockerContainer {
-			image := urls.ReplaceHost(f.executablesConfig.image, f.registryMirror)
+			image := f.executablesConfig.image
+			if f.registryMirror != nil {
+				image = urls.ReplaceHost(f.executablesConfig.image, f.registryMirror.endpoint)
+			}
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
 				image,
@@ -289,6 +321,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 		}
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
+	case v1alpha1.NutanixDatacenterKind:
+		f.WithKubectl().WithPrismClient(clusterConfigFile)
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -331,16 +365,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			f.dependencies.Provider = cloudstack.NewProvider(
-				datacenterConfig,
-				machineConfigs,
-				clusterConfig,
-				f.dependencies.Kubectl,
-				f.dependencies.Cmk,
-				f.dependencies.Writer,
-				time.Now,
-				skipIpCheck,
-			)
+			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, f.dependencies.Cmk, f.dependencies.Writer, time.Now, skipIpCheck, logger.Get())
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(
@@ -403,6 +428,26 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Kubectl,
 				time.Now,
 			)
+		case v1alpha1.NutanixDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetNutanixMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			provider := nutanix.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				f.dependencies.Kubectl,
+				f.dependencies.NutanixPrismClient.V3,
+				time.Now,
+			)
+			f.dependencies.Provider = provider
 		default:
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 		}
@@ -543,6 +588,10 @@ func (f *Factory) WithWriter() *Factory {
 func (f *Factory) WithKind() *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
+	if f.registryMirror != nil && f.registryMirror.auth {
+		f.WithDockerLogin()
+	}
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Kind != nil {
 			return nil
@@ -604,8 +653,8 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.registryMirror != "" {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+		if f.registryMirror != nil {
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror.endpoint))
 		}
 
 		if f.proxyConfiguration != nil {
@@ -661,13 +710,15 @@ func (f *Factory) WithCiliumTemplater() *Factory {
 }
 
 func (f *Factory) WithAwsIamAuth() *Factory {
+	f.WithKubectl().WithWriter()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.AwsIamAuth != nil {
 			return nil
 		}
 		certgen := crypto.NewCertificateGenerator()
 		clusterId := uuid.New()
-		f.dependencies.AwsIamAuth = awsiamauth.NewAwsIamAuth(certgen, clusterId)
+		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(certgen, clusterId, f.dependencies.Kubectl, f.dependencies.Writer)
 		return nil
 	})
 
@@ -825,12 +876,14 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 	return f
 }
 
-func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithKubectl().WithPackageControllerClient(spec).WithPackageClient()
+func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+	f.WithKubectl().WithPackageControllerClient(spec, kubeConfig).WithPackageClient()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
+		managementClusterName := getManagementClusterName(spec)
+		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
 			f.dependencies.Kubectl,
@@ -838,20 +891,22 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 			f.dependencies.PackageControllerClient,
 			spec,
 			packagesLocation,
+			mgmtKubeConfig,
 		)
 		return nil
 	})
 	return f
 }
 
-func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string) *Factory {
 	f.WithHelm(executables.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
-		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+		managementClusterName := getManagementClusterName(spec)
+		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
@@ -862,7 +917,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
-			kubeConfig,
+			mgmtKubeConfig,
 			imageUrl,
 			chart.Name,
 			chart.Tag(),
@@ -872,7 +927,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			curatedpackages.WithHTTPProxy(httpProxy),
 			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),
-			curatedpackages.WithManagementClusterName(getManagementClusterName(spec)),
+			curatedpackages.WithManagementClusterName(managementClusterName),
 		)
 		return nil
 	})
@@ -1092,6 +1147,44 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 
 		f.dependencies.VSphereDefaulter = vsphere.NewDefaulter(f.dependencies.Govc)
 
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
+	if f.dependencies.NutanixPrismClient != nil {
+		return f
+	}
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+		if err != nil {
+			return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+		}
+		endpoint := datacenterConfig.Spec.Endpoint
+		port := datacenterConfig.Spec.Port
+		url := fmt.Sprintf("%s:%d", endpoint, port)
+		nutanixUser, found := os.LookupEnv("NUTANIX_USER")
+		if !found {
+			return fmt.Errorf("NUTANIX_USER environment variable not set")
+		}
+		nutanixPassword, found := os.LookupEnv("NUTANIX_PASSWORD")
+		if !found {
+			return fmt.Errorf("NUTANIX_PASSWORD environment variable not set")
+		}
+		nutanixCreds := prismgoclient.Credentials{
+			URL:      url,
+			Username: nutanixUser,
+			Password: nutanixPassword,
+			Endpoint: endpoint,
+			Port:     fmt.Sprintf("%d", port),
+		}
+		client, err := v3.NewV3Client(nutanixCreds)
+		if err != nil {
+			return fmt.Errorf("error creating nutanix client: %v", err)
+		}
+		f.dependencies.NutanixPrismClient = client
 		return nil
 	})
 

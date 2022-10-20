@@ -225,12 +225,6 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		s.TinkerbellTemplateConfigs = templateConfigs
 	}
 
-	if s.ManagementCluster != nil {
-		s.Cluster.SetManagedBy(s.ManagementCluster.Name)
-	} else {
-		s.Cluster.SetSelfManaged()
-	}
-
 	return s, nil
 }
 

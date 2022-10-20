@@ -2,7 +2,6 @@ package validations_test
 
 import (
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -107,6 +106,6 @@ func TestValidateK8s124SupportActive(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube124
 	features.ClearCache()
-	os.Setenv(features.K8s124SupportEnvVar, "true")
+	t.Setenv(features.K8s124SupportEnvVar, "true")
 	tt.Expect(validations.ValidateK8s124Support(tt.clusterSpec)).To(Succeed())
 }

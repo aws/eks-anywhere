@@ -788,62 +788,44 @@ func (m *MockAwsIamAuth) EXPECT() *MockAwsIamAuthMockRecorder {
 	return m.recorder
 }
 
-// GenerateAwsIamAuthKubeconfig mocks base method.
-func (m *MockAwsIamAuth) GenerateAwsIamAuthKubeconfig(arg0 *cluster.Spec, arg1, arg2 string) ([]byte, error) {
+// CreateAndInstallAWSIAMAuthCASecret mocks base method.
+func (m *MockAwsIamAuth) CreateAndInstallAWSIAMAuthCASecret(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateAwsIamAuthKubeconfig", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "CreateAndInstallAWSIAMAuthCASecret", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GenerateAwsIamAuthKubeconfig indicates an expected call of GenerateAwsIamAuthKubeconfig.
-func (mr *MockAwsIamAuthMockRecorder) GenerateAwsIamAuthKubeconfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+// CreateAndInstallAWSIAMAuthCASecret indicates an expected call of CreateAndInstallAWSIAMAuthCASecret.
+func (mr *MockAwsIamAuthMockRecorder) CreateAndInstallAWSIAMAuthCASecret(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAwsIamAuthKubeconfig", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateAwsIamAuthKubeconfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAndInstallAWSIAMAuthCASecret", reflect.TypeOf((*MockAwsIamAuth)(nil).CreateAndInstallAWSIAMAuthCASecret), arg0, arg1, arg2)
 }
 
-// GenerateCertKeyPairSecret mocks base method.
-func (m *MockAwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
+// InstallAWSIAMAuth mocks base method.
+func (m *MockAwsIamAuth) InstallAWSIAMAuth(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateCertKeyPairSecret")
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "InstallAWSIAMAuth", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GenerateCertKeyPairSecret indicates an expected call of GenerateCertKeyPairSecret.
-func (mr *MockAwsIamAuthMockRecorder) GenerateCertKeyPairSecret() *gomock.Call {
+// InstallAWSIAMAuth indicates an expected call of InstallAWSIAMAuth.
+func (mr *MockAwsIamAuthMockRecorder) InstallAWSIAMAuth(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCertKeyPairSecret", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateCertKeyPairSecret))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallAWSIAMAuth", reflect.TypeOf((*MockAwsIamAuth)(nil).InstallAWSIAMAuth), arg0, arg1, arg2, arg3)
 }
 
-// GenerateManifest mocks base method.
-func (m *MockAwsIamAuth) GenerateManifest(arg0 *cluster.Spec) ([]byte, error) {
+// UpgradeAWSIAMAuth mocks base method.
+func (m *MockAwsIamAuth) UpgradeAWSIAMAuth(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateManifest", arg0)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "UpgradeAWSIAMAuth", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GenerateManifest indicates an expected call of GenerateManifest.
-func (mr *MockAwsIamAuthMockRecorder) GenerateManifest(arg0 interface{}) *gomock.Call {
+// UpgradeAWSIAMAuth indicates an expected call of UpgradeAWSIAMAuth.
+func (mr *MockAwsIamAuthMockRecorder) UpgradeAWSIAMAuth(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateManifest), arg0)
-}
-
-// GenerateManifestForUpgrade mocks base method.
-func (m *MockAwsIamAuth) GenerateManifestForUpgrade(arg0 *cluster.Spec) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateManifestForUpgrade", arg0)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GenerateManifestForUpgrade indicates an expected call of GenerateManifestForUpgrade.
-func (mr *MockAwsIamAuthMockRecorder) GenerateManifestForUpgrade(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifestForUpgrade", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateManifestForUpgrade), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeAWSIAMAuth", reflect.TypeOf((*MockAwsIamAuth)(nil).UpgradeAWSIAMAuth), arg0, arg1, arg2)
 }

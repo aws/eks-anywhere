@@ -15,6 +15,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 type apiBuilerTest struct {
@@ -106,7 +107,7 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 
 	workerNodeGroupConfig := &anywherev1.WorkerNodeGroupConfiguration{
 		Name:  "wng-1",
-		Count: 3,
+		Count: ptr.Int(3),
 		Taints: []v1.Taint{
 			{
 				Key:       "key2",

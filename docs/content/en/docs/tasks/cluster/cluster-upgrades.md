@@ -6,7 +6,7 @@ date: 2017-01-05
 description: >
   How to perform a cluster upgrade
 ---
-> **_NOTE_**: Cluster upgrade is supported for vSphere clusters, but is not yet available for Bare Metal clusters
+> **_NOTE_**: Cluster upgrade is supported for vSphere and CloudStack clusters, but is not yet available for Bare Metal clusters.
 >
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
@@ -205,6 +205,9 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `usernameClaim`
 - `usernamePrefix`
 
+`AWSIamConfig`:
+- `mapRoles`
+- `mapUsers`
 
 EKS Anywhere `upgrade` also supports adding more worker node groups post-creation.
 To add more worker node groups, modify your cluster config file to define the additional group(s).

@@ -16,14 +16,14 @@ spec:
             anonymous-auth: "false"
             node-labels: label1=foo,label2=bar
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          name: '{{ ds.meta_data.local_hostname }}'
+          name: "{{ ds.meta_data.hostname }}"
       preKubeadmCommands:
       - swapoff -a
-      - hostname "{{ ds.meta_data.local_hostname }}"
+      - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
       diskSetup:
         filesystems:
           - device: /dev/vdb1

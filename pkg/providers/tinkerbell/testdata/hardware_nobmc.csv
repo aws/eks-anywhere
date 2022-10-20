@@ -1,0 +1,5 @@
+hostname,mac,ip_address,netmask,gateway,nameservers,labels,disk
+worker1,00:00:00:00:00:01,10.10.10.10,255.255.255.0,10.10.10.1,1.1.1.1,type=cp,/dev/sda
+worker2,00:00:00:00:00:02,10.10.10.11,255.255.255.0,10.10.10.1,1.1.1.1,type=worker,/dev/sda
+worker3,00:00:00:00:00:03,10.10.10.12,255.255.255.0,10.10.10.1,1.1.1.1,type=etcd,/dev/sda
+worker4,00:00:00:00:00:04,10.10.10.13,255.255.255.0,10.10.10.1,1.1.1.1,type=cp,/dev/sda

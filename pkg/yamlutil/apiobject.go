@@ -25,6 +25,34 @@ func (o ObjectLookup) add(obj APIObject) {
 	o[keyForObject(obj)] = obj
 }
 
+func NewObjectLookupBuilder() *ObjectLookupBuilder {
+	return &ObjectLookupBuilder{
+		lookup: ObjectLookup{},
+	}
+}
+
+// ObjectLookupBuilder allows to construct an ObjectLookup and add APIObjects to it
+type ObjectLookupBuilder struct {
+	lookup ObjectLookup
+}
+
+// Add acumulates an API object that will be included in the built ObjectLookup
+func (o *ObjectLookupBuilder) Add(objs ...APIObject) *ObjectLookupBuilder {
+	for _, obj := range objs {
+		o.lookup.add(obj)
+	}
+	return o
+}
+
+// Build constructs and returns an ObjectLookup
+// After this method is called, the builder is reset and loses track
+// of all previously added objects
+func (o *ObjectLookupBuilder) Build() ObjectLookup {
+	l := o.lookup
+	o.lookup = ObjectLookup{}
+	return l
+}
+
 func keyForRef(ref corev1.ObjectReference) string {
 	return key(ref.APIVersion, ref.Kind, ref.Name)
 }

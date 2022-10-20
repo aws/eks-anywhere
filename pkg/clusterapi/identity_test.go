@@ -173,7 +173,7 @@ contexts:
 								Permissions: "0640",
 								ContentFrom: &bootstrapv1.FileSource{
 									Secret: bootstrapv1.SecretFileSource{
-										Name: "aws-iam-authenticator-ca",
+										Name: "test-cluster-aws-iam-authenticator-ca",
 										Key:  "cert.pem",
 									},
 								},
@@ -184,7 +184,7 @@ contexts:
 								Permissions: "0640",
 								ContentFrom: &bootstrapv1.FileSource{
 									Secret: bootstrapv1.SecretFileSource{
-										Name: "aws-iam-authenticator-ca",
+										Name: "test-cluster-aws-iam-authenticator-ca",
 										Key:  "key.pem",
 									},
 								},

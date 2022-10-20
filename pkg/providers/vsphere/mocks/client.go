@@ -55,6 +55,20 @@ func (mr *MockProviderGovcClientMockRecorder) AddTag(arg0, arg1, arg2 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTag", reflect.TypeOf((*MockProviderGovcClient)(nil).AddTag), arg0, arg1, arg2)
 }
 
+// AddUserToGroup mocks base method.
+func (m *MockProviderGovcClient) AddUserToGroup(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddUserToGroup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddUserToGroup indicates an expected call of AddUserToGroup.
+func (mr *MockProviderGovcClientMockRecorder) AddUserToGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToGroup", reflect.TypeOf((*MockProviderGovcClient)(nil).AddUserToGroup), arg0, arg1, arg2)
+}
+
 // ConfigureCertThumbprint mocks base method.
 func (m *MockProviderGovcClient) ConfigureCertThumbprint(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
@@ -83,6 +97,20 @@ func (mr *MockProviderGovcClientMockRecorder) CreateCategoryForVM(arg0, arg1 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCategoryForVM", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateCategoryForVM), arg0, arg1)
 }
 
+// CreateGroup mocks base method.
+func (m *MockProviderGovcClient) CreateGroup(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateGroup", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateGroup indicates an expected call of CreateGroup.
+func (mr *MockProviderGovcClientMockRecorder) CreateGroup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroup", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateGroup), arg0, arg1)
+}
+
 // CreateLibrary mocks base method.
 func (m *MockProviderGovcClient) CreateLibrary(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
@@ -97,6 +125,20 @@ func (mr *MockProviderGovcClientMockRecorder) CreateLibrary(arg0, arg1, arg2 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateLibrary), arg0, arg1, arg2)
 }
 
+// CreateRole mocks base method.
+func (m *MockProviderGovcClient) CreateRole(arg0 context.Context, arg1 string, arg2 []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRole", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateRole indicates an expected call of CreateRole.
+func (mr *MockProviderGovcClientMockRecorder) CreateRole(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRole", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateRole), arg0, arg1, arg2)
+}
+
 // CreateTag mocks base method.
 func (m *MockProviderGovcClient) CreateTag(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
@@ -109,6 +151,20 @@ func (m *MockProviderGovcClient) CreateTag(arg0 context.Context, arg1, arg2 stri
 func (mr *MockProviderGovcClientMockRecorder) CreateTag(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTag", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateTag), arg0, arg1, arg2)
+}
+
+// CreateUser mocks base method.
+func (m *MockProviderGovcClient) CreateUser(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockProviderGovcClientMockRecorder) CreateUser(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateUser), arg0, arg1, arg2)
 }
 
 // DatacenterExists mocks base method.
@@ -214,6 +270,21 @@ func (mr *MockProviderGovcClientMockRecorder) GetWorkloadAvailableSpace(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkloadAvailableSpace", reflect.TypeOf((*MockProviderGovcClient)(nil).GetWorkloadAvailableSpace), arg0, arg1)
 }
 
+// GroupExists mocks base method.
+func (m *MockProviderGovcClient) GroupExists(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GroupExists", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupExists indicates an expected call of GroupExists.
+func (mr *MockProviderGovcClientMockRecorder) GroupExists(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupExists", reflect.TypeOf((*MockProviderGovcClient)(nil).GroupExists), arg0, arg1)
+}
+
 // ImportTemplate mocks base method.
 func (m *MockProviderGovcClient) ImportTemplate(arg0 context.Context, arg1, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -302,6 +373,21 @@ func (mr *MockProviderGovcClientMockRecorder) NetworkExists(arg0, arg1 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NetworkExists", reflect.TypeOf((*MockProviderGovcClient)(nil).NetworkExists), arg0, arg1)
 }
 
+// RoleExists mocks base method.
+func (m *MockProviderGovcClient) RoleExists(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RoleExists", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RoleExists indicates an expected call of RoleExists.
+func (mr *MockProviderGovcClientMockRecorder) RoleExists(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RoleExists", reflect.TypeOf((*MockProviderGovcClient)(nil).RoleExists), arg0, arg1)
+}
+
 // SearchTemplate mocks base method.
 func (m *MockProviderGovcClient) SearchTemplate(arg0 context.Context, arg1 string, arg2 *v1alpha1.VSphereMachineConfig) (string, error) {
 	m.ctrl.T.Helper()
@@ -317,6 +403,20 @@ func (mr *MockProviderGovcClientMockRecorder) SearchTemplate(arg0, arg1, arg2 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchTemplate", reflect.TypeOf((*MockProviderGovcClient)(nil).SearchTemplate), arg0, arg1, arg2)
 }
 
+// SetGroupRoleOnObject mocks base method.
+func (m *MockProviderGovcClient) SetGroupRoleOnObject(arg0 context.Context, arg1, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetGroupRoleOnObject", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetGroupRoleOnObject indicates an expected call of SetGroupRoleOnObject.
+func (mr *MockProviderGovcClientMockRecorder) SetGroupRoleOnObject(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGroupRoleOnObject", reflect.TypeOf((*MockProviderGovcClient)(nil).SetGroupRoleOnObject), arg0, arg1, arg2, arg3, arg4)
+}
+
 // TemplateHasSnapshot mocks base method.
 func (m *MockProviderGovcClient) TemplateHasSnapshot(arg0 context.Context, arg1 string) (bool, error) {
 	m.ctrl.T.Helper()
@@ -330,6 +430,21 @@ func (m *MockProviderGovcClient) TemplateHasSnapshot(arg0 context.Context, arg1 
 func (mr *MockProviderGovcClientMockRecorder) TemplateHasSnapshot(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateHasSnapshot", reflect.TypeOf((*MockProviderGovcClient)(nil).TemplateHasSnapshot), arg0, arg1)
+}
+
+// UserExists mocks base method.
+func (m *MockProviderGovcClient) UserExists(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserExists", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserExists indicates an expected call of UserExists.
+func (mr *MockProviderGovcClientMockRecorder) UserExists(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserExists", reflect.TypeOf((*MockProviderGovcClient)(nil).UserExists), arg0, arg1)
 }
 
 // ValidateVCenterAuthentication mocks base method.

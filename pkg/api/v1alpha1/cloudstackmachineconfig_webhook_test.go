@@ -7,21 +7,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 )
 
-func TestCloudStackMachineConfigValidateCreateFeatureDisabled(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "false")
-
-	c := cloudstackMachineConfig()
-	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
-}
-
 func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -37,8 +25,6 @@ func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -54,8 +40,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t 
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -71,8 +55,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -88,8 +70,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -105,8 +85,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *t
 }
 
 func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib.a": "/_data/var-redirect/log.d",
@@ -116,8 +94,6 @@ func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib:a": "/_data/var-redirect/log:d",
@@ -127,8 +103,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T)
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib:a": "/_data/var-redirect/log,d",
@@ -138,8 +112,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T)
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"var/lib": "/data/var/log",
@@ -149,8 +121,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRoot(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib": "data/var/log",
@@ -160,8 +130,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRo
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib/": "/data/var/log",
@@ -171,8 +139,6 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *t
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueEndWithRoot(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib": "/data/var/log/",

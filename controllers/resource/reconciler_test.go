@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 //go:embed testdata/vsphereKubeadmcontrolplane.yaml
@@ -126,7 +125,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 		args    args
 		want    controllerruntime.Result
 		wantErr bool
-		prepare func(context.Context, *mocks.MockResourceFetcher, *mocks.MockResourceUpdater, string, string)
+		prepare func(*testing.T, context.Context, *mocks.MockResourceFetcher, *mocks.MockResourceUpdater, string, string)
 	}{
 		{
 			name: "worker node reconcile (Vsphere provider) - worker nodes has changes",
@@ -139,7 +138,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				},
 			},
 			want: controllerruntime.Result{},
-			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
+			prepare: func(t *testing.T, ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
@@ -215,7 +214,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 						Users: []anywherev1.UserConfiguration{
 							{
 								Name:              "capv",
-								SshAuthorizedKeys: []string{"ssh-rsa ssh_key_value"},
+								SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZndjX5NTr8= ubuntu@ip-10-2-0-6"},
 							},
 						},
 					},
@@ -264,7 +263,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				},
 			},
 			want: controllerruntime.Result{},
-			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
+			prepare: func(t *testing.T, ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
@@ -313,7 +312,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 				}
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
@@ -325,7 +324,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 						Users: []anywherev1.UserConfiguration{
 							{
 								Name:              "capv",
-								SshAuthorizedKeys: []string{"ssh-rsa ssh_key_value"},
+								SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZndjX5NTr8= ubuntu@ip-10-2-0-6"},
 							},
 						},
 					},
@@ -372,7 +371,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				},
 			},
 			want: controllerruntime.Result{},
-			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
+			prepare: func(t *testing.T, ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
@@ -441,7 +440,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Taints: []corev1.Taint{
 						{
@@ -492,7 +491,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				},
 			},
 			want: controllerruntime.Result{},
-			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
+			prepare: func(t *testing.T, ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
@@ -561,7 +560,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Labels: map[string]string{
 						"Key1": "Val1",
@@ -605,7 +604,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			fetcher := mocks.NewMockResourceFetcher(mockCtrl)
 			resourceUpdater := mocks.NewMockResourceUpdater(mockCtrl)
-			tt.prepare(ctx, fetcher, resourceUpdater, tt.args.name, tt.args.namespace)
+			tt.prepare(t, ctx, fetcher, resourceUpdater, tt.args.name, tt.args.namespace)
 
 			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, logr.Discard())
 
@@ -780,7 +779,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 				}
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
@@ -882,7 +881,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Taints: []corev1.Taint{
 						{
@@ -892,10 +891,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 						},
 					},
 				}
-
-				oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-				os.Unsetenv(features.CloudStackProviderEnvVar)
-				defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
@@ -986,7 +981,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Labels: map[string]string{
 						"Key1": "Val1",
@@ -1077,7 +1072,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 				}
 
@@ -1101,10 +1096,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 						},
 					},
 				}
-
-				oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-				os.Unsetenv(features.CloudStackProviderEnvVar)
-				defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(existingCSDatacenterConfig, nil)
@@ -1158,9 +1149,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 			},
 		},
 	}
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	os.Setenv(features.CloudStackProviderEnvVar, "true")
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
@@ -1179,8 +1167,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 }
 
 func TestClusterReconcilerReconcileNutanix(t *testing.T) {
-	err := os.Setenv(features.NutanixProviderEnvVar, "true")
-	require.NoError(t, err)
+	t.Setenv(features.NutanixProviderEnvVar, "true")
 	assert.True(t, features.NutanixProvider().IsActive())
 
 	type args struct {

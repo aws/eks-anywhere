@@ -20,7 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
-// imagesCmd represents the images command
+// imagesCmd represents the images command.
 var downloadImagesCmd = &cobra.Command{
 	Use:   "images",
 	Short: "Download all eks-a images to disk",

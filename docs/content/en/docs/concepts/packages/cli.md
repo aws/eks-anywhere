@@ -11,7 +11,7 @@ These functionalities can be achieved during and after an EKS Anywhere cluster i
 
 The CLI provides both imperative and declarative mechanisms to manage curated packages. These 
 packages will be included as part of a `packagebundle` that will be provided by the EKS Anywhere team.
-Whenever a user requests a package creation through the CLI (`eksctl anywhere create packages`), a custom resource is created on the cluster
+Whenever a user requests a package creation through the CLI (`eksctl anywhere create package`), a custom resource is created on the cluster
 indicating the existence of a new package that needs to be installed. When a user executes a delete operation (`eksctl anywhere delete package`),
 the custom resource will be removed from the cluster indicating the need for uninstalling a package. 
 An upgrade through the CLI (`eksctl anywhere upgrade packages`) upgrades all packages to the latest release.

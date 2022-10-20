@@ -76,6 +76,7 @@ metadata:
    name: my-cluster-datacenter
 spec:
   datacenter: ""
+  disableCSI:
   server: ""
   network: ""
   insecure:
@@ -239,6 +240,26 @@ openssl x509 -sha1 -fingerprint -in ca.crt -noout
 If you specify the wrong thumbprint, an error message will be printed with the expected thumbprint. If no valid
 certificate is being used, `insecure` must be set to true.
 
+### disableCSI (optional)
+Set `disableCSI` to `true` if you don't want to have EKS Anywhere install and manage the vSphere CSI driver for you. 
+More details on the driver are [here](https://docs.vmware.com/en/VMware-vSphere-Container-Storage-Plug-in/2.0/vmware-vsphere-csp-getting-started/GUID-C44D8071-85E7-4933-83EA-6797518C1837.html)
+
+>**_NOTE:_** If you upgrade a cluster and disable the vSphere CSI driver after it has already been installed by EKS Anywhere, 
+> you will need to remove the resources manually from the cluster. Delete the `DaemonSet` and `Deployment` first, as they 
+> rely on the other resources. This should be done after setting `disableCSI` to `true` and running `upgrade cluster`.
+> 
+> These are the resources you would need to delete:
+> * vsphere-csi-controller-role (kind: ClusterRole)
+> * vsphere-csi-controller-binding (kind: ClusterRoleBinding)
+> * csi.vsphere.vmware.com (kind: CSIDriver)
+> 
+> These are the resources you would need to delete
+> in the `kube-system` namespace:
+> * vsphere-csi-controller (kind: ServiceAccount)
+> * csi-vsphere-config (kind: Secret)
+> * vsphere-csi-node (kind: DaemonSet)
+> * vsphere-csi-controller (kind: Deployment)
+>
 
 ## VSphereMachineConfig Fields
 

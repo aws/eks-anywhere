@@ -34,7 +34,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		"envoy":                           r.BundleArtifactsTable["envoy"],
 		"tink":                            r.BundleArtifactsTable["tink"],
 		"hegel":                           r.BundleArtifactsTable["hegel"],
-		"cfssl":                           r.BundleArtifactsTable["cfssl"],
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
@@ -142,7 +141,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 				WriteFile:   bundleImageArtifacts["writefile"],
 			},
 			Boots: bundleImageArtifacts["boots"],
-			Cfssl: bundleImageArtifacts["cfssl"],
 			Hegel: bundleImageArtifacts["hegel"],
 			Hook: anywherev1alpha1.HookBundle{
 				Bootkit: bundleImageArtifacts["hook-bootkit"],

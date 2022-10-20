@@ -1802,6 +1802,35 @@ spec:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
+                        kubeVip:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         metadata:
                           properties:
                             uri:
@@ -1814,6 +1843,7 @@ spec:
                       - clusterAPIController
                       - clusterTemplate
                       - components
+                      - kubeVip
                       - metadata
                       - version
                       type: object
@@ -2328,35 +2358,6 @@ spec:
                                   description: The image repository, name, and tag
                                   type: string
                               type: object
-                            cfssl:
-                              properties:
-                                arch:
-                                  description: Architectures of the asset
-                                  items:
-                                    type: string
-                                  type: array
-                                description:
-                                  type: string
-                                imageDigest:
-                                  description: The SHA256 digest of the image manifest
-                                  type: string
-                                name:
-                                  description: The asset name
-                                  type: string
-                                os:
-                                  description: Operating system of the asset
-                                  enum:
-                                  - linux
-                                  - darwin
-                                  - windows
-                                  type: string
-                                osName:
-                                  description: Name of the OS like ubuntu, bottlerocket
-                                  type: string
-                                uri:
-                                  description: The image repository, name, and tag
-                                  type: string
-                              type: object
                             hegel:
                               properties:
                                 arch:
@@ -2806,7 +2807,6 @@ spec:
                           required:
                           - actions
                           - boots
-                          - cfssl
                           - hegel
                           - hook
                           - rufio
@@ -3718,6 +3718,9 @@ spec:
                 description: RegistryMirrorConfiguration defines the settings for
                   image registry mirror
                 properties:
+                  authenticate:
+                    description: Authenticate defines if registry requires authentication
+                    type: boolean
                   caCertContent:
                     description: CACertContent defines the contents registry mirror
                       CA certificate
@@ -4794,21 +4797,26 @@ spec:
           metadata:
             type: object
           spec:
-            description: "TinkerbellDatacenterConfigSpec defines the desired state
-              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
-              regenerate code after modifying this file"
+            description: TinkerbellDatacenterConfigSpec defines the desired state
+              of TinkerbellDatacenterConfig
             properties:
               hookImagesURLPath:
                 description: HookImagesURLPath can be used to override the default
-                  Hook images path to pull from a local server
+                  Hook images path to pull from a local server.
                 type: string
               osImageURL:
                 description: OSImageURL can be used to override the default OS image
-                  path to pull from a local server
+                  path to pull from a local server.
                 type: string
+              skipLoadBalancerDeployment:
+                description: SkipLoadBalancerDeployment when set to "true" can be
+                  used to skip deploying a load balancer to expose Tinkerbell stack.
+                  Users will need to deploy and configure a load balancer manually
+                  after the cluster is created.
+                type: boolean
               tinkerbellIP:
                 description: TinkerbellIP is used to configure a VIP for hosting the
-                  Tinkerbell servies.
+                  Tinkerbell services.
                 type: string
             required:
             - tinkerbellIP
@@ -5098,6 +5106,8 @@ spec:
             properties:
               datacenter:
                 type: string
+              disableCSI:
+                type: boolean
               insecure:
                 type: boolean
               network:
@@ -5297,6 +5307,8 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
@@ -5803,6 +5815,48 @@ webhooks:
     - UPDATE
     resources:
     - snowmachineconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig
+  failurePolicy: Fail
+  name: mutation.vspheredatacenterconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - vspheredatacenterconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheremachineconfig
+  failurePolicy: Fail
+  name: mutation.vspheremachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - vspheremachineconfigs
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1

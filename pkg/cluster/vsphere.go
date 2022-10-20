@@ -27,6 +27,12 @@ func vsphereEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			func(c *Config) error {
+				for _, m := range c.VSphereMachineConfigs {
+					m.SetDefaults()
+				}
+				return nil
+			},
 		},
 		Validations: []Validation{
 			func(c *Config) error {

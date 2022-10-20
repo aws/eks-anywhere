@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 )
 
-var updateGoldenFiles = flag.Bool("update", false, "update golden files")
+var UpdateGoldenFiles = flag.Bool("update", false, "update golden files")
 
 func AssertFilesEquals(t *testing.T, gotPath, wantPath string) {
 	t.Helper()
@@ -61,7 +61,7 @@ func AssertContentToFile(t *testing.T, gotContent, wantFile string) {
 }
 
 func processUpdate(t *testing.T, filePath, content string) {
-	if *updateGoldenFiles {
+	if *UpdateGoldenFiles {
 		if err := ioutil.WriteFile(filePath, []byte(content), 0o644); err != nil {
 			t.Fatalf("failed to update golden file %s: %v", filePath, err)
 		}
@@ -69,13 +69,17 @@ func processUpdate(t *testing.T, filePath, content string) {
 	}
 }
 
-func ReadFile(t *testing.T, file string) string {
+func ReadFileAsBytes(t *testing.T, file string) []byte {
 	bytesRead, err := ioutil.ReadFile(file)
 	if err != nil {
 		t.Fatalf("File [%s] reading error in test: %v", file, err)
 	}
 
-	return string(bytesRead)
+	return bytesRead
+}
+
+func ReadFile(t *testing.T, file string) string {
+	return string(ReadFileAsBytes(t, file))
 }
 
 func NewWriter(t *testing.T) (dir string, writer filewriter.FileWriter) {

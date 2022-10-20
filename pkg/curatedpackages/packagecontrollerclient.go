@@ -16,6 +16,9 @@ import (
 //go:embed config/awssecret.yaml
 var awsSecretYaml string
 
+//go:embed config/packagebundlecontroller.yaml
+var packageBundleControllerYaml string
+
 const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
@@ -65,15 +68,22 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 	return pcc
 }
 
-// InstallController installs the curated packages controller.
+// EnableCuratedPackages enables curated packages in a cluster
+// In case the cluster is management cluster, it performs the following actions:
+//   - Installation of Package Controller through helm chart installation
+//   - Creation of secret credentials
+//   - Creation of a single run of a cron job refresher
+//   - Activation of a curated packages bundle
 //
-// This includes all necessary steps for functionality. These include:
-//
-//   - helm chart installation
-//   - credentials secret creation
-//   - credentials refreshing cron job creation
-//   - activation of a curated packages bundle
-func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
+// In case the cluster is a workload cluster, it performs the following actions:
+//   - Creation of package bundle controller (PBC) custom resource in management cluster
+func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) error {
+	// When the management cluster name and current cluster name are different,
+	// it indicates that we are trying to install the controller on a workload cluster.
+	// Instead of installing the controller, install packagebundlecontroller resource.
+	if pc.managementClusterName != pc.clusterName {
+		return pc.InstallPBCResources(ctx)
+	}
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
 
@@ -91,7 +101,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, packagesNamespace, values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, "", values)
 	if err != nil {
 		return err
 	}
@@ -108,6 +118,30 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		return err
 	}
 
+	return nil
+}
+
+// InstallPBCResources installs Curated Packages Bundle Controller Custom Resource
+// This method is used only for Workload clusters
+// Please refer to this documentation: https://github.com/aws/eks-anywhere-packages/blob/main/docs/design/remote-management.md
+func (pc *PackageControllerClient) InstallPBCResources(ctx context.Context) error {
+	templateValues := map[string]string{
+		"clusterName": pc.clusterName,
+		"namespace":   constants.EksaPackagesName,
+	}
+
+	result, err := templater.Execute(packageBundleControllerYaml, templateValues)
+	if err != nil {
+		return fmt.Errorf("replacing template values %v", err)
+	}
+
+	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
+	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
+	if err != nil {
+		return fmt.Errorf("creating package bundle controller custom resource%v", err)
+	}
+
+	fmt.Print(&stdOut)
 	return nil
 }
 

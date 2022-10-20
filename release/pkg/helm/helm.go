@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
@@ -63,9 +64,15 @@ func NewHelm() (*helmDriver, error) {
 	}, nil
 }
 
-func GetHelmDest(d *helmDriver, ReleaseImageURI, assetName string) (string, error) {
+func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, assetName string) (string, error) {
 	var chartPath string
 	var err error
+
+	err = d.HelmRegistryLogin(r, "source")
+	if err != nil {
+		return "", fmt.Errorf("logging into the source registry: %w", err)
+	}
+
 	helmChart := strings.Split(ReleaseImageURI, ":")
 	HelmLog.Info("Starting to modifying helm chart %s", helmChart[1])
 	HelmLog.Info("Pulling helm chart %s", ReleaseImageURI)
@@ -125,10 +132,32 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 		return fmt.Errorf("packaging the helm chart: %w", err)
 	}
 	HelmLog.Info("Pushing modified helm chart %s to %s", packaged, r.ReleaseContainerRegistry)
+	err = d.HelmRegistryLogin(r, "destination")
+	if err != nil {
+		return fmt.Errorf("logging into the destination registry: %w", err)
 	err = d.PushHelmChart(packaged, filepath.Dir(helmChart[0]))
 	if err != nil {
 		return fmt.Errorf("pushing the helm chart: %w", err)
 	}
+	return nil
+}
+
+func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType string) error {
+	var authConfig *docker.AuthConfiguration
+	var remote string
+	if remoteType == "source" {
+		authConfig = r.SourceClients.ECR.AuthConfig
+		remote = r.SourceContainerRegistry
+	} else if remoteType == "destination" {
+		authConfig = r.ReleaseClients.ECRPublic.AuthConfig
+		remote = r.ReleaseContainerRegistry
+	}
+	login := action.NewRegistryLogin(d.cfg)
+	err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password, false)
+	if err != nil {
+		return fmt.Errorf("running the Helm registry login command: %w", err)
+	}
+
 	return nil
 }
 
@@ -158,7 +187,7 @@ func (d *helmDriver) PushHelmChart(packaged, URI string) error {
 	}
 	_, err := p.Run(packaged, URI)
 	if err != nil {
-		return fmt.Errorf("empty input for PushHelmChart, check flags")
+		return fmt.Errorf("running Helm push command on URI %s: %w", URI, err)
 	}
 	return nil
 }
@@ -215,7 +244,7 @@ func HasRequires(helmdir string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return "", fmt.Errorf("Found Dir, not requires.yaml file")
+		return "", fmt.Errorf("found Dir, not requires.yaml file")
 	}
 	return requires, nil
 }
@@ -260,7 +289,7 @@ func validateHelmRequiresName(helmrequires *Requires) error {
 func (helmrequires *Requires) validateHelmRequiresNotEmpty() error {
 	// Check if Projects are listed
 	if len(helmrequires.Spec.Images) < 1 {
-		return fmt.Errorf("Should use non-empty list of images for requires")
+		return fmt.Errorf("should use non-empty list of images for requires")
 	}
 	return nil
 }
@@ -281,7 +310,7 @@ func parseHelmRequires(fileName string, helmrequires *Requires) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("Requires.yaml file [%s] is invalid or does not contain kind %v", fileName, helmrequires)
+	return fmt.Errorf("requires.yaml file [%s] is invalid or does not contain kind %v", fileName, helmrequires)
 }
 
 // Chart yaml functions
@@ -294,7 +323,7 @@ func HasChart(helmdir string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return "", fmt.Errorf("Found Dir, not Chart.yaml file")
+		return "", fmt.Errorf("found Dir, not Chart.yaml file")
 	}
 	return requires, nil
 }

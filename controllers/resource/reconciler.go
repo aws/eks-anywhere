@@ -47,6 +47,7 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 			ResourceFetcher: resourceFetcher,
 			ResourceUpdater: resourceUpdater,
 			now:             now,
+			log:             log,
 		},
 		dockerTemplate: DockerTemplate{
 			ResourceFetcher: resourceFetcher,
@@ -80,6 +81,8 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	switch cs.Spec.DatacenterRef.Kind {
 	case anywherev1.VSphereDatacenterKind:
 		vdc := &anywherev1.VSphereDatacenterConfig{}
+		// max len = len(workers) + CP + etcd
+		spec.VSphereMachineConfigs = make(map[string]*anywherev1.VSphereMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations)+2)
 		cpVmc := &anywherev1.VSphereMachineConfig{}
 		etcdVmc := &anywherev1.VSphereMachineConfig{}
 		workerVmc := &anywherev1.VSphereMachineConfig{}
@@ -88,22 +91,26 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		if err != nil {
 			return err
 		}
+		spec.VSphereDatacenter = vdc
 		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}, cpVmc)
 		if err != nil {
 			return err
 		}
+		spec.VSphereMachineConfigs[cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] = cpVmc
 		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
 			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerVmc)
 			if err != nil {
 				return err
 			}
 			workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerVmc
+			spec.VSphereMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name] = workerVmc
 		}
 		if cs.Spec.ExternalEtcdConfiguration != nil {
 			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdVmc)
 			if err != nil {
 				return err
 			}
+			spec.VSphereMachineConfigs[cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] = etcdVmc
 		}
 		r, err := cor.vsphereTemplate.TemplateResources(ctx, cs, spec, *vdc, *cpVmc, *etcdVmc, workerVmcs)
 		if err != nil {
@@ -111,9 +118,6 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		}
 		resources = append(resources, r...)
 	case anywherev1.CloudStackDatacenterKind:
-		if !features.IsActive(features.CloudStackProvider()) {
-			return fmt.Errorf("cloudstack provider is not supported in eks-a controller")
-		}
 		csdc := &anywherev1.CloudStackDatacenterConfig{}
 		cpCsmc := &anywherev1.CloudStackMachineConfig{}
 		etcdCsmc := &anywherev1.CloudStackMachineConfig{}

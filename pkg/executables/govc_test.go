@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -45,61 +46,15 @@ var govcEnvironment = map[string]string{
 	govcInsecure:   "false",
 }
 
-type testContext struct {
-	oldUsername     string
-	isUsernameSet   bool
-	oldPassword     string
-	isPasswordSet   bool
-	oldServer       string
-	isServerSet     bool
-	oldDatacenter   string
-	isDatacenterSet bool
-}
-
-func (tctx *testContext) SaveContext() {
-	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(vSphereUsername)
-	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(vSpherePassword)
-	tctx.oldServer, tctx.isServerSet = os.LookupEnv(vSphereServer)
-	tctx.oldDatacenter, tctx.isDatacenterSet = os.LookupEnv(govcDatacenter)
-	os.Setenv(vSphereUsername, "vsphere_username")
-	os.Setenv(vSpherePassword, "vsphere_password")
-	os.Setenv(vSphereServer, "vsphere_server")
-	os.Setenv(govcUsername, os.Getenv(vSphereUsername))
-	os.Setenv(govcPassword, os.Getenv(vSpherePassword))
-	os.Setenv(govcURL, os.Getenv(vSphereServer))
-	os.Setenv(govcInsecure, "false")
-	os.Setenv(govcDatacenter, "vsphere_datacenter")
-}
-
-func (tctx *testContext) RestoreContext() {
-	if tctx.isUsernameSet {
-		os.Setenv(vSphereUsername, tctx.oldUsername)
-	} else {
-		os.Unsetenv(vSphereUsername)
-	}
-	if tctx.isPasswordSet {
-		os.Setenv(vSpherePassword, tctx.oldPassword)
-	} else {
-		os.Unsetenv(vSpherePassword)
-	}
-	if tctx.isServerSet {
-		os.Setenv(vSphereServer, tctx.oldServer)
-	} else {
-		os.Unsetenv(vSphereServer)
-	}
-	if tctx.isDatacenterSet {
-		os.Setenv(govcDatacenter, tctx.oldDatacenter)
-	} else {
-		os.Unsetenv(govcDatacenter)
-	}
-}
-
 func setupContext(t *testing.T) {
-	var tctx testContext
-	tctx.SaveContext()
-	t.Cleanup(func() {
-		tctx.RestoreContext()
-	})
+	t.Setenv(vSphereUsername, "vsphere_username")
+	t.Setenv(vSpherePassword, "vsphere_password")
+	t.Setenv(vSphereServer, "vsphere_server")
+	t.Setenv(govcUsername, os.Getenv(vSphereUsername))
+	t.Setenv(govcPassword, os.Getenv(vSpherePassword))
+	t.Setenv(govcURL, os.Getenv(vSphereServer))
+	t.Setenv(govcInsecure, "false")
+	t.Setenv(govcDatacenter, "vsphere_datacenter")
 }
 
 func setup(t *testing.T, opts ...executables.GovcOpt) (dir string, govc *executables.Govc, mockExecutable *mockexecutables.MockExecutable, env map[string]string) {
@@ -377,9 +332,7 @@ func TestGovcTemplateHasSnapshot(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupContext(t)
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 	params := []string{"snapshot.tree", "-vm", template}
@@ -417,9 +370,7 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 
-			var tctx testContext
-			tctx.SaveContext()
-			defer tctx.RestoreContext()
+			setupContext(t)
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			params := []string{"datastore.info", "-json=true", datastore}
@@ -496,9 +447,7 @@ func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	selfSigned := true
 
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupContext(t)
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 
@@ -544,9 +493,7 @@ func TestGovcCleanupVms(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	_, writer := test.NewWriter(t)
 
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupContext(t)
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 
@@ -1032,7 +979,7 @@ func TestGovcValidateVCenterAuthenticationErrorNoDatacenter(t *testing.T) {
 	ctx := context.Background()
 	_, g, _, _ := setup(t)
 
-	os.Setenv(govcDatacenter, "")
+	t.Setenv(govcDatacenter, "")
 
 	if err := g.ValidateVCenterAuthentication(ctx); err == nil {
 		t.Fatal("Govc.ValidateVCenterAuthentication() err = nil, want err not nil")
@@ -1382,7 +1329,7 @@ func TestGovcRoleExistsFalse(t *testing.T) {
 	_, g, executable, env := setup(t)
 	role := "EKSACloudAdmin"
 
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "role.ls", role).Return(*bytes.NewBufferString(""), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "role.ls", role).Return(*bytes.NewBufferString(""), fmt.Errorf("role \"%s\" not found", role))
 
 	exists, err := g.RoleExists(ctx, role)
 	gt := NewWithT(t)

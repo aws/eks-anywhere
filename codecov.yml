@@ -15,3 +15,4 @@ ignore:
   - "**/zz_generated.deepcopy.go"
   - "test/framework" 
   - "internal/aws-sdk-go-v2"
+  - "**/mock_*.go"

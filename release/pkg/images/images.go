@@ -123,7 +123,7 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 	return nil
 }
 
-func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier bool) (string, string, error) {
+func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier, hasSeparateTagPerReleaseBranch bool) (string, string, error) {
 	var sourceImageUri string
 	var latestTag string
 	var err error
@@ -167,7 +167,11 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 					if strings.Contains(name, "bottlerocket-bootstrap") {
 						gitTagFromMain = "non-existent"
 					} else {
-						gitTagFromMain, err = filereader.ReadGitTag(tagOptions["projectPath"], r.BuildRepoSource, "main")
+						gitTagPath := tagOptions["projectPath"]
+						if hasSeparateTagPerReleaseBranch {
+							gitTagPath = filepath.Join(tagOptions["projectPath"], tagOptions["eksDReleaseChannel"])
+						}
+						gitTagFromMain, err = filereader.ReadGitTag(gitTagPath, r.BuildRepoSource, "main")
 						if err != nil {
 							return "", "", errors.Cause(err)
 						}
@@ -204,7 +208,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	return sourceImageUri, sourcedFromBranch, nil
 }
 
-func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier bool) (string, error) {
+func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier, hasSeparateTagPerReleaseBranch bool) (string, error) {
 	var releaseImageUri string
 
 	if imageTagConfiguration.ReleaseImageTagFormat != "" {
@@ -227,7 +231,7 @@ func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, ta
 		if r.Weekly {
 			semver = r.DevReleaseUriVersion
 		} else {
-			currentSourceImageUri, _, err := GetSourceImageURI(r, name, repoName, tagOptions, imageTagConfiguration, trimVersionSignifier)
+			currentSourceImageUri, _, err := GetSourceImageURI(r, name, repoName, tagOptions, imageTagConfiguration, trimVersionSignifier, hasSeparateTagPerReleaseBranch)
 			if err != nil {
 				return "", errors.Cause(err)
 			}

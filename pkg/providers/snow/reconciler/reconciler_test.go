@@ -26,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/reconciler/mocks"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -239,7 +240,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 		c.Spec.WorkerNodeGroupConfigurations = append(c.Spec.WorkerNodeGroupConfigurations,
 			anywherev1.WorkerNodeGroupConfiguration{
-				Count: 1,
+				Count: ptr.Int(1),
 				MachineGroupRef: &anywherev1.Ref{
 					Kind: "SnowMachineConfig",
 					Name: machineConfigWN.Name,

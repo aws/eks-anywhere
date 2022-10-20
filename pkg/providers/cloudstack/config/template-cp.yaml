@@ -41,8 +41,10 @@ spec:
   failureDomains:{{ range $az := .cloudstackAvailabilityZones }}
   - name: {{ $az.Name }}
     zone:
+      id: {{ $az.Zone.Id }}
       name: {{ $az.Zone.Name }}
       network:
+        id: {{ $az.Zone.Network.Id }}
         name: {{ $az.Zone.Network.Name }}
     domain: {{ $az.Domain }}
     account: {{ $az.Account }}
@@ -308,14 +310,14 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: cert.pem
       permissions: "0640"
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: key.pem
       permissions: "0640"
       owner: root:root
@@ -331,7 +333,7 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-        name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+        name: "{{`{{ ds.meta_data.hostname }}`}}"
 {{- if .controlPlaneTaints }}
         taints:
 {{- range .controlPlaneTaints}}
@@ -353,7 +355,7 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-        name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+        name: "{{`{{ ds.meta_data.hostname }}`}}"
 {{- if .controlPlaneTaints }}
         taints:
 {{- range .controlPlaneTaints}}
@@ -374,11 +376,11 @@ spec:
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
 {{- end }}
-    - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
+    - hostname "{{`{{ ds.meta_data.hostname }}`}}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
-    - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+    - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+    - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
 {{- range $dir, $target := .cloudstackControlPlaneSymlinks}}
     - >-
       if [ ! -L {{$dir}} ] ;
@@ -438,11 +440,11 @@ spec:
       - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
     preEtcdadmCommands:
     - swapoff -a
-    - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
+    - hostname "{{`{{ ds.meta_data.hostname }}`}}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
-    - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+    - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+    - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
 {{- if .cloudstackEtcdDiskOfferingProvided }}
     - >-
       echo "type=83" | sfdisk {{ .cloudstackEtcdDiskOfferingDevice }} &&

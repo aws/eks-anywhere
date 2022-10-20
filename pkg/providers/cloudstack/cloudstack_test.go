@@ -3,6 +3,7 @@ package cloudstack
 import (
 	"context"
 	"embed"
+	_ "embed"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -30,6 +31,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -204,16 +206,7 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackD
 
 func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, cmk ProviderCmkClient) *cloudstackProvider {
 	_, writer := test.NewWriter(t)
-	return NewProvider(
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
-		kubectl,
-		cmk,
-		writer,
-		test.FakeNow,
-		true,
-	)
+	return NewProvider(datacenterConfig, machineConfigs, clusterConfig, kubectl, cmk, writer, test.FakeNow, true, test.NewNullLogger())
 }
 
 func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
@@ -301,7 +294,7 @@ func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) 
 		t.Fatalf("provider object is nil")
 	}
 
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
@@ -323,7 +316,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T)
 		t.Fatalf("provider object is nil")
 	}
 
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
@@ -345,7 +338,7 @@ func TestProviderSetupAndValidateDeleteClusterFailureOnInvalidUrl(t *testing.T) 
 		t.Fatalf("provider object is nil")
 	}
 
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateDeleteCluster(ctx, cluster, nil)
 	tt.Expect(err).NotTo(BeNil())
 }
@@ -471,6 +464,39 @@ func TestProviderGenerateCAPISpecForCreateWithAffinity(t *testing.T) {
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_affinity_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_affinity_md.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateWithZoneIdAndNetworkId(t *testing.T) {
+	clusterSpecManifest := "cluster_main.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	datacenterConfig.Spec.AvailabilityZones[0].Zone = v1alpha1.CloudStackZone{
+		Id: "zoneId",
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Id: "networkId",
+		},
+	}
+	clusterSpec.CloudStackDatacenter = datacenterConfig
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_resourceids_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
 }
 
 func TestProviderGenerateCAPISpecForCreateWithMirrorConfig(t *testing.T) {
@@ -1401,7 +1427,7 @@ func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T
 				},
 			}
 			newClusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: 1, MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "CloudStackMachineConfig"}, Name: "md-2"}
+			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(1), MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "CloudStackMachineConfig"}, Name: "md-2"}
 			newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newConfig)
 
 			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
@@ -1600,6 +1626,16 @@ func TestClusterUpgradeNeededNoChanges(t *testing.T) {
 	}
 }
 
+func TestClusterNeedsNewWorkloadTemplateFalse(t *testing.T) {
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfig := givenMachineConfigs(t, testClusterConfigMainFilename)[cc.MachineConfigRefs()[0].Name]
+
+	assert.False(t, NeedsNewWorkloadTemplate(clusterSpec, clusterSpec, dcConfig, dcConfig, machineConfig, machineConfig, test.NewNullLogger()), "expected no spec change to be detected")
+}
+
 func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
@@ -1702,7 +1738,7 @@ func TestAnyImmutableFieldChangedDiskOfferingNoChange(t *testing.T) {
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
@@ -1715,8 +1751,17 @@ func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	newMachineConfigsMap["test"].Spec.DiskOffering.Name = "newDiskOffering"
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	newMachineConfigsMap["test"].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "newDiskOffering",
+		},
+		CustomSize: 0,
+		MountPath:  "",
+		Device:     "",
+		Filesystem: "",
+		Label:      "",
+	}
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedSymlinksAdded(t *testing.T) {
@@ -1730,7 +1775,21 @@ func TestAnyImmutableFieldChangedSymlinksAdded(t *testing.T) {
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	newMachineConfigsMap["test"].Spec.Symlinks["/new/folder"] = "/data/new/folder"
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+}
+
+func TestAnyImmutableFieldChangedComputeOffering(t *testing.T) {
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newMachineConfigsMap["test"].Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{Name: "new-offering"}
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
@@ -1746,7 +1805,7 @@ func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
 	for k, v := range newMachineConfigsMap["test"].Spec.Symlinks {
 		newMachineConfigsMap["test"].Spec.Symlinks[k] = "/new" + v
 	}
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedDomain(t *testing.T) {
@@ -1755,7 +1814,7 @@ func TestAnyImmutableFieldChangedDomain(t *testing.T) {
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newDcConfig.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
 
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
 }
 
 func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
@@ -1766,7 +1825,7 @@ func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
 
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
 }
 
 func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) {
@@ -1781,7 +1840,7 @@ func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) 
 	newDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
@@ -1799,11 +1858,24 @@ func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	oldCloudstackKubeVipDisabledVal := os.Getenv(features.CloudStackKubeVipDisabledEnvVar)
 	os.Unsetenv(features.CloudStackKubeVipDisabledEnvVar)
 	defer os.Setenv(features.CloudStackKubeVipDisabledEnvVar, oldCloudstackKubeVipDisabledVal)
-	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeConfigFile).Return(nil)
 	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackKubeVipDisabledEnvVar, "false", kubeConfigFile).Return(nil)
 	if err := provider.InstallCustomProviderComponents(ctx, kubeConfigFile); err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
+}
+
+func TestNeedsNewWorkloadTemplateK8sVersion(t *testing.T) {
+	oldSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newK8sSpec := oldSpec.DeepCopy()
+	newK8sSpec.Cluster.Spec.KubernetesVersion = "1.25"
+	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, test.NewNullLogger()))
+}
+
+func TestNeedsNewWorkloadTemplateBundleNumber(t *testing.T) {
+	oldSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newK8sSpec := oldSpec.DeepCopy()
+	newK8sSpec.Bundles.Spec.Number = 10000
+	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, test.NewNullLogger()))
 }
 
 func TestProviderUpdateSecrets(t *testing.T) {

@@ -91,72 +91,36 @@ objects needed for the user workloads once the cluster is created.
 
 As mentioned above, if Cilium is configured with `policyEnforcementMode` set to `always`,
 EKS Anywhere creates NetworkPolicy objects to enable communication between
-its core components. These policies are created based on the type of cluster as follows:
+its core components.  EKS Anywhere will create NetworkPolicy resources in the following namespaces allowing all ingress/egress traffic by default:
+- kube-system
+- eksa-system
+- All core Cluster API namespaces:
+    + capi-system
+    + capi-kubeadm-bootstrap-system
+    + capi-kubeadm-control-plane-system
+    + etcdadm-bootstrap-provider-system
+    + etcdadm-controller-system
+    + cert-manager
+- Infrastructure provider's namespace (for instance, capd-system OR capv-system)
+- If Gitops is enabled, then the gitops namespace (flux-system by default)
 
-1. For self-managed/management cluster, EKS Anywhere will create NetworkPolicy resources in the following namespaces allowing all ingress/egress traffic by default:
-    - kube-system
-    - eksa-system
-    - All core Cluster API namespaces:
-        + capi-system
-        + capi-kubeadm-bootstrap-system
-        + capi-kubeadm-control-plane-system
-        + etcdadm-bootstrap-provider-system
-        + etcdadm-controller-system
-        + cert-manager
-    - Infrastruture provider's namespace (for instance, capd-system OR capv-system)
-    - If Gitops is enabled, then the gitops namespace (flux-system by default)
-    
-    This is the NetworkPolicy that will be created in these namespaces for the self-managed cluster:
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-all-ingress-egress
-      namespace: test
-    spec:
-      podSelector: {}
-      ingress:
-      - {}
-      egress:
-      - {}
-      policyTypes:
-      - Ingress
-      - Egress
-    ```
-
-2. For a workload cluster managed by another EKS Anywhere cluster, EKS Anywhere will create NetworkPolicy resource only in the following namespace by default:
-    - kube-system
-    
-    For the workload clusters using Kubernetes version 1.21 and higher, the ingress/egress of pods in the kube-system namespace will be limited
-    to other pods only in the kube-system namespace by using the following NetworkPolicy:
-    
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-all-ingress-egress
-      namespace: test
-    spec:
-      podSelector: {}
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      egress:
-      - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      policyTypes:
-      - Ingress
-      - Egress
-    ```
-    
-    For workload clusters using Kubernetes version 1.20, the NetworkPolicy in kube-system will
-    allow ingress/egress from all pods. This is because Kubernetes versions prior to 1.21 do not
-    set the default labels on the namespaces so EKS Anywhere cannot use a namespace selector.
-    This NetworkPolicy will ensure that the cluster gets created successfully. Later the cluster admin can edit/replace it if required.
+This is the NetworkPolicy that will be created in these namespaces for the cluster:
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-ingress-egress
+  namespace: test
+spec:
+  podSelector: {}
+  ingress:
+  - {}
+  egress:
+  - {}
+  policyTypes:
+  - Ingress
+  - Egress
+```
 
 #### Switching the Cilium policy enforcement mode
 

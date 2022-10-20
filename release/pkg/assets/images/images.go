@@ -65,7 +65,7 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, 
 		}
 	}
 
-	sourceImageUri, sourcedFromBranch, err := images.GetSourceImageURI(rc, assetName, sourceRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier)
+	sourceImageUri, sourcedFromBranch, err := images.GetSourceImageURI(rc, assetName, sourceRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier, ac.HasSeparateTagPerReleaseBranch)
 	if err != nil {
 		return nil, "", errors.Cause(err)
 	}
@@ -77,7 +77,7 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, 
 		imageTagOptionsMap["gitTag"] = gitTag
 	}
 
-	releaseImageUri, err := images.GetReleaseImageURI(rc, assetName, releaseRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier)
+	releaseImageUri, err := images.GetReleaseImageURI(rc, assetName, releaseRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier, ac.HasSeparateTagPerReleaseBranch)
 	if err != nil {
 		return nil, "", errors.Cause(err)
 	}

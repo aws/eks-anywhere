@@ -27,6 +27,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
+	vspherereconcilermocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler/mocks"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -51,11 +53,13 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 
 	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{}, vcb)
 	defaulter := vsphere.NewDefaulter(govcClient)
+	cniReconciler := vspherereconcilermocks.NewMockCNIReconciler(ctrl)
 
 	reconciler := vspherereconciler.New(
 		cl,
 		validator,
 		defaulter,
+		cniReconciler,
 		nil,
 	)
 	registry := clusters.NewProviderClusterReconcilerRegistryBuilder().
@@ -511,7 +515,7 @@ func createCluster() *anywherev1.Cluster {
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &anywherev1.Ref{
 						Kind: "VSphereMachineConfig",
 						Name: name + "-wn",

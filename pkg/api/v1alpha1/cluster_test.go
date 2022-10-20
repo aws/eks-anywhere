@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -10,6 +11,8 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestValidateClusterName(t *testing.T) {
@@ -135,7 +138,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -183,7 +186,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -231,7 +234,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -279,7 +282,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -337,7 +340,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -385,7 +388,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test-2",
@@ -433,7 +436,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -485,7 +488,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -537,7 +540,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -590,7 +593,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -644,7 +647,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{
 						{
 							Name:  "md-0",
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &Ref{
 								Kind: VSphereMachineConfigKind,
 								Name: "eksa-unit-test-2",
@@ -659,7 +662,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 						{
 							Name:  "md-1",
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &Ref{
 								Kind: VSphereMachineConfigKind,
 								Name: "eksa-unit-test-2",
@@ -924,7 +927,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -972,7 +975,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1020,7 +1023,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1068,7 +1071,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1145,7 +1148,7 @@ func TestParseClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1240,7 +1243,7 @@ func TestParseClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -2290,10 +2293,52 @@ func TestValidateMirrorConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "authenticate but username not set",
+			wantErr: "please set REGISTRY_USERNAME env var",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
+				},
+			},
+		},
+		{
+			name:    "authenticate but not vsphere",
+			wantErr: "authenticated registry mirror is only supported for vSphere provider currently",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
+			if tt.cluster.Spec.RegistryMirrorConfiguration != nil {
+				if tt.cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+					if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
+						t.Fatalf(err.Error())
+					}
+					if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
+						t.Fatalf(err.Error())
+					}
+				}
+			}
 			err := validateMirrorConfig(tt.cluster)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
@@ -2306,43 +2351,88 @@ func TestValidateMirrorConfig(t *testing.T) {
 
 func TestValidateAutoscalingConfig(t *testing.T) {
 	tests := []struct {
-		name              string
-		wantErr           string
-		autoscalingConfig *AutoScalingConfiguration
+		name                         string
+		wantErr                      string
+		workerNodeGroupConfiguration *WorkerNodeGroupConfiguration
 	}{
 		{
-			name:              "autoscaling config nil",
-			wantErr:           "",
-			autoscalingConfig: nil,
+			name:                         "autoscaling config nil",
+			wantErr:                      "",
+			workerNodeGroupConfiguration: nil,
 		},
 		{
 			name:    "autoscaling config valid",
 			wantErr: "",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: 1,
-				MaxCount: 2,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(2),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 1,
+					MaxCount: 2,
+				},
 			},
 		},
 		{
 			name:    "negative min count",
 			wantErr: "min count must be non negative",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: -1,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: -1,
+				},
 			},
 		},
 		{
 			name:    "min count > max count",
 			wantErr: "min count must be no greater than max count",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: 2,
-				MaxCount: 1,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 1,
+				},
+			},
+		},
+		{
+			name:    "count < min count",
+			wantErr: "min count must be less than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count > max count",
+			wantErr: "max count must be greater than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(4),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count < 0 with nil autoscaling",
+			wantErr: "worker node count must be zero or greater if autoscaling is not enabled",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(-1),
+			},
+		},
+		{
+			name:    "nil autoscaling",
+			wantErr: "",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			err := validateAutoscalingConfig(tt.autoscalingConfig)
+			err := validateAutoscalingConfig(tt.workerNodeGroupConfiguration)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
@@ -2384,6 +2474,51 @@ func TestClusterRegistryMirror(t *testing.T) {
 	}
 }
 
+func TestClusterRegistryAuth(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    bool
+	}{
+		{
+			name: "with registry mirror auth",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "without registry mirror auth",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name:    "without registry mirror",
+			cluster: &Cluster{},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.RegistryAuth()).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterProxyConfiguration(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -2421,7 +2556,113 @@ func TestClusterProxyConfiguration(t *testing.T) {
 	}
 }
 
+func TestValidateControlPlaneEndpoint(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "docker provider - control plane endpoint is not nil",
+			wantErr: "specifying endpoint host configuration in Cluster is not supported",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: DockerDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "docker provider - control plane endpoint is not set",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: DockerDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{},
+				},
+			},
+		},
+		{
+			name:    "control plane ip is not set",
+			wantErr: "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "control plane ip is set",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateControlPlaneEndpoint(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))
+}
+
+func TestClusterWorkerNodeConfigCount(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with worker node config count",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Name:                     "",
+					Count:                    ptr.Int(5),
+					AutoScalingConfiguration: nil,
+					MachineGroupRef:          nil,
+					Taints:                   nil,
+					Labels:                   nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(5))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
 }

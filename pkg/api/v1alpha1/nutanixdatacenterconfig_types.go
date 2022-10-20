@@ -128,7 +128,7 @@ type NutanixDatacenterConfigGenerate struct {
 
 // NutanixDatacenterConfigList contains a list of NutanixDatacenterConfig
 //
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 type NutanixDatacenterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

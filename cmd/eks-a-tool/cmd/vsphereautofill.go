@@ -95,7 +95,7 @@ func autofill(ctx context.Context) error {
 	updateField("THUMBPRINT", &datacenterConfig.Spec.Thumbprint)
 
 	updateFieldInt("CONTROL_PLANE_COUNT", &clusterConfig.Spec.ControlPlaneConfiguration.Count)
-	updateFieldInt("WORKER_NODE_COUNT", &clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count)
+	updateFieldInt("WORKER_NODE_COUNT", clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count)
 
 	updateField("SSH_AUTHORIZED_KEY", &controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys[0])
 	updateField("SSH_USERNAME", &controlPlaneMachineConfig.Spec.Users[0].Name)

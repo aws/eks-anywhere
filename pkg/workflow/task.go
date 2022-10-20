@@ -12,6 +12,21 @@ type Task interface {
 	RunTask(context.Context) (context.Context, error)
 }
 
+// TaskFunc is a helper for defining inline tasks. It is used by type converting a function to
+// TaskFunc.
+//
+// Example:
+//
+//	workflow.TaskFunc(func(ctx context.Context) (context.Context, error) {
+//		return ctx, nil
+//	})
+type TaskFunc func(context.Context) (context.Context, error)
+
+// RunTask satisfies the Task interface.
+func (fn TaskFunc) RunTask(ctx context.Context) (context.Context, error) {
+	return fn(ctx)
+}
+
 // namedTask associates a name with a Task in the context of a Workflow to enable hook lookup.
 type namedTask struct {
 	Task

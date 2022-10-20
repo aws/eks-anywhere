@@ -139,7 +139,6 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 		vb.Tinkerbell.TinkerbellStack.Actions.WriteFile,
 		vb.Tinkerbell.TinkerbellStack.Actions.Reboot,
 		vb.Tinkerbell.TinkerbellStack.Boots,
-		vb.Tinkerbell.TinkerbellStack.Cfssl,
 		vb.Tinkerbell.TinkerbellStack.Hegel,
 		vb.Tinkerbell.TinkerbellStack.Hook.Bootkit,
 		vb.Tinkerbell.TinkerbellStack.Hook.Docker,
@@ -152,9 +151,12 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 }
 
 func (vb *VersionsBundle) NutanixImages() []Image {
-	return []Image{
-		vb.Nutanix.ClusterAPIController,
+	i := make([]Image, 0, 1)
+	if vb.Nutanix.ClusterAPIController.URI != "" {
+		i = append(i, vb.Nutanix.ClusterAPIController)
 	}
+
+	return i
 }
 
 func (vb *VersionsBundle) SharedImages() []Image {

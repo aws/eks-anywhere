@@ -15,14 +15,11 @@ metadata:
   name: eksa-packages-bundle-controller
   namespace: eksa-packages
 spec:
-  activeBundle: "v1-21-1001"
-  logLevel: 4
-  privateRegistry: public.ecr.aws/eks-anywhere
-  source:
-    registry: public.ecr.aws/eks-anywhere
-    repository: eks-anywhere-packages-bundles
-  upgradeCheckInterval: "24h"
-  upgradeCheckShortInterval: "5h"
+  activeBundle: v1-21-83
+  defaultImageRegistry: 783794618700.dkr.ecr.us-west-2.amazonaws.com
+  defaultRegistry: public.ecr.aws/eks-anywhere
+  privateRegistry: ""
+  upgradeCheckInterval: 24h0m0s
 
 ---
 apiVersion: packages.eks.amazonaws.com/v1alpha1
@@ -32,16 +29,16 @@ metadata:
   namespace: eksa-packages
 spec:
   packages:
-  - name: hello-eks-anywhere
-    source:
-      registry: public.ecr.aws/eks-anywhere
-      repository: hello-eks-anywhere
-      versions:
-      - digest: sha256:da25f5fdff88c259bb2ce7c0f1e9edddaf102dc4fb9cf5159ad6b902b5194e66
-        name: v0.0
-        images:
-        - digest: sha256:da25f5fdff88c259bb2ce7c0f1e9edddaf102dc4fb9cf5159ad6b902b5194e66
-          repository: public.ecr.aws/eks-anywhere
+    - name: hello-eks-anywhere
+      source:
+        repository: hello-eks-anywhere
+        versions:
+          - digest: sha256:c31242a2f94a58017409df163debc01430de65ded6bdfc5496c29d6a6cbc0d94
+            images:
+              - digest: sha256:26e3f2f9aa546fee833218ece3fe7561971fd905cef40f685fd1b5b09c6fb71d
+                repository: hello-eks-anywhere
+            name: 0.1.1-083e68edbbc62ca0228a5669e89e4d3da99ff73b
+            schema: H4sIAJc5EW...
 
 ---
 apiVersion: packages.eks.amazonaws.com/v1alpha1
@@ -50,8 +47,9 @@ metadata:
   name: my-hello-eks-anywhere
   namespace: eksa-packages
 spec:
+  config: |
+    title: "My Hello"
   packageName: hello-eks-anywhere
-  packageVersion: v0.0.0-f47374093e8a9c48aca8c7a7f06ae185eb7506f3-helm
   targetNamespace: eksa-packages
 
 ```
@@ -121,17 +119,24 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#packagebundlecontrollerspecsource">source</a></b></td>
-        <td>object</td>
-        <td>
-          Source of the bundle.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>activeBundle</b></td>
         <td>string</td>
         <td>
           ActiveBundle is name of the bundle from which packages should be sourced.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>defaultImageRegistry</b></td>
+        <td>string</td>
+        <td>
+          Registry used for package container images.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>defaultRegistry</b></td>
+        <td>string</td>
+        <td>
+          Registry used for package helm charts and bundles.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -147,7 +152,7 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
         <td><b>privateRegistry</b></td>
         <td>string</td>
         <td>
-          PrivateRegistry is the registry being used for all images, charts and bundles<br/>
+          PrivateRegistry is the registry being used for all images, charts and bundles. Overrides the defaults.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -170,40 +175,6 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
             <i>Default</i>: 1h<br/>
         </td>
         <td>false</td>
-      </tr></tbody>
-</table>
-
-
-#### PackageBundleController.spec.source
-<sup><sup>[↩ Parent](#packagebundlecontrollerspec)</sup></sup>
-
-
-
-Source of the bundle.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>registry</b></td>
-        <td>string</td>
-        <td>
-          Registry portion of an OCI address to the bundle<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>repository</b></td>
-        <td>string</td>
-        <td>
-          Repository portion of an OCI address to the bundle<br/>
-        </td>
-        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -237,7 +208,7 @@ PackageBundleControllerStatus defines the observed state of PackageBundleControl
         <td>
           State of the bundle controller.<br/>
           <br/>
-            <i>Enum</i>: ignored, active, disconnected<br/>
+            <i>Enum</i>: ignored, active, disconnected, upgrade available<br/>
         </td>
         <td>false</td>
       </tr></tbody>

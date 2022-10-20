@@ -151,7 +151,10 @@ type DockerTemplateBuilder struct {
 }
 
 func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := buildTemplateMapCP(clusterSpec)
+	values, err := buildTemplateMapCP(clusterSpec)
+	if err != nil {
+		return nil, fmt.Errorf("error building template map from CP %v", err)
+	}
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -181,7 +184,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
@@ -213,7 +216,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kubeletExtraArgs":           kubeletExtraArgs.ToPartialYaml(),
 		"externalEtcdVersion":        bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":        constants.EksaSystemNamespace,
-		"auditPolicy":                common.GetAuditPolicy(),
 		"podCidrs":                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":               clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"haproxyImageRepository":     getHAProxyImageRepo(bundle.Haproxy.Image),
@@ -230,7 +232,13 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 	values["controlPlaneTaints"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints
 
-	return values
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
+	}
+	values["auditPolicy"] = auditPolicy
+
+	return values, nil
 }
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
@@ -245,7 +253,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		"kindNodeImage":         bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace":   constants.EksaSystemNamespace,
 		"kubeletExtraArgs":      kubeletExtraArgs.ToPartialYaml(),
-		"workerReplicas":        workerNodeGroupConfiguration.Count,
+		"workerReplicas":        *workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":   fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints": workerNodeGroupConfiguration.Taints,
 		"autoscalingConfig":     workerNodeGroupConfiguration.AutoScalingConfiguration,

@@ -1,0 +1,57 @@
+{
+  "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+  "kind": "Cluster",
+  "metadata": {
+    "name": "eksa-unit-test",
+    "namespace": "default"
+  },
+  "spec": {
+    "kubernetesVersion": "1.19",
+    "controlPlaneConfiguration": {
+      "name": "eksa-unit-test",
+      "count": 3,
+      "endpoint": {
+        "host": "test-ip"
+      },
+      "machineGroupRef": {
+        "name": "eksa-unit-test",
+        "kind": "NutanixMachineConfig"
+      }
+    },
+    "workerNodeGroupConfigurations": [
+      {
+        "count": 4,
+        "name": "eksa-unit-test",
+        "machineGroupRef": {
+          "name": "eksa-unit-test",
+          "kind": "NutanixMachineConfig"
+        }
+      }
+    ],
+    "externalEtcdConfiguration": {
+      "name": "eksa-unit-test",
+      "count": 3,
+      "machineGroupRef": {
+        "name": "eksa-unit-test",
+        "kind": "NutanixMachineConfig"
+      }
+    },
+    "datacenterRef": {
+      "kind": "NutanixDatacenterConfig",
+      "name": "eksa-unit-test"
+    },
+    "clusterNetwork": {
+      "cni": "cilium",
+      "pods": {
+        "cidrBlocks": [
+          "192.168.0.0/16"
+        ]
+      },
+      "services": {
+        "cidrBlocks": [
+          "10.96.0.0/12"
+        ]
+      }
+    }
+  }
+}

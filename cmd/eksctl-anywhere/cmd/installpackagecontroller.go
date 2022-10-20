@@ -15,7 +15,8 @@ import (
 )
 
 type installControllerOptions struct {
-	fileName string
+	fileName   string
+	kubeConfig string
 }
 
 var ico = &installControllerOptions{}
@@ -23,6 +24,7 @@ var ico = &installControllerOptions{}
 func init() {
 	installCmd.AddCommand(installPackageControllerCommand)
 	installPackageControllerCommand.Flags().StringVarP(&ico.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	installPackageControllerCommand.Flags().StringVar(&ico.kubeConfig, "kubeConfig", "", "Management cluster kubeconfig file")
 	if err := installPackageControllerCommand.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -54,23 +56,19 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithClusterSpec(clusterSpec))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithClusterSpec(clusterSpec), WithKubeConfig(ico.kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
 	ctrlClient := deps.PackageControllerClient
 
-	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
-		return err
-	}
-
-	if ctrlClient.IsInstalled(ctx) {
+	if clusterSpec.Cluster.IsSelfManaged() && ctrlClient.IsInstalled(ctx) {
 		return errors.New("curated Packages controller exists in the current cluster")
 	}
 
 	curatedpackages.PrintLicense()
-	err = ctrlClient.InstallController(ctx)
+	err = ctrlClient.EnableCuratedPackages(ctx)
 	if err != nil {
 		return err
 	}

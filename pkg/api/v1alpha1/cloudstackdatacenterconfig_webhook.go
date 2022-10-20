@@ -48,9 +48,6 @@ var _ webhook.Validator = &CloudStackDatacenterConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *CloudStackDatacenterConfig) ValidateCreate() error {
 	cloudstackdatacenterconfiglog.Info("validate create", "name", r.Name)
-	if !features.IsActive(features.CloudStackProvider()) {
-		return apierrors.NewBadRequest("CloudStackProvider feature is not active, preventing CloudStackDataCenterConfig resource creation")
-	}
 	if r.IsReconcilePaused() {
 		cloudstackdatacenterconfiglog.Info("CloudStackDatacenterConfig is paused, so allowing create", "name", r.Name)
 		return nil

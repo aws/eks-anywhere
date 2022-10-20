@@ -35,6 +35,7 @@ type provider string
 const (
 	vsphere    provider = "vsphere"
 	tinkerbell provider = "tinkerbell"
+	nutanix    provider = "nutanix"
 )
 
 func newTest(t *testing.T, p provider) *factoryTest {
@@ -44,6 +45,8 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		clusterConfigFile = "testdata/cluster_vsphere.yaml"
 	case tinkerbell:
 		clusterConfigFile = "testdata/cluster_tinkerbell.yaml"
+	case nutanix:
+		clusterConfigFile = "testdata/cluster_nutanix.yaml"
 	default:
 		t.Fatalf("Not a valid provider: %v", p)
 	}
@@ -79,6 +82,68 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt.Expect(deps.Provider).NotTo(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
 	tt.Expect(deps.DockerClient).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithProviderNutanix(t *testing.T) {
+	tests := []struct {
+		name              string
+		clusterConfigFile string
+		expectError       bool
+	}{
+		{
+			name:              "nutanix provider valid config",
+			clusterConfigFile: "testdata/cluster_nutanix.yaml",
+		},
+		{
+			name:              "nutanix provider missing datacenter config",
+			clusterConfigFile: "testdata/cluster_nutanix_without_dc.yaml",
+			expectError:       true,
+		},
+		{
+			name:              "nutanix provider missing machine config",
+			clusterConfigFile: "testdata/cluster_nutanix_without_mc.yaml",
+			expectError:       true,
+		},
+	}
+
+	t.Setenv("NUTANIX_USER", "test")
+	t.Setenv("NUTANIX_PASSWORD", "test")
+	for _, tc := range tests {
+		tt := newTest(t, nutanix)
+		tt.clusterConfigFile = tc.clusterConfigFile
+
+		deps, err := dependencies.NewFactory().
+			WithLocalExecutables().
+			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+			Build(context.Background())
+
+		if tc.expectError {
+			tt.Expect(err).NotTo(BeNil())
+			tt.Expect(deps).To(BeNil())
+		} else {
+			tt.Expect(err).To(BeNil())
+			tt.Expect(deps.Provider).NotTo(BeNil())
+			tt.Expect(deps.NutanixPrismClient).NotTo(BeNil())
+		}
+	}
+}
+
+func TestFactoryBuildWithInvalidProvider(t *testing.T) {
+	clusterConfigFile := "testdata/cluster_invalid_provider.yaml"
+	tt := &factoryTest{
+		WithT:             NewGomegaWithT(t),
+		clusterConfigFile: clusterConfigFile,
+		clusterSpec:       test.NewFullClusterSpec(t, clusterConfigFile),
+		ctx:               context.Background(),
+	}
+
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		Build(context.Background())
+
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(deps).To(BeNil())
 }
 
 func TestFactoryBuildWithClusterManager(t *testing.T) {
@@ -184,7 +249,19 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithRegistryMirror("1.2.3.4:443").
+		WithRegistryMirror("1.2.3.4:443", false).
+		WithHelm(executables.WithInsecure()).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Helm).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithRegistryMirrorAuth(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithRegistryMirror("1.2.3.4:443", true).
 		WithHelm(executables.WithInsecure()).
 		Build(context.Background())
 
@@ -217,7 +294,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(executables.WithInsecure()).
 		WithKubectl().
-		WithPackageInstaller(spec, "/test/packages.yaml").
+		WithPackageInstaller(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
 		Build(context.Background())
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.PackageInstaller).NotTo(BeNil())
@@ -278,7 +355,7 @@ func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(executables.WithInsecure()).
 		WithKubectl().
-		WithPackageControllerClient(spec).
+		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -318,7 +395,7 @@ func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(executables.WithInsecure()).
 		WithKubectl().
-		WithPackageControllerClient(spec).
+		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -359,4 +436,8 @@ func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
 
 func (b dummyDockerClient) Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	return bytes.Buffer{}, nil
+}
+
+func (b dummyDockerClient) Login(ctx context.Context, endpoint, username, password string) error {
+	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestOIDCToExtraArgs(t *testing.T) {
@@ -318,14 +319,14 @@ func TestNodeLabelsExtraArgs(t *testing.T) {
 		{
 			testName: "no labels",
 			wnc: v1alpha1.WorkerNodeGroupConfiguration{
-				Count: 3,
+				Count: ptr.Int(3),
 			},
 			want: clusterapi.ExtraArgs{},
 		},
 		{
 			testName: "with labels",
 			wnc: v1alpha1.WorkerNodeGroupConfiguration{
-				Count:  3,
+				Count:  ptr.Int(3),
 				Labels: map[string]string{"label1": "foo", "label2": "bar"},
 			},
 			want: clusterapi.ExtraArgs{

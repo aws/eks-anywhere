@@ -270,7 +270,6 @@ type EtcdadmControllerBundle struct {
 type TinkerbellStackBundle struct {
 	Actions        ActionsBundle `json:"actions"`
 	Boots          Image         `json:"boots"`
-	Cfssl          Image         `json:"cfssl"`
 	Hegel          Image         `json:"hegel"`
 	TinkebellChart Image         `json:"tinkerbellChart"`
 	Hook           HookBundle    `json:"hook"`
@@ -334,6 +333,7 @@ type SnowBundle struct {
 type NutanixBundle struct {
 	ClusterAPIController Image    `json:"clusterAPIController"`
 	Version              string   `json:"version"`
+	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`

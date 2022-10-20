@@ -56,7 +56,7 @@ var awsIamFiles = []bootstrapv1.File{
 		Permissions: "0640",
 		ContentFrom: &bootstrapv1.FileSource{
 			Secret: bootstrapv1.SecretFileSource{
-				Name: "aws-iam-authenticator-ca",
+				Name: "test-cluster-aws-iam-authenticator-ca",
 				Key:  "cert.pem",
 			},
 		},
@@ -67,7 +67,7 @@ var awsIamFiles = []bootstrapv1.File{
 		Permissions: "0640",
 		ContentFrom: &bootstrapv1.FileSource{
 			Secret: bootstrapv1.SecretFileSource{
-				Name: "aws-iam-authenticator-ca",
+				Name: "test-cluster-aws-iam-authenticator-ca",
 				Key:  "key.pem",
 			},
 		},

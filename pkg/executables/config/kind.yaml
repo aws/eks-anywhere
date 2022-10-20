@@ -25,6 +25,11 @@ containerdConfigPatches:
 {{- else }}
         ca_file = "/etc/containerd/certs.d/{{.RegistryMirrorEndpoint}}/ca.crt"
 {{- end }}
+{{- if .RegistryAuth }}
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.RegistryMirrorEndpoint}}".auth]
+        username = "{{.RegistryUsername}}"
+        password = "{{.RegistryPassword}}"
+{{- end }}
 {{- end }}
 {{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) (ne (len .ExtraPortMappings) 0)}}
 nodes:

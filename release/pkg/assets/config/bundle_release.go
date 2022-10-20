@@ -90,21 +90,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
-	// Cfssl artifacts
-	{
-		ProjectName: "cfssl",
-		ProjectPath: "projects/cloudflare/cfssl",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "cfssl",
-			},
-		},
-		ImageRepoPrefix: "cloudflare",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 	// Cilium artifacts
 	{
 		ProjectName: "cilium",
@@ -351,7 +336,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	// EKS-A cluster-controller artifacts
 	{
 		ProjectName:    "eks-anywhere-cluster-controller",
-		ProjectPath:    "projects/aws/eks-anywhere",
+		ProjectPath:    "projects/aws/eks-anywhere-cluster-controller",
 		GitTagAssigner: tagger.CliGitTagAssigner,
 		Images: []*assettypes.Image{
 			{

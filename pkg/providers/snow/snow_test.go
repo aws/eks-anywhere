@@ -25,6 +25,7 @@ import (
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -104,7 +105,7 @@ func givenClusterSpec() *cluster.Spec {
 				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 					{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &v1alpha1.Ref{
 							Kind: "SnowMachineConfig",
 							Name: "test-wn",
@@ -255,25 +256,8 @@ func newProvider(ctx context.Context, t *testing.T, kubeUnAuthClient snow.KubeUn
 }
 
 func setupContext(t *testing.T) {
-	credsFileOrgVal, isSet := os.LookupEnv(credsFileEnvVar)
-	os.Setenv(credsFileEnvVar, credsFilePath)
-	t.Cleanup(func() {
-		if isSet {
-			os.Setenv(credsFileEnvVar, credsFileOrgVal)
-		} else {
-			os.Unsetenv(credsFileEnvVar)
-		}
-	})
-
-	certsFileOrgVal, isSet := os.LookupEnv(certsFileEnvVar)
-	os.Setenv(certsFileEnvVar, certsFilePath)
-	t.Cleanup(func() {
-		if isSet {
-			os.Setenv(certsFileEnvVar, certsFileOrgVal)
-		} else {
-			os.Unsetenv(certsFileEnvVar)
-		}
-	})
+	t.Setenv(credsFileEnvVar, credsFilePath)
+	t.Setenv(certsFileEnvVar, certsFilePath)
 }
 
 func TestName(t *testing.T) {
