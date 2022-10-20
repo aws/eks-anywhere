@@ -74,8 +74,8 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	}
 
 	helmChart := strings.Split(ReleaseImageURI, ":")
-	HelmLog.Info("Starting to modifying helm chart %s", helmChart[0])
-	HelmLog.Info("Pulling helm chart %s", ReleaseImageURI)
+	fmt.Printf("Starting to modifying helm chart %s\n", helmChart[0])
+	fmt.Printf("Pulling helm chart %s\n", ReleaseImageURI)
 	chartPath, err = d.PullHelmChart(helmChart[0], helmChart[1])
 	if err != nil {
 		return "", fmt.Errorf("pulling the helm chart: %w", err)
@@ -85,7 +85,7 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	if err != nil {
 		return "", fmt.Errorf("getting current working dir: %w", err)
 	}
-	HelmLog.Info("Untar helm chart %s into %s", chartPath, dest)
+	fmt.Printf("Untar helm chart %s into %s\n", chartPath, dest)
 	err = UnTarHelmChart(chartPath, assetName, dest)
 	if err != nil {
 		return "", fmt.Errorf("untar the helm chart: %w", err)
@@ -111,7 +111,7 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 	helmtag := helmChart[1]
 
 	// Overwrite Chart.yaml
-	HelmLog.Info("Checking inside helm chart for Chart.yaml %s", helmDest)
+	fmt.Printf("Checking inside helm chart for Chart.yaml %s\n", helmDest)
 	chart, err := HasChart(helmDest)
 	if err != nil {
 		return fmt.Errorf("finding the Chart.yaml: %w", err)
@@ -121,17 +121,17 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 		return fmt.Errorf("turning Chart.yaml to struct: %w", err)
 	}
 	chartYaml.Version = helmtag
-	HelmLog.Info("Overwriting helm chart.yaml version to new tag %s", chartYaml.Version)
+	fmt.Printf("Overwriting helm chart.yaml version to new tag %s\n", chartYaml.Version)
 	err = OverwriteChartYaml(fmt.Sprintf("%s/%s", helmDest, "Chart.yaml"), chartYaml)
 	if err != nil {
 		return fmt.Errorf("overwriting the Chart.yaml version: %w", err)
 	}
-	HelmLog.Info("Re-Packaging modified helm chart %s", helmDest)
+	fmt.Printf("Re-Packaging modified helm chart %s\n", helmDest)
 	packaged, err := PackageHelmChart(helmDest)
 	if err != nil {
 		return fmt.Errorf("packaging the helm chart: %w", err)
 	}
-	HelmLog.Info("Pushing modified helm chart %s to %s", packaged, r.ReleaseContainerRegistry)
+	fmt.Printf("Pushing modified helm chart %s to %s\n", packaged, r.ReleaseContainerRegistry)
 	err = d.HelmRegistryLogin(r, "destination")
 	if err != nil {
 		return fmt.Errorf("logging into the destination registry: %w", err)
