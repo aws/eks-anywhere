@@ -172,7 +172,7 @@ metadata:
   namespace: eksa-packages
 !
 ```
-### Workload cluster is disconnedted
+### Workload cluster is disconnected
 
 Cluster is disconnected:
 ```bash
@@ -184,3 +184,13 @@ eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/billy        
 In the example above, the secret does not exist which may be that the management cluster is not managing the cluster, the PackageBundleController name is wrong or the secret was deleted.
 
 This also may happen if the management cluster cannot communicate with the workload cluster or the workload cluster was deleted, although the detail would be different.
+
+### Error: Error from server (NotFound): packagebundlecontrollers.packages.eks.amazonaws.com "clusterName" not found
+
+A package command run run on a cluster that does not seem to be managed by the management cluster. To get a list of the clusters managed by the management cluster run the following command:
+```
+eksctl anywhere get packagebundlecontroller
+NAME     ACTIVEBUNDLE   STATE     DETAIL
+billy    v1-21-87       active
+```
+There will be one packagebundlecontroller for each cluster that is being managed. The only valid cluster name in the above example is `billy`.
