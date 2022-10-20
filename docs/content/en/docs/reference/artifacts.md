@@ -309,6 +309,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
      "iso_checksum_type": "<for example: sha256>",
      "rhel_username": "<rhsm username>",
      "rhel_password": "<rhsm password>"
+     "extra_rpms": "<Space-separated list of RPM packages. Useful for adding required drivers or other packages>"
    }
    ```
    >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
