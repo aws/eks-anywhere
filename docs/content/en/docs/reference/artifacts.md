@@ -301,7 +301,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
-1. Create a Bare Metal configuration file (for example, `baremetal.json`) to identify the location of a Red Hat Enterprise Linux 8.6 ISO image and related checksum and Red Hat subscription information:
+1. Create a Bare Metal configuration file (for example, `baremetal.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
    {
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
@@ -309,7 +309,6 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
      "iso_checksum_type": "<for example: sha256>",
      "rhel_username": "<rhsm username>",
      "rhel_password": "<rhsm password>"
-     "extra_rpms": "<Space-separated list of RPM packages. Useful for adding required drivers or other packages>"
    }
    ```
    >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
@@ -335,6 +334,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
 
       ```bash
       image-builder build --os redhat --hypervisor baremetal --release-channel 1-23 --baremetal-config baremetal.json
+      ```
 
 1. To consume the resulting Ubuntu-based or RHEL-based image, serve the image from an accessible Web server. For example, add the image to a server called `my-web-server`:
    ```
@@ -385,7 +385,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
-1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8.6 ISO image and related checksum and Red Hat subscription information:
+1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
    {
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
@@ -393,7 +393,6 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
      "iso_checksum_type": "<for example: sha256>",
      "rhel_username": "<rhsm username>",
      "rhel_password": "<rhsm password>"
-     "extra_rpms": "<Space-separated list of RPM packages. Useful for adding required drivers or other packages>"
    }
    ```
    >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
