@@ -193,7 +193,7 @@ Once the Tinkerbell services move from the Admin machine to run on the target cl
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu see [building ubuntu]({{< relref "../artifacts/#Building-Ubuntu-based-node-images" >}})
+Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or Redhat see [building baremetal node images]({{< relref "../artifacts/#build-bare-metal-node-images" >}})
 to learn more on building and using Ubuntu with an EKS Anywhere cluster. This field is also useful if you want to provide a customized operating system image or simply host the standard image locally.
 
 ### hookImagesURLPath
