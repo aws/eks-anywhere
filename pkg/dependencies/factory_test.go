@@ -100,6 +100,16 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 			clusterConfigFile: "testdata/cluster_nutanix_with_trust_bundle.yaml",
 		},
 		{
+			name:              "nutanix provider valid config with invalid additional trust bundle",
+			clusterConfigFile: "testdata/cluster_nutanix_with_invalid_trust_bundle.yaml",
+			expectError:       true,
+		},
+		{
+			name:              "nutanix provider valid config with empty additional trust bundle",
+			clusterConfigFile: "testdata/cluster_nutanix_with_empty_trust_bundle.yaml",
+			expectError:       true,
+		},
+		{
 			name:              "nutanix provider missing datacenter config",
 			clusterConfigFile: "testdata/cluster_nutanix_without_dc.yaml",
 			expectError:       true,
