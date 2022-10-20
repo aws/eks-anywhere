@@ -2,6 +2,8 @@ package dependencies
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"time"
@@ -1162,25 +1164,33 @@ func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
 		if err != nil {
 			return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
 		}
+
+		clientOpts := make([]v3.ClientOption, 0)
+		if datacenterConfig.Spec.AdditionalTrustBundle != "" {
+			block, _ := pem.Decode([]byte(datacenterConfig.Spec.AdditionalTrustBundle))
+			certs, err := x509.ParseCertificates(block.Bytes)
+			if err != nil {
+				return fmt.Errorf("unable to parse additional trust bundle %s: %v", datacenterConfig.Spec.AdditionalTrustBundle, err)
+			}
+			if len(certs) == 0 {
+				return fmt.Errorf("unable to extract certs from the addtional trust bundle %s", datacenterConfig.Spec.AdditionalTrustBundle)
+			}
+			clientOpts = append(clientOpts, v3.WithCertificate(certs[0]))
+		}
+
 		endpoint := datacenterConfig.Spec.Endpoint
 		port := datacenterConfig.Spec.Port
 		url := fmt.Sprintf("%s:%d", endpoint, port)
-		nutanixUser, found := os.LookupEnv("NUTANIX_USER")
-		if !found {
-			return fmt.Errorf("NUTANIX_USER environment variable not set")
-		}
-		nutanixPassword, found := os.LookupEnv("NUTANIX_PASSWORD")
-		if !found {
-			return fmt.Errorf("NUTANIX_PASSWORD environment variable not set")
-		}
+		creds := nutanix.GetCredsFromEnv()
 		nutanixCreds := prismgoclient.Credentials{
 			URL:      url,
-			Username: nutanixUser,
-			Password: nutanixPassword,
+			Username: creds.PrismCentral.Username,
+			Password: creds.PrismCentral.Password,
 			Endpoint: endpoint,
 			Port:     fmt.Sprintf("%d", port),
 		}
-		client, err := v3.NewV3Client(nutanixCreds)
+
+		client, err := v3.NewV3Client(nutanixCreds, clientOpts...)
 		if err != nil {
 			return fmt.Errorf("error creating nutanix client: %v", err)
 		}

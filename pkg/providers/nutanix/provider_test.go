@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
+
 	"github.com/golang/mock/gomock"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
@@ -50,8 +52,8 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 		"eksa-unit-test": machineConf,
 	}
 
-	t.Setenv(nutanixUsernameKey, "admin")
-	t.Setenv(nutanixPasswordKey, "password")
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
 
 	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, time.Now)
 	require.NotNil(t, provider)
@@ -529,9 +531,9 @@ func TestNutanixProviderEnvMap(t *testing.T) {
 	})
 
 	t.Run("required envs set", func(t *testing.T) {
-		t.Setenv("NUTANIX_USER", "nutanix")
-		t.Setenv("NUTANIX_PASSWORD", "nutanix")
-		t.Setenv("NUTANIX_ENDPOINT", "prism.nutanix.com")
+		t.Setenv(constants.NutanixUsernameKey, "nutanix")
+		t.Setenv(constants.NutanixPasswordKey, "nutanix")
+		t.Setenv(nutanixEndpointKey, "prism.nutanix.com")
 
 		envMap, err := provider.EnvMap(clusterSpec)
 		assert.NoError(t, err)

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
@@ -62,9 +64,9 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 		"eksa-unit-test": machineConf.Spec,
 	}
 
-	t.Setenv(nutanixUsernameKey, "admin")
-	t.Setenv(nutanixPasswordKey, "password")
-	creds := getCredsFromEnv()
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
 	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
 	assert.NotNil(t, builder)
 
@@ -99,9 +101,9 @@ func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
 	jsonMarshal = fakemarshal
 	defer restoremarshal(storedMarshal)
 
-	t.Setenv(nutanixUsernameKey, "admin")
-	t.Setenv(nutanixPasswordKey, "password")
-	creds := getCredsFromEnv()
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
 	builder := NewNutanixTemplateBuilder(nil, nil, nil, nil, creds, time.Now)
 	assert.NotNil(t, builder)
 

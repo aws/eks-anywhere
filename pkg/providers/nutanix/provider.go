@@ -36,7 +36,7 @@ var mhcTemplate []byte
 var (
 	eksaNutanixDatacenterResourceType = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixMachineResourceType    = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                      = []string{nutanixEndpointKey, nutanixUsernameKey, nutanixPasswordKey}
+	requiredEnvs                      = []string{nutanixEndpointKey, constants.NutanixUsernameKey, constants.NutanixPasswordKey}
 )
 
 // Provider implements the Nutanix Provider
@@ -72,7 +72,7 @@ func NewProvider(
 		}
 	}
 
-	creds := getCredsFromEnv()
+	creds := GetCredsFromEnv()
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
 	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now)
 	nutanixValidator := NewValidator(nutanixClient)

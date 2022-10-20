@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"testing"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
+
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -95,6 +97,10 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 			clusterConfigFile: "testdata/cluster_nutanix.yaml",
 		},
 		{
+			name:              "nutanix provider valid config with additional trust bundle",
+			clusterConfigFile: "testdata/cluster_nutanix_with_trust_bundle.yaml",
+		},
+		{
 			name:              "nutanix provider missing datacenter config",
 			clusterConfigFile: "testdata/cluster_nutanix_without_dc.yaml",
 			expectError:       true,
@@ -106,8 +112,8 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 		},
 	}
 
-	t.Setenv("NUTANIX_USER", "test")
-	t.Setenv("NUTANIX_PASSWORD", "test")
+	t.Setenv(constants.NutanixUsernameKey, "test")
+	t.Setenv(constants.NutanixPasswordKey, "test")
 	for _, tc := range tests {
 		tt := newTest(t, nutanix)
 		tt.clusterConfigFile = tc.clusterConfigFile
