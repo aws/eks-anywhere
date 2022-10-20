@@ -50,8 +50,8 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
   In kubectl examples, you can point to those files using: `https://anywhere.eks.amazonaws.com/manifests/whatever.yaml`
 * **Generic instructions for creating a cluster** should go into the [getting started](https://anywhere.eks.amazonaws.com/docs/getting-started/) section in either:
    * [Install EKS Anywhere](https://anywhere.eks.amazonaws.com/docs/getting-started/install/) installation guide: For prerequisites and procedures related to setting up the Administrative machine.
-   * [Creating a local cluster]({{< relref "../getting-started/local-environment/" >}}) or [production cluster]({{< relref "../getting-started/production-environment/" >}}): For simple instructions for a Docker or Production (Bare Metal or vSphere) installation, respectively.
-* **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Provider-specific sections are in the Reference sections for [Bare Metal]({{< relref "../reference/baremetal/" >}}) and [vSphere]({{< relref "../reference/vsphere/" >}}).
+   * [Creating a local cluster]({{< relref "../getting-started/local-environment/" >}}) or [production cluster]({{< relref "../getting-started/production-environment/" >}}): For simple instructions for a Docker or Production (CloudStack, Bare Metal or vSphere) installation, respectively.
+* **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Provider-specific sections are in the Reference sections for [CloudStack]({{< relref "../reference/cloudstack/" >}}), [Bare Metal]({{< relref "../reference/baremetal/" >}}), and [vSphere]({{< relref "../reference/vsphere/" >}}).
 * **Workshop content** should contain organized links to existing documentation pages.
   The workshop content should not duplicate existing documentation pages or contain guides that are not part of the main documentation.
 

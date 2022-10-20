@@ -8,7 +8,7 @@ description: >
 ---
 
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
-Currently, Bare Metal and VMware vSphere are the recommended providers for supported EKS Anywhere clusters.
+Currently, Bare Metal, CloudStack, and VMware vSphere are the recommended providers for supported EKS Anywhere clusters.
 We step through the cluster creation workflow for those two providers here.
 
 ## Before cluster creation
@@ -50,7 +50,7 @@ EKS Anywhere uses an infrastructure provider model for creating, upgrading, and 
 Like Cluster API, EKS Anywhere runs a [kind](https://kind.sigs.k8s.io/) cluster on the local Administrative machine to act as a bootstrap cluster.
 However, instead of using CAPI directly with the `clusterctl` command to manage the workload cluster, you use the `eksctl anywhere` command which abstracts that process for you, including calling `clusterctl` under the covers.
 
-With your Administrative machine in place, you need to prepare your [Bare Metal]({{< relref "../reference/baremetal" >}}) or [vSphere]({{< relref "../reference/vsphere" >}}) provider for EKS Anywhere.
+With your Administrative machine in place, you need to prepare your [Bare Metal]({{< relref "../reference/baremetal" >}}), [vSphere]({{< relref "../reference/vsphere" >}}), or [CloudStack]({{< relref "../reference/cloudstack" >}}), provider for EKS Anywhere.
 The following sections describe how to create a Bare Metal or vSphere cluster.
 
 ## Creating a Bare Metal cluster

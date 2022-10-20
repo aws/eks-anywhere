@@ -7,7 +7,7 @@ description: >
   How to backup and restore an EKS Anywhere cluster
 ---
 
->**_NOTE_**: External etcd topology is supported for vSphere clusters, but not yet for Bare Metal clusters.
+>**_NOTE_**: External etcd topology is supported for vSphere and CloudStack clusters, but not yet for Bare Metal clusters.
 >
 
 This page contains steps for backing up a cluster by taking an etcd snapshot, and restoring the cluster from a snapshot. These steps are for an EKS Anywhere cluster provisioned using the external etcd topology (selected by default) and Ubuntu OVAs.
