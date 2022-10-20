@@ -33,13 +33,13 @@ description: >
       packageName: emissary
     ```
 
-2. Install Emissary
+1. Install Emissary
 
    ```bash
    eksctl anywhere create packages -f emissary.yaml
    ```
 
-3. Validate the installation
+1. Validate the installation
 
    ```bash
    eksctl anywhere get packages

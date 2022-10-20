@@ -39,13 +39,13 @@ description: >
     ```
 
 
-2. Install Cluster Autoscaler
+1. Install Cluster Autoscaler
 
    ```bash
    eksctl anywhere create packages -f cluster-autoscaler.yaml
    ```
 
-3. Validate the installation
+1. Validate the installation
 
    ```bash
    eksctl anywhere get packages --cluster <cluster-name>
