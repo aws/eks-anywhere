@@ -7,8 +7,8 @@ description: >
 ---
 
 >**_NOTE_**: Currently, Multus support is only available with the EKS Anywhere Bare Metal provider.
-The vSphere provider, does not have multi-network support for cluster machines.
-Once multiple network support is added to EKS Anywhere vSphere clusters, Multus CNI can be supported. 
+The vSphere and CloudStack providers, do not have multi-network support for cluster machines.
+Once multiple network support is added to those clusters, Multus CNI can be supported. 
 >
 
 [Multus CNI](https://github.com/k8snetworkplumbingwg/multus-cni) is a container network interface plugin for Kubernetes that enables attaching multiple network interfaces to pods.
