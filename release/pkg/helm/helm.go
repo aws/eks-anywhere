@@ -80,6 +80,12 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	if err != nil {
 		return "", fmt.Errorf("pulling the helm chart: %w", err)
 	}
+
+	err = d.HelmRegistryLogout(r, "source")
+	if err != nil {
+		return "", fmt.Errorf("logging out of the source registry: %w", err)
+	}
+
 	pwd, err := os.Getwd()
 	dest := filepath.Join(pwd, assetName)
 	if err != nil {
@@ -116,30 +122,41 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 	if err != nil {
 		return fmt.Errorf("finding the Chart.yaml: %w", err)
 	}
+
 	chartYaml, err := ValidateHelmChart(chart)
 	if err != nil {
 		return fmt.Errorf("turning Chart.yaml to struct: %w", err)
 	}
 	chartYaml.Version = helmtag
+	
 	fmt.Printf("Overwriting helm chart.yaml version to new tag %s\n", chartYaml.Version)
 	err = OverwriteChartYaml(fmt.Sprintf("%s/%s", helmDest, "Chart.yaml"), chartYaml)
 	if err != nil {
 		return fmt.Errorf("overwriting the Chart.yaml version: %w", err)
 	}
+
 	fmt.Printf("Re-Packaging modified helm chart %s\n", helmDest)
 	packaged, err := PackageHelmChart(helmDest)
 	if err != nil {
 		return fmt.Errorf("packaging the helm chart: %w", err)
 	}
+
 	fmt.Printf("Pushing modified helm chart %s to %s\n", packaged, r.ReleaseContainerRegistry)
 	err = d.HelmRegistryLogin(r, "destination")
 	if err != nil {
 		return fmt.Errorf("logging into the destination registry: %w", err)
 	}
+
 	err = d.PushHelmChart(packaged, filepath.Dir(helmChart[0]))
 	if err != nil {
 		return fmt.Errorf("pushing the helm chart: %w", err)
 	}
+
+	err = d.HelmRegistryLogout(r, "destination")
+	if err != nil {
+		return fmt.Errorf("logging out of the destination registry: %w", err)
+	}
+
 	return nil
 }
 
@@ -157,6 +174,22 @@ func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType
 	err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password, false)
 	if err != nil {
 		return fmt.Errorf("running the Helm registry login command: %w", err)
+	}
+
+	return nil
+}
+
+func (d *helmDriver) HelmRegistryLogout(r *releasetypes.ReleaseConfig, remoteType string) error {
+	var remote string
+	if remoteType == "source" {
+		remote = r.SourceContainerRegistry
+	} else if remoteType == "destination" {
+		remote = r.ReleaseContainerRegistry
+	}
+	logout := action.NewRegistryLogout(d.cfg)
+	err := logout.Run(os.Stdout, remote)
+	if err != nil {
+		return fmt.Errorf("running the Helm registry logout command: %w", err)
 	}
 
 	return nil
