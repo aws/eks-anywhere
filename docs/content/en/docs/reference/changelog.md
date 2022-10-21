@@ -19,7 +19,7 @@ weight: 35
 - Add option to disable vSphere CSI driver [#3148](https://github.com/aws/eks-anywhere/issues/3148)
 - Add support for skipping load balancer deployment for Bare Metal so users can use their own load balancers [#3608](https://github.com/aws/eks-anywhere/pull/3608)
 - Add support to configure aws-iam-authenticator on workload clusters independent of management cluster [#2814](https://github.com/aws/eks-anywhere/issues/2814)
-- Add EKS Anywhere Packages support for remote management on workload clusters. (For more EKS Anywhere packages info: [v0.12.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.12.0))
+- Add EKS Anywhere Packages support for remote management on workload clusters. (For more EKS Anywhere packages info: [v0.12.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.2.14))
 - Add new EKS Anywhere Packages
   - AWS Distro for OpenTelemetry (ADOT)
   - Cert Manager
