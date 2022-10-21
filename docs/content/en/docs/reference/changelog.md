@@ -10,6 +10,28 @@ weight: 35
 - Certificates signed with SHA-1 are not supported anymore for Registry Mirror. Users with a registry mirror and providing a custom CA cert will need to rotate the certificate served by the registry mirror endpoint before using the new EKS-A version. This is true for both new clusters (`create cluster` command) and existing clusters (`upgrade cluster` command).
 - The `--source` option was removed from several package commands. Use either `--kube-version` for registry or `--cluster` for cluster.
 
+## [v0.12.0](https://github.com/aws/eks-anywhere/releases/tag/v0.12.0)
+
+### Added
+- Add support for EKS Anywhere with provider CloudStack
+- Add support to upgrade Bare Metal cluster
+- Add support for using Registry Mirror for Bare Metal
+- Redhat-based node image support for vSphere, CloudStack and Bare Metal EKS Anywhere clusters
+- Allow authenticated image pull using Registry Mirror for Ubuntu on vSphere cluster
+- Add option to disable vSphere CSI driver [#3148](https://github.com/aws/eks-anywhere/issues/3148)
+- Add support for skipping load balancer deployment for Bare Metal so users can use their own load balancers [#3608](https://github.com/aws/eks-anywhere/pull/3608)
+- Add support to configure aws-iam-authenticator on workload clusters independent of management cluster [#2814](https://github.com/aws/eks-anywhere/issues/2814)
+- Add EKS Anywhere Packages support for remote management on workload clusters. (For more EKS Anywhere packages info: [v0.12.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.12.0))
+- Add new EKS Anywhere Packages
+  - AWS Distro for OpenTelemetry (ADOT)
+  - Cert Manager
+  - Cluster Autoscaler
+  - Metrics Server
+
+### Fixed
+- Remove special cilium network policy with `policyEnforcementMode` set to `always` due to lack of pod network connectivity for vSphere CSI
+- Fixed [#3391](https://github.com/aws/eks-anywhere/issues/3391) [#3560](https://github.com/aws/eks-anywhere/issues/3560) for AWSIamConfig upgrades on EKS Anywhere workload clusters
+
 ## [v0.11.4](https://github.com/aws/eks-anywhere/releases/tag/v0.11.4)
 
 ### Added
