@@ -16,7 +16,7 @@ weight: 35
 - Add support for EKS Anywhere with provider CloudStack
 - Add support to upgrade Bare Metal cluster
 - Add support for using Registry Mirror for Bare Metal
-- RHEL availability for vSphere, CloudStack and Bare Metal cluster
+- Redhat-based node image support for vSphere, CloudStack and Bare Metal EKS Anywhere clusters
 - Allow authenticated image pull using Registry Mirror for Ubuntu on vSphere cluster
 - Add option to disable vSphere CSI driver [#3148](https://github.com/aws/eks-anywhere/issues/3148)
 - Add support for skipping load balancer deployment for Bare Metal so users can use their own load balancers [#3608](https://github.com/aws/eks-anywhere/pull/3608)
