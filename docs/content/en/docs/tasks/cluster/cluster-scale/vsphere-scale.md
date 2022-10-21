@@ -66,13 +66,8 @@ You can do this by storing your cluster config manifest in git and then having a
 Or you can use a GitOps controller to apply the changes.
 To read more about making changes with the integrated Flux GitOps controller you can read how to [Manage a cluster with GitOps]({{< relref "../cluster-flux" >}}).
 
-### Automatic scaling
+### Autoscaling
 
-Automatic cluster scaling is designed for worker nodes and it is not advised to automatically scale your control plane.
-Typically, autoscaling is done with a controller such as the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/).
-This has some concerns in an on-prem environment.
+EKS Anywhere supports autoscaling of worker node groups using the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/) and as a [curated package](../../../../reference/packagespec/cluster-autoscaler/).
 
-Automatic scaling does not work with some providers such as Docker or bare metal.
-An EKS Anywhere cluster currently is not intended to be used with the Kubernetes Cluster Autoscaler so that it does not interfere with built in controllers or cause unexpected machine thrashing.
-
-In future versions of EKS Anywhere we will be adding support for automatic autoscaling for specific providers.
+See [here](../../../../reference/clusterspec/optional/autoscaling) for details on how to configure your cluster spec to autoscale worker node groups for autoscaling.
