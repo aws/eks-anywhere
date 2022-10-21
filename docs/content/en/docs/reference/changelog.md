@@ -13,23 +13,23 @@ weight: 35
 ## [v0.12.0](https://github.com/aws/eks-anywhere/releases/tag/v0.12.0)
 
 ### Added
-- Add support for EKS Anywhere with provider Cloudstack
+- Add support for EKS Anywhere with provider CloudStack
 - Add support to upgrade Bare Metal cluster
 - Add support for using Registry Mirror for Bare Metal
-- RHEL availability for vSphere, Cloudstack and Bare Metal cluster
+- RHEL availability for vSphere, CloudStack and Bare Metal cluster
 - Allow authenticated image pull using Registry Mirror for Ubuntu on vSphere cluster
 - Add option to disable vSphere CSI driver [#3148](https://github.com/aws/eks-anywhere/issues/3148)
 - Add support for skipping load balancer deployment for Bare Metal so users can use their own load balancers [#3608](https://github.com/aws/eks-anywhere/pull/3608)
 - Add support to configure aws-iam-authenticator on workload clusters independent of management cluster [#2814](https://github.com/aws/eks-anywhere/issues/2814)
-- Add EKS Anywhere Packages support for remote management on workload clusters (For more EKS Anywhere packages info: [v0.12.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.12.0))
+- Add EKS Anywhere Packages support for remote management on workload clusters. (For more EKS Anywhere packages info: [v0.12.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.12.0))
 - Add new EKS Anywhere Packages
   - AWS Distro for OpenTelemetry (ADOT)
   - Cert Manager
   - Cluster Autoscaler
 
 ### Fixed
-- Remove special cilium network policy with `policyEnforcementMode` is set to `always` due to lack of pod network connectivity for vsphere csi
-- Fixed [#3391](https://github.com/aws/eks-anywhere/issues/3391) [#3560](https://github.com/aws/eks-anywhere/issues/3560) for AWSIamConfig upgrades on EKS-A workload clusters
+- Remove special cilium network policy with `policyEnforcementMode` set to `always` due to lack of pod network connectivity for vSphere CSI
+- Fixed [#3391](https://github.com/aws/eks-anywhere/issues/3391) [#3560](https://github.com/aws/eks-anywhere/issues/3560) for AWSIamConfig upgrades on EKS Anywhere workload clusters
 
 ## [v0.11.4](https://github.com/aws/eks-anywhere/releases/tag/v0.11.4)
 
