@@ -40,9 +40,9 @@ providers:
     type: "BootstrapProvider"
     version: "v0.1.0"
   - name: "nutanix"
-    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-nutanix/v0.5.2/infrastructure-components.yaml"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-nutanix/v1.0.0/infrastructure-components.yaml"
     type: "InfrastructureProvider"
-    version: "v0.5.2"
+    version: "v1.0.0"
 
 overridesFolder: {{.dir}}/cluster-name/generated/overrides
 images:
