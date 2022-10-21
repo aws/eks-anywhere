@@ -26,31 +26,15 @@ const (
 	validGitKnownHostsFilePath = "testdata/known_hosts"
 )
 
-type testFluxContext struct {
-	oldGithubToken   string
-	isGithubTokenSet bool
-}
-
-func (tctx *testFluxContext) SaveContext() {
-	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(eksaGithubTokenEnv)
-	os.Setenv(eksaGithubTokenEnv, validPATValue)
-	os.Setenv(githubToken, os.Getenv(eksaGithubTokenEnv))
-}
-
-func (tctx *testFluxContext) RestoreContext() {
-	if tctx.isGithubTokenSet {
-		os.Setenv(eksaGithubTokenEnv, tctx.oldGithubToken)
-	} else {
-		os.Unsetenv(eksaGithubTokenEnv)
-	}
+func setupFluxContext(t *testing.T) {
+	t.Setenv(eksaGithubTokenEnv, validPATValue)
+	t.Setenv(githubToken, os.Getenv(eksaGithubTokenEnv))
 }
 
 func TestFluxInstallGithubToolkitsSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
-	var tctx testFluxContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupFluxContext(t)
 
 	owner := "janedoe"
 	repo := "gitops-fleet"
@@ -168,9 +152,7 @@ func TestFluxInstallGithubToolkitsSuccess(t *testing.T) {
 func TestFluxUninstallGitOpsToolkitsComponents(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
-	var tctx testFluxContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupFluxContext(t)
 
 	tests := []struct {
 		testName     string
@@ -231,9 +213,7 @@ func TestFluxUninstallGitOpsToolkitsComponents(t *testing.T) {
 func TestFluxPauseKustomization(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
-	var tctx testFluxContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupFluxContext(t)
 
 	tests := []struct {
 		testName     string
@@ -304,9 +284,7 @@ func TestFluxPauseKustomization(t *testing.T) {
 func TestFluxResumeKustomization(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
-	var tctx testFluxContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupFluxContext(t)
 
 	tests := []struct {
 		testName     string
@@ -378,9 +356,7 @@ func TestFluxResumeKustomization(t *testing.T) {
 func TestFluxReconcile(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
-	var tctx testFluxContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupFluxContext(t)
 
 	tests := []struct {
 		testName     string

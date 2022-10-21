@@ -256,25 +256,8 @@ func newProvider(ctx context.Context, t *testing.T, kubeUnAuthClient snow.KubeUn
 }
 
 func setupContext(t *testing.T) {
-	credsFileOrgVal, isSet := os.LookupEnv(credsFileEnvVar)
-	os.Setenv(credsFileEnvVar, credsFilePath)
-	t.Cleanup(func() {
-		if isSet {
-			os.Setenv(credsFileEnvVar, credsFileOrgVal)
-		} else {
-			os.Unsetenv(credsFileEnvVar)
-		}
-	})
-
-	certsFileOrgVal, isSet := os.LookupEnv(certsFileEnvVar)
-	os.Setenv(certsFileEnvVar, certsFilePath)
-	t.Cleanup(func() {
-		if isSet {
-			os.Setenv(certsFileEnvVar, certsFileOrgVal)
-		} else {
-			os.Unsetenv(certsFileEnvVar)
-		}
-	})
+	t.Setenv(credsFileEnvVar, credsFilePath)
+	t.Setenv(certsFileEnvVar, certsFilePath)
 }
 
 func TestName(t *testing.T) {

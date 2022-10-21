@@ -50,10 +50,8 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 		"eksa-unit-test": machineConf,
 	}
 
-	os.Setenv(nutanixUsernameKey, "admin")
-	defer os.Unsetenv(nutanixUsernameKey)
-	os.Setenv(nutanixPasswordKey, "password")
-	defer os.Unsetenv(nutanixPasswordKey)
+	t.Setenv(nutanixUsernameKey, "admin")
+	t.Setenv(nutanixPasswordKey, "password")
 
 	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, time.Now)
 	require.NotNil(t, provider)
@@ -522,20 +520,23 @@ func TestNutanixProviderVersion(t *testing.T) {
 func TestNutanixProviderEnvMap(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	envMap, err := provider.EnvMap(clusterSpec)
-	assert.Error(t, err)
-	assert.Nil(t, envMap)
 
-	os.Setenv("NUTANIX_USER", "nutanix")
-	defer os.Unsetenv("NUTANIX_USER")
-	os.Setenv("NUTANIX_PASSWORD", "nutanix")
-	defer os.Unsetenv("NUTANIX_PASSWORD")
-	os.Setenv("NUTANIX_ENDPOINT", "prism.nutanix.com")
-	defer os.Unsetenv("NUTANIX_ENDPOINT")
+	t.Run("required envs not set", func(t *testing.T) {
+		os.Clearenv()
+		envMap, err := provider.EnvMap(clusterSpec)
+		assert.Error(t, err)
+		assert.Nil(t, envMap)
+	})
 
-	envMap, err = provider.EnvMap(clusterSpec)
-	assert.NoError(t, err)
-	assert.NotNil(t, envMap)
+	t.Run("required envs set", func(t *testing.T) {
+		t.Setenv("NUTANIX_USER", "nutanix")
+		t.Setenv("NUTANIX_PASSWORD", "nutanix")
+		t.Setenv("NUTANIX_ENDPOINT", "prism.nutanix.com")
+
+		envMap, err := provider.EnvMap(clusterSpec)
+		assert.NoError(t, err)
+		assert.NotNil(t, envMap)
+	})
 }
 
 func TestNutanixProviderGetDeployments(t *testing.T) {

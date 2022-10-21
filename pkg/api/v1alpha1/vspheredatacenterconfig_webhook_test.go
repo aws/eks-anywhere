@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -146,12 +145,11 @@ func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 }
 
 func TestVSphereDatacenterValidateCreateFullManagementCycleOn(t *testing.T) {
-	os.Setenv("FULL_LIFECYCLE_API", "true")
+	t.Setenv("FULL_LIFECYCLE_API", "true")
 	dataCenterConfig := vsphereDatacenterConfig()
 
 	g := NewWithT(t)
 	g.Expect(dataCenterConfig.ValidateCreate()).To(Succeed())
-	os.Unsetenv("FULL_LIFECYCLE_API")
 }
 
 func TestVSphereDatacenterValidateCreate(t *testing.T) {

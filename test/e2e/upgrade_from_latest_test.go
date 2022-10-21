@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -75,7 +76,7 @@ func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testin
 
 func TestCloudStackKubernetes120UpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -266,6 +267,35 @@ func TestVSphereKubernetes122To123UbuntuUpgradeFromLatestMinorRelease(t *testing
 			framework.UpdateUbuntuTemplate123Var(), // Set the template so it doesn't get autoimported
 		),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
+	)
+}
+
+func TestVSphereKubernetes123To124UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+		framework.WithUbuntuForRelease(release, anywherev1.Kube123),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube123)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		anywherev1.Kube124,
+		provider.WithProviderUpgrade(
+			framework.UpdateUbuntuTemplate124Var(), // Set the template so it doesn't get autoimported
+		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 

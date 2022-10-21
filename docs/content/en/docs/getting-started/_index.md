@@ -36,4 +36,4 @@ See [EKS Anywhere local environment]({{< relref "local-environment" >}}).
 ## Production environment
 
 When evaluating a solution for a production environment
-consider deploying EKS Anywhere on [Bare Metal]({{< relref "production-environment/baremetal-getstarted" >}}) or [vSphere]({{< relref "production-environment/vsphere-getstarted" >}}).
+consider deploying EKS Anywhere on providers listed on the [Create production cluster]({{< relref "production-environment/" >}}) page.

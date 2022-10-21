@@ -89,6 +89,12 @@ description: >
 
    ![Harbor web portal](/images/harbor-portal.png)
 
+## Update
+To update package configuration, update harbor.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f harbor.yaml
+```
+
 ## Upgrade
 {{% alert title="Note" color="primary" %}}
 * New versions of software packages will be automatically downloaded but not automatically installed. You can always manually run `eksctl` to check and install updates.

@@ -90,6 +90,11 @@ description: >
    mylb   metallb   22h   installed   0.12.1-ce5b5de19014202cebd4ab4c091830a3b6dfea06   0.12.1-ce5b5de19014202cebd4ab4c091830a3b6dfea06 (latest)
    ```
 
+## Update
+To update package configuration, update metallb.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f metallb.yaml
+```
 
 ## Upgrade
 

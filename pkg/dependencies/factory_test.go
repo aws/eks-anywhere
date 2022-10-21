@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -107,10 +106,8 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 		},
 	}
 
-	os.Setenv("NUTANIX_USER", "test")
-	defer os.Unsetenv("NUTANIX_USER")
-	os.Setenv("NUTANIX_PASSWORD", "test")
-	defer os.Unsetenv("NUTANIX_PASSWORD")
+	t.Setenv("NUTANIX_USER", "test")
+	t.Setenv("NUTANIX_PASSWORD", "test")
 	for _, tc := range tests {
 		tt := newTest(t, nutanix)
 		tt.clusterConfigFile = tc.clusterConfigFile

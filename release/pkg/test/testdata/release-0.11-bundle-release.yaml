@@ -421,6 +421,7 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.20"
     nutanix:
+      kubeVip: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
@@ -1155,6 +1156,7 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.21"
     nutanix:
+      kubeVip: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
@@ -1889,6 +1891,7 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.22"
     nutanix:
+      kubeVip: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
@@ -2623,6 +2626,7 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.23"
     nutanix:
+      kubeVip: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}

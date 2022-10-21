@@ -68,21 +68,18 @@ var (
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
 
 type vsphereProvider struct {
-	datacenterConfig       *v1alpha1.VSphereDatacenterConfig
-	machineConfigs         map[string]*v1alpha1.VSphereMachineConfig
-	clusterConfig          *v1alpha1.Cluster
-	providerGovcClient     ProviderGovcClient
-	providerKubectlClient  ProviderKubectlClient
-	writer                 filewriter.FileWriter
-	controlPlaneSshAuthKey string
-	workerSshAuthKey       string
-	etcdSshAuthKey         string
-	templateBuilder        *VsphereTemplateBuilder
-	skipIpCheck            bool
-	resourceSetManager     ClusterResourceSetManager
-	Retrier                *retrier.Retrier
-	validator              *Validator
-	defaulter              *Defaulter
+	datacenterConfig      *v1alpha1.VSphereDatacenterConfig
+	machineConfigs        map[string]*v1alpha1.VSphereMachineConfig
+	clusterConfig         *v1alpha1.Cluster
+	providerGovcClient    ProviderGovcClient
+	providerKubectlClient ProviderKubectlClient
+	writer                filewriter.FileWriter
+	templateBuilder       *VsphereTemplateBuilder
+	skipIPCheck           bool
+	resourceSetManager    ClusterResourceSetManager
+	Retrier               *retrier.Retrier
+	validator             *Validator
+	defaulter             *Defaulter
 }
 
 type ProviderGovcClient interface {
@@ -169,19 +166,6 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConf
 }
 
 func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider {
-	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec
-	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.VSphereMachineConfigSpec, len(machineConfigs))
-
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-		}
-	}
-
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &vsphereProvider{
 		datacenterConfig:      datacenterConfig,
@@ -191,14 +175,10 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		providerKubectlClient: providerKubectlClient,
 		writer:                writer,
 		templateBuilder: NewVsphereTemplateBuilder(
-			&datacenterConfig.Spec,
-			controlPlaneMachineSpec,
-			etcdMachineSpec,
-			workerNodeGroupMachineSpecs,
 			now,
 			false,
 		),
-		skipIpCheck:        skipIpCheck,
+		skipIPCheck:        skipIpCheck,
 		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
 		validator:          v,
@@ -253,109 +233,25 @@ func (p *vsphereProvider) MachineResourceType() string {
 	return eksaVSphereMachineResourceType
 }
 
-func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
-	var useKeyGeneratedForControlplane, useKeyGeneratedForWorker bool
-	var err error
-	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
-	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
-	if len(p.controlPlaneSshAuthKey) > 0 {
-		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
-		if err != nil {
-			return err
-		}
-	} else {
-		logger.Info("Provided control plane sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-		generatedKey, err := common.GenerateSSHAuthKey(p.writer)
-		if err != nil {
-			return err
-		}
-		p.controlPlaneSshAuthKey = generatedKey
-		useKeyGeneratedForControlplane = true
-	}
-	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
-	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-		if len(p.workerSshAuthKey) > 0 {
-			p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
-			if err != nil {
-				return err
-			}
-		} else {
-			if useKeyGeneratedForControlplane { // use the same key
-				p.workerSshAuthKey = p.controlPlaneSshAuthKey
+func (p *vsphereProvider) generateSSHKeysIfNotSet() error {
+	var generatedKey string
+	for _, machineConfig := range p.machineConfigs {
+		user := machineConfig.Spec.Users[0]
+		if user.SshAuthorizedKeys[0] == "" {
+			if generatedKey != "" { // use the same key
+				user.SshAuthorizedKeys[0] = generatedKey
 			} else {
-				logger.Info("Provided worker sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-				generatedKey, err := common.GenerateSSHAuthKey(p.writer)
+				logger.Info("Provided sshAuthorizedKey is not set or is empty, auto-generating new key pair...", "vSphereMachineConfig", machineConfig.Name)
+				var err error
+				generatedKey, err = common.GenerateSSHAuthKey(p.writer)
 				if err != nil {
 					return err
 				}
-				p.workerSshAuthKey = generatedKey
-				useKeyGeneratedForWorker = true
+				user.SshAuthorizedKeys[0] = generatedKey
 			}
 		}
-		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	}
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
-		if len(p.etcdSshAuthKey) > 0 {
-			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
-			if err != nil {
-				return err
-			}
-		} else {
-			if useKeyGeneratedForControlplane { // use the same key as for controlplane
-				p.etcdSshAuthKey = p.controlPlaneSshAuthKey
-			} else if useKeyGeneratedForWorker {
-				p.etcdSshAuthKey = p.workerSshAuthKey // if cp key was provided by user, check if worker key was generated by cli and use that
-			} else {
-				logger.Info("Provided etcd sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-				generatedKey, err := common.GenerateSSHAuthKey(p.writer)
-				if err != nil {
-					return err
-				}
-				p.etcdSshAuthKey = generatedKey
-			}
-		}
-		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
-	}
-	return nil
-}
 
-func (p *vsphereProvider) setupSSHAuthKeysForUpgrade() error {
-	var err error
-	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
-	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
-	if len(p.controlPlaneSshAuthKey) > 0 {
-		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
-		if err != nil {
-			return err
-		}
-	}
-	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
-	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-		if len(p.workerSshAuthKey) > 0 {
-			p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
-			if err != nil {
-				return err
-			}
-		}
-		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
-	}
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
-		if len(p.etcdSshAuthKey) > 0 {
-			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
-			if err != nil {
-				return err
-			}
-		}
-		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
-	}
 	return nil
 }
 
@@ -383,17 +279,17 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	vSphereClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	vSphereClusterSpec := NewSpec(clusterSpec)
 
-	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 
-	if err := vSphereClusterSpec.datacenterConfig.Validate(); err != nil {
+	if err := vSphereClusterSpec.VSphereDatacenter.Validate(); err != nil {
 		return err
 	}
 
-	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return err
 	}
 
@@ -405,7 +301,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
-	if err := p.setupSSHAuthKeysForCreate(); err != nil {
+	if err := p.generateSSHKeysIfNotSet(); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
@@ -434,7 +330,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		}
 	}
 
-	if !p.skipIpCheck {
+	if !p.skipIPCheck {
 		if err := p.validator.validateControlPlaneIpUniqueness(vSphereClusterSpec); err != nil {
 			return err
 		}
@@ -479,17 +375,17 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	vSphereClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	vSphereClusterSpec := NewSpec(clusterSpec)
 
-	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 
-	if err := vSphereClusterSpec.datacenterConfig.Validate(); err != nil {
+	if err := vSphereClusterSpec.VSphereDatacenter.Validate(); err != nil {
 		return err
 	}
 
-	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return err
 	}
 
@@ -501,11 +397,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return err
 	}
 
-	err := p.setupSSHAuthKeysForUpgrade()
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-	err = p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
 	}
@@ -714,7 +606,6 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
-		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 
 	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -748,8 +639,6 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["vsphereControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
-		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
@@ -769,8 +658,6 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
-		values["vsphereControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
-		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
 		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
@@ -783,7 +670,6 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {

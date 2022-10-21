@@ -1,7 +1,11 @@
 package nutanix
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+
+	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -12,13 +16,15 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
+var jsonMarshal = json.Marshal
+
 // TemplateBuilder builds templates for nutanix
 type TemplateBuilder struct {
 	datacenterSpec              *v1alpha1.NutanixDatacenterConfigSpec
 	controlPlaneMachineSpec     *v1alpha1.NutanixMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.NutanixMachineConfigSpec
 	workerNodeGroupMachineSpecs map[string]v1alpha1.NutanixMachineConfigSpec
-	creds                       basicAuthCreds
+	creds                       credentials.BasicAuthCredential
 	now                         types.NowFunc
 }
 
@@ -29,7 +35,7 @@ func NewNutanixTemplateBuilder(
 	controlPlaneMachineSpec,
 	etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec,
 	workerNodeGroupMachineSpecs map[string]v1alpha1.NutanixMachineConfigSpec,
-	creds basicAuthCreds,
+	creds credentials.BasicAuthCredential,
 	now types.NowFunc,
 ) *TemplateBuilder {
 	return &TemplateBuilder{
@@ -48,7 +54,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Sp
 		etcdMachineSpec = *ntb.etcdMachineSpec
 	}
 
-	values := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec, ntb.creds)
+	values := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -79,7 +85,21 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 }
 
 func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := buildTemplateMapSecret(clusterSpec, ntb.creds)
+	encodedCreds, err := jsonMarshal(ntb.creds)
+	if err != nil {
+		return nil, err
+	}
+
+	nutanixCreds := []credentials.Credential{{
+		Type: credentials.BasicAuthCredentialType,
+		Data: encodedCreds,
+	}}
+	credsJSON, err := jsonMarshal(nutanixCreds)
+	if err != nil {
+		return nil, err
+	}
+
+	values := buildTemplateMapSecret(clusterSpec, credsJSON)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -101,7 +121,6 @@ func buildTemplateMapCP(
 	clusterSpec *cluster.Spec,
 	controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec,
 	etcdMachineSpec v1alpha1.NutanixMachineConfigSpec,
-	creds basicAuthCreds,
 ) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
@@ -122,14 +141,14 @@ func buildTemplateMapCP(
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
-		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
+		"kubeVipImage":                 bundle.Nutanix.KubeVip.VersionedImage(),
+		"kubeVipSvcEnable":             false,
+		"kubeVipLBEnable":              false,
 		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
 		"nutanixEndpoint":              datacenterSpec.Endpoint,
 		"nutanixPort":                  datacenterSpec.Port,
 		"nutanixAdditionalTrustBundle": datacenterSpec.AdditionalTrustBundle,
-		"nutanixUser":                  creds.username,
-		"nutanixPassword":              creds.password,
 		"vcpusPerSocket":               controlPlaneMachineSpec.VCPUsPerSocket,
 		"vcpuSockets":                  controlPlaneMachineSpec.VCPUSockets,
 		"memorySize":                   controlPlaneMachineSpec.MemorySize.String(),
@@ -174,15 +193,11 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	return values
 }
 
-func buildTemplateMapSecret(
-	clusterSpec *cluster.Spec,
-	creds basicAuthCreds,
-) map[string]interface{} {
+func buildTemplateMapSecret(clusterSpec *cluster.Spec, creds []byte) map[string]interface{} {
 	values := map[string]interface{}{
-		"clusterName":         clusterSpec.Cluster.Name,
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
-		"nutanixUser":         creds.username,
-		"nutanixPassword":     creds.password,
+		"clusterName":              clusterSpec.Cluster.Name,
+		"eksaSystemNamespace":      constants.EksaSystemNamespace,
+		"base64EncodedCredentials": base64.StdEncoding.EncodeToString(creds),
 	}
 	return values
 }

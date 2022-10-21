@@ -218,12 +218,8 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 			image = kindImage
 
 			if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-				if err := os.Setenv("REGISTRY_USERNAME", "username"); err != nil {
-					t.Fatalf(err.Error())
-				}
-				if err := os.Setenv("REGISTRY_PASSWORD", "password"); err != nil {
-					t.Fatalf(err.Error())
-				}
+				t.Setenv("REGISTRY_USERNAME", "username")
+				t.Setenv("REGISTRY_PASSWORD", "password")
 			}
 
 			executable.EXPECT().ExecuteWithEnv(

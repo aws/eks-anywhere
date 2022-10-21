@@ -37,7 +37,7 @@ To get the general state of the package controller, run the following command:
 kubectl get packages,packagebundles,packagebundlecontrollers -A
 ```
 
-You should see an active packagebundlecontroller and an available bundle. The packagebundlecontroller should indicate the active bundle. It may take a few minutes to download and active the latest bundle. Thest state of the package in this example is installing and there is an error downloading the chart.
+You should see an active packagebundlecontroller and an available bundle. The packagebundlecontroller should indicate the active bundle. It may take a few minutes to download and activate the latest bundle. The state of the package in this example is installing and there is an error downloading the chart.
 ```bash
 NAMESPACE              NAME                                          PACKAGE              AGE   STATE       CURRENTVERSION                                   TARGETVERSION                                             DETAIL
 eksa-packages-sammy    package.packages.eks.amazonaws.com/my-hello   hello-eks-anywhere   42h   installed   0.1.1-bc7dc6bb874632972cd92a2bca429a846f7aa785   0.1.1-bc7dc6bb874632972cd92a2bca429a846f7aa785 (latest)   
@@ -89,7 +89,7 @@ Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "
 Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.
 ```
 
-If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` varialbles to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages. If you forgot to set those values before cluster creation, the next section describes how you would create or update the secret after creation.
+If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` variables to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages. If you forgot to set those values before cluster creation, the next section describes how you would create or update the secret after creation.
 
 ### ImagePullBackOff on Package or Package Controller
 
@@ -172,7 +172,7 @@ metadata:
   namespace: eksa-packages
 !
 ```
-### Workload cluster is disconnedted
+### Workload cluster is disconnected
 
 Cluster is disconnected:
 ```bash
@@ -184,3 +184,13 @@ eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/billy        
 In the example above, the secret does not exist which may be that the management cluster is not managing the cluster, the PackageBundleController name is wrong or the secret was deleted.
 
 This also may happen if the management cluster cannot communicate with the workload cluster or the workload cluster was deleted, although the detail would be different.
+
+### Error: Error from server (NotFound): packagebundlecontrollers.packages.eks.amazonaws.com "clusterName" not found
+
+A package command run run on a cluster that does not seem to be managed by the management cluster. To get a list of the clusters managed by the management cluster run the following command:
+```
+eksctl anywhere get packagebundlecontroller
+NAME     ACTIVEBUNDLE   STATE     DETAIL
+billy    v1-21-87       active
+```
+There will be one packagebundlecontroller for each cluster that is being managed. The only valid cluster name in the above example is `billy`.
