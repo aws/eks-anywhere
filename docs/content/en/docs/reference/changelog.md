@@ -4,8 +4,6 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
-## Unreleased
-
 ### ⚠️ Breaking changes
 - Certificates signed with SHA-1 are not supported anymore for Registry Mirror. Users with a registry mirror and providing a custom CA cert will need to rotate the certificate served by the registry mirror endpoint before using the new EKS-A version. This is true for both new clusters (`create cluster` command) and existing clusters (`upgrade cluster` command).
 - The `--source` option was removed from several package commands. Use either `--kube-version` for registry or `--cluster` for cluster.
