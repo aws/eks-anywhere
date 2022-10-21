@@ -34,12 +34,12 @@ Bottlerocket vends its Baremetal variant Images using a secure distribution tool
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
 ## vSphere artifacts
@@ -54,9 +54,9 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-5`
+1.23 - `eksdRelease:kubernetes-1-23-eks-6`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-10`
+1.22 - `eksdRelease:kubernetes-1-22-eks-11`
 
 1.21 - `eksdRelease:kubernetes-1-21-eks-18`
 
@@ -90,7 +90,7 @@ export KUBEVERSION="1.23"
 
     a. To download VMware variant Bottlerocket OVA
     ```
-    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.9.2.ova"
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.10.0.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -100,7 +100,7 @@ export KUBEVERSION="1.23"
 
     b. To download Baremetal variant Bottlerocket image
     ```
-    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.9.0.img.lz4"
+    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.10.0.img.lz4"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-metal} --target-name "${IMAGE}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/metal-k8s-${KUBEVERSION}/x86_64/" \
@@ -212,7 +212,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
@@ -297,7 +297,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
@@ -382,7 +382,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
