@@ -77,6 +77,16 @@ func TestDockerKubernetes123AWSIamAuth(t *testing.T) {
 	runAWSIamAuthFlow(test)
 }
 
+func TestDockerKubernetes124AWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+	runAWSIamAuthFlow(test)
+}
+
 func TestVSphereKubernetes120AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

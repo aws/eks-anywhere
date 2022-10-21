@@ -33,14 +33,14 @@ func runLabelsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.DeleteCluster()
 }
 
-func TestDockerKubernetes123Labels(t *testing.T) {
+func TestDockerKubernetes124Labels(t *testing.T) {
 	provider := framework.NewDocker(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithKubernetesVersion(v1alpha1.Kube124),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -50,17 +50,19 @@ func TestDockerKubernetes123Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube123,
+		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 

@@ -44,20 +44,22 @@ func TestDockerKubernetes120FluxLegacy(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestDockerKubernetes123GithubFlux(t *testing.T) {
+func TestDockerKubernetes124GithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
 
-func TestDockerKubernetes123GitFlux(t *testing.T) {
+func TestDockerKubernetes124GitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFluxGit(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -199,10 +201,10 @@ func TestVSphereKubernetes123ThreeReplicasThreeWorkersFluxLegacy(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestDockerKubernetes123GitopsOptionsFluxLegacy(t *testing.T) {
+func TestDockerKubernetes124GitopsOptionsFluxLegacy(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithFluxLegacy(
@@ -210,6 +212,7 @@ func TestDockerKubernetes123GitopsOptionsFluxLegacy(t *testing.T) {
 			api.WithFluxNamespace(fluxUserProvidedNamespace),
 			api.WithFluxConfigurationPath(fluxUserProvidedPath),
 		),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
