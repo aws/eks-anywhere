@@ -24,7 +24,7 @@ From the apachecloudstack console:
 1. To generate API credentials for the user, select Accounts-> <username> -> View Users -> <username> and select the Generate Keys button.
 1. Select OK to confirm key generation. The API Key and Secret Key should appear as shown in the following figure:
 
-   ![Generate API Key and Secret Key](images/csgenkeys.png)
+   ![Generate API Key and Secret Key](/images/csgenkeys.png)
 
 1. Copy the API Key and Secret Key to a credentials file to use when you generate your cluster. For example:
    ```
@@ -91,7 +91,7 @@ Here is how to get information to go into `CloudStackMachineConfig` sections of 
 
 * computeOffering: Select Service Offerings -> Compute Offerings to see a list of available combinations of CPU cores, CPU, and memory to apply to your node instances. See the following figure for an example:
 
-   ![Choose or add a compute offering to set node resources](images/cszones.png)
+   ![Choose or add a compute offering to set node resources](/images/cszones.png)
 
 * template: Select Images -> Templates to see available operating system image templates.
 
