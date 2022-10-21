@@ -26,6 +26,7 @@ weight: 35
   - AWS Distro for OpenTelemetry (ADOT)
   - Cert Manager
   - Cluster Autoscaler
+  - Metrics Server
 
 ### Fixed
 - Remove special cilium network policy with `policyEnforcementMode` set to `always` due to lack of pod network connectivity for vSphere CSI
