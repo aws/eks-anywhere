@@ -5,7 +5,7 @@ weight: 20
 description: >
 ---
 
-cert-manager adds certificates and certificate issuers as resource types in Kubernetes clusters, and simplifies the process of obtaining, renewing and using those certificates.
+The cert-manager package adds certificates and certificate issuers as resource types in Kubernetes clusters, and simplifies the process of obtaining, renewing and using those certificates.
 
 {{< content "../best_practice.md" >}}
 
