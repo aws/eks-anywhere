@@ -12,7 +12,7 @@ description: >
 
 ## Install on workload cluster
 
-**NOTE: Cert-manager package can only be installed on a workload cluster**
+**NOTE: The cert-manager package can only be installed on a workload cluster**
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
