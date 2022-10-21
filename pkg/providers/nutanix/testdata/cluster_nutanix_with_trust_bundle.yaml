@@ -1,0 +1,94 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  kubernetesVersion: "1.19"
+  controlPlaneConfiguration:
+    name: eksa-unit-test
+    count: 3
+    endpoint:
+      host: test-ip
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: NutanixMachineConfig
+  workerNodeGroupConfigurations:
+    - count: 4
+      name: eksa-unit-test
+      machineGroupRef:
+        name: eksa-unit-test
+        kind: NutanixMachineConfig
+  externalEtcdConfiguration:
+    name: eksa-unit-test
+    count: 3
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: NutanixMachineConfig
+  datacenterRef:
+    kind: NutanixDatacenterConfig
+    name: eksa-unit-test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixDatacenterConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  endpoint: "prism.nutanix.com"
+  port: 9440
+  additionalTrustBundle: |
+    -----BEGIN CERTIFICATE-----
+    MIIDajCCAlKgAwIBAgIUZOD4pznfHyCO8gMvP87F+PnhGHMwDQYJKoZIhvcNAQEL
+    BQAwNDELMAkGA1UEBhMCREUxFDASBgNVBAgMC0xhbmQgQmVybGluMQ8wDQYDVQQH
+    DAZCZXJsaW4wHhcNMjIwODI1MTYxNzI5WhcNMzIwODIyMTYxNzI5WjA0MQswCQYD
+    VQQGEwJERTEUMBIGA1UECAwLTGFuZCBCZXJsaW4xDzANBgNVBAcMBkJlcmxpbjCC
+    ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAO280znVj6qLpCqAeNgpw7gw
+    0OE54gBW8Y9gBtEYxBux6hXBl+doj+JNZLcfIoDoqdTlgZX13Y//WakfMuvuhYUN
+    53fpwsiup3pqqL+JHhKy+Bq/BSQcHkLGi/aUGph7qK/wQMZBGBbbBXaCwnhjYovl
+    nRq4p+Cm5wm4S/QUhgyvqyoeNWAc6+2AHniuIzo6Q1MU9ktaSAdL8ZdW5g6el5iA
+    oHjDHNjTwyTeybKFScEQvFqO6qfzTRn8eV6dwH4gOYec1IdDwSp8PSv9R7J9AC+1
+    DtAjsYtqO4i6qRpgf0zyGQb+uNKXdz/ovOGa58twfMKYU7Z2crPj3K7NOJVelZEC
+    AwEAAaN0MHIwHQYDVR0OBBYEFPlcZspynb+2DwRN5K3slRyEV0nxMB8GA1UdIwQY
+    MBaAFPlcZspynb+2DwRN5K3slRyEV0nxMA4GA1UdDwEB/wQEAwIFoDAgBgNVHSUB
+    Af8EFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggEBACXY
+    FH72svBSALkqmTyU9rsh4rRK9yo7tmNJkFkRQ/cjYycpNKZ6Cg9+wGwN6o6pXdqb
+    JfeuePclDdGcgYe8SbGr0T7pFXdUIVmuO/jjatKCftXQQZK5zHCkUTLhVlAbnNpC
+    3NIU4wWjx/QLtk+zEqjl5kyDgXD5GwxXbgzzY+7wi4QZO8VRyLG5lawZVKer3gkt
+    +NGIOtoyz4RjnWIKV34Z6HUDhdgbVyX1uPG/a5mLmcbLjuSf39WdAgv9bFGkUHZk
+    2dU0bIXepIZ5Mz3aovl35EjbGAbpI8tpKWlsHNoiVNQm1vojfKvKVibVS2FNo0cD
+    gu45O/O1hxzezDKiKKU=
+    -----END CERTIFICATE-----
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  vcpusPerSocket: 1
+  vcpuSockets: 4
+  memorySize: 8Gi
+  image:
+    type: "name"
+    name: "prism-image"
+  cluster:
+    type: "name"
+    name: "prism-element"
+  subnet:
+    type: "name"
+    name: "prism-subnet"
+  systemDiskSize: 40Gi
+  osFamily: "ubuntu"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"

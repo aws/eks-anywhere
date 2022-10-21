@@ -447,6 +447,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				clusterConfig,
 				f.dependencies.Kubectl,
 				f.dependencies.NutanixPrismClient.V3,
+				crypto.NewTlsValidator(),
 				time.Now,
 			)
 			f.dependencies.Provider = provider

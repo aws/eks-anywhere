@@ -3,6 +3,7 @@ package nutanix
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -19,6 +20,8 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
+	mockCrypto "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -30,11 +33,12 @@ func testDefaultNutanixProvider(t *testing.T) *Provider {
 	kubectl := executables.NewKubectl(executable)
 
 	mockClient := NewMockClient(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
 	return provider
 }
 
-func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl) *Provider {
+func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator) *Provider {
 	clusterConf := &anywherev1.Cluster{}
 	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
 	require.NoError(t, err)
@@ -54,7 +58,7 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	t.Setenv(constants.NutanixUsernameKey, "admin")
 	t.Setenv(constants.NutanixPasswordKey, "password")
 
-	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, time.Now)
+	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, certValidator, time.Now)
 	require.NotNil(t, provider)
 	return provider
 }
@@ -124,7 +128,8 @@ func TestNutanixProviderDeleteResources(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 
 	mockClient := NewMockClient(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	clusterSpec.ManagementCluster = &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	err := provider.DeleteResources(context.Background(), clusterSpec)
@@ -139,6 +144,28 @@ func TestNutanixProviderPostClusterDeleteValidate(t *testing.T) {
 
 func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 	ctrl := gomock.NewController(t)
+	tests := []struct {
+		name            string
+		clusterConfFile string
+		expectErr       bool
+	}{
+		{
+			name:            "valid cluster config",
+			clusterConfFile: "testdata/eksa-cluster.yaml",
+			expectErr:       false,
+		},
+		{
+			name:            "valid cluster config with trust bundle",
+			clusterConfFile: "testdata/cluster_nutanix_with_trust_bundle.yaml",
+			expectErr:       false,
+		},
+		{
+			name:            "valid cluster config with invalid trust bundle",
+			clusterConfFile: "testdata/cluster_nutanix_with_invalid_trust_bundle.yaml",
+			expectErr:       true,
+		},
+	}
+
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	kubectl := executables.NewKubectl(executable)
 
@@ -177,7 +204,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			},
 		},
 	}
-	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil)
+	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil).AnyTimes()
 	subnets := &v3.SubnetListIntentResponse{
 		Entities: []*v3.SubnetIntentResponse{
 			{
@@ -190,7 +217,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			},
 		},
 	}
-	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(subnets, nil)
+	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(subnets, nil).AnyTimes()
 	images := &v3.ImageListIntentResponse{
 		Entities: []*v3.ImageIntentResponse{
 			{
@@ -203,13 +230,22 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			},
 		},
 	}
-	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil)
-	provider := testNutanixProvider(t, mockClient, kubectl)
+	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil).AnyTimes()
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("invalid cert"))
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
 	assert.NotNil(t, provider)
 
-	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-	assert.NoError(t, err)
+	for _, tt := range tests {
+		clusterSpec := test.NewFullClusterSpec(t, tt.clusterConfFile)
+		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+		if tt.expectErr {
+			assert.Error(t, err, tt.name)
+		} else {
+			assert.NoError(t, err, tt.name)
+		}
+	}
 }
 
 func TestNutanixProviderSetupAndValidateDeleteCluster(t *testing.T) {
@@ -232,7 +268,8 @@ func TestNutanixProviderUpdateSecrets(t *testing.T) {
 	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -265,7 +302,8 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 		"kubeadmcontrolplanes.controlplane.cluster.x-k8s.io", "eksa-unit-test", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "--namespace", "eksa-system").Return(*bytes.NewBufferString(nutanixMachineDeploymentSpecJSON), nil)
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -602,7 +640,8 @@ func TestNutanixProviderUpgradeNeeded(t *testing.T) {
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil)
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
 
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
@@ -634,7 +673,8 @@ func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
 	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
