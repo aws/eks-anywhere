@@ -16,7 +16,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package cert-manager --cluster clusterName > cert-manager.yaml
+   eksctl anywhere generate package cert-manager --cluster <cluster-name> > cert-manager.yaml
    ```
 
 1. Add the desired configuration to `cert-manager.yaml`
