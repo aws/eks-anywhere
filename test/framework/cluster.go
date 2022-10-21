@@ -534,7 +534,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	})
 	e.T.Log("Validating cluster node and CAPI machine name match")
 	err = retrier.Retry(180, 1*time.Second, func() error {
-		if err = e.KubectlClient.ValidateMachineAndNodeNamesMatch(ctx, e.cluster().KubeconfigFile); err != nil {
+		if err = e.KubectlClient.ValidateMachineAndNodeNamesMatch(ctx, e.cluster().KubeconfigFile, constants.EksaSystemNamespace); err != nil {
 			return fmt.Errorf("validating cluster node and CAPI machine name match: %v", err)
 		}
 		return nil
