@@ -62,6 +62,7 @@ func retrieveTestNodeLabels(nodeLabels map[string]string) map[string]string {
 func validateFailuredomainLabel(expectedLabels map[string]string, node corev1.Node) error {
 	if failuredomainSpecified, ok := expectedLabels[FailureDomainLabel]; ok {
 		if failuredomain, exist := node.Labels[FailureDomainLabel]; exist {
+			logger.V(4).Info("node label: ", FailureDomainLabel, failuredomain)
 			if failuredomainSpecified == FailureDomainPlaceholder && failuredomain == failuredomainSpecified {
 				return fmt.Errorf("value %s of label %s on node %s is not replaced with a failurdomain name by CloudStack provider", FailureDomainPlaceholder, FailureDomainLabel, node.Name)
 			}

@@ -1498,9 +1498,9 @@ func (k *Kubectl) ValidateNodesVersion(ctx context.Context, kubeconfig string, k
 	return nil
 }
 
-func (k *Kubectl) ValidateMachineAndNodeNamesMatch(ctx context.Context, kubeconfig string) error {
+func (k *Kubectl) ValidateMachineAndNodeNamesMatch(ctx context.Context, kubeconfig string, namespace string) error {
 	template := "{{range .items}}{{.spec.infrastructureRef.kind}},{{.metadata.name}},{{.status.nodeRef.name}}\n{{end}}"
-	params := []string{"get", "machines", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
+	params := []string{"get", "machines", "--namespace", namespace, "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
 	buffer, err := k.Execute(ctx, params...)
 	if err != nil {
 		return err
@@ -1510,7 +1510,8 @@ func (k *Kubectl) ValidateMachineAndNodeNamesMatch(ctx context.Context, kubeconf
 		line := scanner.Text()
 		vars := strings.Split(line, ",")
 		kind, machineName, nodeName := vars[0], vars[1], vars[2]
-		if kind == "CloudStackMachine" && len(nodeName) > 0 {
+		if kind == "CloudStackMachine" && nodeName != "<no value>" {
+			logger.V(4).Info("check node and machine name match: ", "node name", nodeName, "CAPI machine name", machineName)
 			if machineName != nodeName {
 				return fmt.Errorf("node name %s does not match CAPI machine name %s", nodeName, machineName)
 			}
