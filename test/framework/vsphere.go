@@ -53,6 +53,7 @@ const (
 	govcInsecureVar             = "GOVC_INSECURE"
 	govcDatacenterVar           = "GOVC_DATACENTER"
 	vsphereTemplateEnvVarPrefix = "T_VSPHERE_TEMPLATE_"
+	vsphereTestTagEnvVar        = "T_VSPHERE_TAG"
 )
 
 var requiredEnvVars = []string{
@@ -89,6 +90,7 @@ var requiredEnvVars = []string{
 	govcUrlVar,
 	govcInsecureVar,
 	govcDatacenterVar,
+	vsphereTestTagEnvVar,
 }
 
 type VSphere struct {
@@ -324,8 +326,9 @@ func WithPrivateNetwork() VSphereOpt {
 	}
 }
 
-func WithVSphereTags(tags []string) VSphereOpt {
+func WithVSphereTags() VSphereOpt {
 	return func(v *VSphere) {
+		tags := []string{os.Getenv(vsphereTestTagEnvVar)}
 		v.fillers = append(v.fillers,
 			api.WithTagsForAllMachines(tags),
 		)

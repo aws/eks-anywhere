@@ -16,7 +16,7 @@ type VSphereMachineConfigSpec struct {
 	StoragePolicyName string              `json:"storagePolicyName,omitempty"`
 	Template          string              `json:"template,omitempty"`
 	Users             []UserConfiguration `json:"users,omitempty"`
-	TagIDs            []string            `json:"tagIDs,omitempty"`
+	TagIDs            []string            `json:"tags,omitempty"`
 }
 
 func (c *VSphereMachineConfig) PauseReconcile() {

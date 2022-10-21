@@ -85,6 +85,7 @@ env:
     T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_23_EKS_3: "vsphere_ci_beta_connection:template_bottlerocket_23_eks_3"
     T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
     T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
+    T_VSPHERE_TAG: "vsphere_ci_beta_connection:vm_test_tag"
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"

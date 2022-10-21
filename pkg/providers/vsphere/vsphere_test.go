@@ -900,9 +900,7 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 
 func TestProviderGenerateCAPISpecForCreateWithControlPlaneTags(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupContext(t)
 	ctx := context.Background()
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	cluster := &types.Cluster{

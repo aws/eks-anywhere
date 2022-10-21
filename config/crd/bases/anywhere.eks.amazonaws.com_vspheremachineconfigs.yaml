@@ -53,7 +53,7 @@ spec:
                 type: string
               storagePolicyName:
                 type: string
-              tagIDs:
+              tags:
                 items:
                   type: string
                 type: array

@@ -90,7 +90,7 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 	return nil
 }
 
-func (v *Validator) validateMachineConfigTagsExist(ctx context.Context, machineConfigs map[string]*anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateMachineConfigTagsExist(ctx context.Context, machineConfigs []*anywherev1.VSphereMachineConfig) error {
 	tags, err := v.govc.ListTags(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to check if tags exists in vSphere: %v", err)
@@ -160,7 +160,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return err
 	}
 
-	if err := v.validateMachineConfigTagsExist(ctx, vsphereClusterSpec.machineConfigsLookup); err != nil {
+	if err := v.validateMachineConfigTagsExist(ctx, vsphereClusterSpec.machineConfigs()); err != nil {
 		return err
 	}
 

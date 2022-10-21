@@ -174,7 +174,7 @@ func TestVSphereKubernetes123RedHatSimpleFlow(t *testing.T) {
 func TestVSphereKubernetes122SimpleFlowWithTags(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket122(), framework.WithVSphereTags([]string{"urn:vmomi:InventoryServiceTag:8e0ce079-0675-47d6-8665-16ada4e6dabd:GLOBAL"})),
+		framework.NewVSphere(t, framework.WithBottleRocket122(), framework.WithVSphereTags()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 	)
 	runSimpleFlow(test)
