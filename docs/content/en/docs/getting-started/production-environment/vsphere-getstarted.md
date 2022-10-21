@@ -159,7 +159,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    ```
 
    Refer to the initial config described earlier for the required and optional settings.
-   Ensure workload cluster object names (`Cluster`, `vSphereDatacenterConfig`, `vSphereMachineConfig`, etc.) are distinct from management cluster object names.
+   Ensure workload cluster object names (`Cluster`, `vSphereDatacenterConfig`, `vSphereMachineConfig`, etc.) are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
 
 1. Create a workload cluster
 

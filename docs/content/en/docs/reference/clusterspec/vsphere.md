@@ -167,14 +167,20 @@ the existing nodes.
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
-Number of worker nodes
+### workerNodeGroupConfigurations.count
+Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+Minimum number of nodes for this node group's autoscaling configuration.
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations.taints
 A list of taints to apply to the nodes in the worker node group.
@@ -270,7 +276,7 @@ Size of RAM on virtual machines (Default: 8192)
 Number of CPUs on virtual machines (Default: 2)
 
 ### osFamily (optional)
-Operating System on virtual machines. Permitted values: ubuntu, bottlerocket (Default: bottlerocket)
+Operating System on virtual machines. Permitted values: bottlerocket, ubuntu, redhat (Default: bottlerocket)
 
 ### diskGiB (optional)
 Size of disk on virtual machines if snapshots aren't included (Default: 25)
@@ -299,7 +305,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template (optional)
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/vsphere-ovas.md" >}}).
-This is a required field if you are using Ubuntu OVAs.
+This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
 
 ### datastore (required)
 The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)

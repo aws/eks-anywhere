@@ -311,3 +311,39 @@ func TestSetSnowDatacenterIndentityRefDefault(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateSnowMachineRefExistsError(t *testing.T) {
+	g := NewWithT(t)
+	c := &cluster.Config{
+		Cluster: &anywherev1.Cluster{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       anywherev1.ClusterKind,
+				APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "eksa-unit-test",
+				Namespace: "ns-1",
+			},
+			Spec: anywherev1.ClusterSpec{
+				WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+					{
+						MachineGroupRef: &anywherev1.Ref{
+							Name: "worker-not-exists",
+							Kind: "SnowMachineConfig",
+						},
+					},
+				},
+			},
+		},
+		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
+			"worker-1": {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "worker-1",
+				},
+			},
+		},
+	}
+	g.Expect(cluster.ValidateConfig(c)).To(
+		MatchError(ContainSubstring("unable to find SnowMachineConfig worker-not-exists")),
+	)
+}

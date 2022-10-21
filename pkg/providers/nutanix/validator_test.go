@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	mockCrypto "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 )
 
 //go:embed testdata/machineConfigUUID.yaml
@@ -34,7 +35,9 @@ func TestNutanixValidatorNoResourcesFound(t *testing.T) {
 	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no clusters found"))
 	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no subnets found"))
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no images found"))
-	validator := NewValidator(mockClient)
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	validator := NewValidator(mockClient, mockTLSValidator)
 	require.NotNil(t, validator)
 
 	machineConfig := &anywherev1.NutanixMachineConfig{}
@@ -116,7 +119,8 @@ func TestNutanixValidatorDuplicateResourcesFound(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil)
-	validator := NewValidator(mockClient)
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	validator := NewValidator(mockClient, mockTLSValidator)
 	require.NotNil(t, validator)
 
 	machineConfig := &anywherev1.NutanixMachineConfig{}
@@ -136,7 +140,8 @@ func TestNutanixValidatorIdentifierTypeUUID(t *testing.T) {
 	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no clusters found"))
 	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no subnets found"))
 	mockClient.EXPECT().GetImage(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no images found"))
-	validator := NewValidator(mockClient)
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	validator := NewValidator(mockClient, mockTLSValidator)
 	require.NotNil(t, validator)
 
 	machineConfig := &anywherev1.NutanixMachineConfig{}
@@ -158,7 +163,8 @@ func TestNutanixValidatorInvalidIdentifierType(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := NewMockClient(ctrl)
-	validator := NewValidator(mockClient)
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	validator := NewValidator(mockClient, mockTLSValidator)
 	require.NotNil(t, validator)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -176,7 +182,8 @@ func TestNutanixValidatorEmptyResourceName(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := NewMockClient(ctrl)
-	validator := NewValidator(mockClient)
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	validator := NewValidator(mockClient, mockTLSValidator)
 	require.NotNil(t, validator)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -194,7 +201,8 @@ func TestNutanixValidatorEmptyResourceUUID(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := NewMockClient(ctrl)
-	validator := NewValidator(mockClient)
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	validator := NewValidator(mockClient, mockTLSValidator)
 	require.NotNil(t, validator)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -202,4 +210,37 @@ func TestNutanixValidatorEmptyResourceUUID(t *testing.T) {
 	assert.Contains(t, err.Error(), "missing cluster uuid")
 	assert.Contains(t, err.Error(), "missing subnet uuid")
 	assert.Contains(t, err.Error(), "missing image uuid")
+}
+
+func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	tests := []struct {
+		name       string
+		dcConfFile string
+	}{
+		{
+			name:       "valid datacenter config without trust bundle",
+			dcConfFile: nutanixDatacenterConfigSpec,
+		},
+		{
+			name:       "valid datacenter config with trust bundle",
+			dcConfFile: nutanixDatacenterConfigSpecWithTrustBundle,
+		},
+	}
+
+	for _, tt := range tests {
+		dcConf := &anywherev1.NutanixDatacenterConfig{}
+		err := yaml.Unmarshal([]byte(tt.dcConfFile), dcConf)
+		require.NoError(t, err)
+
+		mockClient := NewMockClient(ctrl)
+		mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+		mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		validator := NewValidator(mockClient, mockTLSValidator)
+		require.NotNil(t, validator)
+
+		err = validator.ValidateDatacenterConfig(context.Background(), dcConf)
+		assert.NoError(t, err)
+	}
 }

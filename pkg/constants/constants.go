@@ -50,6 +50,8 @@ const (
 	GovcPasswordKey    = "GOVC_PASSWORD"
 	SnowCredentialsKey = "AWS_B64ENCODED_CREDENTIALS"
 	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
+	NutanixUsernameKey = "NUTANIX_USER"
+	NutanixPasswordKey = "NUTANIX_PASSWORD"
 )
 
 type Operation int

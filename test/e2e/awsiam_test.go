@@ -35,7 +35,7 @@ func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster(framework.WithForce())
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateAWSIamAuth()
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -175,7 +175,7 @@ func TestVSphereKubernetes123To124AWSIamAuthUpgrade(t *testing.T) {
 		t,
 		provider,
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithAWSIamAuth(

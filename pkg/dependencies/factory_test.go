@@ -13,6 +13,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -46,7 +47,7 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	case tinkerbell:
 		clusterConfigFile = "testdata/cluster_tinkerbell.yaml"
 	case nutanix:
-		clusterConfigFile = "testdata/cluster_nutanix.yaml"
+		clusterConfigFile = "testdata/nutanix/cluster_nutanix.yaml"
 	default:
 		t.Fatalf("Not a valid provider: %v", p)
 	}
@@ -92,22 +93,36 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 	}{
 		{
 			name:              "nutanix provider valid config",
-			clusterConfigFile: "testdata/cluster_nutanix.yaml",
+			clusterConfigFile: "testdata/nutanix/cluster_nutanix.yaml",
+		},
+		{
+			name:              "nutanix provider valid config with additional trust bundle",
+			clusterConfigFile: "testdata/nutanix/cluster_nutanix_with_trust_bundle.yaml",
+		},
+		{
+			name:              "nutanix provider valid config with invalid additional trust bundle",
+			clusterConfigFile: "testdata/nutanix/cluster_nutanix_with_invalid_trust_bundle.yaml",
+			expectError:       true,
+		},
+		{
+			name:              "nutanix provider valid config with empty additional trust bundle",
+			clusterConfigFile: "testdata/nutanix/cluster_nutanix_with_empty_trust_bundle.yaml",
+			expectError:       true,
 		},
 		{
 			name:              "nutanix provider missing datacenter config",
-			clusterConfigFile: "testdata/cluster_nutanix_without_dc.yaml",
+			clusterConfigFile: "testdata/nutanix/cluster_nutanix_without_dc.yaml",
 			expectError:       true,
 		},
 		{
 			name:              "nutanix provider missing machine config",
-			clusterConfigFile: "testdata/cluster_nutanix_without_mc.yaml",
+			clusterConfigFile: "testdata/nutanix/cluster_nutanix_without_mc.yaml",
 			expectError:       true,
 		},
 	}
 
-	t.Setenv("NUTANIX_USER", "test")
-	t.Setenv("NUTANIX_PASSWORD", "test")
+	t.Setenv(constants.NutanixUsernameKey, "test")
+	t.Setenv(constants.NutanixPasswordKey, "test")
 	for _, tc := range tests {
 		tt := newTest(t, nutanix)
 		tt.clusterConfigFile = tc.clusterConfigFile

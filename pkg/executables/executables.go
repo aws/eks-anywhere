@@ -33,6 +33,8 @@ var redactedEnvKeys = []string{
 	config.AwsSecretAccessKeyEnv,
 	constants.SnowCredentialsKey,
 	constants.SnowCertsKey,
+	constants.NutanixUsernameKey,
+	constants.NutanixPasswordKey,
 }
 
 type executable struct {

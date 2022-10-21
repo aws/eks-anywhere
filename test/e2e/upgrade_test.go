@@ -50,7 +50,8 @@ func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion 
 func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.CreateCluster()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeCluster(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
@@ -238,11 +239,13 @@ func TestVSphereKubernetes124UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -411,7 +414,7 @@ func TestVSphereKubernetes122BottlerocketTo123StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -429,7 +432,7 @@ func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -446,7 +449,7 @@ func TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -465,7 +468,7 @@ func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,

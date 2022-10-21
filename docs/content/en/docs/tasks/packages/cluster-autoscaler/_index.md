@@ -13,6 +13,8 @@ description: >
 ## Install
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
+1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here](../../../reference/clusterspec/optional/autoscaling)
+
 1. Generate the package configuration
    ```bash
    eksctl anywhere generate package cluster-autoscaler --cluster clusterName > cluster-autoscaler.yaml
@@ -39,13 +41,13 @@ description: >
     ```
 
 
-2. Install Cluster Autoscaler
+1. Install Cluster Autoscaler
 
    ```bash
    eksctl anywhere create packages -f cluster-autoscaler.yaml
    ```
 
-3. Validate the installation
+1. Validate the installation
 
    ```bash
    eksctl anywhere get packages --cluster <cluster-name>

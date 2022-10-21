@@ -102,6 +102,13 @@ func ControlPlaneNodeLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) Ext
 	return nodeLabelsExtraArgs(cpc.Labels)
 }
 
+// CgroupDriverExtraArgs args added for kube versions below 1.24.
+func CgroupDriverExtraArgs() ExtraArgs {
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("cgroup-driver", "cgroupfs")
+	return args
+}
+
 func nodeLabelsExtraArgs(labels map[string]string) ExtraArgs {
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("node-labels", labelsMapToArg(labels))
