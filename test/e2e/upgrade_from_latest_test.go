@@ -337,6 +337,27 @@ func TestDockerKubernetes122to123UpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
+func TestDockerKubernetes123to124UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube123)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		anywherev1.Kube124,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+}
+
 func TestDockerKubernetes122to123GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
