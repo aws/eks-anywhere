@@ -179,6 +179,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateMirrorConfig,
 	validatePodIAMConfig,
 	validateControlPlaneLabels,
+	validateUsernameAndSecretKey,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -737,6 +738,16 @@ func validatePodIAMConfig(clusterConfig *Cluster) error {
 	}
 	if clusterConfig.Spec.PodIAMConfig.ServiceAccountIssuer == "" {
 		return errors.New("ServiceAccount Issuer can't be empty while configuring IAM roles for pods")
+	}
+	return nil
+}
+
+func validateUsernameAndSecretKey() error {
+	if AWS_ACCOUNT_NAME!=EXPORT_ACCOUNT_NAME {
+		return errors.New("User account is not same as provided")
+	}
+	if GET_USER_SECRET_KEY!=EXPORT_SECRET_KEY {
+		return errors.New("User secret key is not same as provided")
 	}
 	return nil
 }
