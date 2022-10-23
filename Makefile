@@ -446,7 +446,7 @@ coverage-view-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh)
 coverage-view-patch: $(SETUP_ENVTEST)
 coverage-view-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 coverage-view-patch:
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) -coverprofile=$(COVER_PROFILE) -covermode=atomic $(GO_PKGS)
+	-$(MAKE) unit-test-patch GO_TEST_FLAGS="-coverprofile=$(COVER_PROFILE) -covermode=atomic"
 	$(GO) tool cover -html=$(COVER_PROFILE)
 	@echo Reminder: $@ is not a substitute for make unit-test
 
