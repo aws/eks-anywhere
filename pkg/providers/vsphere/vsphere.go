@@ -68,14 +68,13 @@ var (
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
 
 type vsphereProvider struct {
-	datacenterConfig      *v1alpha1.VSphereDatacenterConfig
-	machineConfigs        map[string]*v1alpha1.VSphereMachineConfig
 	clusterConfig         *v1alpha1.Cluster
 	providerGovcClient    ProviderGovcClient
 	providerKubectlClient ProviderKubectlClient
 	writer                filewriter.FileWriter
 	templateBuilder       *VsphereTemplateBuilder
 	skipIPCheck           bool
+	csiEnabled            bool
 	resourceSetManager    ClusterResourceSetManager
 	Retrier               *retrier.Retrier
 	validator             *Validator
@@ -141,7 +140,9 @@ type ClusterResourceSetManager interface {
 	ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
+func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider { //nolint:revive
+	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
+	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	netClient := &networkutils.DefaultNetClient{}
 	vcb := govmomi.NewVMOMIClientBuilder()
 	v := NewValidator(
@@ -152,7 +153,6 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConf
 
 	return NewProviderCustomNet(
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		providerGovcClient,
 		providerKubectlClient,
@@ -165,11 +165,11 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConf
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider { //nolint:revive
+	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
+	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &vsphereProvider{
-		datacenterConfig:      datacenterConfig,
-		machineConfigs:        machineConfigs,
 		clusterConfig:         clusterConfig,
 		providerGovcClient:    providerGovcClient,
 		providerKubectlClient: providerKubectlClient,
@@ -179,6 +179,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 			false,
 		),
 		skipIPCheck:        skipIpCheck,
+		csiEnabled:         !datacenterConfig.Spec.DisableCSI,
 		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
 		validator:          v,
@@ -192,18 +193,12 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 }
 
 func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
-	machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
-	for _, config := range p.MachineConfigs(nil) {
-		mc := config.(*v1alpha1.VSphereMachineConfig)
-		machineConfigMap[mc.Name] = mc
-	}
-
 	for _, oldMcRef := range cc.MachineConfigRefs() {
 		existingVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return false, err
 		}
-		csmc, ok := machineConfigMap[oldMcRef.Name]
+		csmc, ok := newClusterSpec.VSphereMachineConfigs[oldMcRef.Name]
 		if !ok {
 			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
 			return true, nil
@@ -217,8 +212,8 @@ func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1a
 	return false, nil
 }
 
-func (p *vsphereProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.clusterConfig, p.datacenterConfig.Spec.Server)
+func (p *vsphereProvider) BootstrapClusterOpts(spec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	return common.BootstrapClusterOpts(p.clusterConfig, spec.VSphereDatacenter.Spec.Server)
 }
 
 func (p *vsphereProvider) Name() string {
@@ -233,9 +228,9 @@ func (p *vsphereProvider) MachineResourceType() string {
 	return eksaVSphereMachineResourceType
 }
 
-func (p *vsphereProvider) generateSSHKeysIfNotSet() error {
+func (p *vsphereProvider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1alpha1.VSphereMachineConfig) error {
 	var generatedKey string
-	for _, machineConfig := range p.machineConfigs {
+	for _, machineConfig := range machineConfigs {
 		user := machineConfig.Spec.Users[0]
 		if user.SshAuthorizedKeys[0] == "" {
 			if generatedKey != "" { // use the same key
@@ -256,12 +251,17 @@ func (p *vsphereProvider) generateSSHKeysIfNotSet() error {
 }
 
 func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	for _, mc := range p.machineConfigs {
+	for _, mc := range clusterSpec.VSphereMachineConfigs {
 		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, eksaVSphereMachineResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
 			return err
 		}
 	}
-	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaVSphereDatacenterResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx,
+		eksaVSphereDatacenterResourceType,
+		clusterSpec.VSphereDatacenter.Name,
+		clusterSpec.ManagementCluster.KubeconfigFile,
+		clusterSpec.VSphereDatacenter.Namespace,
+	)
 }
 
 func (p *vsphereProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
@@ -275,7 +275,7 @@ func (p *vsphereProvider) PostMoveManagementToBootstrap(_ context.Context, _ *ty
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
@@ -301,13 +301,13 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
-	if err := p.generateSSHKeysIfNotSet(); err != nil {
+	if err := p.generateSSHKeysIfNotSet(clusterSpec.VSphereMachineConfigs); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
 	// TODO: move this to validator
 	if clusterSpec.Cluster.IsManaged() {
-		for _, mc := range p.MachineConfigs(clusterSpec) {
+		for _, mc := range clusterSpec.VSphereMachineConfigs {
 			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
 			if err != nil {
 				return err
@@ -316,12 +316,12 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 				return fmt.Errorf("VSphereMachineConfig %s already exists", mc.GetName())
 			}
 		}
-		existingDatacenter, err := p.providerKubectlClient.SearchVsphereDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		existingDatacenter, err := p.providerKubectlClient.SearchVsphereDatacenterConfig(ctx, clusterSpec.VSphereDatacenter.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
 		if err != nil {
 			return err
 		}
 		if len(existingDatacenter) > 0 {
-			return fmt.Errorf("VSphereDatacenter %s already exists", p.datacenterConfig.Name)
+			return fmt.Errorf("VSphereDatacenter %s already exists", clusterSpec.VSphereDatacenter.Name)
 		}
 		for _, identityProviderRef := range clusterSpec.Cluster.Spec.IdentityProviderRefs {
 			if identityProviderRef.Kind == v1alpha1.OIDCConfigKind {
@@ -371,7 +371,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
-	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
@@ -451,8 +451,8 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 	return nil
 }
 
-func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
-	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, spec *cluster.Spec) error {
+	if err := SetupEnvVars(spec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	return nil
@@ -543,16 +543,16 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	if err != nil {
 		return nil, nil, err
 	}
-	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, newClusterSpec.VSphereDatacenter.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	controlPlaneMachineConfig := newClusterSpec.VSphereMachineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	controlPlaneVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -609,12 +609,12 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	}
 
 	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig := p.machineConfigs[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		etcdMachineConfig := newClusterSpec.VSphereMachineConfigs[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return nil, nil, err
 		}
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, etcdMachineVmc, etcdMachineConfig)
 		if !needsNewEtcdTemplate {
 			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
@@ -695,7 +695,7 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 }
 
 func (p *vsphereProvider) GenerateStorageClass() []byte {
-	if p.datacenterConfig.Spec.DisableCSI {
+	if !p.csiEnabled {
 		return nil
 	}
 	return defaultStorageClass
@@ -780,40 +780,58 @@ func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 	return &infraBundle
 }
 
-func (p *vsphereProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
-	return p.datacenterConfig
+func (p *vsphereProvider) DatacenterConfig(spec *cluster.Spec) providers.DatacenterConfig {
+	return spec.VSphereDatacenter
 }
 
-func (p *vsphereProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
-	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
-	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
-	if p.clusterConfig.IsManaged() {
-		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-	}
-	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
-
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
-		if etcdMachineName != controlPlaneMachineName {
-			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
-			if p.clusterConfig.IsManaged() {
-				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-			}
-		}
+func (p *vsphereProvider) MachineConfigs(spec *cluster.Spec) []providers.MachineConfig {
+	annotateMachineConfig(
+		spec,
+		spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name,
+		spec.Cluster.ControlPlaneAnnotation(),
+		"true",
+	)
+	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		annotateMachineConfig(
+			spec,
+			spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name,
+			spec.Cluster.EtcdAnnotation(),
+			"true",
+		)
 	}
 
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
-		if _, ok := configs[workerMachineName]; !ok {
-			configs[workerMachineName] = p.machineConfigs[workerMachineName]
-			if p.clusterConfig.IsManaged() {
-				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-			}
-		}
+		setMachineConfigManagedBy(
+			spec,
+			workerNodeGroupConfiguration.MachineGroupRef.Name,
+		)
 	}
-	return providers.ConfigsMapToSlice(configs)
+
+	machineConfigs := make([]providers.MachineConfig, 0, len(spec.VSphereMachineConfigs))
+	for _, m := range spec.VSphereMachineConfigs {
+		machineConfigs = append(machineConfigs, m)
+	}
+
+	return machineConfigs
+}
+
+func annotateMachineConfig(spec *cluster.Spec, machineConfigName, annotationKey, annotationValue string) {
+	machineConfig := spec.VSphereMachineConfigs[machineConfigName]
+	if machineConfig.Annotations == nil {
+		machineConfig.Annotations = make(map[string]string, 1)
+	}
+	machineConfig.Annotations[annotationKey] = annotationValue
+	setMachineConfigManagedBy(spec, machineConfigName)
+}
+
+func setMachineConfigManagedBy(spec *cluster.Spec, machineConfigName string) {
+	machineConfig := spec.VSphereMachineConfigs[machineConfigName]
+	if machineConfig.Annotations == nil {
+		machineConfig.Annotations = make(map[string]string, 1)
+	}
+	if spec.Cluster.IsManaged() {
+		machineConfig.SetManagedBy(spec.Cluster.ManagedBy())
+	}
 }
 
 func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -827,7 +845,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return err
 	}
 
-	datacenter := p.datacenterConfig
+	datacenter := clusterSpec.VSphereDatacenter
 
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec
@@ -835,7 +853,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
 	for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
+		machineConfig, ok := clusterSpec.VSphereMachineConfigs[machineConfigRef.Name]
 		if !ok {
 			return fmt.Errorf("cannot find machine config %s in vsphere provider machine configs", machineConfigRef.Name)
 		}
@@ -872,7 +890,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 
 func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.VSphereMachineConfig, *v1alpha1.VSphereMachineConfig, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		oldWorkerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		oldWorkerMachineConfig := newClusterSpec.VSphereMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		newWorkerMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return oldWorkerMachineConfig, nil, err
@@ -884,7 +902,7 @@ func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workl
 
 func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.VSphereDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.VSphereMachineConfig, newWorkerMachineConfig *v1alpha1.VSphereMachineConfig) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, oldWorkerMachineConfig, newWorkerMachineConfig)
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -909,7 +927,7 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 	}
 
 	if newConfig.Spec.OSFamily != prevMachineConfig.Spec.OSFamily {
-		return fmt.Errorf("spec.osFamily os immutable. Previous value %v, new value %v", prevMachineConfig.Spec.OSFamily, newConfig.Spec.OSFamily)
+		return fmt.Errorf("spec.osFamily is immutable. Previous value %v, new value %v", prevMachineConfig.Spec.OSFamily, newConfig.Spec.OSFamily)
 	}
 
 	return nil
@@ -981,7 +999,7 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 	if err != nil {
 		return false, err
 	}
-	if !reflect.DeepEqual(existingVdc.Spec, p.datacenterConfig.Spec) {
+	if !reflect.DeepEqual(existingVdc.Spec, newSpec.VSphereDatacenter.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")
 		return true, nil
 	}
