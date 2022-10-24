@@ -65,20 +65,3 @@ func retrieveTestNodeLabels(nodeLabels map[string]string) map[string]string {
 	}
 	return labels
 }
-
-func validateFailureDomainLabel(expectedLabels map[string]string, node corev1.Node) error {
-	if failuredomainSpecified, ok := expectedLabels[constants.FailuredomainLabelName]; ok {
-		if failuredomain, exist := node.Labels[constants.FailuredomainLabelName]; exist {
-			logger.V(4).Info("node label: ", constants.FailuredomainLabelName, failuredomain)
-			if failuredomainSpecified == constants.CloudstackFailuredomainPlaceholder && failuredomain == failuredomainSpecified {
-				return fmt.Errorf("value %s of label %s on node %s is not replaced with a failurdomain name by CloudStack provider",
-					constants.CloudstackFailuredomainPlaceholder,
-					constants.FailuredomainLabelName,
-					node.Name)
-			}
-		} else {
-			return fmt.Errorf("expected labels %s not found on node %s", constants.FailuredomainLabelName, node.Name)
-		}
-	}
-	return nil
-}
