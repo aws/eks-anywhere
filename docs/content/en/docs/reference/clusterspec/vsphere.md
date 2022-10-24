@@ -305,7 +305,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template (optional)
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/vsphere-ovas.md" >}}).
-This is a required field if you are using Ubuntu-based or Redhat-based OVAs.
+This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
 
 ### datastore (required)
 The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)
