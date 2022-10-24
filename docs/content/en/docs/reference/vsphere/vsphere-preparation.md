@@ -173,7 +173,7 @@ The OVA contains the operating system (Ubuntu, Bottlerocket, or RHEL) for a spec
 The following example uses Ubuntu as the operating system, but a similar workflow would work for Bottlerocket or RHEL.
 
 ### Steps to deploy the OVA
-1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download or build the OVA template with the newest EKS-D Kubernetes release to your computer.
+1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download or build the OVA template with the newest EKS Distro Kubernetes release to your computer.
 1. Log in to the vCenter Server.
 1. Right-click the folder you created above and select Deploy OVF Template.
    The Deploy OVF Template wizard opens.
