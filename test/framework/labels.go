@@ -29,15 +29,6 @@ func ValidateControlPlaneFailureDomainLabels(controlPlane v1alpha1.ControlPlaneC
 	return nil
 }
 
-// ValidateControlPlaneNodeNameMatchCAPIMachineName validate if node name is same as CAPI machine name
-func ValidateControlPlaneNodeNameMatchCAPIMachineName(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) error {
-	if controlPlane.MachineGroupRef.Kind == "CloudStackMachineConfig" {
-		logger.V(4).Info("Validating control plane node matches CAPI machine name")
-		return validateNodeNameMatchCAPIMachineName(node)
-	}
-	return nil
-}
-
 func ValidateWorkerNodeLabels(w v1alpha1.WorkerNodeGroupConfiguration, node corev1.Node) error {
 	logger.V(4).Info("Validating worker node labels", "worker node group", w.Name)
 	return validateLabels(w.Labels, node)
@@ -49,15 +40,6 @@ func ValidateWorkerNodeFailureDomainLabels(w v1alpha1.WorkerNodeGroupConfigurati
 	if w.MachineGroupRef.Kind == "CloudStackMachineConfig" {
 		logger.V(4).Info("Validating worker node failuredomain label", "worker node group", w.Name)
 		return validateFailuredomainLabel(w.Labels, node)
-	}
-	return nil
-}
-
-// ValidateWorkerNodeNameMatchCAPIMachineName validate if node name is same as CAPI machine name
-func ValidateWorkerNodeNameMatchCAPIMachineName(w v1alpha1.WorkerNodeGroupConfiguration, node corev1.Node) error {
-	if w.MachineGroupRef.Kind == "CloudStackMachineConfig" {
-		logger.V(4).Info("Validating worker node matches CAPI machine name")
-		return validateNodeNameMatchCAPIMachineName(node)
 	}
 	return nil
 }
@@ -97,18 +79,6 @@ func validateFailuredomainLabel(expectedLabels map[string]string, node corev1.No
 		} else {
 			return fmt.Errorf("expected labels %s not found on node %s", constants.FailuredomainLabelName, node.Name)
 		}
-	}
-	return nil
-}
-
-func validateNodeNameMatchCAPIMachineName(node corev1.Node) error {
-	capiMachineName, ok := node.Annotations["cluster.x-k8s.io/machine"]
-	if ok {
-		if node.Name != capiMachineName {
-			return fmt.Errorf("node name %s not match CAPI machine name %s", node.Name, capiMachineName)
-		}
-	} else {
-		return fmt.Errorf("CAPI machine name not found for node %s", node.Name)
 	}
 	return nil
 }
