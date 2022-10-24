@@ -24,7 +24,7 @@ func ValidateControlPlaneLabels(controlPlane v1alpha1.ControlPlaneConfiguration,
 func ValidateControlPlaneFailureDomainLabels(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) error {
 	if controlPlane.MachineGroupRef.Kind == "CloudStackMachineConfig" {
 		logger.V(4).Info("Validating control plane node failuredomain label")
-		return validateFailuredomainLabel(controlPlane.Labels, node)
+		return validateFailureDomainLabel(controlPlane.Labels, node)
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func ValidateWorkerNodeLabels(w v1alpha1.WorkerNodeGroupConfiguration, node core
 func ValidateWorkerNodeFailureDomainLabels(w v1alpha1.WorkerNodeGroupConfiguration, node corev1.Node) error {
 	if w.MachineGroupRef.Kind == "CloudStackMachineConfig" {
 		logger.V(4).Info("Validating worker node failuredomain label", "worker node group", w.Name)
-		return validateFailuredomainLabel(w.Labels, node)
+		return validateFailureDomainLabel(w.Labels, node)
 	}
 	return nil
 }
@@ -64,4 +64,20 @@ func retrieveTestNodeLabels(nodeLabels map[string]string) map[string]string {
 		}
 	}
 	return labels
+}
+func validateFailureDomainLabel(expectedLabels map[string]string, node corev1.Node) error {
+	if failuredomainSpecified, ok := expectedLabels[constants.FailureDomainLabelName]; ok {
+		if failuredomain, exist := node.Labels[constants.FailureDomainLabelName]; exist {
+			logger.V(4).Info("node label: ", constants.FailureDomainLabelName, failuredomain)
+			if failuredomainSpecified == constants.CloudstackFailuredomainPlaceholder && failuredomain == failuredomainSpecified {
+				return fmt.Errorf("value %s of label %s on node %s is not replaced with a failurdomain name by CloudStack provider",
+					constants.CloudstackFailuredomainPlaceholder,
+					constants.FailureDomainLabelName,
+					node.Name)
+			}
+		} else {
+			return fmt.Errorf("expected labels %s not found on node %s", constants.FailureDomainLabelName, node.Name)
+		}
+	}
+	return nil
 }
