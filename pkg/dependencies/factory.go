@@ -339,14 +339,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
 			}
 
-			machineConfigs, err := v1alpha1.GetVSphereMachineConfigs(clusterConfigFile)
-			if err != nil {
-				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
-			}
-
 			f.dependencies.Provider = vsphere.NewProvider(
 				datacenterConfig,
-				machineConfigs,
 				clusterConfig,
 				f.dependencies.Govc,
 				f.dependencies.Kubectl,
