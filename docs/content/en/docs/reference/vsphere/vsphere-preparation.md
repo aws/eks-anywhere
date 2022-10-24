@@ -167,7 +167,10 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    To create a role and define privileges check [Create a vCenter Server Custom Role](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-41E5E52E-A95B-4E81-9724-6AD6800BEF78.html) and [Defined Privileges](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html#GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62) pages.
 
 ## Deploy an OVA Template
-If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can. If the user does not have the permissions or network access to create and tag the template, follow this guide. The OVA contains the operating system (Ubuntu or Bottlerocket or RHEL) for a specific EKS-D Kubernetes release and EKS-A version. The following example uses Ubuntu as the operating system, but a similar workflow would work for Bottlerocket or RHEL.
+If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can.
+If the user does not have the permissions or network access to create and tag the template, follow this guide.
+The OVA contains the operating system (Ubuntu, Bottlerocket, or RHEL) for a specific EKS Distro Kubernetes release and EKS Anywhere version.
+The following example uses Ubuntu as the operating system, but a similar workflow would work for Bottlerocket or RHEL.
 
 ### Steps to deploy the OVA
 1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download or build the OVA template with the newest EKS-D Kubernetes release to your computer.
