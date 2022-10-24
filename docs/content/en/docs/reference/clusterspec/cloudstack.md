@@ -157,7 +157,7 @@ spec:
     filesystem: "ext4"
     label: "data_disk"
   symlinks:
-    /var/lib/: /data-small/var/lib
+    /var/lib: /data-small/var/lib
   affinityGroupIds:
   - etcd-affinity
 ---
