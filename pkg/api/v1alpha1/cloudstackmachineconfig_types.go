@@ -107,7 +107,7 @@ func (r *CloudStackResourceDiskOffering) IsEmpty() bool {
 func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
 	if r != nil && (len(r.Id) > 0 || len(r.Name) > 0) {
 		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
-			return errors.New("must be non-empty and starts with /"), "mountPath", r.MountPath
+			return errors.New("must be non-empty and start with /"), "mountPath", r.MountPath
 		}
 		if len(r.Filesystem) < 1 {
 			return errors.New("empty filesystem"), "filesystem", r.Filesystem
