@@ -1,6 +1,6 @@
 package internal
 
-// map where key = namespace and value is a capi deployment
+// CAPIDeployments is a map where key = namespace and value is a capi deployment.
 var CAPIDeployments = map[string][]string{
 	"capi-kubeadm-bootstrap-system":     {"capi-kubeadm-bootstrap-controller-manager"},
 	"capi-kubeadm-control-plane-system": {"capi-kubeadm-control-plane-controller-manager"},

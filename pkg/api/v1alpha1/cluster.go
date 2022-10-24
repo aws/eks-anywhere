@@ -95,6 +95,13 @@ func WithClusterEndpoint() ClusterGenerateOpt {
 	}
 }
 
+// WithCPUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under ControlPlaneConfiguration.
+func WithCPUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: maxSurge}}
+	}
+}
+
 func WithDatacenterRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.DatacenterRef = Ref{
@@ -131,6 +138,16 @@ func WithWorkerMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 		c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = &Ref{
 			Kind: ref.Kind(),
 			Name: ref.Name(),
+		}
+	}
+}
+
+// WithWorkerMachineUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under WorkerNodeGroupConfiguration.
+func WithWorkerMachineUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &WorkerNodesUpgradeRolloutStrategy{
+			Type:          "RollingUpdate",
+			RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: maxSurge, MaxUnavailable: maxUnavailable},
 		}
 	}
 }
@@ -178,6 +195,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateProxyConfig,
 	validateMirrorConfig,
 	validatePodIAMConfig,
+	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 }
 
@@ -437,6 +455,10 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 
 		if err := validateAutoscalingConfig(&workerNodeGroupConfig); err != nil {
 			return fmt.Errorf("validating autoscaling configuration: %v", err)
+		}
+
+		if err := validateMDUpgradeRolloutStrategy(&workerNodeGroupConfig); err != nil {
+			return fmt.Errorf("validating upgrade rollout strategy configuration: %v", err)
 		}
 
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
@@ -738,5 +760,47 @@ func validatePodIAMConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.PodIAMConfig.ServiceAccountIssuer == "" {
 		return errors.New("ServiceAccount Issuer can't be empty while configuring IAM roles for pods")
 	}
+	return nil
+}
+
+func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy == nil {
+		logger.Info("ControlPlaneConfiguration: UpgradeRolloutStrategy not specified in cluster config. CAPI will default to 'RollingUpdate' with maxSurge=1")
+		return nil
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type != "RollingUpdate" {
+		return fmt.Errorf("ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
+		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
+		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
+	}
+
+	return nil
+}
+
+func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
+	if w.UpgradeRolloutStrategy == nil {
+		logger.Info("WorkerNodeGroupConfigurations: UpgradeRolloutStrategy not specified in cluster config. CAPI will default to 'RollingUpdate' with maxSurge=1 and maxUnavailable=0")
+		return nil
+	}
+
+	if w.UpgradeRolloutStrategy.Type != "RollingUpdate" {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	}
+
+	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 || w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable < 0 {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative")
+	}
+
+	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge == 0 && w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable == 0 {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
+	}
+
 	return nil
 }

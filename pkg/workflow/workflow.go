@@ -46,7 +46,7 @@ func New(cfg Config) *Workflow {
 }
 
 // AppendTask appends t to the list of workflow tasks. Task names must be unique within a workflow.
-// Duplicate names will receive an ErrDuplicateTaskName
+// Duplicate names will receive an ErrDuplicateTaskName.
 func (w *Workflow) AppendTask(name TaskName, t Task) error {
 	if _, found := w.taskNames[name]; found {
 		return ErrDuplicateTaskName{name}
