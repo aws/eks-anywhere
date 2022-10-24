@@ -43,7 +43,7 @@ const (
 	DefaultRegistry            = "public.ecr.aws"
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
-	FailuredomainLabelName = "cluster.x-k8s.io/failure-domain"
+	FailureDomainLabelName = "cluster.x-k8s.io/failure-domain"
 
 	// provider specific keywork placeholder
 	CloudstackFailuredomainPlaceholder = "ds.meta_data.failuredomain"
