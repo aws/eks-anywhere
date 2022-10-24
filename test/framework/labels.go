@@ -12,9 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-const (
-	LabelPrefix = "eksa.e2e"
-)
+const LabelPrefix = "eksa.e2e"
 
 func ValidateControlPlaneLabels(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) error {
 	logger.V(4).Info("Validating control plane labels")
