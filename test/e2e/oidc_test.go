@@ -78,6 +78,16 @@ func TestDockerKubernetes123OIDC(t *testing.T) {
 	runOIDCFlow(test)
 }
 
+func TestDockerKubernetes124OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+	runOIDCFlow(test)
+}
+
 func TestVSphereKubernetes120OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
