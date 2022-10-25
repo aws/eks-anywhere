@@ -1,0 +1,55 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: test-ip
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: VSphereMachineConfig
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations: []
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: eksa-unit-test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  diskGiB: 25
+  datastore: "myDatastore"
+  folder: "myFolder"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: "ubuntu"
+  resourcePool: "myResourcePool"
+  storagePolicyName: "myStoragePolicyName"
+  template: "myTemplate"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  datacenter: "myDatacenter"
+  network: "myNetwork"
+  server: "myServer"
+  thumbprint: "myTlsThumbprint"
+  insecure: false
