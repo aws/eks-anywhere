@@ -32,10 +32,10 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
 
 	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
-		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
+		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
 	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
-		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
+		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
 
 	return nil
