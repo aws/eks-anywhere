@@ -15,7 +15,7 @@ Each EKS Anywhere version generally includes support for multiple Kubernetes ver
 Starting from EKS Anywhere version 0.11, the latest version supports at least four recent versions of Kubernetes.
 The end of support date of a Kubernetes version aligns with Amazon EKS in AWS as documented on the [Amazon EKS Kubernetes release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html#kubernetes-release-calendar). 
 
-Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are back-ported to the latest EKS Anywhere version (version n) and the previous one version (version n-1).
+Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are back-ported to the latest EKS Anywhere version (version n).
 The following table shows EKS Anywhere version support for different Kubernetes versions:
 
 | Kubernetes version      | Supported EKS Anywhere version | First supported | End of support  |
