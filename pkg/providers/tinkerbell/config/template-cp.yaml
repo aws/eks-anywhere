@@ -283,6 +283,11 @@ spec:
       kind: TinkerbellMachineTemplate
       name: {{.controlPlaneTemplateName}}
   replicas: {{.controlPlaneReplicas}}
+{{- if .upgradeRolloutStrategy }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}} 
+{{- end }}
   version: {{.kubernetesVersion}}
 ---
 {{- if .externalEtcd }}

@@ -25,6 +25,7 @@ EKS Anywhere supports the following operating system families
 
 * Bottlerocket (default)
 * Ubuntu
+* RHEL
 
 A list of OVAs for this release can be found on the [artifacts page]({{< relref "../artifacts" >}}).
 
