@@ -10,7 +10,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -63,7 +62,6 @@ func TestTinkerbellKubernetes124WithNodesPoweredOn(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	test.GenerateClusterConfig()
@@ -125,7 +123,6 @@ func TestTinkerbellKubernetes124SkipPowerActions(t *testing.T) {
 		framework.WithNoPowerActions(),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	test.GenerateClusterConfig()
@@ -223,7 +220,6 @@ func TestTinkerbellKubernetes124UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 		framework.WithControlPlaneHardware(1),
 		framework.WithCustomLabelHardware(1, nodeGroupLabel1),
 		framework.WithCustomLabelHardware(1, nodeGroupLabel2),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	test.GenerateClusterConfig()

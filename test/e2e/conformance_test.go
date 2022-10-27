@@ -77,7 +77,6 @@ func TestDockerKubernetes124ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -128,7 +127,6 @@ func TestVSphereKubernetes124ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu124()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -179,7 +177,6 @@ func TestVSphereKubernetes124BottleRocketThreeWorkersConformanceFlow(t *testing.
 		framework.NewVSphere(t, framework.WithBottleRocket124()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -252,7 +249,6 @@ func TestTinkerbellKubernetes124ThreeReplicasTwoWorkersConformanceFlow(t *testin
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithControlPlaneHardware(3),
 		framework.WithWorkerHardware(2),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellConformanceFlow(test)
 }
@@ -305,7 +301,6 @@ func TestTinkerbellKubernetes124BottleRocketThreeReplicasTwoWorkersConformanceFl
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithControlPlaneHardware(3),
 		framework.WithWorkerHardware(2),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellConformanceFlow(test)
 }

@@ -7,6 +7,7 @@ weight: 35
 ## Unreleased
 
 ### Added
+- Add support for Kubernetes 1.24 [#3491  ](https://github.com/aws/eks-anywhere/issues/3491)
 
 ### Changed
 
@@ -23,6 +24,7 @@ weight: 35
 - Surface dropped error in Cloudstack validations (#3832)
 
 ## [v0.12.0](https://github.com/aws/eks-anywhere/releases/tag/v0.12.0)
+
 
 ### ⚠️ Breaking changes
 - Certificates signed with SHA-1 are not supported anymore for Registry Mirror. Users with a registry mirror and providing a custom CA cert will need to rotate the certificate served by the registry mirror endpoint before using the new EKS-A version. This is true for both new clusters (`create cluster` command) and existing clusters (`upgrade cluster` command).

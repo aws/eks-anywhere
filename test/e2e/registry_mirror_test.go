@@ -9,7 +9,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -41,7 +40,6 @@ func TestVSphereKubernetes124UbuntuRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithRegistryMirrorEndpointAndCert(constants.VSphereProviderName),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -55,7 +53,6 @@ func TestVSphereKubernetes124BottlerocketRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithRegistryMirrorEndpointAndCert(constants.VSphereProviderName),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -105,7 +102,6 @@ func TestTinkerbellKubernetes124UbuntuRegistryMirror(t *testing.T) {
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellRegistryMirrorFlow(test)
 }
@@ -142,7 +138,6 @@ func TestTinkerbellKubernetes124BottlerocketRegistryMirror(t *testing.T) {
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellRegistryMirrorFlow(test)
 }

@@ -83,7 +83,6 @@ func TestDockerKubernetes124OIDC(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }
@@ -189,7 +188,6 @@ func TestVSphereKubernetes124OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }
@@ -204,14 +202,12 @@ func TestVSphereKubernetes123To124OIDCUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithOIDC(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -247,7 +243,6 @@ func TestTinkerbellKubernetes124OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellOIDCFlow(test)
 }

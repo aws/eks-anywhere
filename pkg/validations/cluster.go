@@ -3,10 +3,8 @@ package validations
 import (
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -51,15 +49,6 @@ func ValidateAuthenticationForRegistryMirror(clusterSpec *cluster.Spec) error {
 		_, _, err := config.ReadCredentials()
 		if err != nil {
 			return err
-		}
-	}
-	return nil
-}
-
-func ValidateK8s124Support(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.K8s124Support()) {
-		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube124 {
-			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube124, features.K8s124SupportEnvVar)
 		}
 	}
 	return nil

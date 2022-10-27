@@ -452,6 +452,7 @@ func TestCPackagesCloudStackRedhatKubernetes121WorkloadCluster(t *testing.T) {
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
+
 func TestCPackagesNutanixKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t),
