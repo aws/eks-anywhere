@@ -105,7 +105,33 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
+	if err != nil {
+		t.Errorf("Install Controller Should succeed when installation passes")
+	}
+}
+
+func TestEnableCuratedPackagesOverrideSuccess(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "helm-chart-0.1.0.tgz", "0.1.0", tt.kubeConfig, "", values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
+
+	err = tt.command.EnableCuratedPackages(tt.ctx, "helm-chart-0.1.0.tgz", "0.1.0")
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -121,7 +147,7 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
 
-	err := tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	tt.Expect(err).To(BeNil())
 }
 
@@ -177,7 +203,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -214,7 +240,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -234,7 +260,7 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err := tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err == nil {
 		t.Errorf("Install Controller Should fail when installation fails")
 	}
@@ -260,7 +286,7 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		DoAndReturn(getPBCFail(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -286,7 +312,7 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when secret creation fails")
 	}
@@ -332,7 +358,7 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when cron job fails")
 	}
@@ -388,7 +414,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when cron job fails")
 	}
@@ -422,7 +448,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -448,7 +474,7 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 		DoAndReturn(getPBCLoops(t, 3)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
@@ -498,7 +524,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 		DoAndReturn(getPBCDelay(t, time.Second)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx, "", "")
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("expected %v, got %v", context.DeadlineExceeded, err)
 	}

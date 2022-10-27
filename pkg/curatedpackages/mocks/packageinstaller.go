@@ -35,7 +35,7 @@ func (m *MockPackageController) EXPECT() *MockPackageControllerMockRecorder {
 }
 
 // EnableCuratedPackages mocks base method.
-func (m *MockPackageController) EnableCuratedPackages(ctx context.Context) error {
+func (m *MockPackageController) EnableCuratedPackages(ctx context.Context, chartSource string, chartVersion string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EnableCuratedPackages", ctx)
 	ret0, _ := ret[0].(error)

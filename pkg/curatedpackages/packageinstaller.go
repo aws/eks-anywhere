@@ -8,7 +8,7 @@ import (
 )
 
 type PackageController interface {
-	EnableCuratedPackages(ctx context.Context) error
+	EnableCuratedPackages(ctx context.Context, chartSource string, chartVersion string) error
 	IsInstalled(ctx context.Context) bool
 }
 
@@ -56,7 +56,7 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Installing curated packages controller on management cluster")
-	err := pi.packageController.EnableCuratedPackages(ctx)
+	err := pi.packageController.EnableCuratedPackages(ctx, "", "")
 	if err != nil {
 		return err
 	}

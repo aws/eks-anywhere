@@ -15,8 +15,10 @@ import (
 )
 
 type installControllerOptions struct {
-	fileName   string
-	kubeConfig string
+	fileName     string
+	kubeConfig   string
+	chartSource  string
+	chartVersion string
 }
 
 var ico = &installControllerOptions{}
@@ -25,6 +27,8 @@ func init() {
 	installCmd.AddCommand(installPackageControllerCommand)
 	installPackageControllerCommand.Flags().StringVarP(&ico.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	installPackageControllerCommand.Flags().StringVar(&ico.kubeConfig, "kubeConfig", "", "Management cluster kubeconfig file")
+	installPackageControllerCommand.Flags().StringVar(&ico.chartSource, "chartSource", "", "package controller chart source path")
+	installPackageControllerCommand.Flags().StringVar(&ico.chartVersion, "chartVersion", "", "package controller chart version")
 	if err := installPackageControllerCommand.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -68,7 +72,7 @@ func installPackageController(ctx context.Context) error {
 	}
 
 	curatedpackages.PrintLicense()
-	err = ctrlClient.EnableCuratedPackages(ctx)
+	err = ctrlClient.EnableCuratedPackages(ctx, ico.chartSource, ico.chartVersion)
 	if err != nil {
 		return err
 	}

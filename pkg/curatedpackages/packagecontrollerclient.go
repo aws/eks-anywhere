@@ -77,14 +77,19 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 //
 // In case the cluster is a workload cluster, it performs the following actions:
 //   - Creation of package bundle controller (PBC) custom resource in management cluster
-func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) error {
+func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context, chartSource string, chartVersion string) error {
 	// When the management cluster name and current cluster name are different,
 	// it indicates that we are trying to install the controller on a workload cluster.
 	// Instead of installing the controller, install packagebundlecontroller resource.
 	if pc.managementClusterName != pc.clusterName {
 		return pc.InstallPBCResources(ctx)
 	}
-	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
+	if chartSource == "" {
+		chartSource = fmt.Sprintf("%s%s", "oci://", pc.uri)
+	}
+	if chartVersion != "" {
+		pc.chartVersion = chartVersion
+	}
 	registry := GetRegistry(pc.uri)
 
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
@@ -101,7 +106,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, "", values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, chartSource, pc.chartVersion, pc.kubeConfig, "", values)
 	if err != nil {
 		return err
 	}
