@@ -74,9 +74,23 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, s
 		return c.eksaTinkerbellCollectors()
 	case v1alpha1.SnowDatacenterKind:
 		return c.eksaSnowCollectors()
+	case v1alpha1.NutanixDatacenterKind:
+		return c.eksaNutanixCollectors()
 	default:
 		return nil
 	}
+}
+
+func (c *collectorFactory) eksaNutanixCollectors() []*Collect {
+	nutanixLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapxSystemNamespace,
+				Name:      logpath(constants.CapxSystemNamespace),
+			},
+		},
+	}
+	return append(nutanixLogs, c.nutanixCrdCollectors()...)
 }
 
 func (c *collectorFactory) eksaSnowCollectors() []*Collect {
@@ -369,6 +383,17 @@ func (c *collectorFactory) packagesCrdCollectors() []*Collect {
 		"packages.packages.eks.amazonaws.com",
 	}
 	return c.generateCrdCollectors(packageCrds)
+}
+
+func (c *collectorFactory) nutanixCrdCollectors() []*Collect {
+	capvCrds := []string{
+		"nutanixclusters.infrastructure.cluster.x-k8s.io",
+		"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com",
+		"nutanixmachineconfigs.anywhere.eks.amazonaws.com",
+		"nutanixmachines.infrastructure.cluster.x-k8s.io",
+		"nutanixmachinetemplates.infrastructure.cluster.x-k8s.io",
+	}
+	return c.generateCrdCollectors(capvCrds)
 }
 
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
