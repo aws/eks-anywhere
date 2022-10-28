@@ -9,7 +9,7 @@ description: >
 ## Prerequisites
 Before installing any curated packages for EKS Anywhere, do the following:
 
-* Check that the cluster `Kubernetes` version is `v1.21` or above.
+* Check that the cluster `Kubernetes` version is `v1.21` or above. For example, you could run `kubectl get cluster -o yaml <cluster-name> | grep -i kubernetesVersion`
 * Check that the version of `eksctl anywhere` is `v0.11.0` or above with the `eksctl anywhere version` command.
 * It is recommended that the package controller is only installed on the management cluster.
 * Check the existence of package controller:
