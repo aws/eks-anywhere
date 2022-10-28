@@ -35,17 +35,17 @@ func (m *MockPackageController) EXPECT() *MockPackageControllerMockRecorder {
 }
 
 // EnableCuratedPackages mocks base method.
-func (m *MockPackageController) EnableCuratedPackages(ctx context.Context, chartSource string, chartVersion string) error {
+func (m *MockPackageController) EnableCuratedPackages(ctx context.Context, chartSource, chartVersion string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnableCuratedPackages", ctx)
+	ret := m.ctrl.Call(m, "EnableCuratedPackages", ctx, chartSource, chartVersion)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // EnableCuratedPackages indicates an expected call of EnableCuratedPackages.
-func (mr *MockPackageControllerMockRecorder) EnableCuratedPackages(ctx interface{}) *gomock.Call {
+func (mr *MockPackageControllerMockRecorder) EnableCuratedPackages(ctx, chartSource, chartVersion interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableCuratedPackages", reflect.TypeOf((*MockPackageController)(nil).EnableCuratedPackages), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableCuratedPackages", reflect.TypeOf((*MockPackageController)(nil).EnableCuratedPackages), ctx, chartSource, chartVersion)
 }
 
 // IsInstalled mocks base method.
