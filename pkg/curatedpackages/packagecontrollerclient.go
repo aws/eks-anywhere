@@ -68,6 +68,11 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 	return pcc
 }
 
+// CanCuratedPackagesEnabled checks if curated packages can be enabled in a cluster
+func (pc *PackageControllerClient) CanCuratedPackagesEnabled(ctx context.Context) bool {
+	return pc.eksaAccessKeyId != "" && pc.eksaSecretAccessKey != "" && pc.eksaRegion != ""
+}
+
 // EnableCuratedPackages enables curated packages in a cluster
 // In case the cluster is management cluster, it performs the following actions:
 //   - Installation of Package Controller through helm chart installation

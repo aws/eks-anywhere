@@ -8,6 +8,7 @@ import (
 )
 
 type PackageController interface {
+	CanCuratedPackagesEnabled(ctx context.Context) bool
 	EnableCuratedPackages(ctx context.Context) error
 	IsInstalled(ctx context.Context) bool
 }
@@ -38,6 +39,11 @@ func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController
 }
 
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
+	if !pi.packageController.CanCuratedPackagesEnabled(ctx) {
+		logger.MarkWarning("Installing curated packages is skipped")
+		return nil
+	}
+
 	PrintLicense()
 	err := pi.installPackagesController(ctx)
 	if err != nil {

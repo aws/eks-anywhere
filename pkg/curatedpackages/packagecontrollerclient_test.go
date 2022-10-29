@@ -48,6 +48,10 @@ type packageControllerTest struct {
 }
 
 func newPackageControllerTest(t *testing.T) *packageControllerTest {
+	return newPackageControllerTestWithLicenseInfo(t, "test-access-id", "test-access-key", "test-region")
+}
+
+func newPackageControllerTestWithLicenseInfo(t *testing.T, eksaAccessId string, eksaAccessKey string, eksaRegion string) *packageControllerTest {
 	ctrl := gomock.NewController(t)
 	k := mocks.NewMockKubectlRunner(ctrl)
 	ci := mocks.NewMockChartInstaller(ctrl)
@@ -55,9 +59,6 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 	uri := "test/registry_name"
 	chartName := "test_controller"
 	chartVersion := "v1.0.0"
-	eksaAccessId := "test-access-id"
-	eksaAccessKey := "test-access-key"
-	eksaRegion := "test-region"
 	clusterName := "billy"
 	return &packageControllerTest{
 		WithT:          NewWithT(t),
@@ -502,6 +503,21 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("expected %v, got %v", context.DeadlineExceeded, err)
 	}
+}
+
+func TestCanCuratedPackagesEnabled(t *testing.T) {
+	tt := newPackageControllerTestWithLicenseInfo(t, "test-access-id", "test-access-key", "test-region")
+	tt.Expect(tt.command.CanCuratedPackagesEnabled(tt.ctx)).To(BeTrue())
+
+	tt = newPackageControllerTestWithLicenseInfo(t, "", "test-access-key", "test-region")
+	tt.Expect(tt.command.CanCuratedPackagesEnabled(tt.ctx)).To(BeFalse())
+
+	tt = newPackageControllerTestWithLicenseInfo(t, "test-access-id", "", "test-region")
+	tt.Expect(tt.command.CanCuratedPackagesEnabled(tt.ctx)).To(BeFalse())
+
+	// The default region is used when no region is passed
+	tt = newPackageControllerTestWithLicenseInfo(t, "test-access-id", "test-access-key", "")
+	tt.Expect(tt.command.CanCuratedPackagesEnabled(tt.ctx)).To(BeTrue())
 }
 
 func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
