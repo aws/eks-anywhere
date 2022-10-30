@@ -250,7 +250,7 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 
 		for _, nodeGroupNewSpec := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
 			if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
-				if nodeGroupNewSpec.Count != workerNodeGrpOldSpec.Count {
+				if *nodeGroupNewSpec.Count != *workerNodeGrpOldSpec.Count {
 					if rollingUpgrade {
 						return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 					}
