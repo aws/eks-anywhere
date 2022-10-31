@@ -65,6 +65,7 @@ func WithOsFamilyForAllMachines(value anywherev1.OSFamily) VSphereFiller {
 	}
 }
 
+// WithTagsForAllMachines add provided tags to all machines.
 func WithTagsForAllMachines(value []string) VSphereFiller {
 	return func(config VSphereConfig) {
 		for _, m := range config.machineConfigs {

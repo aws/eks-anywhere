@@ -854,12 +854,14 @@ func (g *Govc) GetTags(ctx context.Context, path string) ([]string, error) {
 	return tags, nil
 }
 
+// Tag struct to represent a vSphere Tag.
 type Tag struct {
 	Id         string
 	Name       string
 	CategoryId string `json:"category_id,omitempty"`
 }
 
+// ListTags list all vSphere tags in vCenter.
 func (g *Govc) ListTags(ctx context.Context) ([]Tag, error) {
 	tagsResponse, err := g.exec(ctx, "tags.ls", "-json")
 	if err != nil {

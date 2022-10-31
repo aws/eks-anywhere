@@ -326,6 +326,7 @@ func WithPrivateNetwork() VSphereOpt {
 	}
 }
 
+// WithVSphereTags with vsphere tags option.
 func WithVSphereTags() VSphereOpt {
 	return func(v *VSphere) {
 		tags := []string{os.Getenv(vsphereTestTagEnvVar)}

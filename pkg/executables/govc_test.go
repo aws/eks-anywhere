@@ -641,8 +641,16 @@ func TestListTagsSuccessHasTags(t *testing.T) {
 	]`
 
 	wantTags := []executables.Tag{
-		executables.Tag{Name: "eksd:1.19-4", Id: "urn:vmomi:InventoryServiceTag:5555:GLOBAL", CategoryId: "eksd"},
-		executables.Tag{Name: "kubernetesChannel:1.19", Id: "urn:vmomi:InventoryServiceTag:5555:GLOBAL", CategoryId: "kubernetesChannel"},
+		{
+			Name:       "eksd:1.19-4",
+			Id:         "urn:vmomi:InventoryServiceTag:5555:GLOBAL",
+			CategoryId: "eksd",
+		},
+		{
+			Name:       "kubernetesChannel:1.19",
+			Id:         "urn:vmomi:InventoryServiceTag:5555:GLOBAL",
+			CategoryId: "kubernetesChannel",
+		},
 	}
 
 	_, g, executable, env := setup(t)

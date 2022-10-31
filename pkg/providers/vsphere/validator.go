@@ -103,9 +103,9 @@ func (v *Validator) validateMachineConfigTagsExist(ctx context.Context, machineC
 
 	idLookup := types.SliceToLookup(tagIds)
 	for _, machineConfig := range machineConfigs {
-		for _, tagId := range machineConfig.Spec.TagIDs {
-			if !idLookup.IsPresent(tagId) {
-				return fmt.Errorf("tag (%s) does not exist in vSphere. please provide a valid tag id in the urn format (example: urn:vmomi:InventoryServiceTag:8e0ce079-0677-48d6-8865-19ada4e6dabd:GLOBAL)", tagId)
+		for _, tagID := range machineConfig.Spec.TagIDs {
+			if !idLookup.IsPresent(tagID) {
+				return fmt.Errorf("tag (%s) does not exist in vSphere. please provide a valid tag id in the urn format (example: urn:vmomi:InventoryServiceTag:8e0ce079-0677-48d6-8865-19ada4e6dabd:GLOBAL)", tagID)
 			}
 		}
 	}
