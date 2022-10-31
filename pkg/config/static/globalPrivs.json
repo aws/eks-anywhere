@@ -3,6 +3,7 @@
   "ContentLibrary.CheckInTemplate",
   "ContentLibrary.CheckOutTemplate",
   "ContentLibrary.CreateLocalLibrary",
+  "ContentLibrary.UpdateSession",
   "InventoryService.Tagging.AttachTag",
   "InventoryService.Tagging.CreateCategory",
   "InventoryService.Tagging.CreateTag",
