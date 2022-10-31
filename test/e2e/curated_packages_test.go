@@ -194,7 +194,7 @@ func TestCPackagesDockerUbuntuKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube120),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
@@ -218,7 +218,7 @@ func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
