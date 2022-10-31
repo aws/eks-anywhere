@@ -6,10 +6,8 @@ import (
 	"context"
 	"crypto/sha1"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,6 +22,7 @@ import (
 	rctrl "github.com/tinkerbell/rufio/controllers"
 	"sigs.k8s.io/yaml"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -34,6 +33,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -53,7 +53,6 @@ const (
 	EksaPackagesInstallation         = "eks-anywhere-packages"
 )
 
-//go:embed testdata/oidc-roles.yaml
 var oidcRoles []byte
 
 type ClusterE2ETest struct {
@@ -899,16 +898,89 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 	}
 }
 
-func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string, opts ...string) {
+func (e *ClusterE2ETest) SetPackageBundleActive() {
+	kubeconfig := e.kubeconfigFilePath()
+	pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), kubeconfig, e.ClusterName)
+	if err != nil {
+		e.T.Fatalf("Error getting PackageBundleController: %v", err)
+	}
+	pb, err := e.KubectlClient.GetPackageBundleList(context.Background(), e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("Error getting PackageBundle: %v", err)
+	}
+	if pbc.Spec.ActiveBundle != pb[0].ObjectMeta.Name {
+		e.RunEKSA([]string{
+			"upgrade", "packages",
+			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
+		})
+	}
+}
+
+func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubeconfig, namespace string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"install", "package", packageName,
+		"--source=cluster",
 		"--package-name=" + packagePrefix, "-v=9",
 		"--cluster=" + e.ClusterName,
 		strings.Join(opts, " "),
 	})
+}
+
+func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig string, opts ...string) {
+	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
+	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
+	e.T.Log("Installing EKS-A Packages file", packageFile)
+	e.RunEKSA([]string{
+		"apply", "package", "-f", packageFile, "-v=9", strings.Join(opts, " "),
+	})
+}
+
+func (e *ClusterE2ETest) generatePackageConfig(ns, targetns, prefix, packageName string) []byte {
+	yamlB := make([][]byte, 0, 4)
+	generatedName := fmt.Sprintf("%s-%s", prefix, packageName)
+	if targetns == "" {
+		targetns = ns
+	}
+	ns = fmt.Sprintf("%s-%s", ns, e.ClusterName)
+	builtpackage := &packagesv1.Package{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       packagesv1.PackageKind,
+			APIVersion: "packages.eks.amazonaws.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      generatedName,
+			Namespace: ns,
+		},
+		Spec: packagesv1.PackageSpec{
+			PackageName:     packageName,
+			TargetNamespace: targetns,
+		},
+	}
+	builtpackageB, err := yaml.Marshal(builtpackage)
+	if err != nil {
+		e.T.Fatalf("marshalling package config: %v", err)
+	}
+	yamlB = append(yamlB, builtpackageB)
+	return templater.AppendYamlResources(yamlB...)
+}
+
+func (e *ClusterE2ETest) BuildPackageConfigFile(packageName, prefix, ns string) string {
+	b := e.generatePackageConfig(ns, ns, prefix, packageName)
+
+	writer, err := filewriter.NewWriter(e.ClusterConfigFolder)
+	if err != nil {
+		e.T.Fatalf("Error creating writer: %v", err)
+	}
+	packageFile := fmt.Sprintf("%s.yaml", packageName)
+
+	writtenFile, err := writer.Write(packageFile, b, filewriter.PersistentFile)
+	if err != nil {
+		e.T.Fatalf("Error writing cluster config to file %s: %v", e.ClusterConfigLocation, err)
+	}
+	return writtenFile
 }
 
 func (e *ClusterE2ETest) CreateResource(ctx context.Context, resource string) {
@@ -1005,83 +1077,41 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	ctx := context.Background()
-
 	ns := constants.EksaPackagesName
-	err := e.KubectlClient.WaitForService(ctx,
-		e.cluster().KubeconfigFile, "5m", name, ns)
+
+	e.T.Log("Waiting for Package", name, "To be installed")
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		e.cluster(), name, "1m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
 	if err != nil {
-		e.T.Fatalf("waiting for service timed out: %s", err)
+		e.T.Fatalf("waiting for hello-eks-anywhere package timed out: %s", err)
 	}
 
-	// Ensure that the pod is up before trying to port-forward. In some test
-	// environments, the pod might not be running when the port-forward is
-	// attempted, and that will cause the port-forward to fail.
+	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", "hello-eks-anywhere", ns)
+		e.cluster(), "1m", "Available", "hello-eks-anywhere", ns)
 	if err != nil {
-		e.T.Fatalf("waiting for hello-eks-anywhere pod timed out: %s", err)
+		e.T.Fatalf("waiting for hello-eks-anywhere deployment timed out: %s", err)
 	}
 
-	timedCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-	defer cancel()
-	timedOut := timedCtx.Done()
-	// It's preferable to configure kubectl to use a random port, which
-	// it would write to stdout, indicating when the port-forward is
-	// active. However, the current Executable framework doesn't allow
-	// for reading stdout before the process exits. Polling provides a
-	// workable solution.
-	const port = 9980 // ...and hope it's available...
-	stopPF, pfErrCh := e.forwardPortToService(timedCtx, name, ns, port)
-	defer stopPF()
+	svcAddress := name + "." + ns + ".svc.cluster.local"
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, "busybox-test", e.kubeconfigFilePath(), []string{"curl", svcAddress})
+	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
 
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	var resp *http.Response
-outer:
-	for {
-		select {
-		case <-timedOut:
-			e.T.Fatalf("timed out: %s", timedCtx.Err())
-		case err := <-pfErrCh:
-			e.T.Fatalf("port forwarding error: %s", err)
-		case <-ticker.C:
-			url := fmt.Sprintf("http://localhost:%d/index.json", port)
-			resp, err = http.Get(url)
-			if err != nil {
-				e.T.Logf("service error, will retry: %s", err)
-				continue
-			}
-			if resp.StatusCode < http.StatusOK ||
-				resp.StatusCode >= http.StatusMultipleChoices {
-				resp.Body.Close()
-				e.T.Fatalf("expected a 2XX response, got: %d (%s)",
-					resp.StatusCode, http.StatusText(resp.StatusCode))
-			}
-			defer resp.Body.Close()
-			break outer
-		}
+	err = e.KubectlClient.WaitForPodCompleted(ctx,
+		e.cluster(), clientPod, "3m", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
 	}
 
-	buf := &bytes.Buffer{}
-	// A TeeReader will let us log the entire body in case of an error.
-	tee := io.TeeReader(resp.Body, buf)
-	respData := map[string]interface{}{}
-	if err = json.NewDecoder(tee).Decode(&respData); err != nil {
-		_, debugErr := io.ReadAll(tee)
-		if debugErr != nil {
-			// Just log this, since the test is already a failure.
-			e.T.Logf("trying to read the entire response body: %s", debugErr)
-		}
-		e.T.Fatalf("unmarshaling JSON response: %s\n%s", err, buf.String())
+	e.T.Log("Checking Busybox pod logs", clientPod)
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
 	}
-
-	title, ok := respData["title"].(string)
+	fmt.Printf("Logs from curl Hello EKS Anywhere\n %s\n", logs)
+	ok := strings.Contains(logs, "Amazon EKS Anywhere")
 	if !ok {
-		e.T.Fatalf("expected title to be a string, got %T", respData["title"])
-	}
-	expected := "Amazon EKS Anywhere"
-	if !strings.EqualFold(title, expected) {
-		e.T.Fatalf("expected title to be %q, got %q", expected, title)
+		e.T.Fatalf("expected Amazon EKS Anywhere, got %T", logs)
 	}
 }
 
