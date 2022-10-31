@@ -686,7 +686,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if !ok {
 		return nil, fmt.Errorf("unable to determine control plane template name")
 	}
-	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%s", cpTemplateName), cs.controlPlaneMachineSpec)
+	cpMachineTemplate := MachineTemplate(fmt.Sprintf("%s", cpTemplateName), cs.controlPlaneMachineSpec)
 	cpMachineTemplateBytes, err := templater.ObjectsToYaml(cpMachineTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)
@@ -703,7 +703,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 		if !ok {
 			return nil, fmt.Errorf("unable to determine etcd template name")
 		}
-		etcdMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%s", etcdMachineTemplateName), &etcdMachineSpec)
+		etcdMachineTemplate := MachineTemplate(fmt.Sprintf("%s", etcdMachineTemplateName), &etcdMachineSpec)
 		etcdMachineTemplateBytes, err := templater.ObjectsToYaml(etcdMachineTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling etcd machine template to byte array: %v", err)
@@ -731,7 +731,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 
 		workerMachineTemplateName := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		machineConfig := cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		workerMachineTemplate := CloudStackMachineTemplate(workerMachineTemplateName, &machineConfig)
+		workerMachineTemplate := MachineTemplate(workerMachineTemplateName, &machineConfig)
 		workerMachineTemplateBytes, err := templater.ObjectsToYaml(workerMachineTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling worker machine template to byte array: %v", err)

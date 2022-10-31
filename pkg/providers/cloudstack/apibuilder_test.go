@@ -20,7 +20,7 @@ type apiBuilderTest struct {
 	machineConfig *v1alpha1.CloudStackMachineConfigSpec
 }
 
-func newApiBuilderTest(t *testing.T) apiBuilderTest {
+func newAPIBuilderTest(t *testing.T) apiBuilderTest {
 	return apiBuilderTest{
 		WithT:         NewWithT(t),
 		machineConfig: givenMachineConfig(),
@@ -33,11 +33,11 @@ const (
 	testFilesystem      = "testFilesystem"
 	testLabel           = "testLabel"
 	testDiskSize        = 5
-	computeOfferingId   = "computeOfferingId"
+	computeOfferingID   = "computeOfferingID"
 	computeOfferingName = "computeOfferingName"
-	diskOfferingId      = "diskOfferingId"
+	diskOfferingID      = "diskOfferingID"
 	diskOfferingName    = "diskOfferingName"
-	templateId          = "templateId"
+	templateID          = "templateID"
 	templateName        = "templateName"
 	proAffinity         = "pro"
 )
@@ -56,13 +56,13 @@ var (
 func givenMachineConfig() *v1alpha1.CloudStackMachineConfigSpec {
 	return &v1alpha1.CloudStackMachineConfigSpec{
 		ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
-			Id:   computeOfferingId,
+			Id:   computeOfferingID,
 			Name: computeOfferingName,
 		},
 		DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
 			CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 				Name: diskOfferingName,
-				Id:   diskOfferingId,
+				Id:   diskOfferingID,
 			},
 			CustomSize: testDiskSize,
 			MountPath:  testMountPath,
@@ -71,7 +71,7 @@ func givenMachineConfig() *v1alpha1.CloudStackMachineConfigSpec {
 			Label:      testLabel,
 		},
 		Template: v1alpha1.CloudStackResourceIdentifier{
-			Id:   templateId,
+			Id:   templateID,
 			Name: templateName,
 		},
 		Symlinks:          testSymLinks,
@@ -85,7 +85,7 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 	return &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: cloudstackv1.GroupVersion.String(),
-			Kind:       "CloudStackMachineTemplate",
+			Kind:       cloudstack.CloudStackMachineTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cloudstack-test-md-0-1",
@@ -103,18 +103,18 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Details: testDetails,
 					Offering: cloudstackv1.CloudStackResourceIdentifier{
-						ID:   computeOfferingId,
+						ID:   computeOfferingID,
 						Name: computeOfferingName,
 					},
 					Template: cloudstackv1.CloudStackResourceIdentifier{
-						ID:   templateId,
+						ID:   templateID,
 						Name: templateName,
 					},
 					AffinityGroupIDs: affinityGroupIds,
 					Affinity:         proAffinity,
 					DiskOffering: cloudstackv1.CloudStackResourceDiskOffering{
 						CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
-							ID:   diskOfferingId,
+							ID:   diskOfferingID,
 							Name: diskOfferingName,
 						},
 						CustomSize: testDiskSize,
@@ -130,15 +130,15 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 }
 
 func TestFullCloudStackMachineTemplate(t *testing.T) {
-	tt := newApiBuilderTest(t)
-	got := cloudstack.CloudStackMachineTemplate("cloudstack-test-control-plane-1", tt.machineConfig)
+	tt := newAPIBuilderTest(t)
+	got := cloudstack.MachineTemplate("cloudstack-test-control-plane-1", tt.machineConfig)
 	want := fullCloudStackMachineTemplate()
 	tt.Expect(got.Spec.Spec.Spec).To(Equal(want.Spec.Spec.Spec))
 	tt.Expect(got.Annotations).To(Equal(want.Annotations))
 }
 
 func TestBasicCloudStackMachineDeployment(t *testing.T) {
-	tt := newApiBuilderTest(t)
+	tt := newAPIBuilderTest(t)
 	count := 1
 	workerNodeGroupConfig := v1alpha1.WorkerNodeGroupConfiguration{
 		Name:  "test-worker-node-group",

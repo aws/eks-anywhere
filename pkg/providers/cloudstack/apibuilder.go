@@ -16,14 +16,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
-const (
-	CloudStackMachineTemplateKind = "CloudStackMachineTemplate"
-)
+// CloudStackMachineTemplateKind defines the K8s Kind corresponding with the MachineTemplate.
+const CloudStackMachineTemplateKind = "CloudStackMachineTemplate"
 
 func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, cloudstackMachineTemplate *cloudstackv1.CloudStackMachineTemplate) clusterv1.MachineDeployment {
 	return clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, cloudstackMachineTemplate)
 }
 
+// MachineDeployments returns generated CAPI MachineDeployment objects for a given cluster spec.
 func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[string]*bootstrapv1.KubeadmConfigTemplate, machineTemplates map[string]*cloudstackv1.CloudStackMachineTemplate) map[string]*clusterv1.MachineDeployment {
 	m := make(map[string]*clusterv1.MachineDeployment, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 
@@ -37,7 +37,7 @@ func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[st
 	return m
 }
 
-func fillMachineTemplateAnnotations(machineConfig *v1alpha1.CloudStackMachineConfigSpec) map[string]string {
+func generateMachineTemplateAnnotations(machineConfig *v1alpha1.CloudStackMachineConfigSpec) map[string]string {
 	annotations := make(map[string]string, 0)
 	if machineConfig.DiskOffering != nil {
 		annotations[fmt.Sprintf("mountpath.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.DiskOffering.MountPath
@@ -77,7 +77,8 @@ func setDiskOffering(machineConfig *v1alpha1.CloudStackMachineConfigSpec, templa
 	}
 }
 
-func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfigSpec) *cloudstackv1.CloudStackMachineTemplate {
+// MachineTemplate returns a generated CloudStackMachineTemplate object for a given EKS-A CloudStackMachineConfig.
+func MachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfigSpec) *cloudstackv1.CloudStackMachineTemplate {
 	template := &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: cloudstackv1.GroupVersion.String(),
@@ -86,7 +87,7 @@ func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMa
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
 			Namespace:   constants.EksaSystemNamespace,
-			Annotations: fillMachineTemplateAnnotations(machineConfig),
+			Annotations: generateMachineTemplateAnnotations(machineConfig),
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
 			Spec: cloudstackv1.CloudStackMachineTemplateResource{
