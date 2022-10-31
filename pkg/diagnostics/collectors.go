@@ -393,7 +393,7 @@ func (c *collectorFactory) nutanixCrdCollectors() []*Collect {
 		"nutanixmachines.infrastructure.cluster.x-k8s.io",
 		"nutanixmachinetemplates.infrastructure.cluster.x-k8s.io",
 	}
-	return c.generateCrdCollectors(capvCrds)
+	return c.generateCrdCollectors(capxCrds)
 }
 
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
