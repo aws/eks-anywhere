@@ -76,7 +76,7 @@ weight: 35
 ## [v0.11.0](https://github.com/aws/eks-anywhere/releases/tag/v0.11.0)
 
 ### Breaking Changes
-- EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters. Building your own Ubuntu-based nodes as described in [Building Ubuntu-based node images]({{< relref "./artifacts.md/#building-ubuntu-based-node-images" >}}) is the only supported way to get that functionality.
+- EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters. Building your own Ubuntu-based nodes as described in [Building node images]({{< relref "./artifacts.md/#building-node-images" >}}) is the only supported way to get that functionality.
 
 ### Added
 - Add support for Kubernetes 1.23 [#2159](https://github.com/aws/eks-anywhere/issues/2159)

@@ -826,8 +826,8 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr:     true,
 		},
 		{
-			testName: "without worker nodes",
-			fileName: "testdata/cluster_without_worker_nodes.yaml",
+			testName: "tinkerbell without worker nodes",
+			fileName: "testdata/tinkerbell_cluster_without_worker_nodes.yaml",
 			wantCluster: &Cluster{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       ClusterKind,
@@ -868,6 +868,12 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			testName:    "nontinkerbell datacenter without worker nodes",
+			fileName:    "testdata/vsphere_cluster_without_worker_nodes.yaml",
+			wantCluster: nil,
+			wantErr:     true,
 		},
 		{
 			testName:    "without worker nodes but has control plane taints",

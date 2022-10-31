@@ -7,13 +7,13 @@ description: >
   Install/upgrade/uninstall Cluster Autoscaler
 ---
 
-{{< content "../prereq.md" >}}
-
+If you have not already done so, make sure your cluster meets the [package prerequisites.]({{< relref "../prereq" >}})
+Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/packages" >}}) in the event of a problem.
 
 ## Install
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here](../../../reference/clusterspec/optional/autoscaling)
+1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here](../../../reference/clusterspec/optional/autoscaling/)
 
 1. Generate the package configuration
    ```bash

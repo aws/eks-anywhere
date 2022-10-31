@@ -46,7 +46,7 @@ cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: <minCount>
 cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: <maxCount>
 ```
 
-After deploying the Kubernetes Cluster Autoscaler from upstream or as a [curated package](../../../tasks/packages/cluster-autoscaler), the deployment will pick up your MachineDeployment and scale the nodes as per your min and max count values.
+After deploying the Kubernetes Cluster Autoscaler from upstream or as a [curated package](../../../../tasks/packages/cluster-autoscaler/), the deployment will pick up your MachineDeployment and scale the nodes as per your min and max count values.
 
 ### Cluster Autoscaler Deployment Topologies
 
@@ -54,6 +54,6 @@ The Kubernetes Cluster Autoscaler can only scale a single cluster per deployment
 
 This means that each cluster you want to scale will need its own cluster autoscaler deployment.
 
-The most straightforward way of deploying cluster autoscaler is to deploy it to the management cluster as described [here](../../../tasks/packages/cluster-autoscaler/_index.md#install).
+The most straightforward way of deploying cluster autoscaler is to deploy it to the management cluster as described [here](../../../../tasks/packages/cluster-autoscaler/#install).
 
-If your deployment topology runs small management clusters though, it is also possible to deploy the cluster autoscaler to a [workload cluster](../../../tasks/packages/cluster-autoscaler/_index.md#installing-cluster-autoscaler-on-workload-cluster).
+If your deployment topology runs small management clusters though, it is also possible to deploy the cluster autoscaler to a [workload cluster](../../../../tasks/packages/cluster-autoscaler/#installing-cluster-autoscaler-on-workload-cluster).
