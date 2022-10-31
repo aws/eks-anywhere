@@ -4,7 +4,7 @@ weight: 10
 ---
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
-Currently we support creating development clusters locally using Docker and production clusters from providers listed on the [Create production cluster](../production-environment/) page.
+Currently we support creating development clusters locally using Docker and production clusters from providers listed on the [Create production cluster]({{< relref "/docs/getting-started/production-environment" >}}) page.
 
 Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
 From there, you create the cluster for your chosen provider.
@@ -90,5 +90,5 @@ eksctl anywhere version
 
 Once you have the tools installed you can deploy a local cluster or production cluster in the next steps.
 
-* [Create local cluster](../local-environment/)
-* [Create production cluster](../production-environment/)
+* [Create local cluster]({{< relref "/docs/getting-started/local-environment" >}})
+* [Create production cluster]({{< relref "/docs/getting-started/production-environment" >}})
