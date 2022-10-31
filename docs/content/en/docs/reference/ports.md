@@ -43,7 +43,7 @@ The following table represents the ports published by the Kubernetes project tha
 | Protocol | Direction | Port Range  | Purpose               | Used By                 |
 |----------|-----------|-------------|-----------------------|-------------------------|
 | TCP      | Inbound   | 10250       | Kubelet API           | Self, Control plane     |
-| TCP      | Inbound   | 30000-32767 | [NodePort Services](/docs/concepts/services-networking/service/)    | All                     |
+| TCP      | Inbound   | 30000-32767 | [NodePort Services](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport)    | All                     |
 
 The API server port that is sometimes switched to 443.
 Alternatively, the default port is kept as is and API server is put behind a load balancer that listens on 443 and routes the requests to API server on the default port.
