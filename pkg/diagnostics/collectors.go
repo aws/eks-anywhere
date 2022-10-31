@@ -386,7 +386,7 @@ func (c *collectorFactory) packagesCrdCollectors() []*Collect {
 }
 
 func (c *collectorFactory) nutanixCrdCollectors() []*Collect {
-	capvCrds := []string{
+	capxCrds := []string{
 		"nutanixclusters.infrastructure.cluster.x-k8s.io",
 		"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com",
 		"nutanixmachineconfigs.anywhere.eks.amazonaws.com",
