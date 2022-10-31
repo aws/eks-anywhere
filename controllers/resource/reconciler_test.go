@@ -14,9 +14,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -209,6 +211,8 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				if err := yaml.Unmarshal([]byte(vsphereMachineDeploymentFile), machineDeployment); err != nil {
 					t.Errorf("unmarshalling machinedeployment failed: %v", err)
 				}
+
+				strippedSSHKey := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZndjX5NTr8="
 				workerNodeMachineConfig := &anywherev1.VSphereMachineConfig{
 					Spec: anywherev1.VSphereMachineConfigSpec{
 						Users: []anywherev1.UserConfiguration{
@@ -248,6 +252,21 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 							t.Errorf("unmarshal failed: %v", err)
 						}
 						assert.Equal(t, expectedMCDeployment, template, "values", expectedMCDeployment, template)
+					case "KubeadmControlPlane":
+						kubeadmControlPlane := &controlplanev1.KubeadmControlPlane{}
+						assert.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(template.Object, kubeadmControlPlane))
+
+						assert.Equal(t, strippedSSHKey, kubeadmControlPlane.Spec.KubeadmConfigSpec.Users[0].SSHAuthorizedKeys[0])
+					case "KubeadmConfigTemplate":
+						kubeadmConfigTemplate := &bootstrapv1.KubeadmConfigTemplate{}
+						assert.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(template.Object, kubeadmConfigTemplate))
+
+						assert.Equal(t, strippedSSHKey, kubeadmConfigTemplate.Spec.Template.Spec.Users[0].SSHAuthorizedKeys[0])
+					case "EtcdadmCluster":
+						etcdadmCluster := &etcdv1.EtcdadmCluster{}
+						assert.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(template.Object, etcdadmCluster))
+
+						assert.Equal(t, strippedSSHKey, etcdadmCluster.Spec.EtcdadmConfigSpec.Users[0].SSHAuthorizedKeys[0])
 					}
 				}).AnyTimes().Return(nil)
 			},
