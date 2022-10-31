@@ -20,10 +20,6 @@ func ValidateControlPlaneIpUniqueness(cluster *v1alpha1.Cluster, netClient netwo
 }
 
 func ValidateSupportedProviderCreate(provider providers.Provider) error {
-	if !features.IsActive(features.CloudStackProvider()) && provider.Name() == constants.CloudStackProviderName {
-		return fmt.Errorf("provider cloudstack is not supported in this release")
-	}
-
 	if !features.IsActive(features.SnowProvider()) && provider.Name() == constants.SnowProviderName {
 		return fmt.Errorf("provider snow is not supported in this release")
 	}

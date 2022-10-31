@@ -132,7 +132,8 @@ func WithCloudStackRedhat121() CloudStackOpt {
 	}
 }
 
-func WithRedhat120() CloudStackOpt {
+// WithCloudStackRedhat120 sets the cloudstack template for all machines in the cluster to the one provided via env var.
+func WithCloudStackRedhat120() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),

@@ -115,6 +115,10 @@ spec:
                     value: "10"
                   - name: vip_retryperiod
                     value: "2"
+                  - name: svc_enable
+                    value: "{{.kubeVipSvcEnable}}"
+                  - name: lb_enable
+                    value: "{{.kubeVipLBEnable}}"
                 securityContext:
                   capabilities:
                     add:
@@ -147,6 +151,10 @@ spec:
         sudo: ALL=(ALL) NOPASSWD:ALL
         sshAuthorizedKeys:
           - "{{.controlPlaneSshAuthorizedKey}}"
+    preKubeadmCommands:
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   $(hostname)" >> /etc/hosts
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
     useExperimentalRetryJoin: true

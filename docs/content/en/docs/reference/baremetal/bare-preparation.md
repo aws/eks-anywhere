@@ -16,7 +16,7 @@ Once the hardware is in place, you need to:
 * Obtain the gateway address for your network to reach the Internet.
 * Obtain the IP address for your DNS servers.
 * Make sure the following settings are in place:
-  * UEFI is enabled on all target cluster machines
+  * UEFI is enabled on all target cluster machines, unless you are provisioning RHEL systems. Enable legacy BIOS on any RHEL machines.
   * PXE boot is enabled for the NIC on each machine for which you provided the MAC address. This is the interface on which the operating system will be provisioned.
   * PXE is set as the first device in each machine's boot order
   * IPMI over LAN is enabled on the IPMI interfaces

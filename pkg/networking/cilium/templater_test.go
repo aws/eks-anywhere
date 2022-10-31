@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 
@@ -380,6 +381,33 @@ func TestTemplaterGenerateManifestForSingleNodeCluster(t *testing.T) {
 			tt.Expect(reflect.ValueOf(values["operator"]).MapIndex(reflect.ValueOf("replicas")).Interface().(int)).To(Equal(1))
 			return tt.manifest, nil
 		})
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateManifestForRegistryAuth(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+		Endpoint:     "1.2.3.4",
+		Port:         "443",
+		Authenticate: true,
+	}
+
+	os.Unsetenv("REGISTRY_USERNAME")
+	os.Unsetenv("REGISTRY_PASSWORD")
+	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
+	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
+
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+
+	tt.h.EXPECT().
+		RegistryLogin(gomock.Any(), "1.2.3.4:443", "username", "password").
+		Return(nil)
+
+	tt.h.EXPECT().
+		Template(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
 }

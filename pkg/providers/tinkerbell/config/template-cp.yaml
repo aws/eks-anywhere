@@ -182,7 +182,13 @@ spec:
                 value: "2"
               - name: address
                 value: {{.controlPlaneEndpointIp}}
-              image: {{.kubeVipImage}}
+{{- if and (not .workerNodeGroupConfigurations) (not .skipLoadBalancerDeployment) }}
+                # kube-vip daemon in worker node watches for LoadBalancer services.
+                # When there is no worker node, make kube-vip in control-plane nodes watch
+              - name: svc_enable
+                value: "true"
+{{- end }}
+              image: {{ .kubeVipImage }}
               imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
@@ -277,6 +283,11 @@ spec:
       kind: TinkerbellMachineTemplate
       name: {{.controlPlaneTemplateName}}
   replicas: {{.controlPlaneReplicas}}
+{{- if .upgradeRolloutStrategy }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}} 
+{{- end }}
   version: {{.kubernetesVersion}}
 ---
 {{- if .externalEtcd }}

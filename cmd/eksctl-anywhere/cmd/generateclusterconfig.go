@@ -149,9 +149,6 @@ func generateClusterConfig(clusterName string) error {
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 	case constants.CloudStackProviderName:
-		if !features.IsActive(features.CloudStackProvider()) {
-			return fmt.Errorf("the cloudstack infrastructure provider is still under development")
-		}
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
 		datacenterConfig := v1alpha1.NewCloudStackDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))

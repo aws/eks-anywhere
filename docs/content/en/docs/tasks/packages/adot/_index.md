@@ -15,7 +15,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package adot --source cluster > adot.yaml
+   eksctl anywhere generate package adot --cluster clusterName > adot.yaml
    ```
 
 1. Add the desired configuration to `adot.yaml`
@@ -105,6 +105,12 @@ description: >
    NAME   PACKAGE   AGE   STATE       CURRENTVERSION                                                            TARGETVERSION                                                                   DETAIL
    my-adot   adot   19h   installed   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef (latest)
    ```
+
+## Update
+To update package configuration, update adot.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f adot.yaml
+```
 
 ## Upgrade
 

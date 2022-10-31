@@ -34,6 +34,20 @@ func (m *MockHelm) EXPECT() *MockHelmMockRecorder {
 	return m.recorder
 }
 
+// RegistryLogin mocks base method.
+func (m *MockHelm) RegistryLogin(ctx context.Context, registry, username, password string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegistryLogin", ctx, registry, username, password)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegistryLogin indicates an expected call of RegistryLogin.
+func (mr *MockHelmMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockHelm)(nil).RegistryLogin), ctx, registry, username, password)
+}
+
 // Template mocks base method.
 func (m *MockHelm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
 	m.ctrl.T.Helper()

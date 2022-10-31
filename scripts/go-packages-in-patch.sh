@@ -21,7 +21,7 @@ ref="$(awsRemote)/main"
     set +e
     git diff --stat --name-only "$ref...HEAD"
     git status --untracked-files=normal --short | awk '{ print $NF }'
-} | grep ._test\.go \
+} | grep .\.go\$ \
     | xargs -r -n1 dirname \
     | sort \
     | uniq \

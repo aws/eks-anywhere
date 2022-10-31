@@ -6,13 +6,14 @@ description: >
   Artifacts associated with this release: OVAs and images.
 ---
 
-EKS Anywhere supports two different node operating systems:
+EKS Anywhere supports three different node operating systems:
 
-* Bottlerocket
-* Ubuntu
+* Bottlerocket: For vSphere and Bare Metal providers
+* Ubuntu: For vSphere and Bare Metal providers
+* Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, and Bare Metal providers
 
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
-To build your own Ubuntu-based EKS Anywhere node, see [Building Ubuntu-based node images]({{< relref "#building-ubuntu-based-node-images">}}).
+To build your own Ubuntu-based or RHEL-based EKS Anywhere node, see [Building node images]({{< relref "#building-node-images">}}).
 
 ## Bare Metal artifacts
 
@@ -20,28 +21,28 @@ Artifacts for EKS Anyware Bare Metal clusters are listed below.
 If you like, you can download these images and serve them locally to speed up cluster creation.
 See descriptions of the [osImageURL]({{< relref "./clusterspec/baremetal/#osimageurl" >}}) and [`hookImagesURLPath`]({{< relref "./clusterspec/baremetal/#hookimagesurlpath" >}}) fields for details.
 
-### Ubuntu OS images for Bare Metal
+### Ubuntu or RHEL OS images for Bare Metal
 
-EKS Anywhere no longer distributes Ubuntu OS images.
-However, see [Building Ubuntu-based node images]({{< relref "#building-ubuntu-based-node-images">}}) for information on how to build your own Ubuntu-based image to use with EKS Anywhere.
+EKS Anywhere does not distribute Ubuntu or RHEL OS images.
+However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.
 
 ### Bottlerocket OS images for Bare Metal
 
-Bottlerocket vends its Baremetal variant Images using a secure distribution tool called tuftool. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image.
+Bottlerocket vends its Baremetal variant Images using a secure distribution tool called tuftool. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image.
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
-## vSphere OVAs
+## vSphere artifacts
 
 ### Bottlerocket OVAs
 
@@ -53,9 +54,9 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-5`
+1.23 - `eksdRelease:kubernetes-1-23-eks-6`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-10`
+1.22 - `eksdRelease:kubernetes-1-22-eks-11`
 
 1.21 - `eksdRelease:kubernetes-1-21-eks-18`
 
@@ -63,7 +64,7 @@ EKS-D Release
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
-Building your own Ubuntu-based nodes as described in [Building Ubuntu-based node images]({{< relref "#building-ubuntu-based-node-images">}}) is the only supported way to get that functionality.
+Building your own Ubuntu-based nodes as described in [Building node images]({{< relref "#building-node-images">}}) is the only supported way to get that functionality.
 
 ## Download Bottlerocket node images
 Bottlerocket vends its VMware variant OVAs and Baremetal variants images using a secure distribution tool called tuftool. Please follow instructions down below to
@@ -89,7 +90,7 @@ export KUBEVERSION="1.23"
 
     a. To download VMware variant Bottlerocket OVA
     ```
-    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.9.2.ova"
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.10.0.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -99,7 +100,7 @@ export KUBEVERSION="1.23"
 
     b. To download Baremetal variant Bottlerocket image
     ```
-    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.9.0.img.lz4"
+    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.10.0.img.lz4"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-metal} --target-name "${IMAGE}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/metal-k8s-${KUBEVERSION}/x86_64/" \
@@ -112,16 +113,17 @@ export KUBEVERSION="1.23"
    gzip ${TMPDIR:-/tmp/bottlerocket-metal}/bottlerocket.img
    ```
 
-## Building Ubuntu-based node images
+## Building node images
 
-The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs or Bare Metal gzip images to use in EKS Anywhere clusters.
-When you run `image-builder` it will pull in all components needed to create images to use for nodes in an EKS Anywhere cluster, including the lastest Ubuntu, Kubernetes, and EKS Distro security updates, bug fixes, and patches.
+The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs, RHEL-based qcow2 images, or Bare Metal gzip images to use in EKS Anywhere clusters.
+When you run `image-builder` it will pull in all components needed to create images to use for nodes in an EKS Anywhere cluster, including the lastest operating system, Kubernetes, and EKS Distro security updates, bug fixes, and patches.
 With this tool, when you build an image you get to choose:
 
 * Operating system type (for example, ubuntu)
-* Provider (vsphere or baremetal)
+* Provider (vsphere, cloudstack or baremetal)
 * Release channel for EKS Distro (generally aligning with Kubernetes releases)
 * vSphere only: configuration file providing information needed to access your vSphere setup
+* CloudStack only: configuration file providing information needed to access your Cloudstack setup
 
 Because `image-builder` creates images in the same way that the EKS Anywhere project does for their own testing, images built with that tool are supported.
 The following procedure describes how to use `image-builder` to build images for EKS Anywhere on a vSphere or Bare Metal provider.
@@ -130,7 +132,7 @@ The following procedure describes how to use `image-builder` to build images for
 
 To use `image-builder` you must meet the following prerequisites:
 
-* Run on Ubuntu 22.04 or later 
+* Run on Ubuntu 22.04 or later (for Ubuntu images) or RHEL 8.4 or later (for RHEL images)
 * Machine requirements:
   * AMD 64-bit architecture
   * 50 GB disk space
@@ -139,6 +141,7 @@ To use `image-builder` you must meet the following prerequisites:
   * Bare Metal only: Run on a bare metal machine with virtualization enabled
 * Network access to:
   * vCenter endpoint (vSphere only)
+  * CloudStack endpoint (CloudStack only)
   * public.ecr.aws (to download container images from EKS Anywhere)
   * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)
   * distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
@@ -174,6 +177,7 @@ To use `image-builder` you must meet the following prerequisites:
       * Low level file operations
     * Network
       * Assign network to vm
+* CloudStack only: See [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) for required CloudStack user permissions.
 
 ### Optional Proxy configuration
 You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
@@ -185,17 +189,19 @@ You can use a proxy server to route outbound requests to the internet. To config
 
 ### Build vSphere OVA node images
 
+These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for vSphere.
+
 1. Create a linux user for running image-builder.
    ```
    sudo adduser image-builder
    ```
    Follow the prompt to provide a password for the image-builder user.
-2. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
+1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
    ```
    sudo usermod -aG sudo image-builder
    su image-builder
    ```
-3. Install packages and prepare environment:
+1. Install packages and prepare environment:
    ```
    sudo apt update -y
    sudo apt install jq unzip make ansible -y
@@ -203,18 +209,18 @@ You can use a proxy server to route outbound requests to the internet. To config
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
-4. Get `image-builder`:
+1. Get `image-builder`:
    ```bash
    cd /tmp
-   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
-5. Create a content library on vSphere:
+1. Create a content library on vSphere:
    ```
    govc library.create "<library name>"
    ```
-6. Create a vsphere configuration file (for example, `vsphere-connection.json`):
+1. Create a vsphere configuration file (for example, `vsphere-connection.json`):
    ```json
    {
      "cluster":"<vsphere cluster used for image building>",
@@ -233,18 +239,40 @@ You can use a proxy server to route outbound requests to the internet. To config
      "vsphere_library_name": "<vsphere content library name>"
    }
    ```
-
-7. Run `image-builder` with the following options:
-
-   * `--os`: Currently only `ubuntu` is supported.
-   * `--hypervisor`: For vSphere use `vsphere`
-   * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
-   * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
-
-   ```bash
-   image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-23 --vsphere-config vsphere-connection.json
+   For RHEL images, add the following fields:
+   ```json
+     "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
+     "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
+     "iso_checksum_type": "<for example: sha256>",
+     "rhel_username": "<rhsm username>",
+     "rhel_password": "<rhsm password>"
    ```
+
+1. Create an ubuntu or redhat image:
+
+   * To create an Ubuntu-based image, run `image-builder` with the following options:
+
+      * `--os`: `ubuntu`
+      * `--hypervisor`: For vSphere use `vsphere`
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
+
+      ```bash
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-23 --vsphere-config vsphere-connection.json
+      ```
+   * To create a RHEL-based image, run `image-builder` with the following options:
+
+      * `--os`: `redhat`
+      * `--hypervisor`: For vSphere use `vsphere`
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
+
+      ```bash
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-23 --vsphere-config vsphere-connection.json
+      ```
 ### Build Bare Metal node images
+These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for Bare Metal.
+
 1. Create a linux user for running image-builder.
    ```
    sudo adduser image-builder
@@ -269,20 +297,47 @@ You can use a proxy server to route outbound requests to the internet. To config
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
-1. Run `image-builder` with the following options:
-
-    * `--os`: Currently only `ubuntu` is supported.
-    * `--hypervisor`: For Bare Metal use `baremetal`
-    * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
-
-   ```bash
-   image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-23
+1. Create a Bare Metal configuration file (for example, `baremetal.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
+   ```json
+   {
+     "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
+     "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
+     "iso_checksum_type": "<for example: sha256>",
+     "rhel_username": "<rhsm username>",
+     "rhel_password": "<rhsm password>"
+     "extra_rpms": "<Space-separated list of RPM packages. Useful for adding required drivers or other packages>"
+   }
    ```
-1. To consume the resulting gzip Ubuntu-based image, serve the image from an accessible Web server. For example, add the image to a server called `my-web-server`:
+   >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
+
+1. Create an ubuntu or redhat image:
+
+   * To create an Ubuntu-based image, run `image-builder` with the following options:
+
+      * `--os`: `ubuntu`
+      * `--hypervisor`: For Bare Metal use `baremetal`
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--baremetal-config`: Bare Metal configuration file (`baremetal.json` in this example)
+
+      ```bash
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-23 --baremetal-config baremetal.json
+      ```
+   * To create a RHEL-based image, run `image-builder` with the following options:
+
+      * `--os`: `redhat`
+      * `--hypervisor`: For Bare Metal use `baremetal`
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--baremetal-config`: Bare Metal configuration file (`baremetal.json` in this example)
+
+      ```bash
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1-23 --baremetal-config baremetal.json
+      ```
+
+1. To consume the resulting Ubuntu-based or RHEL-based image, serve the image from an accessible Web server. For example, add the image to a server called `my-web-server`:
    ```
    my-web-server
    ├── hook
@@ -298,7 +353,64 @@ You can use a proxy server to route outbound requests to the internet. To config
    ```
 
    See descriptions of [osImageURL]({{< relref "./clusterspec/baremetal/#osimageurl" >}}) for further information.
- 
+
+### Build CloudStack node images
+
+These steps use `image-builder` to create a RHEL-based image for CloudStack.
+
+1. Create a linux user for running image-builder.
+   ```
+   sudo adduser image-builder
+   ```
+   Follow the prompt to provide a password for the image-builder user.
+1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
+   ```
+   sudo usermod -aG sudo image-builder
+   su image-builder
+   ```
+1. Install packages and prepare environment:
+   ```
+   sudo apt update -y
+   sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip ansible -y
+   sudo snap install yq
+   sudo usermod -a -G kvm $USER
+   sudo chmod 666 /dev/kvm
+   sudo chown root:kvm /dev/kvm
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   ```
+1. Get `image-builder`:
+    ```bash
+    cd /tmp
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    sudo tar xvf image-builder*.tar.gz
+    sudo cp image-builder /usr/local/bin
+    ```
+1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
+   ```json
+   {
+     "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
+     "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
+     "iso_checksum_type": "<for example: sha256>",
+     "rhel_username": "<rhsm username>",
+     "rhel_password": "<rhsm password>"
+   }
+   ```
+   >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
+
+1. To create a RHEL-based image, run `image-builder` with the following options:
+
+      * `--os`: `redhat`
+      * `--hypervisor`: For CloudStack use `cloudstack`
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
+
+      ```bash
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-23 --cloudstack-config cloudstack.json
+      ```
+
+1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing Cloudstack]({{< relref "./cloudstack/cloudstack-preparation.md" >}}).
+
 ## Images
 
 The various images for EKS Anywhere can be found [in the EKS Anywhere ECR repository](https://gallery.ecr.aws/eks-anywhere/).

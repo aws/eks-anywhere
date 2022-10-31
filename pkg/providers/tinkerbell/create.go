@@ -70,9 +70,11 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
-	err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
-	if err != nil {
-		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+	if len(p.catalogue.AllBMCs()) > 0 {
+		err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		if err != nil {
+			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+		}
 	}
 	return nil
 }
@@ -93,7 +95,9 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostPortEnabled(false), // disable host port on workload cluster
 		stack.WithEnvoyEnabled(true),     // use envoy on workload cluster
-		stack.WithLoadBalancerEnabled(!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
+		stack.WithLoadBalancerEnabled(
+			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
+				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
 	)
 	if err != nil {
 		return fmt.Errorf("installing stack on workload cluster: %v", err)
@@ -108,7 +112,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		return ErrExternalEtcdUnsupported
+		return errExternalEtcdUnsupported
 	}
 
 	if err := p.stackInstaller.CleanupLocalBoots(ctx, p.forceCleanup); err != nil {

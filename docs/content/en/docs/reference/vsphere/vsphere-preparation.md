@@ -30,7 +30,7 @@ Follow these steps to create the user's vSphere folder:
    For more details, see the [vSphere Create a Folder](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vcenterhost.doc/GUID-031BDB12-D3B2-4E2D-80E6-604F304B4D0C.html) documentation.
 
 ### Set up vSphere roles and user permission
-You need to get a vSphere username with the right privileges to let you creatie EKS Anywhere clusters on top of your vSphere cluster.
+You need to get a vSphere username with the right privileges to let you create EKS Anywhere clusters on top of your vSphere cluster.
 Then you would need to import the latest release of the EKS Anywhere OVA template to your VSphere cluster to use it to provision your Cluster nodes.
 
 #### Add a vCenter User
@@ -167,10 +167,13 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    To create a role and define privileges check [Create a vCenter Server Custom Role](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-41E5E52E-A95B-4E81-9724-6AD6800BEF78.html) and [Defined Privileges](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html#GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62) pages.
 
 ## Deploy an OVA Template
-If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can. If the user does not have the permissions or network access to create and tag the template, follow this guide. The OVA contains the operating system (Ubuntu or Bottlerocket) for a specific EKS-D Kubernetes release and EKS-A version. The following example uses Ubuntu as the operating system, but a similar workflow would work for Bottlerocket.
+If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can.
+If the user does not have the permissions or network access to create and tag the template, follow this guide.
+The OVA contains the operating system (Ubuntu, Bottlerocket, or RHEL) for a specific EKS Distro Kubernetes release and EKS Anywhere version.
+The following example uses Ubuntu as the operating system, but a similar workflow would work for Bottlerocket or RHEL.
 
-### Steps to deploy the Ubuntu OVA
-1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download the OVA template with the newest EKS-D Kubernetes release to your computer.
+### Steps to deploy the OVA
+1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download or build the OVA template with the newest EKS Distro Kubernetes release to your computer.
 1. Log in to the vCenter Server.
 1. Right-click the folder you created above and select Deploy OVF Template.
    The Deploy OVF Template wizard opens.

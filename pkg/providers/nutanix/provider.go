@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -36,13 +37,8 @@ var mhcTemplate []byte
 var (
 	eksaNutanixDatacenterResourceType = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixMachineResourceType    = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                      = []string{nutanixEndpointKey, nutanixUsernameKey, nutanixPasswordKey}
+	requiredEnvs                      = []string{nutanixEndpointKey, constants.NutanixUsernameKey, constants.NutanixPasswordKey}
 )
-
-type basicAuthCreds struct {
-	username string
-	password string
-}
 
 // Provider implements the Nutanix Provider
 type Provider struct {
@@ -64,6 +60,7 @@ func NewProvider(
 	clusterConfig *v1alpha1.Cluster,
 	providerKubectlClient ProviderKubectlClient,
 	nutanixClient Client,
+	certValidator crypto.TlsValidator,
 	now types.NowFunc,
 ) *Provider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
@@ -77,10 +74,10 @@ func NewProvider(
 		}
 	}
 
-	creds := getCredsFromEnv()
+	creds := GetCredsFromEnv()
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
 	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now)
-	nutanixValidator := NewValidator(nutanixClient)
+	nutanixValidator := NewValidator(nutanixClient, certValidator)
 
 	return &Provider{
 		clusterConfig:    clusterConfig,
@@ -151,8 +148,12 @@ func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementClus
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The nutanix infrastructure provider is still in development and should not be used in production")
-	if err := setupEnvVars(p.datacenterConfig); err != nil {
+	if err := setupEnvVars(clusterSpec.NutanixDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	if err := p.validator.ValidateDatacenterConfig(ctx, clusterSpec.NutanixDatacenter); err != nil {
+		return fmt.Errorf("failed to validate datacenter config: %v", err)
 	}
 
 	for _, conf := range clusterSpec.NutanixMachineConfigs {
@@ -607,8 +608,8 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	// TODO(nutanix): figure out if we need something else here
-	return nil
+	logger.Info("Installing secrets on bootstrap cluster")
+	return p.UpdateSecrets(ctx, cluster, clusterSpec)
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {

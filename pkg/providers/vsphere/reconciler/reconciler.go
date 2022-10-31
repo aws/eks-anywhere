@@ -2,57 +2,49 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/go-logr/logr"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/remote"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	ctrl "sigs.k8s.io/controller-runtime"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
-	"github.com/aws/eks-anywhere/pkg/controller/serverside"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/networking/cilium"
-	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
-const defaultRequeueTime = time.Minute
-
-// TODO move these constants
-const (
-	managedEtcdReadyCondition           clusterv1.ConditionType = "ManagedEtcdReady"
-	controlSpecPlaneAppliedCondition    clusterv1.ConditionType = "ControlPlaneSpecApplied"
-	workerNodeSpecPlaneAppliedCondition clusterv1.ConditionType = "WorkerNodeSpecApplied"
-	cniSpecAppliedCondition             clusterv1.ConditionType = "CNISpecApplied"
-	controlPlaneReadyCondition          clusterv1.ConditionType = "ControlPlaneReady"
-)
-
-type Reconciler struct {
-	client    client.Client
-	validator *vsphere.Validator
-	defaulter *vsphere.Defaulter
-	tracker   *remote.ClusterCacheTracker
+// CNIReconciler is an interface for reconciling CNI in the VSphere cluster reconciler.
+type CNIReconciler interface {
+	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *c.Spec) (controller.Result, error)
 }
 
-func New(client client.Client, validator *vsphere.Validator, defaulter *vsphere.Defaulter, tracker *remote.ClusterCacheTracker) *Reconciler {
+// RemoteClientRegistry is an interface that defines methods for remote clients.
+type RemoteClientRegistry interface {
+	GetClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error)
+}
+
+type Reconciler struct {
+	client               client.Client
+	validator            *vsphere.Validator
+	defaulter            *vsphere.Defaulter
+	cniReconciler        CNIReconciler
+	remoteClientRegistry RemoteClientRegistry
+}
+
+// New defines a new VSphere reconciler.
+func New(client client.Client, validator *vsphere.Validator, defaulter *vsphere.Defaulter, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry) *Reconciler {
 	return &Reconciler{
-		client:    client,
-		validator: validator,
-		defaulter: defaulter,
-		tracker:   tracker,
+		client:               client,
+		validator:            validator,
+		defaulter:            defaulter,
+		cniReconciler:        cniReconciler,
+		remoteClientRegistry: remoteClientRegistry,
 	}
 }
 
@@ -93,201 +85,84 @@ func SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereData
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	dataCenterConfig := &anywherev1.VSphereDatacenterConfig{}
-	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
-	if err := r.client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
-		return controller.Result{}, err
-	}
-	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := SetupEnvVars(ctx, dataCenterConfig, r.client); err != nil {
-		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
-		return controller.Result{}, err
-	}
-	if !dataCenterConfig.Status.SpecValid {
-		log.Info("Skipping cluster reconciliation because data center config is invalid", "data center", dataCenterConfig.Name)
-		return controller.Result{
-			Result: &ctrl.Result{
-				Requeue:      true,
-				RequeueAfter: defaultRequeueTime,
-			},
-		}, nil
-	}
-
-	machineConfigMap := map[string]*anywherev1.VSphereMachineConfig{}
-
-	for _, ref := range cluster.MachineConfigRefs() {
-		machineConfig := &anywherev1.VSphereMachineConfig{}
-		machineConfigName := types.NamespacedName{Namespace: cluster.Namespace, Name: ref.Name}
-		if err := r.client.Get(ctx, machineConfigName, machineConfig); err != nil {
-			return controller.Result{}, err
-		}
-		machineConfigMap[ref.Name] = machineConfig
-	}
-
-	log.V(4).Info("Fetching cluster spec")
-	specWithBundles, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
+	log = log.WithValues("provider", "vsphere")
+	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
 	if err != nil {
 		return controller.Result{}, err
 	}
 
-	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
+	return controller.NewPhaseRunner().Register(
+		r.ValidateDatacenterConfig,
+		r.ValidateMachineConfigs,
+		r.ReconcileControlPlane,
+		r.ReconcileCNI,
+		r.ReconcileWorkers,
+	).Run(ctx, log, clusterSpec)
+}
 
-	if err := r.validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
+// ValidateDatacenterConfig updates the cluster status if the VSphereDatacenter status indicates that the spec is invalid.
+func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateDatacenterConfig")
+	dataCenterConfig := clusterSpec.VSphereDatacenter
+
+	if !dataCenterConfig.Status.SpecValid {
+		var failureMessage string
+		if dataCenterConfig.Status.FailureMessage != nil {
+			failureMessage = *dataCenterConfig.Status.FailureMessage
+		}
+
+		log.Error(errors.New(failureMessage), "Invalid VSphereDatacenterConfig", "datacenterConfig", klog.KObj(dataCenterConfig))
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+		return controller.Result{}, nil
+	}
+	return controller.Result{}, nil
+}
+
+// ValidateMachineConfigs performs additional, context-aware validations on the machine configs.
+func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateMachineConfigs")
+	datacenterConfig := clusterSpec.VSphereDatacenter
+
+	// Set up env vars for executing Govc cmd
+	if err := SetupEnvVars(ctx, datacenterConfig, r.client); err != nil {
+		log.Error(err, "Failed to set up env vars for Govc")
 		return controller.Result{}, err
 	}
 
-	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, wnConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
-		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = machineConfigMap[wnConfig.MachineGroupRef.Name].Spec
-	}
+	vsphereClusterSpec := vsphere.NewSpec(clusterSpec)
 
-	cp := machineConfigMap[specWithBundles.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	var etcdSpec *anywherev1.VSphereMachineConfigSpec
-	if specWithBundles.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcd := machineConfigMap[specWithBundles.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcdSpec = &etcd.Spec
-	}
-
-	templateBuilder := vsphere.NewVsphereTemplateBuilder(&dataCenterConfig.Spec, &cp.Spec, etcdSpec, workerNodeGroupMachineSpecs, time.Now, true)
-	clusterName := cluster.ObjectMeta.Name
-
-	kubeadmconfigTemplateNames := make(map[string]string, len(cluster.Spec.WorkerNodeGroupConfigurations))
-	workloadTemplateNames := make(map[string]string, len(cluster.Spec.WorkerNodeGroupConfigurations))
-
-	for _, wnConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
-		kubeadmconfigTemplateNames[wnConfig.Name] = common.KubeadmConfigTemplateName(cluster.Name, wnConfig.MachineGroupRef.Name, time.Now)
-		workloadTemplateNames[wnConfig.Name] = common.WorkerMachineTemplateName(cluster.Name, wnConfig.Name, time.Now)
-		templateBuilder.WorkerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name]
-	}
-
-	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, time.Now)
-		controlPlaneUser := machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		values["vsphereControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
-
-		if cluster.Spec.ExternalEtcdConfiguration != nil {
-			etcdUser := machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
-			values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
-		}
-
-		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, time.Now)
-	}
-	log.Info("cluster", "name", cluster.Name)
-
-	if result, err := r.reconcileControlPlaneSpec(ctx, cluster, templateBuilder, specWithBundles, cpOpt, log); err != nil {
-		return result, err
-	}
-
-	if result, err := r.reconcileWorkerNodeSpec(ctx, cluster, templateBuilder, specWithBundles, workloadTemplateNames, kubeadmconfigTemplateNames); err != nil {
-		return result, err
-	}
-
-	capiCluster, result, errCAPICLuster := r.getCAPICluster(ctx, cluster, log)
-	if errCAPICLuster != nil {
-		return result, errCAPICLuster
-	}
-
-	// wait for etcd if necessary
-	if cluster.Spec.ExternalEtcdConfiguration != nil {
-		if !conditions.Has(capiCluster, managedEtcdReadyCondition) || conditions.IsFalse(capiCluster, managedEtcdReadyCondition) {
-			log.Info("Waiting for etcd to be ready", "cluster", cluster.Name)
-			return controller.Result{Result: &ctrl.Result{
-				RequeueAfter: defaultRequeueTime,
-			}}, nil
-		}
-	}
-
-	if !conditions.IsTrue(capiCluster, controlPlaneReadyCondition) {
-		log.Info("waiting for control plane to be ready", "cluster", capiCluster.Name, "kind", capiCluster.Kind)
-		return controller.Result{Result: &ctrl.Result{
-			RequeueAfter: defaultRequeueTime,
-		}}, err
-	}
-
-	if result, err := r.reconcileCNI(ctx, cluster, capiCluster, specWithBundles, log); err != nil {
-		return result, err
-	}
-
-	return controller.Result{}, nil
-}
-
-func (r *Reconciler) reconcileCNI(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *c.Spec, log logr.Logger) (controller.Result, error) {
-	if !conditions.Has(cluster, cniSpecAppliedCondition) || conditions.IsFalse(capiCluster, cniSpecAppliedCondition) {
-		log.Info("Getting remote client", "client for cluster", capiCluster.Name)
-		key := client.ObjectKey{
-			Namespace: capiCluster.Namespace,
-			Name:      capiCluster.Name,
-		}
-		remoteClient, err := r.tracker.GetClient(ctx, key)
-		if err != nil {
-			return controller.Result{}, err
-		}
-
-		log.Info("About to apply CNI")
-
-		helm := executables.NewHelm(executables.NewExecutable("helm"), executables.WithInsecure())
-		cilium := cilium.NewCilium(nil, helm)
-
-		if err != nil {
-			return controller.Result{}, err
-		}
-		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, []string{constants.CapvSystemNamespace})
-		if err != nil {
-			return controller.Result{}, err
-		}
-		if err := serverside.ReconcileYaml(ctx, remoteClient, ciliumSpec); err != nil {
-			return controller.Result{}, err
-		}
-		conditions.MarkTrue(cluster, cniSpecAppliedCondition)
+	if err := r.validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
+		log.Error(err, "Invalid VSphereMachineConfig")
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+		return controller.Result{}, err
 	}
 	return controller.Result{}, nil
 }
 
-func (r *Reconciler) getCAPICluster(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (*clusterv1.Cluster, controller.Result, error) {
-	capiCluster := &clusterv1.Cluster{}
-	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
-	log.Info("Searching for CAPI cluster", "name", cluster.Name)
-	if err := r.client.Get(ctx, capiClusterName, capiCluster); err != nil {
-		return nil, controller.Result{Result: &ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: defaultRequeueTime,
-		}}, err
-	}
-	return capiCluster, controller.Result{}, nil
-}
-
-func (r *Reconciler) reconcileWorkerNodeSpec(
-	ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder,
-	specWithBundles *c.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string,
-) (controller.Result, error) {
-	if !conditions.IsTrue(cluster, workerNodeSpecPlaneAppliedCondition) {
-		workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, workloadTemplateNames, kubeadmconfigTemplateNames)
-		if err != nil {
-			return controller.Result{}, err
-		}
-
-		if err := serverside.ReconcileYaml(ctx, r.client, workersSpec); err != nil {
-			return controller.Result{}, err
-		}
-
-		conditions.MarkTrue(cluster, workerNodeSpecPlaneAppliedCondition)
-	}
+// ReconcileControlPlane applies the control plane CAPI objects to the cluster.
+func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileControlPlane")
+	log.Info("Applying control plane CAPI objects")
+	// TODO: implement CP reconciliation phase
 	return controller.Result{}, nil
 }
 
-func (r *Reconciler) reconcileControlPlaneSpec(ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder, specWithBundles *c.Spec, cpOpt func(values map[string]interface{}), log logr.Logger) (controller.Result, error) {
-	if !conditions.IsTrue(cluster, controlSpecPlaneAppliedCondition) {
-		log.Info("Applying control plane spec", "name", cluster.Name)
-		controlPlaneSpec, err := templateBuilder.GenerateCAPISpecControlPlane(specWithBundles, cpOpt)
-		if err != nil {
-			return controller.Result{}, err
-		}
-		if err := serverside.ReconcileYaml(ctx, r.client, controlPlaneSpec); err != nil {
-			return controller.Result{Result: &ctrl.Result{
-				RequeueAfter: defaultRequeueTime,
-			}}, err
-		}
-		conditions.MarkTrue(cluster, controlSpecPlaneAppliedCondition)
+// ReconcileCNI takes the Cilium CNI in a cluster to the desired state defined in a cluster spec.
+func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileCNI")
+	client, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
+	if err != nil {
+		return controller.Result{}, err
 	}
+
+	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
+}
+
+// ReconcileWorkers applies the worker CAPI objects to the cluster.
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileWorkers")
+	log.Info("Applying worker CAPI objects")
+	// TODO: implement workers reconciliation phase
 	return controller.Result{}, nil
 }

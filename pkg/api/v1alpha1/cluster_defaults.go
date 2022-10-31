@@ -54,7 +54,9 @@ func setWorkerNodeGroupDefaults(cluster *Cluster) error {
 
 	for i := range cluster.Spec.WorkerNodeGroupConfigurations {
 		w := &cluster.Spec.WorkerNodeGroupConfigurations[i]
-		if w.Count == nil {
+		if w.Count == nil && w.AutoScalingConfiguration != nil {
+			w.Count = &w.AutoScalingConfiguration.MinCount
+		} else if w.Count == nil {
 			w.Count = ptr.Int(1)
 		}
 	}

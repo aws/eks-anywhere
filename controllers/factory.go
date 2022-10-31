@@ -202,6 +202,7 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 			f.manager.GetClient(),
 			f.deps.VSphereValidator,
 			f.deps.VSphereDefaulter,
+			f.cniReconciler,
 			f.tracker,
 		)
 		f.registryBuilder.Add(anywherev1.VSphereDatacenterKind, f.vsphereClusterReconciler)

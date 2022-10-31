@@ -85,7 +85,7 @@ func TestParseConfig(t *testing.T) {
 				},
 				Spec: anywherev1.VSphereDatacenterConfigSpec{
 					Datacenter: "myDatacenter",
-					Network:    "myNetwork",
+					Network:    "/myDatacenter/network-1",
 					Server:     "myServer",
 					Thumbprint: "myTlsThumbprint",
 					Insecure:   false,

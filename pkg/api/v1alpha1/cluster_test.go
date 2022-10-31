@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -2292,10 +2293,52 @@ func TestValidateMirrorConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "authenticate but username not set",
+			wantErr: "please set REGISTRY_USERNAME env var",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
+				},
+			},
+		},
+		{
+			name:    "authenticate but not vsphere",
+			wantErr: "authenticated registry mirror is only supported for vSphere provider currently",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
+			if tt.cluster.Spec.RegistryMirrorConfiguration != nil {
+				if tt.cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+					if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
+						t.Fatalf(err.Error())
+					}
+					if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
+						t.Fatalf(err.Error())
+					}
+				}
+			}
 			err := validateMirrorConfig(tt.cluster)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
@@ -2308,43 +2351,88 @@ func TestValidateMirrorConfig(t *testing.T) {
 
 func TestValidateAutoscalingConfig(t *testing.T) {
 	tests := []struct {
-		name              string
-		wantErr           string
-		autoscalingConfig *AutoScalingConfiguration
+		name                         string
+		wantErr                      string
+		workerNodeGroupConfiguration *WorkerNodeGroupConfiguration
 	}{
 		{
-			name:              "autoscaling config nil",
-			wantErr:           "",
-			autoscalingConfig: nil,
+			name:                         "autoscaling config nil",
+			wantErr:                      "",
+			workerNodeGroupConfiguration: nil,
 		},
 		{
 			name:    "autoscaling config valid",
 			wantErr: "",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: 1,
-				MaxCount: 2,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(2),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 1,
+					MaxCount: 2,
+				},
 			},
 		},
 		{
 			name:    "negative min count",
 			wantErr: "min count must be non negative",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: -1,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: -1,
+				},
 			},
 		},
 		{
 			name:    "min count > max count",
 			wantErr: "min count must be no greater than max count",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: 2,
-				MaxCount: 1,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 1,
+				},
+			},
+		},
+		{
+			name:    "count < min count",
+			wantErr: "min count must be less than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count > max count",
+			wantErr: "max count must be greater than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(4),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count < 0 with nil autoscaling",
+			wantErr: "worker node count must be zero or greater if autoscaling is not enabled",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(-1),
+			},
+		},
+		{
+			name:    "nil autoscaling",
+			wantErr: "",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			err := validateAutoscalingConfig(tt.autoscalingConfig)
+			err := validateAutoscalingConfig(tt.workerNodeGroupConfiguration)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
@@ -2382,6 +2470,51 @@ func TestClusterRegistryMirror(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterRegistryAuth(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    bool
+	}{
+		{
+			name: "with registry mirror auth",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "without registry mirror auth",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name:    "without registry mirror",
+			cluster: &Cluster{},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.RegistryAuth()).To(Equal(tt.want))
 		})
 	}
 }
@@ -2497,6 +2630,222 @@ func TestValidateControlPlaneEndpoint(t *testing.T) {
 	}
 }
 
+func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "rolling upgrade strategy invalid",
+			wantErr: "ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "NotRollingUpdate"},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs not specified",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate"},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade invalid",
+			wantErr: "maxSurge for control plane must be 0 or 1",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 2}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 0}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 1}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid value -1",
+			wantErr: "ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: -1}},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateCPUpgradeRolloutStrategy(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "rolling upgrade strategy invalid",
+			wantErr: "WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "NotRollingUpdate"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs not specified",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade invalid",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 0,1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 1,0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 1, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 5,0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 3,1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values 3,-1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: -1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values -3,1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values -3,-1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: -1}},
+					}},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateMDUpgradeRolloutStrategy(&tt.cluster.Spec.WorkerNodeGroupConfigurations[0])
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))
@@ -2528,6 +2877,127 @@ func TestClusterWorkerNodeConfigCount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(5))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterCPUpgradeRolloutStrategyNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    ControlPlaneConfiguration
+	}{
+		{
+			name: "with control plane rollout upgrade strategy nil",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: ControlPlaneConfiguration{
+				Endpoint:               nil,
+				Count:                  1,
+				MachineGroupRef:        nil,
+				Taints:                 nil,
+				Labels:                 nil,
+				UpgradeRolloutStrategy: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterCPUpgradeRolloutStrategyNotNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    ControlPlaneConfiguration
+	}{
+		{
+			name: "with control plane rollout upgrade strategy non-nil",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: ControlPlaneConfiguration{
+				Endpoint:               nil,
+				Count:                  1,
+				MachineGroupRef:        nil,
+				Taints:                 nil,
+				Labels:                 nil,
+				UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 5}},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1), WithCPUpgradeRolloutStrategy(5, 2))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterMDUpgradeRolloutStrategyNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with md rollout upgrade strategy knobs not specified",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Count:           ptr.Int(1),
+					MachineGroupRef: nil,
+					Taints:          nil,
+					Labels:          nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with md rollout upgrade strategy",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Count:                  ptr.Int(1),
+					MachineGroupRef:        nil,
+					Taints:                 nil,
+					Labels:                 nil,
+					UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 2}},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1), WithWorkerMachineUpgradeRolloutStrategy(5, 2))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
 		})

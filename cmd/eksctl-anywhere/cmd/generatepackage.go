@@ -25,13 +25,13 @@ var gpOptions = &generatePackageOptions{}
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
 	generatePackageCommand.Flags().StringVar(&gpOptions.clusterName, "cluster", "", "Name of cluster for package generation")
-	if err := generatePackageCommand.MarkFlagRequired("cluster"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
 	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
 	generatePackageCommand.Flags().StringVar(&gpOptions.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file to use.")
+	if err := generatePackageCommand.MarkFlagRequired("cluster"); err != nil {
+		log.Fatalf("marking cluster flag as required: %s", err)
+	}
 }
 
 var generatePackageCommand = &cobra.Command{
@@ -51,7 +51,12 @@ var generatePackageCommand = &cobra.Command{
 }
 
 func runGeneratePackages(cmd *cobra.Command, args []string) error {
-	if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, gpOptions.clusterName); err != nil {
+	clusterName := gpOptions.clusterName
+	if len(gpOptions.kubeVersion) > 0 {
+		// allow both
+		clusterName = ""
+	}
+	if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, clusterName); err != nil {
 		return err
 	}
 	return generatePackages(cmd.Context(), args)

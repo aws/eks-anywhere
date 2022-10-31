@@ -30,6 +30,7 @@ func TestTinkerbellKubernetes122WithNodesPoweredOn(t *testing.T) {
 
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
 	test.PowerOnHardware()
 	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
 	test.DeleteCluster()

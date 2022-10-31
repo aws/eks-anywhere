@@ -34,18 +34,18 @@ func (m *MockPackageController) EXPECT() *MockPackageControllerMockRecorder {
 	return m.recorder
 }
 
-// InstallController mocks base method.
-func (m *MockPackageController) InstallController(ctx context.Context) error {
+// EnableCuratedPackages mocks base method.
+func (m *MockPackageController) EnableCuratedPackages(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallController", ctx)
+	ret := m.ctrl.Call(m, "EnableCuratedPackages", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// InstallController indicates an expected call of InstallController.
-func (mr *MockPackageControllerMockRecorder) InstallController(ctx interface{}) *gomock.Call {
+// EnableCuratedPackages indicates an expected call of EnableCuratedPackages.
+func (mr *MockPackageControllerMockRecorder) EnableCuratedPackages(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallController", reflect.TypeOf((*MockPackageController)(nil).InstallController), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableCuratedPackages", reflect.TypeOf((*MockPackageController)(nil).EnableCuratedPackages), ctx)
 }
 
 // IsInstalled mocks base method.

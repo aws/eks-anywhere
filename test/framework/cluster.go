@@ -905,8 +905,8 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"install", "package", packageName,
-		"--source=cluster",
 		"--package-name=" + packagePrefix, "-v=9",
+		"--cluster=" + e.ClusterName,
 		strings.Join(opts, " "),
 	})
 }

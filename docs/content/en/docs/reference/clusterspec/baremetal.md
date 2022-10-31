@@ -161,14 +161,20 @@ Bare Metal EKS Anywhere clusters do not yet support the creation of separate wor
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
-Number of worker nodes
+### workerNodeGroupConfigurations.count
+Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with Tinkerbell-specific configuration for your nodes. See `TinkerbellMachineConfig Fields` below.
 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+Minimum number of nodes for this node group's autoscaling configuration.
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations.taints
 A list of taints to apply to the nodes in the worker node group.
@@ -193,7 +199,7 @@ Once the Tinkerbell services move from the Admin machine to run on the target cl
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu see [building ubuntu]({{< relref "../artifacts/#Building-Ubuntu-based-node-images" >}})
+Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or Redhat see [building baremetal node images]({{< relref "../artifacts/#build-bare-metal-node-images" >}})
 to learn more on building and using Ubuntu with an EKS Anywhere cluster. This field is also useful if you want to provide a customized operating system image or simply host the standard image locally.
 
 ### hookImagesURLPath
@@ -216,6 +222,13 @@ my-web-server
 │   └── vmlinuz-x86_64
 └── ubuntu-v1.23.7-eks-a-12-amd64.gz
 ```
+
+### skipLoadBalancerDeployment
+Optional field to skip deploying the default load balancer for Tinkerbell stack.
+
+EKS Anywhere for Bare Metal uses `kube-vip` load balancer by default to expose the Tinkerbell stack externally.
+You can disable this feature by setting this field to `true`.
+>**_NOTE:_** If you skip load balancer deployment, you will have to ensure that the Tinkerbell stack is available at [tinkerbellIP]({{< relref "#tinkerbellip" >}}) once the cluster creation is finished. One way to achieve this is by using the [MetalLB]({{< relref "../../tasks/packages/metallb" >}}) package. 
 
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.

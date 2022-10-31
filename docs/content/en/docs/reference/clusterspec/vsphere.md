@@ -76,6 +76,7 @@ metadata:
    name: my-cluster-datacenter
 spec:
   datacenter: ""
+  disableCSI:
   server: ""
   network: ""
   insecure:
@@ -166,14 +167,20 @@ the existing nodes.
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
-Number of worker nodes
+### workerNodeGroupConfigurations.count
+Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+Minimum number of nodes for this node group's autoscaling configuration.
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations.taints
 A list of taints to apply to the nodes in the worker node group.
@@ -239,6 +246,26 @@ openssl x509 -sha1 -fingerprint -in ca.crt -noout
 If you specify the wrong thumbprint, an error message will be printed with the expected thumbprint. If no valid
 certificate is being used, `insecure` must be set to true.
 
+### disableCSI (optional)
+Set `disableCSI` to `true` if you don't want to have EKS Anywhere install and manage the vSphere CSI driver for you. 
+More details on the driver are [here](https://docs.vmware.com/en/VMware-vSphere-Container-Storage-Plug-in/2.0/vmware-vsphere-csp-getting-started/GUID-C44D8071-85E7-4933-83EA-6797518C1837.html)
+
+>**_NOTE:_** If you upgrade a cluster and disable the vSphere CSI driver after it has already been installed by EKS Anywhere, 
+> you will need to remove the resources manually from the cluster. Delete the `DaemonSet` and `Deployment` first, as they 
+> rely on the other resources. This should be done after setting `disableCSI` to `true` and running `upgrade cluster`.
+> 
+> These are the resources you would need to delete:
+> * vsphere-csi-controller-role (kind: ClusterRole)
+> * vsphere-csi-controller-binding (kind: ClusterRoleBinding)
+> * csi.vsphere.vmware.com (kind: CSIDriver)
+> 
+> These are the resources you would need to delete
+> in the `kube-system` namespace:
+> * vsphere-csi-controller (kind: ServiceAccount)
+> * csi-vsphere-config (kind: Secret)
+> * vsphere-csi-node (kind: DaemonSet)
+> * vsphere-csi-controller (kind: Deployment)
+>
 
 ## VSphereMachineConfig Fields
 
@@ -249,7 +276,7 @@ Size of RAM on virtual machines (Default: 8192)
 Number of CPUs on virtual machines (Default: 2)
 
 ### osFamily (optional)
-Operating System on virtual machines. Permitted values: ubuntu, bottlerocket (Default: bottlerocket)
+Operating System on virtual machines. Permitted values: bottlerocket, ubuntu, redhat (Default: bottlerocket)
 
 ### diskGiB (optional)
 Size of disk on virtual machines if snapshots aren't included (Default: 25)
@@ -278,7 +305,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template (optional)
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/vsphere-ovas.md" >}}).
-This is a required field if you are using Ubuntu OVAs.
+This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
 
 ### datastore (required)
 The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)

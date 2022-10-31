@@ -1802,6 +1802,35 @@ spec:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
+                        kubeVip:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         metadata:
                           properties:
                             uri:
@@ -1814,6 +1843,7 @@ spec:
                       - clusterAPIController
                       - clusterTemplate
                       - components
+                      - kubeVip
                       - metadata
                       - version
                       type: object
@@ -3619,6 +3649,23 @@ spec:
                       - key
                       type: object
                     type: array
+                  upgradeRolloutStrategy:
+                    description: UpgradeRolloutStrategy determines the rollout strategy
+                      to use for rolling upgrades and related parameters/knobs
+                    properties:
+                      rollingUpdate:
+                        properties:
+                          maxSurge:
+                            type: integer
+                          maxUnavailable:
+                            type: integer
+                        required:
+                        - maxSurge
+                        - maxUnavailable
+                        type: object
+                      type:
+                        type: string
+                    type: object
                 type: object
               datacenterRef:
                 properties:
@@ -3688,6 +3735,9 @@ spec:
                 description: RegistryMirrorConfiguration defines the settings for
                   image registry mirror
                 properties:
+                  authenticate:
+                    description: Authenticate defines if registry requires authentication
+                    type: boolean
                   caCertContent:
                     description: CACertContent defines the contents registry mirror
                       CA certificate
@@ -3774,6 +3824,23 @@ spec:
                         - key
                         type: object
                       type: array
+                    upgradeRolloutStrategy:
+                      description: UpgradeRolloutStrategy determines the rollout strategy
+                        to use for rolling upgrades and related parameters/knobs
+                      properties:
+                        rollingUpdate:
+                          properties:
+                            maxSurge:
+                              type: integer
+                            maxUnavailable:
+                              type: integer
+                          required:
+                          - maxSurge
+                          - maxUnavailable
+                          type: object
+                        type:
+                          type: string
+                      type: object
                   type: object
                 type: array
             type: object
@@ -5073,6 +5140,8 @@ spec:
             properties:
               datacenter:
                 type: string
+              disableCSI:
+                type: boolean
               insecure:
                 type: boolean
               network:
@@ -5272,6 +5341,8 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs

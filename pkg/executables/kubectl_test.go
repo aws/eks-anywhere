@@ -16,6 +16,7 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
@@ -395,7 +396,7 @@ func TestKubectlWaitForService(t *testing.T) {
 	}
 	ret := bytes.NewBuffer(respJSON)
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"get", "--ignore-not-found", "--namespace", "eksa-packages", "-o", "json", "--kubeconfig", "kubeconfig", "service", "test"}
+	expectedParam := []string{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", "kubeconfig", "service", "--namespace", "eksa-packages", "test"}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
 	if err := k.WaitForService(ctx, "kubeconfig", "5m", "test", "eksa-packages"); err != nil {
 		t.Errorf("Kubectl.WaitForService() error = %v, want nil", err)
@@ -420,7 +421,7 @@ func TestKubectlWaitForServiceWithLoadBalancer(t *testing.T) {
 	}
 	ret := bytes.NewBuffer(respJSON)
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"get", "--ignore-not-found", "--namespace", "eksa-packages", "-o", "json", "--kubeconfig", "kubeconfig", "service", "test"}
+	expectedParam := []string{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", "kubeconfig", "service", "--namespace", "eksa-packages", "test"}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
 	if err := k.WaitForService(ctx, "kubeconfig", "5m", "test", "eksa-packages"); err != nil {
 		t.Errorf("Kubectl.WaitForService() error = %v, want nil", err)
@@ -429,7 +430,7 @@ func TestKubectlWaitForServiceWithLoadBalancer(t *testing.T) {
 
 func TestKubectlWaitForServiceTimedOut(t *testing.T) {
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"get", "--ignore-not-found", "--namespace", "eksa-packages", "-o", "json", "--kubeconfig", "kubeconfig", "service", "test"}
+	expectedParam := []string{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", "kubeconfig", "service", "--namespace", "eksa-packages", "test"}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil).AnyTimes()
 	if err := k.WaitForService(ctx, "kubeconfig", "2s", "test", "eksa-packages"); err == nil {
 		t.Errorf("Kubectl.WaitForService() error = nil, want %v", context.Canceled)
@@ -975,9 +976,10 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			machineConfigName := "testMachineConfig"
 			e.EXPECT().Execute(ctx, []string{
-				"get", "--ignore-not-found", "--namespace", constants.EksaSystemNamespace,
+				"get", "--ignore-not-found",
 				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 				"cloudstackmachineconfigs.anywhere.eks.amazonaws.com",
+				"--namespace", constants.EksaSystemNamespace,
 				machineConfigName,
 			}).Return(*bytes.NewBufferString(fileContent), nil)
 
@@ -1062,9 +1064,10 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			datacenterConfigName := "testDatacenterConfig"
 			e.EXPECT().Execute(ctx, []string{
-				"get", "--ignore-not-found", "--namespace", constants.EksaSystemNamespace,
+				"get", "--ignore-not-found",
 				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 				"cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com",
+				"--namespace", constants.EksaSystemNamespace,
 				datacenterConfigName,
 			}).Return(*bytes.NewBufferString(fileContent), nil)
 
@@ -2164,6 +2167,45 @@ func TestKubectlGetDaemonSetError(t *testing.T) {
 	}).testError()
 }
 
+func TestKubectlGetStorageClassSuccess(t *testing.T) {
+	deletePolicy := corev1.PersistentVolumeReclaimDelete
+	immediateBinding := storagev1.VolumeBindingImmediate
+	newKubectlGetterTest(t).withoutNamespace().withResourceType(
+		"storageclass",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetStorageClass(tt.ctx, tt.name, tt.kubeconfig)
+	}).withJsonFromFile(
+		"testdata/kubectl_storageclass.json",
+	).andWant(
+		&storagev1.StorageClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "standard",
+				Annotations: map[string]string{
+					"storageclass.kubernetes.io/is-default-class": "true",
+				},
+			},
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "storage.k8s.io/v1",
+				Kind:       "StorageClass",
+			},
+			Parameters: map[string]string{
+				"storagePolicyName": "vSAN Default Storage Policy",
+			},
+			Provisioner:       "csi.vsphere.vmware.com",
+			ReclaimPolicy:     &deletePolicy,
+			VolumeBindingMode: &immediateBinding,
+		},
+	).testSuccess()
+}
+
+func TestKubectlGetStorageClassError(t *testing.T) {
+	newKubectlGetterTest(t).withResourceType(
+		"storageclass",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetStorageClass(tt.ctx, tt.name, tt.kubeconfig)
+	}).testError()
+}
+
 func TestApplyTolerationsFromTaints(t *testing.T) {
 	tt := newKubectlTest(t)
 	params := []string{
@@ -2202,7 +2244,7 @@ func TestKubectlGetObjectNotFound(t *testing.T) {
 			name := "my-cluster"
 			tt.e.EXPECT().Execute(
 				tt.ctx,
-				"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, tc.resourceType, name,
+				"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, tc.resourceType, "--namespace", tt.namespace, name,
 			).Return(bytes.Buffer{}, nil)
 
 			err := tt.k.GetObject(tt.ctx, tc.resourceType, name, tt.namespace, tt.kubeconfig, &clusterv1.Cluster{})
@@ -2210,6 +2252,19 @@ func TestKubectlGetObjectNotFound(t *testing.T) {
 			tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	}
+}
+
+func TestKubectlGetClusterObjectNotFound(t *testing.T) {
+	test := newKubectlTest(t)
+	name := "my-cluster"
+	test.e.EXPECT().Execute(
+		test.ctx,
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", test.kubeconfig, "testresource", name,
+	).Return(bytes.Buffer{}, nil)
+
+	err := test.k.GetClusterObject(test.ctx, "testresource", name, test.kubeconfig, &clusterv1.Cluster{})
+	test.Expect(err).To(HaveOccurred())
+	test.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 }
 
 func TestKubectlGetEksaFluxConfig(t *testing.T) {
@@ -2449,6 +2504,30 @@ func TestKubectlDelete(t *testing.T) {
 	tt.Expect(tt.k.Delete(tt.ctx, resourceType, name, tt.namespace, tt.kubeconfig)).To(Succeed())
 }
 
+func TestKubectlDeleteClusterObject(t *testing.T) {
+	tt := newKubectlTest(t)
+	name := "my-storageclass"
+	resourceType := "storageclass"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", resourceType, name, "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.DeleteClusterObject(tt.ctx, resourceType, name, tt.kubeconfig)).To(Succeed())
+}
+
+func TestKubectlDeleteClusterObjectError(t *testing.T) {
+	tt := newKubectlTest(t)
+	name := "my-storageclass"
+	resourceType := "storageclass"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", resourceType, name, "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, errors.New("test error"))
+
+	tt.Expect(tt.k.DeleteClusterObject(tt.ctx, resourceType, name, tt.kubeconfig)).NotTo(Succeed())
+}
+
 func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
 	tt := newKubectlTest(t)
 	timeout := "5m"
@@ -2525,7 +2604,7 @@ func TestKubectlListObjects(t *testing.T) {
 	tt.Expect(err).To(Succeed())
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters",
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters", "--namespace", tt.namespace,
 	).Return(*bytes.NewBuffer(b), nil)
 
 	tt.Expect(tt.k.ListObjects(tt.ctx, "clusters", tt.namespace, tt.kubeconfig, &v1alpha1.ClusterList{})).To(Succeed())
@@ -2535,7 +2614,7 @@ func TestKubectlListObjectsExecError(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters",
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters", "--namespace", tt.namespace,
 	).Return(bytes.Buffer{}, errors.New("error"))
 
 	tt.Expect(tt.k.ListObjects(tt.ctx, "clusters", tt.namespace, tt.kubeconfig, &v1alpha1.ClusterList{})).To(MatchError(ContainSubstring("getting clusters with kubectl: error")))
@@ -2545,7 +2624,7 @@ func TestKubectlListObjectsMarshalError(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters",
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters", "--namespace", tt.namespace,
 	).Return(*bytes.NewBufferString("//"), nil)
 
 	tt.Expect(tt.k.ListObjects(tt.ctx, "clusters", tt.namespace, tt.kubeconfig, &v1alpha1.ClusterList{})).To(MatchError(ContainSubstring("parsing get clusters response")))
@@ -2562,8 +2641,8 @@ func TestKubectlHasResource(t *testing.T) {
 	b, err := json.Marshal(pbc)
 	tt.Expect(err).To(Succeed())
 	tt.e.EXPECT().Execute(tt.ctx,
-		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json",
-		"--kubeconfig", tt.kubeconfig, "packageBundleController", "testResourceName",
+		"get", "--ignore-not-found", "-o", "json",
+		"--kubeconfig", tt.kubeconfig, "packageBundleController", "--namespace", tt.namespace, "testResourceName",
 	).Return(*bytes.NewBuffer(b), nil)
 
 	has, err := tt.k.HasResource(tt.ctx, "packageBundleController", "testResourceName", tt.kubeconfig, tt.namespace)
@@ -2574,8 +2653,8 @@ func TestKubectlHasResource(t *testing.T) {
 func TestKubectlHasResourceWithGetError(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(tt.ctx,
-		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json",
-		"--kubeconfig", tt.kubeconfig, "packageBundleController", "testResourceName",
+		"get", "--ignore-not-found", "-o", "json",
+		"--kubeconfig", tt.kubeconfig, "packageBundleController", "--namespace", tt.namespace, "testResourceName",
 	).Return(bytes.Buffer{}, fmt.Errorf("test error"))
 
 	has, err := tt.k.HasResource(tt.ctx, "packageBundleController", "testResourceName", tt.kubeconfig, tt.namespace)
@@ -2681,7 +2760,7 @@ func TestKubectlSearchNutanixDatacenterConfigError(t *testing.T) {
 func TestKubectlGetEksaNutanixMachineConfig(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
-		[]string{"--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil)
 	item, err := tt.k.GetEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
@@ -2692,7 +2771,7 @@ func TestKubectlGetEksaNutanixMachineConfig(t *testing.T) {
 func TestKubectlGetEksaNutanixMachineConfigError(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
-		[]string{"--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(bytes.Buffer{}, fmt.Errorf("error"))
 	item, err := tt.k.GetEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
@@ -2703,7 +2782,7 @@ func TestKubectlGetEksaNutanixMachineConfigError(t *testing.T) {
 func TestKubectlGetEksaNutanixDatacenterConfig(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
-		[]string{"--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(*bytes.NewBufferString(nutanixDatacenterConfigSpecJSON), nil)
 	item, err := tt.k.GetEksaNutanixDatacenterConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
@@ -2714,7 +2793,7 @@ func TestKubectlGetEksaNutanixDatacenterConfig(t *testing.T) {
 func TestKubectlGetEksaNutanixDatacenterConfigError(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
-		[]string{"--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(bytes.Buffer{}, fmt.Errorf("error"))
 	item, err := tt.k.GetEksaNutanixDatacenterConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)

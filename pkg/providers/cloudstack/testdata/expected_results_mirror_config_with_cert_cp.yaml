@@ -159,7 +159,7 @@ spec:
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
-        apiVersion: audit.k8s.io/v1
+        apiVersion: audit.k8s.io/v1beta1
         kind: Policy
         rules:
         # Log aws-auth configmap changes
@@ -352,7 +352,7 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -361,17 +361,17 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
-    - hostname "{{ ds.meta_data.local_hostname }}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -402,11 +402,11 @@ spec:
       - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
     preEtcdadmCommands:
     - swapoff -a
-    - hostname "{{ ds.meta_data.local_hostname }}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername

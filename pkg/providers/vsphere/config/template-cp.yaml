@@ -281,6 +281,11 @@ spec:
           [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
             ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
           {{- end }}
+          {{- if .registryAuth }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".auth]
+            username = "{{.registryUsername}}"
+            password = "{{.registryPassword}}"
+          {{- end }}
       owner: root:root
       path: "/etc/containerd/config_append.toml"
 {{- end }}
@@ -424,6 +429,7 @@ spec:
     matchLabels:
       cluster.x-k8s.io/cluster-name: {{.clusterName}}
   resources:
+{{- if not .disableCSI }}
   - kind: Secret
     name: vsphere-csi-controller
   - kind: ConfigMap
@@ -438,6 +444,7 @@ spec:
     name: vsphere-csi-node
   - kind: ConfigMap
     name: vsphere-csi-controller
+{{- end }}
   - kind: Secret
     name: cloud-controller-manager
   - kind: Secret
@@ -540,6 +547,7 @@ stringData:
   username: "{{.eksaVsphereUsername}}"
   password: "{{.eksaVspherePassword}}"
 ---
+{{- if not .disableCSI }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -1012,6 +1020,7 @@ metadata:
   name: internal-feature-states.csi.vsphere.vmware.com
   namespace: {{.eksaSystemNamespace}}
 ---
+{{- end }}
 apiVersion: v1
 kind: Secret
 metadata:

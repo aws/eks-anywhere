@@ -1,6 +1,6 @@
 package constants
 
-// Namespace constants
+// Namespace constants.
 const (
 	EksaSystemNamespace                     = "eksa-system"
 	EksaDiagnosticsNamespace                = "eksa-diagnostics"
@@ -43,13 +43,18 @@ const (
 	DefaultRegistry            = "public.ecr.aws"
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
-	// provider specific env vars
+	// Provider specific env vars.
 	VSphereUsernameKey = "VSPHERE_USERNAME"
 	VSpherePasswordKey = "VSPHERE_PASSWORD"
 	GovcUsernameKey    = "GOVC_USERNAME"
 	GovcPasswordKey    = "GOVC_PASSWORD"
 	SnowCredentialsKey = "AWS_B64ENCODED_CREDENTIALS"
 	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
+	NutanixUsernameKey = "NUTANIX_USER"
+	NutanixPasswordKey = "NUTANIX_PASSWORD"
+
+	SecretKind    = "Secret"
+	ConfigMapKind = "ConfigMap"
 )
 
 type Operation int

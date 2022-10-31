@@ -1097,6 +1097,7 @@ func TestClusterValidateUpdateInvalidType(t *testing.T) {
 }
 
 func TestClusterValidateUpdateSuccess(t *testing.T) {
+	features.ClearCache()
 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}})
 	cOld := createCluster()
 	cOld.Spec.WorkerNodeGroupConfigurations = workerConfiguration
@@ -1128,7 +1129,6 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 
 func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := createCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},

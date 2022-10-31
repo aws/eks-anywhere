@@ -6,9 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -100,10 +98,6 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return err
 	}
 	defer close(ctx, deps)
-
-	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
-		return fmt.Errorf("Error: provider cloudstack is not supported in this release")
-	}
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,

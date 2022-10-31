@@ -56,6 +56,17 @@ var _ webhook.Validator = &VSphereDatacenterConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	vspheredatacenterconfiglog.Info("validate create", "name", r.Name)
+
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
+			r.Name,
+			field.ErrorList{
+				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+			},
+		)
+	}
+
 	if r.IsReconcilePaused() {
 		vspheredatacenterconfiglog.Info("VSphereDatacenterConfig is paused, so allowing create", "name", r.Name)
 		return nil
@@ -63,6 +74,7 @@ func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	if !features.IsActive(features.FullLifecycleAPI()) {
 		return apierrors.NewBadRequest("Creating new VSphereDatacenterConfig on existing cluster is not supported")
 	}
+
 	return nil
 }
 
@@ -75,6 +87,16 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDataCenterConfig but got a %T", old))
 	}
 
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
+			r.Name,
+			field.ErrorList{
+				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+			},
+		)
+	}
+
 	if oldDatacenterConfig.IsReconcilePaused() {
 		vspheredatacenterconfiglog.Info("Reconciliation is paused")
 		return nil
@@ -82,19 +104,11 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 
 	r.SetDefaults()
 
-	var allErrs field.ErrorList
-
-	if err := r.ValidateFields(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if allErrs := validateImmutableFieldsVSphereCluster(r, oldDatacenterConfig); len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	allErrs = append(allErrs, validateImmutableFieldsVSphereCluster(r, oldDatacenterConfig)...)
-
-	if len(allErrs) == 0 {
-		return nil
-	}
-
-	return apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), r.Name, allErrs)
+	return nil
 }
 
 func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) field.ErrorList {
@@ -133,6 +147,13 @@ func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) fi
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("thumbprint"), "field is immutable"),
+		)
+	}
+
+	if old.Spec.DisableCSI != new.Spec.DisableCSI {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("disableCSI"), "field is immutable"),
 		)
 	}
 

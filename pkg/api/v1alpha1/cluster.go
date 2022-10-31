@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -94,6 +95,13 @@ func WithClusterEndpoint() ClusterGenerateOpt {
 	}
 }
 
+// WithCPUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under ControlPlaneConfiguration.
+func WithCPUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: maxSurge}}
+	}
+}
+
 func WithDatacenterRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.DatacenterRef = Ref{
@@ -130,6 +138,16 @@ func WithWorkerMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 		c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = &Ref{
 			Kind: ref.Kind(),
 			Name: ref.Name(),
+		}
+	}
+}
+
+// WithWorkerMachineUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under WorkerNodeGroupConfiguration.
+func WithWorkerMachineUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &WorkerNodesUpgradeRolloutStrategy{
+			Type:          "RollingUpdate",
+			RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: maxSurge, MaxUnavailable: maxUnavailable},
 		}
 	}
 }
@@ -177,6 +195,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateProxyConfig,
 	validateMirrorConfig,
 	validatePodIAMConfig,
+	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 }
 
@@ -290,6 +309,14 @@ func (c *Cluster) RegistryMirror() string {
 	}
 
 	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
+}
+
+// RegistryAuth returns whether registry requires authentication or not.
+func (c *Cluster) RegistryAuth() bool {
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return false
+	}
+	return c.Spec.RegistryMirrorConfiguration.Authenticate
 }
 
 func (c *Cluster) ProxyConfiguration() map[string]string {
@@ -426,12 +453,12 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("worker node count must be >= 0")
 		}
 
-		if workerNodeGroupConfig.AutoScalingConfiguration == nil && *workerNodeGroupConfig.Count <= 0 {
-			return errors.New("worker node count must be positive if autoscaling is not enabled")
+		if err := validateAutoscalingConfig(&workerNodeGroupConfig); err != nil {
+			return fmt.Errorf("validating autoscaling configuration: %v", err)
 		}
 
-		if err := validateAutoscalingConfig(workerNodeGroupConfig.AutoScalingConfiguration); err != nil {
-			return fmt.Errorf("validating autoscaling configuration: %v", err)
+		if err := validateMDUpgradeRolloutStrategy(&workerNodeGroupConfig); err != nil {
+			return fmt.Errorf("validating upgrade rollout strategy configuration: %v", err)
 		}
 
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
@@ -465,15 +492,27 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	return nil
 }
 
-func validateAutoscalingConfig(autoscalingConfig *AutoScalingConfiguration) error {
-	if autoscalingConfig == nil {
+func validateAutoscalingConfig(w *WorkerNodeGroupConfiguration) error {
+	if w == nil {
 		return nil
 	}
-	if autoscalingConfig.MinCount < 0 {
+	if w.AutoScalingConfiguration == nil && *w.Count < 0 {
+		return errors.New("worker node count must be zero or greater if autoscaling is not enabled")
+	}
+	if w.AutoScalingConfiguration == nil {
+		return nil
+	}
+	if w.AutoScalingConfiguration.MinCount < 0 {
 		return errors.New("min count must be non negative")
 	}
-	if autoscalingConfig.MinCount > autoscalingConfig.MaxCount {
+	if w.AutoScalingConfiguration.MinCount > w.AutoScalingConfiguration.MaxCount {
 		return errors.New("min count must be no greater than max count")
+	}
+	if w.AutoScalingConfiguration.MinCount > *w.Count {
+		return errors.New("min count must be less than or equal to count")
+	}
+	if w.AutoScalingConfiguration.MaxCount < *w.Count {
+		return errors.New("max count must be greater than or equal to count")
 	}
 
 	return nil
@@ -666,6 +705,17 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
 	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate && clusterConfig.Spec.DatacenterRef.Kind != VSphereDatacenterKind {
+		return errors.New("authenticated registry mirror is only supported for vSphere provider currently")
+	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {
+		_, _, err := config.ReadCredentials()
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -710,5 +760,47 @@ func validatePodIAMConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.PodIAMConfig.ServiceAccountIssuer == "" {
 		return errors.New("ServiceAccount Issuer can't be empty while configuring IAM roles for pods")
 	}
+	return nil
+}
+
+func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy == nil {
+		logger.Info("ControlPlaneConfiguration: UpgradeRolloutStrategy not specified in cluster config. CAPI will default to 'RollingUpdate' with maxSurge=1")
+		return nil
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type != "RollingUpdate" {
+		return fmt.Errorf("ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
+		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
+		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
+	}
+
+	return nil
+}
+
+func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
+	if w.UpgradeRolloutStrategy == nil {
+		logger.Info("WorkerNodeGroupConfigurations: UpgradeRolloutStrategy not specified in cluster config. CAPI will default to 'RollingUpdate' with maxSurge=1 and maxUnavailable=0")
+		return nil
+	}
+
+	if w.UpgradeRolloutStrategy.Type != "RollingUpdate" {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	}
+
+	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 || w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable < 0 {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative")
+	}
+
+	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge == 0 && w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable == 0 {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
+	}
+
 	return nil
 }

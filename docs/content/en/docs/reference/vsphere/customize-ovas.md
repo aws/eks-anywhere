@@ -132,14 +132,29 @@ Restart containerd service with the `sudo systemctl restart containerd` command.
 
 After you have customized the VM, you need to convert it to a template.
 
-### Reset the machine-id and power off the VM
+### Cleanup the machine and power off the VM
 
 This step is needed because of a [known issue in Ubuntu](https://kb.vmware.com/s/article/82229) which results in the clone VMs getting the same DHCP IP
 
 ```
+sudo su
 echo -n > /etc/machine-id
 rm /var/lib/dbus/machine-id
 ln -s /etc/machine-id /var/lib/dbus/machine-id
+cloud-init clean -l --machine-id
+```
+
+Delete the hostname from file
+```
+/etc/hostname
+```
+Delete the networking config file
+```
+rm -rf /etc/netplan/50-cloud-init.yaml
+```
+Edit the cloud init config to turn `preserve_hostname` to false
+```
+vi /etc/cloud/cloud.cfg
 ```
 
 Power the VM down

@@ -93,11 +93,13 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 						return fmt.Errorf("creating helm client: %v", err)
 					}
 
-					helmDest, err := helm.GetHelmDest(helmDriver, artifact.Image.SourceImageURI, trimmedAsset)
+					fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
+					helmDest, err := helm.GetHelmDest(helmDriver, r, artifact.Image.SourceImageURI, trimmedAsset)
 					if err != nil {
 						return fmt.Errorf("getting Helm destination: %v", err)
 					}
 
+					fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
 					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, helmDriver, helmDest)
 					if err != nil {
 						return fmt.Errorf("modifying Chart.yaml and pushing Helm chart to destination: %v", err)

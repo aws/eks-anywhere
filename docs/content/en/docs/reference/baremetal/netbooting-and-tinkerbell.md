@@ -87,7 +87,7 @@ The format that it serves is similar to an Ec2 metadata format.
 The rufio Kubernetes controller sets things such as power state, persistent boot order, and eventually other services (like NTP, LDAP, and TLS certificates).
 BMC authentication is managed with Kubernetes secrets.
 * **tink**: The tink service consists of three components: tink server, tink controller, and tink worker.
-The tink controller manages hardware data, templates you want to execute, and the worflows that each target specific hardware you are provisioning.
+The tink controller manages hardware data, templates you want to execute, and the workflows that each target specific hardware you are provisioning.
 The tink worker is a small binary that runs inside of HookOS and talks to the tink server.
 The worker sends the tink server its MAC address and asks the server for workflows to run.
 The tink worker will then go through each action, one-by-one, and try to execute it.
@@ -215,7 +215,7 @@ NAME                                TEMPLATE                            STATE
 mycluster-md-0-1656099863422-vxh2   mycluster-md-0-1656099863422-vxh2   STATE_RUNNING
 ```
 
-This shows the worflow for the first machine that is being provisioned.
+This shows the workflow for the first machine that is being provisioned.
 Add `-o yaml` to see details of that workflow template:
 
 ```bash
@@ -240,7 +240,7 @@ status:
 ```
 
 You can see that the first action in the workflow is to stream (`stream-image`) the operating system to the destination disk (`DEST_DISK`) on the machine.
-In this example, the Bottlerocket operating system that will be copied to disk (`/dev/sda`) is being served from the location specificed by IMG_URL.
+In this example, the Bottlerocket operating system that will be copied to disk (`/dev/sda`) is being served from the location specified by IMG_URL.
 The action was successful (STATE_SUCCESS) and it took 35 seconds.
 
 Each action and its status is shown in this output for the whole workflow.

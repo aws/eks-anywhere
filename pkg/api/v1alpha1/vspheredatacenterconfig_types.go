@@ -15,6 +15,7 @@ type VSphereDatacenterConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	Datacenter string `json:"datacenter"`
+	DisableCSI bool   `json:"disableCSI,omitempty"`
 	Network    string `json:"network"`
 	Server     string `json:"server"`
 	Thumbprint string `json:"thumbprint"`
@@ -83,7 +84,7 @@ func (v *VSphereDatacenterConfig) SetDefaults() {
 	}
 }
 
-func (v *VSphereDatacenterConfig) ValidateFields() error {
+func (v *VSphereDatacenterConfig) Validate() error {
 	if len(v.Spec.Server) <= 0 {
 		return errors.New("VSphereDatacenterConfig server is not set or is empty")
 	}
@@ -123,10 +124,6 @@ func (v *VSphereDatacenterConfig) ConvertConfigToConfigGenerateStruct() *VSphere
 
 func (v *VSphereDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
-}
-
-func (v *VSphereDatacenterConfig) Validate() error {
-	return nil
 }
 
 // +kubebuilder:object:generate=false

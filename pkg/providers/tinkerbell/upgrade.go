@@ -63,7 +63,7 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentClusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		return ErrExternalEtcdUnsupported
+		return errExternalEtcdUnsupported
 	}
 
 	if err := p.configureSshKeys(); err != nil {
@@ -185,9 +185,14 @@ func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig 
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
-	// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
-	if err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace); err != nil {
-		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+	// Check if the hardware in the catalogue have a BMCRef. Since we only allow either all hardware with bmc
+	// or no hardware with bmc, its sufficient to check the first hardware.
+	if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
+		// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
+		err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		if err != nil {
+			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+		}
 	}
 
 	return nil
@@ -282,7 +287,7 @@ func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alp
 
 	for _, nodeGroupNewSpec := range newCluster.Spec.WorkerNodeGroupConfigurations {
 		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
-			if nodeGroupNewSpec.Count != workerNodeGrpOldSpec.Count {
+			if *nodeGroupNewSpec.Count != *workerNodeGrpOldSpec.Count {
 				return true
 			}
 		}
@@ -303,7 +308,7 @@ func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alp
 
 	for _, nodeGroupNewSpec := range newSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
-			if nodeGroupNewSpec.Count != workerNodeGrpOldSpec.Count {
+			if *nodeGroupNewSpec.Count != *workerNodeGrpOldSpec.Count {
 				return true
 			}
 		}

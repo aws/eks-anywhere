@@ -2,6 +2,8 @@ package nutanix
 
 import (
 	_ "embed"
+	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -19,6 +22,9 @@ var nutanixClusterConfigSpec string
 
 //go:embed testdata/datacenterConfig.yaml
 var nutanixDatacenterConfigSpec string
+
+//go:embed testdata/datacenterConfig_with_trust_bundle.yaml
+var nutanixDatacenterConfigSpecWithTrustBundle string
 
 //go:embed testdata/eksa-cluster.json
 var nutanixClusterConfigSpecJSON string
@@ -34,6 +40,14 @@ var nutanixMachineConfigSpecJSON string
 
 //go:embed testdata/machineDeployment.json
 var nutanixMachineDeploymentSpecJSON string
+
+func fakemarshal(v interface{}) ([]byte, error) {
+	return []byte{}, errors.New("marshalling failed")
+}
+
+func restoremarshal(replace func(v interface{}) ([]byte, error)) {
+	jsonMarshal = replace
+}
 
 func TestNewNutanixTemplateBuilder(t *testing.T) {
 	clusterConf := &anywherev1.Cluster{}
@@ -52,11 +66,9 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 		"eksa-unit-test": machineConf.Spec,
 	}
 
-	creds := basicAuthCreds{
-		username: "admin",
-		password: "password",
-	}
-
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
 	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
 	assert.NotNil(t, builder)
 
@@ -81,4 +93,27 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
 	assert.NoError(t, err)
 	assert.NotNil(t, secretSpec)
+	expectedSecret, err := os.ReadFile("testdata/templated_secret.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedSecret, secretSpec)
+}
+
+func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
+	storedMarshal := jsonMarshal
+	jsonMarshal = fakemarshal
+	defer restoremarshal(storedMarshal)
+
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(nil, nil, nil, nil, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	v := version.Info{GitVersion: "v0.0.1"}
+	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
+	assert.NoError(t, err)
+
+	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
+	assert.Nil(t, secretSpec)
+	assert.Error(t, err)
 }

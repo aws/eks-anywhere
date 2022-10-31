@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -71,6 +72,16 @@ func TestVSphereKubernetes123StackedEtcdUbuntu(t *testing.T) {
 	runStackedEtcdFlow(test)
 }
 
+func TestVSphereKubernetes124StackedEtcdUbuntu(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewVSphere(t, framework.WithUbuntu124()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"))
+	runStackedEtcdFlow(test)
+}
+
 func TestDockerKubernetesStackedEtcd(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -80,7 +91,7 @@ func TestDockerKubernetesStackedEtcd(t *testing.T) {
 
 func TestCloudStackKubernetes120StackedEtcdRedhat(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithRedhat120()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()))

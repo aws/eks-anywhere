@@ -45,10 +45,10 @@ func NewBundleReader(kubeConfig string, clusterName string, k KubectlRunner, bm 
 }
 
 func (b *BundleReader) GetLatestBundle(ctx context.Context, kubeVersion string) (*packagesv1.PackageBundle, error) {
-	if len(b.clusterName) > 0 {
-		return b.getActiveBundleFromCluster(ctx)
+	if len(kubeVersion) > 0 {
+		return b.getLatestBundleFromRegistry(ctx, kubeVersion)
 	}
-	return b.getLatestBundleFromRegistry(ctx, kubeVersion)
+	return b.getActiveBundleFromCluster(ctx)
 }
 
 func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context, kubeVersion string) (*packagesv1.PackageBundle, error) {

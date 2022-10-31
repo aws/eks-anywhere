@@ -80,7 +80,7 @@ spec:
           anonymous-auth: "false"
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
-        name: '{{ ds.meta_data.hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -88,7 +88,7 @@ spec:
           anonymous-auth: "false"
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
-        name: '{{ ds.meta_data.hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
       - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
