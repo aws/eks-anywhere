@@ -36,7 +36,7 @@ From the apachecloudstack console:
 ## Import template
 You need to build at least one operating system image and import it as a template to use for your cluster nodes.
 Currently, only Red Hat Enterprise Linux 8 images are supported.
-To build a RHEL-based image to use with EKS Anywhere, see [Build CloudStack node images]({{< relref "../artifacts/#build-cloudstack-node-images/" >}}).
+To build a RHEL-based image to use with EKS Anywhere, see [Build node images]({{< relref "../artifacts/#building-node-images" >}}).
 
 1. Make your image accessible from you local machine or from a URL that is accessible to your CloudStack setup.
 
