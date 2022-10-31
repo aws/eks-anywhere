@@ -1,0 +1,4 @@
+IgnoreInternalEmptyHash: true
+IgnoreDirs:
+- "_print"
+IgnoreAltMissing: true

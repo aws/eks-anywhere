@@ -178,4 +178,4 @@ enable = false
 fullversion = "v0.12"
 version = "v0.12"
 docsbranch = "main"
-url = "/docs"
+url = "/docs/"
