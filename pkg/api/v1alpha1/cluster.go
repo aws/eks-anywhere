@@ -437,7 +437,11 @@ func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
-		logger.Info("Warning: No configurations provided for worker node groups, pods will be scheduled on control-plane nodes")
+		if clusterConfig.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
+			logger.Info("Warning: No configurations provided for worker node groups, pods will be scheduled on control-plane nodes")
+		} else {
+			return fmt.Errorf("WorkerNodeGroupConfigs cannot be empty for %s", clusterConfig.Spec.DatacenterRef.Kind)
+		}
 	}
 
 	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
