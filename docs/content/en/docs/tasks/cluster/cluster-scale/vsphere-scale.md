@@ -70,4 +70,4 @@ To read more about making changes with the integrated Flux GitOps controller you
 
 EKS Anywhere supports autoscaling of worker node groups using the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/) and as a [curated package](../../../../reference/packagespec/cluster-autoscaler/).
 
-See [here](../../../../reference/clusterspec/optional/autoscaling) for details on how to configure your cluster spec to autoscale worker node groups for autoscaling.
+See [here](../../../../reference/clusterspec/optional/autoscaling/) for details on how to configure your cluster spec to autoscale worker node groups for autoscaling.

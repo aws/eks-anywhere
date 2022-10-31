@@ -13,7 +13,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 ## Install
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here](../../../reference/clusterspec/optional/autoscaling)
+1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here](../../../reference/clusterspec/optional/autoscaling/)
 
 1. Generate the package configuration
    ```bash
