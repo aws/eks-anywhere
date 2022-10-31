@@ -23,7 +23,7 @@ func runTinkerbellConformanceFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.RunConformanceTests()
 	test.StopIfFailed()
 	test.DeleteCluster()

@@ -50,7 +50,8 @@ func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion 
 func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.CreateCluster()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeCluster(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
