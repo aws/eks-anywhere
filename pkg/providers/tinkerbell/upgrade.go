@@ -308,7 +308,7 @@ func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alp
 
 	for _, nodeGroupNewSpec := range newSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
-			if nodeGroupNewSpec.Count != workerNodeGrpOldSpec.Count {
+			if *nodeGroupNewSpec.Count != *workerNodeGrpOldSpec.Count {
 				return true
 			}
 		}
