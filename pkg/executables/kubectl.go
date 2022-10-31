@@ -595,6 +595,9 @@ func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile
 	}
 	response := &packagesv1.PackageBundleController{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return packagesv1.PackageBundleController{}, fmt.Errorf("unmarshalling kubectl response to GO struct %s: %v", clusterName, err)
+	}
 	return *response, nil
 }
 
@@ -606,6 +609,9 @@ func (k *Kubectl) GetPackageBundleList(ctx context.Context, kubeconfigFile strin
 	}
 	response := &packagesv1.PackageBundleList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling kubectl response to GO struct %v", err)
+	}
 	return response.Items, nil
 }
 
