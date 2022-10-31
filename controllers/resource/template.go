@@ -164,8 +164,6 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc.Spec.Users)
-		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
 		for k, v := range credValues {
 			values[k] = v
