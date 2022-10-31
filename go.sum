@@ -1931,8 +1931,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15/go.mod h1:LEScyz
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22/go.mod h1:LEScyzhFmoF5pso/YSeBstl57mOzx9xlU9n85RGrDQg=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.25/go.mod h1:Mlj9PNLmG9bZ6BHFwFKDo5afkpWyUISkb9Me0GnK66I=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.30/go.mod h1:fEO7lRTdivWO2qYVCVG7dEADOMo/MLDCVr8So2g88Uw=
-sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc3 h1:h6XTNVas/2gzPHIzu3kbn062LXZNnkCTE3Zyx5O8BME=
-sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc3/go.mod h1:Exwre/HXXrntfbct3j64F6pQmKkN/I/vD1rCyzFehxY=
+sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1 h1:dTmmeLggoXt4oAlvT+g02pcab/4b1ptfdgkjQa6fWkQ=
+sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1/go.mod h1:b7l5H1Rb5tdpczy3MW/sGP+wM0E9HWdl0obBMxIq0q4=
 sigs.k8s.io/cluster-api-provider-vsphere v1.0.1 h1:qs7zSFkAL9tU8tHob7bmrEWfKsOU5JaskpeSIYrhQCc=
 sigs.k8s.io/cluster-api-provider-vsphere v1.0.1/go.mod h1:Z6MDQcZjX5DUcEFStotBptj2fMR4vgCVPAnw6inIY20=
 sigs.k8s.io/cluster-api/test v1.0.0 h1:PeWOLXtDGYMmzXwGX+NtH7Xxx6BtS83DT7vKzITY5X0=
