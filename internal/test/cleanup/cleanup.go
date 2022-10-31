@@ -95,11 +95,14 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	if err != nil {
 		return fmt.Errorf("creating filewriter for directory rmvms: %v", err)
 	}
-	execConfig, err := decoder.ParseCloudStackSecret()
+	execConfig, err := decoder.ParseCloudStackCredsFromEnv()
+	if err != nil {
+		return fmt.Errorf("parsing cloudstack credentials from environment: %v", err)
+	}
+	cmk, err := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig)
 	if err != nil {
 		return fmt.Errorf("building cmk executable: %v", err)
 	}
-	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig.Profiles)
 	defer cmk.Close(ctx)
 
 	errorsMap := map[string]error{}

@@ -207,7 +207,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCAPIManager().
 		WithManifestReader().
 		WithUnAuthKubeClient().
-		WithCmk().
+		WithCloudStackValidatorRegistry(false).
 		WithVSphereDefaulter().
 		WithVSphereValidator().
 		WithCiliumTemplater().

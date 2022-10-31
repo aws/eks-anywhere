@@ -56,8 +56,8 @@ type Dependencies struct {
 	DockerClient              *executables.Docker
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
-	Cmk                       *executables.Cmk
-	SnowAwsClientRegistry     *snow.AwsClientRegistry
+	CloudStackValidatorRegistry cloudstack.ValidatorRegistry
+	SnowAwsClientRegistry       *snow.AwsClientRegistry
 	SnowConfigManager         *snow.ConfigManager
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
@@ -312,7 +312,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
 	case v1alpha1.CloudStackDatacenterKind:
-		f.WithKubectl().WithCmk().WithWriter()
+		f.WithKubectl().WithCloudStackValidatorRegistry(skipIpCheck).WithWriter()
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
@@ -360,8 +360,15 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			if err != nil {
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
-
-			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, f.dependencies.Cmk, f.dependencies.Writer, time.Now, skipIpCheck, logger.Get())
+			execConfig, err := decoder.ParseCloudStackCredsFromEnv()
+			if err != nil {
+				return fmt.Errorf("parsing CloudStack credentials: %v", err)
+			}
+			validator, err := f.dependencies.CloudStackValidatorRegistry.Get(execConfig)
+			if err != nil {
+				return fmt.Errorf("building validator from exec config: %v", err)
+			}
+			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, validator, f.dependencies.Writer, time.Now, logger.Get())
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(
@@ -504,21 +511,16 @@ func (f *Factory) WithGovc() *Factory {
 	return f
 }
 
-func (f *Factory) WithCmk() *Factory {
+// WithCloudStackValidatorRegistry initializes the CloudStack validator for the object being constructed to make it available in the constructor.
+func (f *Factory) WithCloudStackValidatorRegistry(skipIPCheck bool) *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Cmk != nil {
+		if f.dependencies.CloudStackValidatorRegistry != nil {
 			return nil
 		}
 
-		execConfig, err := decoder.ParseCloudStackSecret()
-		if err != nil {
-			return fmt.Errorf("building cmk executable: %v", err)
-		}
-
-		f.dependencies.Cmk = f.executablesConfig.builder.BuildCmkExecutable(f.dependencies.Writer, execConfig.Profiles)
-		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
+		f.dependencies.CloudStackValidatorRegistry = cloudstack.NewValidatorFactory(f.executablesConfig.builder, f.dependencies.Writer, skipIPCheck)
 
 		return nil
 	})
