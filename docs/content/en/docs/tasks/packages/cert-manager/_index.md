@@ -7,8 +7,8 @@ description: >
    Install/update/upgrade/uninstall Cert-Manager
 ---
 
-{{< content "../prereq.md" >}}
-
+If you have not already done so, make sure your cluster meets the [package prerequisites.]({{< relref "../prereq" >}})
+Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/packages" >}}) in the event of a problem.
 
 ## Install on workload cluster
 
