@@ -419,12 +419,11 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 	if timeoutDuration < 0 {
 		return fmt.Errorf("timeout must be positive")
 	}
-	timeoutTime := time.Now().Add(timeoutDuration)
 
 	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
-			return k.waitJSONPathLoop(ctx, kubeconfig, timeoutTime, jsonpath, forCondition, property, namespace, opts...)
+			return k.waitJSONPathLoop(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace, opts...)
 		},
 	)
 	if err != nil {
@@ -507,12 +506,25 @@ func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, 
 }
 
 // waitJsonPathLoop will be deprecated in favor of waitJsonPath after version 1.23.
-func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeoutTime time.Time, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+	timeoutDur, err := time.ParseDuration(timeout)
+	if err != nil {
+		return fmt.Errorf("parsing duration %q: %w", timeout, err)
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeoutDur)
+	defer cancel()
+	timedOut := timeoutCtx.Done()
+
+	const pollInterval = time.Second
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case <-time.After(timeoutTime.Sub(time.Now())):
+		case <-timedOut:
 			return fmt.Errorf("waiting for %s %s on %s: timed out", jsonpath, forCondition, property)
-		case <-time.Tick(time.Second):
+		case <-ticker.C:
 			params := []string{
 				"get", property,
 				"-o", fmt.Sprintf("jsonpath='{.%s}'", jsonpath),

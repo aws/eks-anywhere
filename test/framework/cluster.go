@@ -17,7 +17,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
 	rctrl "github.com/tinkerbell/rufio/controllers"
 	"sigs.k8s.io/yaml"
@@ -1075,6 +1074,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 	}
 }
 
+// VerifyHelloPackageInstalled is checking if the hello eks anywhere package gets installed correctly.
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	ctx := context.Background()
 	ns := constants.EksaPackagesName
@@ -1095,6 +1095,9 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 
 	svcAddress := name + "." + ns + ".svc.cluster.local"
 	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, "busybox-test", e.kubeconfigFilePath(), []string{"curl", svcAddress})
+	if err != nil {
+		e.T.Fatalf("error launching busybox pod: %s", err)
+	}
 	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
 
 	err = e.KubectlClient.WaitForPodCompleted(ctx,
@@ -1113,39 +1116,4 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	if !ok {
 		e.T.Fatalf("expected Amazon EKS Anywhere, got %T", logs)
 	}
-}
-
-func (e *ClusterE2ETest) forwardPortToService(ctx context.Context,
-	name, namespace string, port int,
-) (func(), <-chan error) {
-	// The current Executable framework doesn't allow reading stdout before
-	// the command completes, so there's no way to know when the port-forward
-	// is available, short of just trying it.
-	pfContext, pfCancel := context.WithCancel(ctx)
-	errCh := make(chan error, 1)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer close(errCh)
-		defer wg.Done()
-		_, err := e.KubectlClient.Execute(pfContext, "port-forward",
-			"--kubeconfig="+e.kubeconfigFilePath(), "--namespace="+namespace,
-			"service/"+name, fmt.Sprintf("%d:80", port))
-		if err != nil {
-			pfCtxErr := pfContext.Err()
-			// A canceled context indicates a controlled shutdown.
-			if errors.Is(pfCtxErr, context.Canceled) {
-				return
-			}
-			if pfCtxErr != nil {
-				e.T.Logf("port-forward context error: %s", err)
-			}
-			errCh <- err
-		}
-	}()
-
-	return func() {
-		pfCancel()
-		wg.Wait()
-	}, errCh
 }
