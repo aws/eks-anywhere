@@ -12,6 +12,7 @@ import (
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	"k8s.io/utils/integer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -760,7 +761,7 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	ready, total := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
-		return true, c.machineBackoff * time.Duration(total-ready)
+		return true, c.machineBackoff * time.Duration(integer.IntMax(1, total-ready))
 	}
 
 	var machineDeploymentReplicasCount int
@@ -795,7 +796,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) error {
 	readyNodes, totalNodes := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
-		return true, c.machineBackoff * time.Duration(totalNodes-readyNodes)
+		return true, c.machineBackoff * time.Duration(integer.IntMax(1, totalNodes-readyNodes))
 	}
 
 	areNodesReady := func() error {
