@@ -1,6 +1,6 @@
 package constants
 
-// Namespace constants
+// Namespace constants.
 const (
 	EksaSystemNamespace                     = "eksa-system"
 	EksaDiagnosticsNamespace                = "eksa-diagnostics"
@@ -57,6 +57,9 @@ const (
 	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
 	NutanixUsernameKey = "NUTANIX_USER"
 	NutanixPasswordKey = "NUTANIX_PASSWORD"
+
+	SecretKind    = "Secret"
+	ConfigMapKind = "ConfigMap"
 )
 
 type Operation int

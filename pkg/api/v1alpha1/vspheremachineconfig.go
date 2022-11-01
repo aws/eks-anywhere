@@ -140,3 +140,11 @@ func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
 
 	return nil
 }
+
+func validateVSphereMachineConfigHasTemplate(config *VSphereMachineConfig) error {
+	if config.Spec.Template == "" {
+		return fmt.Errorf("template field is required")
+	}
+
+	return nil
+}

@@ -157,7 +157,7 @@ spec:
     filesystem: "ext4"
     label: "data_disk"
   symlinks:
-    /var/lib/: /data-small/var/lib
+    /var/lib: /data-small/var/lib
   affinityGroupIds:
   - etcd-affinity
 ---
@@ -246,14 +246,20 @@ If this is a standalone cluster or if it were serving as the management cluster 
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
-Number of worker nodes
+### workerNodeGroupConfigurations.count
+Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with CloudStack specific configuration for your nodes. See `CloudStackMachineConfig Fields` below.
 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+Minimum number of nodes for this node group's autoscaling configuration.
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations.taints
 A list of taints to apply to the nodes in the worker node group.

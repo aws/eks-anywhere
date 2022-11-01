@@ -35,6 +35,7 @@ func newPackageReaderTest(t *testing.T) *packageReaderTest {
 }
 
 func TestPackageReaderReadImagesFromBundlesSuccess(t *testing.T) {
+	t.Skip("Test consistently fails locally as it attempts to download unreachable artifacts (https://github.com/aws/eks-anywhere/issues/3881)")
 	tt := newPackageReaderTest(t)
 	bundles := &releasev1.Bundles{
 		Spec: releasev1.BundlesSpec{
@@ -110,6 +111,7 @@ func TestPackageReaderReadImagesFromBundlesFailWhenWrongBundle(t *testing.T) {
 }
 
 func TestPackageReaderReadChartsFromBundlesSuccess(t *testing.T) {
+	t.Skip("Test consistently fails locally as it attempts to download unreachable artifacts (https://github.com/aws/eks-anywhere/issues/3881)")
 	tt := newPackageReaderTest(t)
 	bundles := &releasev1.Bundles{
 		Spec: releasev1.BundlesSpec{

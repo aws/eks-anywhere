@@ -826,8 +826,8 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr:     true,
 		},
 		{
-			testName: "without worker nodes",
-			fileName: "testdata/cluster_without_worker_nodes.yaml",
+			testName: "tinkerbell without worker nodes",
+			fileName: "testdata/tinkerbell_cluster_without_worker_nodes.yaml",
 			wantCluster: &Cluster{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       ClusterKind,
@@ -868,6 +868,12 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			testName:    "nontinkerbell datacenter without worker nodes",
+			fileName:    "testdata/vsphere_cluster_without_worker_nodes.yaml",
+			wantCluster: nil,
+			wantErr:     true,
 		},
 		{
 			testName:    "without worker nodes but has control plane taints",
@@ -2630,6 +2636,222 @@ func TestValidateControlPlaneEndpoint(t *testing.T) {
 	}
 }
 
+func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "rolling upgrade strategy invalid",
+			wantErr: "ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "NotRollingUpdate"},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs not specified",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate"},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade invalid",
+			wantErr: "maxSurge for control plane must be 0 or 1",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 2}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 0}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 1}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid value -1",
+			wantErr: "ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: -1}},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateCPUpgradeRolloutStrategy(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "rolling upgrade strategy invalid",
+			wantErr: "WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "NotRollingUpdate"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs not specified",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade invalid",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 0,1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 1,0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 1, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 5,0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 3,1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values 3,-1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: -1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values -3,1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values -3,-1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: -1}},
+					}},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateMDUpgradeRolloutStrategy(&tt.cluster.Spec.WorkerNodeGroupConfigurations[0])
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))
@@ -2661,6 +2883,127 @@ func TestClusterWorkerNodeConfigCount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(5))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterCPUpgradeRolloutStrategyNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    ControlPlaneConfiguration
+	}{
+		{
+			name: "with control plane rollout upgrade strategy nil",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: ControlPlaneConfiguration{
+				Endpoint:               nil,
+				Count:                  1,
+				MachineGroupRef:        nil,
+				Taints:                 nil,
+				Labels:                 nil,
+				UpgradeRolloutStrategy: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterCPUpgradeRolloutStrategyNotNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    ControlPlaneConfiguration
+	}{
+		{
+			name: "with control plane rollout upgrade strategy non-nil",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: ControlPlaneConfiguration{
+				Endpoint:               nil,
+				Count:                  1,
+				MachineGroupRef:        nil,
+				Taints:                 nil,
+				Labels:                 nil,
+				UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 5}},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1), WithCPUpgradeRolloutStrategy(5, 2))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterMDUpgradeRolloutStrategyNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with md rollout upgrade strategy knobs not specified",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Count:           ptr.Int(1),
+					MachineGroupRef: nil,
+					Taints:          nil,
+					Labels:          nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with md rollout upgrade strategy",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Count:                  ptr.Int(1),
+					MachineGroupRef:        nil,
+					Taints:                 nil,
+					Labels:                 nil,
+					UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 2}},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1), WithWorkerMachineUpgradeRolloutStrategy(5, 2))
 			g := NewWithT(t)
 			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
 		})

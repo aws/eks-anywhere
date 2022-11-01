@@ -13,6 +13,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -21,6 +22,9 @@ var nutanixClusterConfigSpec string
 
 //go:embed testdata/datacenterConfig.yaml
 var nutanixDatacenterConfigSpec string
+
+//go:embed testdata/datacenterConfig_with_trust_bundle.yaml
+var nutanixDatacenterConfigSpecWithTrustBundle string
 
 //go:embed testdata/eksa-cluster.json
 var nutanixClusterConfigSpecJSON string
@@ -62,9 +66,9 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 		"eksa-unit-test": machineConf.Spec,
 	}
 
-	t.Setenv(nutanixUsernameKey, "admin")
-	t.Setenv(nutanixPasswordKey, "password")
-	creds := getCredsFromEnv()
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
 	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
 	assert.NotNil(t, builder)
 
@@ -99,9 +103,9 @@ func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
 	jsonMarshal = fakemarshal
 	defer restoremarshal(storedMarshal)
 
-	t.Setenv(nutanixUsernameKey, "admin")
-	t.Setenv(nutanixPasswordKey, "password")
-	creds := getCredsFromEnv()
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
 	builder := NewNutanixTemplateBuilder(nil, nil, nil, nil, creds, time.Now)
 	assert.NotNil(t, builder)
 

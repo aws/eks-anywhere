@@ -10,19 +10,36 @@ import (
 	"go.uber.org/multierr"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 )
 
-// Validator is a client to validate nutanix resources
+// Validator is a client to validate nutanix resources.
 type Validator struct {
-	client Client
+	client        Client
+	certValidator crypto.TlsValidator
 }
 
-// NewValidator returns a new validator client
-func NewValidator(client Client) *Validator {
-	return &Validator{client: client}
+// NewValidator returns a new validator client.
+func NewValidator(client Client, certValidator crypto.TlsValidator) *Validator {
+	return &Validator{
+		client:        client,
+		certValidator: certValidator,
+	}
 }
 
-// ValidateMachineConfig validates the Prism Element cluster, subnet, and image for the machine
+// ValidateDatacenterConfig validates the datacenter config.
+func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywherev1.NutanixDatacenterConfig) error {
+	return v.validateTrustBundleConfig(config.Spec)
+}
+
+func (v *Validator) validateTrustBundleConfig(dcConf anywherev1.NutanixDatacenterConfigSpec) error {
+	if dcConf.AdditionalTrustBundle == "" {
+		return nil
+	}
+	return v.certValidator.ValidateCert(dcConf.Endpoint, fmt.Sprintf("%d", dcConf.Port), dcConf.AdditionalTrustBundle)
+}
+
+// ValidateMachineConfig validates the Prism Element cluster, subnet, and image for the machine.
 func (v *Validator) ValidateMachineConfig(ctx context.Context, config *anywherev1.NutanixMachineConfig) error {
 	var errors error
 	if err := v.validateClusterConfig(ctx, config.Spec.Cluster); err != nil {
@@ -121,7 +138,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 	return nil
 }
 
-// findSubnetUUIDByName retrieves the subnet uuid by the given subnet name
+// findSubnetUUIDByName retrieves the subnet uuid by the given subnet name.
 func findSubnetUUIDByName(ctx context.Context, v3Client Client, subnetName string) (*string, error) {
 	res, err := v3Client.ListSubnet(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", subnetName)),
@@ -137,13 +154,13 @@ func findSubnetUUIDByName(ctx context.Context, v3Client Client, subnetName strin
 	return res.Entities[0].Metadata.UUID, nil
 }
 
-// findClusterUUIDByName retrieves the cluster uuid by the given cluster name
+// findClusterUUIDByName retrieves the cluster uuid by the given cluster name.
 func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName string) (*string, error) {
 	res, err := v3Client.ListCluster(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", clusterName)),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to find clluster by name %q: %v", clusterName, err)
+		return nil, fmt.Errorf("failed to find cluster by name %q: %v", clusterName, err)
 	}
 	entities := make([]*v3.ClusterIntentResponse, 0)
 	for _, entity := range res.Entities {
@@ -172,7 +189,7 @@ func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName str
 	return entities[0].Metadata.UUID, nil
 }
 
-// findImageUUIDByName retrieves the image uuid by the given image name
+// findImageUUIDByName retrieves the image uuid by the given image name.
 func findImageUUIDByName(ctx context.Context, v3Client Client, imageName string) (*string, error) {
 	res, err := v3Client.ListImage(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),

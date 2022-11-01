@@ -236,22 +236,12 @@ func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.VSphereDatac
 	return datacenterConfig
 }
 
-func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.VSphereMachineConfig {
-	machineConfigs, err := v1alpha1.GetVSphereMachineConfigs(path.Join(testDataDir, fileName))
-	if err != nil {
-		t.Fatalf("unable to get machine configs from file")
-	}
-	return machineConfigs
-}
-
 func givenProvider(t *testing.T) *vsphereProvider {
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	provider := newProviderWithKubectl(
 		t,
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		nil,
 	)
@@ -304,6 +294,7 @@ func setupContext(t *testing.T) {
 
 type providerTest struct {
 	*WithT
+	t                                  *testing.T
 	ctx                                context.Context
 	managementCluster, workloadCluster *types.Cluster
 	provider                           *vsphereProvider
@@ -314,6 +305,7 @@ type providerTest struct {
 	kubectl                            *mocks.MockProviderKubectlClient
 	govc                               *mocks.MockProviderGovcClient
 	resourceSetManager                 *mocks.MockClusterResourceSetManager
+	clientBuilder                      *mockVSphereClientBuilder
 }
 
 func newProviderTest(t *testing.T) *providerTest {
@@ -322,20 +314,10 @@ func newProviderTest(t *testing.T) *providerTest {
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
 	govc := mocks.NewMockProviderGovcClient(ctrl)
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
 	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	spec := givenClusterSpec(t, testClusterConfigMainFilename)
-	provider := newProvider(
-		t,
-		spec.VSphereDatacenter,
-		spec.VSphereMachineConfigs,
-		spec.Cluster,
-		govc,
-		kubectl,
-		resourceSetManager,
-		v,
-	)
-	return &providerTest{
+	p := &providerTest{
+		t:     t,
 		WithT: NewWithT(t),
 		ctx:   context.Background(),
 		managementCluster: &types.Cluster{
@@ -346,7 +328,6 @@ func newProviderTest(t *testing.T) *providerTest {
 			Name:           "test",
 			KubeconfigFile: "kubeconfig-w.kubeconfig",
 		},
-		provider:           provider,
 		cluster:            spec.Cluster,
 		clusterSpec:        spec,
 		datacenterConfig:   spec.VSphereDatacenter,
@@ -354,7 +335,11 @@ func newProviderTest(t *testing.T) *providerTest {
 		kubectl:            kubectl,
 		govc:               govc,
 		resourceSetManager: resourceSetManager,
+		clientBuilder:      vscb,
 	}
+	p.buildNewProvider()
+
+	return p
 }
 
 func (tt *providerTest) setExpectationsForDefaultDiskGovcCalls() {
@@ -382,26 +367,36 @@ func (tt *providerTest) setExpectationsForMachineConfigsVCenterValidation() {
 	}
 }
 
+func (tt *providerTest) buildNewProvider() {
+	tt.provider = newProvider(
+		tt.t,
+		tt.clusterSpec.VSphereDatacenter,
+		tt.clusterSpec.Cluster,
+		tt.govc,
+		tt.kubectl,
+		tt.resourceSetManager,
+		NewValidator(tt.govc, &DummyNetClient{}, tt.clientBuilder),
+	)
+}
+
 func TestNewProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	govc := NewDummyProviderGovcClient()
 	_, writer := test.NewWriter(t)
-	skipIpCheck := true
+	skipIPCheck := true
 
 	provider := NewProvider(
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		govc,
 		kubectl,
 		writer,
 		time.Now,
-		skipIpCheck,
+		skipIPCheck,
 		resourceSetManager,
 	)
 
@@ -417,12 +412,10 @@ func TestNewProviderCustomNet(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider := newProviderWithKubectl(
 		t,
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		kubectl,
 	)
@@ -432,7 +425,7 @@ func TestNewProviderCustomNet(t *testing.T) {
 	}
 }
 
-func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *vsphereProvider {
+func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *vsphereProvider {
 	ctrl := gomock.NewController(t)
 	govc := NewDummyProviderGovcClient()
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
@@ -441,7 +434,6 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereData
 	return newProvider(
 		t,
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		govc,
 		kubectl,
@@ -450,7 +442,7 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereData
 	)
 }
 
-func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient) *vsphereProvider {
+func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient) *vsphereProvider {
 	ctrl := gomock.NewController(t)
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
 	v := NewValidator(govc, &DummyNetClient{}, vscb)
@@ -459,7 +451,6 @@ func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacen
 	return newProvider(
 		t,
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		govc,
 		kubectl,
@@ -490,20 +481,19 @@ func setDefaultVSphereClientMock(vsc *govmomi_mocks.MockVSphereClient) error {
 	return nil
 }
 
-func newMockVSphereClientBuilder(ctrl *gomock.Controller) (VSphereClientBuilder, error) {
+func newMockVSphereClientBuilder(ctrl *gomock.Controller) (*mockVSphereClientBuilder, error) {
 	vsc := govmomi_mocks.NewMockVSphereClient(ctrl)
 	err := setDefaultVSphereClientMock(vsc)
 	mvscb := mockVSphereClientBuilder{vsc}
 	return &mvscb, err
 }
 
-func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient, kubectl ProviderKubectlClient, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider {
+func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient, kubectl ProviderKubectlClient, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider {
 	_, writer := test.NewWriter(t)
 	netClient := &DummyNetClient{}
 
 	return NewProviderCustomNet(
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		govc,
 		kubectl,
@@ -560,8 +550,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
 			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
-			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
-			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 			if provider == nil {
 				t.Fatalf("provider object is nil")
 			}
@@ -639,8 +628,7 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
 			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
-			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
-			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 			if provider == nil {
 				t.Fatalf("provider object is nil")
 			}
@@ -704,8 +692,7 @@ func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T
 			kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster)))
 
 			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
-			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
-			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 			if provider == nil {
 				t.Fatalf("provider object is nil")
 			}
@@ -783,7 +770,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
 			kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster)))
 			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
-			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.VSphereMachineConfigs, clusterSpec.Cluster, kubectl)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 			if provider == nil {
 				t.Fatalf("provider object is nil")
 			}
@@ -851,8 +838,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	}
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 	if provider == nil {
 		t.Fatalf("provider object is nil")
 	}
@@ -868,9 +854,9 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, controlPlaneMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(machineConfigs[controlPlaneMachineConfigName], nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, workerNodeMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(machineConfigs[workerNodeMachineConfigName], nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, etcdMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(machineConfigs[etcdMachineConfigName], nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, controlPlaneMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName], nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, workerNodeMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName], nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, etcdMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[etcdMachineConfigName], nil)
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, clusterSpec.Cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldCP, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil).Times(2)
 	kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, clusterSpec.Cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadmCluster, nil)
@@ -894,8 +880,7 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 	if provider == nil {
 		t.Fatalf("provider object is nil")
 	}
@@ -924,8 +909,7 @@ func TestProviderGenerateCAPISpecForCreateWithMultipleWorkerNodeGroups(t *testin
 	clusterSpec := givenClusterSpec(t, "cluster_main_multiple_worker_node_groups.yaml")
 
 	datacenterConfig := givenDatacenterConfig(t, "cluster_main_multiple_worker_node_groups.yaml")
-	machineConfigs := givenMachineConfigs(t, "cluster_main_multiple_worker_node_groups.yaml")
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 	if provider == nil {
 		t.Fatalf("provider object is nil")
 	}
@@ -952,13 +936,10 @@ func TestProviderGenerateStorageClass(t *testing.T) {
 }
 
 func TestProviderGenerateStorageClassDisableCSI(t *testing.T) {
-	provider := givenProvider(t)
-	provider.datacenterConfig.Spec.DisableCSI = true
-
-	storageClassManifest := provider.GenerateStorageClass()
-	if storageClassManifest != nil {
-		t.Fatalf("Expected nil")
-	}
+	tt := newProviderTest(t)
+	tt.clusterSpec.VSphereDatacenter.Spec.DisableCSI = true
+	tt.buildNewProvider()
+	tt.Expect(tt.provider.GenerateStorageClass()).To(BeNil())
 }
 
 func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
@@ -970,7 +951,6 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
@@ -979,7 +959,6 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	provider := newProvider(
 		t,
 		datacenterConfig,
-		machineConfigs,
 		clusterSpec.Cluster,
 		govc,
 		kubectl,
@@ -1009,7 +988,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
@@ -1018,7 +996,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 	provider := newProvider(
 		t,
 		datacenterConfig,
-		machineConfigs,
 		clusterSpec.Cluster,
 		govc,
 		kubectl,
@@ -1047,7 +1024,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = bottlerocketOSTag
@@ -1056,7 +1032,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 	provider := newProvider(
 		t,
 		datacenterConfig,
-		machineConfigs,
 		clusterSpec.Cluster,
 		govc,
 		kubectl,
@@ -1084,11 +1059,10 @@ func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = ubuntuOSTag
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -1111,11 +1085,10 @@ func TestProviderGenerateDeploymentFileWithMirrorAndCertConfig(t *testing.T) {
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = ubuntuOSTag
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -1144,11 +1117,10 @@ func TestProviderGenerateDeploymentFileWithMirrorAuth(t *testing.T) {
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = ubuntuOSTag
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -1175,7 +1147,7 @@ func TestUpdateKubeConfig(t *testing.T) {
 
 func TestBootstrapClusterOpts(t *testing.T) {
 	provider := givenProvider(t)
-	clusterSpec := givenEmptyClusterSpec()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
 	bootstrapClusterOps, err := provider.BootstrapClusterOpts(clusterSpec)
 	if err != nil {
@@ -1257,7 +1229,6 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	setupContext(t)
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -1269,7 +1240,7 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 		KubeconfigFile:     "kc.kubeconfig",
 		ExistingManagement: true,
 	}
-	for _, config := range newMachineConfigs {
+	for _, config := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
 	}
 	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{}, nil)
@@ -1287,8 +1258,6 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	setupContext(t)
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
@@ -1302,7 +1271,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 
 	idx := 0
 	var existingMachine string
-	for _, config := range newMachineConfigs {
+	for _, config := range clusterSpec.VSphereMachineConfigs {
 		if idx == 0 {
 			kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{config}, nil)
 			existingMachine = config.Name
@@ -1349,7 +1318,6 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	setupContext(t)
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -1362,7 +1330,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 		ExistingManagement: true,
 	}
 
-	for _, config := range newMachineConfigs {
+	for _, config := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
 	}
 	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{datacenterConfig}, nil)
@@ -1399,24 +1367,18 @@ func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *
 }
 
 func TestSetupAndValidateDeleteCluster(t *testing.T) {
-	ctx := context.Background()
-	provider := givenProvider(t)
-	setupContext(t)
+	tt := newProviderTest(t)
 
-	err := provider.SetupAndValidateDeleteCluster(ctx, nil, nil)
-	if err != nil {
-		t.Fatalf("unexpected failure %v", err)
-	}
+	tt.Expect(
+		tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.managementCluster, tt.clusterSpec),
+	).To(Succeed())
 }
 
 func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
-	ctx := context.Background()
-	provider := givenProvider(t)
-	setupContext(t)
+	tt := newProviderTest(t)
 	os.Unsetenv(config.EksavSpherePasswordKey)
 
-	err := provider.SetupAndValidateDeleteCluster(ctx, nil, nil)
-
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.managementCluster, tt.clusterSpec)
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
@@ -1468,7 +1430,7 @@ func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
@@ -1488,7 +1450,7 @@ func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
@@ -1509,7 +1471,7 @@ func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
@@ -1541,11 +1503,10 @@ func TestVersion(t *testing.T) {
 func TestProviderBootstrapSetup(t *testing.T) {
 	ctx := context.Background()
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterConfig, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl)
 	cluster := types.Cluster{
 		Name:           "test",
 		KubeconfigFile: "",
@@ -1585,10 +1546,9 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 	ctx := context.Background()
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterConfig, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterConfig, kubectl)
 	cluster := types.Cluster{
 		Name:           "test",
 		KubeconfigFile: "",
@@ -1811,14 +1771,14 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+	if clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
 		t.Fatalf("sshAuthorizedKey has not changed for control plane machine")
 	}
 }
@@ -1836,7 +1796,7 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyErrorGenerating(t *testing.T) {
 	writer := mockswriter.NewMockFileWriter(ctrl)
 	provider.writer = writer
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 
 	writer.EXPECT().Write(
 		test.OfType("string"), gomock.Any(), gomock.Not(gomock.Nil()),
@@ -1860,14 +1820,14 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyWorker(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+	if clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
 		t.Fatalf("sshAuthorizedKey has not changed for worker node machine")
 	}
 }
@@ -1881,14 +1841,14 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyEtcd(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+	if clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
 		t.Fatalf("sshAuthorizedKey did not get generated for etcd machine")
 	}
 }
@@ -1902,11 +1862,11 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 
 	setupContext(t)
 
@@ -1914,19 +1874,19 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+	if clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
 		t.Fatalf("sshAuthorizedKey has not changed for control plane machine")
 	}
-	if provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+	if clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
 		t.Fatalf("sshAuthorizedKey has not changed for worker node machine")
 	}
-	if provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+	if clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
 		t.Fatalf("sshAuthorizedKey not generated for etcd machines")
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] != provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] {
+	if clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] != clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] {
 		t.Fatalf("sshAuthorizedKey not the same for controlplane and worker machines")
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] != provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] {
+	if clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] != clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] {
 		t.Fatalf("sshAuthorizedKey not the same for controlplane and etcd machines")
 	}
 }
@@ -2041,7 +2001,6 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	govc.osTag = bottlerocketOSTag
 	provider := newProviderWithGovc(t,
 		clusterSpec.VSphereDatacenter,
-		clusterSpec.VSphereMachineConfigs,
 		clusterSpec.Cluster,
 		govc,
 	)
@@ -2243,26 +2202,23 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 }
 
 func TestGetDatacenterConfig(t *testing.T) {
-	provider := givenProvider(t)
-	provider.datacenterConfig.TypeMeta.Kind = "kind"
+	tt := newProviderTest(t)
 
-	providerConfig := provider.DatacenterConfig(givenEmptyClusterSpec())
-	if providerConfig.Kind() != "kind" {
-		t.Fatal("Unexpected error DatacenterConfig: kind field not found")
-	}
+	providerConfig := tt.provider.DatacenterConfig(tt.clusterSpec)
+	tt.Expect(providerConfig).To(BeAssignableToTypeOf(&v1alpha1.VSphereDatacenterConfig{}))
+	d := providerConfig.(*v1alpha1.VSphereDatacenterConfig)
+	tt.Expect(d).To(Equal(tt.clusterSpec.VSphereDatacenter))
 }
 
 func TestValidateNewSpecSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 	setupContext(t)
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
-
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	clusterVsphereSecret := &v1.Secret{
 		TypeMeta:   metav1.TypeMeta{},
@@ -2272,36 +2228,29 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 			"password": []byte("vsphere_password"),
 		},
 	}
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-	c := &types.Cluster{}
 
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
+	for _, config := range clusterSpec.VSphereMachineConfigs {
+		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(config, nil)
 	}
 	kubectl.EXPECT().GetSecretFromNamespace(gomock.Any(), gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
 
-	err := provider.ValidateNewSpec(context.TODO(), c, clusterSpec)
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.NoError(t, err, "No error should be returned when previous spec == new spec")
 }
 
 func TestValidateNewSpecMutableFields(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 	setupContext(t)
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newDatacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	for _, config := range newMachineConfigs {
+	for _, config := range newClusterSpec.VSphereMachineConfigs {
 		config.Spec.ResourcePool = "new-" + config.Spec.ResourcePool
 		config.Spec.Folder = "new=" + config.Spec.Folder
 	}
@@ -2315,210 +2264,160 @@ func TestValidateNewSpecMutableFields(t *testing.T) {
 		},
 	}
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(newDatacenterConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(clusterSpec.VSphereDatacenter, nil)
+	for _, config := range clusterSpec.VSphereMachineConfigs {
+		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(config, nil)
 	}
 	kubectl.EXPECT().GetSecretFromNamespace(gomock.Any(), gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
 
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.NoError(t, err, "No error should be returned when modifying mutable fields")
 }
 
 func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Datacenter = "new-" + newProviderConfig.Spec.Datacenter
+	clusterSpec.VSphereDatacenter.Spec.Datacenter = "new-" + clusterSpec.VSphereDatacenter.Spec.Datacenter
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
+	for _, config := range clusterSpec.VSphereMachineConfigs {
+		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(config, nil)
 	}
 
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.Error(t, err, "Datacenter should be immutable")
 }
 
 func TestValidateNewSpecMachineConfigNotFound(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Datacenter = "new-" + newProviderConfig.Spec.Datacenter
+	newClusterSpec.VSphereDatacenter.Spec.Datacenter = "new-" + newClusterSpec.VSphereDatacenter.Spec.Datacenter
+	newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "missing-machine-group"
+	newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = "missing-machine-group"
+	newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "missing-machine-group"
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig.DeepCopy()
-		s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "missing-machine-group"
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = "missing-machine-group"
-		s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "missing-machine-group"
-	})
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
 
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.Errorf(t, err, "can't find machine config missing-machine-group in vsphere provider machine configs")
 }
 
 func TestValidateNewSpecServerImmutable(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Server = "new-" + newProviderConfig.Spec.Server
+	newClusterSpec.VSphereDatacenter.Spec.Server = "new-" + newClusterSpec.VSphereDatacenter.Spec.Server
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
+	for _, config := range clusterSpec.VSphereMachineConfigs {
+		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(config, nil)
 	}
 
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
 	assert.Error(t, err, "Server should be immutable")
 }
 
 func TestValidateNewSpecStoragePolicyNameImmutableControlPlane(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	controlPlaneMachineConfigName := newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	controlPlaneMachineConfig := newClusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName]
+	controlPlaneMachineConfig.Spec.StoragePolicyName = "new-" + controlPlaneMachineConfig.Spec.StoragePolicyName
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	controlPlaneMachineConfigName := clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	newMachineConfigs[controlPlaneMachineConfigName].Spec.StoragePolicyName = "new-" + newMachineConfigs[controlPlaneMachineConfigName].Spec.StoragePolicyName
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName], nil).AnyTimes()
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[controlPlaneMachineConfigName], nil)
-
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "StoragePolicyName should be immutable")
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
+	assert.ErrorContains(t, err, "spec.storagePolicyName is immutable", "StoragePolicyName should be immutable")
 }
 
 func TestValidateNewSpecStoragePolicyNameImmutableWorker(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	workerMachineConfigName := newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	workerMachineConfig := newClusterSpec.VSphereMachineConfigs[workerMachineConfigName]
+	workerMachineConfig.Spec.StoragePolicyName = "new-" + workerMachineConfig.Spec.StoragePolicyName
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	workerMachineConfigName := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	newMachineConfigs[workerMachineConfigName].Spec.StoragePolicyName = "new-" + newMachineConfigs[workerMachineConfigName].Spec.StoragePolicyName
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[workerMachineConfigName], nil).AnyTimes()
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[workerMachineConfigName], nil)
-
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "StoragePolicyName should be immutable")
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
+	assert.ErrorContains(t, err, "spec.storagePolicyName is immutable", "StoragePolicyName should be immutable")
 }
 
 func TestValidateNewSpecOSFamilyImmutableControlPlane(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	newClusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	controlPlaneMachineConfigName := clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	newMachineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName], nil).AnyTimes()
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[controlPlaneMachineConfigName], nil)
-
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "OSFamily should be immutable")
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
+	assert.ErrorContains(t, err, "spec.osFamily is immutable", "OSFamily should be immutable")
 }
 
 func TestValidateNewSpecOSFamilyImmutableWorker(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 
 	provider := givenProvider(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	workerMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	newClusterSpec.VSphereMachineConfigs[workerMachineConfigName].Spec.OSFamily = "bottlerocket"
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	workerMachineConfigName := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	newMachineConfigs[workerMachineConfigName].Spec.OSFamily = "bottlerocket"
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereMachineConfigs[workerMachineConfigName], nil).AnyTimes()
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[workerMachineConfigName], nil)
-
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "OSFamily should be immutable")
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
+	assert.ErrorContains(t, err, "spec.osFamily is immutable", "OSFamily should be immutable")
 }
 
 func TestChangeDiffNoChange(t *testing.T) {
@@ -2618,8 +2517,7 @@ func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {
 	clusterSpec.Cluster.Spec.PodIAMConfig = &v1alpha1.PodIAMConfig{ServiceAccountIssuer: "https://test"}
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 	if provider == nil {
 		t.Fatalf("provider object is nil")
 	}
@@ -2648,8 +2546,7 @@ func TestProviderGenerateCAPISpecForCreateWithCustomResolvConf(t *testing.T) {
 	clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf = &v1alpha1.ResolvConf{Path: "/etc/my-custom-resolv.conf"}
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 	if provider == nil {
 		t.Fatalf("provider object is nil")
 	}
@@ -2677,8 +2574,7 @@ func TestProviderGenerateCAPISpecForCreateVersion121(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMain121Filename)
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMain121Filename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMain121Filename)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 	if provider == nil {
 		t.Fatalf("provider object is nil")
 	}
@@ -2707,8 +2603,7 @@ func TestProviderGenerateCAPISpecForCreateVersion121Controller(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMain121Filename)
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMain121Filename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMain121Filename)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 
 	if provider == nil {
 		t.Fatalf("provider object is nil")
@@ -2734,13 +2629,12 @@ func TestSetupAndValidateCreateManagementDoesNotCheckIfMachineAndDataCenterExist
 	setupContext(t)
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	for _, config := range newMachineConfigs {
+	for _, config := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, gomock.Any(), config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).Times(0)
 	}
 	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), datacenterConfig.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{}, nil).Times(0)
@@ -2756,20 +2650,17 @@ func TestClusterSpecChangedNoChanges(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	clusterSpec := givenEmptyClusterSpec()
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cluster := &types.Cluster{
 		KubeconfigFile: "test",
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	for _, value := range machineConfigsMap {
+	for _, value := range clusterSpec.VSphereMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, value.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(value, nil)
 	}
-	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+	provider := newProviderWithKubectl(t, dcConfig, clusterSpec.Cluster, kubectl)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
 
 	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
 	if err != nil {
@@ -2784,21 +2675,18 @@ func TestClusterSpecChangedDatacenterConfigChanged(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	clusterSpec := givenEmptyClusterSpec()
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
 	cluster := &types.Cluster{
 		KubeconfigFile: "test",
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	shinyModifiedDcConfig := dcConfig.DeepCopy()
-	shinyModifiedDcConfig.Spec.Datacenter = "shiny-new-api-datacenter"
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	newClusterSpec.VSphereDatacenter.Spec.Datacenter = "shiny-new-api-datacenter"
 
-	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(shinyModifiedDcConfig, nil)
+	provider := newProviderWithKubectl(t, dcConfig, clusterSpec.Cluster, kubectl)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(clusterSpec.VSphereDatacenter, nil)
 
-	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
+	specChanged, err := provider.UpgradeNeeded(ctx, newClusterSpec, clusterSpec, cluster)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -2811,19 +2699,16 @@ func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	clusterSpec := givenEmptyClusterSpec()
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cluster := &types.Cluster{
 		KubeconfigFile: "test",
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-	modifiedMachineConfig := machineConfigsMap[cc.MachineConfigRefs()[0].Name].DeepCopy()
+	modifiedMachineConfig := clusterSpec.VSphereMachineConfigs[clusterSpec.Cluster.MachineConfigRefs()[0].Name].DeepCopy()
 	modifiedMachineConfig.Spec.NumCPUs = 4
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(modifiedMachineConfig, nil)
-	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+	provider := newProviderWithKubectl(t, dcConfig, clusterSpec.Cluster, kubectl)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
 
 	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
 	if err != nil {
@@ -2882,8 +2767,7 @@ func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 			clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
 			datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-			machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+			provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 			if provider == nil {
 				t.Fatalf("provider object is nil")
 			}
@@ -2904,5 +2788,44 @@ func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestVsphereProviderMachineConfigsSelfManagedCluster(t *testing.T) {
+	tt := newProviderTest(t)
+	machineConfigs := tt.provider.MachineConfigs(tt.clusterSpec)
+	tt.Expect(machineConfigs).To(HaveLen(3))
+	for _, m := range machineConfigs {
+		tt.Expect(m).To(BeAssignableToTypeOf(&v1alpha1.VSphereMachineConfig{}))
+		machineConfig := m.(*v1alpha1.VSphereMachineConfig)
+		tt.Expect(machineConfig.IsManaged()).To(BeFalse())
+
+		if machineConfig.Name == tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name {
+			tt.Expect(machineConfig.IsControlPlane()).To(BeTrue())
+		}
+
+		if machineConfig.Name == tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name {
+			tt.Expect(machineConfig.IsEtcd()).To(BeTrue())
+		}
+	}
+}
+
+func TestVsphereProviderMachineConfigsManagedCluster(t *testing.T) {
+	tt := newProviderTest(t)
+	tt.clusterSpec.Cluster.SetManagedBy("my-management-cluster")
+	machineConfigs := tt.provider.MachineConfigs(tt.clusterSpec)
+	tt.Expect(machineConfigs).To(HaveLen(3))
+	for _, m := range machineConfigs {
+		tt.Expect(m).To(BeAssignableToTypeOf(&v1alpha1.VSphereMachineConfig{}))
+		machineConfig := m.(*v1alpha1.VSphereMachineConfig)
+		tt.Expect(machineConfig.IsManaged()).To(BeTrue())
+
+		if machineConfig.Name == tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name {
+			tt.Expect(machineConfig.IsControlPlane()).To(BeTrue())
+		}
+
+		if machineConfig.Name == tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name {
+			tt.Expect(machineConfig.IsEtcd()).To(BeTrue())
+		}
 	}
 }

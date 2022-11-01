@@ -401,6 +401,33 @@ func TestMinimumHardwareAvailableAssertionForCreate_InsufficientFailsWithoutExte
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
+func TestAssertionsForScaleUpDown_Success(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, clusterSpec.Spec, true)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForScaleUpDown_FailsScaleUpAndRollingError(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, clusterSpec.Spec, true)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.WorkerNodeGroupConfigurations()[0].Count = ptr.Int(2)
+	g.Expect(assertion(newClusterSpec)).NotTo(gomega.Succeed())
+}
+
 func TestHardwareSatisfiesOnlyOneSelectorAssertion_MeetsOnlyOneSelector(t *testing.T) {
 	g := gomega.NewWithT(t)
 

@@ -123,6 +123,13 @@ func (c *VSphereMachineConfig) Validate() error {
 	return validateVSphereMachineConfig(c)
 }
 
+// ValidateHasTemplate verifies that a VSphereMachineConfig object has a template.
+// Specifying a template is required when submitting an object via webhook,
+// as we only support auto-importing templates when creating a cluster via CLI.
+func (c *VSphereMachineConfig) ValidateHasTemplate() error {
+	return validateVSphereMachineConfigHasTemplate(c)
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig

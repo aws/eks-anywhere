@@ -1,14 +1,18 @@
+DOCS_FOLDER=$(shell git rev-parse --show-toplevel)/docs
 IMAGE_REGISTRY ?= public.ecr.aws/eks-distro-build-tooling
 CONTAINER_IMAGE   = $(IMAGE_REGISTRY)/eks-a-hugo
 CONTAINER_RUN     = docker run --rm --interactive --tty --volume $(CURDIR)/../:/src
 DOCS_ARCHIVE      = public.zip
+HTMLTEST_VERSION?=v0.16.0
 
 .PHONY: help build release submodule zip deploy serve server container-build container-serve container-server clean
 
 help: ## Show this help. Requires locally installed npm and hugo.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-build: submodule ## Generate the static site into the /public folder
+build: build-docs htmltest
+
+build-docs: submodule ## Generate the static site into the /public folder
 	npm install
 	hugo --environment production --cleanDestinationDir
 
@@ -17,6 +21,12 @@ release: build
 submodule: ## initialize the docsy theme submodule
 	git submodule update --init --recursive
 	cd themes/docsy; git am ../../patches/0001-Make-docsy-js-files-static.patch; cd ../..
+
+htmltest: install-htmltest
+	bin/htmltest -c $(DOCS_FOLDER)/.htmltest.yml -s $(DOCS_FOLDER)/public
+
+install-htmltest:
+	curl https://htmltest.wjdp.uk | bash -s $(HTMLTEST_VERSION)
 
 submodule-reset: ## reset submodules to tracked commit
 	rm -rf themes/docsy

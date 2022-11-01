@@ -7,11 +7,10 @@ import (
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const (
-	nutanixUsernameKey = "NUTANIX_USER"
-	nutanixPasswordKey = "NUTANIX_PASSWORD"
 	nutanixEndpointKey = "NUTANIX_ENDPOINT"
 )
 
@@ -22,9 +21,10 @@ func setupEnvVars(datacenterConfig *anywherev1.NutanixDatacenterConfig) error {
 	return nil
 }
 
-func getCredsFromEnv() credentials.BasicAuthCredential {
-	username := os.Getenv(nutanixUsernameKey)
-	password := os.Getenv(nutanixPasswordKey)
+// GetCredsFromEnv returns nutanix credentials based on the environment.
+func GetCredsFromEnv() credentials.BasicAuthCredential {
+	username := os.Getenv(constants.NutanixUsernameKey)
+	password := os.Getenv(constants.NutanixPasswordKey)
 	return credentials.BasicAuthCredential{
 		PrismCentral: credentials.PrismCentralBasicAuth{
 			BasicAuth: credentials.BasicAuth{

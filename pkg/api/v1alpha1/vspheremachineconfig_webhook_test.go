@@ -690,6 +690,14 @@ func TestVSphereMachineConfigValidateCreateResourcePoolNotSet(t *testing.T) {
 	g.Expect(config.ValidateCreate()).To(MatchError(ContainSubstring("resourcePool is not set or is empty")))
 }
 
+func TestVSphereMachineConfigValidateCreateTemplateNotSet(t *testing.T) {
+	config := vsphereMachineConfig()
+	config.Spec.Template = ""
+
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).To(MatchError(ContainSubstring("template field is required")))
+}
+
 func TestVSphereMachineConfigSetDefaults(t *testing.T) {
 	g := NewWithT(t)
 
@@ -711,6 +719,7 @@ func vsphereMachineConfig() v1alpha1.VSphereMachineConfig {
 			ResourcePool: "my-resourcePool",
 			Datastore:    "my-datastore",
 			OSFamily:     "ubuntu",
+			Template:     "/Datacenter/vm/Templates/bottlerocket-v1.23.12-kubernetes-1-23-eks-7-amd64-d44065e",
 		},
 		Status: v1alpha1.VSphereMachineConfigStatus{},
 	}

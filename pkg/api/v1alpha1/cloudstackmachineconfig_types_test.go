@@ -258,7 +258,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {
 	g.Expect(err != nil).To(BeTrue())
 	g.Expect(fieldName == "mountPath").To(BeTrue())
 	g.Expect(fieldValue == "/").To(BeTrue())
-	g.Expect(err.Error() == "must be non-empty and starts with /").To(BeTrue())
+	g.Expect(err.Error() == "must be non-empty and start with /").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.T) {
@@ -276,7 +276,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.
 	g.Expect(err != nil).To(BeTrue())
 	g.Expect(fieldName == "mountPath").To(BeTrue())
 	g.Expect(fieldValue == "data").To(BeTrue())
-	g.Expect(err.Error() == "must be non-empty and starts with /").To(BeTrue())
+	g.Expect(err.Error() == "must be non-empty and start with /").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingValid(t *testing.T) {

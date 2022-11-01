@@ -446,7 +446,7 @@ coverage-view-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh)
 coverage-view-patch: $(SETUP_ENVTEST)
 coverage-view-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 coverage-view-patch:
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) -coverprofile=$(COVER_PROFILE) -covermode=atomic $(GO_PKGS)
+	-$(MAKE) unit-test-patch GO_TEST_FLAGS="-coverprofile=$(COVER_PROFILE) -covermode=atomic"
 	$(GO) tool cover -html=$(COVER_PROFILE)
 	@echo Reminder: $@ is not a substitute for make unit-test
 
@@ -516,6 +516,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/fetch.go -package=mocks -source "pkg/clusterapi/fetch.go"
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
+	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/validator.go -package=mocks -source "pkg/crypto/validator.go" TlsValidator
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
@@ -616,6 +617,10 @@ conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance te
 eksa-components-override:
 	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL) $(CLUSTER_CONTROLLER_IMAGE)
 
+.PHONY: bundles-override-local-e2e-tests
+bundles-override-local-e2e-tests: docker-build docker-push eksa-components-override
+	echo "Don't forget to export T_BUNDLES_OVERRIDE=true before running the tests"
+
 .PHONY: help
 help:  ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[%\/0-9A-Za-z_-]+:.*?##/ { printf "  \033[36m%-45s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -641,15 +646,6 @@ generate-core-manifests: $(CONTROLLER_GEN) ## Generate manifests for the core pr
 		output:webhook:dir=./config/webhook \
 		webhook
 
-REGISTRY ?= public.ecr.aws/a2k4d8v8
-IMAGE_NAME ?= eksa-cluster-controller
-CONTROLLER_IMG ?= $(REGISTRY)/$(IMAGE_NAME)
-
-TAG ?= dev
-ARCH ?= amd64
-
-CONTROLLER_IMG_TAGGED ?= $(CONTROLLER_IMG)-$(ARCH):$(TAG)
-
 LDFLAGS := $(shell hack/version.sh)
 
 .PHONY: docker-build
@@ -663,11 +659,11 @@ docker-build-core: ## Build the docker image for controller-manager
 	--build-arg TARGETARCH=$(GO_ARCH) \
 	--build-arg TARGETOS=$(GO_OS) \
 	--build-arg BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
-    . -t $(CONTROLLER_IMG_TAGGED) -f $(DOCKERFILE_FOLDER)/Dockerfile
+    . -t $(CLUSTER_CONTROLLER_IMAGE) -f $(DOCKERFILE_FOLDER)/Dockerfile
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
-	docker push $(CONTROLLER_IMG_TAGGED)
+	docker push $(CLUSTER_CONTROLLER_IMAGE)
 
 ## TODO update release folder
 RELEASE_DIR := config/manifest

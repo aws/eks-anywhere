@@ -10,7 +10,7 @@ The CIS Benchmark self-assessment guide serves to help EKS Anywhere users evalua
 
 You can verify the security posture of your EKS Anywhere cluster by using a tool called [`kube-bench`](https://github.com/aquasecurity/kube-bench). The ideal way to run the benchmark tests on your EKS Anywhere cluster is to apply the [Kube-bench Job YAMLs](https://github.com/aws/eks-anywhere/blob/main/test/kube-bench/jobs) to the cluster. This runs the `kube-bench` tests on a Pod on the cluster, and the logs of the Pod provide the test results.
 
-Kube-bench currently does not support unstacked `etcd` topology (which is the default for EKS Anywhere), so the following checks are skipped in the default kube-bench Job YAML. If you created your EKS Anywhere cluster with stacked `etcd` configuration, you can apply the stacked `etcd` [Job YAML](jobs/controlplane/kube-bench-stacked-etcd.yaml) instead.
+Kube-bench currently does not support unstacked `etcd` topology (which is the default for EKS Anywhere), so the following checks are skipped in the default kube-bench Job YAML. If you created your EKS Anywhere cluster with stacked `etcd` configuration, you can apply the stacked `etcd` [Job YAML](https://github.com/aws/eks-anywhere/blob/main/test/kube-bench/jobs/controlplane/kube-bench-stacked-etcd.yaml) instead.
 
 | Check number | Check description |
 | :---: | :---: |
