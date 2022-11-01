@@ -193,8 +193,8 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.3 h1:frW4ikGcxfAEDfmQqWgMLp+F1n4n
 github.com/aws/aws-sdk-go-v2/service/sso v1.11.3/go.mod h1:7UQ/e69kU7LDPtY40OyoHYgRmgfGM4mgsLYtcObdveU=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 h1:cJGRyzCSVwZC7zZZ1xbx9m32UnrKydRYhOvcD1NYP9Q=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3/go.mod h1:bfBj0iVmsUyUg4weDB4NxktD9rDGeKSVWnjTnwbx9b8=
-github.com/aws/eks-anywhere-packages v0.2.15 h1:9cjd0fG4ya530otGafLjDLvEkpNRbRWs4aRRO9nlES8=
-github.com/aws/eks-anywhere-packages v0.2.15/go.mod h1:qNCSi6k9tb/9ztf2x98B32EDeIr/xwHemB7YNxtxd3U=
+github.com/aws/eks-anywhere-packages v0.2.8 h1:v8RbLypdpVPyQ0Cd7e5ln4Wlhd6STv3F53nObMlOqcA=
+github.com/aws/eks-anywhere-packages v0.2.8/go.mod h1:qNCSi6k9tb/9ztf2x98B32EDeIr/xwHemB7YNxtxd3U=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
 github.com/aws/smithy-go v1.11.2/go.mod h1:3xHYmszWVx2c0kIwQeEVf9uSm4fYZt67FBJnwub1bgM=
@@ -717,6 +717,10 @@ github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/inconshreveable/mousetrap v1.0.1 h1:U3uMjPSQEBMNp1lFxmllqCPM6P5u/Xq7Pgzkat/bFNc=
 github.com/inconshreveable/mousetrap v1.0.1/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
+github.com/itchyny/gojq v0.12.6 h1:VjaFn59Em2wTxDNGcrRkDK9ZHMNa8IksOgL13sLL4d0=
+github.com/itchyny/gojq v0.12.6/go.mod h1:ZHrkfu7A+RbZLy5J1/JKpS4poEqrzItSTGDItqsfP0A=
+github.com/itchyny/timefmt-go v0.1.3 h1:7M3LGVDsqcd0VZH2U+x393obrzZisp7C0uEe921iRkU=
+github.com/itchyny/timefmt-go v0.1.3/go.mod h1:0osSSCQSASBJMsIZnhAaF1C2fCBTJZXrnj37mG8/c+A=
 github.com/j-keck/arping v0.0.0-20160618110441-2cf9dc699c56/go.mod h1:ymszkNOg6tORTn+6F6j+Jc8TOr5osrynvN6ivFWZ2GA=
 github.com/jacobweinstock/registrar v0.4.6 h1:0O3g2jT2Lx+Bf+yl4QsMUN48fVZxUpM3kS+NtIJ+ucw=
 github.com/jacobweinstock/registrar v0.4.6/go.mod h1:IDx65tQ7DLJ2UqiVjE1zo74jMZZfel9YZW8VrC26m6o=
