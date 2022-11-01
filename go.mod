@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
 	github.com/aws/aws-sdk-go-v2/credentials v1.11.2
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/eks-anywhere-packages v0.2.15
+	github.com/aws/eks-anywhere-packages v0.2.8
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
@@ -126,6 +126,8 @@ require (
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/itchyny/gojq v0.12.6 // indirect
+	github.com/itchyny/timefmt-go v0.1.3 // indirect
 	github.com/jacobweinstock/registrar v0.4.6 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
