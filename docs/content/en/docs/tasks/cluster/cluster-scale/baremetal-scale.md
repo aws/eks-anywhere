@@ -8,7 +8,7 @@ description: >
 ---
 
 ### Scaling nodes on Bare Metal clusters
-When you are horizontally scaling your Bare Metal EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
+When you are horizontally scaling your bare metal EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
 
 See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/) documentation to learn the differences between the control plane and the data plane (worker nodes).
 
@@ -29,8 +29,8 @@ spec:
   - count: 1     # increase this number to horizontally scale your data plane
 ```
 
-Next, you must ensure you have enough available hardware for the scale-up operation to function. Available hardware could have been fed to the cluster as extra hardware during a prior create command, or could be fed to the cluster during the scale-up process by providing the hardware CSV file to the upgrade cluster command (explained in detail below).
-For scale-down operation, you can skip directly to the upgrade cluster command.
+Next, you must ensure you have enough available hardware for the scale up operation to function. Available hardware could have been fed to the cluster as extra hardware during a prior create command, or could be fed to the cluster during the scale up process by providing the hardware CSV file to the upgrade cluster command (explained in detail below).
+For scale down operation, you can skip directly to the [upgrade cluster command]({{< relref "baremetal-scale/#upgrade-cluster-command-for-scale-updown" >}}).
 
 To check if you have enough available hardware for scale up, you can use the `kubectl` command below to check if there are hardware with the selector labels corresponding to the controlplane/worker node group and without the `ownerName` label. 
 
@@ -50,13 +50,7 @@ eksa-worker1                    type=worker-group-1,v1alpha1.tinkerbell.org/owne
 eksa-worker2                    type=worker-group-1
 ```
 
-If you don't have any available hardware that match this requirement in the cluster, you can [setup a new hardware CSV]({{< relref "../../../reference/baremetal/bare-preparation/#prepare-hardware-inventory" >}}). You can feed this hardware inventory file during the upgrade cluster command as shown below.
-
-#### Upgrade Cluster Command for Scale Up/Down
-
-```bash
-eksctl anywhere upgrade cluster -f cluster.yaml --hardware-csv <hardware.csv>
-```
+If you don't have any available hardware that match this requirement in the cluster, you can [setup a new hardware CSV]({{< relref "../../../reference/baremetal/bare-preparation/#prepare-hardware-inventory" >}}). You can feed this hardware inventory file during the [upgrade cluster command]({{< relref "baremetal-scale/#upgrade-cluster-command-for-scale-updown" >}}).
 
 or 
 
@@ -66,8 +60,22 @@ Prior to running the upgrade cluster command shown above, you can run the follow
 eksctl anywhere generate hardware -z <hardware.csv> | kubectl apply -f -
 ```
 
+#### Upgrade Cluster Command for Scale Up/Down
+
+##### With Hardware CSV File
+
+```bash
+eksctl anywhere upgrade cluster -f cluster.yaml --hardware-csv <hardware.csv>
+```
+
+##### Without Hardware CSV File
+
+```bash
+eksctl anywhere upgrade cluster -f cluster.yaml
+```
+
 ### Autoscaling
 
 EKS Anywhere supports autoscaling of worker node groups using the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/) and as a [curated package](../../../../reference/packagespec/cluster-autoscaler/).
 
-See [here](../../../../reference/clusterspec/optional/autoscaling/) for details on how to configure your cluster spec to autoscale worker node groups for autoscaling.
+See [here](../../../../reference/clusterspec/optional/autoscaling) for details on how to configure your cluster spec to autoscale worker node groups for autoscaling.
