@@ -20,11 +20,6 @@ spec:
     kind: DockerCluster
     name: single-node
     namespace: eksa-system
-  managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
-    kind: EtcdadmCluster
-    name: single-node-etcd
-    namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerCluster
@@ -65,11 +60,11 @@ spec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
-        external:
-          endpoints: []
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.14-eks-1-19-2
+          extraArgs:
+            cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.0-eks-1-19-2
@@ -268,18 +263,17 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cgroup-driver: cgroupfs
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cgroup-driver: cgroupfs
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         taints: []
   replicas: 1
   version: v1.19.6-eks-1-19-2
-
