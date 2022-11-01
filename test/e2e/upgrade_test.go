@@ -1433,7 +1433,7 @@ func TestNutanixKubernetes120UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 }
 
 // 5 node control plane cluster scaled down to 3
-func TestNutanixKubernetes120UbuntuControlPlaneNodeScaleUp5To3(t *testing.T) {
+func TestNutanixKubernetes120UbuntuControlPlaneNodeScaleDown5To3(t *testing.T) {
 	provider := framework.NewNutanix(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1469,7 +1469,7 @@ func TestNutanixKubernetes121UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 }
 
 // 5 node control plane cluster scaled down to 3
-func TestNutanixKubernetes121UbuntuControlPlaneNodeScaleUp5To3(t *testing.T) {
+func TestNutanixKubernetes121UbuntuControlPlaneNodeScaleDown5To3(t *testing.T) {
 	provider := framework.NewNutanix(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1505,7 +1505,7 @@ func TestNutanixKubernetes122UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 }
 
 // 5 node control plane cluster scaled down to 3
-func TestNutanixKubernetes122UbuntuControlPlaneNodeScaleUp5To3(t *testing.T) {
+func TestNutanixKubernetes122UbuntuControlPlaneNodeScaleDown5To3(t *testing.T) {
 	provider := framework.NewNutanix(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1541,7 +1541,7 @@ func TestNutanixKubernetes123UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 }
 
 // 5 node control plane cluster scaled down to 3
-func TestNutanixKubernetes123UbuntuControlPlaneNodeScaleUp5To3(t *testing.T) {
+func TestNutanixKubernetes123UbuntuControlPlaneNodeScaleDown5To3(t *testing.T) {
 	provider := framework.NewNutanix(t)
 	test := framework.NewClusterE2ETest(
 		t,
