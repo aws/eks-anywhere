@@ -694,11 +694,12 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) GenerateStorageClass() []byte {
+func (p *vsphereProvider) InstallStorageClass(ctx context.Context, cluster *types.Cluster) error {
 	if !p.csiEnabled {
 		return nil
 	}
-	return defaultStorageClass
+
+	return p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, defaultStorageClass)
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {

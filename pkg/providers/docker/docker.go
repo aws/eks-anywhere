@@ -471,10 +471,6 @@ func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateStorageClass() []byte {
-	return nil
-}
-
 func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	// The Docker provider is for testing only. We don't want to change the interface just for the test
 	ctx := context.Background()
