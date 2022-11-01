@@ -907,10 +907,8 @@ func TestProviderGenerateCAPISpecForCreateWithControlPlaneTags(t *testing.T) {
 		Name: "test",
 	}
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	datacenterConfig := clusterSpec.VSphereDatacenter
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
 	if provider == nil {
 		t.Fatalf("provider object is nil")
 	}
