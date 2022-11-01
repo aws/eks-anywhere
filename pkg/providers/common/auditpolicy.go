@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
@@ -29,7 +30,7 @@ func GetAuditPolicy(kubeVersion v1alpha1.KubernetesVersion) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return string(auditPolicyv1), nil
+		return strings.TrimSpace(string(auditPolicyv1)), nil
 	}
 	return auditPolicy, nil
 }

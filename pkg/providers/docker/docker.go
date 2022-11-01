@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -153,7 +154,7 @@ type DockerTemplateBuilder struct {
 func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	values, err := buildTemplateMapCP(clusterSpec)
 	if err != nil {
-		return nil, fmt.Errorf("error building template map from CP %v", err)
+		return nil, fmt.Errorf("error building template map for CP %v", err)
 	}
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -170,7 +171,10 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluste
 func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
+		values, err := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, fmt.Errorf("error building template map for MD %v", err)
+		}
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
@@ -184,6 +188,22 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
+func kubeletCgroupDriverExtraArgs(kubeVersion v1alpha1.KubernetesVersion) (clusterapi.ExtraArgs, error) {
+	clusterKubeVersionSemver, err := semver.KubeVersionToValidSemver(kubeVersion)
+	if err != nil {
+		return nil, fmt.Errorf("converting kubeVersion %v to semver %v", kubeVersion, err)
+	}
+	kube124Semver, err := semver.KubeVersionToValidSemver(v1alpha1.Kube124)
+	if err != nil {
+		return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", v1alpha1.Kube124, err)
+	}
+	if clusterKubeVersionSemver.Compare(kube124Semver) != -1 {
+		return nil, nil
+	}
+
+	return clusterapi.CgroupDriverExtraArgs(), nil
+}
+
 func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
@@ -191,6 +211,15 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
+
+	cgroupDriverArgs, err := kubeletCgroupDriverExtraArgs(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
+	}
+	if cgroupDriverArgs != nil {
+		kubeletExtraArgs.Append(cgroupDriverArgs)
+	}
+
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
@@ -241,12 +270,19 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	return values, nil
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
 
+	cgroupDriverArgs, err := kubeletCgroupDriverExtraArgs(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
+	}
+	if cgroupDriverArgs != nil {
+		kubeletExtraArgs.Append(cgroupDriverArgs)
+	}
 	values := map[string]interface{}{
 		"clusterName":           clusterSpec.Cluster.Name,
 		"kubernetesVersion":     bundle.KubeDistro.Kubernetes.Tag,
@@ -259,7 +295,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		"autoscalingConfig":     workerNodeGroupConfiguration.AutoScalingConfiguration,
 	}
 
-	return values
+	return values, nil
 }
 
 func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
