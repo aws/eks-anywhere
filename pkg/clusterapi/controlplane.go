@@ -68,6 +68,7 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 	if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
 		return err
 	}
+	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = cp.ControlPlaneMachineTemplate.GetName()
 
 	if cp.EtcdCluster == nil {
 		return nil
@@ -87,6 +88,7 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 	if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.EtcdMachineTemplate); err != nil {
 		return err
 	}
+	cp.EtcdCluster.Spec.InfrastructureTemplate.Name = cp.EtcdMachineTemplate.GetName()
 
 	return nil
 }
