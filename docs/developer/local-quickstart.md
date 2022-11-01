@@ -21,6 +21,15 @@ make lint
 
 Note that to correct linting issues you will need to install [gofumpt](https://github.com/mvdan/gofumpt) and [gci](https://github.com/daixiang0/gci).
 
+Invoke gofumpt:
+```
+gofumpt -w <target files or directory>
+```
+
+Invoke gci:
+```
+gci write  -s 'standard,default,prefix(github.com/aws/eks-anywhere)' <target files or directory>
+```
 
 Run project unit tests:
 ```
