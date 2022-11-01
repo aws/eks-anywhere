@@ -280,12 +280,14 @@ func TestVSphereKubernetes123To124GitFluxUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
