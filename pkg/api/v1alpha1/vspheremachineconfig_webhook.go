@@ -41,8 +41,11 @@ var _ webhook.Validator = &VSphereMachineConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *VSphereMachineConfig) ValidateCreate() error {
 	vspheremachineconfiglog.Info("validate create", "name", r.Name)
-
-	return r.Validate()
+	err := r.Validate()
+	if err != nil {
+		return err
+	}
+	return r.ValidateHasTemplate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
