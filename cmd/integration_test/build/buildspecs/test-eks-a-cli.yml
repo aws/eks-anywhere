@@ -145,6 +145,19 @@ env:
 phases:
   pre_build:
     commands:
+      - export GIT_HASH=$(cat bin/githash)
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./cmd/integration_test/build/script/upload_artifacts.sh
+        $ARTIFACTS_BUCKET
+        $CODEBUILD_SRC_DIR
+        "eks-a-cli"
+        $CODEBUILD_BUILD_NUMBER
+        $GIT_HASH
+        "linux,darwin"
+        "amd64"
+        $BRANCH_NAME
+        false
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
@@ -180,19 +193,6 @@ phases:
   post_build:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
-      - export GIT_HASH=$(cat bin/githash)
-      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
-      - >
-        ./cmd/integration_test/build/script/upload_artifacts.sh
-        $ARTIFACTS_BUCKET
-        $CODEBUILD_SRC_DIR
-        "eks-a-cli"
-        $CODEBUILD_BUILD_NUMBER
-        $GIT_HASH
-        "linux,darwin"
-        "amd64"
-        $BRANCH_NAME
-        false
       - >
         ./bin/test e2e cleanup vsphere
         -n ${CLUSTER_NAME_PREFIX}
