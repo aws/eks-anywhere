@@ -360,18 +360,20 @@ func TestVSphereKubernetes123BottlerocketWorkerNodeUpgrade(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes122To123StackedEtcdUpgrade(t *testing.T) {
+func TestDockerKubernetes123To124StackedEtcdUpgrade(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube123,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		v1alpha1.Kube124,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
