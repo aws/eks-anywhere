@@ -206,7 +206,7 @@ After finishing the task, make sure you resume the cluster reconciliation by rem
 kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
 ```
 
-### Upgradeable Cluster Attributes
+### Upgradeable cluster attributes
 
 `Cluster`:
 - `kubernetesVersion`
