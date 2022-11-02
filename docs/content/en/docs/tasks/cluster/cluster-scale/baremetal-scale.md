@@ -30,7 +30,7 @@ spec:
 ```
 
 Next, you must ensure you have enough available hardware for the scale-up operation to function. Available hardware could have been fed to the cluster as extra hardware during a prior create command, or could be fed to the cluster during the scale-up process by providing the hardware CSV file to the upgrade cluster command (explained in detail below).
-For scale down operation, you can skip directly to the [upgrade cluster command]({{< relref "baremetal-scale/#upgrade-cluster-command-for-scale-updown" >}}).
+For scale-down operation, you can skip directly to the [upgrade cluster command]({{< relref "baremetal-scale/#upgrade-cluster-command-for-scale-updown" >}}).
 
 To check if you have enough available hardware for scale up, you can use the `kubectl` command below to check if there are hardware with the selector labels corresponding to the controlplane/worker node group and without the `ownerName` label. 
 
