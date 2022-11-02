@@ -140,7 +140,7 @@ spec:
 >**_NOTE:_** If you have a custom machine image for your nodes in your cluster config yaml you may also need to update 
 your [`TinkerbellDatacenterConfig`]({{< relref "../../../reference/clusterspec/baremetal/#tinkerbelldatacenterconfig-fields" >}}) with a new [`osImageURL`]({{< relref "../../../reference/clusterspec/baremetal/#osimageurl" >}}).
 
-and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrades/#upgrade-cluster-command" >}})
+and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrades/#upgrade-cluster-command" >}}).
 
 
 #### Upgrade cluster command
