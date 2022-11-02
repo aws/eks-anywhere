@@ -8,7 +8,7 @@ description: >
 ---
 
 ### Scaling nodes on Bare Metal clusters
-When you are horizontally scaling your bare metal EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
+When you are horizontally scaling your Bare Metal EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
 
 See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/) documentation to learn the differences between the control plane and the data plane (worker nodes).
 
