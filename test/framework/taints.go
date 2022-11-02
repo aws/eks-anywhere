@@ -17,7 +17,7 @@ func ValidateControlPlaneTaints(controlPlane v1alpha1.ControlPlaneConfiguration,
 	// if no taints are specified, kubeadm defaults it to a well-known control plane taint.
 	// so, we make sure to check for that well-known taint if no taints are provided in the spec.
 	if cpTaints == nil {
-		cpTaints = []corev1.Taint{ControlPlaneTaint()}
+		cpTaints = []corev1.Taint{ControlPlaneTaint(), MasterTaint()}
 	}
 	valid := v1alpha1.TaintsSliceEqual(cpTaints, node.Spec.Taints)
 	if !valid {
@@ -61,9 +61,18 @@ func PreferNoScheduleTaint() corev1.Taint {
 	}
 }
 
-func ControlPlaneTaint() corev1.Taint {
+// MasterTaint will be deprecated from kubernetes version 1.25 onwards.
+func MasterTaint() corev1.Taint {
 	return corev1.Taint{
 		Key:    "node-role.kubernetes.io/master",
+		Effect: corev1.TaintEffectNoSchedule,
+	}
+}
+
+// ControlPlaneTaint has been added from 1.24 onwards.
+func ControlPlaneTaint() corev1.Taint {
+	return corev1.Taint{
+		Key:    "node-role.kubernetes.io/control-plane",
 		Effect: corev1.TaintEffectNoSchedule,
 	}
 }
