@@ -898,6 +898,7 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 	}
 }
 
+// SetPackageBundleActive will set the current packagebundle to the active state.
 func (e *ClusterE2ETest) SetPackageBundleActive() {
 	kubeconfig := e.kubeconfigFilePath()
 	pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), kubeconfig, e.ClusterName)
@@ -916,6 +917,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 	}
 }
 
+// InstallCuratedPackage will install a curated package in the desired namespace.
 func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubeconfig, namespace string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
@@ -929,6 +931,7 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubec
 	})
 }
 
+// InstallCuratedPackageFile will install a curated package from a yaml file, this is useful since target namespace isn't supported on the CLI.
 func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
@@ -967,6 +970,7 @@ func (e *ClusterE2ETest) generatePackageConfig(ns, targetns, prefix, packageName
 	return templater.AppendYamlResources(yamlB...)
 }
 
+// BuildPackageConfigFile will create the file in the test directory for the curated package.
 func (e *ClusterE2ETest) BuildPackageConfigFile(packageName, prefix, ns string) string {
 	b := e.generatePackageConfig(ns, ns, prefix, packageName)
 
