@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -20,10 +20,10 @@ func TestCloudStackKubernetes121LabelsAndNodeNameRedhat(t *testing.T) {
 		),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube121),
-			api.WithControlPlaneLabel(constants.FailuredomainLabelName, constants.CloudstackFailuredomainPlaceholder),
+			api.WithControlPlaneLabel(constants.FailureDomainLabelName, constants.CloudstackFailuredomainPlaceholder),
 			api.WithWorkerNodeGroup(constants.DefaultWorkerNodeGroupName,
 				api.WithCount(1),
-				api.WithLabel(constants.FailuredomainLabelName, constants.CloudstackFailuredomainPlaceholder),
+				api.WithLabel(constants.FailureDomainLabelName, constants.CloudstackFailuredomainPlaceholder),
 			),
 		),
 	)
