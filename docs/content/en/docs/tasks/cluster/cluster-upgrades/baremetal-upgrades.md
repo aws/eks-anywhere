@@ -84,7 +84,7 @@ To format the output in json, add `-o json` to the end of the command line.
 Next, you must ensure you have enough available hardware for the rolling upgrade operation to function. This type of upgrade requires you to have one spare hardware server for control plane upgrade and one for each worker node group upgrade. Check [prerequisites]({{< relref "baremetal-upgrades/#prerequisites" >}}) for more information.
 Available hardware could have been fed to the cluster as extra hardware during a prior create command, or could be fed to the cluster during the upgrade process by providing the hardware CSV file to the [upgrade cluster command]({{< relref "baremetal-upgrades/#upgrade-cluster-command" >}}).
 
-To check if you have enough available hardware for rolling upgrade, you can use the `kubectl` command below to check if there are hardware with the selector labels corresponding to the controlplane/worker node group and without the `ownerName` label. 
+To check if you have enough available hardware for rolling upgrade, you can use the `kubectl` command below to check if there are hardware objects with the selector labels corresponding to the controlplane/worker node group and without the `ownerName` label. 
 
 ```bash
 kubectl get hardware -n eksa-system --show-labels
