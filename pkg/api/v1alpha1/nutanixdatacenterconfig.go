@@ -6,7 +6,7 @@ import (
 
 const NutanixDatacenterKind = "NutanixDatacenterConfig"
 
-// NewNutanixDatacenterConfigGenerate is used for generating yaml for generate clusterconfig command
+// NewNutanixDatacenterConfigGenerate is used for generating yaml for generate clusterconfig command.
 func NewNutanixDatacenterConfigGenerate(clusterName string) *NutanixDatacenterConfigGenerate {
 	return &NutanixDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
@@ -32,7 +32,7 @@ func (c *NutanixDatacenterConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
 }
 
-// GetNutanixDatacenterConfig parses config in a yaml file and returns a NutanixDatacenterConfig object
+// GetNutanixDatacenterConfig parses config in a yaml file and returns a NutanixDatacenterConfig object.
 func GetNutanixDatacenterConfig(fileName string) (*NutanixDatacenterConfig, error) {
 	var clusterConfig NutanixDatacenterConfig
 	err := ParseClusterConfig(fileName, &clusterConfig)

@@ -18,7 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ReleaseSpec defines the desired state of Release
+// ReleaseSpec defines the desired state of Release.
 type ReleaseSpec struct {
 	// +kubebuilder:validation:Required
 	// EKS-A Latest Release version following semver
@@ -29,13 +29,13 @@ type ReleaseSpec struct {
 	Releases []EksARelease `json:"releases"`
 }
 
-// ReleaseStatus defines the observed state of Release
+// ReleaseStatus defines the observed state of Release.
 type ReleaseStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Release is the Schema for the releases API
+// Release is the Schema for the releases API.
 type Release struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -46,7 +46,7 @@ type Release struct {
 
 //+kubebuilder:object:root=true
 
-// ReleaseList contains a list of Release
+// ReleaseList contains a list of Release.
 type ReleaseList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -57,7 +57,7 @@ func init() {
 	SchemeBuilder.Register(&Release{}, &ReleaseList{})
 }
 
-// EksARelease defines each release of EKS-Anywhere
+// EksARelease defines each release of EKS-Anywhere.
 type EksARelease struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Type=string

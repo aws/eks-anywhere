@@ -6,7 +6,7 @@ import (
 
 const SnowDatacenterKind = "SnowDatacenterConfig"
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewSnowDatacenterConfigGenerate(clusterName string) *SnowDatacenterConfigGenerate {
 	return &SnowDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

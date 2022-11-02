@@ -15,13 +15,13 @@ type Retrier struct {
 
 type (
 	// RetryPolicy allows to customize the retrying logic. The boolean retry indicates if a new retry
-	// should be performed and the wait duration indicates the wait time before the next retry
+	// should be performed and the wait duration indicates the wait time before the next retry.
 	RetryPolicy func(totalRetries int, err error) (retry bool, wait time.Duration)
 	RetrierOpt  func(*Retrier)
 )
 
 // New creates a new retrier with a global timeout (max time allowed for the whole execution)
-// The default retry policy is to always retry with no wait time in between retries
+// The default retry policy is to always retry with no wait time in between retries.
 func New(timeout time.Duration, opts ...RetrierOpt) *Retrier {
 	r := &Retrier{
 		timeout:     timeout,
@@ -34,14 +34,14 @@ func New(timeout time.Duration, opts ...RetrierOpt) *Retrier {
 	return r
 }
 
-// NewWithMaxRetries creates a new retrier with no global timeout and a max retries policy
+// NewWithMaxRetries creates a new retrier with no global timeout and a max retries policy.
 func NewWithMaxRetries(maxRetries int, backOffPeriod time.Duration) *Retrier {
 	// this value is roughly 292 years, so in practice there is no timeout
 	return New(time.Duration(math.MaxInt64), WithMaxRetries(maxRetries, backOffPeriod))
 }
 
 // WithMaxRetries sets a retry policy that will retry up to maxRetries times
-// with a wait time between retries of backOffPeriod
+// with a wait time between retries of backOffPeriod.
 func WithMaxRetries(maxRetries int, backOffPeriod time.Duration) RetrierOpt {
 	return func(r *Retrier) {
 		r.retryPolicy = maxRetriesPolicy(maxRetries, backOffPeriod)
@@ -61,7 +61,7 @@ func WithRetryPolicy(policy RetryPolicy) RetrierOpt {
 }
 
 // Retry runs the fn function until it either successful completes (not error),
-// the set timeout reached or the retry policy aborts the execution
+// the set timeout reached or the retry policy aborts the execution.
 func (r *Retrier) Retry(fn func() error) error {
 	// While it seems aberrant to call a method with a nil receiver, several unit tests actually do.  With a previous
 	// version of this module (which didn't attempt to dereference the receiver until after the wrapped function failed)
@@ -110,7 +110,7 @@ func (r *Retrier) Retry(fn func() error) error {
 	return err
 }
 
-// Retry runs fn with a MaxRetriesPolicy
+// Retry runs fn with a MaxRetriesPolicy.
 func Retry(maxRetries int, backOffPeriod time.Duration, fn func() error) error {
 	r := NewWithMaxRetries(maxRetries, backOffPeriod)
 	return r.Retry(fn)

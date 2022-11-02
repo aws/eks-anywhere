@@ -40,7 +40,7 @@ var (
 	requiredEnvs                      = []string{nutanixEndpointKey, constants.NutanixUsernameKey, constants.NutanixPasswordKey}
 )
 
-// Provider implements the Nutanix Provider
+// Provider implements the Nutanix Provider.
 type Provider struct {
 	clusterConfig    *v1alpha1.Cluster
 	datacenterConfig *v1alpha1.NutanixDatacenterConfig
@@ -53,7 +53,7 @@ type Provider struct {
 
 var _ providers.Provider = &Provider{}
 
-// NewProvider returns a new nutanix provider
+// NewProvider returns a new nutanix provider.
 func NewProvider(
 	datacenterConfig *v1alpha1.NutanixDatacenterConfig,
 	machineConfigs map[string]*v1alpha1.NutanixMachineConfig,
@@ -535,8 +535,15 @@ func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *clust
 }
 
 func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	// TODO(nutanix): figure out if we need something else here
-	return nil
+	if currentSpec.VersionsBundle.Nutanix.Version == newSpec.VersionsBundle.Nutanix.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.NutanixProviderName,
+		NewVersion:    newSpec.VersionsBundle.Nutanix.Version,
+		OldVersion:    currentSpec.VersionsBundle.Nutanix.Version,
+	}
 }
 
 func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {

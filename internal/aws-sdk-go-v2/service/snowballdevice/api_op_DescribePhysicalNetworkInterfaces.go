@@ -115,7 +115,7 @@ type DescribePhysicalNetworkInterfacesAPIClient interface {
 var _ DescribePhysicalNetworkInterfacesAPIClient = (*Client)(nil)
 
 // DescribePhysicalNetworkInterfacesPaginatorOptions is the paginator options for
-// DescribePhysicalNetworkInterfaces
+// DescribePhysicalNetworkInterfaces.
 type DescribePhysicalNetworkInterfacesPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
@@ -123,7 +123,7 @@ type DescribePhysicalNetworkInterfacesPaginatorOptions struct {
 }
 
 // DescribePhysicalNetworkInterfacesPaginator is a paginator for
-// DescribePhysicalNetworkInterfaces
+// DescribePhysicalNetworkInterfaces.
 type DescribePhysicalNetworkInterfacesPaginator struct {
 	options   DescribePhysicalNetworkInterfacesPaginatorOptions
 	client    DescribePhysicalNetworkInterfacesAPIClient
@@ -133,7 +133,7 @@ type DescribePhysicalNetworkInterfacesPaginator struct {
 }
 
 // NewDescribePhysicalNetworkInterfacesPaginator returns a new
-// DescribePhysicalNetworkInterfacesPaginator
+// DescribePhysicalNetworkInterfacesPaginator.
 func NewDescribePhysicalNetworkInterfacesPaginator(client DescribePhysicalNetworkInterfacesAPIClient, params *DescribePhysicalNetworkInterfacesInput, optFns ...func(*DescribePhysicalNetworkInterfacesPaginatorOptions)) *DescribePhysicalNetworkInterfacesPaginator {
 	if params == nil {
 		params = &DescribePhysicalNetworkInterfacesInput{}
@@ -154,7 +154,7 @@ func NewDescribePhysicalNetworkInterfacesPaginator(client DescribePhysicalNetwor
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available
+// HasMorePages returns a boolean indicating whether more pages are available.
 func (p *DescribePhysicalNetworkInterfacesPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }

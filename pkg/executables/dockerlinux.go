@@ -14,7 +14,7 @@ type linuxDockerExecutable struct {
 }
 
 // This currently returns a linuxDockerExecutable, but if we support other types of docker executables we can change
-// the name of this constructor
+// the name of this constructor.
 func NewDockerExecutable(cli string, containerName string) Executable {
 	return &linuxDockerExecutable{
 		cli:           cli,

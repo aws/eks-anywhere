@@ -16,7 +16,7 @@ import (
 // CheckControlPlaneReady is a controller helper to check whether a CAPI cluster CP for
 // an eks-a cluster is ready or not. This is intended to be used from cluster reconcilers
 // due its signature and that it returns controller results with appropriate wait times whenever
-// the cluster is not ready
+// the cluster is not ready.
 func CheckControlPlaneReady(ctx context.Context, client client.Client, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	capiCluster, err := controller.GetCAPICluster(ctx, client, cluster)
 	if err != nil {

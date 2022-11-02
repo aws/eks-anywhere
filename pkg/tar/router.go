@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-// Router instructs where to extract a file
+// Router instructs where to extract a file.
 type Router interface {
 	// ExtractPath instructs the path where a file should be extracted.
 	// Empty strings instructs to omit the file extraction

@@ -31,7 +31,7 @@ func ValidateGitOps(ctx context.Context, k validations.KubectlClient, cluster *t
 	return nil
 }
 
-// validateGitOpsConfig method will be removed in a future release since gitOpsConfig is deprecated in favor of fluxConfig
+// validateGitOpsConfig method will be removed in a future release since gitOpsConfig is deprecated in favor of fluxConfig.
 func validateGitOpsConfig(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if clusterSpec.GitOpsConfig == nil {
 		return nil

@@ -34,7 +34,7 @@ func (r *SnowMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Defaulter = &SnowMachineConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
 func (r *SnowMachineConfig) Default() {
 	snowmachineconfiglog.Info("Setting up Snow Machine Config defaults for", "name", r.Name)
 	r.SetDefaults()
@@ -45,21 +45,21 @@ func (r *SnowMachineConfig) Default() {
 
 var _ webhook.Validator = &SnowMachineConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *SnowMachineConfig) ValidateCreate() error {
 	snowmachineconfiglog.Info("validate create", "name", r.Name)
 
 	return r.Validate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *SnowMachineConfig) ValidateUpdate(old runtime.Object) error {
 	snowmachineconfiglog.Info("validate update", "name", r.Name)
 
 	return r.Validate()
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *SnowMachineConfig) ValidateDelete() error {
 	snowmachineconfiglog.Info("validate delete", "name", r.Name)
 

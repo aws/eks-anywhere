@@ -13,14 +13,14 @@ import (
 )
 
 type (
-	// APIObjectGenerator returns an implementor of the APIObject interface
+	// APIObjectGenerator returns an implementor of the APIObject interface.
 	APIObjectGenerator func() APIObject
-	// ParsedProcessor fills the struct of type T with the parsed API objects in ObjectLookup
+	// ParsedProcessor fills the struct of type T with the parsed API objects in ObjectLookup.
 	ParsedProcessor[T any] func(*T, ObjectLookup)
 
 	// Parser allows to parse from yaml with kubernetes style objects and
 	// store them in a type implementing Builder
-	// It allows to dynamically register configuration for mappings between kind and concrete types
+	// It allows to dynamically register configuration for mappings between kind and concrete types.
 	Parser struct {
 		apiObjectMapping map[string]APIObjectGenerator
 		logger           logr.Logger
@@ -34,7 +34,7 @@ func NewParser(logger logr.Logger) *Parser {
 	}
 }
 
-// RegisterMapping records the mapping between a kubernetes Kind and an API concrete type
+// RegisterMapping records the mapping between a kubernetes Kind and an API concrete type.
 func (c *Parser) RegisterMapping(kind string, generator APIObjectGenerator) error {
 	if _, ok := c.apiObjectMapping[kind]; ok {
 		return errors.Errorf("mapping for api object %s already registered", kind)
@@ -44,7 +44,7 @@ func (c *Parser) RegisterMapping(kind string, generator APIObjectGenerator) erro
 	return nil
 }
 
-// Mapping mapping between a kubernetes Kind and an API concrete type of type T
+// Mapping mapping between a kubernetes Kind and an API concrete type of type T.
 type Mapping[T APIObject] struct {
 	New  func() T
 	Kind string
@@ -59,7 +59,7 @@ func NewMapping[T APIObject](kind string, new func() T) Mapping[T] {
 
 // ToAPIObjectMapping is helper to convert from other concrete types of Mapping
 // to a APIObject Mapping
-// This is mostly to help pass Mappings to RegisterMappings
+// This is mostly to help pass Mappings to RegisterMappings.
 func (m Mapping[T]) ToAPIObjectMapping() Mapping[APIObject] {
 	return Mapping[APIObject]{
 		Kind: m.Kind,
@@ -69,7 +69,7 @@ func (m Mapping[T]) ToAPIObjectMapping() Mapping[APIObject] {
 	}
 }
 
-// RegisterMappings records a collection of mappings
+// RegisterMappings records a collection of mappings.
 func (c *Parser) RegisterMappings(mappings ...Mapping[APIObject]) error {
 	for _, m := range mappings {
 		if err := c.RegisterMapping(m.Kind, m.New); err != nil {
@@ -80,19 +80,19 @@ func (c *Parser) RegisterMappings(mappings ...Mapping[APIObject]) error {
 	return nil
 }
 
-// Builder processes the parsed API objects contained in a lookup
+// Builder processes the parsed API objects contained in a lookup.
 type Builder interface {
 	BuildFromParsed(ObjectLookup) error
 }
 
 // Parse reads yaml manifest content with the registered mappings and passes
-// the result to the Builder for further processing
+// the result to the Builder for further processing.
 func (p *Parser) Parse(yamlManifest []byte, b Builder) error {
 	return p.Read(bytes.NewReader(yamlManifest), b)
 }
 
 // Read reads yaml manifest content with the registered mappings and passes
-// the result to the Builder for further processing
+// the result to the Builder for further processing.
 func (p *Parser) Read(reader io.Reader, b Builder) error {
 	parsed, err := p.unmarshal(reader)
 	if err != nil {

@@ -18,7 +18,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-// ClusterReconcilerLegacy reconciles a Cluster object
+// ClusterReconcilerLegacy reconciles a Cluster object.
 type ClusterReconcilerLegacy struct {
 	client.Client
 	Log             logr.Logger

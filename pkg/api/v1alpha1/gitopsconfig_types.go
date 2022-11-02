@@ -9,7 +9,7 @@ type GitOpsConfigSpec struct {
 	Flux Flux `json:"flux,omitempty"`
 }
 
-// Flux defines the Git repository options for Flux v2
+// Flux defines the Git repository options for Flux v2.
 type Flux struct {
 	// github is the name of the Git Provider to host the Git repo.
 	Github Github `json:"github,omitempty"`
@@ -36,7 +36,7 @@ type Github struct {
 	Personal bool `json:"personal,omitempty"`
 }
 
-// GitOpsConfigStatus defines the observed state of GitOpsConfig
+// GitOpsConfigStatus defines the observed state of GitOpsConfig.
 type GitOpsConfigStatus struct{}
 
 //+kubebuilder:object:root=true
@@ -51,7 +51,7 @@ type GitOpsConfig struct {
 }
 
 // +kubebuilder:object:generate=false
-// Same as GitOpsConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled
+// Same as GitOpsConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled.
 type GitOpsConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -71,7 +71,7 @@ func (e *GitOpsConfigSpec) Equal(n *GitOpsConfigSpec) bool {
 
 //+kubebuilder:object:root=true
 
-// GitOpsConfigList contains a list of GitOpsConfig
+// GitOpsConfigList contains a list of GitOpsConfig.
 type GitOpsConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

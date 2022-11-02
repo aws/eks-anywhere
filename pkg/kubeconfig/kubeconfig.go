@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-// FromClusterFormat defines the format of the kubeconfig of the
+// FromClusterFormat defines the format of the kubeconfig of the.
 const FromClusterFormat = "%s-eks-a-cluster.kubeconfig"
 
 // EnvName is the standard KubeConfig environment variable name.
@@ -21,7 +21,7 @@ const EnvName = "KUBECONFIG"
 
 // FromClusterName formats an expected Kubeconfig path for EKS-A clusters. This includes a subdirecftory
 // named after the cluster name. For example, if the clusterName is 'sandbox' the generated path would be
-// sandbox/sandbox-eks-a-cluster.kubeconfig
+// sandbox/sandbox-eks-a-cluster.kubeconfig.
 func FromClusterName(clusterName string) string {
 	return filepath.Join(clusterName, fmt.Sprintf(FromClusterFormat, clusterName))
 }

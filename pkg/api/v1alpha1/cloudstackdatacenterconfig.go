@@ -6,7 +6,7 @@ import (
 
 const CloudStackDatacenterKind = "CloudStackDatacenterConfig"
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatacenterConfigGenerate {
 	return &CloudStackDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

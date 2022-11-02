@@ -17,7 +17,7 @@ const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 // +kubebuilder:object:generate=false
 type ActionOpt func(action *[]tinkerbell.Action)
 
-// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the required Tasks and Actions
+// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the required Tasks and Actions.
 func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, disk string, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp string, osFamily OSFamily) *TinkerbellTemplateConfig {
 	config := &TinkerbellTemplateConfig{
 		TypeMeta: metav1.TypeMeta{

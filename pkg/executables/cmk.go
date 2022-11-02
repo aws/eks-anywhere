@@ -30,7 +30,7 @@ const (
 	domainDelimiter                   = "/"
 )
 
-// Cmk this struct wraps around the CloudMonkey executable CLI to perform operations against a CloudStack endpoint
+// Cmk this struct wraps around the CloudMonkey executable CLI to perform operations against a CloudStack endpoint.
 type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
@@ -359,7 +359,7 @@ func (c *Cmk) GetManagementApiEndpoint(profile string) (string, error) {
 	return "", fmt.Errorf("profile %s does not exist", profile)
 }
 
-// ValidateCloudStackConnection Calls `cmk sync` to ensure that the endpoint and credentials + domain are valid
+// ValidateCloudStackConnection Calls `cmk sync` to ensure that the endpoint and credentials + domain are valid.
 func (c *Cmk) ValidateCloudStackConnection(ctx context.Context, profile string) error {
 	command := newCmkCommand("sync")
 	buffer, err := c.exec(ctx, profile, command...)

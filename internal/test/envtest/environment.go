@@ -86,7 +86,7 @@ func WithAssignment(envRef **Environment) EnvironmentOpt {
 
 // RunWithEnvironment runs a suite of tests with an envtest that is shared across all tests
 // We use testing.M as the input to avoid having this called directly from a test
-// This ensures the envtest setup is always run from a TestMain
+// This ensures the envtest setup is always run from a TestMain.
 func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 	ctx := ctrl.SetupSignalHandler()
 	env, err := newEnvironment(ctx)
@@ -181,12 +181,12 @@ func (e *Environment) Client() client.Client {
 	return e.client
 }
 
-// APIReader returns a non cached reader client
+// APIReader returns a non cached reader client.
 func (e *Environment) APIReader() client.Reader {
 	return e.apiReader
 }
 
-// Manager returns a Manager for the test environment
+// Manager returns a Manager for the test environment.
 func (e *Environment) Manager() manager.Manager {
 	return e.manager
 }

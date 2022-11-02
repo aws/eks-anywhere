@@ -28,7 +28,7 @@ func New(ciliumReconciler CiliumReconciler) *Reconciler {
 // Reconcile takes the specified CNI in a cluster to the desired state defined in a cluster Spec
 // It uses a controller.Result to indicate when requeues are needed
 // Intended to be used in a kubernetes controller
-// Only Cilium CNI is supported for now
+// Only Cilium CNI is supported for now.
 func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium != nil {
 		return r.ciliumReconciler.Reconcile(ctx, logger, client, spec)

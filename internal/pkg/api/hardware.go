@@ -51,7 +51,7 @@ func NewHardwareMapFromFile(file string) (map[string]*Hardware, error) {
 	return HardwareSliceToMap(slice), nil
 }
 
-// converts a hardware slice to a map. The first instance of the slice is used in case slice contains duplicates
+// converts a hardware slice to a map. The first instance of the slice is used in case slice contains duplicates.
 func HardwareSliceToMap(slice []*Hardware) map[string]*Hardware {
 	hardwareMap := make(map[string]*Hardware)
 
