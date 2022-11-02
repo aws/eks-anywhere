@@ -117,7 +117,7 @@ eksctl anywhere generate hardware -z <hardware.csv> | kubectl apply -f -
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.20 to 1.21 you would change your spec
+As an example, to upgrade a cluster with version 1.20 to 1.21 you would change your spec as follows:
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
