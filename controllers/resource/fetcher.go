@@ -544,7 +544,7 @@ func (r *CapiResourceFetcher) ExistingKubeVersion(ctx context.Context, cs *anywh
 	return existingControlPlane.Spec.Version, nil
 }
 
-// Control plane and external etcd are configured to use the same node image, so pulling it from control plane
+// Control plane and external etcd are configured to use the same node image, so pulling it from control plane.
 func (r *CapiResourceFetcher) ExistingControlPlaneKindNodeImage(ctx context.Context, cs *anywherev1.Cluster) (string, error) {
 	existingDockerMachineTemplate, err := r.DockerControlPlaneMachineTemplate(ctx, cs)
 	if err != nil {

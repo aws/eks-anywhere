@@ -31,7 +31,7 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 // create a node with a taint
 // remove a taint from a node
 // add a taint to a node which already has another taint
-// add a taint to a node which had no taints
+// add a taint to a node which had no taints.
 func TestDockerKubernetes124Taints(t *testing.T) {
 	provider := framework.NewDocker(t)
 

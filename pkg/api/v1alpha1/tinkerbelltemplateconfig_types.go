@@ -12,19 +12,19 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // Important: Run "make generate" to regenerate code after modifying this file
 
-// TinkerbellTemplateConfigSpec defines the desired state of TinkerbellTemplateConfig
+// TinkerbellTemplateConfigSpec defines the desired state of TinkerbellTemplateConfig.
 type TinkerbellTemplateConfigSpec struct {
 	// Template defines a Tinkerbell workflow template with specific tasks and actions.
 	Template tinkerbell.Workflow `json:"template"`
 }
 
-// TinkerbellTemplateConfigStatus defines the observed state of TinkerbellTemplateConfig
+// TinkerbellTemplateConfigStatus defines the observed state of TinkerbellTemplateConfig.
 type TinkerbellTemplateConfigStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// TinkerbellTemplateConfig is the Schema for the TinkerbellTemplateConfigs API
+// TinkerbellTemplateConfig is the Schema for the TinkerbellTemplateConfigs API.
 type TinkerbellTemplateConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -69,7 +69,7 @@ func (c *TinkerbellTemplateConfig) ConvertConfigToConfigGenerateStruct() *Tinker
 
 // +kubebuilder:object:generate=false
 
-// Same as TinkerbellTemplateConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as TinkerbellTemplateConfig except stripped down for generation of yaml file during generate clusterconfig.
 type TinkerbellTemplateConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -79,7 +79,7 @@ type TinkerbellTemplateConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// TinkerbellTemplateConfigList contains a list of TinkerbellTemplateConfig
+// TinkerbellTemplateConfigList contains a list of TinkerbellTemplateConfig.
 type TinkerbellTemplateConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

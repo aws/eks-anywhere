@@ -13,7 +13,7 @@ import (
 const machineDeploymentKind = "MachineDeployment"
 
 // WorkersBuilder implements yamlutil.Builder
-// It's a wrapper around Workers to provide yaml parsing functionality
+// It's a wrapper around Workers to provide yaml parsing functionality.
 type WorkersBuilder[M clusterapi.Object] struct {
 	Workers *clusterapi.Workers[M]
 }
@@ -24,7 +24,7 @@ func NewWorkersBuilder[M clusterapi.Object]() *WorkersBuilder[M] {
 	}
 }
 
-// BuildFromParsed reads parsed objects in ObjectLookup and sets them in the Workers
+// BuildFromParsed reads parsed objects in ObjectLookup and sets them in the Workers.
 func (cp *WorkersBuilder[M]) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
 	ProcessWorkerObjects(cp.Workers, lookup)
 	return nil
@@ -34,7 +34,7 @@ func (cp *WorkersBuilder[M]) BuildFromParsed(lookup yamlutil.ObjectLookup) error
 // It registers the basic shared mappings plus another one for the provider machine template
 // For worker specs that need to include more objects, wrap around the provider builder and
 // implement BuildFromParsed.
-// Any extra mappings will need to be registered manually in the Parser
+// Any extra mappings will need to be registered manually in the Parser.
 func NewWorkersParserAndBuilder[M clusterapi.Object](
 	logger logr.Logger,
 	machineTemplateMapping yamlutil.Mapping[M],
@@ -55,7 +55,7 @@ func NewWorkersParserAndBuilder[M clusterapi.Object](
 }
 
 // RegisterWorkerMappings records the basic mappings for CAPI MachineDeployment
-// and KubeadmConfigTemplate in a Parser
+// and KubeadmConfigTemplate in a Parser.
 func RegisterWorkerMappings(parser *yamlutil.Parser) error {
 	err := parser.RegisterMappings(
 		yamlutil.NewMapping(
@@ -76,7 +76,7 @@ func RegisterWorkerMappings(parser *yamlutil.Parser) error {
 	return nil
 }
 
-// ProcessWorkerObjects finds all necessary objects in the parsed objects and sets them in Workers
+// ProcessWorkerObjects finds all necessary objects in the parsed objects and sets them in Workers.
 func ProcessWorkerObjects[M clusterapi.Object](w *clusterapi.Workers[M], lookup yamlutil.ObjectLookup) {
 	for _, obj := range lookup {
 		if obj.GetObjectKind().GroupVersionKind().Kind == machineDeploymentKind {
@@ -90,7 +90,7 @@ func ProcessWorkerObjects[M clusterapi.Object](w *clusterapi.Workers[M], lookup 
 
 // ProcessWorkerGroupObjects looks in the parsed objects for the KubeadmConfigTemplate and
 // the provider machine template referenced in the MachineDeployment and sets them in the WorkerGroup.
-// MachineDeployment needs to be already set in the WorkerGroup
+// MachineDeployment needs to be already set in the WorkerGroup.
 func ProcessWorkerGroupObjects[M clusterapi.Object](g *clusterapi.WorkerGroup[M], lookup yamlutil.ObjectLookup) {
 	kubeadmConfigTemplate := lookup.GetFromRef(*g.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef)
 	if kubeadmConfigTemplate != nil {

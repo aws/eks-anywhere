@@ -162,7 +162,7 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	}
 }
 
-// TODO: add unstacked etcd test
+// TODO: add unstacked etcd test.
 func TestCluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got := clusterapi.Cluster(tt.clusterSpec, tt.providerCluster, tt.controlPlane)
@@ -297,7 +297,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	}
 }
 
-// TODO: add unstacked etcd test
+// TODO: add unstacked etcd test.
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got, err := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)

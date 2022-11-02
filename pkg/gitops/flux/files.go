@@ -45,7 +45,7 @@ func NewFileGenerator() *FileGenerator {
 }
 
 // NewFileGeneratorWithWriterTemplater takes flux and eksa writer and templater interface to build the generator.
-// This is only for testing
+// This is only for testing.
 func NewFileGeneratorWithWriterTemplater(fluxWriter, eksaWriter filewriter.FileWriter, fluxTemplater, eksaTemplater Templater) *FileGenerator {
 	return &FileGenerator{
 		fluxWriter:    fluxWriter,

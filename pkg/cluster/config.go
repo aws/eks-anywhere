@@ -109,7 +109,7 @@ func (c *Config) DeepCopy() *Config {
 	return c2
 }
 
-// ChildObjects returns all API objects in Config except the Cluster
+// ChildObjects returns all API objects in Config except the Cluster.
 func (c *Config) ChildObjects() []kubernetes.Object {
 	objs := make(
 		[]kubernetes.Object,

@@ -42,7 +42,7 @@ func (r *VSphereDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 
 var _ webhook.Defaulter = &VSphereDatacenterConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
 func (r *VSphereDatacenterConfig) Default() {
 	vspheredatacenterconfiglog.Info("Setting up VSphere Datacenter Config defaults for", "name", r.Name)
 	r.SetDefaults()
@@ -53,7 +53,7 @@ func (r *VSphereDatacenterConfig) Default() {
 
 var _ webhook.Validator = &VSphereDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	vspheredatacenterconfiglog.Info("validate create", "name", r.Name)
 
@@ -78,7 +78,7 @@ func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	vspheredatacenterconfiglog.Info("validate update", "name", r.Name)
 
@@ -160,7 +160,7 @@ func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) fi
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereDatacenterConfig) ValidateDelete() error {
 	vspheredatacenterconfiglog.Info("validate delete", "name", r.Name)
 

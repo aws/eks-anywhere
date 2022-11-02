@@ -18,7 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// FluxConfigSpec defines the desired state of FluxConfig
+// FluxConfigSpec defines the desired state of FluxConfig.
 type FluxConfigSpec struct {
 	// SystemNamespace scope for this operation. Defaults to flux-system
 	SystemNamespace string `json:"systemNamespace,omitempty"`
@@ -56,7 +56,7 @@ type GitProviderConfig struct {
 	SshKeyAlgorithm string `json:"sshKeyAlgorithm,omitempty"`
 }
 
-// FluxConfigStatus defines the observed state of FluxConfig
+// FluxConfigStatus defines the observed state of FluxConfig.
 type FluxConfigStatus struct{}
 
 //+kubebuilder:object:root=true
@@ -73,7 +73,7 @@ type FluxConfig struct {
 }
 
 // +kubebuilder:object:generate=false
-// Same as FluxConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled
+// Same as FluxConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled.
 type FluxConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -122,7 +122,7 @@ func (e *GitProviderConfig) Equal(n *GitProviderConfig) bool {
 
 //+kubebuilder:object:root=true
 
-// FluxConfigList contains a list of FluxConfig
+// FluxConfigList contains a list of FluxConfig.
 type FluxConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

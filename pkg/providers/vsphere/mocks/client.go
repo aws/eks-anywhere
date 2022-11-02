@@ -830,21 +830,6 @@ func (mr *MockClusterResourceSetManagerMockRecorder) ForceUpdate(arg0, arg1, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForceUpdate", reflect.TypeOf((*MockClusterResourceSetManager)(nil).ForceUpdate), arg0, arg1, arg2, arg3, arg4)
 }
 
-// DevicesInfo mocks base method.
-func (m *MockProviderGovcClient) DevicesInfo(arg0 context.Context, arg1, arg2 string) (interface{}, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DevicesInfo", arg0, arg1)
-	ret0, _ := ret[0].(interface{})
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DevicesInfo indicates an expected call of DevicesInfo.
-func (mr *MockProviderGovcClientMockRecorder) DevicesInfo(arg0 context.Context, arg1, arg2 string) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DevicesInfo", reflect.TypeOf((*MockProviderGovcClient)(nil).DevicesInfo), arg0, arg1, arg2)
-}
-
 // ValidateSize mocks base method.
 func (m *MockProviderGovcClient) ValidateSize(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()

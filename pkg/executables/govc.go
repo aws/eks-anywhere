@@ -1095,6 +1095,7 @@ func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role 
 	return nil
 }
 
+// ValidateSize validates the size a template disk
 func (g *Govc) ValidateSize(ctx context.Context, datacenter, templateName string) error {
 	devicesInfo, err := g.DevicesInfo(ctx, datacenter, templateName)
 	if err != nil {

@@ -40,7 +40,7 @@ func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Defaulter = &Cluster{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
 func (r *Cluster) Default() {
 	clusterlog.Info("Setting up Cluster defaults", "name", r.Name, "namespace", r.Namespace)
 	r.SetDefaults()
@@ -51,7 +51,7 @@ func (r *Cluster) Default() {
 
 var _ webhook.Validator = &Cluster{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *Cluster) ValidateCreate() error {
 	clusterlog.Info("validate create", "name", r.Name)
 
@@ -76,7 +76,7 @@ func (r *Cluster) ValidateCreate() error {
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	clusterlog.Info("validate update", "name", r.Name)
 	oldCluster, ok := old.(*Cluster)
@@ -231,7 +231,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *Cluster) ValidateDelete() error {
 	clusterlog.Info("validate delete", "name", r.Name)
 

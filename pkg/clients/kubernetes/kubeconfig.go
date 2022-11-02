@@ -15,7 +15,7 @@ type Object client.Object
 type ObjectList client.ObjectList
 
 // KubeconfigClient is an authenticated kubernetes API client
-// it authenticates using the credentials of a kubeconfig file
+// it authenticates using the credentials of a kubeconfig file.
 type KubeconfigClient struct {
 	client     *UnAuthClient
 	kubeconfig string
@@ -29,7 +29,7 @@ func NewKubeconfigClient(client *UnAuthClient, kubeconfig string) *KubeconfigCli
 }
 
 // Get performs a GET call to the kube API server
-// and unmarshalls the response into the provided Object
+// and unmarshalls the response into the provided Object.
 func (c *KubeconfigClient) Get(ctx context.Context, name, namespace string, obj Object) error {
 	return c.client.Get(ctx, name, namespace, c.kubeconfig, obj)
 }

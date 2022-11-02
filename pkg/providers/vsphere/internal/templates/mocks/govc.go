@@ -322,3 +322,17 @@ func (mr *MockGovcClientMockRecorder) UserExists(ctx, username interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserExists", reflect.TypeOf((*MockGovcClient)(nil).UserExists), ctx, username)
 }
+
+// ValidateSize mocks base method.
+func (m *MockGovcClient) ValidateSize(ctx context.Context, datacenter, templateName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateSize", ctx, datacenter, templateName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateSize indicates an expected call of ValidateSize.
+func (mr *MockGovcClientMockRecorder) ValidateSize(ctx context.Context, datacenter, templateName string) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateSize", reflect.TypeOf((*MockGovcClient)(nil).ValidateSize), ctx, datacenter, templateName)
+}

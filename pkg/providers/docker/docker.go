@@ -482,7 +482,7 @@ func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	}
 }
 
-// this is required for docker provider
+// this is required for docker provider.
 func getUpdatedKubeConfigContent(content *[]byte, dockerLbPort string) {
 	mc := regexp.MustCompile("server:.*")
 	updatedConfig := mc.ReplaceAllString(string(*content), fmt.Sprintf("server: https://127.0.0.1:%s", dockerLbPort))

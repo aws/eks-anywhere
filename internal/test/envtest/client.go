@@ -14,7 +14,7 @@ import (
 type Object client.Object
 
 // CreateObjs creates Objects using the provided kube client and waits until its cache
-// has been updated with those objects
+// has been updated with those objects.
 func CreateObjs(ctx context.Context, t testing.TB, c client.Client, objs ...Object) {
 	t.Helper()
 	for _, o := range objs {

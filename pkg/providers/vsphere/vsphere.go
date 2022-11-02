@@ -113,7 +113,6 @@ type ProviderGovcClient interface {
 	RoleExists(ctx context.Context, name string) (bool, error)
 	CreateRole(ctx context.Context, name string, privileges []string) error
 	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
-	DevicesInfo(ctx context.Context, datacenter, templateName string) (interface{}, error)
 	ValidateSize(ctx context.Context, datacenter, templateName string) error
 }
 

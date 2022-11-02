@@ -6,7 +6,7 @@ import (
 
 const DockerDatacenterKind = "DockerDatacenterConfig"
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewDockerDatacenterConfigGenerate(clusterName string) *DockerDatacenterConfigGenerate {
 	return &DockerDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

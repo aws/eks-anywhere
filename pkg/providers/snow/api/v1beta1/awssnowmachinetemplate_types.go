@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// AWSSnowMachineTemplateSpec defines the desired state of AWSSnowMachineTemplate
+// AWSSnowMachineTemplateSpec defines the desired state of AWSSnowMachineTemplate.
 type AWSSnowMachineTemplateSpec struct {
 	Template AWSSnowMachineTemplateResource `json:"template"`
 }
@@ -29,7 +29,7 @@ type AWSSnowMachineTemplateSpec struct {
 // +kubebuilder:resource:path=awssnowmachinetemplates,scope=Namespaced,categories=cluster-api,shortName=awssmt
 // +kubebuilder:storageversion
 
-// AWSSnowMachineTemplate is the Schema for the awssnowmachinetemplates API
+// AWSSnowMachineTemplate is the Schema for the awssnowmachinetemplates API.
 type AWSSnowMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

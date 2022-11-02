@@ -4,7 +4,7 @@ package types
 
 type ClusterAssociationState string
 
-// Enum values for ClusterAssociationState
+// Enum values for ClusterAssociationState.
 const (
 	ClusterAssociationStateAssociated     ClusterAssociationState = "ASSOCIATED"
 	ClusterAssociationStateAssociating    ClusterAssociationState = "ASSOCIATING"
@@ -26,7 +26,7 @@ func (ClusterAssociationState) Values() []ClusterAssociationState {
 
 type DirectNetworkDriver string
 
-// Enum values for DirectNetworkDriver
+// Enum values for DirectNetworkDriver.
 const (
 	DirectNetworkDriverIxgbevf  DirectNetworkDriver = "ixgbevf"
 	DirectNetworkDriverMlx5Core DirectNetworkDriver = "mlx5_core"
@@ -44,7 +44,7 @@ func (DirectNetworkDriver) Values() []DirectNetworkDriver {
 
 type InstallState string
 
-// Enum values for InstallState
+// Enum values for InstallState.
 const (
 	InstallStateNa             InstallState = "NA"
 	InstallStateDecrypting     InstallState = "DECRYPTING"
@@ -76,7 +76,7 @@ func (InstallState) Values() []InstallState {
 
 type IpAddressAssignment string
 
-// Enum values for IpAddressAssignment
+// Enum values for IpAddressAssignment.
 const (
 	IpAddressAssignmentDhcp   IpAddressAssignment = "DHCP"
 	IpAddressAssignmentStatic IpAddressAssignment = "STATIC"
@@ -94,7 +94,7 @@ func (IpAddressAssignment) Values() []IpAddressAssignment {
 
 type NetworkReachabilityState string
 
-// Enum values for NetworkReachabilityState
+// Enum values for NetworkReachabilityState.
 const (
 	NetworkReachabilityStateReachable   NetworkReachabilityState = "REACHABLE"
 	NetworkReachabilityStateUnreachable NetworkReachabilityState = "UNREACHABLE"
@@ -112,7 +112,7 @@ func (NetworkReachabilityState) Values() []NetworkReachabilityState {
 
 type PhysicalConnectorType string
 
-// Enum values for PhysicalConnectorType
+// Enum values for PhysicalConnectorType.
 const (
 	PhysicalConnectorTypeRj45    PhysicalConnectorType = "RJ45"
 	PhysicalConnectorTypeRj452   PhysicalConnectorType = "RJ45_2"
@@ -136,7 +136,7 @@ func (PhysicalConnectorType) Values() []PhysicalConnectorType {
 
 type RemoteManagementState string
 
-// Enum values for RemoteManagementState
+// Enum values for RemoteManagementState.
 const (
 	RemoteManagementStateInstalledAutostart RemoteManagementState = "INSTALLED_AUTOSTART"
 	RemoteManagementStateInstalledOnly      RemoteManagementState = "INSTALLED_ONLY"
@@ -154,7 +154,7 @@ func (RemoteManagementState) Values() []RemoteManagementState {
 
 type ServiceStatusState string
 
-// Enum values for ServiceStatusState
+// Enum values for ServiceStatusState.
 const (
 	ServiceStatusStateInactive     ServiceStatusState = "INACTIVE"
 	ServiceStatusStateDeactivating ServiceStatusState = "DEACTIVATING"
@@ -178,7 +178,7 @@ func (ServiceStatusState) Values() []ServiceStatusState {
 
 type ShippingLabelUpdateStatus string
 
-// Enum values for ShippingLabelUpdateStatus
+// Enum values for ShippingLabelUpdateStatus.
 const (
 	ShippingLabelUpdateStatusLabelStateUnavailable ShippingLabelUpdateStatus = "LABEL_STATE_UNAVAILABLE"
 	ShippingLabelUpdateStatusLabelFound            ShippingLabelUpdateStatus = "LABEL_FOUND"
@@ -216,7 +216,7 @@ func (ShippingLabelUpdateStatus) Values() []ShippingLabelUpdateStatus {
 
 type TimeSourceState string
 
-// Enum values for TimeSourceState
+// Enum values for TimeSourceState.
 const (
 	TimeSourceStateCurrent      TimeSourceState = "CURRENT"
 	TimeSourceStateCombined     TimeSourceState = "COMBINED"
@@ -240,7 +240,7 @@ func (TimeSourceState) Values() []TimeSourceState {
 
 type TimeSourceType string
 
-// Enum values for TimeSourceType
+// Enum values for TimeSourceType.
 const (
 	TimeSourceTypeServer TimeSourceType = "SERVER"
 	TimeSourceTypePeer   TimeSourceType = "PEER"
@@ -258,7 +258,7 @@ func (TimeSourceType) Values() []TimeSourceType {
 
 type UnlockStatusState string
 
-// Enum values for UnlockStatusState
+// Enum values for UnlockStatusState.
 const (
 	UnlockStatusStateLocked    UnlockStatusState = "LOCKED"
 	UnlockStatusStateUnlocked  UnlockStatusState = "UNLOCKED"

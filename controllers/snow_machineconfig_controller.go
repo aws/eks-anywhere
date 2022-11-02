@@ -18,7 +18,7 @@ type Validator interface {
 	ValidateEC2ImageExistsOnDevice(ctx context.Context, m *anywherev1.SnowMachineConfig) error
 }
 
-// SnowMachineConfigReconciler reconciles a SnowMachineConfig object
+// SnowMachineConfigReconciler reconciles a SnowMachineConfig object.
 type SnowMachineConfigReconciler struct {
 	client    client.Client
 	log       logr.Logger
@@ -40,7 +40,7 @@ func (r *SnowMachineConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// TODO: add here kubebuilder permissions as needed
+// TODO: add here kubebuilder permissions as needed.
 func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("snowMachineConfig", req.NamespacedName)
 

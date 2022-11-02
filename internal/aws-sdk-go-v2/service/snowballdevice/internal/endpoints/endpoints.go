@@ -9,7 +9,7 @@ import (
 	"regexp"
 )
 
-// Options is the endpoint resolver configuration options
+// Options is the endpoint resolver configuration options.
 type Options struct {
 	// Logger is a logging implementation that log events should be sent to.
 	Logger logging.Logger
@@ -62,12 +62,12 @@ func transformToSharedOptions(options Options) endpoints.Options {
 	}
 }
 
-// Resolver Snowball Device endpoint resolver
+// Resolver Snowball Device endpoint resolver.
 type Resolver struct {
 	partitions endpoints.Partitions
 }
 
-// ResolveEndpoint resolves the service endpoint for the given region and options
+// ResolveEndpoint resolves the service endpoint for the given region and options.
 func (r *Resolver) ResolveEndpoint(region string, options Options) (endpoint aws.Endpoint, err error) {
 	if len(region) == 0 {
 		return endpoint, &aws.MissingRegionError{}
@@ -77,7 +77,7 @@ func (r *Resolver) ResolveEndpoint(region string, options Options) (endpoint aws
 	return r.partitions.ResolveEndpoint(region, opt)
 }
 
-// New returns a new Resolver
+// New returns a new Resolver.
 func New() *Resolver {
 	return &Resolver{
 		partitions: defaultPartitions,

@@ -115,7 +115,7 @@ type DescribeVirtualNetworkInterfacesAPIClient interface {
 var _ DescribeVirtualNetworkInterfacesAPIClient = (*Client)(nil)
 
 // DescribeVirtualNetworkInterfacesPaginatorOptions is the paginator options for
-// DescribeVirtualNetworkInterfaces
+// DescribeVirtualNetworkInterfaces.
 type DescribeVirtualNetworkInterfacesPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
@@ -123,7 +123,7 @@ type DescribeVirtualNetworkInterfacesPaginatorOptions struct {
 }
 
 // DescribeVirtualNetworkInterfacesPaginator is a paginator for
-// DescribeVirtualNetworkInterfaces
+// DescribeVirtualNetworkInterfaces.
 type DescribeVirtualNetworkInterfacesPaginator struct {
 	options   DescribeVirtualNetworkInterfacesPaginatorOptions
 	client    DescribeVirtualNetworkInterfacesAPIClient
@@ -133,7 +133,7 @@ type DescribeVirtualNetworkInterfacesPaginator struct {
 }
 
 // NewDescribeVirtualNetworkInterfacesPaginator returns a new
-// DescribeVirtualNetworkInterfacesPaginator
+// DescribeVirtualNetworkInterfacesPaginator.
 func NewDescribeVirtualNetworkInterfacesPaginator(client DescribeVirtualNetworkInterfacesAPIClient, params *DescribeVirtualNetworkInterfacesInput, optFns ...func(*DescribeVirtualNetworkInterfacesPaginatorOptions)) *DescribeVirtualNetworkInterfacesPaginator {
 	if params == nil {
 		params = &DescribeVirtualNetworkInterfacesInput{}
@@ -154,7 +154,7 @@ func NewDescribeVirtualNetworkInterfacesPaginator(client DescribeVirtualNetworkI
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available
+// HasMorePages returns a boolean indicating whether more pages are available.
 func (p *DescribeVirtualNetworkInterfacesPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }

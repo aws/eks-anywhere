@@ -32,18 +32,18 @@ type DockerClient interface {
 }
 
 // ImageSource represents a generic source for container images that can be loaded
-// into the local docker cache
+// into the local docker cache.
 type ImageSource interface {
 	Load(ctx context.Context, images ...string) error
 }
 
 // ImageDestination represents a generic destination for container images that
-// can be written from the local docker cache
+// can be written from the local docker cache.
 type ImageDestination interface {
 	Write(ctx context.Context, images ...string) error
 }
 
-// ImageMover orchestrates loading images from a source and writing them to a destination
+// ImageMover orchestrates loading images from a source and writing them to a destination.
 type ImageMover struct {
 	source      ImageSource
 	destination ImageDestination
@@ -56,7 +56,7 @@ func NewImageMover(source ImageSource, destination ImageDestination) *ImageMover
 	}
 }
 
-// Move loads images from source and writes them to the destination
+// Move loads images from source and writes them to the destination.
 func (m *ImageMover) Move(ctx context.Context, images ...string) error {
 	uniqueImages := removesDuplicates(images)
 

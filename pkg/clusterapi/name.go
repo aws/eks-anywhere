@@ -17,18 +17,18 @@ import (
 
 var nameRegex = regexp.MustCompile(`(.*?)(-)(\d+)$`)
 
-// Object represents a kubernetes API object
+// Object represents a kubernetes API object.
 type Object interface {
 	kubernetes.Object
 }
 
 // ObjectComparator returns true only if only both kubernetes Object's are identical
 // Most of the time, this only requires comparing the Spec field, but that can variate
-// from object to object
+// from object to object.
 type ObjectComparator[O Object] func(current, new O) bool
 
 // ObjectRetriever gets a kubernetes API object using the provided client
-// If the object doesn't exist, it returns a NotFound error
+// If the object doesn't exist, it returns a NotFound error.
 type ObjectRetriever[O Object] func(ctx context.Context, client kubernetes.Client, name, namespace string) (O, error)
 
 // IncrementName takes an object name and increments the suffix number by one.
@@ -105,7 +105,7 @@ func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConf
 	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec, workerNodeGroupConfig))
 }
 
-// EnsureNewNameIfChanged updates an object's name if such object is different from its current state in the cluster
+// EnsureNewNameIfChanged updates an object's name if such object is different from its current state in the cluster.
 func EnsureNewNameIfChanged[M Object](ctx context.Context,
 	client kubernetes.Client,
 	retrieve ObjectRetriever[M],
