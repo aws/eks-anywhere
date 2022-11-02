@@ -11,6 +11,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	yamlcapi "github.com/aws/eks-anywhere/pkg/clusterapi/yaml"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -52,7 +53,7 @@ func TestControlPlaneObjects(t *testing.T) {
 	tests := []struct {
 		name         string
 		controlPlane *vsphere.ControlPlane
-		want         []clusterapi.Object
+		want         []kubernetes.Object
 	}{
 		{
 			name: "stacked etcd",
@@ -64,7 +65,7 @@ func TestControlPlaneObjects(t *testing.T) {
 					ControlPlaneMachineTemplate: vsphereMachineTemplate("cp-mt"),
 				},
 			},
-			want: []clusterapi.Object{
+			want: []kubernetes.Object{
 				capiCluster(),
 				vsphereCluster(),
 				kubeadmControlPlane(),
@@ -85,7 +86,7 @@ func TestControlPlaneObjects(t *testing.T) {
 				Secrets:    []*corev1.Secret{secret()},
 				ConfigMaps: []*corev1.ConfigMap{configMap()},
 			},
-			want: []clusterapi.Object{
+			want: []kubernetes.Object{
 				capiCluster(),
 				vsphereCluster(),
 				kubeadmControlPlane(),
