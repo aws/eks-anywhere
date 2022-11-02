@@ -32,6 +32,7 @@ func CheckCuratedPackagesCredentials(t *testing.T) {
 	requiredEnvVars := []string{
 		"EKSA_AWS_SECRET_ACCESS_KEY",
 		"EKSA_AWS_ACCESS_KEY_ID",
+		"EKSA_AWS_REGION",
 	}
 	for _, env := range requiredEnvVars {
 		_, ok := os.LookupEnv(env)

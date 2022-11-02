@@ -2836,3 +2836,121 @@ func TestKubectlDeleteEksaNutanixMachineConfigError(t *testing.T) {
 	).Return(bytes.Buffer{}, fmt.Errorf("error"))
 	tt.Expect(tt.k.DeleteEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)).NotTo(Succeed())
 }
+
+func TestWaitForPod(t *testing.T) {
+	tt := newKubectlTest(t)
+	timeout := "2m"
+	expectedTimeout := "120.00s"
+	condition := "status.containerStatuses[0].state.terminated.reason"
+	target := "testpod"
+	tt.e.EXPECT().Execute(gomock.Any(), "wait", "--timeout",
+		[]string{expectedTimeout, fmt.Sprintf("%s=%s", "--for=condition", condition), fmt.Sprintf("%s/%s", "pod", target), "--kubeconfig", tt.kubeconfig, "-n", "eksa-system"},
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(bytes.Buffer{}, nil)
+	tt.Expect(tt.k.WaitForPod(tt.ctx, tt.cluster, timeout, condition, target, "eksa-system")).To(Succeed())
+}
+
+func TestWaitForPodCompleted(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'Completed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"get", "pod/testpod", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.containerStatuses[0].state.terminated.reason}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if err := tt.k.WaitForPodCompleted(tt.ctx, tt.cluster, "testpod", "2m", "eksa-system"); err != nil {
+		t.Errorf("Kubectl.WaitForPodCompleted() error = %v, want nil", err)
+	}
+}
+
+func TestWaitForPackagesInstalled(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if err := tt.k.WaitForPackagesInstalled(tt.ctx, tt.cluster, "testpackage", "2m", "eksa-system"); err != nil {
+		t.Errorf("Kubectl.WaitForPackagesInstalled() error = %v, want nil", err)
+	}
+}
+
+func TestWaitJSONPathLoop(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if err := tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "2m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system"); err != nil {
+		t.Errorf("Kubectl.WaitJSONPathLoop() error = %v, want nil", err)
+	}
+}
+
+func TestWaitJSONPath(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"wait", "--timeout", "2m", fmt.Sprintf("--for=jsonpath='{.%s}'=%s", "status.state", "installed"), "packages.packages.eks.amazonaws.com/testpackage", "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if err := tt.k.WaitJSONPath(tt.ctx, tt.cluster.KubeconfigFile, "2m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system"); err != nil {
+		t.Errorf("Kubectl.WaitJSONPath() error = %v, want nil", err)
+	}
+}
+
+func TestGetPackageBundleController(t *testing.T) {
+	tt := newKubectlTest(t)
+	testPbc := &packagesv1.PackageBundleController{}
+	respJSON, err := json.Marshal(testPbc)
+	if err != nil {
+		t.Errorf("marshaling test service: %s", err)
+	}
+	ret := bytes.NewBuffer(respJSON)
+	expectedParam := []string{"get", "pbc", "testcluster", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
+	if _, err := tt.k.GetPackageBundleController(tt.ctx, tt.cluster.KubeconfigFile, "testcluster"); err != nil {
+		t.Errorf("Kubectl.GetPackageBundleController() error = %v, want nil", err)
+	}
+}
+
+func TestGetPackageBundleList(t *testing.T) {
+	tt := newKubectlTest(t)
+	testPbc := &packagesv1.PackageBundleList{}
+	respJSON, err := json.Marshal(testPbc)
+	if err != nil {
+		t.Errorf("marshaling test service: %s", err)
+	}
+	ret := bytes.NewBuffer(respJSON)
+	expectedParam := []string{"get", "packagebundle", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
+	if _, err := tt.k.GetPackageBundleList(tt.ctx, tt.cluster.KubeconfigFile); err != nil {
+		t.Errorf("Kubectl.GetPackageBundleList() error = %v, want nil", err)
+	}
+}
+
+func TestRunBusyBoxPod(t *testing.T) {
+	tt := newKubectlTest(t)
+	var b bytes.Buffer
+	expectedParam := []string{"run", "testpod-123", "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "pwd"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if _, err := tt.k.RunBusyBoxPod(tt.ctx, "eksa-packages", "testpod-123", tt.cluster.KubeconfigFile, []string{"pwd"}); err != nil {
+		t.Errorf("Kubectl.RunBusyBoxPod() error = %v, want nil", err)
+	}
+}
+
+func TestGetPodLogs(t *testing.T) {
+	tt := newKubectlTest(t)
+	var b bytes.Buffer
+	expectedParam := []string{"logs", "testpod", "testcontainer", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if _, err := tt.k.GetPodLogs(tt.ctx, "eksa-packages", "testpod", "testcontainer", tt.cluster.KubeconfigFile); err != nil {
+		t.Errorf("Kubectl.GetPodLogs() error = %v, want nil", err)
+	}
+}
+
+func TestGetPodLogsSince(t *testing.T) {
+	tt := newKubectlTest(t)
+	var b bytes.Buffer
+	now := time.Now()
+	expectedParam := []string{"logs", "testpod", "testcontainer", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--since-time", now.Format(time.RFC3339)}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if _, err := tt.k.GetPodLogsSince(tt.ctx, "eksa-packages", "testpod", "testcontainer", tt.cluster.KubeconfigFile, now); err != nil {
+		t.Errorf("Kubectl.GetPodLogsSince() error = %v, want nil", err)
+	}
+}

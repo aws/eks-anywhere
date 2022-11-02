@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -27,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/version"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
@@ -36,6 +34,7 @@ import (
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -432,7 +431,7 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 	return nil
 }
 
-// CheckJSONPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+
+// WaitJSONPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+
 func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
@@ -535,6 +534,7 @@ func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 			if err != nil {
 				return fmt.Errorf("waiting for %s %s on %s: %w", jsonpath, forCondition, property, err)
 			}
+			fmt.Printf("%v=%v\n", stdout.String(), fmt.Sprintf("'%s'", forCondition))
 			if stdout.String() == fmt.Sprintf("'%s'", forCondition) {
 				return nil
 			}
@@ -883,14 +883,13 @@ func (k *Kubectl) ValidatePods(ctx context.Context, kubeconfig string) error {
 
 // RunBusyBoxPod will run Kubectl run with a busybox curl image and the command you pass in.
 func (k *Kubectl) RunBusyBoxPod(ctx context.Context, namespace, name, kubeconfig string, command []string) (string, error) {
-	randomname := fmt.Sprintf("%s-%s", name, utilrand.String(7))
-	params := []string{"run", randomname, "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never"}
+	params := []string{"run", name, "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never"}
 	params = append(params, command...)
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return "", err
 	}
-	return randomname, err
+	return name, err
 }
 
 // GetPodLogs returns the logs of the specified container (namespace/pod/container).
