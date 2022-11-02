@@ -45,7 +45,7 @@ func (r *CloudStackDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) e
 
 var _ webhook.Validator = &CloudStackDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackDatacenterConfig) ValidateCreate() error {
 	cloudstackdatacenterconfiglog.Info("validate create", "name", r.Name)
 	if r.IsReconcilePaused() {
@@ -58,7 +58,7 @@ func (r *CloudStackDatacenterConfig) ValidateCreate() error {
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	cloudstackdatacenterconfiglog.Info("validate update", "name", r.Name)
 
@@ -140,7 +140,7 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackDatacenterConfig) ValidateDelete() error {
 	cloudstackdatacenterconfiglog.Info("validate delete", "name", r.Name)
 

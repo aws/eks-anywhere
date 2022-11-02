@@ -15,7 +15,7 @@
 package constants
 
 const (
-	// Artifacts-related constants
+	// Artifacts-related constants.
 	ReleaseKind              = "Release"
 	BundlesKind              = "Bundles"
 	HexAlphabet              = "0123456789abcdef"
@@ -26,7 +26,7 @@ const (
 	EksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
 	YamlSeparator            = "\n---\n"
 
-	// Project paths
+	// Project paths.
 	CapasProjectPath                    = "projects/aws/cluster-api-provider-aws-snow"
 	CapcProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
 	CapiProjectPath                     = "projects/kubernetes-sigs/cluster-api"

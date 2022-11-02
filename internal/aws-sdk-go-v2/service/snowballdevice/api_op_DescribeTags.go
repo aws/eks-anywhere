@@ -111,14 +111,14 @@ type DescribeTagsAPIClient interface {
 
 var _ DescribeTagsAPIClient = (*Client)(nil)
 
-// DescribeTagsPaginatorOptions is the paginator options for DescribeTags
+// DescribeTagsPaginatorOptions is the paginator options for DescribeTags.
 type DescribeTagsPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
 	StopOnDuplicateToken bool
 }
 
-// DescribeTagsPaginator is a paginator for DescribeTags
+// DescribeTagsPaginator is a paginator for DescribeTags.
 type DescribeTagsPaginator struct {
 	options   DescribeTagsPaginatorOptions
 	client    DescribeTagsAPIClient
@@ -127,7 +127,7 @@ type DescribeTagsPaginator struct {
 	firstPage bool
 }
 
-// NewDescribeTagsPaginator returns a new DescribeTagsPaginator
+// NewDescribeTagsPaginator returns a new DescribeTagsPaginator.
 func NewDescribeTagsPaginator(client DescribeTagsAPIClient, params *DescribeTagsInput, optFns ...func(*DescribeTagsPaginatorOptions)) *DescribeTagsPaginator {
 	if params == nil {
 		params = &DescribeTagsInput{}
@@ -148,7 +148,7 @@ func NewDescribeTagsPaginator(client DescribeTagsAPIClient, params *DescribeTags
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available
+// HasMorePages returns a boolean indicating whether more pages are available.
 func (p *DescribeTagsPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }

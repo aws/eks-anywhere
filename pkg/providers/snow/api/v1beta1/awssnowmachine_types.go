@@ -195,7 +195,7 @@ type CloudInit struct {
 	// SecureSecretsBackend SecretBackend `json:"secureSecretsBackend,omitempty"`
 }
 
-// AWSSnowMachineStatus defines the observed state of AWSSnowMachine
+// AWSSnowMachineStatus defines the observed state of AWSSnowMachine.
 type AWSSnowMachineStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -257,7 +257,7 @@ type AWSSnowMachineStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// AWSSnowMachine is the Schema for the awssnowmachines API
+// AWSSnowMachine is the Schema for the awssnowmachines API.
 type AWSSnowMachine struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -269,7 +269,7 @@ type AWSSnowMachine struct {
 
 //+kubebuilder:object:root=true
 
-// AWSSnowMachineList contains a list of AWSSnowMachine
+// AWSSnowMachineList contains a list of AWSSnowMachine.
 type AWSSnowMachineList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -385,7 +385,7 @@ func addRetryMiddlewares(stack *middleware.Stack, o Options) error {
 	return retry.AddRetryMiddlewares(stack, mo)
 }
 
-// resolves dual-stack endpoint configuration
+// resolves dual-stack endpoint configuration.
 func resolveUseDualStackEndpoint(cfg aws.Config, o *Options) error {
 	if len(cfg.ConfigSources) == 0 {
 		return nil
@@ -400,7 +400,7 @@ func resolveUseDualStackEndpoint(cfg aws.Config, o *Options) error {
 	return nil
 }
 
-// resolves FIPS endpoint configuration
+// resolves FIPS endpoint configuration.
 func resolveUseFIPSEndpoint(cfg aws.Config, o *Options) error {
 	if len(cfg.ConfigSources) == 0 {
 		return nil

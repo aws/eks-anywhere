@@ -37,7 +37,7 @@ func WithInsecure() HelmOpt {
 	}
 }
 
-// join the default and the provided maps together
+// join the default and the provided maps together.
 func WithEnv(env map[string]string) HelmOpt {
 	return func(h *Helm) {
 		for k, v := range env {
@@ -138,7 +138,7 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 }
 
 // InstallChartWithValuesFile installs a helm chart with the provided values file and waits for the chart deployment to be ready
-// The default timeout for the chart to reach ready state is 5m
+// The default timeout for the chart to reach ready state is 5m.
 func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
 	params := []string{"install", chart, ociURI, "--version", version, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath, "--wait"}
 	params = h.addInsecureFlagIfProvided(params)

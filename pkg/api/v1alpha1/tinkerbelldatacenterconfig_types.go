@@ -7,7 +7,7 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // Important: Run "make generate" to regenerate code after modifying this file
 
-// TinkerbellDatacenterConfigSpec defines the desired state of TinkerbellDatacenterConfig
+// TinkerbellDatacenterConfigSpec defines the desired state of TinkerbellDatacenterConfig.
 type TinkerbellDatacenterConfigSpec struct {
 	// TinkerbellIP is used to configure a VIP for hosting the Tinkerbell services.
 	TinkerbellIP string `json:"tinkerbellIP"`
@@ -22,13 +22,13 @@ type TinkerbellDatacenterConfigSpec struct {
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig
 //
-// Important: Run "make generate" to regenerate code after modifying this file
+// Important: Run "make generate" to regenerate code after modifying this file.
 type TinkerbellDatacenterConfigStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// TinkerbellDatacenterConfig is the Schema for the TinkerbellDatacenterConfigs API
+// TinkerbellDatacenterConfig is the Schema for the TinkerbellDatacenterConfigs API.
 type TinkerbellDatacenterConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -89,7 +89,7 @@ func (t *TinkerbellDatacenterConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as TinkerbellDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as TinkerbellDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type TinkerbellDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -99,7 +99,7 @@ type TinkerbellDatacenterConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// TinkerbellDatacenterConfigList contains a list of TinkerbellDatacenterConfig
+// TinkerbellDatacenterConfigList contains a list of TinkerbellDatacenterConfig.
 type TinkerbellDatacenterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

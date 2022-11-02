@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// NutanixDatacenterConfigSpec defines the desired state of NutanixDatacenterConfig
+// NutanixDatacenterConfigSpec defines the desired state of NutanixDatacenterConfig.
 type NutanixDatacenterConfigSpec struct {
 	// Endpoint is the Endpoint of Nutanix Prism Central
 	// +kubebuilder:validation:Required
@@ -28,7 +28,7 @@ type NutanixDatacenterConfigSpec struct {
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 }
 
-// NutanixDatacenterConfigStatus defines the observed state of NutanixDatacenterConfig
+// NutanixDatacenterConfigStatus defines the observed state of NutanixDatacenterConfig.
 type NutanixDatacenterConfigStatus struct{}
 
 // NutanixDatacenterConfig is the Schema for the NutanixDatacenterConfigs API

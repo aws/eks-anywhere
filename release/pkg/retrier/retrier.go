@@ -26,13 +26,13 @@ type Retrier struct {
 
 type (
 	// RetryPolicy allows to customize the retrying logic. The boolean retry indicates if a new retry
-	// should be performed and the wait duration indicates the wait time before the next retry
+	// should be performed and the wait duration indicates the wait time before the next retry.
 	RetryPolicy func(totalRetries int, err error) (retry bool, wait time.Duration)
 	RetrierOpt  func(*Retrier)
 )
 
 // NewRetrier creates a new retrier with a global timeout (max time allowed for the whole execution)
-// The default retry policy is to always retry with no wait time in between retries
+// The default retry policy is to always retry with no wait time in between retries.
 func NewRetrier(timeout time.Duration, opts ...RetrierOpt) *Retrier {
 	r := &Retrier{
 		timeout:     timeout,
@@ -52,7 +52,7 @@ func WithRetryPolicy(policy RetryPolicy) RetrierOpt {
 }
 
 // Retry runs the fn function until it either successful completes (not error),
-// the set timeout reached or the retry policy aborts the execution
+// the set timeout reached or the retry policy aborts the execution.
 func (r *Retrier) Retry(fn func() error) error {
 	start := time.Now()
 	retries := 0

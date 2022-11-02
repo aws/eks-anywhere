@@ -113,7 +113,7 @@ type DescribeAutoUpdateStrategiesAPIClient interface {
 var _ DescribeAutoUpdateStrategiesAPIClient = (*Client)(nil)
 
 // DescribeAutoUpdateStrategiesPaginatorOptions is the paginator options for
-// DescribeAutoUpdateStrategies
+// DescribeAutoUpdateStrategies.
 type DescribeAutoUpdateStrategiesPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
@@ -121,7 +121,7 @@ type DescribeAutoUpdateStrategiesPaginatorOptions struct {
 }
 
 // DescribeAutoUpdateStrategiesPaginator is a paginator for
-// DescribeAutoUpdateStrategies
+// DescribeAutoUpdateStrategies.
 type DescribeAutoUpdateStrategiesPaginator struct {
 	options   DescribeAutoUpdateStrategiesPaginatorOptions
 	client    DescribeAutoUpdateStrategiesAPIClient
@@ -131,7 +131,7 @@ type DescribeAutoUpdateStrategiesPaginator struct {
 }
 
 // NewDescribeAutoUpdateStrategiesPaginator returns a new
-// DescribeAutoUpdateStrategiesPaginator
+// DescribeAutoUpdateStrategiesPaginator.
 func NewDescribeAutoUpdateStrategiesPaginator(client DescribeAutoUpdateStrategiesAPIClient, params *DescribeAutoUpdateStrategiesInput, optFns ...func(*DescribeAutoUpdateStrategiesPaginatorOptions)) *DescribeAutoUpdateStrategiesPaginator {
 	if params == nil {
 		params = &DescribeAutoUpdateStrategiesInput{}
@@ -152,7 +152,7 @@ func NewDescribeAutoUpdateStrategiesPaginator(client DescribeAutoUpdateStrategie
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available
+// HasMorePages returns a boolean indicating whether more pages are available.
 func (p *DescribeAutoUpdateStrategiesPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }

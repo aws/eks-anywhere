@@ -24,7 +24,7 @@ func (r *AWSIamConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Defaulter = &AWSIamConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
 func (r *AWSIamConfig) Default() {
 	awsiamconfiglog.Info("Setting up AWSIamConfig defaults for", "name", r.Name)
 	r.SetDefaults()
@@ -35,14 +35,14 @@ func (r *AWSIamConfig) Default() {
 
 var _ webhook.Validator = &AWSIamConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *AWSIamConfig) ValidateCreate() error {
 	awsiamconfiglog.Info("validate create", "name", r.Name)
 
 	return r.Validate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) error {
 	awsiamconfiglog.Info("validate update", "name", r.Name)
 
@@ -65,7 +65,7 @@ func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(AWSIamConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *AWSIamConfig) ValidateDelete() error {
 	awsiamconfiglog.Info("validate delete", "name", r.Name)
 

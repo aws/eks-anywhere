@@ -25,7 +25,7 @@ func (r *OIDCConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Validator = &OIDCConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *OIDCConfig) ValidateCreate() error {
 	oidcconfiglog.Info("validate create", "name", r.Name)
 
@@ -38,7 +38,7 @@ func (r *OIDCConfig) ValidateCreate() error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *OIDCConfig) ValidateUpdate(old runtime.Object) error {
 	oidcconfiglog.Info("validate update", "name", r.Name)
 
@@ -65,7 +65,7 @@ func (r *OIDCConfig) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *OIDCConfig) ValidateDelete() error {
 	oidcconfiglog.Info("validate delete", "name", r.Name)
 

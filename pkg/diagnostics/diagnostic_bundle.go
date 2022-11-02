@@ -306,7 +306,7 @@ func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 // createDiagnosticNamespace attempts to create the namespace eksa-diagnostics and associated RBAC objects.
 // collector pods, for example host log collectors or run command collectors, will be launched in this namespace with the default service account.
 // this method intentionally does not return an error
-// a cluster in need of diagnosis may be unable to create new API objects and we should not stop our collection/analysis just because the namespace fails to create
+// a cluster in need of diagnosis may be unable to create new API objects and we should not stop our collection/analysis just because the namespace fails to create.
 func (e *EksaDiagnosticBundle) createDiagnosticNamespaceAndRoles(ctx context.Context) {
 	targetCluster := &types.Cluster{
 		KubeconfigFile: e.kubeconfig,

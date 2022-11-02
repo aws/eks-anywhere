@@ -28,7 +28,7 @@ import (
 
 const DefaultCloudStackAZPrefix = "default-az"
 
-// CloudStackDatacenterConfigSpec defines the desired state of CloudStackDatacenterConfig
+// CloudStackDatacenterConfigSpec defines the desired state of CloudStackDatacenterConfig.
 type CloudStackDatacenterConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -77,7 +77,7 @@ func (r *CloudStackResourceIdentifier) Equal(o *CloudStackResourceIdentifier) bo
 	return r.Id == "" && o.Id == "" && r.Name == o.Name
 }
 
-// CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
+// CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name.
 type CloudStackZone struct {
 	// Zone is the name or UUID of the CloudStack zone in which clusters should be created. Zones should be managed by a single CloudStack Management endpoint.
 	Id   string `json:"id,omitempty"`
@@ -87,7 +87,7 @@ type CloudStackZone struct {
 	Network CloudStackResourceIdentifier `json:"network"`
 }
 
-// CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure
+// CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure.
 type CloudStackAvailabilityZone struct {
 	// Name is used as a unique identifier for each availability zone
 	Name string `json:"name"`
@@ -105,7 +105,7 @@ type CloudStackAvailabilityZone struct {
 	ManagementApiEndpoint string `json:"managementApiEndpoint"`
 }
 
-// CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
+// CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig.
 type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// SpecValid is set to true if cloudstackdatacenterconfig is validated.
 	SpecValid bool `json:"specValid,omitempty"`
@@ -122,7 +122,7 @@ type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// CloudStackDatacenterConfig is the Schema for the cloudstackdatacenterconfigs API
+// CloudStackDatacenterConfig is the Schema for the cloudstackdatacenterconfigs API.
 type CloudStackDatacenterConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -300,7 +300,7 @@ func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool 
 
 // +kubebuilder:object:generate=false
 
-// Same as CloudStackDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as CloudStackDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type CloudStackDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -310,7 +310,7 @@ type CloudStackDatacenterConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// CloudStackDatacenterConfigList contains a list of CloudStackDatacenterConfig
+// CloudStackDatacenterConfigList contains a list of CloudStackDatacenterConfig.
 type CloudStackDatacenterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

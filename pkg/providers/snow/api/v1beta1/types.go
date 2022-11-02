@@ -40,7 +40,7 @@ type AWSResourceReference struct {
 	Filters []Filter `json:"filters,omitempty"`
 }
 
-// Filter is a filter used to identify an AWS resource
+// Filter is a filter used to identify an AWS resource.
 type Filter struct {
 	// Name of the filter. Filter names are case-sensitive.
 	Name string `json:"name"`
@@ -157,35 +157,35 @@ type Volume struct {
 type InstanceState string
 
 var (
-	// InstanceStatePending is the string representing an instance in a pending state
+	// InstanceStatePending is the string representing an instance in a pending state.
 	InstanceStatePending = InstanceState("pending")
 
-	// InstanceStateRunning is the string representing an instance in a running state
+	// InstanceStateRunning is the string representing an instance in a running state.
 	InstanceStateRunning = InstanceState("running")
 
-	// InstanceStateShuttingDown is the string representing an instance shutting down
+	// InstanceStateShuttingDown is the string representing an instance shutting down.
 	InstanceStateShuttingDown = InstanceState("shutting-down")
 
-	// InstanceStateTerminated is the string representing an instance that has been terminated
+	// InstanceStateTerminated is the string representing an instance that has been terminated.
 	InstanceStateTerminated = InstanceState("terminated")
 
 	// InstanceStateStopping is the string representing an instance
-	// that is in the process of being stopped and can be restarted
+	// that is in the process of being stopped and can be restarted.
 	InstanceStateStopping = InstanceState("stopping")
 
 	// InstanceStateStopped is the string representing an instance
-	// that has been stopped and can be restarted
+	// that has been stopped and can be restarted.
 	InstanceStateStopped = InstanceState("stopped")
 
 	// InstanceRunningStates defines the set of states in which an EC2 instance is
-	// running or going to be running soon
+	// running or going to be running soon.
 	InstanceRunningStates = sets.NewString(
 		string(InstanceStatePending),
 		string(InstanceStateRunning),
 	)
 
 	// InstanceOperationalStates defines the set of states in which an EC2 instance is
-	// or can return to running, and supports all EC2 operations
+	// or can return to running, and supports all EC2 operations.
 	InstanceOperationalStates = InstanceRunningStates.Union(
 		sets.NewString(
 			string(InstanceStateStopping),
@@ -193,7 +193,7 @@ var (
 		),
 	)
 
-	// InstanceKnownStates represents all known EC2 instance states
+	// InstanceKnownStates represents all known EC2 instance states.
 	InstanceKnownStates = InstanceOperationalStates.Union(
 		sets.NewString(
 			string(InstanceStateShuttingDown),
@@ -202,7 +202,7 @@ var (
 	)
 )
 
-// AWSSnowMachineTemplateResource describes the data needed to create am AWSSnowMachine from a template
+// AWSSnowMachineTemplateResource describes the data needed to create am AWSSnowMachine from a template.
 type AWSSnowMachineTemplateResource struct {
 	// Spec is the specification of the desired behavior of the machine.
 	Spec AWSSnowMachineSpec `json:"spec"`

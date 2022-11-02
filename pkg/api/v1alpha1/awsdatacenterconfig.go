@@ -6,7 +6,7 @@ import (
 
 const AWSDatacenterKind = "AWSDatacenterConfig"
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewAWSDatacenterConfigGenerate(clusterName string) *AWSDatacenterConfigGenerate {
 	return &AWSDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

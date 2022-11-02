@@ -45,7 +45,7 @@ type WorkerGroup[M Object] struct {
 // with the current state of the cluster. If they had, it generates a new name for them by increasing a monotonic number
 // at the end of the name.
 // This process is performed to the provider machine template and the kubeadmconfigtemplate.
-// The kubeadmconfigtemplate is not immutable at the API level but we treat is a such for consistency
+// The kubeadmconfigtemplate is not immutable at the API level but we treat is a such for consistency.
 func (g *WorkerGroup[M]) UpdateImmutableObjectNames(
 	ctx context.Context,
 	client kubernetes.Client,
@@ -76,7 +76,7 @@ func (g *WorkerGroup[M]) UpdateImmutableObjectNames(
 }
 
 // GetKubeadmConfigTemplate retrieves a KubeadmConfigTemplate using a client
-// Implements ObjectRetriever
+// Implements ObjectRetriever.
 func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, name, namespace string) (*kubeadmv1.KubeadmConfigTemplate, error) {
 	k := &kubeadmv1.KubeadmConfigTemplate{}
 	if err := client.Get(ctx, name, namespace, k); err != nil {
@@ -88,7 +88,7 @@ func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, nam
 
 // KubeadmConfigTemplateEqual returns true only if the new version of a KubeadmConfigTemplate
 // involves changes with respect6 to the old one when applied to the cluster
-// Implements ObjectComparator
+// Implements ObjectComparator.
 func KubeadmConfigTemplateEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
 	// DeepDerivative treats empty map (length == 0) as unset field. We need to manually compare certain fields
 	// such as taints, so that setting it to empty will trigger machine recreate

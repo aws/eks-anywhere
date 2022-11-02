@@ -11,7 +11,7 @@ type KubeLister interface {
 	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 }
 
-// GetProviders lists all installed CAPI providers across all namespaces from the kube-api server
+// GetProviders lists all installed CAPI providers across all namespaces from the kube-api server.
 func GetProviders(ctx context.Context, client KubeLister) ([]clusterctlv1.Provider, error) {
 	providersList := &clusterctlv1.ProviderList{}
 	err := client.List(ctx, providersList)

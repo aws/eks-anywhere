@@ -31,7 +31,7 @@ const (
 	clusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
 
-// ClusterReconciler reconciles a Cluster object
+// ClusterReconciler reconciles a Cluster object.
 type ClusterReconciler struct {
 	client                     client.Client
 	log                        logr.Logger

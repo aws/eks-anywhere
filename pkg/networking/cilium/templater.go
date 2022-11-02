@@ -61,7 +61,7 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	return manifest, nil
 }
 
-// ManifestOpt allows to modify options for a cilium manifest
+// ManifestOpt allows to modify options for a cilium manifest.
 type ManifestOpt func(*ManifestConfig)
 
 type ManifestConfig struct {
@@ -73,14 +73,14 @@ type ManifestConfig struct {
 
 // WithKubeVersion allows to generate the Cilium manifest for a different kubernetes version
 // than the one specified in the cluster spec. Useful for upgrades scenarios where Cilium is upgraded before
-// the kubernetes components
+// the kubernetes components.
 func WithKubeVersion(kubeVersion string) ManifestOpt {
 	return func(c *ManifestConfig) {
 		c.kubeVersion = kubeVersion
 	}
 }
 
-// WithRetrier introduced for optimizing unit tests
+// WithRetrier introduced for optimizing unit tests.
 func WithRetrier(retrier *retrier.Retrier) ManifestOpt {
 	return func(c *ManifestConfig) {
 		c.retrier = retrier
@@ -88,7 +88,7 @@ func WithRetrier(retrier *retrier.Retrier) ManifestOpt {
 }
 
 // WithUpgradeFromVersion allows to specify the compatibility Cilium version to use in the manifest.
-// This is necessary for Cilium upgrades
+// This is necessary for Cilium upgrades.
 func WithUpgradeFromVersion(version semver.Version) ManifestOpt {
 	return func(c *ManifestConfig) {
 		c.values.set(fmt.Sprintf("%d.%d", version.Major, version.Minor), "upgradeCompatibility")
@@ -96,7 +96,7 @@ func WithUpgradeFromVersion(version semver.Version) ManifestOpt {
 }
 
 // WithPolicyAllowedNamespaces allows to specify which namespaces traffic should be allowed when using
-// and "Always" policy enforcement mode
+// and "Always" policy enforcement mode.
 func WithPolicyAllowedNamespaces(namespaces []string) ManifestOpt {
 	return func(c *ManifestConfig) {
 		c.namespaces = namespaces

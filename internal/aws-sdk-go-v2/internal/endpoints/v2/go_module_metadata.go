@@ -2,5 +2,5 @@
 
 package endpoints
 
-// goModuleVersion is the tagged release for this module
+// goModuleVersion is the tagged release for this module.
 const goModuleVersion = "2.4.15"

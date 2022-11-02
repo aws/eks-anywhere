@@ -1658,7 +1658,7 @@ func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name str
 
 // GetObject performs a GET call to the kube API server authenticating with a kubeconfig file
 // and unmarshalls the response into the provided Object
-// If the object is not found, it returns an error implementing apimachinery errors.APIStatus
+// If the object is not found, it returns an error implementing apimachinery errors.APIStatus.
 func (k *Kubectl) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
 	return k.get(ctx, resourceType, kubeconfig, obj, withGetResourceName(name), withGetNamespace(namespace))
 }
@@ -1778,7 +1778,7 @@ func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buf
 	return k.Execute(ctx, opts...)
 }
 
-// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file
+// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file.
 func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error {
 	if _, err := k.Execute(ctx, "delete", resourceType, name, "--namespace", namespace, "--kubeconfig", kubeconfig); err != nil {
 		return fmt.Errorf("deleting %s %s in namespace %s: %v", name, resourceType, namespace, err)
