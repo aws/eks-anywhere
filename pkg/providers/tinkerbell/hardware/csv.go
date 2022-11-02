@@ -17,7 +17,7 @@ type CSVReader struct {
 	reader *csv.Unmarshaller
 }
 
-// NewCSVReader returns a new CSVReader instance that consumes csv data from r. r should return io.EOF when no more
+// NewCSVReader returns a new CSVReader instance that consumes csv data from r. R should return io.EOF when no more
 // records are available.
 func NewCSVReader(r io.Reader) (CSVReader, error) {
 	stdreader := stdcsv.NewReader(r)

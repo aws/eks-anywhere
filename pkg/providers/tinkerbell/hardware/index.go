@@ -12,7 +12,7 @@ type FieldIndexer struct {
 	indexes      map[string]*fieldIndex
 }
 
-// NewFieldIndexer creates a new FieldIndexer instance. object is the object to be indexed and will
+// NewFieldIndexer creates a new FieldIndexer instance. Object is the object to be indexed and will
 // be checked during Insert() calls. NewFieldIndexer will panic if object is nil.
 func NewFieldIndexer(object interface{}) *FieldIndexer {
 	objectType := reflect.TypeOf(object)
@@ -29,8 +29,8 @@ func NewFieldIndexer(object interface{}) *FieldIndexer {
 // KeyExtractorFunc returns a key from object that can be used to look up the object.
 type KeyExtractorFunc func(object interface{}) string
 
-// IndexField registers a new index with i. field is the index name and should represent a path
-// to the field such as `.Spec.ID`. fn is used to extract the lookup key on Insert() from the object
+// IndexField registers a new index with i. Field is the index name and should represent a path
+// to the field such as `.Spec.ID`. Fn is used to extract the lookup key on Insert() from the object
 // to be inserted.
 func (i *FieldIndexer) IndexField(field string, fn KeyExtractorFunc) {
 	i.indexes[field] = &fieldIndex{

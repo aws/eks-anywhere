@@ -88,7 +88,7 @@ const (
 	// NameKubernetesClusterPrefix is the tag name used by the cloud provider to logically
 	// separate independent cluster resources. We use it to identify which resources we expect
 	// to be permissive about state changes.
-	// logically independent clusters running in the same AZ.
+	// Logically independent clusters running in the same AZ.
 	// The tag key = NameKubernetesAWSCloudProviderPrefix + clusterID
 	// The tag value is an ownership value.
 	NameKubernetesAWSCloudProviderPrefix = "kubernetes.io/cluster/"

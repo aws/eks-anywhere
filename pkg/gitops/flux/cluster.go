@@ -114,9 +114,9 @@ func (fc *fluxForCluster) initializeProviderRepositoryIfNotExists(ctx context.Co
 }
 
 // setupRepository will set up the repository which will house the GitOps configuration for the cluster.
-// if the repository exists and is not empty, it will be cloned.
-// if the repository exists but is empty, it will be initialized locally, as a bare repository cannot be cloned.
-// if the repository does not exist, it will be created and then initialized locally.
+// If the repository exists and is not empty, it will be cloned.
+// If the repository exists but is empty, it will be initialized locally, as a bare repository cannot be cloned.
+// If the repository does not exist, it will be created and then initialized locally.
 func (fc *fluxForCluster) setupRepository(ctx context.Context) (err error) {
 	r, err := fc.initializeProviderRepositoryIfNotExists(ctx)
 	if err != nil {
@@ -170,7 +170,7 @@ func (fc *fluxForCluster) createRemoteRepository(ctx context.Context) error {
 }
 
 // initializeLocalRepository will git init the local repository directory, initialize a git repository.
-// it will then change branches to the branch specified in the GitOps configuration.
+// It will then change branches to the branch specified in the GitOps configuration.
 func (fc *fluxForCluster) initializeLocalRepository() error {
 	if err := fc.gitClient.Init(); err != nil {
 		return fmt.Errorf("initializing repository: %v", err)

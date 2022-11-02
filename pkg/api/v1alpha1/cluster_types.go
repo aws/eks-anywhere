@@ -21,14 +21,14 @@ const (
 
 	clusterResourceType = "clusters.anywhere.eks.amazonaws.com"
 
-	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it.
+	// EtcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it.
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
 
-	// managementAnnotation points to the name of a management cluster
+	// ManagementAnnotation points to the name of a management cluster
 	// cluster object.
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 
-	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
+	// DefaultEksaNamespace is the default namespace for EKS-A resources when not specified.
 	defaultEksaNamespace = "default"
 )
 

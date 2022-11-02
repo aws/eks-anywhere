@@ -164,7 +164,7 @@ var _ aws.EndpointResolverWithOptions = awsEndpointResolverAdaptor(nil)
 // If awsResolver returns aws.EndpointNotFoundError error, the resolver will use the the provided
 // fallbackResolver for resolution.
 //
-// fallbackResolver must not be nil.
+// FallbackResolver must not be nil.
 func withEndpointResolver(awsResolver aws.EndpointResolver, awsResolverWithOptions aws.EndpointResolverWithOptions, fallbackResolver EndpointResolver) EndpointResolver {
 	var resolver aws.EndpointResolverWithOptions
 

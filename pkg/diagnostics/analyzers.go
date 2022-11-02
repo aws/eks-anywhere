@@ -230,7 +230,7 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 }
 
 // namespaceLogTextAnalyzersMap is used to associated log text analyzers with the logs collected from a specific namespace.
-// the key of the analyzers map is the namespace name, and the value are the associated log text analyzers.
+// The key of the analyzers map is the namespace name, and the value are the associated log text analyzers.
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	return map[string][]*Analyze{
 		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),

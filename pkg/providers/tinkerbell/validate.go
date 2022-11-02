@@ -158,7 +158,7 @@ type minimumHardwareRequirement struct {
 }
 
 // minimumHardwareRequirements is a collection of minimumHardwareRequirement instances.
-// it stores requirements in a map where the key is derived from selectors. This ensures selectors
+// It stores requirements in a map where the key is derived from selectors. This ensures selectors
 // specifying the same key-value pairs are combined.
 type minimumHardwareRequirements map[string]*minimumHardwareRequirement
 
@@ -207,7 +207,7 @@ func validateMinimumHardwareRequirements(requirements minimumHardwareRequirement
 }
 
 // validateHardwareSatifiesOnlyOneSelector ensures hardware in allHardware meets one and only one
-// selector in selectors. selectors uses the selectorSet construct to ensure we don't
+// selector in selectors. Selectors uses the selectorSet construct to ensure we don't
 // operate on duplicate selectors given a selector can be re-used among groups as they may reference
 // the same TinkerbellMachineConfig.
 func validateHardwareSatisfiesOnlyOneSelector(allHardware []*tinkv1alpha1.Hardware, selectors selectorSet) error {

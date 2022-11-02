@@ -136,7 +136,7 @@ func NewMachineTemplateName(new, old *snowv1.AWSSnowMachineTemplate) string {
 
 // MachineTemplateDeepDerivative compares two awssnowmachinetemplates to determine if their spec fields are equal.
 // DeepDerivative is used so that unset fields in new object are not compared. Although DeepDerivative treats
-// new subset slice equal to the original slice. i.e. DeepDerivative([]int{1}, []int{1, 2}) returns true.
+// new subset slice equal to the original slice. I.e. DeepDerivative([]int{1}, []int{1, 2}) returns true.
 // Custom logic is added to justify this usecase since removing a device from the devices list shall trigger machine
 // rollout and recreate or the snow cluster goes into a state where the machines on the removed device can’t be deleted.
 func MachineTemplateDeepDerivative(new, old *snowv1.AWSSnowMachineTemplate) bool {
@@ -183,7 +183,7 @@ func recreateKubeadmConfigTemplateNeeded(new, old *bootstrapv1.KubeadmConfigTemp
 
 // credentialsSecret generates the credentials secret(s) used for provisioning a snow cluster.
 // - eks-a credentials secret: user managed secret referred from snowdatacenterconfig identityRef
-// - snow credentials secret: eks-a creates, updates and deletes in eksa-system namespace. this secret is fully managed by eks-a. User shall treat it as a "read-only" object.
+// - snow credentials secret: eks-a creates, updates and deletes in eksa-system namespace. This secret is fully managed by eks-a. User shall treat it as a "read-only" object.
 func capasCredentialsSecret(clusterSpec *cluster.Spec) (*v1.Secret, error) {
 	if clusterSpec.SnowCredentialsSecret == nil {
 		return nil, errors.New("snowCredentialsSecret in clusterSpec shall not be nil")

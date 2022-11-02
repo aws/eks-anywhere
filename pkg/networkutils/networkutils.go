@@ -28,7 +28,7 @@ func ValidateIP(ip string) error {
 // ip by trying to establish a TCP connection. Ports checked include: 22, 23, 80, 443 and 6443 (Kubernetes API Server).
 // Each connection attempt allows up-to 500ms for a response.
 //
-// todo(chrisdoherty) change to an icmp approach to eliminate the need for ports.
+// Todo(chrisdoherty) change to an icmp approach to eliminate the need for ports.
 func IsIPInUse(client NetClient, ip string) bool {
 	ports := []string{"22", "23", "80", "443", "6443"}
 	for _, port := range ports {
