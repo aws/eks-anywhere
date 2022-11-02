@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-// ValidateControlPlaneNodeNameMatchCAPIMachineName validate if node name is same as CAPI machine name
+// ValidateControlPlaneNodeNameMatchCAPIMachineName validate if node name is same as CAPI machine name.
 func ValidateControlPlaneNodeNameMatchCAPIMachineName(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) error {
 	if controlPlane.MachineGroupRef.Kind == "CloudStackMachineConfig" {
 		logger.V(4).Info("Validating control plane node matches CAPI machine name")
@@ -18,7 +18,7 @@ func ValidateControlPlaneNodeNameMatchCAPIMachineName(controlPlane v1alpha1.Cont
 	return nil
 }
 
-// ValidateWorkerNodeNameMatchCAPIMachineName validate if node name is same as CAPI machine name
+// ValidateWorkerNodeNameMatchCAPIMachineName validate if node name is same as CAPI machine name.
 func ValidateWorkerNodeNameMatchCAPIMachineName(w v1alpha1.WorkerNodeGroupConfiguration, node corev1.Node) error {
 	if w.MachineGroupRef.Kind == "CloudStackMachineConfig" {
 		logger.V(4).Info("Validating worker node matches CAPI machine name")
