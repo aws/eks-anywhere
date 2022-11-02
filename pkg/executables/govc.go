@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -340,6 +341,11 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 		err = g.ResizeDisk(ctx, datacenter, templateName, diskName, diskSizeInGB)
 		if err != nil {
 			return fmt.Errorf("resizing disk %v to 20G: %v", diskName, err)
+		}
+
+		err = g.ValidateSize(ctx, datacenter, templateName)
+		if err != nil {
+			return fmt.Errorf("incorrect disk size: %v", err)
 		}
 	}
 
@@ -1087,4 +1093,48 @@ func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role 
 	}
 
 	return nil
+}
+
+func (g *Govc) ValidateSize(ctx context.Context, datacenter, templateName string) error {
+	devicesInfo, err := g.DevicesInfo(ctx, datacenter, templateName)
+	if err != nil {
+		return err
+	}
+	for _, deviceInfo := range devicesInfo.([]interface{}) {
+		deviceMetadata := deviceInfo.(map[string]interface{})["DeviceInfo"]
+		deviceLabel := deviceMetadata.(map[string]interface{})["Label"].(string)
+		deviceDiskSize := deviceMetadata.(map[string]interface{})["Summary"].(string)
+
+		if strings.EqualFold(deviceLabel, "Hard disk 1") {
+			// check if size is 20 or 22 gb
+			parsedDiskSize, err := parseDiskSize(deviceDiskSize)
+			if err != nil {
+				return err
+			}
+			if parsedDiskSize != 22 {
+				return fmt.Errorf("resizing disk1 to 20 GB - actual size is: %d", parsedDiskSize)
+			}
+		} else if strings.EqualFold(deviceLabel, "Hard disk 2") {
+			parsedDiskSize, err := parseDiskSize(deviceDiskSize)
+			if err != nil {
+				return err
+			}
+			if parsedDiskSize != 20 {
+				return fmt.Errorf("resizing disk2 to 22 GB - actual size is: %d", parsedDiskSize)
+			}
+		}
+	}
+	return nil
+}
+
+func parseDiskSize(str string) (int, error) {
+	nonAlphanumericRegex := regexp.MustCompile(`[^0-9]+`)
+	replacedString := nonAlphanumericRegex.ReplaceAllString(str, "")
+
+	i, err := strconv.Atoi(replacedString)
+	if err != nil {
+		return 0, fmt.Errorf("error converting string to int: %v", err)
+	}
+
+	return i / (1024 * 1024), nil
 }

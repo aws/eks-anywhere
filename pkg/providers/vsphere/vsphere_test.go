@@ -19,7 +19,6 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -196,6 +195,22 @@ func (pc *DummyProviderGovcClient) RoleExists(ctx context.Context, name string) 
 
 func (pc *DummyProviderGovcClient) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
 	return nil
+}
+
+func (pc *DummyProviderGovcClient) CreateVMSnapshot(ctx context.Context, datacenter, name string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) MarkVMAsTemplate(ctx context.Context, datacenter, vmName string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) ValidateSize(ctx context.Context, datacenter, templateName string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) DevicesInfo(ctx context.Context, datacenter, templateName string) (interface{}, error) {
+	return nil, nil
 }
 
 type DummyNetClient struct{}
