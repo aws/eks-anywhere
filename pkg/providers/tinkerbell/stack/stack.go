@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"net"
 	"path/filepath"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -295,7 +295,6 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 				"TINKERBELL_TLS":            "false",
 				"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
 				"BOOTS_EXTRA_KERNEL_ARGS":   extraKernelArgs,
-				"DOCKER_REGISTRY":           localRegistry,
 				"REGISTRY_USERNAME":         username,
 				"REGISTRY_PASSWORD":         password,
 			}
