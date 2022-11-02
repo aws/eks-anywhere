@@ -18,7 +18,11 @@ import (
 	"github.com/Masterminds/sprig"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/golang/mock/gomock"
+<<<<<<< HEAD
 	. "github.com/onsi/gomega"
+=======
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+>>>>>>> 8ee00472 (Validate BR Disk Size)
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -204,6 +208,35 @@ func (pc *DummyProviderGovcClient) SetGroupRoleOnObject(ctx context.Context, pri
 	return nil
 }
 
+<<<<<<< HEAD
+=======
+func (pc *DummyProviderGovcClient) CreateVMSnapshot(ctx context.Context, datacenter, name string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) MarkVMAsTemplate(ctx context.Context, datacenter, vmName string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) ValidateSize(ctx context.Context, datacenter, templateName string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) DevicesInfo(ctx context.Context, datacenter, templateName string) (interface{}, error) {
+	return nil, nil
+}
+
+type DummyNetClient struct{}
+
+func (n *DummyNetClient) DialTimeout(network, address string, timeout time.Duration) (net.Conn, error) {
+	// add dummy case for coverage
+	if address == "255.255.255.255:22" {
+		return &net.IPConn{}, nil
+	}
+	return nil, errors.New("")
+}
+
+>>>>>>> 8ee00472 (Validate BR Disk Size)
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {
 	return givenClusterSpec(t, fileName).Cluster
 }

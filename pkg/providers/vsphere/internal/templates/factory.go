@@ -48,6 +48,8 @@ type GovcClient interface {
 	RoleExists(ctx context.Context, name string) (bool, error)
 	CreateRole(ctx context.Context, name string, privileges []string) error
 	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
+	DevicesInfo(ctx context.Context, datacenter, templateName string) (interface{}, error)
+	ValidateSize(ctx context.Context, datacenter, templateName string) error
 }
 
 func NewFactory(client GovcClient, datacenter, datastore, network, resourcePool, templateLibrary string) *Factory {
@@ -70,7 +72,19 @@ func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machin
 	if err == nil && len(templateFullPath) > 0 {
 		machineConfig.Spec.Template = templateFullPath // TODO: move this out of the factory into the defaulter, it's a side effect
 		logger.V(2).Info("Template already exists. Skipping creation", "template", machineConfig.Spec.Template)
+		osFamily := machineConfig.Spec.OSFamily
+
+		templateName := filepath.Base(templateFullPath)
+		if strings.EqualFold(string(osFamily), string(v1alpha1.Bottlerocket)) {
+
+			err1 := f.client.ValidateSize(ctx, datacenter, templateName)
+
+			if err1 != nil {
+				return fmt.Errorf("resize validation failed: %v", err1)
+			}
+		}
 		return nil
+
 	}
 
 	logger.V(2).Info("Template not available. Creating", "template", machineConfig.Spec.Template)
