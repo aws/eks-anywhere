@@ -368,16 +368,17 @@ func (k *Kubectl) WaitForBaseboardManagements(ctx context.Context, cluster *type
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioBaseboardManagementResourceType, namespace, WithWaitAll())
 }
 
-// WaitForJobCompleted waits for a pod resource to reach desired condition before returning.
+// WaitForJobCompleted waits for a job resource to reach desired condition before returning.
 func (k *Kubectl) WaitForJobCompleted(ctx context.Context, kubeconfig, timeout string, condition string, target string, namespace string) error {
 	return k.Wait(ctx, kubeconfig, timeout, condition, "job/"+target, namespace)
 }
 
-// WaitForJobCompleted waits for a package resource to reach installed state before returning.
+// WaitForPackagesInstalled waits for a package resource to reach installed state before returning.
 func (k *Kubectl) WaitForPackagesInstalled(ctx context.Context, cluster *types.Cluster, name string, timeout string, namespace string) error {
 	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, "status.state", "installed", fmt.Sprintf("%s/%s", eksaPackagesType, name), namespace)
 }
 
+// WaitForPodCompleted waits for a pod to be terminated with a Completed state before returning.
 func (k *Kubectl) WaitForPodCompleted(ctx context.Context, cluster *types.Cluster, name string, timeout string, namespace string) error {
 	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, "status.containerStatuses[0].state.terminated.reason", "Completed", "pod/"+name, namespace)
 }
@@ -431,7 +432,7 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 	return nil
 }
 
-// WaitJSONPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+
+// WaitJSONPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+.
 func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
@@ -587,6 +588,7 @@ func (k *Kubectl) DeleteFluxConfig(ctx context.Context, managementCluster *types
 	return nil
 }
 
+// GetPackageBundleController will retrieve the packagebundlecontroller from eksa-packages namespace and return the object.
 func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile, clusterName string) (packagesv1.PackageBundleController, error) {
 	params := []string{"get", "pbc", clusterName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	stdOut, err := k.Execute(ctx, params...)
@@ -601,6 +603,7 @@ func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile
 	return *response, nil
 }
 
+// GetPackageBundleList will retrieve the packagebundle list from eksa-packages namespace and return the list.
 func (k *Kubectl) GetPackageBundleList(ctx context.Context, kubeconfigFile string) ([]packagesv1.PackageBundle, error) {
 	params := []string{"get", "packagebundle", "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	stdOut, err := k.Execute(ctx, params...)
