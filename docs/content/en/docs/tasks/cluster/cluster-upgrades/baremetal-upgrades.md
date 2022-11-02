@@ -31,7 +31,7 @@ Control plane components will be upgraded before worker nodes.
 
 This type of upgrade requires you to have one spare hardware server for control plane upgrade and one for each worker node group upgrade.
 The spare hardware server is provisioned with the new version and then an old server is deprovisioned. The deprovisioned server is then reprovisioned with
-the new version while another old server is deprovisioned. This happens one at a time until all the control plane components have been upgraded followed by
+the new version while another old server is deprovisioned. This happens one at a time until all the control plane components have been upgraded, followed by
 worker node upgrades.
 
 ### Core component upgrades
