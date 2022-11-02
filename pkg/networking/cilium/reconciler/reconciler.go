@@ -26,7 +26,7 @@ type Templater interface {
 	GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...cilium.ManifestOpt) ([]byte, error)
 }
 
-// Reconciler allows to reconcile a Cilium CNI
+// Reconciler allows to reconcile a Cilium CNI.
 type Reconciler struct {
 	templater Templater
 }
@@ -39,7 +39,7 @@ func New(templater Templater) *Reconciler {
 
 // Reconcile takes the Cilium CNI in a cluster to the desired state defined in a cluster Spec
 // It uses a controller.Result to indicate when requeues are needed
-// Intended to be used in a kubernetes controller
+// Intended to be used in a kubernetes controller.
 func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
 	installation, err := getInstallation(ctx, client)
 	if err != nil {

@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
-// DiskExtractor represents a hardware labels and map it with the appropriate disk given in the hardware csv file
+// DiskExtractor represents a hardware labels and map it with the appropriate disk given in the hardware csv file.
 type DiskExtractor struct {
 	selector                 map[string]eksav1alpha1.HardwareSelector
 	disks                    map[string]string

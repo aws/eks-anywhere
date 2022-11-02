@@ -25,7 +25,7 @@ import (
 
 var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "eks-anywhere-release",
 	Short: "A release tool for EKS Anywhere",

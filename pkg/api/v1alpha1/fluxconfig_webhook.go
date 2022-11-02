@@ -39,7 +39,7 @@ func (r *FluxConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Validator = &FluxConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *FluxConfig) ValidateCreate() error {
 	fluxconfiglog.Info("validate create", "name", r.Name)
 
@@ -53,7 +53,7 @@ func (r *FluxConfig) ValidateCreate() error {
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *FluxConfig) ValidateUpdate(old runtime.Object) error {
 	fluxconfiglog.Info("validate update", "name", r.Name)
 
@@ -77,7 +77,7 @@ func (r *FluxConfig) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(FluxConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *FluxConfig) ValidateDelete() error {
 	fluxconfiglog.Info("validate delete", "name", r.Name)
 

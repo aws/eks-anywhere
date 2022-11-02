@@ -44,7 +44,7 @@ func (t Tags) HasAWSCloudProviderOwned(cluster string) bool {
 	return ok && ResourceLifecycle(value) == ResourceLifecycleOwned
 }
 
-// GetRole returns the Cluster API role for the tagged resource
+// GetRole returns the Cluster API role for the tagged resource.
 func (t Tags) GetRole() string {
 	return t[NameAWSClusterAPIRole]
 }
@@ -71,7 +71,7 @@ func (t Tags) Merge(other Tags) {
 	}
 }
 
-// ResourceLifecycle configures the lifecycle of a resource
+// ResourceLifecycle configures the lifecycle of a resource.
 type ResourceLifecycle string
 
 const (
@@ -90,17 +90,17 @@ const (
 	// to be permissive about state changes.
 	// logically independent clusters running in the same AZ.
 	// The tag key = NameKubernetesAWSCloudProviderPrefix + clusterID
-	// The tag value is an ownership value
+	// The tag value is an ownership value.
 	NameKubernetesAWSCloudProviderPrefix = "kubernetes.io/cluster/"
 
 	// NameAWSProviderPrefix is the tag prefix we use to differentiate
 	// cluster-api-provider-aws owned components from other tooling that
-	// uses NameKubernetesClusterPrefix
+	// uses NameKubernetesClusterPrefix.
 	NameAWSProviderPrefix = "sigs.k8s.io/cluster-api-provider-aws-snow/"
 
 	// NameAWSProviderOwned is the tag name we use to differentiate
 	// cluster-api-provider-aws owned components from other tooling that
-	// uses NameKubernetesClusterPrefix
+	// uses NameKubernetesClusterPrefix.
 	NameAWSProviderOwned = NameAWSProviderPrefix + "cluster/"
 
 	// NameAWSClusterAPIRole is the tag name we use to mark roles for resources
@@ -111,22 +111,22 @@ const (
 
 	SecondarySubnetTagValue = "secondary"
 
-	// APIServerRoleTagValue describes the value for the apiserver role
+	// APIServerRoleTagValue describes the value for the apiserver role.
 	APIServerRoleTagValue = "apiserver"
 
-	// BastionRoleTagValue describes the value for the bastion role
+	// BastionRoleTagValue describes the value for the bastion role.
 	BastionRoleTagValue = "bastion"
 
-	// CommonRoleTagValue describes the value for the common role
+	// CommonRoleTagValue describes the value for the common role.
 	CommonRoleTagValue = "common"
 
-	// PublicRoleTagValue describes the value for the public role
+	// PublicRoleTagValue describes the value for the public role.
 	PublicRoleTagValue = "public"
 
-	// PrivateRoleTagValue describes the value for the private role
+	// PrivateRoleTagValue describes the value for the private role.
 	PrivateRoleTagValue = "private"
 
-	// MachineNameTagKey is the key for machine name
+	// MachineNameTagKey is the key for machine name.
 	MachineNameTagKey = "MachineName"
 )
 
@@ -165,14 +165,14 @@ type BuildParams struct {
 }
 
 // WithMachineName tags the namespaced machine name
-// The machine name will be tagged with key "MachineName"
+// The machine name will be tagged with key "MachineName".
 func (b BuildParams) WithMachineName(m *clusterv1.Machine) BuildParams {
 	machineNamespacedName := types.NamespacedName{Namespace: m.Namespace, Name: m.Name}
 	b.Additional[MachineNameTagKey] = machineNamespacedName.String()
 	return b
 }
 
-// WithCloudProvider tags the cluster ownership for a resource
+// WithCloudProvider tags the cluster ownership for a resource.
 func (b BuildParams) WithCloudProvider(name string) BuildParams {
 	b.Additional[ClusterAWSCloudProviderTagKey(name)] = string(ResourceLifecycleOwned)
 	return b

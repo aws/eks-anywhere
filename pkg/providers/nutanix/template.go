@@ -18,7 +18,7 @@ import (
 
 var jsonMarshal = json.Marshal
 
-// TemplateBuilder builds templates for nutanix
+// TemplateBuilder builds templates for nutanix.
 type TemplateBuilder struct {
 	datacenterSpec              *v1alpha1.NutanixDatacenterConfigSpec
 	controlPlaneMachineSpec     *v1alpha1.NutanixMachineConfigSpec

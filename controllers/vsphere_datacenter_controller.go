@@ -15,7 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
 
-// VSphereDatacenterReconciler reconciles a VSphereDatacenterConfig object
+// VSphereDatacenterReconciler reconciles a VSphereDatacenterConfig object.
 type VSphereDatacenterReconciler struct {
 	log       logr.Logger
 	client    client.Client
@@ -39,7 +39,7 @@ func (r *VSphereDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// TODO: add here kubebuilder permissions as neeeded
+// TODO: add here kubebuilder permissions as neeeded.
 func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("vsphereDatacenter", req.NamespacedName)
 

@@ -23,7 +23,7 @@ type SnowInstanceType string
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // Important: Run "make generate" to regenerate code after modifying this file
 
-// SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec
+// SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec.
 type SnowMachineConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
@@ -59,7 +59,7 @@ func (s *SnowMachineConfig) OSFamily() OSFamily {
 	return ""
 }
 
-// SnowMachineConfigStatus defines the observed state of SnowMachineConfig
+// SnowMachineConfigStatus defines the observed state of SnowMachineConfig.
 type SnowMachineConfigStatus struct {
 	// SpecValid is set to true if vspheredatacenterconfig is validated.
 	SpecValid bool `json:"specValid,omitempty"`
@@ -73,7 +73,7 @@ type SnowMachineConfigStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// SnowMachineConfig is the Schema for the SnowMachineConfigs API
+// SnowMachineConfig is the Schema for the SnowMachineConfigs API.
 type SnowMachineConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -108,7 +108,7 @@ func (s *SnowMachineConfig) SetEtcdAnnotation() {
 
 // +kubebuilder:object:generate=false
 
-// Same as SnowMachineConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as SnowMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
 type SnowMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -140,7 +140,7 @@ func (s *SnowMachineConfig) Marshallable() Marshallable {
 
 //+kubebuilder:object:root=true
 
-// SnowMachineConfigList contains a list of SnowMachineConfig
+// SnowMachineConfigList contains a list of SnowMachineConfig.
 type SnowMachineConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

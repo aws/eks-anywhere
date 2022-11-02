@@ -44,7 +44,7 @@ func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
 }
 
 // FeatureGatesExtraArgs takes a list of features with the value and returns it in the proper format
-// Example FeatureGatesExtraArgs("ServiceLoadBalancerClass=true")
+// Example FeatureGatesExtraArgs("ServiceLoadBalancerClass=true").
 func FeatureGatesExtraArgs(features ...string) ExtraArgs {
 	if len(features) == 0 {
 		return nil
@@ -81,7 +81,7 @@ func ResolvConfExtraArgs(resolvConf *v1alpha1.ResolvConf) ExtraArgs {
 	return args
 }
 
-// We don't need to add these once the Kubernetes components default to using the secure cipher suites
+// We don't need to add these once the Kubernetes components default to using the secure cipher suites.
 func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("tls-cipher-suites", crypto.SecureCipherSuitesString())

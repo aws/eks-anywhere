@@ -10,7 +10,7 @@ import (
 )
 
 // Temporary: Curated packages dev and prod accounts are currently hard coded
-// This is because there is no mechanism to extract these values as of now
+// This is because there is no mechanism to extract these values as of now.
 const (
 	dockerPath        = "docker"
 	defaultRegistry   = "public.ecr.aws"
@@ -152,7 +152,7 @@ func (d *Docker) ForceRemove(ctx context.Context, name string) error {
 }
 
 // CheckContainerExistence checks whether a Docker container with the provided name exists
-// It returns true if a container with the name exists, false if it doesn't and an error if it encounters some other error
+// It returns true if a container with the name exists, false if it doesn't and an error if it encounters some other error.
 func (d *Docker) CheckContainerExistence(ctx context.Context, name string) (bool, error) {
 	params := []string{"container", "inspect", name}
 

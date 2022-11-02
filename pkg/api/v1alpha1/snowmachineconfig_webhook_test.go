@@ -72,7 +72,7 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	g.Expect(sNew.ValidateUpdate(&sOld)).NotTo(Succeed())
 }
 
-// Unit test to pass the code coverage job
+// Unit test to pass the code coverage job.
 func TestSnowMachineConfigValidateDelete(t *testing.T) {
 	g := NewWithT(t)
 	sOld := snowMachineConfig()

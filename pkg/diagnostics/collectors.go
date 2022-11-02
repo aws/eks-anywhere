@@ -437,7 +437,7 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	}
 }
 
-// apiServerCollectors collect connection info when running a pod on an existing cluster
+// apiServerCollectors collect connection info when running a pod on an existing cluster.
 func (c *collectorFactory) apiServerCollectors(controlPlaneIP string) []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.controlPlaneNetworkPathCollector(controlPlaneIP)...)
@@ -495,7 +495,7 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 }
 
 // vmsAccessCollector will connect to API server first, then collect vsphere-cloud-controller-manager logs
-// on control plane node
+// on control plane node.
 func (c *collectorFactory) vmsAccessCollector(controlPlaneConfiguration v1alpha1.ControlPlaneConfiguration) *Collect {
 	controlPlaneEndpointHost := controlPlaneConfiguration.Endpoint.Host
 	taints := controlPlaneConfiguration.Taints

@@ -40,7 +40,7 @@ var (
 	requiredEnvs                      = []string{nutanixEndpointKey, constants.NutanixUsernameKey, constants.NutanixPasswordKey}
 )
 
-// Provider implements the Nutanix Provider
+// Provider implements the Nutanix Provider.
 type Provider struct {
 	clusterConfig    *v1alpha1.Cluster
 	datacenterConfig *v1alpha1.NutanixDatacenterConfig
@@ -53,7 +53,7 @@ type Provider struct {
 
 var _ providers.Provider = &Provider{}
 
-// NewProvider returns a new nutanix provider
+// NewProvider returns a new nutanix provider.
 func NewProvider(
 	datacenterConfig *v1alpha1.NutanixDatacenterConfig,
 	machineConfigs map[string]*v1alpha1.NutanixMachineConfig,

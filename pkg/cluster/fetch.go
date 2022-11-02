@@ -26,7 +26,7 @@ type AWSIamConfigFetch func(ctx context.Context, name, namespace string) (*v1alp
 
 // BuildSpec constructs a cluster.Spec for an eks-a cluster by retrieving all
 // necessary objects using fetch methods
-// This is deprecated in favour of BuildSpec
+// This is deprecated in favour of BuildSpec.
 func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, fluxConfigFetch FluxConfigFetch, oidcFetch OIDCFetch, awsIamConfigFetch AWSIamConfigFetch) (*Spec, error) {
 	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
 	if err != nil {
@@ -178,7 +178,7 @@ func GetAWSIamConfigForCluster(ctx context.Context, cluster *v1alpha1.Cluster, f
 }
 
 // BuildSpec constructs a cluster.Spec for an eks-a cluster by retrieving all
-// necessary objects from the cluster using a kubernetes client
+// necessary objects from the cluster using a kubernetes client.
 func BuildSpec(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*Spec, error) {
 	configBuilder := NewDefaultConfigClientBuilder()
 	config, err := configBuilder.Build(ctx, client, cluster)

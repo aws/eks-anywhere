@@ -17,7 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
-// Task is a logical unit of work - meant to be implemented by each Task
+// Task is a logical unit of work - meant to be implemented by each Task.
 type Task interface {
 	Run(ctx context.Context, commandContext *CommandContext) Task
 	Name() string
@@ -25,7 +25,7 @@ type Task interface {
 	Restore(ctx context.Context, commandContext *CommandContext, completedTask *CompletedTask) (Task, error)
 }
 
-// Command context maintains the mutable and shared entities
+// Command context maintains the mutable and shared entities.
 type CommandContext struct {
 	Bootstrapper       interfaces.Bootstrapper
 	Provider           providers.Provider
@@ -58,12 +58,12 @@ type Profiler struct {
 	starts  map[string]map[string]time.Time
 }
 
-// profiler for a Task
+// profiler for a Task.
 func (pp *Profiler) SetStartTask(taskName string) {
 	pp.SetStart(taskName, taskName)
 }
 
-// this can be used to profile sub tasks
+// this can be used to profile sub tasks.
 func (pp *Profiler) SetStart(taskName string, msg string) {
 	if _, ok := pp.starts[taskName]; !ok {
 		pp.starts[taskName] = map[string]time.Time{}
@@ -71,12 +71,12 @@ func (pp *Profiler) SetStart(taskName string, msg string) {
 	pp.starts[taskName][msg] = time.Now()
 }
 
-// needs to be called after setStart
+// needs to be called after setStart.
 func (pp *Profiler) MarkDoneTask(taskName string) {
 	pp.MarkDone(taskName, taskName)
 }
 
-// this can be used to profile sub tasks
+// this can be used to profile sub tasks.
 func (pp *Profiler) MarkDone(taskName string, msg string) {
 	if _, ok := pp.metrics[taskName]; !ok {
 		pp.metrics[taskName] = map[string]time.Duration{}
@@ -86,12 +86,12 @@ func (pp *Profiler) MarkDone(taskName string, msg string) {
 	}
 }
 
-// get Metrics
+// get Metrics.
 func (pp *Profiler) Metrics() map[string]map[string]time.Duration {
 	return pp.metrics
 }
 
-// debug logs for task metric
+// debug logs for task metric.
 func (pp *Profiler) logProfileSummary(taskName string) {
 	if durationMap, ok := pp.metrics[taskName]; ok {
 		for k, v := range durationMap {
@@ -106,7 +106,7 @@ func (pp *Profiler) logProfileSummary(taskName string) {
 	}
 }
 
-// Manages Task execution
+// Manages Task execution.
 type taskRunner struct {
 	task           Task
 	writer         filewriter.FileWriter

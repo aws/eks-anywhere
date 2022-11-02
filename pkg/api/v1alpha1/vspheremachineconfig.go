@@ -21,7 +21,7 @@ const (
 	ubuntuDefaultUser        = "capv"
 )
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate {
 	return &VSphereMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

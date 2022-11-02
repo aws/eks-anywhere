@@ -398,7 +398,7 @@ func RequiredVsphereEnvVars() []string {
 }
 
 // VSphereExtraEnvVarPrefixes returns prefixes for env vars that although not always required,
-// might be necessary for certain tests
+// might be necessary for certain tests.
 func VSphereExtraEnvVarPrefixes() []string {
 	return []string{
 		vsphereTemplateEnvVarPrefix,

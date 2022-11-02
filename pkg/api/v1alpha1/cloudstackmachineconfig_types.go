@@ -25,7 +25,7 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CloudStackMachineConfigSpec defines the desired state of CloudStackMachineConfig
+// CloudStackMachineConfigSpec defines the desired state of CloudStackMachineConfig.
 type CloudStackMachineConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -206,7 +206,7 @@ func (c *CloudStackMachineConfig) Validate() error {
 	return nil
 }
 
-// CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig
+// CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig.
 type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -222,7 +222,7 @@ type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs API
+// CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs API.
 type CloudStackMachineConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -300,7 +300,7 @@ func (c *CloudStackMachineConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as CloudStackMachineConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as CloudStackMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
 type CloudStackMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -310,7 +310,7 @@ type CloudStackMachineConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// CloudStackMachineConfigList contains a list of CloudStackMachineConfig
+// CloudStackMachineConfigList contains a list of CloudStackMachineConfig.
 type CloudStackMachineConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
