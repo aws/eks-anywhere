@@ -98,7 +98,7 @@ func processUpdate(t *testing.T, goldenFilePath, generatedFilePath string) {
 
 // Note: This test contains generated files
 // To automatically update the generated files, run the following
-// go test -timeout 30s -run ^TestTinkerbellStackInstallWithDifferentOptions$ github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack -update -count=1 -v
+// go test -timeout 30s -run ^TestTinkerbellStackInstallWithDifferentOptions$ github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack -update -count=1 -v.
 func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 	stackTests := []struct {
 		name              string

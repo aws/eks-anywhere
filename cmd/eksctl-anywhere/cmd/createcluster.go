@@ -167,6 +167,13 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			CreateBootstrapClusterOptions: deps.Provider,
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
+
+		// Not all provider implementations want to bind hooks so we explicitly check if they
+		// want to bind hooks before registering it.
+		if registrar, ok := deps.Provider.(management.CreateClusterHookRegistrar); ok {
+			wflw.WithHookRegistrar(registrar)
+		}
+
 		err = wflw.Run(ctx)
 	} else {
 		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)

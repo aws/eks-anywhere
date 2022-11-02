@@ -18,7 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// BundlesSpec defines the desired state of Bundles
+// BundlesSpec defines the desired state of Bundles.
 type BundlesSpec struct {
 	// Monotonically increasing release number
 	Number          int              `json:"number"`
@@ -27,13 +27,13 @@ type BundlesSpec struct {
 	VersionsBundles []VersionsBundle `json:"versionsBundles"`
 }
 
-// BundlesStatus defines the observed state of Bundles
+// BundlesStatus defines the observed state of Bundles.
 type BundlesStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Bundles is the Schema for the bundles API
+// Bundles is the Schema for the bundles API.
 type Bundles struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -48,7 +48,7 @@ func (b *Bundles) DefaultEksAToolsImage() Image {
 
 //+kubebuilder:object:root=true
 
-// BundlesList contains a list of Bundles
+// BundlesList contains a list of Bundles.
 type BundlesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -277,7 +277,7 @@ type TinkerbellStackBundle struct {
 	Tink           TinkBundle    `json:"tink"`
 }
 
-// Tinkerbell Template Actions
+// Tinkerbell Template Actions.
 type ActionsBundle struct {
 	Cexec       Image `json:"cexec"`
 	Kexec       Image `json:"kexec"`
@@ -293,7 +293,7 @@ type TinkBundle struct {
 	TinkWorker     Image `json:"tinkWorker"`
 }
 
-// Tinkerbell hook OS
+// Tinkerbell hook OS.
 type HookBundle struct {
 	Bootkit   Image    `json:"bootkit"`
 	Docker    Image    `json:"docker"`

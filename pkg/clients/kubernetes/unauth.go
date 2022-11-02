@@ -16,7 +16,7 @@ type KubectlGetter interface {
 }
 
 // UnAuthClient is a generic kubernetes API client that takes a kubeconfig
-// file on every call in order to authenticate
+// file on every call in order to authenticate.
 type UnAuthClient struct {
 	kubectl KubectlGetter
 	scheme  *runtime.Scheme
@@ -31,13 +31,13 @@ func NewUnAuthClient(kubectl KubectlGetter) *UnAuthClient {
 
 // Init initializes the client internal API scheme
 // It has always be invoked at least once before making any API call
-// It is not thread safe
+// It is not thread safe.
 func (c *UnAuthClient) Init() error {
 	return addToScheme(c.scheme, schemeAdders...)
 }
 
 // Get performs a GET call to the kube API server authenticating with a kubeconfig file
-// and unmarshalls the response into the provdied Object
+// and unmarshalls the response into the provdied Object.
 func (c *UnAuthClient) Get(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error {
 	resourceType, err := c.resourceTypeForObj(obj)
 	if err != nil {
@@ -47,12 +47,12 @@ func (c *UnAuthClient) Get(ctx context.Context, name, namespace, kubeconfig stri
 	return c.kubectl.GetObject(ctx, resourceType, name, namespace, kubeconfig, obj)
 }
 
-// KubeconfigClient returns an equivalent authenticated client
+// KubeconfigClient returns an equivalent authenticated client.
 func (c *UnAuthClient) KubeconfigClient(kubeconfig string) Client {
 	return NewKubeconfigClient(c, kubeconfig)
 }
 
-// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file
+// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file.
 func (c *UnAuthClient) Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error {
 	resourceType, err := c.resourceTypeForObj(obj)
 	if err != nil {

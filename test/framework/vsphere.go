@@ -42,6 +42,7 @@ const (
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTemplateBR122Var     = "T_VSPHERE_TEMPLATE_BR_1_22"
 	vsphereTemplateBR123Var     = "T_VSPHERE_TEMPLATE_BR_1_23"
+	vsphereTemplateBR124Var     = "T_VSPHERE_TEMPLATE_BR_1_24"
 	vsphereTlsInsecureVar       = "T_VSPHERE_TLS_INSECURE"
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
@@ -78,6 +79,7 @@ var requiredEnvVars = []string{
 	vsphereTemplateBR121Var,
 	vsphereTemplateBR122Var,
 	vsphereTemplateBR123Var,
+	vsphereTemplateBR124Var,
 	vsphereTlsInsecureVar,
 	vsphereTlsThumbprintVar,
 	vsphereUsernameVar,
@@ -133,6 +135,11 @@ func UpdateBottlerocketTemplate122() api.VSphereFiller {
 
 func UpdateBottlerocketTemplate123() api.VSphereFiller {
 	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR123Var, api.WithTemplateForAllMachines)
+}
+
+// UpdateBottlerocketTemplate124 retusns vsphere filler for 1.24 BR.
+func UpdateBottlerocketTemplate124() api.VSphereFiller {
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR124Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate120() api.VSphereFiller {
@@ -298,6 +305,16 @@ func WithBottleRocket123() VSphereOpt {
 	}
 }
 
+// WithBottleRocket124 returns br 124 var.
+func WithBottleRocket124() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithVSphereStringFromEnvVar(vsphereTemplateBR124Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		)
+	}
+}
+
 func WithPrivateNetwork() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
@@ -381,7 +398,7 @@ func RequiredVsphereEnvVars() []string {
 }
 
 // VSphereExtraEnvVarPrefixes returns prefixes for env vars that although not always required,
-// might be necessary for certain tests
+// might be necessary for certain tests.
 func VSphereExtraEnvVarPrefixes() []string {
 	return []string{
 		vsphereTemplateEnvVarPrefix,

@@ -73,7 +73,7 @@ func AssertWorkerNodeGroupMachineRefsExists(spec *ClusterSpec) error {
 	return nil
 }
 
-// AssertK8SVersionNot120 ensures Kubernetes version is not set to v1.20
+// AssertK8SVersionNot120 ensures Kubernetes version is not set to v1.20.
 func AssertK8SVersionNot120(spec *ClusterSpec) error {
 	if spec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube120 {
 		return errors.New("kubernetes version v1.20 is not supported for Bare Metal")
@@ -98,7 +98,7 @@ func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion 
 	}
 }
 
-// AssertTinkerbellIPNotInUse ensures tinkerbell ip isn't in use
+// AssertTinkerbellIPNotInUse ensures tinkerbell ip isn't in use.
 func AssertTinkerbellIPNotInUse(client networkutils.NetClient) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		ip := spec.DatacenterConfig.Spec.TinkerbellIP
@@ -109,7 +109,7 @@ func AssertTinkerbellIPNotInUse(client networkutils.NetClient) ClusterSpecAssert
 	}
 }
 
-// AssertTinkerbellIPAndControlPlaneIPNotSame ensures tinkerbell ip and controlplane ip are not the same
+// AssertTinkerbellIPAndControlPlaneIPNotSame ensures tinkerbell ip and controlplane ip are not the same.
 func AssertTinkerbellIPAndControlPlaneIPNotSame(spec *ClusterSpec) error {
 	tinkerbellIP := spec.DatacenterConfig.Spec.TinkerbellIP
 	controlPlaneIP := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
@@ -119,7 +119,7 @@ func AssertTinkerbellIPAndControlPlaneIPNotSame(spec *ClusterSpec) error {
 	return nil
 }
 
-// AssertPortsNotInUse ensures that ports 80, 42113, and 50061 are available
+// AssertPortsNotInUse ensures that ports 80, 42113, and 50061 are available.
 func AssertPortsNotInUse(client networkutils.NetClient) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		host := "0.0.0.0"

@@ -926,22 +926,6 @@ func TestProviderGenerateCAPISpecForCreateWithMultipleWorkerNodeGroups(t *testin
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_multiple_worker_node_groups.yaml")
 }
 
-func TestProviderGenerateStorageClass(t *testing.T) {
-	provider := givenProvider(t)
-
-	storageClassManifest := provider.GenerateStorageClass()
-	if storageClassManifest == nil {
-		t.Fatalf("Expected storageClassManifest")
-	}
-}
-
-func TestProviderGenerateStorageClassDisableCSI(t *testing.T) {
-	tt := newProviderTest(t)
-	tt.clusterSpec.VSphereDatacenter.Spec.DisableCSI = true
-	tt.buildNewProvider()
-	tt.Expect(tt.provider.GenerateStorageClass()).To(BeNil())
-}
-
 func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
 	clusterSpecManifest := "cluster_bottlerocket_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -1163,6 +1147,71 @@ func TestName(t *testing.T) {
 
 	if provider.Name() != expectedVSphereName {
 		t.Fatalf("unexpected Name %s!=%s", provider.Name(), expectedVSphereName)
+	}
+}
+
+func TestProviderInstallStorageClass(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+
+	var content []byte
+	kubectl.EXPECT().
+		ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _ *types.Cluster, ctnt []byte) error {
+			content = ctnt
+			return nil
+		})
+
+	provider := newProviderWithKubectl(
+		t,
+		datacenterConfig,
+		clusterConfig,
+		kubectl,
+	)
+
+	err := provider.InstallStorageClass(context.Background(), &types.Cluster{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test.AssertContentToFile(t, string(content), "testdata/TestProviderInstallStorageClass_expect.yaml")
+}
+
+func TestProviderInstallStorageClassDisableCSI(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+
+	datacenterConfig.Spec.DisableCSI = true
+
+	provider := newProviderWithKubectl(
+		t,
+		datacenterConfig,
+		clusterConfig,
+		kubectl,
+	)
+
+	err := provider.InstallStorageClass(context.Background(), &types.Cluster{})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestVSphereProviderInstallStorageClassInterface ensures the vSphere provider implements an
+// anonymous interface specified by the cluster manager. Its purely for protective purposes
+// until we switch to new workflows when the cluster manager storage class installation behavior
+// will be removed in favor of workflow hooks.
+func TestVSphereProviderInstallStorageClassInterface(t *testing.T) {
+	_, ok := (interface{}(&vsphereProvider{})).(interface {
+		InstallStorageClass(context.Context, *types.Cluster) error
+	})
+
+	if !ok {
+		t.Fatalf("Provider does not implement InstallStorageClass")
 	}
 }
 

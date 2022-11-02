@@ -212,7 +212,7 @@ func (d *helmDriver) PullHelmChart(name, version string) (string, error) {
 	return chartPath, nil
 }
 
-// PushHelmChart will take in packaged helm chart and push to a remote URI
+// PushHelmChart will take in packaged helm chart and push to a remote URI.
 func (d *helmDriver) PushHelmChart(packaged, URI string) error {
 	config := action.WithPushConfig(d.cfg)
 	p := action.NewPushWithOpts(config)
@@ -226,7 +226,7 @@ func (d *helmDriver) PushHelmChart(packaged, URI string) error {
 	return nil
 }
 
-// PackageHelmChart will package a dir into a helm chart
+// PackageHelmChart will package a dir into a helm chart.
 func PackageHelmChart(dir string) (string, error) {
 	if dir == "" {
 		return "", fmt.Errorf("empty input for PackageHelmChart, check flags")
@@ -270,7 +270,7 @@ func UnTarHelmChart(chartRef, chartPath, dest string) error {
 	return chartutil.ExpandFile(dest, chartRef)
 }
 
-// HasRequires checks for the existance of the requires.yaml within the helm directory
+// HasRequires checks for the existance of the requires.yaml within the helm directory.
 func HasRequires(helmdir string) (string, error) {
 	requires := filepath.Join(helmdir, "requires.yaml")
 	info, err := os.Stat(requires)
@@ -283,7 +283,7 @@ func HasRequires(helmdir string) (string, error) {
 	return requires, nil
 }
 
-// ValidateHelmRequires runs the parse file into struct function, and validations
+// ValidateHelmRequires runs the parse file into struct function, and validations.
 func ValidateHelmRequires(fileName string) (*Requires, error) {
 	helmrequires := &Requires{}
 	err := parseHelmRequires(fileName, helmrequires)
@@ -297,7 +297,7 @@ func ValidateHelmRequires(fileName string) (*Requires, error) {
 	return helmrequires, err
 }
 
-// validateHelmRequiresContent loops over the validation tests
+// validateHelmRequiresContent loops over the validation tests.
 func validateHelmRequiresContent(helmrequires *Requires) error {
 	for _, v := range helmRequiresValidations {
 		if err := v(helmrequires); err != nil {
@@ -319,7 +319,7 @@ func validateHelmRequiresName(helmrequires *Requires) error {
 	return nil
 }
 
-// validateHelmRequiresNotEmpty checks that it has at least one image in the spec
+// validateHelmRequiresNotEmpty checks that it has at least one image in the spec.
 func (helmrequires *Requires) validateHelmRequiresNotEmpty() error {
 	// Check if Projects are listed
 	if len(helmrequires.Spec.Images) < 1 {
@@ -328,7 +328,7 @@ func (helmrequires *Requires) validateHelmRequiresNotEmpty() error {
 	return nil
 }
 
-// parseHelmRequires will attempt to unpack the requires.yaml into the Go struct `Requires`
+// parseHelmRequires will attempt to unpack the requires.yaml into the Go struct `Requires`.
 func parseHelmRequires(fileName string, helmrequires *Requires) error {
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -349,7 +349,7 @@ func parseHelmRequires(fileName string, helmrequires *Requires) error {
 
 // Chart yaml functions
 
-// HasChart checks for the existance of the Chart.yaml within the helm directory
+// HasChart checks for the existance of the Chart.yaml within the helm directory.
 func HasChart(helmdir string) (string, error) {
 	requires := filepath.Join(helmdir, "Chart.yaml")
 	info, err := os.Stat(requires)
@@ -362,7 +362,7 @@ func HasChart(helmdir string) (string, error) {
 	return requires, nil
 }
 
-// ValidateHelmChart runs the parse file into struct function, and validations
+// ValidateHelmChart runs the parse file into struct function, and validations.
 func ValidateHelmChart(fileName string) (*chart.Metadata, error) {
 	helmChart := &chart.Metadata{}
 	err := parseHelmChart(fileName, helmChart)
@@ -372,7 +372,7 @@ func ValidateHelmChart(fileName string) (*chart.Metadata, error) {
 	return helmChart, err
 }
 
-// parseHelmChart will attempt to unpack the Chart.yaml into the Go struct `Chart`
+// parseHelmChart will attempt to unpack the Chart.yaml into the Go struct `Chart`.
 func parseHelmChart(fileName string, helmChart *chart.Metadata) error {
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {

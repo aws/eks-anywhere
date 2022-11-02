@@ -149,7 +149,7 @@ func (fc *fluxForCluster) clone(ctx context.Context) error {
 	return fc.gitClient.Branch(fc.branch())
 }
 
-// createRemoteRepository will create a repository in the remote git provider with the user-provided configuration
+// createRemoteRepository will create a repository in the remote git provider with the user-provided configuration.
 func (fc *fluxForCluster) createRemoteRepository(ctx context.Context) error {
 	logger.V(3).Info("Remote Github repo does not exist; will create and initialize", "repo", fc.repository(), "owner", fc.owner())
 
@@ -170,7 +170,7 @@ func (fc *fluxForCluster) createRemoteRepository(ctx context.Context) error {
 }
 
 // initializeLocalRepository will git init the local repository directory, initialize a git repository.
-// it will then change branches to the branch specified in the GitOps configuration
+// it will then change branches to the branch specified in the GitOps configuration.
 func (fc *fluxForCluster) initializeLocalRepository() error {
 	if err := fc.gitClient.Init(); err != nil {
 		return fmt.Errorf("initializing repository: %v", err)

@@ -343,11 +343,6 @@ func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *c
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *Provider) GenerateStorageClass() []byte {
-	// TODO: determine if we need something else here
-	return nil
-}
-
 func (p *Provider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]

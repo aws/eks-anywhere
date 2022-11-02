@@ -43,7 +43,7 @@ var (
 	eksAReleaseManifestFile   = "/eks-a-release.yaml"
 )
 
-// releaseCmd represents the release command
+// releaseCmd represents the release command.
 var releaseCmd = &cobra.Command{
 	Use:   "release",
 	Short: "Cut an eks-anywhere release",

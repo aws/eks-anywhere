@@ -1,24 +1,23 @@
-package controllers
+package controllers_test
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	apiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/aws/eks-anywhere/controllers"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -32,14 +31,14 @@ import (
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-var (
-	name      = "test-cluster"
-	namespace = "eksa-system"
+const (
+	clusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
 
 type vsphereClusterReconcilerTest struct {
 	govcClient *mocks.MockProviderGovcClient
-	reconciler *ClusterReconciler
+	reconciler *controllers.ClusterReconciler
+	client     client.Client
 }
 
 func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsphereClusterReconcilerTest {
@@ -66,11 +65,12 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		Add(anywherev1.VSphereDatacenterKind, reconciler).
 		Build()
 
-	r := NewClusterReconciler(cl, logf.Log, &registry)
+	r := controllers.NewClusterReconciler(cl, logf.Log, &registry)
 
 	return &vsphereClusterReconcilerTest{
 		govcClient: govcClient,
 		reconciler: r,
+		client:     cl,
 	}
 }
 
@@ -101,102 +101,12 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 
 	apiCluster := &anywherev1.Cluster{}
 
-	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if err != nil {
 		t.Fatalf("get cluster: (%v)", err)
 	}
 	if apiCluster.Status.FailureMessage != nil {
 		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
-	}
-}
-
-func TestClusterReconcilerSuccess(t *testing.T) {
-	t.Skip("It will be implemented soon")
-
-	secret := createSecret()
-	managementCluster := createCluster()
-	managementCluster.Name = "management-cluster"
-	cluster := createCluster()
-	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
-
-	datacenterConfig := createDataCenter(cluster)
-	bundle := createBundle(managementCluster)
-	machineConfigCP := createCPMachineConfig()
-	machineConfigWN := createWNMachineConfig()
-
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
-
-	tt := newVsphereClusterReconcilerTest(t, objs...)
-
-	req := clusterRequest(cluster)
-
-	ctx := context.Background()
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigCP, gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machineConfigCP).Return("test", nil)
-	tt.govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
-	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(2)
-
-	_, err := tt.reconciler.Reconcile(ctx, req)
-	if err != nil {
-		t.Fatalf("reconcile: (%v)", err)
-	}
-
-	apiCluster := &anywherev1.Cluster{}
-
-	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
-	if err != nil {
-		t.Fatalf("get cluster: (%v)", err)
-	}
-	if apiCluster.Status.FailureMessage != nil {
-		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
-	}
-}
-
-func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
-	secret := createSecret()
-	managementCluster := createCluster()
-	managementCluster.Name = "management-cluster"
-	bundle := createBundle(managementCluster)
-	cluster := createCluster()
-	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
-	cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
-		APIVersion: bundle.APIVersion,
-		Name:       bundle.Name,
-		Namespace:  bundle.Namespace,
-	}
-
-	datacenterConfig := createDataCenter(cluster)
-	eksd := createEksdRelease()
-	machineConfigCP := createCPMachineConfig()
-	machineConfigWN := createWNMachineConfig()
-
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, eksd, machineConfigCP, machineConfigWN, managementCluster}
-
-	tt := newVsphereClusterReconcilerTest(t, objs...)
-
-	req := clusterRequest(cluster)
-
-	ctx := context.Background()
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigCP, gomock.Any()).Return(fmt.Errorf("error"))
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil).MaxTimes(1)
-	tt.govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machineConfigCP).Return("test", nil).Times(0)
-	tt.govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
-	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(0)
-
-	_, err := tt.reconciler.Reconcile(ctx, req)
-	if err == nil {
-		t.Fatalf("expected and error in the reconcile")
-	}
-
-	apiCluster := &anywherev1.Cluster{}
-
-	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
-	if err != nil {
-		t.Fatalf("get cluster: (%v)", err)
-	}
-	if apiCluster.Status.FailureMessage == nil {
-		t.Errorf("Expected failure reason to be set")
 	}
 }
 
@@ -231,7 +141,7 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 
 	apiCluster := &clusterv1.Cluster{}
 
-	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if !apierrors.IsNotFound(err) {
 		t.Fatalf("expected apierrors.IsNotFound but got: (%v)", err)
 	}
@@ -274,7 +184,7 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 
 	apiCluster := &anywherev1.Cluster{}
 
-	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if err != nil {
 		t.Fatalf("get cluster: (%v)", err)
 	}
@@ -370,59 +280,6 @@ func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
 			},
 		},
 		Status: anywherev1.VSphereMachineConfigStatus{},
-	}
-}
-
-func createEksdRelease() *eksdv1alpha1.Release {
-	return &eksdv1alpha1.Release{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: "eksa-system",
-		},
-		Status: eksdv1alpha1.ReleaseStatus{
-			Components: []eksdv1alpha1.Component{
-				{
-					Assets: []eksdv1alpha1.Asset{
-						{
-							Name:  "etcd-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "node-driver-registrar-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "livenessprobe-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "external-attacher-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "external-provisioner-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "pause-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "aws-iam-authenticator-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "coredns-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-						{
-							Name:  "kube-apiserver-image",
-							Image: &eksdv1alpha1.AssetImage{},
-						},
-					},
-				},
-			},
-		},
 	}
 }
 
@@ -537,15 +394,6 @@ func createSecret() *apiv1.Secret {
 		Data: map[string][]byte{
 			"username": []byte("test"),
 			"password": []byte("test"),
-		},
-	}
-}
-
-func clusterRequest(cluster *anywherev1.Cluster) reconcile.Request {
-	return reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cluster.Name,
-			Namespace: cluster.Namespace,
 		},
 	}
 }

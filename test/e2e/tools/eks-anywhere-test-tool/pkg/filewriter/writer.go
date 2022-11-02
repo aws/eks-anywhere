@@ -53,7 +53,7 @@ func (t *writer) Dir() string {
 	return t.dir
 }
 
-// This method writes the e2e test artifacts from S3 to files in a directory named after the e2e test name
+// This method writes the e2e test artifacts from S3 to files in a directory named after the e2e test name.
 func (t *writer) WriteTestArtifactsS3ToFile(key string, data []byte) error {
 	i := strings.LastIndex(key, "/Test")
 	p := path.Join(t.dir, key[i:])

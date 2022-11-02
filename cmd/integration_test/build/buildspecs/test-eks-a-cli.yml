@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 165
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 165
+    INTEGRATION_TEST_MAX_EC2_COUNT: 170
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 170
     T_CLOUDSTACK_CIDR: "10.11.248.0/21"
     CLOUDSTACK_PROVIDER: true
     SKIPPED_TESTS: "TestTinkerbellKubernetes123RedHatSimpleFlow,TestTinkerbellKubernetes122RedHatSimpleFlow,TestTinkerbellKubernetes121RedHatSimpleFlow,TestTinkerbellKubernetes122SkipPowerActions,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes122SimpleFlow,TestSnowKubernetes123SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig,TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups,TestSnowKubernetes123LabelsUbuntu,TestSnowKubernetes123TaintsUbuntu,TestSnowKubernetes121To122UbuntuUpgrade,TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade,TestCPackagesDockerUbuntuKubernetes122SimpleFlow,TestCPackagesHarborInstallSimpleFlow,TestCPackagesDockerUbuntuKubernetes121SimpleFlow,TestCPackagesDockerUbuntuKubernetes120SimpleFlow,TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow,TestCPackagesVSphereKubernetes121SimpleFlow,TestCPackagesVSphereKubernetes122SimpleFlow,TestCPackagesVSphereKubernetes121BottleRocketSimpleFlow,TestCPackagesVSphereKubernetes120SimpleFlow,TestSnowKubernetes122To123AWSIamAuthUpgrade,TestSnowKubernetes121UbuntuAWSIamAuth"
@@ -148,6 +148,19 @@ env:
 phases:
   pre_build:
     commands:
+      - export GIT_HASH=$(cat bin/githash)
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./cmd/integration_test/build/script/upload_artifacts.sh
+        $ARTIFACTS_BUCKET
+        $CODEBUILD_SRC_DIR
+        "eks-a-cli"
+        $CODEBUILD_BUILD_NUMBER
+        $GIT_HASH
+        "linux,darwin"
+        "amd64"
+        $BRANCH_NAME
+        false
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
@@ -183,19 +196,6 @@ phases:
   post_build:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
-      - export GIT_HASH=$(cat bin/githash)
-      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
-      - >
-        ./cmd/integration_test/build/script/upload_artifacts.sh
-        $ARTIFACTS_BUCKET
-        $CODEBUILD_SRC_DIR
-        "eks-a-cli"
-        $CODEBUILD_BUILD_NUMBER
-        $GIT_HASH
-        "linux,darwin"
-        "amd64"
-        $BRANCH_NAME
-        false
       - >
         ./bin/test e2e cleanup vsphere
         -n ${CLUSTER_NAME_PREFIX}

@@ -85,7 +85,7 @@ func GetLatestUploadDestination(sourcedFromBranch string) string {
 	}
 }
 
-// GetURI returns an full URL for the given path
+// GetURI returns an full URL for the given path.
 func GetURI(cdn, path string) (string, error) {
 	uri, err := url.Parse(cdn)
 	if err != nil {

@@ -22,7 +22,7 @@ func (o *ofType) String() string {
 }
 
 // AContext returns a gomock matchers that evaluates if the receive value can
-// fullfills the context.Context interface
+// fullfills the context.Context interface.
 func AContext() gomock.Matcher {
 	ctxInterface := reflect.TypeOf((*context.Context)(nil)).Elem()
 	return gomock.AssignableToTypeOf(ctxInterface)

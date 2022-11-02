@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
 
-// GetNutanixBundle returns the bundle for Nutanix
+// GetNutanixBundle returns the bundle for Nutanix.
 func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.NutanixBundle, error) {
 	nutanixBundleArtifacts := map[string][]releasetypes.Artifact{
 		"cluster-api-provider-nutanix": r.BundleArtifactsTable["cluster-api-provider-nutanix"],

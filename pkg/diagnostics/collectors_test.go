@@ -108,3 +108,18 @@ func TestSnowCollectors(t *testing.T) {
 		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
 	}
 }
+
+func TestNutanixCollectors(t *testing.T) {
+	g := NewGomegaWithT(t)
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {})
+	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.NutanixDatacenterKind}
+	factory := diagnostics.NewDefaultCollectorFactory()
+	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
+	g.Expect(collectors).To(HaveLen(6), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapxSystemNamespace))
+	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapxSystemNamespace)))
+	for _, collector := range collectors[1:] {
+		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
+		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
+	}
+}

@@ -34,7 +34,7 @@ func NoErrorPredicate(_ string, err error) bool {
 	return err == nil
 }
 
-// TODO turn them into generics using comparable once 1.18 is allowed
+// TODO turn them into generics using comparable once 1.18 is allowed.
 func StringMatchPredicate(s string) resourcePredicate {
 	return func(in string, err error) bool {
 		return err == nil && strings.Compare(s, in) == 0

@@ -214,7 +214,7 @@ func (a *analyzerFactory) eksaDockerAnalyzers() []*Analyze {
 }
 
 // EksaLogTextAnalyzers given a slice of Collectors will check which namespaced log collectors are present
-// and return the log analyzers associated with the namespace in the namespaceLogTextAnalyzersMap
+// and return the log analyzers associated with the namespace in the namespaceLogTextAnalyzersMap.
 func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze {
 	var analyzers []*Analyze
 	analyzersMap := a.namespaceLogTextAnalyzersMap()
@@ -335,13 +335,13 @@ func (a *analyzerFactory) crdAnalyzer(crdName string) *Analyze {
 	}
 }
 
-// vsphereDiagnosticAnalyzers will return diagnostic analyzers to analyze the condition of vSphere cluster
+// vsphereDiagnosticAnalyzers will return diagnostic analyzers to analyze the condition of vSphere cluster.
 func (a *analyzerFactory) vsphereDiagnosticAnalyzers() []*Analyze {
 	return []*Analyze{a.validControlPlaneIPAnalyzer(), a.vcenterSessionValidatePermissionAnalyzer()}
 }
 
 // validControlPlaneIPAnalyzer analyzes whether a valid control plane IP is used to connect
-// to API server
+// to API server.
 func (a *analyzerFactory) validControlPlaneIPAnalyzer() *Analyze {
 	runPingPod := "ping-host-ip"
 	runPingPodLog := fmt.Sprintf("%s.log", runPingPod)
@@ -373,7 +373,7 @@ func (a *analyzerFactory) validControlPlaneIPAnalyzer() *Analyze {
 }
 
 // vcenterSessionValidateAnalyzer analyzes whether the vcenter user has Session validate permissions for CAPV
-// to be able to look up existing valid sessions to reuse them instead of having to create new ones
+// to be able to look up existing valid sessions to reuse them instead of having to create new ones.
 func (a *analyzerFactory) vcenterSessionValidatePermissionAnalyzer() *Analyze {
 	capvManagerPod := "capv-controller-manager-*"
 	capvManagerContainerLogFile := capvManagerPod + ".log"

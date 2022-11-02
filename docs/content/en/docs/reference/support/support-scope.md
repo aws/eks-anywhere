@@ -24,7 +24,7 @@ See the [Artifacts]({{< relref "../artifacts" >}}) page for details.
 
 * **Ubuntu**: EKS Anywhere has been tested with Ubuntu-based nodes.
 Amazon will assist with troubleshooting and configuration guidance with Ubuntu-based nodes under the [EKS Anywhere Enterprise Subscription.](https://aws.amazon.com/eks/eks-anywhere/pricing/)
-To build your own Ubuntu-based EKS Anywhere node, see [Building Ubuntu-based node images.]({{< relref "../artifacts/#building-ubuntu-based-node-images" >}})
+To build your own Ubuntu-based EKS Anywhere node, see [Building node images.]({{< relref "../artifacts/#building-node-images" >}})
 For official Ubuntu support, see the Canonical [Support](https://ubuntu.com/support) page.
 
 * **Red Hat Enterprise Linux (RHEL)**: EKS Anywhere has been tested with RHEL-based nodes.

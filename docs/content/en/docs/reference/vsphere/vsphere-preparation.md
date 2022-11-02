@@ -66,6 +66,7 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    * Check in a template
    * Check out a template
    * Create local library
+   * Update files
    > vSphere Tagging
    * Assign or Unassign vSphere Tag
    * Assign or Unassign vSphere Tag on Object

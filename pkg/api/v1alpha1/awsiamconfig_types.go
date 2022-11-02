@@ -5,7 +5,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // AWSIamConfig defines configuration options for AWS IAM Authenticator server
 
-// AWSIamConfigSpec defines the desired state of AWSIamConfig
+// AWSIamConfigSpec defines the desired state of AWSIamConfig.
 type AWSIamConfigSpec struct {
 	// AWSRegion defines a region in an AWS partition
 	AWSRegion string `json:"awsRegion"`
@@ -22,14 +22,14 @@ type AWSIamConfigSpec struct {
 	Partition string `json:"partition,omitempty"`
 }
 
-// MapRoles defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
+// MapRoles defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode.
 type MapRoles struct {
 	RoleARN  string   `yaml:"rolearn" json:"roleARN"`
 	Username string   `json:"username"`
 	Groups   []string `json:"groups,omitempty"`
 }
 
-// MapUsers defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
+// MapUsers defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode.
 type MapUsers struct {
 	UserARN  string   `yaml:"userarn" json:"userARN"`
 	Username string   `json:"username"`
@@ -52,13 +52,13 @@ func (e *AWSIamConfigSpec) Equal(n *AWSIamConfigSpec) bool {
 	return SliceEqual(e.BackendMode, n.BackendMode)
 }
 
-// AWSIamConfigStatus defines the observed state of AWSIamConfig
+// AWSIamConfigStatus defines the observed state of AWSIamConfig.
 type AWSIamConfigStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// AWSIamConfig is the Schema for the awsiamconfigs API
+// AWSIamConfig is the Schema for the awsiamconfigs API.
 type AWSIamConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -68,7 +68,7 @@ type AWSIamConfig struct {
 }
 
 // +kubebuilder:object:generate=false
-// Same as AWSIamConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled
+// Same as AWSIamConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled.
 type AWSIamConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -78,7 +78,7 @@ type AWSIamConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// AWSIamConfigList contains a list of AWSIamConfig
+// AWSIamConfigList contains a list of AWSIamConfig.
 type AWSIamConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

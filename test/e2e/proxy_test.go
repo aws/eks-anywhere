@@ -33,16 +33,17 @@ func TestVSphereKubernetes124UbuntuProxyConfig(t *testing.T) {
 	runProxyConfigFlow(test)
 }
 
-func TestVSphereKubernetes123BottlerocketProxyConfig(t *testing.T) {
+func TestVSphereKubernetes124BottlerocketProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket123(),
+		framework.NewVSphere(t, framework.WithBottleRocket124(),
 			framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }
@@ -69,8 +70,8 @@ func TestSnowKubernetes121UbuntuProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		// TODO: provide separate Proxy Env Vars for Snow provider. Leaving VSphere for backwards compatibility
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
-		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
+		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
+		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }
