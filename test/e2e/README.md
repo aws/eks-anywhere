@@ -53,6 +53,7 @@ GOVC_URL
 T_VSPHERE_CLUSTER_IP_POOL # comma-separated list of CP ip addresses
 EKSA_AWS_ACCESS_KEY_ID # For Packages tests
 EKSA_AWS_SECRET_ACCESS_KEY # For Packages tests
+EKSA_AWS_REGION:# For Packages tests
 ```
 
 ### Tests upgrading from old release

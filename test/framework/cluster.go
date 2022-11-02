@@ -19,6 +19,8 @@ import (
 
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
 	rctrl "github.com/tinkerbell/rufio/controllers"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
@@ -32,7 +34,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -1094,7 +1095,8 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	}
 
 	svcAddress := name + "." + ns + ".svc.cluster.local"
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, "busybox-test", e.kubeconfigFilePath(), []string{"curl", svcAddress})
+	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomname, e.kubeconfigFilePath(), []string{"curl", svcAddress})
 	if err != nil {
 		e.T.Fatalf("error launching busybox pod: %s", err)
 	}
