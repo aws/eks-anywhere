@@ -20,10 +20,10 @@ func TestCloudStackKubernetes121LabelsAndNodeNameRedhat(t *testing.T) {
 		),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube121),
-			api.WithControlPlaneLabel(constants.FailureDomainLabelName, constants.CloudstackFailuredomainPlaceholder),
+			api.WithControlPlaneLabel(constants.FailureDomainLabelName, constants.CloudstackFailureDomainPlaceholder),
 			api.WithWorkerNodeGroup(constants.DefaultWorkerNodeGroupName,
 				api.WithCount(1),
-				api.WithLabel(constants.FailureDomainLabelName, constants.CloudstackFailuredomainPlaceholder),
+				api.WithLabel(constants.FailureDomainLabelName, constants.CloudstackFailureDomainPlaceholder),
 			),
 		),
 	)

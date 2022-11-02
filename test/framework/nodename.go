@@ -38,4 +38,3 @@ func validateNodeNameMatchCAPIMachineName(node corev1.Node) error {
 	}
 	return nil
 }
-

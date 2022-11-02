@@ -45,10 +45,10 @@ const (
 
 	FailureDomainLabelName = "cluster.x-k8s.io/failure-domain"
 
-	// provider specific keywork placeholder
-	CloudstackFailuredomainPlaceholder = "ds.meta_data.failuredomain"
+	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder
+	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
 
-	// provider specific env vars
+	// Provider specific env vars
 	VSphereUsernameKey = "VSPHERE_USERNAME"
 	VSpherePasswordKey = "VSPHERE_PASSWORD"
 	GovcUsernameKey    = "GOVC_USERNAME"
