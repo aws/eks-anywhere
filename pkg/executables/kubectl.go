@@ -417,7 +417,7 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 		return fmt.Errorf("unparsable timeout specified: %w", err)
 	}
 	if timeoutDuration < 0 {
-		return fmt.Errorf("timeout must be positive")
+		return fmt.Errorf("negative timeout specified: %w", err)
 	}
 
 	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
@@ -495,6 +495,9 @@ func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.
 }
 
 func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+	if jsonpath == "" || forCondition == "" || kubeconfig == "" || namespace == "" {
+		return fmt.Errorf("empty conditions params passed to waitJSONPath()")
+	}
 	params := []string{
 		"wait", "--timeout", timeout, fmt.Sprintf("--for=jsonpath='{.%s}'=%s", jsonpath, forCondition), property, "--kubeconfig", kubeconfig, "-n", namespace,
 	}
@@ -507,6 +510,9 @@ func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, 
 
 // waitJsonPathLoop will be deprecated in favor of waitJsonPath after version 1.23.
 func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+	if jsonpath == "" || forCondition == "" || kubeconfig == "" || namespace == "" {
+		return fmt.Errorf("empty conditions params passed to waitJSONPathLoop()")
+	}
 	timeoutDur, err := time.ParseDuration(timeout)
 	if err != nil {
 		return fmt.Errorf("parsing duration %q: %w", timeout, err)
@@ -591,12 +597,9 @@ func (k *Kubectl) DeleteFluxConfig(ctx context.Context, managementCluster *types
 // GetPackageBundleController will retrieve the packagebundlecontroller from eksa-packages namespace and return the object.
 func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile, clusterName string) (packagesv1.PackageBundleController, error) {
 	params := []string{"get", "pbc", clusterName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return packagesv1.PackageBundleController{}, fmt.Errorf("getting package bundle controller resource for %s: %v", clusterName, err)
-	}
+	stdOut, _ := k.Execute(ctx, params...)
 	response := &packagesv1.PackageBundleController{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
+	err := json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return packagesv1.PackageBundleController{}, fmt.Errorf("unmarshalling kubectl response to GO struct %s: %v", clusterName, err)
 	}
