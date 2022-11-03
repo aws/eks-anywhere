@@ -3019,3 +3019,25 @@ func TestGetPodLogsSince(t *testing.T) {
 		t.Errorf("Kubectl.GetPodLogsSince() error = %v, want nil", err)
 	}
 }
+
+func TestGetPodLogsSinceInternalError(t *testing.T) {
+	tt := newKubectlTest(t)
+	now := time.Now()
+	var b bytes.Buffer
+	b.WriteString("Internal Error")
+	expectedParam := []string{"logs", "testpod", "testcontainer", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--since-time", now.Format(time.RFC3339)}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	_, err := tt.k.GetPodLogsSince(tt.ctx, "eksa-packages", "testpod", "testcontainer", tt.cluster.KubeconfigFile, now)
+	tt.Expect(err).To(MatchError(ContainSubstring("Internal Error")))
+}
+
+func TestGetPodLogsSinceExecuteError(t *testing.T) {
+	tt := newKubectlTest(t)
+	now := time.Now()
+	var b bytes.Buffer
+	b.WriteString("execute error")
+	expectedParam := []string{"logs", "testpod", "testcontainer", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--since-time", now.Format(time.RFC3339)}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, fmt.Errorf("execute error")).AnyTimes()
+	_, err := tt.k.GetPodLogsSince(tt.ctx, "eksa-packages", "testpod", "testcontainer", tt.cluster.KubeconfigFile, now)
+	tt.Expect(err).To(MatchError(ContainSubstring("execute error")))
+}
