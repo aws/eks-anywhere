@@ -71,6 +71,7 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
+	Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string, opts ...executables.KubectlOpt) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -278,7 +279,10 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), workloadCluster.Name)
+	capiClustersResourceType := fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
+	err = c.clusterClient.Wait(ctx, managementCluster.KubeconfigFile, c.controlPlaneWaitTimeout.String(), "ControlPlaneInitialized",
+		fmt.Sprintf("%s/%s", capiClustersResourceType, workloadCluster.Name), constants.EksaSystemNamespace)
+	//err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), workloadCluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
