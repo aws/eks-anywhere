@@ -254,6 +254,36 @@ func (mr *MockProviderKubectlClientMockRecorder) GetUnprovisionedTinkerbellHardw
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnprovisionedTinkerbellHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetUnprovisionedTinkerbellHardware), arg0, arg1, arg2)
 }
 
+// SearchTinkerbellDatacenterConfig mocks base method.
+func (m *MockProviderKubectlClient) SearchTinkerbellDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) ([]*v1alpha1.TinkerbellDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchTinkerbellDatacenterConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]*v1alpha1.TinkerbellDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchTinkerbellDatacenterConfig indicates an expected call of SearchTinkerbellDatacenterConfig.
+func (mr *MockProviderKubectlClientMockRecorder) SearchTinkerbellDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchTinkerbellDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).SearchTinkerbellDatacenterConfig), arg0, arg1, arg2, arg3)
+}
+
+// SearchTinkerbellMachineConfig mocks base method.
+func (m *MockProviderKubectlClient) SearchTinkerbellMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) ([]*v1alpha1.TinkerbellMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchTinkerbellMachineConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]*v1alpha1.TinkerbellMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchTinkerbellMachineConfig indicates an expected call of SearchTinkerbellMachineConfig.
+func (mr *MockProviderKubectlClientMockRecorder) SearchTinkerbellMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchTinkerbellMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).SearchTinkerbellMachineConfig), arg0, arg1, arg2, arg3)
+}
+
 // UpdateAnnotation mocks base method.
 func (m *MockProviderKubectlClient) UpdateAnnotation(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 ...executables.KubectlOpt) error {
 	m.ctrl.T.Helper()

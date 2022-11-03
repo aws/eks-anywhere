@@ -823,6 +823,11 @@ type CloudStackDatacenterConfigResponse struct {
 	Items []*v1alpha1.CloudStackDatacenterConfig `json:"items,omitempty"`
 }
 
+// TinkerbellDatacenterConfigResponse contains list of TinkerbellDatacenterConfig.
+type TinkerbellDatacenterConfigResponse struct {
+	Items []*v1alpha1.TinkerbellDatacenterConfig `json:"items,omitempty"`
+}
+
 type NutanixDatacenterConfigResponse struct {
 	Items []*v1alpha1.NutanixDatacenterConfig `json:"items,omitempty"`
 }
@@ -837,6 +842,11 @@ type VSphereMachineConfigResponse struct {
 
 type CloudStackMachineConfigResponse struct {
 	Items []*v1alpha1.CloudStackMachineConfig `json:"items,omitempty"`
+}
+
+// TinkerbellMachineConfigResponse contains list of TinkerbellMachineConfig.
+type TinkerbellMachineConfigResponse struct {
+	Items []*v1alpha1.TinkerbellMachineConfig `json:"items,omitempty"`
 }
 
 type NutanixMachineConfigResponse struct {
@@ -1205,6 +1215,26 @@ func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name string, k
 	return response.Items, nil
 }
 
+// SearchTinkerbellMachineConfig returns the list of TinkerbellMachineConfig in the cluster.
+func (k *Kubectl) SearchTinkerbellMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error) {
+	params := []string{
+		"get", eksaTinkerbellMachineResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("searching eksa TinkerbellMachineConfigResponse: %v", err)
+	}
+
+	response := &TinkerbellMachineConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing TinkerbellMachineConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
 func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName string, kind string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
 	var internalType string
 
@@ -1249,6 +1279,26 @@ func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterN
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing VSphereDatacenterConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+// SearchTinkerbellDatacenterConfig returns the list of TinkerbellDatacenterConfig in the cluster.
+func (k *Kubectl) SearchTinkerbellDatacenterConfig(ctx context.Context, datacenterName string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error) {
+	params := []string{
+		"get", eksaTinkerbellDatacenterResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + datacenterName,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("searching eksa TinkerbellDatacenterConfigResponse: %v", err)
+	}
+
+	response := &TinkerbellDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing TinkerbellDatacenterConfigResponse response: %v", err)
 	}
 
 	return response.Items, nil

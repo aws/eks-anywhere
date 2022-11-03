@@ -62,6 +62,11 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 }
 
 func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return p.applyHardware(ctx, cluster)
+}
+
+// ApplyHardwareToCluster adds all the hardwares to the cluster.
+func (p *Provider) applyHardware(ctx context.Context, cluster *types.Cluster) error {
 	hardwareSpec, err := hardware.MarshalCatalogue(p.catalogue)
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
@@ -144,6 +149,28 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 
 	spec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
+	if p.clusterConfig.IsManaged() {
+		for _, mc := range p.MachineConfigs(clusterSpec) {
+			em, err := p.providerKubectlClient.SearchTinkerbellMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
+			if err != nil {
+				return err
+			}
+			if len(em) > 0 {
+				return fmt.Errorf("TinkerbellMachineConfig %s already exists", mc.GetName())
+			}
+		}
+		existingDatacenter, err := p.providerKubectlClient.SearchTinkerbellDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		if err != nil {
+			return err
+		}
+		if len(existingDatacenter) > 0 {
+			return fmt.Errorf("TinkerbellDatacenterConfig %s already exists", p.datacenterConfig.Name)
+		}
+
+		if err := p.getHardwareFromManagementCluster(ctx, clusterSpec.ManagementCluster); err != nil {
+			return err
+		}
+	}
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
 	clusterSpecValidator := NewClusterSpecValidator(
@@ -155,10 +182,60 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 
 	if !p.skipIpCheck {
 		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
-		clusterSpecValidator.Register(AssertTinkerbellIPNotInUse(p.netClient))
+		if !p.clusterConfig.IsManaged() {
+			clusterSpecValidator.Register(AssertTinkerbellIPNotInUse(p.netClient))
+		}
 	}
 	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
 	if err := clusterSpecValidator.Validate(spec); err != nil {
+		return err
+	}
+
+	if p.clusterConfig.IsManaged() {
+		return p.applyHardware(ctx, clusterSpec.ManagementCluster)
+	}
+
+	return nil
+}
+
+func (p *Provider) getHardwareFromManagementCluster(ctx context.Context, cluster *types.Cluster) error {
+	// Retrieve all unprovisioned hardware from the management cluster and populate the catalogue so
+	// it can be considered for the workload creation.
+	hardware, err := p.providerKubectlClient.GetUnprovisionedTinkerbellHardware(
+		ctx,
+		cluster.KubeconfigFile,
+		constants.EksaSystemNamespace,
+	)
+	if err != nil {
+		return fmt.Errorf("retrieving unprovisioned hardware: %v", err)
+	}
+	for i := range hardware {
+		if err := p.catalogue.InsertHardware(&hardware[i]); err != nil {
+			return err
+		}
+		if err := p.diskExtractor.InsertDisks(&hardware[i]); err != nil {
+			return err
+		}
+	}
+
+	// Retrieve all provisioned hardware from the management cluster and populate diskExtractors's
+	// disksProvisionedHardware map for use during workload creation
+	hardware, err = p.providerKubectlClient.GetProvisionedTinkerbellHardware(
+		ctx,
+		cluster.KubeconfigFile,
+		constants.EksaSystemNamespace,
+	)
+	if err != nil {
+		return fmt.Errorf("retrieving provisioned hardware: %v", err)
+	}
+	for i := range hardware {
+		if err := p.diskExtractor.InsertProvisionedHardwareDisks(&hardware[i]); err != nil {
+			return err
+		}
+	}
+
+	// Remove all the provisioned hardware from the existing cluster if repeated from the hardware csv input.
+	if err := p.catalogue.RemoveHardwares(hardware); err != nil {
 		return err
 	}
 

@@ -2836,3 +2836,71 @@ func TestKubectlDeleteEksaNutanixMachineConfigError(t *testing.T) {
 	).Return(bytes.Buffer{}, fmt.Errorf("error"))
 	tt.Expect(tt.k.DeleteEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)).NotTo(Succeed())
 }
+
+func TestKubectlSearchTinkerbellMachineConfig(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchTinkerbellMachineConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchTinkerbellMachineConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 machine configs, got %d", len(mc))
+	}
+}
+
+func TestKubectlSearchTinkerbellMachineConfigNotFound(t *testing.T) {
+	var kubeconfigfile string
+	tt := newKubectlTest(t)
+
+	params := []string{
+		"get", fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfigfile, "--namespace", tt.namespace, "--field-selector=metadata.name=test",
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), errors.New("machineconfig not found"))
+
+	_, err := tt.k.SearchTinkerbellMachineConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestKubectlSearchTinkerbellDatacenterConfigs(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_datacenterconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchTinkerbellDatacenterConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchTinkerbellDatacenterConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 datacenter configs, got %d", len(mc))
+	}
+}
+
+func TestKubectlSearchTinkerbellDatacenterConfigNotFound(t *testing.T) {
+	var kubeconfigfile string
+	tt := newKubectlTest(t)
+
+	params := []string{
+		"get", fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfigfile, "--namespace", tt.namespace, "--field-selector=metadata.name=test",
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), errors.New("datacenterconfig not found"))
+
+	_, err := tt.k.SearchTinkerbellDatacenterConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
