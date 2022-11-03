@@ -25,6 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/executables/cmk"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
@@ -51,47 +52,47 @@ import (
 )
 
 type Dependencies struct {
-	Provider                  providers.Provider
-	ClusterAwsCli             *executables.Clusterawsadm
-	DockerClient              *executables.Docker
-	Kubectl                   *executables.Kubectl
-	Govc                      *executables.Govc
+	Provider                    providers.Provider
+	ClusterAwsCli               *executables.Clusterawsadm
+	DockerClient                *executables.Docker
+	Kubectl                     *executables.Kubectl
+	Govc                        *executables.Govc
 	CloudStackValidatorRegistry cloudstack.ValidatorRegistry
 	SnowAwsClientRegistry       *snow.AwsClientRegistry
-	SnowConfigManager         *snow.ConfigManager
-	Writer                    filewriter.FileWriter
-	Kind                      *executables.Kind
-	Clusterctl                *executables.Clusterctl
-	Flux                      *executables.Flux
-	Troubleshoot              *executables.Troubleshoot
-	Helm                      *executables.Helm
-	UnAuthKubeClient          *kubernetes.UnAuthClient
-	Networking                clustermanager.Networking
-	CiliumTemplater           *cilium.Templater
-	AwsIamAuth                *awsiamauth.Installer
-	ClusterManager            *clustermanager.ClusterManager
-	Bootstrapper              *bootstrapper.Bootstrapper
-	GitOpsFlux                *flux.Flux
-	Git                       *gitfactory.GitTools
-	EksdInstaller             *eksd.Installer
-	EksdUpgrader              *eksd.Upgrader
-	AnalyzerFactory           diagnostics.AnalyzerFactory
-	CollectorFactory          diagnostics.CollectorFactory
-	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
-	CAPIManager               *clusterapi.Manager
-	ResourceSetManager        *clusterapi.ResourceSetManager
-	FileReader                *files.Reader
-	ManifestReader            *manifests.Reader
-	closers                   []types.Closer
-	CliConfig                 *config.CliConfig
-	PackageInstaller          interfaces.PackageInstaller
-	BundleRegistry            curatedpackages.BundleRegistry
-	PackageControllerClient   *curatedpackages.PackageControllerClient
-	PackageClient             curatedpackages.PackageHandler
-	VSphereValidator          *vsphere.Validator
-	VSphereDefaulter          *vsphere.Defaulter
-	NutanixPrismClient        *v3.Client
-	SnowValidator             *snow.AwsClientValidator
+	SnowConfigManager           *snow.ConfigManager
+	Writer                      filewriter.FileWriter
+	Kind                        *executables.Kind
+	Clusterctl                  *executables.Clusterctl
+	Flux                        *executables.Flux
+	Troubleshoot                *executables.Troubleshoot
+	Helm                        *executables.Helm
+	UnAuthKubeClient            *kubernetes.UnAuthClient
+	Networking                  clustermanager.Networking
+	CiliumTemplater             *cilium.Templater
+	AwsIamAuth                  *awsiamauth.Installer
+	ClusterManager              *clustermanager.ClusterManager
+	Bootstrapper                *bootstrapper.Bootstrapper
+	GitOpsFlux                  *flux.Flux
+	Git                         *gitfactory.GitTools
+	EksdInstaller               *eksd.Installer
+	EksdUpgrader                *eksd.Upgrader
+	AnalyzerFactory             diagnostics.AnalyzerFactory
+	CollectorFactory            diagnostics.CollectorFactory
+	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
+	CAPIManager                 *clusterapi.Manager
+	ResourceSetManager          *clusterapi.ResourceSetManager
+	FileReader                  *files.Reader
+	ManifestReader              *manifests.Reader
+	closers                     []types.Closer
+	CliConfig                   *config.CliConfig
+	PackageInstaller            interfaces.PackageInstaller
+	BundleRegistry              curatedpackages.BundleRegistry
+	PackageControllerClient     *curatedpackages.PackageControllerClient
+	PackageClient               curatedpackages.PackageHandler
+	VSphereValidator            *vsphere.Validator
+	VSphereDefaulter            *vsphere.Defaulter
+	NutanixPrismClient          *v3.Client
+	SnowValidator               *snow.AwsClientValidator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -520,7 +521,8 @@ func (f *Factory) WithCloudStackValidatorRegistry(skipIPCheck bool) *Factory {
 			return nil
 		}
 
-		f.dependencies.CloudStackValidatorRegistry = cloudstack.NewValidatorFactory(f.executablesConfig.builder, f.dependencies.Writer, skipIPCheck)
+		cmkBuilder := cmk.NewCmkBuilder(f.executablesConfig.builder)
+		f.dependencies.CloudStackValidatorRegistry = cloudstack.NewValidatorFactory(cmkBuilder, f.dependencies.Writer, skipIPCheck)
 
 		return nil
 	})

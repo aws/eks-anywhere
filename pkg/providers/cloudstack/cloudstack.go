@@ -62,7 +62,7 @@ type cloudstackProvider struct {
 	writer                filewriter.FileWriter
 	selfSigned            bool
 	templateBuilder       *CloudStackTemplateBuilder
-	validator             *Validator
+	validator             ProviderValidator
 	execConfig            *decoder.CloudStackExecConfig
 	log                   logr.Logger
 }
@@ -232,7 +232,7 @@ type ProviderKubectlClient interface {
 }
 
 // NewProvider initializes the CloudStack provider object.
-func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, validator *Validator, writer filewriter.FileWriter, now types.NowFunc, log logr.Logger) *cloudstackProvider { //nolint:revive
+func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, validator ProviderValidator, writer filewriter.FileWriter, now types.NowFunc, log logr.Logger) *cloudstackProvider { //nolint:revive
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -429,7 +429,7 @@ func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStac
 }
 
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
-	if err := p.validator.validateCloudStackAccess(ctx, clusterSpec.CloudStackDatacenter); err != nil {
+	if err := p.validator.ValidateCloudStackAccess(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
 	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter); err != nil {

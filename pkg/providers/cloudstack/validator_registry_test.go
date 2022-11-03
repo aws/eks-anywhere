@@ -6,25 +6,24 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/executables/cmk"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
-func getFromRegistry(registry cloudstack.ValidatorRegistry, execConfig *decoder.CloudStackExecConfig) (*cloudstack.Validator, error) {
-	return registry.Get(execConfig)
-}
-
 func TestRegistryGetWithNilExecConfig(t *testing.T) {
 	g := NewGomegaWithT(t)
-	registry := cloudstack.NewValidatorFactory(executables.NewLocalExecutablesBuilder(), nil, false)
-	_, err := getFromRegistry(registry, nil)
+	executableBuilder := executables.NewLocalExecutablesBuilder()
+	registry := cloudstack.NewValidatorFactory(cmk.NewCmkBuilder(executableBuilder), nil, false)
+	_, err := registry.Get(nil)
 	g.Expect(err).NotTo(BeNil())
 }
 
 func TestRegistryGetSuccess(t *testing.T) {
 	g := NewGomegaWithT(t)
-	registry := cloudstack.NewValidatorFactory(executables.NewLocalExecutablesBuilder(), nil, false)
-	validator, err := getFromRegistry(registry, &decoder.CloudStackExecConfig{Profiles: []decoder.CloudStackProfileConfig{
+	executableBuilder := executables.NewLocalExecutablesBuilder()
+	registry := cloudstack.NewValidatorFactory(cmk.NewCmkBuilder(executableBuilder), nil, false)
+	validator, err := registry.Get(&decoder.CloudStackExecConfig{Profiles: []decoder.CloudStackProfileConfig{
 		{
 			Name:          "test",
 			ApiKey:        "apikey",
