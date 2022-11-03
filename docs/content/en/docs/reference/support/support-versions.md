@@ -32,8 +32,8 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 | EKS Anywhere version      | Kubernetes versions included | EKS Anywhere Release Date | CVE patches and bug fixes back-ported? |
 |------------|---------------------|---------------------------------|-------------------------|
 | 0.12 | 1.23, 1.22, 1.21, 1.20 | August 18, 2022 | Yes | 
-| 0.11 | 1.23, 1.22, 1.21, 1.20 | August 18, 2022 | No | 
-| 0.10 | 1.22, 1.21, 1.20 | June 30, 2022 | Yes | 
+| 0.11 | 1.23, 1.22, 1.21, 1.20 | August 18, 2022 | Yes | 
+| 0.10 | 1.22, 1.21, 1.20 | June 30, 2022 | No | 
 | 0.9 | 1.21, 1.20 | May 12, 2022 | No | 
 | 0.8 | 1.22, 1.21, 1.20 | March 31, 2022 | No | 
 | 0.7 | 1.21, 1.20 | January 27, 2022 | No | 
