@@ -1,10 +1,17 @@
 package vsphere
 
 import (
+	"context"
+	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	yamlcapi "github.com/aws/eks-anywhere/pkg/clusterapi/yaml"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -19,7 +26,7 @@ type ControlPlane struct {
 	BaseControlPlane
 	Secrets            []*corev1.Secret
 	ConfigMaps         []*corev1.ConfigMap
-	ClusterResourceSet *clusterapi.ClusterResourceSet
+	ClusterResourceSet *addonsv1.ClusterResourceSet
 }
 
 // Objects returns the control plane objects associated with the VSphere cluster.
@@ -27,7 +34,7 @@ func (p ControlPlane) Objects() []kubernetes.Object {
 	o := p.BaseControlPlane.Objects()
 	o = getSecrets(o, p.Secrets)
 	o = getConfigMaps(o, p.ConfigMaps)
-	// TODO: Get ClusterResourceSet
+	o = append(o, p.ClusterResourceSet)
 
 	return o
 }
@@ -45,25 +52,92 @@ func (b *ControlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) erro
 	}
 
 	b.ControlPlane.BaseControlPlane = *b.BaseBuilder.ControlPlane
-	processSecrets(b.ControlPlane, lookup)
-	processConfigMaps(b.ControlPlane, lookup)
-	// TODO: Process ClusterResourceSet
+	processObjects(b.ControlPlane, lookup)
 
 	return nil
 }
 
-func processSecrets(c *ControlPlane, lookup yamlutil.ObjectLookup) {
-	for _, obj := range lookup {
-		if obj.GetObjectKind().GroupVersionKind().Kind == constants.SecretKind {
-			c.Secrets = append(c.Secrets, obj.(*corev1.Secret))
-		}
+// ControlPlaneSpec builds a vsphere ControlPlane definition based on an eks-a cluster spec.
+func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
+	templateBuilder := NewVsphereTemplateBuilder(time.Now, true)
+
+	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(
+		spec,
+		func(values map[string]interface{}) {
+			values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
+			values["etcdTemplateName"] = clusterapi.EtcdMachineTemplateName(spec.Cluster)
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "generating vsphere control plane yaml spec")
 	}
+
+	parser, builder, err := newControlPlaneParser(logger)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parser.Parse(controlPlaneYaml, builder)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing vsphere control plane yaml")
+	}
+
+	return builder.ControlPlane, nil
 }
 
-func processConfigMaps(c *ControlPlane, lookup yamlutil.ObjectLookup) {
+func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *ControlPlaneBuilder, error) {
+	parser, baseBuilder, err := yamlcapi.NewControlPlaneParserAndBuilder(
+		logger,
+		yamlutil.NewMapping(
+			"VSphereCluster",
+			func() *vspherev1.VSphereCluster {
+				return &vspherev1.VSphereCluster{}
+			},
+		),
+		yamlutil.NewMapping(
+			"VSphereMachineTemplate",
+			func() *vspherev1.VSphereMachineTemplate {
+				return &vspherev1.VSphereMachineTemplate{}
+			},
+		),
+	)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "building vsphere control plane parser")
+	}
+
+	err = parser.RegisterMappings(
+		yamlutil.NewMapping(constants.SecretKind, func() yamlutil.APIObject {
+			return &corev1.Secret{}
+		}),
+		yamlutil.NewMapping(constants.ConfigMapKind, func() yamlutil.APIObject {
+			return &corev1.ConfigMap{}
+		}),
+		yamlutil.NewMapping(constants.ClusterResourceSetKind, func() yamlutil.APIObject {
+			return &addonsv1.ClusterResourceSet{}
+		}),
+	)
+
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "registering vsphere control plane mappings in parser")
+	}
+
+	builder := &ControlPlaneBuilder{
+		BaseBuilder:  baseBuilder,
+		ControlPlane: &ControlPlane{},
+	}
+
+	return parser, builder, nil
+}
+
+func processObjects(c *ControlPlane, lookup yamlutil.ObjectLookup) {
 	for _, obj := range lookup {
-		if obj.GetObjectKind().GroupVersionKind().Kind == constants.ConfigMapKind {
+		switch obj.GetObjectKind().GroupVersionKind().Kind {
+		case constants.SecretKind:
+			c.Secrets = append(c.Secrets, obj.(*corev1.Secret))
+		case constants.ConfigMapKind:
 			c.ConfigMaps = append(c.ConfigMaps, obj.(*corev1.ConfigMap))
+		case constants.ClusterResourceSetKind:
+			c.ClusterResourceSet = obj.(*addonsv1.ClusterResourceSet)
 		}
 	}
 }
