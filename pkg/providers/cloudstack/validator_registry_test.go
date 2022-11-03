@@ -24,7 +24,7 @@ func TestRegistryGetWithNilExecConfig(t *testing.T) {
 func TestRegistryGetSuccess(t *testing.T) {
 	g := NewGomegaWithT(t)
 	registry := cloudstack.NewValidatorFactory(executables.NewLocalExecutablesBuilder(), nil, false)
-	_, err := getFromRegistry(registry, &decoder.CloudStackExecConfig{Profiles: []decoder.CloudStackProfileConfig{
+	validator, err := getFromRegistry(registry, &decoder.CloudStackExecConfig{Profiles: []decoder.CloudStackProfileConfig{
 		{
 			Name:          "test",
 			ApiKey:        "apikey",
@@ -33,4 +33,5 @@ func TestRegistryGetSuccess(t *testing.T) {
 		},
 	}})
 	g.Expect(err).To(BeNil())
+	g.Expect(validator).ToNot(BeNil())
 }

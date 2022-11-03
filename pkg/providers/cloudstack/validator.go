@@ -47,7 +47,6 @@ type localAvailabilityZone struct {
 
 // ProviderCmkClient defines the methods used by Cmk as a separate interface to be mockable when injected into other objects.
 type ProviderCmkClient interface {
-	Close(ctx context.Context) error
 	GetManagementApiEndpoint(profile string) (string, error)
 	ValidateCloudStackConnection(ctx context.Context, profile string) error
 	ValidateServiceOfferingPresent(ctx context.Context, profile string, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error

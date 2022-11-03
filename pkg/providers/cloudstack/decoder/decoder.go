@@ -29,8 +29,8 @@ func ParseCloudStackCredsFromSecrets(secrets []apiv1.Secret) (*CloudStackExecCon
 	if len(secrets) == 0 {
 		return nil, fmt.Errorf("no secrets provided - unable to generate CloudStackExecConfig")
 	}
-	cloudstackProfiles := make([]CloudStackProfileConfig, len(secrets))
-	for idx, secret := range secrets {
+	cloudstackProfiles := make([]CloudStackProfileConfig, 0, len(secrets))
+	for _, secret := range secrets {
 		apiKey, ok := secret.Data[APIKeyKey]
 		if !ok {
 			return nil, fmt.Errorf("secret %s is missing required key %s", secret.Name, APIKeyKey)
@@ -47,13 +47,16 @@ func ParseCloudStackCredsFromSecrets(secrets []apiv1.Secret) (*CloudStackExecCon
 		if !ok {
 			verifySsl = []byte(defaultVerifySslValue)
 		}
-		cloudstackProfiles[idx] = CloudStackProfileConfig{
-			Name:          secret.Name,
-			ApiKey:        string(apiKey),
-			SecretKey:     string(secretKey),
-			ManagementUrl: string(apiURL),
-			VerifySsl:     string(verifySsl),
-		}
+		cloudstackProfiles = append(
+			cloudstackProfiles,
+			CloudStackProfileConfig{
+				Name:          secret.Name,
+				ApiKey:        string(apiKey),
+				SecretKey:     string(secretKey),
+				ManagementUrl: string(apiURL),
+				VerifySsl:     string(verifySsl),
+			},
+		)
 	}
 
 	return &CloudStackExecConfig{

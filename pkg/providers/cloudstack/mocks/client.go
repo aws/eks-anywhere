@@ -41,20 +41,6 @@ func (m *MockProviderCmkClient) EXPECT() *MockProviderCmkClientMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method.
-func (m *MockProviderCmkClient) Close(arg0 context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Close indicates an expected call of Close.
-func (mr *MockProviderCmkClientMockRecorder) Close(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockProviderCmkClient)(nil).Close), arg0)
-}
-
 // GetManagementApiEndpoint mocks base method.
 func (m *MockProviderCmkClient) GetManagementApiEndpoint(arg0 string) (string, error) {
 	m.ctrl.T.Helper()
