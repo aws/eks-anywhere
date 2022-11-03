@@ -15,12 +15,12 @@ import (
 )
 
 // ConfigManager allows to parse from yaml, set defaults and validate a Cluster struct
-// It allows to dynamically register configuration for all those operations
+// It allows to dynamically register configuration for all those operations.
 type ConfigManager struct { // TODO: find a better name
 	entry *ConfigManagerEntry
 }
 
-// NewConfigManager builds a ConfigManager with empty configuration
+// NewConfigManager builds a ConfigManager with empty configuration.
 func NewConfigManager() *ConfigManager {
 	return &ConfigManager{
 		entry: NewConfigManagerEntry(),
@@ -28,32 +28,32 @@ func NewConfigManager() *ConfigManager {
 }
 
 // Register records the configuration defined in a ConfigManagerEntry into the ConfigManager
-// This is equivalent to the individual register methods
+// This is equivalent to the individual register methods.
 func (c *ConfigManager) Register(entries ...*ConfigManagerEntry) error {
 	return c.entry.Merge(entries...)
 }
 
-// RegisterMapping records the mapping between a kubernetes Kind and an API concrete type
+// RegisterMapping records the mapping between a kubernetes Kind and an API concrete type.
 func (c *ConfigManager) RegisterMapping(kind string, generator APIObjectGenerator) error {
 	return c.entry.RegisterMapping(kind, generator)
 }
 
-// RegisterProcessors records setters to fill the Config struct from the parsed API objects
+// RegisterProcessors records setters to fill the Config struct from the parsed API objects.
 func (c *ConfigManager) RegisterProcessors(processors ...ParsedProcessor) {
 	c.entry.RegisterProcessors(processors...)
 }
 
-// RegisterValidations records validations for a Config struct
+// RegisterValidations records validations for a Config struct.
 func (c *ConfigManager) RegisterValidations(validations ...Validation) {
 	c.entry.RegisterValidations(validations...)
 }
 
-// RegisterDefaulters records defaults for a Config struct
+// RegisterDefaulters records defaults for a Config struct.
 func (c *ConfigManager) RegisterDefaulters(defaulters ...Defaulter) {
 	c.entry.RegisterDefaulters(defaulters...)
 }
 
-// Parse reads yaml manifest with at least one cluster object and generates the corresponding Config
+// Parse reads yaml manifest with at least one cluster object and generates the corresponding Config.
 func (c *ConfigManager) Parse(yamlManifest []byte) (*Config, error) {
 	parsed, err := c.unmarshal(yamlManifest)
 	if err != nil {
@@ -63,7 +63,7 @@ func (c *ConfigManager) Parse(yamlManifest []byte) (*Config, error) {
 	return c.buildConfigFromParsed(parsed)
 }
 
-// Parse set the registered defaults in a Config struct
+// Parse set the registered defaults in a Config struct.
 func (c *ConfigManager) SetDefaults(config *Config) error {
 	var allErrs []error
 
@@ -81,7 +81,7 @@ func (c *ConfigManager) SetDefaults(config *Config) error {
 	return nil
 }
 
-// Validate performs the registered validations in a Config struct
+// Validate performs the registered validations in a Config struct.
 func (c *ConfigManager) Validate(config *Config) error {
 	var allErrs []error
 
@@ -175,7 +175,7 @@ func (c *ConfigManager) buildConfigFromParsed(p *parsed) (*Config, error) {
 	return config, nil
 }
 
-// machineConfigsProcessor is a helper to generate a ParsedProcessor for all machine configs in a Cluster
+// machineConfigsProcessor is a helper to generate a ParsedProcessor for all machine configs in a Cluster.
 func machineConfigsProcessor(processMachineRef func(c *Config, o ObjectLookup, machineRef *anywherev1.Ref)) ParsedProcessor {
 	return func(c *Config, o ObjectLookup) {
 		for _, m := range c.Cluster.MachineConfigRefs() {

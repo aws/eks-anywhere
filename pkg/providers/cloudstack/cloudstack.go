@@ -403,7 +403,7 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
-// TODO: Consider to move this functionality to validator.go
+// TODO: Consider to move this functionality to validator.go.
 func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, cluster *types.Cluster) error {
 	for _, profile := range p.execConfig.Profiles {
 		secret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
@@ -579,7 +579,7 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 
 // AnyImmutableFieldChanged Used by EKS-A controller and CLI upgrade workflow to compare generated CSDC/CSMC's from
 // CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
-// new CloudStackMachineTemplates
+// new CloudStackMachineTemplates.
 func AnyImmutableFieldChanged(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatacenterConfig, generatedCsmc, actualCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
 	if len(generatedCsdc.Spec.AvailabilityZones) != len(actualCsdc.Spec.AvailabilityZones) {
 		log.V(4).Info("Generated and actual CloudStackDatacenterConfigs do not match", "generatedAvailabilityZones", generatedCsdc.Spec.AvailabilityZones,
@@ -1236,10 +1236,6 @@ func (p *cloudstackProvider) PostClusterDeleteValidate(_ context.Context, _ *typ
 
 func (p *cloudstackProvider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Cluster) error {
 	// NOOP
-	return nil
-}
-
-func (p *cloudstackProvider) GenerateStorageClass() []byte {
 	return nil
 }
 

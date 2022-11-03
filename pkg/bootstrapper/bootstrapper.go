@@ -74,7 +74,7 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 
 type BootstrapperOpt func(*Bootstrapper)
 
-// WithRetrier implemented primarily for unit testing optimization purposes
+// WithRetrier implemented primarily for unit testing optimization purposes.
 func WithRetrier(retrier *retrier.Retrier) BootstrapperOpt {
 	return func(c *Bootstrapper) {
 		c.clusterClient.Retrier = retrier

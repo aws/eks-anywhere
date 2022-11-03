@@ -8,7 +8,7 @@ const (
 	RedHat       OSFamily = "redhat"
 )
 
-// UserConfiguration defines the configuration of the user to be added to the VM
+// UserConfiguration defines the configuration of the user to be added to the VM.
 type UserConfiguration struct {
 	Name              string   `json:"name"`
 	SshAuthorizedKeys []string `json:"sshAuthorizedKeys"`

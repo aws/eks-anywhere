@@ -74,7 +74,7 @@ func mergeLabels(labels ...map[string]string) map[string]string {
 	return merged
 }
 
-// ClusterName generates the CAPI cluster name for an EKSA Cluster
+// ClusterName generates the CAPI cluster name for an EKSA Cluster.
 func ClusterName(cluster *anywherev1.Cluster) string {
 	return cluster.Name
 }

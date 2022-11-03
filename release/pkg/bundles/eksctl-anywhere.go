@@ -28,7 +28,7 @@ import (
 	artifactutils "github.com/aws/eks-anywhere/release/pkg/util/artifacts"
 )
 
-// GetCliArtifacts returns the artifacts for eksctl-anywhere cli
+// GetCliArtifacts returns the artifacts for eksctl-anywhere cli.
 func GetEksACliArtifacts(r *releasetypes.ReleaseConfig) ([]releasetypes.Artifact, error) {
 	osList := []string{"linux", "darwin"}
 	arch := "amd64"

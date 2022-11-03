@@ -17,7 +17,7 @@ const (
 	MinimumContainerVolumeSize              = 8
 )
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 	return &SnowMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

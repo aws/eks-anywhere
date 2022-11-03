@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
-// KubeClient is a kubernetes API client
+// KubeClient is a kubernetes API client.
 type KubeClient interface {
 	Get(ctx context.Context, name, namespace string, obj kubernetes.Object) error
 }

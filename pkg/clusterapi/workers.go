@@ -13,7 +13,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
-type Workers[M Object] struct {
+// Workers represents the provider specific CAPI spec for an eks-a cluster's workers.
+type Workers[M Object[M]] struct {
 	Groups []WorkerGroup[M]
 }
 
@@ -35,7 +36,8 @@ func (w *Workers[M]) UpdateImmutableObjectNames(
 	return nil
 }
 
-type WorkerGroup[M Object] struct {
+// WorkerGroup represents the provider specific CAPI spec for an eks-a worker group.
+type WorkerGroup[M Object[M]] struct {
 	KubeadmConfigTemplate   *kubeadmv1.KubeadmConfigTemplate
 	MachineDeployment       *clusterv1.MachineDeployment
 	ProviderMachineTemplate M
@@ -45,7 +47,7 @@ type WorkerGroup[M Object] struct {
 // with the current state of the cluster. If they had, it generates a new name for them by increasing a monotonic number
 // at the end of the name.
 // This process is performed to the provider machine template and the kubeadmconfigtemplate.
-// The kubeadmconfigtemplate is not immutable at the API level but we treat is a such for consistency
+// The kubeadmconfigtemplate is not immutable at the API level but we treat it as such for consistency.
 func (g *WorkerGroup[M]) UpdateImmutableObjectNames(
 	ctx context.Context,
 	client kubernetes.Client,
@@ -66,17 +68,28 @@ func (g *WorkerGroup[M]) UpdateImmutableObjectNames(
 	if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, g.ProviderMachineTemplate); err != nil {
 		return err
 	}
+	g.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name = g.ProviderMachineTemplate.GetName()
 
 	g.KubeadmConfigTemplate.SetName(currentMachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name)
 	if err = EnsureNewNameIfChanged(ctx, client, GetKubeadmConfigTemplate, KubeadmConfigTemplateEqual, g.KubeadmConfigTemplate); err != nil {
 		return err
 	}
+	g.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name = g.KubeadmConfigTemplate.Name
 
 	return nil
 }
 
+// DeepCopy generates a new WorkerGroup copying the contexts of the receiver.
+func (g *WorkerGroup[M]) DeepCopy() *WorkerGroup[M] {
+	return &WorkerGroup[M]{
+		MachineDeployment:       g.MachineDeployment.DeepCopy(),
+		KubeadmConfigTemplate:   g.KubeadmConfigTemplate.DeepCopy(),
+		ProviderMachineTemplate: g.ProviderMachineTemplate.DeepCopy(),
+	}
+}
+
 // GetKubeadmConfigTemplate retrieves a KubeadmConfigTemplate using a client
-// Implements ObjectRetriever
+// Implements ObjectRetriever.
 func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, name, namespace string) (*kubeadmv1.KubeadmConfigTemplate, error) {
 	k := &kubeadmv1.KubeadmConfigTemplate{}
 	if err := client.Get(ctx, name, namespace, k); err != nil {
@@ -88,7 +101,7 @@ func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, nam
 
 // KubeadmConfigTemplateEqual returns true only if the new version of a KubeadmConfigTemplate
 // involves changes with respect6 to the old one when applied to the cluster
-// Implements ObjectComparator
+// Implements ObjectComparator.
 func KubeadmConfigTemplateEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
 	// DeepDerivative treats empty map (length == 0) as unset field. We need to manually compare certain fields
 	// such as taints, so that setting it to empty will trigger machine recreate

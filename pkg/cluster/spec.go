@@ -228,7 +228,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	return s, nil
 }
 
-// init does the basic initialization with the provided necessary api objects
+// init does the basic initialization with the provided necessary api objects.
 func (s *Spec) init(config *Config, bundles *v1alpha1.Bundles, versionsBundle *v1alpha1.VersionsBundle, eksdRelease *eksdv1alpha1.Release) error {
 	kubeDistro, err := buildKubeDistro(eksdRelease)
 	if err != nil {

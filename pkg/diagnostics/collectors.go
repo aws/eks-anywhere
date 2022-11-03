@@ -74,9 +74,23 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, s
 		return c.eksaTinkerbellCollectors()
 	case v1alpha1.SnowDatacenterKind:
 		return c.eksaSnowCollectors()
+	case v1alpha1.NutanixDatacenterKind:
+		return c.eksaNutanixCollectors()
 	default:
 		return nil
 	}
+}
+
+func (c *collectorFactory) eksaNutanixCollectors() []*Collect {
+	nutanixLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapxSystemNamespace,
+				Name:      logpath(constants.CapxSystemNamespace),
+			},
+		},
+	}
+	return append(nutanixLogs, c.nutanixCrdCollectors()...)
 }
 
 func (c *collectorFactory) eksaSnowCollectors() []*Collect {
@@ -371,6 +385,17 @@ func (c *collectorFactory) packagesCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(packageCrds)
 }
 
+func (c *collectorFactory) nutanixCrdCollectors() []*Collect {
+	capxCrds := []string{
+		"nutanixclusters.infrastructure.cluster.x-k8s.io",
+		"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com",
+		"nutanixmachineconfigs.anywhere.eks.amazonaws.com",
+		"nutanixmachines.infrastructure.cluster.x-k8s.io",
+		"nutanixmachinetemplates.infrastructure.cluster.x-k8s.io",
+	}
+	return c.generateCrdCollectors(capxCrds)
+}
+
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
 	var crdCollectors []*Collect
 	for _, d := range crds {
@@ -412,7 +437,7 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	}
 }
 
-// apiServerCollectors collect connection info when running a pod on an existing cluster
+// apiServerCollectors collect connection info when running a pod on an existing cluster.
 func (c *collectorFactory) apiServerCollectors(controlPlaneIP string) []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.controlPlaneNetworkPathCollector(controlPlaneIP)...)
@@ -470,7 +495,7 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 }
 
 // vmsAccessCollector will connect to API server first, then collect vsphere-cloud-controller-manager logs
-// on control plane node
+// on control plane node.
 func (c *collectorFactory) vmsAccessCollector(controlPlaneConfiguration v1alpha1.ControlPlaneConfiguration) *Collect {
 	controlPlaneEndpointHost := controlPlaneConfiguration.Endpoint.Host
 	taints := controlPlaneConfiguration.Taints

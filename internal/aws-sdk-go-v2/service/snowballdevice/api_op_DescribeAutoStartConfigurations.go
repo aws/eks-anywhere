@@ -113,7 +113,7 @@ type DescribeAutoStartConfigurationsAPIClient interface {
 var _ DescribeAutoStartConfigurationsAPIClient = (*Client)(nil)
 
 // DescribeAutoStartConfigurationsPaginatorOptions is the paginator options for
-// DescribeAutoStartConfigurations
+// DescribeAutoStartConfigurations.
 type DescribeAutoStartConfigurationsPaginatorOptions struct {
 	// Set to true if pagination should stop if the service returns a pagination token
 	// that matches the most recent token provided to the service.
@@ -121,7 +121,7 @@ type DescribeAutoStartConfigurationsPaginatorOptions struct {
 }
 
 // DescribeAutoStartConfigurationsPaginator is a paginator for
-// DescribeAutoStartConfigurations
+// DescribeAutoStartConfigurations.
 type DescribeAutoStartConfigurationsPaginator struct {
 	options   DescribeAutoStartConfigurationsPaginatorOptions
 	client    DescribeAutoStartConfigurationsAPIClient
@@ -131,7 +131,7 @@ type DescribeAutoStartConfigurationsPaginator struct {
 }
 
 // NewDescribeAutoStartConfigurationsPaginator returns a new
-// DescribeAutoStartConfigurationsPaginator
+// DescribeAutoStartConfigurationsPaginator.
 func NewDescribeAutoStartConfigurationsPaginator(client DescribeAutoStartConfigurationsAPIClient, params *DescribeAutoStartConfigurationsInput, optFns ...func(*DescribeAutoStartConfigurationsPaginatorOptions)) *DescribeAutoStartConfigurationsPaginator {
 	if params == nil {
 		params = &DescribeAutoStartConfigurationsInput{}
@@ -152,7 +152,7 @@ func NewDescribeAutoStartConfigurationsPaginator(client DescribeAutoStartConfigu
 	}
 }
 
-// HasMorePages returns a boolean indicating whether more pages are available
+// HasMorePages returns a boolean indicating whether more pages are available.
 func (p *DescribeAutoStartConfigurationsPaginator) HasMorePages() bool {
 	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }

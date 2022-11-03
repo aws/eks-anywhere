@@ -14,20 +14,20 @@ const (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// SnowDatacenterConfigSpec defines the desired state of SnowDatacenterConfig
+// SnowDatacenterConfigSpec defines the desired state of SnowDatacenterConfig.
 type SnowDatacenterConfigSpec struct { // Important: Run "make generate" to regenerate code after modifying this file
 
 	// IdentityRef is a reference to an identity for the Snow API to be used when reconciling this cluster
 	IdentityRef Ref `json:"identityRef,omitempty"`
 }
 
-// SnowDatacenterConfigStatus defines the observed state of SnowDatacenterConfig
+// SnowDatacenterConfigStatus defines the observed state of SnowDatacenterConfig.
 type SnowDatacenterConfigStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// SnowDatacenterConfig is the Schema for the SnowDatacenterConfigs API
+// SnowDatacenterConfig is the Schema for the SnowDatacenterConfigs API.
 type SnowDatacenterConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -96,7 +96,7 @@ func (s *SnowDatacenterConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as SnowDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as SnowDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type SnowDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -106,7 +106,7 @@ type SnowDatacenterConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// SnowDatacenterConfigList contains a list of SnowDatacenterConfig
+// SnowDatacenterConfigList contains a list of SnowDatacenterConfig.
 type SnowDatacenterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

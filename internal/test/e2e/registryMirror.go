@@ -27,12 +27,21 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		}
 	}
 
-	if e.testEnvVars[e2etests.RegistryCACertVar] != "" && e.testEnvVars[e2etests.RegistryEndpointVar] != "" && e.testEnvVars[e2etests.RegistryPortVar] != "" {
-		return e.mountRegistryCert(e.testEnvVars[e2etests.RegistryCACertVar], net.JoinHostPort(e.testEnvVars[e2etests.RegistryEndpointVar], e.testEnvVars[e2etests.RegistryPortVar]))
+	endpoint := e.testEnvVars[e2etests.RegistryEndpointVar]
+	port := e.testEnvVars[e2etests.RegistryPortVar]
+	caCert := e.testEnvVars[e2etests.RegistryCACertVar]
+
+	// Since Tinkerbell uses a separate harbor registry,
+	// we need to setup cert for that registry for Tinkerbell tests.
+	re = regexp.MustCompile(`^.*Tinkerbell.*$`)
+	if re.MatchString(testRegex) {
+		endpoint = e.testEnvVars[e2etests.RegistryEndpointTinkerbellVar]
+		port = e.testEnvVars[e2etests.RegistryPortTinkerbellVar]
+		caCert = e.testEnvVars[e2etests.RegistryCACertTinkerbellVar]
 	}
 
-	if e.testEnvVars[e2etests.RegistryCACertTinkerbellVar] != "" && e.testEnvVars[e2etests.RegistryEndpointTinkerbellVar] != "" && e.testEnvVars[e2etests.RegistryPortTinkerbellVar] != "" {
-		return e.mountRegistryCert(e.testEnvVars[e2etests.RegistryCACertTinkerbellVar], net.JoinHostPort(e.testEnvVars[e2etests.RegistryEndpointTinkerbellVar], e.testEnvVars[e2etests.RegistryPortTinkerbellVar]))
+	if endpoint != "" && port != "" && caCert != "" {
+		return e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port))
 	}
 
 	return nil

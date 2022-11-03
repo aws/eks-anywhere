@@ -4,7 +4,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig
+// VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig.
 type VSphereMachineConfigSpec struct {
 	DiskGiB           int                 `json:"diskGiB,omitempty"`
 	Datastore         string              `json:"datastore"`
@@ -58,7 +58,7 @@ func (c *VSphereMachineConfig) SetManagedBy(clusterName string) {
 	c.Annotations[managementAnnotation] = clusterName
 }
 
-// IsManaged returns true if the vspheremachineconfig is associated with a workload cluster
+// IsManaged returns true if the vspheremachineconfig is associated with a workload cluster.
 func (c *VSphereMachineConfig) IsManaged() bool {
 	if s, ok := c.Annotations[managementAnnotation]; ok {
 		return s != ""
@@ -78,13 +78,13 @@ func (c *VSphereMachineConfig) GetName() string {
 	return c.Name
 }
 
-// VSphereMachineConfigStatus defines the observed state of VSphereMachineConfig
+// VSphereMachineConfigStatus defines the observed state of VSphereMachineConfig.
 type VSphereMachineConfigStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// VSphereMachineConfig is the Schema for the vspheremachineconfigs API
+// VSphereMachineConfig is the Schema for the vspheremachineconfigs API.
 type VSphereMachineConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -123,9 +123,16 @@ func (c *VSphereMachineConfig) Validate() error {
 	return validateVSphereMachineConfig(c)
 }
 
+// ValidateHasTemplate verifies that a VSphereMachineConfig object has a template.
+// Specifying a template is required when submitting an object via webhook,
+// as we only support auto-importing templates when creating a cluster via CLI.
+func (c *VSphereMachineConfig) ValidateHasTemplate() error {
+	return validateVSphereMachineConfigHasTemplate(c)
+}
+
 // +kubebuilder:object:generate=false
 
-// Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
 type VSphereMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -135,7 +142,7 @@ type VSphereMachineConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// VSphereMachineConfigList contains a list of VSphereMachineConfig
+// VSphereMachineConfigList contains a list of VSphereMachineConfig.
 type VSphereMachineConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

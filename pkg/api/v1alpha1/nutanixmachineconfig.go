@@ -14,7 +14,7 @@ import (
 type NutanixIdentifierType string
 
 const (
-	// NutanixMachineConfigKind is the kind for a NutanixMachineConfig
+	// NutanixMachineConfigKind is the kind for a NutanixMachineConfig.
 	NutanixMachineConfigKind = "NutanixMachineConfig"
 
 	// NutanixIdentifierUUID is a resource identifier identifying the object by UUID.
@@ -32,7 +32,7 @@ const (
 
 // NutanixResourceIdentifier holds the identity of a Nutanix Prism resource (cluster, image, subnet, etc.)
 //
-// +union
+// +union.
 type NutanixResourceIdentifier struct {
 	// Type is the identifier type to use for this resource.
 	// +kubebuilder:validation:Required
@@ -55,7 +55,7 @@ type NutanixResourceIdentifier struct {
 type NutanixMachineConfigGenerateOpt func(config *NutanixMachineConfigGenerate)
 
 // NewNutanixMachineConfigGenerate returns a new instance of NutanixMachineConfigGenerate
-// used for generating yaml for generate clusterconfig command
+// used for generating yaml for generate clusterconfig command.
 func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGenerateOpt) *NutanixMachineConfigGenerate {
 	emptyString := ""
 	machineConfig := &NutanixMachineConfigGenerate{

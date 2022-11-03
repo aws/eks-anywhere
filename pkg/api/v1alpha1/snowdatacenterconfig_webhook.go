@@ -35,21 +35,21 @@ func (r *SnowDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Validator = &SnowDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *SnowDatacenterConfig) ValidateCreate() error {
 	snowdatacenterconfiglog.Info("validate create", "name", r.Name)
 
 	return r.Validate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *SnowDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	snowdatacenterconfiglog.Info("validate update", "name", r.Name)
 
 	return r.Validate()
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *SnowDatacenterConfig) ValidateDelete() error {
 	snowdatacenterconfiglog.Info("validate delete", "name", r.Name)
 

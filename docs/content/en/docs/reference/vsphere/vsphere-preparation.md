@@ -5,22 +5,18 @@ description: >
   Set up a vSphere cluster to prepare it for EKS Anywhere
 ---
 
-## Create a VM and template folder (Optional):
-For each user that needs to create workload clusters, have the vSphere administrator create a VM and template folder.
+Certain resources must be in place with appropriate user permissions to create an EKS Anywhere cluster using the vSphere provider.
+
+## Configuring Folder Resources
+
+### Create a VM folder:
+For each user that needs to create workload clusters, have the vSphere administrator create a VM folder.
 That folder will host:
 
 * The VMs of the Control plane and Data plane nodes of each cluster.
 * A nested folder for the management cluster and another one for each workload cluster.
 * Each cluster VM in its own nested folder under this folder.
 
-User permissions should be set up to: 
-
-* Only allow the user to see and create EKS Anywhere resources in that folder and its nested folders.
-* Prevent the user from having visibility and control over the whole vSphere cluster domain and its sub-child objects (datacenter, resource pools and other folders).
-
-In your EKS Anywhere configuration file you will reference to a path under this folder associated with the cluster you create.
-
-### Add a vSphere folder
 Follow these steps to create the user's vSphere folder:
 
 1. From vCenter, select the Menus/VM and Template tab.
@@ -29,9 +25,102 @@ Follow these steps to create the user's vSphere folder:
 1. Enter a name for the folder and click OK.
    For more details, see the [vSphere Create a Folder](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vcenterhost.doc/GUID-031BDB12-D3B2-4E2D-80E6-604F304B4D0C.html) documentation.
 
-### Set up vSphere roles and user permission
-You need to get a vSphere username with the right privileges to let you create EKS Anywhere clusters on top of your vSphere cluster.
-Then you would need to import the latest release of the EKS Anywhere OVA template to your VSphere cluster to use it to provision your Cluster nodes.
+## Configuring vSphere User, Group, and Roles
+You need a vSphere user with the right privileges to let you create EKS Anywhere clusters on top of your vSphere cluster.
+
+### Configure via EKSA CLI
+
+To configure a new user via CLI, you will need two things:
+- a set of vSphere admin credentials *with the ability to create users and groups*. If you do not have the rights to create new groups and users, you can invoke govc commands directly as outlined here.
+- a `user.yaml` file:
+```yaml
+apiVersion: "eks-anywhere.amazon.com/v1"
+kind: vSphereUser
+spec:
+  username: "eksa" // optional, default eksa
+  group: "MyExistingGroup" // optional, default EKSAUsers
+  globalRole: "MyGlobalRole" // optional, default EKSAGlobalRole
+  userRole: "MyUserRole" // optional, default EKSAUserRole
+  adminRole: "MyEKSAAdminRole" // optional, default EKSACloudAdminRole
+  datacenter: "MyDatacenter"
+  vSphereDomain: "vsphere.local" // this should be the domain used when you login, e.g. YourUsername@vsphere.local
+  connection:
+    server: "https://my-vsphere.internal.acme.com"
+    insecure: false
+  objects:
+    networks:
+      - !!str "/MyDatacenter/network/My Network"
+    datastores:
+      - !!str "/MyDatacenter/datastore/MyDatastore2"
+    resourcePools:
+      - !!str "/MyDatacenter/host/Cluster-03/MyResourcePool"
+    folders:
+      - !!str "/MyDatacenter/vm/OrgDirectory/MyVMs"
+    templates:
+      - !!str "/MyDatacenter/vm/Templates/MyTemplates"
+```
+
+Set the admin credentials as environment variables:
+```bash
+export EKSA_VSPHERE_USERNAME=<ADMIN_VSPHERE_USERNAME>
+export EKSA_VSPHERE_PASSWORD=<ADMIN_VSPHERE_PASSWORD>
+```
+
+If the user does not already exists, you can create the user and all the specified group and role objects by runing:
+```bash
+eksctl anywhere exp vsphere setup user -f user.yaml --password '<NewUserPassword>'
+```
+
+If the user or any of the group or role objects already exist, use the force flag instead to overwrite Group-Role-Object mappings for the group, roles, and objects specified in the `user.yaml` config file:
+```
+eksctl anywhere exp vsphere setup user -f user.yaml --force
+```
+
+### Configure via govc
+
+If you do not have the rights to create a new user, you can still configure the necessary roles and permissions using the [govc cli](https://github.com/vmware/govmomi/tree/master/govc#usage).
+
+```bash
+#! /bin/bash
+# govc calls to configure a user with minimal permissions
+set -x
+set -e
+
+EKSA_USER='<Username>@<UserDomain>'
+USER_ROLE='EKSAUserRole'
+GLOBAL_ROLE='EKSAGlobalRole'
+ADMIN_ROLE='EKSACloudAdminRole'
+
+FOLDER_VM='/YourDatacenter/vm/YourVMFolder'
+FOLDER_TEMPLATES='/YourDatacenter/vm/Templates'
+
+NETWORK='/YourDatacenter/network/YourNetwork'
+DATASTORE='/YourDatacenter/datastore/YourDatastore'
+RESOURCE_POOL='/YourDatacenter/host/Cluster-01/Resources/YourResourcePool'
+
+govc role.create "$GLOBAL_ROLE" ContentLibrary.AddLibraryItem ContentLibrary.CheckInTemplate ContentLibrary.CheckOutTemplate ContentLibrary.CreateLocalLibrary ContentLibrary.UpdateSession InventoryService.Tagging.AttachTag InventoryService.Tagging.CreateCategory InventoryService.Tagging.CreateTag InventoryService.Tagging.DeleteCategory InventoryService.Tagging.DeleteTag InventoryService.Tagging.EditCategory InventoryService.Tagging.EditTag InventoryService.Tagging.ModifyUsedByForCategory InventoryService.Tagging.ModifyUsedByForTag InventoryService.Tagging.ObjectAttachable Sessions.ValidateSession System.Anonymous System.Read System.View
+
+govc role.create "$USER_ROLE" ContentLibrary.AddLibraryItem ContentLibrary.CheckInTemplate ContentLibrary.CheckOutTemplate ContentLibrary.CreateLocalLibrary Datastore.AllocateSpace Datastore.Browse Datastore.FileManagement Folder.Create InventoryService.Tagging.AttachTag InventoryService.Tagging.CreateCategory InventoryService.Tagging.CreateTag InventoryService.Tagging.DeleteCategory InventoryService.Tagging.DeleteTag InventoryService.Tagging.EditCategory InventoryService.Tagging.EditTag InventoryService.Tagging.ModifyUsedByForCategory InventoryService.Tagging.ModifyUsedByForTag InventoryService.Tagging.ObjectAttachable Network.Assign Resource.AssignVMToPool ScheduledTask.Create ScheduledTask.Delete ScheduledTask.Edit ScheduledTask.Run StorageProfile.View StorageViews.View System.Anonymous System.Read System.View VApp.Import VirtualMachine.Config.AddExistingDisk VirtualMachine.Config.AddNewDisk VirtualMachine.Config.AddRemoveDevice VirtualMachine.Config.AdvancedConfig VirtualMachine.Config.CPUCount VirtualMachine.Config.DiskExtend VirtualMachine.Config.EditDevice VirtualMachine.Config.Memory VirtualMachine.Config.RawDevice VirtualMachine.Config.RemoveDisk VirtualMachine.Config.Settings VirtualMachine.Interact.PowerOff VirtualMachine.Interact.PowerOn VirtualMachine.Inventory.Create VirtualMachine.Inventory.CreateFromExisting VirtualMachine.Inventory.Delete VirtualMachine.Provisioning.Clone VirtualMachine.Provisioning.CloneTemplate VirtualMachine.Provisioning.CreateTemplateFromVM VirtualMachine.Provisioning.Customize VirtualMachine.Provisioning.DeployTemplate VirtualMachine.Provisioning.MarkAsTemplate VirtualMachine.Provisioning.ReadCustSpecs VirtualMachine.State.CreateSnapshot VirtualMachine.State.RemoveSnapshot VirtualMachine.State.RevertToSnapshot
+
+govc role.create "$ADMIN_ROLE" Alarm.Acknowledge Alarm.Create Alarm.Delete Alarm.DisableActions Alarm.Edit Alarm.SetStatus Authorization.ModifyPermissions Authorization.ModifyRoles CertificateManagement.Manage Cns.Searchable ComputePolicy.Manage ContentLibrary.AddCertToTrustStore ContentLibrary.AddLibraryItem ContentLibrary.CheckInTemplate ContentLibrary.CheckOutTemplate ContentLibrary.CreateLocalLibrary ContentLibrary.CreateSubscribedLibrary ContentLibrary.DeleteCertFromTrustStore ContentLibrary.DeleteLibraryItem ContentLibrary.DeleteLocalLibrary ContentLibrary.DeleteSubscribedLibrary ContentLibrary.DownloadSession ContentLibrary.EvictLibraryItem ContentLibrary.EvictSubscribedLibrary ContentLibrary.GetConfiguration ContentLibrary.ImportStorage ContentLibrary.ProbeSubscription ContentLibrary.ReadStorage ContentLibrary.SyncLibrary ContentLibrary.SyncLibraryItem ContentLibrary.TypeIntrospection ContentLibrary.UpdateConfiguration ContentLibrary.UpdateLibrary ContentLibrary.UpdateLibraryItem ContentLibrary.UpdateLocalLibrary ContentLibrary.UpdateSession ContentLibrary.UpdateSubscribedLibrary Datastore.AllocateSpace Datastore.Browse Datastore.Config Datastore.DeleteFile Datastore.FileManagement Datastore.UpdateVirtualMachineFiles Datastore.UpdateVirtualMachineMetadata Extension.Register Extension.Unregister Extension.Update Folder.Create Folder.Delete Folder.Move Folder.Rename Global.CancelTask Global.GlobalTag Global.Health Global.LogEvent Global.ManageCustomFields Global.ServiceManagers Global.SetCustomField Global.SystemTag HLM.Manage Host.Hbr.HbrManagement InventoryService.Tagging.AttachTag InventoryService.Tagging.CreateCategory InventoryService.Tagging.CreateTag InventoryService.Tagging.DeleteCategory InventoryService.Tagging.DeleteTag InventoryService.Tagging.EditCategory InventoryService.Tagging.EditTag InventoryService.Tagging.ModifyUsedByForCategory InventoryService.Tagging.ModifyUsedByForTag InventoryService.Tagging.ObjectAttachable Namespaces.Configure Namespaces.SelfServiceManage Network.Assign Resource.ApplyRecommendation Resource.AssignVAppToPool Resource.AssignVMToPool Resource.ColdMigrate Resource.CreatePool Resource.DeletePool Resource.EditPool Resource.HotMigrate Resource.MovePool Resource.QueryVMotion Resource.RenamePool ScheduledTask.Create ScheduledTask.Delete ScheduledTask.Edit ScheduledTask.Run Sessions.GlobalMessage Sessions.ValidateSession StorageProfile.Update StorageProfile.View StorageViews.View System.Anonymous System.Read System.View Trust.Manage VApp.ApplicationConfig VApp.AssignResourcePool VApp.AssignVApp VApp.AssignVM VApp.Clone VApp.Create VApp.Delete VApp.Export VApp.ExtractOvfEnvironment VApp.Import VApp.InstanceConfig VApp.ManagedByConfig VApp.Move VApp.PowerOff VApp.PowerOn VApp.Rename VApp.ResourceConfig VApp.Suspend VApp.Unregister VirtualMachine.Config.AddExistingDisk VirtualMachine.Config.AddNewDisk VirtualMachine.Config.AddRemoveDevice VirtualMachine.Config.AdvancedConfig VirtualMachine.Config.Annotation VirtualMachine.Config.CPUCount VirtualMachine.Config.ChangeTracking VirtualMachine.Config.DiskExtend VirtualMachine.Config.DiskLease VirtualMachine.Config.EditDevice VirtualMachine.Config.HostUSBDevice VirtualMachine.Config.ManagedBy VirtualMachine.Config.Memory VirtualMachine.Config.MksControl VirtualMachine.Config.QueryFTCompatibility VirtualMachine.Config.QueryUnownedFiles VirtualMachine.Config.RawDevice VirtualMachine.Config.ReloadFromPath VirtualMachine.Config.RemoveDisk VirtualMachine.Config.Rename VirtualMachine.Config.ResetGuestInfo VirtualMachine.Config.Resource VirtualMachine.Config.Settings VirtualMachine.Config.SwapPlacement VirtualMachine.Config.UpgradeVirtualHardware VirtualMachine.GuestOperations.Execute VirtualMachine.GuestOperations.Modify VirtualMachine.GuestOperations.ModifyAliases VirtualMachine.GuestOperations.Query VirtualMachine.GuestOperations.QueryAliases VirtualMachine.Hbr.ConfigureReplication VirtualMachine.Hbr.MonitorReplication VirtualMachine.Hbr.ReplicaManagement VirtualMachine.Interact.AnswerQuestion VirtualMachine.Interact.Backup VirtualMachine.Interact.ConsoleInteract VirtualMachine.Interact.CreateScreenshot VirtualMachine.Interact.DefragmentAllDisks VirtualMachine.Interact.DeviceConnection VirtualMachine.Interact.DnD VirtualMachine.Interact.GuestControl VirtualMachine.Interact.Pause VirtualMachine.Interact.PowerOff VirtualMachine.Interact.PowerOn VirtualMachine.Interact.PutUsbScanCodes VirtualMachine.Interact.Reset VirtualMachine.Interact.SESparseMaintenance VirtualMachine.Interact.SetCDMedia VirtualMachine.Interact.SetFloppyMedia VirtualMachine.Interact.Suspend VirtualMachine.Interact.ToolsInstall VirtualMachine.Inventory.Create VirtualMachine.Inventory.CreateFromExisting VirtualMachine.Inventory.Delete VirtualMachine.Inventory.Move VirtualMachine.Inventory.Register VirtualMachine.Inventory.Unregister VirtualMachine.Namespace.Event VirtualMachine.Namespace.EventNotify VirtualMachine.Namespace.Management VirtualMachine.Namespace.ModifyContent VirtualMachine.Namespace.Query VirtualMachine.Namespace.ReadContent VirtualMachine.Provisioning.Clone VirtualMachine.Provisioning.CloneTemplate VirtualMachine.Provisioning.CreateTemplateFromVM VirtualMachine.Provisioning.Customize VirtualMachine.Provisioning.DeployTemplate VirtualMachine.Provisioning.DiskRandomAccess VirtualMachine.Provisioning.DiskRandomRead VirtualMachine.Provisioning.FileRandomAccess VirtualMachine.Provisioning.GetVmFiles VirtualMachine.Provisioning.MarkAsTemplate VirtualMachine.Provisioning.MarkAsVM VirtualMachine.Provisioning.ModifyCustSpecs VirtualMachine.Provisioning.PromoteDisks VirtualMachine.Provisioning.PutVmFiles VirtualMachine.Provisioning.ReadCustSpecs VirtualMachine.State.CreateSnapshot VirtualMachine.State.RemoveSnapshot VirtualMachine.State.RenameSnapshot VirtualMachine.State.RevertToSnapshot VirtualMachineClasses.Manage Vsan.Cluster.ShallowRekey vService.CreateDependency vService.DestroyDependency vService.ReconfigureDependency vService.UpdateDependency vSphereDataProtection.Protection vSphereDataProtection.Recovery
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" /
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$ADMIN_ROLE" "$FOLDER_VM"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$ADMIN_ROLE" "$FOLDER_TEMPLATES"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$NETWORK"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$DATASTORE"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$RESOURCE_POOL"
+
+## In addition to the govc permissions.set call against "/", you will need to manually assign the "$USER_ROLE" to your user in the Global Permissions UI. There is no public API for global permissions unfortunately.
+
+```
+
+### Configure via UI
 
 #### Add a vCenter User
 Ask your VSphere administrator to add a vCenter user that will be used for the provisioning of the EKS Anywhere cluster in VMware vSphere.
@@ -66,6 +155,7 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    * Check in a template
    * Check out a template
    * Create local library
+   * Update files
    > vSphere Tagging
    * Assign or Unassign vSphere Tag
    * Assign or Unassign vSphere Tag on Object
@@ -80,7 +170,7 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    > Sessions
    * Validate session
    ```
-1. **Create a user custom role**: The second role is also a custom role that you could call, for example, EKS Anywhere User.
+1. **Create a user custom role**: The second role is also a custom role that you could call, for example, EKSAUserRole.
    Define this role with the following objects and children objects. 
    * The **pool resource level** and its children objects.
      This resource pool that our EKS Anywhere VMs will be part of.

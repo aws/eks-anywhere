@@ -10,7 +10,7 @@ import (
 	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
-// NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig
+// NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig.
 type NutanixMachineConfigSpec struct {
 	OSFamily OSFamily            `json:"osFamily"`
 	Users    []UserConfiguration `json:"users,omitempty"`
@@ -108,7 +108,7 @@ func (in *NutanixMachineConfig) GetName() string {
 	return in.Name
 }
 
-// NutanixMachineConfigStatus defines the observed state of NutanixMachineConfig
+// NutanixMachineConfigStatus defines the observed state of NutanixMachineConfig.
 type NutanixMachineConfigStatus struct {
 	// Ready is true when the provider resource is ready.
 	// +optional

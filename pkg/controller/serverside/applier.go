@@ -12,12 +12,12 @@ import (
 
 type ObjectGenerator func() ([]kubernetes.Object, error)
 
-// ObjectApplier helps reconcile kubernetes object using server side apply
+// ObjectApplier helps reconcile kubernetes object using server side apply.
 type ObjectApplier struct {
 	client client.Client
 }
 
-// NewObjectApplier builds a ObjectApplier
+// NewObjectApplier builds a ObjectApplier.
 func NewObjectApplier(client client.Client) *ObjectApplier {
 	return &ObjectApplier{
 		client: client,
@@ -27,7 +27,7 @@ func NewObjectApplier(client client.Client) *ObjectApplier {
 // Apply uses server side apply to reconcile kubernetes objects returned by a generator
 // Useful in reconcilers because it simplifies the reconciliation when generating API
 // objects from another package, like a provider
-// This is mostly a helper for generate objects + serverside apply
+// This is mostly a helper for generate objects + serverside apply.
 func (a *ObjectApplier) Apply(ctx context.Context, generateObjects ObjectGenerator) (controller.Result, error) {
 	return controller.Result{}, reconcileKubernetesObjects(ctx, a.client, generateObjects)
 }

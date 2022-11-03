@@ -3,15 +3,18 @@ package tinkerbell
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
@@ -44,6 +47,16 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 		t.Fatalf("unable to get machine configs from file: %v", err)
 	}
 	return machineConfigs
+}
+
+func assertError(t *testing.T, expected string, err error) {
+	if err == nil {
+		t.Fatalf("Expected=<%s> actual=<nil>", expected)
+	}
+	actual := err.Error()
+	if expected != actual {
+		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
+	}
 }
 
 func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient, forceCleanup bool) *Provider {
@@ -877,4 +890,252 @@ func TestTinkerbellTemplate_isScaleUpDownSuccess(t *testing.T) {
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	assert.True(t, provider.isScaleUpDown(clusterSpec.Cluster, newClusterSpec.Cluster), "expected scale up down true")
+}
+
+func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	assert.NoError(t, err, "No error should be returned")
+}
+
+func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+
+	idx := 0
+	var existingMachine string
+	for _, config := range machineConfigs {
+		if idx == 0 {
+			kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{config}, nil)
+			existingMachine = config.Name
+		} else {
+			kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil).MaxTimes(1)
+		}
+		idx++
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+
+	assertError(t, fmt.Sprintf("TinkerbellMachineConfig %s already exists", existingMachine), err)
+}
+
+func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{datacenterConfig}, nil)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+
+	assertError(t, fmt.Sprintf("TinkerbellDatacenterConfig %s already exists", datacenterConfig.Name), err)
+}
+
+func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterConfigError(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, errors.New("error getting TinkerbellDatacenterConfig"))
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assertError(t, "error getting TinkerbellDatacenterConfig", err)
+}
+
+func TestSetupAndValidateCreateWorkloadClusterErrorUnprovisionedHardware(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, errors.New("error"))
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assertError(t, "retrieving unprovisioned hardware: error", err)
+}
+
+func TestSetupAndValidateCreateWorkloadClusterErrorProvisionedHardware(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, errors.New("error"))
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assertError(t, "retrieving provisioned hardware: error", err)
 }

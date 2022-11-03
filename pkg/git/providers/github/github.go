@@ -85,7 +85,7 @@ func (g *githubProvider) AddDeployKeyToRepo(ctx context.Context, opts git.AddDep
 	return g.githubProviderClient.AddDeployKeyToRepo(ctx, opts)
 }
 
-// validates the github setup and access
+// validates the github setup and access.
 func (g *githubProvider) Validate(ctx context.Context) error {
 	user, err := g.githubProviderClient.AuthenticatedUser(ctx)
 	if err != nil {

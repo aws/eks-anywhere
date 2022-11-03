@@ -37,7 +37,7 @@ func (ipgen IPGenerator) GenerateUniqueIP(cidrBlock string) (string, error) {
 	return uniqueIp.String(), nil
 }
 
-// generates a random ip within the specified cidr block
+// generates a random ip within the specified cidr block.
 func (ipgen IPGenerator) randIp(cidr *net.IPNet) (net.IP, error) {
 	newIp := *new(net.IP)
 	for i := 0; i < 4; i++ {

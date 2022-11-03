@@ -13,7 +13,7 @@ import (
 
 // ResourceSetManager helps managing capi ClusterResourceSet's
 // It doesn't implement the complete ClusterResourceSet specification so there might be some
-// configurations that are not supported. JsonLists as content in resources are not supported
+// configurations that are not supported. JsonLists as content in resources are not supported.
 type ResourceSetManager struct {
 	client Client
 }

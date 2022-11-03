@@ -21,11 +21,11 @@ const (
 
 	clusterResourceType = "clusters.anywhere.eks.amazonaws.com"
 
-	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it
+	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it.
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
 
 	// managementAnnotation points to the name of a management cluster
-	// cluster object
+	// cluster object.
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 
 	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
@@ -34,7 +34,7 @@ const (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// ClusterSpec defines the desired state of Cluster
+// ClusterSpec defines the desired state of Cluster.
 type ClusterSpec struct {
 	KubernetesVersion             KubernetesVersion              `json:"kubernetesVersion,omitempty"`
 	ControlPlaneConfiguration     ControlPlaneConfiguration      `json:"controlPlaneConfiguration,omitempty"`
@@ -128,7 +128,7 @@ func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
 	return n.HttpProxy == o.HttpProxy && n.HttpsProxy == o.HttpsProxy && SliceEqual(n.NoProxy, o.NoProxy)
 }
 
-// RegistryMirrorConfiguration defines the settings for image registry mirror
+// RegistryMirrorConfiguration defines the settings for image registry mirror.
 type RegistryMirrorConfiguration struct {
 	// Endpoint defines the registry mirror endpoint to use for pulling images
 	Endpoint string `json:"endpoint,omitempty"`
@@ -614,7 +614,7 @@ var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
 	CiliumPolicyModeNever:   true,
 }
 
-// ClusterStatus defines the observed state of Cluster
+// ClusterStatus defines the observed state of Cluster.
 type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
 	// +optional
@@ -669,20 +669,20 @@ func (n *Ref) Equal(o *Ref) bool {
 }
 
 // +kubebuilder:object:generate=false
-// Interface for getting DatacenterRef fields for Cluster type
+// Interface for getting DatacenterRef fields for Cluster type.
 type ProviderRefAccessor interface {
 	Kind() string
 	Name() string
 }
 
 // +kubebuilder:object:generate=false
-// Interface for getting Kind field for Cluster type
+// Interface for getting Kind field for Cluster type.
 type KindAccessor interface {
 	Kind() string
 	ExpectedKind() string
 }
 
-// ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology
+// ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology.
 type ExternalEtcdConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the etcd machines.
@@ -721,7 +721,7 @@ func (n *PodIAMConfig) Equal(o *PodIAMConfig) bool {
 	return n.ServiceAccountIssuer == o.ServiceAccountIssuer
 }
 
-// AutoScalingConfiguration defines the configuration for the node autoscaling feature
+// AutoScalingConfiguration defines the configuration for the node autoscaling feature.
 type AutoScalingConfiguration struct {
 	// MinCount defines the minimum number of nodes for the associated resource group.
 	// +optional
@@ -757,7 +757,7 @@ type WorkerNodesRollingUpdateParams struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// Cluster is the Schema for the clusters API
+// Cluster is the Schema for the clusters API.
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -775,7 +775,7 @@ func (c *Cluster) SetConditions(conditions clusterv1.Conditions) {
 }
 
 // +kubebuilder:object:generate=false
-// Same as Cluster except stripped down for generation of yaml file during generate clusterconfig
+// Same as Cluster except stripped down for generation of yaml file during generate clusterconfig.
 type ClusterGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -903,7 +903,7 @@ func (c *Cluster) ManagedBy() string {
 }
 
 // +kubebuilder:object:root=true
-// ClusterList contains a list of Cluster
+// ClusterList contains a list of Cluster.
 type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
