@@ -2,6 +2,7 @@ package validations_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -93,6 +94,47 @@ func TestValidateCertForRegistryMirrorInsecureSkip(t *testing.T) {
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = true
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
+}
+
+func TestValidateAuthenticationForRegistryMirrorNoRegistryMirror(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = nil
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateAuthenticationForRegistryMirrorNoAuth(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = false
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateAuthenticationForRegistryMirrorAuthInvalid(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = true
+	if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("please set REGISTRY_USERNAME env var")))
+}
+
+func TestValidateAuthenticationForRegistryMirrorAuthValid(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = true
+	if err := os.Setenv("REGISTRY_USERNAME", "username"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if err := os.Setenv("REGISTRY_PASSWORD", "password"); err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
 }
 
 func TestValidateK8s124Support(t *testing.T) {

@@ -266,14 +266,15 @@ func (f *Factory) WithDockerLogin() *Factory {
 func (f *Factory) WithExecutableBuilder() *Factory {
 	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
-		if f.registryMirror != nil && f.registryMirror.auth {
-			f.WithDockerLogin()
-		}
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.executablesConfig.builder != nil {
 			return nil
+		}
+		
+		if f.registryMirror != nil && f.registryMirror.auth {
+			f.WithDockerLogin()
 		}
 
 		if f.executablesConfig.useDockerContainer {

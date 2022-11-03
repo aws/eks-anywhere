@@ -103,6 +103,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
+	if err := validations.ValidateAuthenticationForRegistryMirror(clusterSpec); err != nil {
+		return err
+	}
+
 	cliConfig := buildCliConfig(clusterSpec)
 	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig, cc.installPackages)
 	if err != nil {
