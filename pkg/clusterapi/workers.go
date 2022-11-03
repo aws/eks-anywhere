@@ -18,6 +18,16 @@ type Workers[M Object[M]] struct {
 	Groups []WorkerGroup[M]
 }
 
+// WorkerObjects returns a list of API objects for concrete provider-specific collection of worker groups.
+func (w *Workers[M]) WorkerObjects() []kubernetes.Object {
+	objs := make([]kubernetes.Object, 0, len(w.Groups)*3)
+	for _, g := range w.Groups {
+		objs = append(objs, g.workerGroupObjects()...)
+	}
+
+	return objs
+}
+
 // UpdateImmutableObjectNames checks if any immutable objects have changed by comparing the new definition
 // with the current state of the cluster. If they had, it generates a new name for them by increasing a monotonic number
 // at the end of the name.
@@ -41,6 +51,14 @@ type WorkerGroup[M Object[M]] struct {
 	KubeadmConfigTemplate   *kubeadmv1.KubeadmConfigTemplate
 	MachineDeployment       *clusterv1.MachineDeployment
 	ProviderMachineTemplate M
+}
+
+func (g *WorkerGroup[M]) workerGroupObjects() []kubernetes.Object {
+	return []kubernetes.Object{
+		g.KubeadmConfigTemplate,
+		g.MachineDeployment,
+		g.ProviderMachineTemplate,
+	}
 }
 
 // UpdateImmutableObjectNames checks if any immutable objects have changed by comparing the new definition
