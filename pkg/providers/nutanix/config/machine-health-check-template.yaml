@@ -5,8 +5,8 @@ metadata:
   namespace: "{{.eksaSystemNamespace}}"
 spec:
   clusterName: "{{.clusterName}}"
-  maxUnhealthy: 40%
-  nodeStartupTimeout: 10m
+  maxUnhealthy: 60%
+  nodeStartupTimeout: 5m
   selector:
     matchLabels:
       cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
