@@ -495,7 +495,7 @@ func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.
 }
 
 func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
-	if jsonpath == "" || forCondition == "" || kubeconfig == "" || namespace == "" {
+	if jsonpath == "" || forCondition == "" {
 		return fmt.Errorf("empty conditions params passed to waitJSONPath()")
 	}
 	params := []string{
@@ -510,7 +510,7 @@ func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, 
 
 // waitJsonPathLoop will be deprecated in favor of waitJsonPath after version 1.23.
 func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
-	if jsonpath == "" || forCondition == "" || kubeconfig == "" || namespace == "" {
+	if jsonpath == "" || forCondition == "" {
 		return fmt.Errorf("empty conditions params passed to waitJSONPathLoop()")
 	}
 	timeoutDur, err := time.ParseDuration(timeout)
