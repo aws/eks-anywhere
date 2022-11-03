@@ -2890,7 +2890,7 @@ func TestWaitJSONPathLoop(t *testing.T) {
 	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	err := tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "2m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")
-	tt.Expect(err).To(BeNil())
+	tt.Expect(err).ToNot(HaveOccurred())
 }
 
 func TestWaitJSONPath(t *testing.T) {
