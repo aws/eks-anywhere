@@ -540,9 +540,9 @@ var versionBundle = &cluster.VersionsBundle{
 			KubeProxy: kubeProxyVersion08,
 		},
 		Nutanix: v1alpha1.NutanixBundle{
-			Version: "v0.5.2",
+			Version: "v1.0.1",
 			ClusterAPIController: v1alpha1.Image{
-				URI: "public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v0.5.2-eks-a-v0.0.0-dev-build.1",
+				URI: "public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v1.0.1-eks-a-v0.0.0-dev-build.1",
 			},
 		},
 		Tinkerbell: v1alpha1.TinkerbellBundle{
