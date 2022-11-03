@@ -41,14 +41,14 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	PrintLicense()
 	err := pi.installPackagesController(ctx)
 
-	// There is an ask from customers to avoid considering the installation of curated packages
+	// There is an ask from customers to avoid considering the failure of installing curated packages
 	// controller as an error but rather a warning
 	if err != nil {
 		logger.MarkWarning("Failed enabling curated packages on the cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return
 	}
 
-	// There is an ask from customers to avoid considering the installation of curated packages
+	// There is an ask from customers to avoid considering the failure of the installation of curated packages
 	// as an error but rather a warning
 	err = pi.installPackages(ctx)
 	if err != nil {
