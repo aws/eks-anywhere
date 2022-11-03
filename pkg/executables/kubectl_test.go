@@ -2847,6 +2847,7 @@ func TestWaitForPod(t *testing.T) {
 		[]string{expectedTimeout, fmt.Sprintf("%s=%s", "--for=condition", condition), fmt.Sprintf("%s/%s", "pod", target), "--kubeconfig", tt.kubeconfig, "-n", "eksa-system"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(bytes.Buffer{}, nil)
+
 	tt.Expect(tt.k.WaitForPod(tt.ctx, tt.cluster, timeout, condition, target, "eksa-system")).To(Succeed())
 }
 
@@ -2860,6 +2861,7 @@ func TestWaitForJob(t *testing.T) {
 		[]string{expectedTimeout, fmt.Sprintf("%s=%s", "--for=condition", condition), fmt.Sprintf("%s/%s", "job", target), "--kubeconfig", tt.kubeconfig, "-n", "eksa-system"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(bytes.Buffer{}, nil)
+
 	tt.Expect(tt.k.WaitForJobCompleted(tt.ctx, tt.cluster.KubeconfigFile, timeout, condition, target, "eksa-system")).To(Succeed())
 }
 
@@ -2869,8 +2871,8 @@ func TestWaitForPodCompleted(t *testing.T) {
 	tt := newKubectlTest(t)
 	expectedParam := []string{"get", "pod/testpod", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.containerStatuses[0].state.terminated.reason}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	err := tt.k.WaitForPodCompleted(tt.ctx, tt.cluster, "testpod", "2m", "eksa-system")
-	tt.Expect(err).To(BeNil())
+
+	tt.Expect(tt.k.WaitForPodCompleted(tt.ctx, tt.cluster, "testpod", "2m", "eksa-system")).To(Succeed())
 }
 
 func TestWaitForPackagesInstalled(t *testing.T) {
@@ -2893,6 +2895,33 @@ func TestWaitJSONPathLoop(t *testing.T) {
 	tt.Expect(err).ToNot(HaveOccurred())
 }
 
+func TestWaitJSONPathLoopTimeParseError(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	tt.Expect(tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")).To(MatchError(ContainSubstring("unparsable timeout specified")))
+}
+
+func TestWaitJSONPathLoopNegativeTimeError(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	tt.Expect(tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "-1m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")).To(MatchError(ContainSubstring("negative timeout specified")))
+}
+
+func TestWaitJSONPathLoopRetrierError(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	tt.Expect(tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "2m", "", "", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")).To(MatchError(ContainSubstring("executing wait")))
+}
+
 func TestWaitJSONPath(t *testing.T) {
 	var b bytes.Buffer
 	b.WriteString("'installed'")
@@ -2901,6 +2930,33 @@ func TestWaitJSONPath(t *testing.T) {
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	err := tt.k.WaitJSONPath(tt.ctx, tt.cluster.KubeconfigFile, "2m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")
 	tt.Expect(err).To(BeNil())
+}
+
+func TestWaitJSONPathTimeParseError(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"wait", "--timeout", "2m", fmt.Sprintf("--for=jsonpath='{.%s}'=%s", "status.state", "installed"), "packages.packages.eks.amazonaws.com/testpackage", "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	tt.Expect(tt.k.WaitJSONPath(tt.ctx, tt.cluster.KubeconfigFile, "", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")).To(MatchError(ContainSubstring("unparsable timeout specified")))
+}
+
+func TestWaitJSONPathNegativeTimeError(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"wait", "--timeout", "2m", fmt.Sprintf("--for=jsonpath='{.%s}'=%s", "status.state", "installed"), "packages.packages.eks.amazonaws.com/testpackage", "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	tt.Expect(tt.k.WaitJSONPath(tt.ctx, tt.cluster.KubeconfigFile, "-1m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")).To(MatchError(ContainSubstring("negative timeout specified")))
+}
+
+func TestWaitJSONPathRetrierError(t *testing.T) {
+	var b bytes.Buffer
+	b.WriteString("'installed'")
+	tt := newKubectlTest(t)
+	expectedParam := []string{"wait", "--timeout", "2m", fmt.Sprintf("--for=jsonpath='{.%s}'=%s", "", ""), "packages.packages.eks.amazonaws.com/testpackage", "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	tt.Expect(tt.k.WaitJSONPath(tt.ctx, tt.cluster.KubeconfigFile, "2m", "", "", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")).To(MatchError(ContainSubstring("executing wait")))
 }
 
 func TestGetPackageBundleController(t *testing.T) {
