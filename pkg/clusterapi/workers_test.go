@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -60,6 +61,32 @@ func TestWorkersUpdateImmutableObjectNamesSuccess(t *testing.T) {
 	g.Expect(
 		workers.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare),
 	).To(Succeed())
+}
+
+func TestWorkerObjects(t *testing.T) {
+	g := NewWithT(t)
+	group1 := dockerGroup{
+		MachineDeployment: machineDeployment(),
+	}
+	group2 := dockerGroup{
+		MachineDeployment: machineDeployment(),
+	}
+
+	workers := &dockerWorkers{
+		Groups: []dockerGroup{group1, group2},
+	}
+
+	objects := workers.WorkerObjects()
+	wantObjects := []kubernetes.Object{
+		group1.KubeadmConfigTemplate,
+		group1.MachineDeployment,
+		group1.ProviderMachineTemplate,
+		group2.KubeadmConfigTemplate,
+		group2.MachineDeployment,
+		group2.ProviderMachineTemplate,
+	}
+
+	g.Expect(objects).To(ConsistOf(wantObjects))
 }
 
 func TestWorkerGroupUpdateImmutableObjectNamesNoMachineDeployment(t *testing.T) {

@@ -86,6 +86,17 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
 func TestReconcilerInvalidDatacenterConfig(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
@@ -452,7 +463,9 @@ func eksdRelease() *eksdv1.Release {
 						},
 						{
 							Name:  "kube-apiserver-image",
-							Image: &eksdv1.AssetImage{},
+							Image: &eksdv1.AssetImage{
+								URI: "public.ecr.aws/eks-distro/kubernetes/kube-apiserver:v1.19.8",
+							},
 						},
 					},
 				},
@@ -485,7 +498,7 @@ func machineConfig(opts ...vsphereMachineOpt) *anywherev1.VSphereMachineConfig {
 			Users: []anywherev1.UserConfiguration{
 				{
 					Name:              "user",
-					SshAuthorizedKeys: []string{"ABC"},
+					SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZndjX5NTr8= ubuntu@ip-10-2-0-6"},
 				},
 			},
 		},
