@@ -37,21 +37,23 @@ func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController
 	}
 }
 
-func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
+func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	PrintLicense()
 	err := pi.installPackagesController(ctx)
+
+	// There is an ask from customers to avoid considering the installation of curated packages
+	// controller as an error but rather a warning
 	if err != nil {
-		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
-		return err
+		logger.MarkWarning("Failed enabling curated packages on the cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
+		return
 	}
 
+	// There is an ask from customers to avoid considering the installation of curated packages
+	// as an error but rather a warning
 	err = pi.installPackages(ctx)
 	if err != nil {
-		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
-		return err
+		logger.MarkWarning("Failed installing curated packages on the cluster; please install through eksctl anywhere create packages command", "error", err)
 	}
-
-	return nil
 }
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {

@@ -207,12 +207,8 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 	)
 }
 
-func (c *createTestSetup) skipCuratedPackagesInstallation() {
-	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(nil)
-}
-
-func (c *createTestSetup) expectCuratedPackagesInstallationFail() {
-	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(errors.New("curated Packages installation failed"))
+func (c *createTestSetup) expectCuratedPackagesInstallation() {
+	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Times(1)
 }
 
 func (c *createTestSetup) expectInstallGitOpsManager() {
@@ -271,7 +267,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
-	test.expectCuratedPackagesInstallationFail()
+	test.expectCuratedPackagesInstallation()
 
 	err := test.run()
 	if err != nil {
@@ -318,7 +314,7 @@ func TestCreateRunAWSIamConfigSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
-	test.expectCuratedPackagesInstallationFail()
+	test.expectCuratedPackagesInstallation()
 
 	err := test.run()
 	if err != nil {
@@ -341,7 +337,7 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
-	test.skipCuratedPackagesInstallation()
+	test.expectCuratedPackagesInstallation()
 
 	err := test.run()
 	if err != nil {
@@ -372,7 +368,7 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
-	test.skipCuratedPackagesInstallation()
+	test.expectCuratedPackagesInstallation()
 
 	if err := test.run(); err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
@@ -406,7 +402,7 @@ func TestCreateWorkloadClusterRunAWSIamConfigSuccess(t *testing.T) {
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
-	test.skipCuratedPackagesInstallation()
+	test.expectCuratedPackagesInstallation()
 
 	if err := test.run(); err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
