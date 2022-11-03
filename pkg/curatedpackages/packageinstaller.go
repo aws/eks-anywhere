@@ -37,7 +37,7 @@ func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController
 	}
 }
 
-// InstallCuratedPackages installs curated packages as part of the cluster creation
+// InstallCuratedPackages installs curated packages as part of the cluster creation.
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	PrintLicense()
 	err := pi.installPackagesController(ctx)
