@@ -2870,7 +2870,7 @@ func TestWaitForPodCompleted(t *testing.T) {
 	expectedParam := []string{"get", "pod/testpod", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.containerStatuses[0].state.terminated.reason}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	err := tt.k.WaitForPodCompleted(tt.ctx, tt.cluster, "testpod", "2m", "eksa-system")
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err).To(BeNil())
 }
 
 func TestWaitForPackagesInstalled(t *testing.T) {
@@ -2880,7 +2880,7 @@ func TestWaitForPackagesInstalled(t *testing.T) {
 	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	err := tt.k.WaitForPackagesInstalled(tt.ctx, tt.cluster, "testpackage", "2m", "eksa-system")
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err).ToNot(HaveOccurred())
 }
 
 func TestWaitJSONPathLoop(t *testing.T) {
@@ -2890,7 +2890,7 @@ func TestWaitJSONPathLoop(t *testing.T) {
 	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	err := tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "2m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err).To(BeNil())
 }
 
 func TestWaitJSONPath(t *testing.T) {
@@ -2900,7 +2900,7 @@ func TestWaitJSONPath(t *testing.T) {
 	expectedParam := []string{"wait", "--timeout", "2m", fmt.Sprintf("--for=jsonpath='{.%s}'=%s", "status.state", "installed"), "packages.packages.eks.amazonaws.com/testpackage", "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	err := tt.k.WaitJSONPath(tt.ctx, tt.cluster.KubeconfigFile, "2m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err).To(BeNil())
 }
 
 func TestGetPackageBundleController(t *testing.T) {
