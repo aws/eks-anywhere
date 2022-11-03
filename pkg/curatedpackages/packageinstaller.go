@@ -57,7 +57,7 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 }
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
-	logger.Info("Installing curated packages controller on management cluster")
+	logger.Info("Enabling curated packages on the cluster")
 	err := pi.packageController.EnableCuratedPackages(ctx)
 	if err != nil {
 		return err
