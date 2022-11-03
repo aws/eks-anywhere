@@ -187,7 +187,25 @@ func TestControlPlaneMachineTemplateName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
-			g.Expect(clusterapi.ControlPlaneMachineTemplateName(g.clusterSpec)).To(Equal(tt.want))
+			g.Expect(clusterapi.ControlPlaneMachineTemplateName(g.clusterSpec.Cluster)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestEtcdMachineTemplateName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "test cluster",
+			want: "test-cluster-etcd-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.EtcdMachineTemplateName(g.clusterSpec.Cluster)).To(Equal(tt.want))
 		})
 	}
 }

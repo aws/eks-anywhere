@@ -140,6 +140,8 @@ func TestWorkerGroupUpdateImmutableObjectNamesSuccess(t *testing.T) {
 	).To(Succeed())
 	g.Expect(group.KubeadmConfigTemplate.Name).To(Equal("template-2"))
 	g.Expect(group.ProviderMachineTemplate.Name).To(Equal("mt-2"))
+	g.Expect(group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name).To(Equal(group.KubeadmConfigTemplate.Name))
+	g.Expect(group.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name).To(Equal(group.ProviderMachineTemplate.Name))
 }
 
 func TestGetKubeadmConfigTemplateSuccess(t *testing.T) {
@@ -392,6 +394,17 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 			g.Expect(clusterapi.KubeadmConfigTemplateEqual(tt.new, tt.old)).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestWorkerGroupDeepCopy(t *testing.T) {
+	g := NewWithT(t)
+	group := &dockerGroup{
+		MachineDeployment:       machineDeployment(),
+		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+		ProviderMachineTemplate: dockerMachineTemplate(),
+	}
+
+	g.Expect(group.DeepCopy()).To(Equal(group))
 }
 
 func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {
