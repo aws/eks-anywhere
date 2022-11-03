@@ -2,7 +2,6 @@ package vsphere_test
 
 import (
 	"context"
-	"path"
 	"testing"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -17,15 +16,13 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
 const (
-	testClusterConfigMainFilename = "cluster_main.yaml"
-	testDataDir                   = "testdata"
+	testClusterConfigMainFilename = "testdata/cluster_main.yaml"
 )
 
 type baseControlPlane = clusterapi.ControlPlane[*v1beta1.VSphereCluster, *v1beta1.VSphereMachineTemplate]
@@ -100,14 +97,14 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	logger := test.NewNullLogger()
 	ctx := context.Background()
 	client := test.NewFakeKubeClient()
-	spec := givenClusterSpec(t, testClusterConfigMainFilename)
+	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
 
 	cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
 	g.Expect(cp.Cluster).To(Equal(capiCluster()))
-	g.Expect(cp.KubeadmControlPlane).To(Equal(wantKCP()))
-	g.Expect(cp.EtcdCluster).To(Equal(wantEtcdCluster()))
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane()))
+	g.Expect(cp.EtcdCluster).To(Equal(etcdCluster()))
 	g.Expect(cp.ProviderCluster).To(Equal(vsphereCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
 	g.Expect(cp.EtcdMachineTemplate.Name).To(Equal("test-etcd-1"))
@@ -118,38 +115,77 @@ func TestControlPlaneSpecNoKubeVersion(t *testing.T) {
 	logger := test.NewNullLogger()
 	ctx := context.Background()
 	client := test.NewFakeKubeClient()
-	spec := givenClusterSpec(t, testClusterConfigMainFilename)
+	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
 	spec.Cluster.Spec.KubernetesVersion = ""
 
 	_, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).To(MatchError(ContainSubstring("generating vsphere control plane yaml spec")))
 }
 
-func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
-	return test.NewFullClusterSpec(t, path.Join(testDataDir, fileName))
-}
+func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
+	originalKubeadmControlPlane := kubeadmControlPlane()
+	originalEtcdCluster := etcdCluster()
+	originalEtcdCluster.Spec.InfrastructureTemplate.Name = "test-etcd-2"
+	originalCPMachineTemplate := vsphereMachineTemplate("test-control-plane-1")
+	originalEtcdMachineTemplate := vsphereMachineTemplate("test-etcd-2")
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
-	return &controlplanev1.KubeadmControlPlane{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "KubeadmControlPlane",
-			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: constants.EksaSystemNamespace,
-		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name:       "test-control-plane-1",
-					Namespace:  constants.EksaSystemNamespace,
-					Kind:       "VSphereMachineTemplate",
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				},
-			},
+	wantKCP := originalKubeadmControlPlane.DeepCopy()
+	wantEtcd := originalEtcdCluster.DeepCopy()
+	wantCPtemplate := originalCPMachineTemplate.DeepCopy()
+	wantEtcdTemplate := originalEtcdMachineTemplate.DeepCopy()
+
+	client := test.NewFakeKubeClient(
+		originalKubeadmControlPlane,
+		originalEtcdCluster,
+		originalCPMachineTemplate,
+		originalEtcdMachineTemplate,
+	)
+	cpTaints := []corev1.Taint{
+		{
+			Key:    "foo",
+			Value:  "bar",
+			Effect: "PreferNoSchedule",
 		},
 	}
+	spec.Cluster.Spec.ControlPlaneConfiguration.Taints = cpTaints
+	spec.VSphereMachineConfigs["test-etcd"].Spec.Datastore = "new-datastore"
+
+	wantKCP.Spec.MachineTemplate.InfrastructureRef.Name = "test-control-plane-2"
+	wantKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = cpTaints
+	wantKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = cpTaints
+
+	wantEtcd.Spec.InfrastructureTemplate.Name = "test-etcd-3"
+
+	wantCPtemplate.Name = "test-control-plane-2"
+	wantCPtemplate.Spec.Template.Spec.NumCPUs = 2
+	wantCPtemplate.Spec.Template.Spec.MemoryMiB = 8192
+
+	wantEtcdTemplate.Name = "test-etcd-3"
+	wantEtcdTemplate.Spec.Template.Spec.Datastore = "new-datastore"
+
+	cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp).NotTo(BeNil())
+	g.Expect(cp.Cluster).To(Equal(capiCluster()))
+	g.Expect(cp.KubeadmControlPlane).To(Equal(wantKCP))
+	g.Expect(cp.EtcdCluster).To(Equal(wantEtcd))
+	g.Expect(cp.ProviderCluster).To(Equal(vsphereCluster()))
+	g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(wantCPtemplate))
+	g.Expect(cp.EtcdMachineTemplate).To(Equal(wantEtcdTemplate))
+}
+
+func TestControPlaneSpecErrorFromClient(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
+	client := test.NewFakeKubeClientAlwaysError()
+	_, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
+	g.Expect(err).To(MatchError(ContainSubstring("updating vsphere immutable object names")))
 }
 
 func capiCluster() *clusterv1.Cluster {
@@ -229,24 +265,32 @@ func vsphereMachineTemplate(name string) *v1beta1.VSphereMachineTemplate {
 			Name:      name,
 			Namespace: constants.EksaSystemNamespace,
 		},
-	}
-}
-
-func etcdCluster() *etcdv1.EtcdadmCluster {
-	return &etcdv1.EtcdadmCluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "EtcdadmCluster",
-			APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-etcd",
-			Namespace: constants.EksaSystemNamespace,
-		},
-		Spec: etcdv1.EtcdadmClusterSpec{
-			InfrastructureTemplate: corev1.ObjectReference{
-				Name:       "test-etcd-1",
-				Kind:       "VSphereMachineTemplate",
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+		Spec: v1beta1.VSphereMachineTemplateSpec{
+			Template: v1beta1.VSphereMachineTemplateResource{
+				Spec: v1beta1.VSphereMachineSpec{
+					VirtualMachineCloneSpec: v1beta1.VirtualMachineCloneSpec{
+						Template:          "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6",
+						CloneMode:         "linkedClone",
+						Server:            "vsphere_server",
+						Thumbprint:        "ABCDEFG",
+						Datacenter:        "SDDC-Datacenter",
+						Folder:            "/SDDC-Datacenter/vm",
+						Datastore:         "/SDDC-Datacenter/datastore/WorkloadDatastore",
+						StoragePolicyName: "vSAN Default Storage Policy",
+						ResourcePool:      "*/Resources",
+						Network: v1beta1.NetworkSpec{
+							Devices: []v1beta1.NetworkDeviceSpec{
+								{
+									NetworkName: "/SDDC-Datacenter/network/sddc-cgw-network-1",
+									DHCP4:       true,
+								},
+							},
+						},
+						NumCPUs:   3,
+						MemoryMiB: 4096,
+						DiskGiB:   25,
+					},
+				},
 			},
 		},
 	}
@@ -298,7 +342,7 @@ func clusterResourceSet() *addons.ClusterResourceSet {
 	}
 }
 
-func wantKCP() *controlplanev1.KubeadmControlPlane {
+func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	var kcp *controlplanev1.KubeadmControlPlane
 	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -605,7 +649,7 @@ spec:
 	return kcp
 }
 
-func wantEtcdCluster() *etcdv1.EtcdadmCluster {
+func etcdCluster() *etcdv1.EtcdadmCluster {
 	var etcdCluster *etcdv1.EtcdadmCluster
 	b := []byte(`kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1

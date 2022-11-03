@@ -82,7 +82,13 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 		return nil, errors.Wrap(err, "parsing vsphere control plane yaml")
 	}
 
-	return builder.ControlPlane, nil
+	cp := builder.ControlPlane
+
+	if err = cp.UpdateImmutableObjectNames(ctx, client, getMachineTemplate, machineTemplateEqual); err != nil {
+		return nil, errors.Wrap(err, "updating vsphere immutable object names")
+	}
+
+	return cp, nil
 }
 
 func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *ControlPlaneBuilder, error) {
