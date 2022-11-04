@@ -34,7 +34,7 @@ const (
 	zoneId             = "4e3b338d-87a6-4189-b931-a1747edeea8f"
 )
 
-var execConfig = decoder.CloudStackExecConfig{
+var execConfig = &decoder.CloudStackExecConfig{
 	Profiles: []decoder.CloudStackProfileConfig{
 		{
 			Name:          "test_name",
@@ -45,7 +45,7 @@ var execConfig = decoder.CloudStackExecConfig{
 	},
 }
 
-var execConfigWithMultipleProfiles = decoder.CloudStackExecConfig{
+var execConfigWithMultipleProfiles = &decoder.CloudStackExecConfig{
 	Profiles: []decoder.CloudStackProfileConfig{
 		execConfig.Profiles[0],
 		{
@@ -112,7 +112,7 @@ func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
-	c := executables.NewCmk(executable, writer, execConfig.Profiles)
+	c, _ := executables.NewCmk(executable, writer, execConfig)
 	err := c.ValidateCloudStackConnection(ctx, execConfig.Profiles[0].Name)
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
@@ -132,7 +132,7 @@ func TestValidateMultipleCloudStackProfiles(t *testing.T) {
 	expectedArgs2 := []string{"-c", configFilePath2, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs2).Return(bytes.Buffer{}, nil)
 
-	c := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles.Profiles)
+	c, _ := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles)
 	err := c.ValidateCloudStackConnection(ctx, execConfigWithMultipleProfiles.Profiles[0].Name)
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
@@ -152,7 +152,7 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, errors.New("cmk test error"))
-	c := executables.NewCmk(executable, writer, execConfig.Profiles)
+	c, _ := executables.NewCmk(executable, writer, execConfig)
 	err := c.ValidateCloudStackConnection(ctx, execConfig.Profiles[0].Name)
 	if err == nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() didn't throw expected error")
@@ -257,20 +257,25 @@ func TestCmkCleanupVms(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 
-			setupContext(t)
-
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			for _, argsList := range tt.argumentsExecCalls {
 				executable.EXPECT().Execute(ctx, argsList).
 					Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
 			}
-			cmk := executables.NewCmk(executable, writer, execConfig.Profiles)
+			cmk, _ := executables.NewCmk(executable, writer, execConfig)
 			err := tt.cmkFunc(*cmk, ctx)
 			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
 				return
 			}
 			t.Fatalf("Cmk error: %v", err)
 		})
+	}
+}
+
+func TestNewCmkNilConfig(t *testing.T) {
+	_, err := executables.NewCmk(nil, nil, nil)
+	if err == nil {
+		t.Fatalf("Expected cmk to fail on creation with nil config but instead it succeeded")
 	}
 }
 
@@ -972,14 +977,12 @@ func TestCmkListOperations(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 
-			setupContext(t)
-
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			if tt.argumentsExecCall != nil {
 				executable.EXPECT().Execute(ctx, tt.argumentsExecCall).
 					Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
 			}
-			cmk := executables.NewCmk(executable, writer, execConfig.Profiles)
+			cmk, _ := executables.NewCmk(executable, writer, execConfig)
 			err := tt.cmkFunc(*cmk, ctx)
 			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
 				return
@@ -994,10 +997,8 @@ func TestCmkGetManagementApiEndpoint(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	tt := NewWithT(t)
 
-	setupContext(t)
-
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	cmk := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles.Profiles)
+	cmk, _ := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles)
 
 	endpoint, err := cmk.GetManagementApiEndpoint("test_name")
 	tt.Expect(err).To(BeNil())

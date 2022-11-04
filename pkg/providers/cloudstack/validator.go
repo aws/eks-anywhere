@@ -45,6 +45,7 @@ type localAvailabilityZone struct {
 	DomainId string
 }
 
+// ProviderCmkClient defines the methods used by Cmk as a separate interface to be mockable when injected into other objects.
 type ProviderCmkClient interface {
 	GetManagementApiEndpoint(profile string) (string, error)
 	ValidateCloudStackConnection(ctx context.Context, profile string) error
@@ -58,7 +59,8 @@ type ProviderCmkClient interface {
 	ValidateAccountPresent(ctx context.Context, profile string, account string, domainId string) error
 }
 
-func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
+// ValidateCloudStackAccess is used as a preflight check to ensure we can connect to all the Cloudstack endpoints used by a cluster.
+func (v *Validator) ValidateCloudStackAccess(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
 	refNamesToCheck := []string{}
 	if len(datacenterConfig.Spec.Domain) > 0 {
 		refNamesToCheck = append(refNamesToCheck, decoder.CloudStackGlobalAZ)

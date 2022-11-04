@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	apiv1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -28,7 +30,7 @@ func (tctx *testContext) restoreContext() {
 	}
 }
 
-func TestCloudStackConfigDecoder(t *testing.T) {
+func TestCloudStackConfigDecoderFromEnv(t *testing.T) {
 	tests := []struct {
 		name       string
 		configFile string
@@ -132,7 +134,141 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
 			tt.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
 
-			gotConfig, err := decoder.ParseCloudStackSecret()
+			gotConfig, err := decoder.ParseCloudStackCredsFromEnv()
+			if tc.wantErr {
+				g.Expect(err).NotTo(BeNil())
+			} else {
+				g.Expect(err).To(BeNil())
+				if !reflect.DeepEqual(tc.wantConfig, gotConfig) {
+					t.Errorf("%v got = %v, want %v", tc.name, gotConfig, tc.wantConfig)
+				}
+			}
+		})
+	}
+}
+
+func TestCloudStackConfigDecoderFromSecrets(t *testing.T) {
+	tests := []struct {
+		name       string
+		secrets    []apiv1.Secret
+		wantErr    bool
+		wantConfig *decoder.CloudStackExecConfig
+	}{
+		{
+			name: "Valid config",
+			secrets: []apiv1.Secret{
+				{
+					ObjectMeta: v1.ObjectMeta{Name: "global"},
+					Data: map[string][]byte{
+						decoder.APIKeyKey:    []byte("test-key1"),
+						decoder.APIUrlKey:    []byte("http://127.16.0.1:8080/client/api"),
+						decoder.SecretKeyKey: []byte("test-secret1"),
+						decoder.VerifySslKey: []byte("false"),
+					},
+				},
+			},
+			wantErr: false,
+			wantConfig: &decoder.CloudStackExecConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
+					{
+						Name:          decoder.CloudStackGlobalAZ,
+						ApiKey:        "test-key1",
+						SecretKey:     "test-secret1",
+						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "false",
+						Timeout:       "",
+					},
+				},
+			},
+		},
+		{
+			name: "Empty config",
+			secrets: []apiv1.Secret{
+				{
+					ObjectMeta: v1.ObjectMeta{Name: "global"},
+					Data:       map[string][]byte{},
+				},
+			},
+			wantErr:    true,
+			wantConfig: nil,
+		},
+		{
+			name: "Missing apikey",
+			secrets: []apiv1.Secret{
+				{
+					ObjectMeta: v1.ObjectMeta{Name: "global"},
+					Data: map[string][]byte{
+						decoder.APIUrlKey:    []byte("http://127.16.0.1:8080/client/api"),
+						decoder.SecretKeyKey: []byte("test-secret1"),
+						decoder.VerifySslKey: []byte("false"),
+					},
+				},
+			},
+			wantErr:    true,
+			wantConfig: nil,
+		},
+		{
+			name: "Missing api url",
+			secrets: []apiv1.Secret{
+				{
+					ObjectMeta: v1.ObjectMeta{Name: "global"},
+					Data: map[string][]byte{
+						decoder.APIKeyKey:    []byte("test-key1"),
+						decoder.SecretKeyKey: []byte("test-secret1"),
+						decoder.VerifySslKey: []byte("false"),
+					},
+				},
+			},
+			wantErr:    true,
+			wantConfig: nil,
+		},
+		{
+			name: "Missing secret key",
+			secrets: []apiv1.Secret{
+				{
+					ObjectMeta: v1.ObjectMeta{Name: "global"},
+					Data: map[string][]byte{
+						decoder.APIKeyKey:    []byte("test-key1"),
+						decoder.APIUrlKey:    []byte("http://127.16.0.1:8080/client/api"),
+						decoder.VerifySslKey: []byte("false"),
+					},
+				},
+			},
+			wantErr:    true,
+			wantConfig: nil,
+		},
+		{
+			name: "Missing verify ssl",
+			secrets: []apiv1.Secret{
+				{
+					ObjectMeta: v1.ObjectMeta{Name: "global"},
+					Data: map[string][]byte{
+						decoder.APIKeyKey:    []byte("test-key1"),
+						decoder.SecretKeyKey: []byte("test-secret1"),
+						decoder.APIUrlKey:    []byte("http://127.16.0.1:8080/client/api"),
+					},
+				},
+			},
+			wantErr: false,
+			wantConfig: &decoder.CloudStackExecConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
+					{
+						Name:          decoder.CloudStackGlobalAZ,
+						ApiKey:        "test-key1",
+						SecretKey:     "test-secret1",
+						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "true",
+						Timeout:       "",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			g := NewWithT(t)
+			gotConfig, err := decoder.ParseCloudStackCredsFromSecrets(tc.secrets)
 			if tc.wantErr {
 				g.Expect(err).NotTo(BeNil())
 			} else {
@@ -149,7 +285,7 @@ func TestCloudStackConfigDecoderInvalidEncoding(t *testing.T) {
 	g := NewWithT(t)
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, "xxx")
 
-	_, err := decoder.ParseCloudStackSecret()
+	_, err := decoder.ParseCloudStackCredsFromEnv()
 	g.Expect(err).NotTo(BeNil())
 }
 
@@ -160,7 +296,7 @@ func TestCloudStackConfigDecoderNoEnvVariable(t *testing.T) {
 
 	g := NewWithT(t)
 
-	_, err := decoder.ParseCloudStackSecret()
+	_, err := decoder.ParseCloudStackCredsFromEnv()
 	g.Expect(err).NotTo(BeNil())
 	tctx.restoreContext()
 }

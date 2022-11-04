@@ -24,7 +24,6 @@ var cmkConfigTemplate string
 const (
 	cmkPath                           = "cmk"
 	cmkConfigFileNameTemplate         = "cmk_%s.ini"
-	Shared                            = "Shared"
 	defaultCloudStackPreflightTimeout = "30"
 	rootDomain                        = "ROOT"
 	domainDelimiter                   = "/"
@@ -338,17 +337,21 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, profile string, accoun
 	return nil
 }
 
-func NewCmk(executable Executable, writer filewriter.FileWriter, configs []decoder.CloudStackProfileConfig) *Cmk {
-	configMap := map[string]decoder.CloudStackProfileConfig{}
-	for _, config := range configs {
-		configMap[config.Name] = config
+// NewCmk initializes CloudMonkey executable to query CloudStack via CLI.
+func NewCmk(executable Executable, writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) (*Cmk, error) {
+	if config == nil {
+		return nil, fmt.Errorf("nil exec config for CloudMonkey, unable to proceed")
+	}
+	configMap := make(map[string]decoder.CloudStackProfileConfig, len(config.Profiles))
+	for _, profile := range config.Profiles {
+		configMap[profile.Name] = profile
 	}
 
 	return &Cmk{
 		writer:     writer,
 		executable: executable,
 		configMap:  configMap,
-	}
+	}, nil
 }
 
 func (c *Cmk) GetManagementApiEndpoint(profile string) (string, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 func TestLocalExecutablesBuilderAllExecutables(t *testing.T) {
@@ -18,6 +19,7 @@ func TestLocalExecutablesBuilderAllExecutables(t *testing.T) {
 
 	b := executables.NewLocalExecutablesBuilder()
 	closer, err := b.Init(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
 	_, writer := test.NewWriter(t)
 
 	kind := b.BuildKindExecutable(writer)
@@ -30,7 +32,9 @@ func TestLocalExecutablesBuilderAllExecutables(t *testing.T) {
 	g.Expect(kubectl).NotTo(BeNil())
 	govc := b.BuildGovcExecutable(writer)
 	g.Expect(govc).NotTo(BeNil())
-	cmk := b.BuildCmkExecutable(writer, nil)
+	cmk, err := b.BuildCmkExecutable(writer, &decoder.CloudStackExecConfig{
+		Profiles: make([]decoder.CloudStackProfileConfig, 0),
+	})
 	g.Expect(cmk).NotTo(BeNil())
 	aws := b.BuildAwsCli()
 	g.Expect(aws).NotTo(BeNil())

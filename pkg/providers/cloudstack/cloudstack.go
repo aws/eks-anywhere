@@ -28,7 +28,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -65,7 +64,7 @@ type cloudstackProvider struct {
 	writer                filewriter.FileWriter
 	selfSigned            bool
 	templateBuilder       *CloudStackTemplateBuilder
-	validator             *Validator
+	validator             ProviderValidator
 	execConfig            *decoder.CloudStackExecConfig
 	log                   logr.Logger
 }
@@ -141,10 +140,10 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Name:      profile.Name,
 		},
 		StringData: map[string]string{
-			"api-url":    profile.ManagementUrl,
-			"api-key":    profile.ApiKey,
-			"secret-key": profile.SecretKey,
-			"verify-ssl": profile.VerifySsl,
+			decoder.APIUrlKey:    profile.ManagementUrl,
+			decoder.APIKeyKey:    profile.ApiKey,
+			decoder.SecretKeyKey: profile.SecretKey,
+			decoder.VerifySslKey: profile.VerifySsl,
 		},
 	}
 }
@@ -234,7 +233,8 @@ type ProviderKubectlClient interface {
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, log logr.Logger) *cloudstackProvider {
+// NewProvider initializes the CloudStack provider object.
+func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, validator ProviderValidator, writer filewriter.FileWriter, now types.NowFunc, log logr.Logger) *cloudstackProvider { //nolint:revive
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -259,7 +259,7 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 			now:                         now,
 		},
 		log:       log,
-		validator: NewValidator(providerCmkClient, &networkutils.DefaultNetClient{}, skipIpCheck),
+		validator: validator,
 	}
 }
 
@@ -381,7 +381,7 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("%s is not set or is empty", decoder.EksacloudStackCloudConfigB64SecretKey)
 	}
-	execConfig, err := decoder.ParseCloudStackSecret()
+	execConfig, err := decoder.ParseCloudStackCredsFromEnv()
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
@@ -424,14 +424,14 @@ func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, clust
 }
 
 func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
-	return string(secret.Data["api-url"]) != profile.ManagementUrl ||
-		string(secret.Data["api-key"]) != profile.ApiKey ||
-		string(secret.Data["secret-key"]) != profile.SecretKey ||
-		string(secret.Data["verify-ssl"]) != profile.VerifySsl
+	return string(secret.Data[decoder.APIUrlKey]) != profile.ManagementUrl ||
+		string(secret.Data[decoder.APIKeyKey]) != profile.ApiKey ||
+		string(secret.Data[decoder.SecretKeyKey]) != profile.SecretKey ||
+		string(secret.Data[decoder.VerifySslKey]) != profile.VerifySsl
 }
 
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
-	if err := p.validator.validateCloudStackAccess(ctx, clusterSpec.CloudStackDatacenter); err != nil {
+	if err := p.validator.ValidateCloudStackAccess(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
 	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter); err != nil {

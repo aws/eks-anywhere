@@ -99,7 +99,7 @@ func TestValidateCloudStackConnection(t *testing.T) {
 	}
 
 	cmk.EXPECT().ValidateCloudStackConnection(ctx, "global").Return(nil)
-	if err := validator.validateCloudStackAccess(ctx, datacenterConfig); err != nil {
+	if err := validator.ValidateCloudStackAccess(ctx, datacenterConfig); err != nil {
 		t.Fatalf("failed to validate CloudStackDataCenterConfig: %v", err)
 	}
 }
@@ -114,7 +114,7 @@ func TestValidateCloudStackConnectionFailure(t *testing.T) {
 	}
 
 	cmk.EXPECT().ValidateCloudStackConnection(ctx, "global").Return(errors.New("exception"))
-	err = validator.validateCloudStackAccess(ctx, datacenterConfig)
+	err = validator.ValidateCloudStackAccess(ctx, datacenterConfig)
 	thenErrorExpected(t, "validating connection to cloudstack global: exception", err)
 }
 
