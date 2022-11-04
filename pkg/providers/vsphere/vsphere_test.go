@@ -224,10 +224,6 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	})
 }
 
-func fillClusterSpecWithClusterConfig(spec *cluster.Spec, clusterConfig *v1alpha1.Cluster) {
-	spec.Cluster = clusterConfig
-}
-
 func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.VSphereDatacenterConfig {
 	datacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(path.Join(testDataDir, fileName))
 	if err != nil {

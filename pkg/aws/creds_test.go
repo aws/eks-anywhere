@@ -15,10 +15,6 @@ const (
 	certificatesFile = "testdata/valid_certificates"
 )
 
-func setupContext(t *testing.T, key, val string) {
-	t.Setenv(key, val)
-}
-
 func TestAwsCredentialsFile(t *testing.T) {
 	tt := newAwsTest(t)
 	t.Setenv(aws.EksaAwsCredentialsFileKey, credentialsFile)
