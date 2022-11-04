@@ -1,11 +1,11 @@
 run:
   timeout: 5m
   skip-files:
-  - "zz_generated.*\\.go$"
+    - "zz_generated.*\\.go$"
   skip-dirs:
-  - ".*/mocks"
-  - "manager/tilt_modules"
-  - "internal/aws-sdk-go-v2"
+    - ".*/mocks"
+    - "manager/tilt_modules"
+    - "internal/aws-sdk-go-v2"
 linters:
   enable:
     - gofumpt
@@ -27,7 +27,6 @@ linters-settings:
       # Exclude todo comments.
       - "(?i)^\\s*todo"
     period: true
-    capital: true
   nakedret:
     # never allow naked returns
     max-func-lines: 0
@@ -38,6 +37,6 @@ issues:
   max-same-issues: 0
   max-issues-per-linter: 0
   include:
-    - EXC0012  # EXC0012 revive: exported (.+) should have comment( \(or a comment on this block\))? or be unexported
-    - EXC0014  # EXC0014 revive: comment on exported (.+) should be of the form "(.+)..."
-    - EXC0009  # EXC0009 revive: (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
+    - EXC0012 # EXC0012 revive: exported (.+) should have comment( \(or a comment on this block\))? or be unexported
+    - EXC0014 # EXC0014 revive: comment on exported (.+) should be of the form "(.+)..."
+    - EXC0009 # EXC0009 revive: (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
