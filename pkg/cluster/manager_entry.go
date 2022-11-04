@@ -3,13 +3,13 @@ package cluster
 import "fmt"
 
 type (
-	// APIObjectGenerator returns an implementor of the APIObject interface
+	// APIObjectGenerator returns an implementor of the APIObject interface.
 	APIObjectGenerator func() APIObject
-	// ParsedProcessor fills the Config struct from the parsed API objects in ObjectLookup
+	// ParsedProcessor fills the Config struct from the parsed API objects in ObjectLookup.
 	ParsedProcessor func(*Config, ObjectLookup)
-	// Validation performs a validation over the Config object
+	// Validation performs a validation over the Config object.
 	Validation func(*Config) error
-	// Defaulter sets defaults in a Config object
+	// Defaulter sets defaults in a Config object.
 	Defaulter func(*Config) error
 )
 
@@ -24,14 +24,14 @@ type ConfigManagerEntry struct {
 	Defaulters       []Defaulter
 }
 
-// NewConfigManagerEntry builds a ConfigManagerEntry with empty configuration
+// NewConfigManagerEntry builds a ConfigManagerEntry with empty configuration.
 func NewConfigManagerEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
 		APIObjectMapping: map[string]APIObjectGenerator{},
 	}
 }
 
-// Merge combines the configuration declared in multiple ConfigManagerEntry
+// Merge combines the configuration declared in multiple ConfigManagerEntry.
 func (c *ConfigManagerEntry) Merge(entries ...*ConfigManagerEntry) error {
 	for _, config := range entries {
 		for k, v := range config.APIObjectMapping {
@@ -48,7 +48,7 @@ func (c *ConfigManagerEntry) Merge(entries ...*ConfigManagerEntry) error {
 	return nil
 }
 
-// RegisterMapping records the mapping between a kubernetes Kind and an API concrete type
+// RegisterMapping records the mapping between a kubernetes Kind and an API concrete type.
 func (c *ConfigManagerEntry) RegisterMapping(kind string, generator APIObjectGenerator) error {
 	if _, ok := c.APIObjectMapping[kind]; ok {
 		return fmt.Errorf("mapping for api object %s already registered", kind)
@@ -58,17 +58,17 @@ func (c *ConfigManagerEntry) RegisterMapping(kind string, generator APIObjectGen
 	return nil
 }
 
-// RegisterProcessors records setters to fill the Config struct from the parsed API objects
+// RegisterProcessors records setters to fill the Config struct from the parsed API objects.
 func (c *ConfigManagerEntry) RegisterProcessors(processors ...ParsedProcessor) {
 	c.Processors = append(c.Processors, processors...)
 }
 
-// RegisterValidations records validations for a Config struct
+// RegisterValidations records validations for a Config struct.
 func (c *ConfigManagerEntry) RegisterValidations(validations ...Validation) {
 	c.Validations = append(c.Validations, validations...)
 }
 
-// RegisterDefaulters records defaults for a Config struct
+// RegisterDefaulters records defaults for a Config struct.
 func (c *ConfigManagerEntry) RegisterDefaulters(defaulters ...Defaulter) {
 	c.Defaulters = append(c.Defaulters, defaulters...)
 }

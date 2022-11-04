@@ -53,8 +53,9 @@ const (
 	NutanixUsernameKey = "NUTANIX_USER"
 	NutanixPasswordKey = "NUTANIX_PASSWORD"
 
-	SecretKind    = "Secret"
-	ConfigMapKind = "ConfigMap"
+	SecretKind             = "Secret"
+	ConfigMapKind          = "ConfigMap"
+	ClusterResourceSetKind = "ClusterResourceSet"
 )
 
 type Operation int

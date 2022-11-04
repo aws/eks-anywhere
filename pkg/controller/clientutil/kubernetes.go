@@ -9,7 +9,7 @@ import (
 )
 
 // Kubeclient implements kubernetes.Client interface using a
-// client.Client as the underlying implementation
+// client.Client as the underlying implementation.
 type KubeClient struct {
 	client client.Client
 }

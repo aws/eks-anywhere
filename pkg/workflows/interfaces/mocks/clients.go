@@ -795,11 +795,9 @@ func (m *MockPackageInstaller) EXPECT() *MockPackageInstallerMockRecorder {
 }
 
 // InstallCuratedPackages mocks base method.
-func (m *MockPackageInstaller) InstallCuratedPackages(arg0 context.Context) error {
+func (m *MockPackageInstaller) InstallCuratedPackages(arg0 context.Context) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallCuratedPackages", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "InstallCuratedPackages", arg0)
 }
 
 // InstallCuratedPackages indicates an expected call of InstallCuratedPackages.

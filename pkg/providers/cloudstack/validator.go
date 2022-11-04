@@ -20,7 +20,7 @@ type Validator struct {
 }
 
 // Taken from https://github.com/shapeblue/cloudstack/blob/08bb4ad9fea7e422c3d3ac6d52f4670b1e89eed7/api/src/main/java/com/cloud/vm/VmDetailConstants.java
-// These fields should be modeled separately in eks-a and not used by the additionalDetails cloudstack VM field
+// These fields should be modeled separately in eks-a and not used by the additionalDetails cloudstack VM field.
 var restrictedUserCustomDetails = [...]string{
 	"keyboard", "cpu.corespersocket", "rootdisksize", "boot.mode", "nameonhypervisor",
 	"nicAdapter", "rootDiskController", "dataDiskController", "svga.vramSize", "nestedVirtualizationFlag", "ramReservation",
@@ -145,7 +145,7 @@ func generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywh
 	return localAvailabilityZones, nil
 }
 
-// TODO: dry out machine configs validations
+// TODO: dry out machine configs validations.
 func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error {
 	if len(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")

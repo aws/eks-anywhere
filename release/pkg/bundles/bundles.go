@@ -52,7 +52,7 @@ func NewBaseBundles(r *releasetypes.ReleaseConfig) *anywherev1alpha1.Bundles {
 }
 
 // GetVersionsBundles will build the entire bundle manifest from the
-// individual component bundles
+// individual component bundles.
 func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]string) ([]anywherev1alpha1.VersionsBundle, error) {
 	versionsBundles := []anywherev1alpha1.VersionsBundle{}
 

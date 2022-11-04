@@ -71,7 +71,7 @@ func eqMap(m map[string]interface{}) gomock.Matcher {
 }
 
 // mapMacher implements a gomock matcher for maps
-// transforms any map or struct into a map[string]interface{} and uses DeepEqual to compare
+// transforms any map or struct into a map[string]interface{} and uses DeepEqual to compare.
 type mapMatcher struct {
 	m map[string]interface{}
 }

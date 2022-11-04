@@ -70,28 +70,28 @@ type StackInstaller interface {
 	UninstallLocal(ctx context.Context) error
 }
 
-// WithNamespaceCreate is an InstallOption is lets you specify whether to create the namespace needed for Tinkerbell stack
+// WithNamespaceCreate is an InstallOption is lets you specify whether to create the namespace needed for Tinkerbell stack.
 func WithNamespaceCreate(create bool) InstallOption {
 	return func(s *Installer) {
 		s.createNamespace = create
 	}
 }
 
-// WithBootsOnDocker is an InstallOption to run Boots as a Docker container
+// WithBootsOnDocker is an InstallOption to run Boots as a Docker container.
 func WithBootsOnDocker() InstallOption {
 	return func(s *Installer) {
 		s.bootsOnDocker = true
 	}
 }
 
-// WithBootsOnKubernetes is an InstallOption to run Boots as a Kubernetes deployment
+// WithBootsOnKubernetes is an InstallOption to run Boots as a Kubernetes deployment.
 func WithBootsOnKubernetes() InstallOption {
 	return func(s *Installer) {
 		s.bootsOnDocker = false
 	}
 }
 
-// WithHostPortEnabled is an InstallOption that allows you to enable/disable host port for Tinkerbell deployments
+// WithHostPortEnabled is an InstallOption that allows you to enable/disable host port for Tinkerbell deployments.
 func WithHostPortEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
 		s.hostPort = enabled
@@ -104,14 +104,14 @@ func WithEnvoyEnabled(enabled bool) InstallOption {
 	}
 }
 
-// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server
+// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server.
 func WithLoadBalancerEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
 		s.loadBalancer = enabled
 	}
 }
 
-// NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack
+// NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack.
 func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *v1alpha1.RegistryMirrorConfiguration) StackInstaller {
 	return &Installer{
 		docker:         docker,
@@ -123,7 +123,7 @@ func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, na
 	}
 }
 
-// Install installs the Tinkerbell stack on a target cluster using a helm chart and providing the necessary values overrides
+// Install installs the Tinkerbell stack on a target cluster using a helm chart and providing the necessary values overrides.
 func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
@@ -283,7 +283,7 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 	}
 }
 
-// UninstallLocal currently removes local docker container running Boots
+// UninstallLocal currently removes local docker container running Boots.
 func (s *Installer) UninstallLocal(ctx context.Context) error {
 	return s.uninstallBootsFromDocker(ctx)
 }
@@ -306,7 +306,7 @@ func getURIDir(uri string) (string, error) {
 }
 
 // CleanupLocalBoots determines whether Boots is already running locally
-// and either cleans it up or errors out depending on the `remove` flag
+// and either cleans it up or errors out depending on the `remove` flag.
 func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 	exists, err := s.docker.CheckContainerExistence(ctx, boots)
 	// return error if the docker call failed

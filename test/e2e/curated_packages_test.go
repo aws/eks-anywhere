@@ -22,7 +22,7 @@ const (
 	EksaPackageControllerHelmChartName = "eks-anywhere-packages"
 	EksaPackagesSourceRegistry         = "public.ecr.aws/l0g8r8j6"
 	EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
-	EksaPackageControllerHelmVersion   = "0.2.7-eks-a-v0.0.0-dev-release-0.11-build.219"
+	EksaPackageControllerHelmVersion   = "0.2.13-eks-a-v0.0.0-dev-build.4532"
 	EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
 )
 
@@ -34,7 +34,7 @@ func NoErrorPredicate(_ string, err error) bool {
 	return err == nil
 }
 
-// TODO turn them into generics using comparable once 1.18 is allowed
+// TODO turn them into generics using comparable once 1.18 is allowed.
 func StringMatchPredicate(s string) resourcePredicate {
 	return func(in string, err error) bool {
 		return err == nil && strings.Compare(s, in) == 0
@@ -168,13 +168,30 @@ func packageBundleURI(version v1alpha1.KubernetesVersion) string {
 	return fmt.Sprintf("%s:%s", EksaPackageBundleURI, tag)
 }
 
+func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
+	test.SetPackageBundleActive()
+	packageName := "hello-eks-anywhere"
+	packagePrefix := "test"
+	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
+	test.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
+	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
+	test.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
+}
+
+func runCuratedPackageInstallTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
+	runCuratedPackageInstall(test)
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
+
 func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
-	test.WithCluster(func(e *framework.ClusterE2ETest) {
-		packageName := "hello-eks-anywhere"
-		packagePrefix := "test"
-		e.InstallCuratedPackage(packageName, packagePrefix)
-		e.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
-	})
+	test.WithCluster(runCuratedPackageInstall)
 }
 
 // There are many tests here, each covers a different combination described in
@@ -187,6 +204,7 @@ func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 // decisions about test packages or methodologies, right now.
 
 func TestCPackagesDockerUbuntuKubernetes120SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -198,6 +216,7 @@ func TestCPackagesDockerUbuntuKubernetes120SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesDockerUbuntuKubernetes121SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -209,6 +228,7 @@ func TestCPackagesDockerUbuntuKubernetes121SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
@@ -220,6 +240,7 @@ func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes120SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -231,6 +252,7 @@ func TestCPackagesVSphereKubernetes120SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes121SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -242,6 +264,7 @@ func TestCPackagesVSphereKubernetes121SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes121BottleRocketSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -253,6 +276,7 @@ func TestCPackagesVSphereKubernetes121BottleRocketSimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes122SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
@@ -264,6 +288,7 @@ func TestCPackagesVSphereKubernetes122SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
@@ -272,4 +297,56 @@ func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube122),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
+func TestCPackagesTinkerbellUbuntuKubernetes123SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube123),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
+func TestCPackagesTinkerbellBottleRocketKubernetes122SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube122),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
+func TestCPackagesTinkerbellBottleRocketKubernetes123SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube123),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }

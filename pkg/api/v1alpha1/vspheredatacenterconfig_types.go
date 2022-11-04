@@ -10,7 +10,7 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// VSphereDatacenterConfigSpec defines the desired state of VSphereDatacenterConfig
+// VSphereDatacenterConfigSpec defines the desired state of VSphereDatacenterConfig.
 type VSphereDatacenterConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
@@ -22,7 +22,7 @@ type VSphereDatacenterConfigSpec struct {
 	Insecure   bool   `json:"insecure"`
 }
 
-// VSphereDatacenterConfigStatus defines the observed state of VSphereDatacenterConfig
+// VSphereDatacenterConfigStatus defines the observed state of VSphereDatacenterConfig.
 type VSphereDatacenterConfigStatus struct { // Important: Run "make generate" to regenerate code after modifying this file
 	// SpecValid is set to true if vspheredatacenterconfig is validated.
 	SpecValid bool `json:"specValid,omitempty"`
@@ -38,7 +38,7 @@ type VSphereDatacenterConfigStatus struct { // Important: Run "make generate" to
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// VSphereDatacenterConfig is the Schema for the VSphereDatacenterConfigs API
+// VSphereDatacenterConfig is the Schema for the VSphereDatacenterConfigs API.
 type VSphereDatacenterConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -128,7 +128,7 @@ func (v *VSphereDatacenterConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as VSphereDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as VSphereDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type VSphereDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -138,7 +138,7 @@ type VSphereDatacenterConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// VSphereDatacenterConfigList contains a list of VSphereDatacenterConfig
+// VSphereDatacenterConfigList contains a list of VSphereDatacenterConfig.
 type VSphereDatacenterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

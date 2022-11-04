@@ -194,7 +194,7 @@ func (g *GoGithub) Organization(ctx context.Context, org string) (*goGithub.Orga
 }
 
 // PathExists checks if a path exists in the remote repository. If the owner, repository or branch doesn't exist,
-// it returns false and no error
+// it returns false and no error.
 func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error) {
 	_, _, _, err := g.Client.GetContents(
 		ctx,

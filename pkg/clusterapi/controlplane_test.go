@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -25,7 +26,7 @@ func TestControlPlaneObjects(t *testing.T) {
 	tests := []struct {
 		name         string
 		controlPlane *dockerControlPlane
-		want         []clusterapi.Object
+		want         []kubernetes.Object
 	}{
 		{
 			name: "stacked etcd",
@@ -35,7 +36,7 @@ func TestControlPlaneObjects(t *testing.T) {
 				KubeadmControlPlane:         kubeadmControlPlane(),
 				ControlPlaneMachineTemplate: dockerMachineTemplate(),
 			},
-			want: []clusterapi.Object{
+			want: []kubernetes.Object{
 				capiCluster(),
 				dockerCluster(),
 				kubeadmControlPlane(),
@@ -52,7 +53,7 @@ func TestControlPlaneObjects(t *testing.T) {
 				EtcdCluster:                 etcdCluster(),
 				EtcdMachineTemplate:         dockerMachineTemplate(),
 			},
-			want: []clusterapi.Object{
+			want: []kubernetes.Object{
 				capiCluster(),
 				dockerCluster(),
 				kubeadmControlPlane(),
@@ -111,7 +112,7 @@ func TestControlPlaneUpdateImmutableObjectNamesErrorUpdatingName(t *testing.T) {
 	)
 }
 
-func TestControlPlaneUpdateImmutableObjectNamesSuccessStackedEtcd(t *testing.T) {
+func TestControlPlaneUpdateImmutableObjectNamesSuccessStackedEtcdNoChanges(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	cp := controlPlaneStackedEtcd()
@@ -121,6 +122,22 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessStackedEtcd(t *testing.T) 
 	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
 
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare)).To(Succeed())
+	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal(originalCPMachineTemplateName))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+}
+
+func TestControlPlaneUpdateImmutableObjectNamesSuccessStackedEtcdWithChanges(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cp := controlPlaneStackedEtcd()
+	originalCPMachineTemplateName := "my-machine-template-1"
+	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
+
+	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, withChangesCompare)).To(Succeed())
+	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("my-machine-template-2"))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
 }
 
 func TestControlPlaneUpdateImmutableObjectNamesNoEtcdCluster(t *testing.T) {
@@ -134,6 +151,8 @@ func TestControlPlaneUpdateImmutableObjectNamesNoEtcdCluster(t *testing.T) {
 	cp.EtcdCluster = etcdCluster()
 
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare)).To(Succeed())
+	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal(originalCPMachineTemplateName))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
 }
 
 func TestControlPlaneUpdateImmutableObjectNamesErrorReadingEtcdCluster(t *testing.T) {
@@ -188,6 +207,29 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessUnstackedEtcd(t *testing.T
 	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
 
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare)).To(Succeed())
+	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal(originalCPMachineTemplateName))
+	g.Expect(cp.EtcdMachineTemplate.Name).To(Equal(originalEtcdMachineTemplateName))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	g.Expect(cp.EtcdCluster.Spec.InfrastructureTemplate.Name).To(Equal(cp.EtcdMachineTemplate.Name))
+}
+
+func TestControlPlaneUpdateImmutableObjectNamesSuccessUnstackedEtcdWithChanges(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cp := controlPlaneUnStackedEtcd()
+	originalCPMachineTemplateName := "my-machine-template-1"
+	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	originalEtcdMachineTemplateName := "my-etcd-machine-template-2"
+	cp.EtcdMachineTemplate.Name = originalEtcdMachineTemplateName
+	cp.EtcdCluster.Spec.InfrastructureTemplate.Name = originalEtcdMachineTemplateName
+	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
+
+	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, withChangesCompare)).To(Succeed())
+	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("my-machine-template-2"))
+	g.Expect(cp.EtcdMachineTemplate.Name).To(Equal("my-etcd-machine-template-3"))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	g.Expect(cp.EtcdCluster.Spec.InfrastructureTemplate.Name).To(Equal(cp.EtcdMachineTemplate.Name))
 }
 
 func capiCluster() *clusterv1.Cluster {

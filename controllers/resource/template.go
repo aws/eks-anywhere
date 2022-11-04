@@ -57,7 +57,7 @@ type TinkerbellTemplate struct {
 	now anywhereTypes.NowFunc
 }
 
-// NutanixTemplate is a struct that implements the TemplateResources method for Nutanix Provider
+// NutanixTemplate is a struct that implements the TemplateResources method for Nutanix Provider.
 type NutanixTemplate struct {
 	ResourceFetcher
 	now anywhereTypes.NowFunc
@@ -164,8 +164,6 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc.Spec.Users)
-		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
 		for k, v := range credValues {
 			values[k] = v
@@ -312,7 +310,7 @@ func (r *CloudStackTemplate) getWorkloadTemplateNames(ctx context.Context, eksaC
 	return workloadTemplateNames, nil
 }
 
-// TODO(pokearu): This method is currently not used. Need to add logic in reconciler for TinkerbellDatacenterKind
+// TODO(pokearu): This method is currently not used. Need to add logic in reconciler for TinkerbellDatacenterKind.
 func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, tdc anywherev1.TinkerbellDatacenterConfig, cpTmc, etcdTmc anywherev1.TinkerbellMachineConfig, workerTmc map[string]anywherev1.TinkerbellMachineConfig) ([]*unstructured.Unstructured, error) {
 	workerNodeGroupMachineSpecs := make(map[string]anywherev1.TinkerbellMachineConfigSpec, len(workerTmc))
 	for _, wnConfig := range workerTmc {
@@ -493,7 +491,7 @@ func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpe
 }
 
 // TemplateResources generates the templated resources for the nutanix cluster
-// TODO(nutanix): This is currently a placeholder for the actual implementation
+// TODO(nutanix): This is currently a placeholder for the actual implementation.
 func (r *NutanixTemplate) TemplateResources(
 	ctx context.Context,
 	cluster *anywherev1.Cluster,

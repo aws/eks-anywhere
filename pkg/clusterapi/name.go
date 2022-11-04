@@ -17,19 +17,20 @@ import (
 
 var nameRegex = regexp.MustCompile(`(.*?)(-)(\d+)$`)
 
-// Object represents a kubernetes API object
-type Object interface {
+// Object represents a kubernetes API object.
+type Object[O kubernetes.Object] interface {
 	kubernetes.Object
+	DeepCopy() O
 }
 
 // ObjectComparator returns true only if only both kubernetes Object's are identical
 // Most of the time, this only requires comparing the Spec field, but that can variate
-// from object to object
-type ObjectComparator[O Object] func(current, new O) bool
+// from object to object.
+type ObjectComparator[O Object[O]] func(current, new O) bool
 
 // ObjectRetriever gets a kubernetes API object using the provided client
-// If the object doesn't exist, it returns a NotFound error
-type ObjectRetriever[O Object] func(ctx context.Context, client kubernetes.Client, name, namespace string) (O, error)
+// If the object doesn't exist, it returns a NotFound error.
+type ObjectRetriever[O Object[O]] func(ctx context.Context, client kubernetes.Client, name, namespace string) (O, error)
 
 // IncrementName takes an object name and increments the suffix number by one.
 // This method is used for updating objects (e.g. machinetemplate, kubeadmconfigtemplate) that are either immutable
@@ -89,8 +90,14 @@ func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig
 	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
 }
 
-func ControlPlaneMachineTemplateName(clusterSpec *cluster.Spec) string {
-	return DefaultObjectName(fmt.Sprintf("%s-control-plane", clusterSpec.Cluster.Name))
+// ControlPlaneMachineTemplateName sets the default object name on the control plane machine template.
+func ControlPlaneMachineTemplateName(cluster *v1alpha1.Cluster) string {
+	return DefaultObjectName(fmt.Sprintf("%s-control-plane", cluster.Name))
+}
+
+// EtcdMachineTemplateName sets the default object name on the etcd machine template.
+func EtcdMachineTemplateName(cluster *v1alpha1.Cluster) string {
+	return DefaultObjectName(fmt.Sprintf("%s-etcd", cluster.Name))
 }
 
 func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
@@ -105,8 +112,8 @@ func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConf
 	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec, workerNodeGroupConfig))
 }
 
-// EnsureNewNameIfChanged updates an object's name if such object is different from its current state in the cluster
-func EnsureNewNameIfChanged[M Object](ctx context.Context,
+// EnsureNewNameIfChanged updates an object's name if such object is different from its current state in the cluster.
+func EnsureNewNameIfChanged[M Object[M]](ctx context.Context,
 	client kubernetes.Client,
 	retrieve ObjectRetriever[M],
 	equal ObjectComparator[M],

@@ -92,7 +92,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
 1. Set License Environment Variable
 
-   If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/tasks/cluster/cluster-license" >}}) if you are licensing an existing cluster):
+   Add a license to any cluster for which you want to receive paid support. If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/tasks/cluster/cluster-license" >}}) if you are licensing an existing cluster):
 
    ```bash
    export EKSA_LICENSE='my-license-here'
@@ -185,6 +185,14 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    * Ensure workload cluster object names (`Cluster`, `CloudDatacenterConfig`, `CloudStackMachineConfig`, etc.) are distinct from management cluster object names.
    * Be sure to set the `managementCluster` field to identify the name of the management cluster.
+
+1. Set License Environment Variable
+
+   Add a license to any cluster for which you want to receive paid support. If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/tasks/cluster/cluster-license" >}}) if you are licensing an existing cluster):
+
+   ```bash
+   export EKSA_LICENSE='my-license-here'
+   ```
 
 1. Create a workload cluster
 

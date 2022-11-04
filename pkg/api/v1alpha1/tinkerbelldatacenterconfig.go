@@ -6,7 +6,7 @@ import (
 
 const TinkerbellDatacenterKind = "TinkerbellDatacenterConfig"
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewTinkerbellDatacenterConfigGenerate(clusterName string) *TinkerbellDatacenterConfigGenerate {
 	return &TinkerbellDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

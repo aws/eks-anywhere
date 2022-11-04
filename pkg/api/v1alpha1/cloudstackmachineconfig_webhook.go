@@ -27,7 +27,7 @@ func (r *CloudStackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 
 var _ webhook.Validator = &CloudStackMachineConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackMachineConfig) ValidateCreate() error {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
 
@@ -41,7 +41,7 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 	cloudstackmachineconfiglog.Info("validate update", "name", r.Name)
 
@@ -114,7 +114,7 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackMachineConfig) ValidateDelete() error {
 	cloudstackmachineconfiglog.Info("validate delete", "name", r.Name)
 

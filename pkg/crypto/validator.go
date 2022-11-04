@@ -35,7 +35,7 @@ func (tv *DefaultTlsValidator) IsSignedByUnknownAuthority(host, port string) (bo
 	return false, nil
 }
 
-// ValidateCert parses the cert, ensures that the cert format is valid and verifies that the cert is valid for the url
+// ValidateCert parses the cert, ensures that the cert format is valid and verifies that the cert is valid for the url.
 func (tv *DefaultTlsValidator) ValidateCert(host, port, caCertContent string) error {
 	// Validates that the cert format is valid
 	block, _ := pem.Decode([]byte(caCertContent))

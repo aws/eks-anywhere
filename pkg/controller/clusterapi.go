@@ -14,7 +14,7 @@ import (
 )
 
 // GetCAPICluster reads a cluster-api Cluster for an eks-a cluster using a kube client
-// If the CAPI cluster is not found, the method returns (nil, nil)
+// If the CAPI cluster is not found, the method returns (nil, nil).
 func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*clusterv1.Cluster, error) {
 	capiClusterName := clusterapi.ClusterName(cluster)
 
@@ -33,7 +33,7 @@ func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywhere
 }
 
 // CapiClusterObjectKey generates an ObjectKey for the CAPI cluster owned by
-// the provided eks-a cluster
+// the provided eks-a cluster.
 func CapiClusterObjectKey(cluster *anywherev1.Cluster) client.ObjectKey {
 	// TODO: we should consider storing a reference to the CAPI cluster in the eksa cluster status
 	return client.ObjectKey{

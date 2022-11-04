@@ -12,6 +12,7 @@ import (
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	"k8s.io/utils/integer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -592,15 +593,21 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 }
 
 func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error {
-	storageClass := provider.GenerateStorageClass()
-	if storageClass == nil {
-		return nil
-	}
-
-	logger.Info("Installing storage class on cluster")
-	err := c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)
-	if err != nil {
-		return fmt.Errorf("applying storage class manifest: %v", err)
+	// Historically, vSphere has been the only provider wanting to install a storage class. The new
+	// workflow hook capability enables inverting the provider relationship so only the vSphere
+	// provider contains storage class installation code.
+	//
+	// To maintain backward compatibility, we're checking for an anonymous interface implemented
+	// on the vSphere provider only to determine if the provider wants to install a storage class.
+	// This code should be deleted when we convert completely to new workflows.
+	installer, ok := provider.(interface {
+		InstallStorageClass(context.Context, *types.Cluster) error
+	})
+	if ok {
+		logger.Info("Installing storage class on cluster")
+		if err := installer.InstallStorageClass(ctx, cluster); err != nil {
+			return fmt.Errorf("installing storage class: %v", err)
+		}
 	}
 	return nil
 }
@@ -704,7 +711,7 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	ready, total := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
-		return true, c.machineBackoff * time.Duration(total-ready)
+		return true, c.machineBackoff * time.Duration(integer.IntMax(1, total-ready))
 	}
 
 	var machineDeploymentReplicasCount int
@@ -739,7 +746,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) error {
 	readyNodes, totalNodes := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
-		return true, c.machineBackoff * time.Duration(totalNodes-readyNodes)
+		return true, c.machineBackoff * time.Duration(integer.IntMax(1, totalNodes-readyNodes))
 	}
 
 	areNodesReady := func() error {

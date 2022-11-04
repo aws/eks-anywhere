@@ -32,7 +32,7 @@ const (
 // +kubebuilder:object:generate=false
 type ClusterGenerateOpt func(config *ClusterGenerate)
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
 	clusterConfig := &ClusterGenerate{
 		TypeMeta: metav1.TypeMeta{
@@ -200,7 +200,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
-// and sets defaults if necessary
+// and sets defaults if necessary.
 func GetClusterConfig(fileName string) (*Cluster, error) {
 	clusterConfig := &Cluster{}
 	err := ParseClusterConfig(fileName, clusterConfig)
@@ -213,7 +213,7 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 	return clusterConfig, nil
 }
 
-// GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content
+// GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content.
 func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
 	clusterConfig := &Cluster{}
 	err := ParseClusterConfigFromContent(content, clusterConfig)
@@ -224,7 +224,7 @@ func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
-// sets defaults if necessary and validates the Cluster
+// sets defaults if necessary and validates the Cluster.
 func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	clusterConfig, err := GetClusterConfig(fileName)
 	if err != nil {
@@ -238,13 +238,13 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	return clusterConfig, nil
 }
 
-// GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster
+// GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster.
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
 	return Kube123
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
-// Some of the validations are a bit heavy and need a network connection
+// Some of the validations are a bit heavy and need a network connection.
 func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 	for _, v := range clusterConfigValidations {
 		if err := v(clusterConfig); err != nil {
@@ -255,7 +255,7 @@ func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 }
 
 // ParseClusterConfig unmarshalls an API object implementing the KindAccessor interface
-// from a multiobject yaml file in disk. It doesn't set defaults nor validates the object
+// from a multiobject yaml file in disk. It doesn't set defaults nor validates the object.
 func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -274,7 +274,7 @@ type kindObject struct {
 }
 
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
-// from a multiobject yaml content. It doesn't set defaults nor validates the object
+// from a multiobject yaml content. It doesn't set defaults nor validates the object.
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
 		k := &kindObject{}
@@ -437,7 +437,11 @@ func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
-		logger.Info("Warning: No configurations provided for worker node groups, pods will be scheduled on control-plane nodes")
+		if clusterConfig.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
+			logger.Info("Warning: No configurations provided for worker node groups, pods will be scheduled on control-plane nodes")
+		} else {
+			return fmt.Errorf("WorkerNodeGroupConfigs cannot be empty for %s", clusterConfig.Spec.DatacenterRef.Kind)
+		}
 	}
 
 	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))

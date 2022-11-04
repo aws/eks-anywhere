@@ -299,7 +299,7 @@ func (s *CreateWorkloadClusterTask) Checkpoint() *task.CompletedTask {
 	return nil
 }
 
-// InstallResourcesOnManagement implementation
+// InstallResourcesOnManagement implementation.
 func (s *InstallResourcesOnManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.BootstrapCluster.ExistingManagement {
 		return &MoveClusterManagementTask{}
@@ -477,10 +477,7 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 }
 
 func (cp *InstallCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	err := commandContext.PackageInstaller.InstallCuratedPackages(ctx)
-	if err != nil {
-		logger.MarkFail("Curated Packages Installation Failed...")
-	}
+	commandContext.PackageInstaller.InstallCuratedPackages(ctx)
 	return nil
 }
 

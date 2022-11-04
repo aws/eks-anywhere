@@ -36,7 +36,7 @@ type Kind struct {
 
 // kindExecConfig contains transient information for the execution of kind commands
 // It's used by BootstrapClusterClientOption's to store/change information prior to a command execution
-// It must be cleaned after each execution to prevent side effects from past executions options
+// It must be cleaned after each execution to prevent side effects from past executions options.
 type kindExecConfig struct {
 	env                    map[string]string
 	ConfigFile             string

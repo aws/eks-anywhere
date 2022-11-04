@@ -12,10 +12,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -35,6 +37,7 @@ type Reconciler struct {
 	defaulter            *vsphere.Defaulter
 	cniReconciler        CNIReconciler
 	remoteClientRegistry RemoteClientRegistry
+	*serverside.ObjectApplier
 }
 
 // New defines a new VSphere reconciler.
@@ -45,6 +48,7 @@ func New(client client.Client, validator *vsphere.Validator, defaulter *vsphere.
 		defaulter:            defaulter,
 		cniReconciler:        cniReconciler,
 		remoteClientRegistry: remoteClientRegistry,
+		ObjectApplier:        serverside.NewObjectApplier(client),
 	}
 }
 
@@ -163,6 +167,11 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileWorkers")
 	log.Info("Applying worker CAPI objects")
-	// TODO: implement workers reconciliation phase
-	return controller.Result{}, nil
+	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
+		w, err := vsphere.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
+		if err != nil {
+			return nil, err
+		}
+		return w.WorkerObjects(), nil
+	})
 }

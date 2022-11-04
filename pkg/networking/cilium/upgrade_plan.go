@@ -10,21 +10,21 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 )
 
-// UpgradePlan contains information about a Cilium installation upgrade
+// UpgradePlan contains information about a Cilium installation upgrade.
 type UpgradePlan struct {
 	DaemonSet ComponentUpgradePlan
 	Operator  ComponentUpgradePlan
 }
 
 // Needed determines if an upgrade is needed or not
-// Returns true if any of the installation components needs an upgrade
+// Returns true if any of the installation components needs an upgrade.
 func (c UpgradePlan) Needed() bool {
 	return c.DaemonSet.Needed() || c.Operator.Needed()
 }
 
 // Reason returns the reason why an upgrade might be needed
 // If no upgrade needed, returns empty string
-// For multiple components with needed upgrades, it composes their reasons into one
+// For multiple components with needed upgrades, it composes their reasons into one.
 func (c UpgradePlan) Reason() string {
 	if !c.Needed() {
 		return ""
@@ -41,20 +41,20 @@ func (c UpgradePlan) Reason() string {
 	return strings.Join(s, " - ")
 }
 
-// ComponentUpgradePlan contains upgrade information for a Cilium component
+// ComponentUpgradePlan contains upgrade information for a Cilium component.
 type ComponentUpgradePlan struct {
 	UpgradeReason string
 	OldImage      string
 	NewImage      string
 }
 
-// Needed determines if an upgrade is needed or not
+// Needed determines if an upgrade is needed or not.
 func (c ComponentUpgradePlan) Needed() bool {
 	return c.UpgradeReason != ""
 }
 
 // BuildUpgradePlan generates the upgrade plan information for a cilium installation by comparing it
-// with a desired cluster Spec
+// with a desired cluster Spec.
 func BuildUpgradePlan(installation *Installation, clusterSpec *cluster.Spec) UpgradePlan {
 	return UpgradePlan{
 		DaemonSet: daemonSetUpgradePlan(installation.DaemonSet, clusterSpec),

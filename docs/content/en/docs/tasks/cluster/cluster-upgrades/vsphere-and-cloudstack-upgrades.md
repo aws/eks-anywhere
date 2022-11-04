@@ -1,13 +1,11 @@
 ---
-title: "Upgrade cluster"
-linkTitle: "Upgrade cluster"
+title: "Upgrade vSphere or CloudStack cluster"
+linkTitle: "Upgrade vSphere or CloudStack cluster"
 weight: 20
 date: 2017-01-05
 description: >
-  How to perform a cluster upgrade
+  How to perform a cluster upgrade for vSphere or CloudStack cluster
 ---
-> **_NOTE_**: Cluster upgrade is supported for vSphere and CloudStack clusters, but is not yet available for Bare Metal clusters.
->
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
 EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
@@ -255,4 +253,4 @@ Attempting to upgrade a cluster with more than 1 minor release will result in re
 Error: failed to upgrade cluster: validations failed
 ```
 
-For more errors you can see the [troubleshooting section]({{< relref "../troubleshoot" >}}).
+For more errors you can see the [troubleshooting section]({{< relref "../../troubleshoot" >}}).

@@ -12,8 +12,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
-// ControlPlane represents the provider-specific spec for a CAPI control plane using the kubeadm CP provider
-type ControlPlane[C, M Object] struct {
+// ControlPlane represents the provider-specific spec for a CAPI control plane using the kubeadm CP provider.
+type ControlPlane[C Object[C], M Object[M]] struct {
 	Cluster *clusterv1.Cluster
 
 	// ProviderCluster is the provider-specific resource that holds the details
@@ -33,7 +33,7 @@ type ControlPlane[C, M Object] struct {
 	EtcdMachineTemplate M
 }
 
-// Objects returns all API objects that form a concrete provider-specific control plane
+// Objects returns all API objects that form a concrete provider-specific control plane.
 func (cp *ControlPlane[C, M]) Objects() []kubernetes.Object {
 	objs := make([]kubernetes.Object, 0, 4)
 	objs = append(objs, cp.Cluster, cp.KubeadmControlPlane, cp.ProviderCluster, cp.ControlPlaneMachineTemplate)
@@ -47,7 +47,7 @@ func (cp *ControlPlane[C, M]) Objects() []kubernetes.Object {
 // UpdateImmutableObjectNames checks if any control plane immutable objects have changed by comparing the new definition
 // with the current state of the cluster. If they had, it generates a new name for them by increasing a monotonic number
 // at the end of the name
-// This is applied to all provider machine templates
+// This is applied to all provider machine templates.
 func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 	ctx context.Context,
 	client kubernetes.Client,
@@ -68,6 +68,7 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 	if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
 		return err
 	}
+	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = cp.ControlPlaneMachineTemplate.GetName()
 
 	if cp.EtcdCluster == nil {
 		return nil
@@ -87,6 +88,7 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 	if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.EtcdMachineTemplate); err != nil {
 		return err
 	}
+	cp.EtcdCluster.Spec.InfrastructureTemplate.Name = cp.EtcdMachineTemplate.GetName()
 
 	return nil
 }

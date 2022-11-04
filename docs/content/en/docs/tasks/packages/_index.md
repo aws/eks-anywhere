@@ -58,7 +58,7 @@ aws sts get-caller-identity
 Login to docker
 
 ```bash
-aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+aws ecr get-login-password --region us-west-2 |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
 ```
 
 Verify you can pull an image
@@ -72,24 +72,32 @@ If the image downloads successfully, it worked!
 You can get a list of the available packages from the command line:
 
 ```bash
-eksctl anywhere list packages --source registry --kube-version 1.23
+export CLUSTER_NAME=nameofyourcluster
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+eksctl anywhere list packages --kube-version 1.23
 ```
 
 Example command output:
-```              
-Package                 Version(s)                                       
--------                 ----------                                       
-hello-eks-anywhere      0.1.1-a217465b3b2d165634f9c24a863fa67349c7268a   
-harbor                  2.5.1-a217465b3b2d165634f9c24a863fa67349c7268a   
-metallb                 0.12.1-b9e4e5d941ccd20c72b4fec366ffaddb79bbc578  
-emissary                3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467
+```
+Package                 Version(s)
+-------                 ----------
+hello-eks-anywhere      0.1.2-a6847010915747a9fc8a412b233a2b1ee608ae76
+adot                    0.21.1-971c31238aeea5f1bda6ec95caaf24993b304157
+cert-manager            1.9.1-dc0c845b5f71bea6869efccd3ca3f2dd11b5c95f
+cluster-autoscaler      9.21.0-1.23-5516c0368ff74d14c328d61fe374da9787ecf437
+harbor                  2.5.1-0d4e0476a740b48a232041597ded2031595d9409
+metallb                 0.13.5-0c9bc01066c2b8e8006c60d09f55015501ad2fc2
+metallb-crds            0.13.5-0c9bc01066c2b8e8006c60d09f55015501ad2fc2
+metrics-server          0.6.1-eks-1-23-6-c94ed410f56421659f554f13b4af7a877da72bc1
+emissary                3.0.0-c5b5d47b53ae5d769cc8349f4822ce2786ad198e
 ```
 
 ### Generate a curated-packages config
 
 The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
 ```bash
-eksctl anywhere generate package harbor --kube-version 1.23 > packages.yaml
+export CLUSTER_NAME=nameofyourcluster
+eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.23 > packages.yaml
 ```
 
 Available curated packages are listed below.

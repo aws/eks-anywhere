@@ -24,7 +24,7 @@ func IsActive(feature Feature) bool {
 	return feature.IsActive()
 }
 
-// ClearCache is mainly used for unit tests as of now
+// ClearCache is mainly used for unit tests as of now.
 func ClearCache() {
 	globalFeatures.clearCache()
 }
@@ -64,7 +64,7 @@ func CheckpointEnabled() Feature {
 	}
 }
 
-// NutanixProvider returns a feature that is active if the NUTANIX_PROVIDER environment variable is true
+// NutanixProvider returns a feature that is active if the NUTANIX_PROVIDER environment variable is true.
 func NutanixProvider() Feature {
 	return Feature{
 		Name:     "Nutanix provider support",

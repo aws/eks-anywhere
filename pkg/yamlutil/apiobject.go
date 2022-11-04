@@ -7,16 +7,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// APIObject represents a kubernetes API object
+// APIObject represents a kubernetes API object.
 type APIObject interface {
 	runtime.Object
 	GetName() string
 }
 
-// ObjectLookup allows to search APIObjects by a unique key composed of apiVersion, kind, and name
+// ObjectLookup allows to search APIObjects by a unique key composed of apiVersion, kind, and name.
 type ObjectLookup map[string]APIObject
 
-// GetFromRef searches in a ObjectLookup for an APIObject referenced by a corev1.ObjectReference
+// GetFromRef searches in a ObjectLookup for an APIObject referenced by a corev1.ObjectReference.
 func (o ObjectLookup) GetFromRef(ref corev1.ObjectReference) APIObject {
 	return o[keyForRef(ref)]
 }
@@ -31,12 +31,12 @@ func NewObjectLookupBuilder() *ObjectLookupBuilder {
 	}
 }
 
-// ObjectLookupBuilder allows to construct an ObjectLookup and add APIObjects to it
+// ObjectLookupBuilder allows to construct an ObjectLookup and add APIObjects to it.
 type ObjectLookupBuilder struct {
 	lookup ObjectLookup
 }
 
-// Add acumulates an API object that will be included in the built ObjectLookup
+// Add acumulates an API object that will be included in the built ObjectLookup.
 func (o *ObjectLookupBuilder) Add(objs ...APIObject) *ObjectLookupBuilder {
 	for _, obj := range objs {
 		o.lookup.add(obj)
@@ -46,7 +46,7 @@ func (o *ObjectLookupBuilder) Add(objs ...APIObject) *ObjectLookupBuilder {
 
 // Build constructs and returns an ObjectLookup
 // After this method is called, the builder is reset and loses track
-// of all previously added objects
+// of all previously added objects.
 func (o *ObjectLookupBuilder) Build() ObjectLookup {
 	l := o.lookup
 	o.lookup = ObjectLookup{}

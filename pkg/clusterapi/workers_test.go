@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -60,6 +61,32 @@ func TestWorkersUpdateImmutableObjectNamesSuccess(t *testing.T) {
 	g.Expect(
 		workers.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare),
 	).To(Succeed())
+}
+
+func TestWorkerObjects(t *testing.T) {
+	g := NewWithT(t)
+	group1 := dockerGroup{
+		MachineDeployment: machineDeployment(),
+	}
+	group2 := dockerGroup{
+		MachineDeployment: machineDeployment(),
+	}
+
+	workers := &dockerWorkers{
+		Groups: []dockerGroup{group1, group2},
+	}
+
+	objects := workers.WorkerObjects()
+	wantObjects := []kubernetes.Object{
+		group1.KubeadmConfigTemplate,
+		group1.MachineDeployment,
+		group1.ProviderMachineTemplate,
+		group2.KubeadmConfigTemplate,
+		group2.MachineDeployment,
+		group2.ProviderMachineTemplate,
+	}
+
+	g.Expect(objects).To(ConsistOf(wantObjects))
 }
 
 func TestWorkerGroupUpdateImmutableObjectNamesNoMachineDeployment(t *testing.T) {
@@ -140,6 +167,8 @@ func TestWorkerGroupUpdateImmutableObjectNamesSuccess(t *testing.T) {
 	).To(Succeed())
 	g.Expect(group.KubeadmConfigTemplate.Name).To(Equal("template-2"))
 	g.Expect(group.ProviderMachineTemplate.Name).To(Equal("mt-2"))
+	g.Expect(group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name).To(Equal(group.KubeadmConfigTemplate.Name))
+	g.Expect(group.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name).To(Equal(group.ProviderMachineTemplate.Name))
 }
 
 func TestGetKubeadmConfigTemplateSuccess(t *testing.T) {
@@ -392,6 +421,17 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 			g.Expect(clusterapi.KubeadmConfigTemplateEqual(tt.new, tt.old)).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestWorkerGroupDeepCopy(t *testing.T) {
+	g := NewWithT(t)
+	group := &dockerGroup{
+		MachineDeployment:       machineDeployment(),
+		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+		ProviderMachineTemplate: dockerMachineTemplate(),
+	}
+
+	g.Expect(group.DeepCopy()).To(Equal(group))
 }
 
 func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {

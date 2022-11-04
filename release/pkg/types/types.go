@@ -20,7 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/clients"
 )
 
-// ReleaseConfig contains metadata fields for a release
+// ReleaseConfig contains metadata fields for a release.
 type ReleaseConfig struct {
 	ReleaseVersion           string
 	DevReleaseUriVersion     string

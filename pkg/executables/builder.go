@@ -71,7 +71,7 @@ func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...HelmOpt) *Helm {
 
 // Init initializes the executable builder and returns a Closer
 // that needs to be called once the executables are not in used anymore
-// The closer will cleanup and free all internal resources
+// The closer will cleanup and free all internal resources.
 func (b *ExecutablesBuilder) Init(ctx context.Context) (Closer, error) {
 	return b.executableBuilder.Init(ctx)
 }
@@ -90,7 +90,7 @@ func BuildDockerExecutable() *Docker {
 
 // RunExecutablesInDocker determines if binary executables should be ran
 // from a docker container or native binaries from the host path
-// It reads MR_TOOLS_DISABLE variable
+// It reads MR_TOOLS_DISABLE variable.
 func ExecutablesInDocker() bool {
 	if env, ok := os.LookupEnv("MR_TOOLS_DISABLE"); ok && strings.EqualFold(env, "true") {
 		logger.Info("Warning: eks-a tools image disabled, using client's executables")
@@ -100,7 +100,7 @@ func ExecutablesInDocker() bool {
 }
 
 // InitInDockerExecutablesBuilder builds and inits a default ExecutablesBuilder to run executables in a docker container
-// that will make use of a long running docker container
+// that will make use of a long running docker container.
 func InitInDockerExecutablesBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutablesBuilder, Closer, error) {
 	b, err := NewInDockerExecutablesBuilder(BuildDockerExecutable(), image, mountDirs...)
 	if err != nil {
@@ -115,7 +115,7 @@ func InitInDockerExecutablesBuilder(ctx context.Context, image string, mountDirs
 	return b, closer, nil
 }
 
-// NewInDockerExecutablesBuilder builds an executables builder for docker
+// NewInDockerExecutablesBuilder builds an executables builder for docker.
 func NewInDockerExecutablesBuilder(dockerClient DockerClient, image string, mountDirs ...string) (*ExecutablesBuilder, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -139,13 +139,13 @@ func DefaultEksaImage() string {
 
 type Closer func(ctx context.Context) error
 
-// Close implements interface types.Closer
+// Close implements interface types.Closer.
 func (c Closer) Close(ctx context.Context) error {
 	return c(ctx)
 }
 
 // CheckErr just calls the closer and logs an error if present
-// It's mostly a helper for defering the close in a oneliner without ignoring the error
+// It's mostly a helper for defering the close in a oneliner without ignoring the error.
 func (c Closer) CheckErr(ctx context.Context) {
 	if err := c(ctx); err != nil {
 		logger.Error(err, "Failed closing container for executables")

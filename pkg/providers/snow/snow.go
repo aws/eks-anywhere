@@ -145,10 +145,6 @@ func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrap
 	return p.generateCAPISpec(ctx, bootstrapCluster, clusterSpec)
 }
 
-func (p *SnowProvider) GenerateStorageClass() []byte {
-	return nil
-}
-
 func (p *SnowProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }

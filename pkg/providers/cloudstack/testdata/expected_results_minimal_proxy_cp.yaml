@@ -46,19 +46,6 @@ spec:
       name: global
       namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-kind: CloudStackMachineTemplate
-metadata:
-  name: test-control-plane-template-1234567890000
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
----
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
@@ -368,3 +355,28 @@ spec:
     format: cloud-config
   replicas: 3
   version: v1.21.2-eks-1-21-4
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: CloudStackMachineTemplate
+metadata:
+  creationTimestamp: null
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---

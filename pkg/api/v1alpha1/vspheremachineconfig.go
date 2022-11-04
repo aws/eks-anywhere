@@ -21,7 +21,7 @@ const (
 	ubuntuDefaultUser        = "capv"
 )
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate {
 	return &VSphereMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
@@ -136,6 +136,14 @@ func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
 	}
 	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users[0].Name != bottlerocketDefaultUser {
 		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", config.Spec.Users[0].Name)
+	}
+
+	return nil
+}
+
+func validateVSphereMachineConfigHasTemplate(config *VSphereMachineConfig) error {
+	if config.Spec.Template == "" {
+		return fmt.Errorf("template field is required")
 	}
 
 	return nil
