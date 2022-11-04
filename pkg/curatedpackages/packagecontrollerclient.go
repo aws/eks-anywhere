@@ -107,7 +107,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	}
 
 	if err = pc.ApplySecret(ctx); err != nil {
-		logger.Info("Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.")
+		logger.Info("Warning: No AWS key/license provided. Please be aware this might prevent the package controller from installing curated packages.")
 	}
 
 	if err = pc.CreateCronJob(ctx); err != nil {

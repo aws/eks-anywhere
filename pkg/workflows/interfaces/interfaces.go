@@ -74,5 +74,5 @@ type EksdUpgrader interface {
 }
 
 type PackageInstaller interface {
-	InstallCuratedPackages(ctx context.Context) error
+	InstallCuratedPackages(ctx context.Context)
 }
