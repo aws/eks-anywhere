@@ -4,6 +4,16 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
+## [v0.12.1](https://github.com/aws/eks-anywhere/releases/tag/v0.12.1)
+
+### Changed
+- Setting minimum wait time for nodes and machinedeployments (#3868, fixes #3822)
+
+### Fixed
+- Fixed worker node count pointer dereference issue (#3852)
+- Fixed eks-anywhere-packages reference in go.mod (#3902)
+- Surface dropped error in Cloudstack validations (#3832)
+
 ## [v0.12.0](https://github.com/aws/eks-anywhere/releases/tag/v0.12.0)
 
 ### ⚠️ Breaking changes
