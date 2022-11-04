@@ -76,27 +76,6 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig
-  failurePolicy: Fail
-  name: mutation.vspheredatacenterconfig.anywhere.amazonaws.com
-  rules:
-  - apiGroups:
-    - anywhere.eks.amazonaws.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - vspheredatacenterconfigs
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
       path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheremachineconfig
   failurePolicy: Fail
   name: mutation.vspheremachineconfig.anywhere.amazonaws.com

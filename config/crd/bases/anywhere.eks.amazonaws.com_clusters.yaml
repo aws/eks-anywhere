@@ -172,23 +172,6 @@ spec:
                       - key
                       type: object
                     type: array
-                  upgradeRolloutStrategy:
-                    description: UpgradeRolloutStrategy determines the rollout strategy
-                      to use for rolling upgrades and related parameters/knobs
-                    properties:
-                      rollingUpdate:
-                        properties:
-                          maxSurge:
-                            type: integer
-                          maxUnavailable:
-                            type: integer
-                        required:
-                        - maxSurge
-                        - maxUnavailable
-                        type: object
-                      type:
-                        type: string
-                    type: object
                 type: object
               datacenterRef:
                 properties:
@@ -258,9 +241,6 @@ spec:
                 description: RegistryMirrorConfiguration defines the settings for
                   image registry mirror
                 properties:
-                  authenticate:
-                    description: Authenticate defines if registry requires authentication
-                    type: boolean
                   caCertContent:
                     description: CACertContent defines the contents registry mirror
                       CA certificate
@@ -347,23 +327,6 @@ spec:
                         - key
                         type: object
                       type: array
-                    upgradeRolloutStrategy:
-                      description: UpgradeRolloutStrategy determines the rollout strategy
-                        to use for rolling upgrades and related parameters/knobs
-                      properties:
-                        rollingUpdate:
-                          properties:
-                            maxSurge:
-                              type: integer
-                            maxUnavailable:
-                              type: integer
-                          required:
-                          - maxSurge
-                          - maxUnavailable
-                          type: object
-                        type:
-                          type: string
-                      type: object
                   type: object
                 type: array
             type: object

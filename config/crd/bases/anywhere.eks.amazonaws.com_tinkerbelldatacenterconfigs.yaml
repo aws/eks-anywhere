@@ -35,26 +35,21 @@ spec:
           metadata:
             type: object
           spec:
-            description: TinkerbellDatacenterConfigSpec defines the desired state
-              of TinkerbellDatacenterConfig
+            description: "TinkerbellDatacenterConfigSpec defines the desired state
+              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
+              regenerate code after modifying this file"
             properties:
               hookImagesURLPath:
                 description: HookImagesURLPath can be used to override the default
-                  Hook images path to pull from a local server.
+                  Hook images path to pull from a local server
                 type: string
               osImageURL:
                 description: OSImageURL can be used to override the default OS image
-                  path to pull from a local server.
+                  path to pull from a local server
                 type: string
-              skipLoadBalancerDeployment:
-                description: SkipLoadBalancerDeployment when set to "true" can be
-                  used to skip deploying a load balancer to expose Tinkerbell stack.
-                  Users will need to deploy and configure a load balancer manually
-                  after the cluster is created.
-                type: boolean
               tinkerbellIP:
                 description: TinkerbellIP is used to configure a VIP for hosting the
-                  Tinkerbell services.
+                  Tinkerbell servies.
                 type: string
             required:
             - tinkerbellIP

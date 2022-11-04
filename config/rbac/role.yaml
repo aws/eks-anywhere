@@ -15,8 +15,6 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
-  - nutanixdatacenterconfigs
-  - nutanixmachineconfigs
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
