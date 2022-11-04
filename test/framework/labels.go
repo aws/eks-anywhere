@@ -28,7 +28,6 @@ func ValidateControlPlaneFailureDomainLabels(controlPlane v1alpha1.ControlPlaneC
 	} else {
 		return fmt.Errorf("ds.meta_data.failuredomain placeholder in node label is currently only supported in CloudStack provider")
 	}
-	return nil
 }
 
 func ValidateWorkerNodeLabels(w v1alpha1.WorkerNodeGroupConfiguration, node corev1.Node) error {
@@ -45,7 +44,6 @@ func ValidateWorkerNodeFailureDomainLabels(w v1alpha1.WorkerNodeGroupConfigurati
 	} else {
 		return fmt.Errorf("ds.meta_data.failuredomain placeholder in node label is currently only supported in CloudStack provider")
 	}
-	return nil
 }
 
 func validateLabels(expectedLabels map[string]string, node corev1.Node) error {
