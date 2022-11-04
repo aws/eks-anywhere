@@ -169,8 +169,8 @@ func (fc *fluxForCluster) createRemoteRepository(ctx context.Context) error {
 	return nil
 }
 
-// initializeLocalRepository will git init the local repository directory, initialize a git repository.
-// it will then change branches to the branch specified in the GitOps configuration.
+// InitializeLocalRepository will git init the local repository directory, initialize a git repository.
+// It will then change branches to the branch specified in the GitOps configuration.
 func (fc *fluxForCluster) initializeLocalRepository() error {
 	if err := fc.gitClient.Init(); err != nil {
 		return fmt.Errorf("initializing repository: %v", err)

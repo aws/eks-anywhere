@@ -299,7 +299,7 @@ func (s *CreateWorkloadClusterTask) Checkpoint() *task.CompletedTask {
 	return nil
 }
 
-// InstallResourcesOnManagement implementation.
+// Run InstallResourcesOnManagement implementation.
 func (s *InstallResourcesOnManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.BootstrapCluster.ExistingManagement {
 		return &MoveClusterManagementTask{}

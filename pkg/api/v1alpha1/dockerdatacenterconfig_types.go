@@ -77,7 +77,7 @@ func (d *DockerDatacenterConfig) Validate() error {
 
 // +kubebuilder:object:generate=false
 
-// Same as DockerDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
+// DockerDatacenterConfigGenerate Same as DockerDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type DockerDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

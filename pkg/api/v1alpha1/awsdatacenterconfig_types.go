@@ -71,7 +71,7 @@ func (a *AWSDatacenterConfig) ConvertConfigToConfigGenerateStruct() *AWSDatacent
 
 // +kubebuilder:object:generate=false
 
-// Same as AWSDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
+// AWSDatacenterConfigGenerate Same as AWSDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type AWSDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

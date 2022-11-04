@@ -14,7 +14,7 @@ const TinkerbellMachineConfigKind = "TinkerbellMachineConfig"
 // +kubebuilder:object:generate=false
 type TinkerbellMachineConfigGenerateOpt func(config *TinkerbellMachineConfigGenerate)
 
-// Used for generating yaml for generate clusterconfig command.
+// NewTinkerbellMachineConfigGenerate Used for generating yaml for generate clusterconfig command.
 func NewTinkerbellMachineConfigGenerate(name string, opts ...TinkerbellMachineConfigGenerateOpt) *TinkerbellMachineConfigGenerate {
 	machineConfig := &TinkerbellMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

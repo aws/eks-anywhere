@@ -12,23 +12,22 @@ import (
 
 const (
 	// PausedAnnotation is an annotation that can be applied to EKS-A cluster
-	// object to prevent a controller from processing a resource.
+	// Object to prevent a controller from processing a resource.
 	pausedAnnotation = "anywhere.eks.amazonaws.com/paused"
 
 	// ControlPlaneAnnotation is an annotation that can be applied to EKS-A machineconfig
-	// object to prevent a controller from making changes to that resource.
+	// Object to prevent a controller from making changes to that resource.
 	controlPlaneAnnotation = "anywhere.eks.amazonaws.com/control-plane"
 
 	clusterResourceType = "clusters.anywhere.eks.amazonaws.com"
 
-	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it.
+	// EtcdAnnotation Can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it.
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
 
-	// managementAnnotation points to the name of a management cluster
-	// cluster object.
+	// ManagementAnnotation points to the name of a management cluster object.
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 
-	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
+	// DefaultEksaNamespace is the default namespace for EKS-A resources when not specified.
 	defaultEksaNamespace = "default"
 )
 

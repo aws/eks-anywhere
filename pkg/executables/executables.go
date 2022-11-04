@@ -49,7 +49,7 @@ type Executable interface {
 	Run(cmd *Command) (stdout bytes.Buffer, err error)
 }
 
-// this should only be called through the executables.builder.
+// NewExecutable This should only be called through the executables.builder.
 func NewExecutable(cli string) Executable {
 	return &executable{
 		cli: cli,

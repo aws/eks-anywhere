@@ -300,7 +300,7 @@ func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool 
 
 // +kubebuilder:object:generate=false
 
-// Same as CloudStackDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
+// CloudStackDatacenterConfigGenerate Same as CloudStackDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type CloudStackDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

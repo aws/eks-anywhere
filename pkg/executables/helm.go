@@ -37,7 +37,7 @@ func WithInsecure() HelmOpt {
 	}
 }
 
-// join the default and the provided maps together.
+// WithEnv join the default and the provided maps together.
 func WithEnv(env map[string]string) HelmOpt {
 	return func(h *Helm) {
 		for k, v := range env {

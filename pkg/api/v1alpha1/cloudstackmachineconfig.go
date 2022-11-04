@@ -11,7 +11,7 @@ import (
 
 const CloudStackMachineConfigKind = "CloudStackMachineConfig"
 
-// Used for generating yaml for generate clusterconfig command.
+// NewCloudStackMachineConfigGenerate Used for generating yaml for generate clusterconfig command.
 func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGenerate {
 	return &CloudStackMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

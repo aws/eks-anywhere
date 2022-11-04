@@ -81,7 +81,7 @@ func ResolvConfExtraArgs(resolvConf *v1alpha1.ResolvConf) ExtraArgs {
 	return args
 }
 
-// We don't need to add these once the Kubernetes components default to using the secure cipher suites.
+// SecureTlsCipherSuitesExtraArgs We don't need to add these once the Kubernetes components default to using the secure cipher suites.
 func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("tls-cipher-suites", crypto.SecureCipherSuitesString())

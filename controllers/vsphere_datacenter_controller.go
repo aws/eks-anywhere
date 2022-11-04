@@ -39,7 +39,7 @@ func (r *VSphereDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// TODO: add here kubebuilder permissions as neeeded.
+// Reconcile TODO: add here kubebuilder permissions as neeeded.
 func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("vsphereDatacenter", req.NamespacedName)
 

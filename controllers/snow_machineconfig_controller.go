@@ -40,7 +40,7 @@ func (r *SnowMachineConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// TODO: add here kubebuilder permissions as needed.
+// Reconcile TODO: add here kubebuilder permissions as needed.
 func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("snowMachineConfig", req.NamespacedName)
 

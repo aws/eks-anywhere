@@ -104,7 +104,7 @@ func WithEnvoyEnabled(enabled bool) InstallOption {
 	}
 }
 
-// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server.
+// WithLoadBalancerEnabled is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server.
 func WithLoadBalancerEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
 		s.loadBalancer = enabled

@@ -130,7 +130,7 @@ func (c *TinkerbellMachineConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as TinkerbellMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
+// TinkerbellMachineConfigGenerate Same as TinkerbellMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
 type TinkerbellMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

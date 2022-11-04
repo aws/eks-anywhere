@@ -69,7 +69,7 @@ func (c *TinkerbellTemplateConfig) ConvertConfigToConfigGenerateStruct() *Tinker
 
 // +kubebuilder:object:generate=false
 
-// Same as TinkerbellTemplateConfig except stripped down for generation of yaml file during generate clusterconfig.
+// TinkerbellTemplateConfigGenerate Same as TinkerbellTemplateConfig except stripped down for generation of yaml file during generate clusterconfig.
 type TinkerbellTemplateConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

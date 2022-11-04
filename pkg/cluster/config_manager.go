@@ -63,7 +63,7 @@ func (c *ConfigManager) Parse(yamlManifest []byte) (*Config, error) {
 	return c.buildConfigFromParsed(parsed)
 }
 
-// Parse set the registered defaults in a Config struct.
+// SetDefaults Parse set the registered defaults in a Config struct.
 func (c *ConfigManager) SetDefaults(config *Config) error {
 	var allErrs []error
 

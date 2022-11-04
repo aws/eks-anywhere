@@ -128,7 +128,7 @@ func (v *VSphereDatacenterConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as VSphereDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
+// VSphereDatacenterConfigGenerate Same as VSphereDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type VSphereDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

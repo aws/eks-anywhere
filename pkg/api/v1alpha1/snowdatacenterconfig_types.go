@@ -96,7 +96,7 @@ func (s *SnowDatacenterConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as SnowDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
+// SnowDatacenterConfigGenerate Same as SnowDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type SnowDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

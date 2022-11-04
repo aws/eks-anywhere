@@ -25,7 +25,7 @@ type Task interface {
 	Restore(ctx context.Context, commandContext *CommandContext, completedTask *CompletedTask) (Task, error)
 }
 
-// Command context maintains the mutable and shared entities.
+// CommandContext Command context maintains the mutable and shared entities.
 type CommandContext struct {
 	Bootstrapper       interfaces.Bootstrapper
 	Provider           providers.Provider
@@ -58,12 +58,12 @@ type Profiler struct {
 	starts  map[string]map[string]time.Time
 }
 
-// profiler for a Task.
+// SetStartTask  profiler for a Task.
 func (pp *Profiler) SetStartTask(taskName string) {
 	pp.SetStart(taskName, taskName)
 }
 
-// this can be used to profile sub tasks.
+// SetStart this can be used to profile sub tasks.
 func (pp *Profiler) SetStart(taskName string, msg string) {
 	if _, ok := pp.starts[taskName]; !ok {
 		pp.starts[taskName] = map[string]time.Time{}
@@ -71,12 +71,12 @@ func (pp *Profiler) SetStart(taskName string, msg string) {
 	pp.starts[taskName][msg] = time.Now()
 }
 
-// needs to be called after setStart.
+// MarkDoneTask needs to be called after setStart.
 func (pp *Profiler) MarkDoneTask(taskName string) {
 	pp.MarkDone(taskName, taskName)
 }
 
-// this can be used to profile sub tasks.
+// MarkDone this can be used to profile sub tasks.
 func (pp *Profiler) MarkDone(taskName string, msg string) {
 	if _, ok := pp.metrics[taskName]; !ok {
 		pp.metrics[taskName] = map[string]time.Duration{}
@@ -86,7 +86,7 @@ func (pp *Profiler) MarkDone(taskName string, msg string) {
 	}
 }
 
-// get Metrics.
+// Metrics get Metrics.
 func (pp *Profiler) Metrics() map[string]map[string]time.Duration {
 	return pp.metrics
 }

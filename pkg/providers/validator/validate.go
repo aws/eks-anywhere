@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
-// TODO: update vsphere, cloudstack, tinkerbell validators to use this common validation method.
+// ValidateControlPlaneIpUniqueness TODO: update vsphere, cloudstack, tinkerbell validators to use this common validation method.
 func ValidateControlPlaneIpUniqueness(cluster *v1alpha1.Cluster, netClient networkutils.NetClient) error {
 	ip := cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	if networkutils.IsIPInUse(netClient, ip) {

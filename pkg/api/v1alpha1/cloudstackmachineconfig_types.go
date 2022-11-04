@@ -300,7 +300,7 @@ func (c *CloudStackMachineConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as CloudStackMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
+// CloudStackMachineConfigGenerate Same as CloudStackMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
 type CloudStackMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

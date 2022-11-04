@@ -32,7 +32,7 @@ const (
 // +kubebuilder:object:generate=false
 type ClusterGenerateOpt func(config *ClusterGenerate)
 
-// Used for generating yaml for generate clusterconfig command.
+// NewClusterGenerate Used for generating yaml for generate clusterconfig command.
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
 	clusterConfig := &ClusterGenerate{
 		TypeMeta: metav1.TypeMeta{
