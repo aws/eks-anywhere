@@ -1096,14 +1096,14 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 
 	e.T.Log("Waiting for Package", name, "To be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.cluster(), name, "1m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+		e.cluster(), name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere package timed out: %s", err)
 	}
 
 	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "1m", "Available", "hello-eks-anywhere", ns)
+		e.cluster(), "5m", "Available", "hello-eks-anywhere", ns)
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere deployment timed out: %s", err)
 	}
@@ -1117,7 +1117,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
 
 	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "3m", ns)
+		e.cluster(), clientPod, "5m", ns)
 	if err != nil {
 		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
 	}
