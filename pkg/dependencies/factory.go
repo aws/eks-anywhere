@@ -272,7 +272,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		if f.executablesConfig.builder != nil {
 			return nil
 		}
-		
+
 		if f.registryMirror != nil && f.registryMirror.auth {
 			f.WithDockerLogin()
 		}
