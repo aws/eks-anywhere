@@ -178,7 +178,7 @@ func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
 }
 
-func runCuratedPackageInstallTinkerbellSingleNodeSimpleFlow(test *framework.ClusterE2ETest) {
+func runCuratedPackageInstallTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOnHardware()
@@ -299,7 +299,7 @@ func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestCPackagesTinkerbellSingleNodeUbuntuKubernetes122SimpleFlow(t *testing.T) {
+func TestCPackagesTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube122),
@@ -309,10 +309,10 @@ func TestCPackagesTinkerbellSingleNodeUbuntuKubernetes122SimpleFlow(t *testing.T
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	
-	runCuratedPackageInstallTinkerbellSingleNodeSimpleFlow(test)
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestCPackagesTinkerbellSingleNodeUbuntuKubernetes123SimpleFlow(t *testing.T) {
+func TestCPackagesTinkerbellUbuntuKubernetes123SingleNodeFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube123),
@@ -322,10 +322,10 @@ func TestCPackagesTinkerbellSingleNodeUbuntuKubernetes123SimpleFlow(t *testing.T
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	
-	runCuratedPackageInstallTinkerbellSingleNodeSimpleFlow(test)
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestCPackagesTinkerbellSingleNodeBottleRocketKubernetes122SimpleFlow(t *testing.T) {
+func TestCPackagesTinkerbellBottleRocketKubernetes122SingleNodeFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube122),
@@ -335,10 +335,10 @@ func TestCPackagesTinkerbellSingleNodeBottleRocketKubernetes122SimpleFlow(t *tes
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	
-	runCuratedPackageInstallTinkerbellSingleNodeSimpleFlow(test)
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestCPackagesTinkerbellSingleNodeBottleRocketKubernetes123SimpleFlow(t *testing.T) {
+func TestCPackagesTinkerbellBottleRocketKubernetes123SingleNodeFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube123),
@@ -348,5 +348,5 @@ func TestCPackagesTinkerbellSingleNodeBottleRocketKubernetes123SimpleFlow(t *tes
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	
-	runCuratedPackageInstallTinkerbellSingleNodeSimpleFlow(test)
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
