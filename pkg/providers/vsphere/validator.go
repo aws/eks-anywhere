@@ -114,7 +114,7 @@ func (v *Validator) validateMachineConfigTagsExist(ctx context.Context, machineC
 	return nil
 }
 
-// ValidateClusterMachineConfigs TODO: dry out machine configs validations
+// ValidateClusterMachineConfigs TODO: dry out machine configs validations.
 func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
