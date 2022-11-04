@@ -143,7 +143,7 @@ func generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywh
 	return localAvailabilityZones, nil
 }
 
-// ValidateClusterMachineConfigs TODO: dry out machine configs validations.
+// ValidateClusterMachineConfigs Validates machine configs. TODO: dry out machine configs validations.
 func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error {
 	if len(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
