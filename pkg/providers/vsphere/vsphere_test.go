@@ -2641,36 +2641,6 @@ func TestProviderGenerateCAPISpecForCreateVersion121(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_121_md.yaml")
 }
 
-func TestProviderGenerateCAPISpecForCreateVersion121Controller(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	setupContext(t)
-	ctx := context.Background()
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	cluster := &types.Cluster{
-		Name: "test",
-	}
-	clusterSpec := givenClusterSpec(t, testClusterConfigMain121Filename)
-
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMain121Filename)
-	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl)
-
-	if provider == nil {
-		t.Fatalf("provider object is nil")
-	}
-	provider.templateBuilder.fromController = true
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("failed to setup and validate: %v", err)
-	}
-
-	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
-	if err != nil {
-		t.Fatalf("failed to generate cluster api spec contents: %v", err)
-	}
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_121_cp.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_121_controller_md.yaml")
-}
-
 func TestSetupAndValidateCreateManagementDoesNotCheckIfMachineAndDataCenterExist(t *testing.T) {
 	ctx := context.Background()
 	provider := givenProvider(t)

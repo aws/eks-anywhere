@@ -19,17 +19,14 @@ import (
 
 func NewVsphereTemplateBuilder(
 	now types.NowFunc,
-	fromController bool,
 ) *VsphereTemplateBuilder {
 	return &VsphereTemplateBuilder{
-		now:            now,
-		fromController: fromController,
+		now: now,
 	}
 }
 
 type VsphereTemplateBuilder struct {
-	now            types.NowFunc
-	fromController bool
+	now types.NowFunc
 }
 
 func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(
@@ -68,7 +65,7 @@ func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spe
 	if err != nil {
 		return false, fmt.Errorf("parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
 	}
-	if vs.fromController && k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
+	if k8sVersion.Major == 1 && k8sVersion.Minor == 21 {
 		return true, nil
 	}
 	return false, nil

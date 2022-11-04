@@ -59,7 +59,7 @@ func (b *ControlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) erro
 
 // ControlPlaneSpec builds a vsphere ControlPlane definition based on an eks-a cluster spec.
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
-	templateBuilder := NewVsphereTemplateBuilder(time.Now, true)
+	templateBuilder := NewVsphereTemplateBuilder(time.Now)
 
 	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(
 		spec,
