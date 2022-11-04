@@ -54,11 +54,11 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-6`
+1.23 - `eksdRelease:kubernetes-1-23-eks-22`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-11`
+1.22 - `eksdRelease:kubernetes-1-22-eks-12`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-18`
+1.21 - `eksdRelease:kubernetes-1-21-eks-20`
 
 1.20 - `eksdRelease:kubernetes-1-20-eks-20`
 
@@ -77,7 +77,7 @@ curl https://sh.rustup.rs -sSf | sh
 ```
 CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 ```
-3. Download the root role tuftool will use to download the bottlerocket images
+3. Download the root role that will be used by tuftool to download the Bottlerocket images
 ```
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"

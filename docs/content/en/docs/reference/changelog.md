@@ -6,11 +6,27 @@ weight: 35
 
 ## Unreleased
 
+### Added
+
+### Changed
+
+### Fixed
+
+## [v0.12.1](https://github.com/aws/eks-anywhere/releases/tag/v0.12.1)
+
+### Changed
+- Setting minimum wait time for nodes and machinedeployments (#3868, fixes #3822)
+
+### Fixed
+- Fixed worker node count pointer dereference issue (#3852)
+- Fixed eks-anywhere-packages reference in go.mod (#3902)
+- Surface dropped error in Cloudstack validations (#3832)
+
+## [v0.12.0](https://github.com/aws/eks-anywhere/releases/tag/v0.12.0)
+
 ### ⚠️ Breaking changes
 - Certificates signed with SHA-1 are not supported anymore for Registry Mirror. Users with a registry mirror and providing a custom CA cert will need to rotate the certificate served by the registry mirror endpoint before using the new EKS-A version. This is true for both new clusters (`create cluster` command) and existing clusters (`upgrade cluster` command).
 - The `--source` option was removed from several package commands. Use either `--kube-version` for registry or `--cluster` for cluster.
-
-## [v0.12.0](https://github.com/aws/eks-anywhere/releases/tag/v0.12.0)
 
 ### Added
 - Add support for EKS Anywhere with provider CloudStack
