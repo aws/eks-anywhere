@@ -168,16 +168,30 @@ func packageBundleURI(version v1alpha1.KubernetesVersion) string {
 	return fmt.Sprintf("%s:%s", EksaPackageBundleURI, tag)
 }
 
+func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
+	test.SetPackageBundleActive()
+	packageName := "hello-eks-anywhere"
+	packagePrefix := "test"
+	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
+	test.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
+	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
+	test.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
+}
+
+func runCuratedPackageInstallTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
+	runCuratedPackageInstall(test)
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
+
 func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
-	test.WithCluster(func(e *framework.ClusterE2ETest) {
-		test.SetPackageBundleActive()
-		packageName := "hello-eks-anywhere"
-		packagePrefix := "test"
-		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
-		e.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
-		e.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
-		e.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
-	})
+	test.WithCluster(runCuratedPackageInstall)
 }
 
 // There are many tests here, each covers a different combination described in
@@ -283,4 +297,56 @@ func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube122),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
+func TestCPackagesTinkerbellUbuntuKubernetes123SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube123),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
+func TestCPackagesTinkerbellBottleRocketKubernetes122SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube122),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
+func TestCPackagesTinkerbellBottleRocketKubernetes123SingleNodeFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube123),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }

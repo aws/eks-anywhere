@@ -201,6 +201,16 @@ func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
 	}
 }
 
+// WithClusterSingleNode helps to create an e2e test option for a single node cluster.
+func WithClusterSingleNode(v v1alpha1.KubernetesVersion) ClusterE2ETestOpt {
+	return WithClusterFiller(
+		api.WithKubernetesVersion(v),
+		api.WithControlPlaneCount(1),
+		api.WithEtcdCountIfExternal(0),
+		api.RemoveAllWorkerNodeGroups(),
+	)
+}
+
 func WithClusterConfigLocationOverride(path string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterConfigLocation = path
