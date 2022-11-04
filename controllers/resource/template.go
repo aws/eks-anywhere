@@ -69,7 +69,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerVmcs[wnConfig.MachineGroupRef.Name].Spec
 	}
 	// control plane and etcd updates are prohibited in controller so those specs should not change
-	templateBuilder := vsphere.NewVsphereTemplateBuilder(r.now, true)
+	templateBuilder := vsphere.NewVsphereTemplateBuilder(r.now)
 	clusterName := clusterSpec.Cluster.Name
 
 	oldVdc, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0])

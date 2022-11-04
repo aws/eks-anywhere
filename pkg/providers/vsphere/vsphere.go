@@ -176,7 +176,6 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, cl
 		writer:                writer,
 		templateBuilder: NewVsphereTemplateBuilder(
 			now,
-			false,
 		),
 		skipIPCheck:        skipIpCheck,
 		csiEnabled:         !datacenterConfig.Spec.DisableCSI,

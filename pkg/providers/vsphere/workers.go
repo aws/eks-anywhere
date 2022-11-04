@@ -27,7 +27,7 @@ type (
 func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*Workers, error) {
 	// TODO(g-gaston): refactor template builder so it doesn't behave differently for controller and CLI
 	// TODO(g-gaston): do we need time.Now if the names are not dependent on a timestamp anymore?
-	templateBuilder := NewVsphereTemplateBuilder(time.Now, false)
+	templateBuilder := NewVsphereTemplateBuilder(time.Now)
 	workersYaml, err := templateBuilder.CAPIWorkersSpecWithInitialNames(spec)
 	if err != nil {
 		return nil, err
