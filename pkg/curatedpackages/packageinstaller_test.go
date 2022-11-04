@@ -74,8 +74,7 @@ func TestPackageInstallerSuccess(t *testing.T) {
 	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(nil)
 	tt.packageControllerClient.EXPECT().EnableCuratedPackages(tt.ctx).Return(nil)
 
-	err := tt.command.InstallCuratedPackages(tt.ctx)
-	tt.Expect(err).To(BeNil())
+	tt.command.InstallCuratedPackages(tt.ctx)
 }
 
 func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
@@ -83,8 +82,7 @@ func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 
 	tt.packageControllerClient.EXPECT().EnableCuratedPackages(tt.ctx).Return(errors.New("controller installation failed"))
 
-	err := tt.command.InstallCuratedPackages(tt.ctx)
-	tt.Expect(err).NotTo(BeNil())
+	tt.command.InstallCuratedPackages(tt.ctx)
 }
 
 func TestPackageInstallerFailWhenPackageFails(t *testing.T) {
@@ -93,6 +91,5 @@ func TestPackageInstallerFailWhenPackageFails(t *testing.T) {
 	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(errors.New("path doesn't exist"))
 	tt.packageControllerClient.EXPECT().EnableCuratedPackages(tt.ctx).Return(nil)
 
-	err := tt.command.InstallCuratedPackages(tt.ctx)
-	tt.Expect(err).NotTo(BeNil())
+	tt.command.InstallCuratedPackages(tt.ctx)
 }

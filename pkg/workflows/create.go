@@ -477,10 +477,7 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 }
 
 func (cp *InstallCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	err := commandContext.PackageInstaller.InstallCuratedPackages(ctx)
-	if err != nil {
-		logger.MarkFail("Curated Packages Installation Failed...")
-	}
+	commandContext.PackageInstaller.InstallCuratedPackages(ctx)
 	return nil
 }
 
