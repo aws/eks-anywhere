@@ -47,12 +47,10 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 // ValidateAuthenticationForRegistryMirror checks if REGISTRY_USERNAME and REGISTRY_PASSWORD is set if authenticated registry mirrors are used.
 func ValidateAuthenticationForRegistryMirror(clusterSpec *cluster.Spec) error {
 	cluster := clusterSpec.Cluster
-	if cluster.Spec.RegistryMirrorConfiguration != nil {
-		if cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-			_, _, err := config.ReadCredentials()
-			if err != nil {
-				return err
-			}
+	if cluster.Spec.RegistryMirrorConfiguration != nil && cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+		_, _, err := config.ReadCredentials()
+		if err != nil {
+			return err
 		}
 	}
 	return nil
