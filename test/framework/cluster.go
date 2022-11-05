@@ -53,6 +53,7 @@ const (
 	EksaPackagesInstallation         = "eks-anywhere-packages"
 )
 
+//go:embed testdata/oidc-roles.yaml
 var oidcRoles []byte
 
 type ClusterE2ETest struct {
