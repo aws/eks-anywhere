@@ -105,14 +105,6 @@ eksa-worker2                    type=worker-group-1
 
 If you don't have any available hardware that match this requirement in the cluster, you can [setup a new hardware CSV]({{< relref "../../../reference/baremetal/bare-preparation/#prepare-hardware-inventory" >}}). You can feed this hardware inventory file during the [upgrade cluster command]({{< relref "baremetal-upgrades/#upgrade-cluster-command" >}}).
 
-or 
-
-Prior to running the [upgrade cluster command]({{< relref "baremetal-upgrades/#upgrade-cluster-command" >}}), you can run the following command to manually push the additional hardware to your cluster:
-
-```bash
-eksctl anywhere generate hardware -z <hardware.csv> | kubectl apply -f -
-```
-
 ### Performing a cluster upgrade
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
