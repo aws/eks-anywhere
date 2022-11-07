@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
@@ -99,6 +100,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateDatacenterConfig,
 		r.ValidateMachineConfigs,
 		r.ReconcileControlPlane,
+		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
@@ -150,6 +152,13 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	log.Info("Applying control plane CAPI objects")
 	// TODO: implement CP reconciliation phase
 	return controller.Result{}, nil
+}
+
+// CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
+// Requeues with the appropriate wait times whenever the cluster is not ready yet.
+func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "checkControlPlaneReady")
+	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
 
 // ReconcileCNI takes the Cilium CNI in a cluster to the desired state defined in a cluster spec.

@@ -86,6 +86,36 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
+	tt := newReconcilerTest(t)
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	capiCluster.Status.Conditions = clusterv1.Conditions{
+		{
+			Type:               clusterapi.ControlPlaneReadyCondition,
+			Status:             corev1.ConditionFalse,
+			LastTransitionTime: metav1.NewTime(time.Now()),
+		},
+	}
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
+	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.machineConfigControlPlane.Spec.Datastore).Return(100.0, nil).Times(2)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.ResultWithRequeue(30 * time.Second)))
+}
+
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
