@@ -314,7 +314,7 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 		// will account for the same selector being specified on different groups.
 		requirements := minimumHardwareRequirements{}
 
-		var maxSurge int
+		maxSurge := 1
 		if spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
 			maxSurge = spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 		}
@@ -327,6 +327,7 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 		}
 
 		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+			maxSurge = 1
 			if nodeGroup.UpgradeRolloutStrategy != nil {
 				maxSurge = nodeGroup.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 			}
