@@ -492,7 +492,7 @@ func eksdRelease() *eksdv1.Release {
 							Image: &eksdv1.AssetImage{},
 						},
 						{
-							Name:  "kube-apiserver-image",
+							Name: "kube-apiserver-image",
 							Image: &eksdv1.AssetImage{
 								URI: "public.ecr.aws/eks-distro/kubernetes/kube-apiserver:v1.19.8",
 							},

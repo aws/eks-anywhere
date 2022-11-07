@@ -4,6 +4,7 @@ package cluster
 // default processors to build a Config.
 func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 	return NewConfigClientBuilder().Register(
+		getDockerDatacenter,
 		getVSphereDatacenter,
 		getVSphereMachineConfigs,
 		getSnowDatacenter,
