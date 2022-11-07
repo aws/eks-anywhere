@@ -61,6 +61,7 @@ func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, 
 		"clusterID":          clusterIdValue,
 		"backendMode":        strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
 		"partition":          clusterSpec.AWSIamConfig.Spec.Partition,
+		"kubeVersion124":     clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube124,
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints != nil {
