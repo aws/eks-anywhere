@@ -161,8 +161,12 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 }
 
 func newRegistryForDummyProviderReconciler() controllers.ProviderClusterReconcilerRegistry {
+	return newRegistryMock(dummyProviderReconciler{})
+}
+
+func newRegistryMock(reconciler clusters.ProviderClusterReconciler) dummyProviderReconcilerRegistry {
 	return dummyProviderReconcilerRegistry{
-		reconciler: dummyProviderReconciler{},
+		reconciler: reconciler,
 	}
 }
 
@@ -177,6 +181,10 @@ func (d dummyProviderReconcilerRegistry) Get(_ string) clusters.ProviderClusterR
 type dummyProviderReconciler struct{}
 
 func (dummyProviderReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	return controller.Result{}, nil
+}
+
+func (dummyProviderReconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	return controller.Result{}, nil
 }
 
