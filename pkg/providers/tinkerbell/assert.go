@@ -216,6 +216,8 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 	}
 }
 
+// AssertionsForScaleUpDown asserts that catalogue has sufficient hardware to
+// support the ClusterSpec during an scale up/down upgrade workflow.
 func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluster.Spec, rollingUpgrade bool) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		// Without Hardware selectors we get undesirable behavior so ensure we have them for
@@ -298,11 +300,9 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 	}
 }
 
-func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalogue, maxSurge int) ClusterSpecAssertion {
-	return ExtraHardwareAvailableAssertion(catalogue, maxSurge)
-}
-
-func ExtraHardwareAvailableAssertion(catalogue *hardware.Catalogue, maxSurge int) ClusterSpecAssertion {
+// ExtraHardwareAvailableAssertionForRollingUpgrade asserts that catalogue has sufficient hardware to
+// support the ClusterSpec during an rolling upgrade workflow.
+func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalogue) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		// Without Hardware selectors we get undesirable behavior so ensure we have them for
 		// all MachineConfigs.
@@ -314,6 +314,10 @@ func ExtraHardwareAvailableAssertion(catalogue *hardware.Catalogue, maxSurge int
 		// will account for the same selector being specified on different groups.
 		requirements := minimumHardwareRequirements{}
 
+		var maxSurge int
+		if spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+			maxSurge = spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+		}
 		err := requirements.Add(
 			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
 			maxSurge,
@@ -323,6 +327,9 @@ func ExtraHardwareAvailableAssertion(catalogue *hardware.Catalogue, maxSurge int
 		}
 
 		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+			if nodeGroup.UpgradeRolloutStrategy != nil {
+				maxSurge = nodeGroup.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+			}
 			err := requirements.Add(
 				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
 				maxSurge,
