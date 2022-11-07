@@ -25,7 +25,6 @@ const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
-	packagesNamespace = "eksa-packages"
 )
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
@@ -121,11 +120,11 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 //   - Creating a single run of the cron job to ensure the secret is consumed
 func (pc *PackageControllerClient) CreateCredentials(ctx context.Context) error {
 	if err := pc.ApplySecret(ctx); err != nil {
-		return errors.New("Environment variables EKSA_AWS_SECRET_ACCESS_KEY and EKSA_AWS_ACCESS_KEY_ID not provided.")
+		return errors.New("environment variables EKSA_AWS_SECRET_ACCESS_KEY and EKSA_AWS_ACCESS_KEY_ID not provided")
 	}
 
 	if err := pc.CreateCronJob(ctx); err != nil {
-		return errors.New("Not able to trigger cron job to enable curated packages.")
+		return errors.New("not able to trigger cron job to enable curated packages")
 	}
 	return nil
 }
