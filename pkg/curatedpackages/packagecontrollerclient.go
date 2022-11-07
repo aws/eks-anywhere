@@ -109,7 +109,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	// Customers are currently requesting to show a warning in case
 	// credentials are not provided for curated packages
 	if err = pc.CreateCredentials(ctx); err != nil {
-		logger.MarkWarning(" Unable to create credentials for curated packages: ", "warning", err)
+		logger.MarkWarning("  Unable to create credentials for curated packages: ", "warning", err)
 	}
 
 	return pc.waitForActiveBundle(ctx)
