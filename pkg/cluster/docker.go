@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"context"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func dockerEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -38,4 +42,18 @@ func processDockerDatacenter(c *Config, objects ObjectLookup) {
 			c.DockerDatacenter = datacenter.(*anywherev1.DockerDatacenterConfig)
 		}
 	}
+}
+
+func getDockerDatacenter(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.DockerDatacenterKind {
+		return nil
+	}
+
+	datacenter := &anywherev1.DockerDatacenterConfig{}
+	if err := client.Get(ctx, c.Cluster.Spec.DatacenterRef.Name, c.Cluster.Namespace, datacenter); err != nil {
+		return err
+	}
+
+	c.DockerDatacenter = datacenter
+	return nil
 }
