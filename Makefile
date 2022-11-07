@@ -146,7 +146,7 @@ UNAME := $(shell uname -s)
 default: build lint
 
 .PHONY: build
-build: eks-a eks-a-tool ## Generate binaries and run unit tests
+build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 
 .PHONY: release
 release: eks-a-release unit-test ## Generate release binary and run unit tests
