@@ -116,7 +116,7 @@ type ClusterClient interface {
 }
 
 type Networking interface {
-	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error)
+	Install(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, namespaces []string) error
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error)
 	RunPostControlPlaneUpgradeSetup(ctx context.Context, cluster *types.Cluster) error
 }
@@ -568,15 +568,7 @@ func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster
 }
 
 func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	providerNamespaces := getProviderNamespaces(provider.GetDeployments())
-	networkingManifestContent, err := c.networking.GenerateManifest(ctx, clusterSpec, providerNamespaces)
-	if err != nil {
-		return fmt.Errorf("generating networking manifest: %v", err)
-	}
-	if err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, networkingManifestContent); err != nil {
-		return fmt.Errorf("applying networking manifest spec: %v", err)
-	}
-	return nil
+	return c.networking.Install(ctx, cluster, clusterSpec, getProviderNamespaces(provider.GetDeployments()))
 }
 
 func (c *ClusterManager) UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, provider providers.Provider) (*types.ChangeDiff, error) {

@@ -1,4 +1,4 @@
-package cilium
+package cilium_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -17,9 +18,9 @@ import (
 type upgraderTest struct {
 	*WithT
 	ctx                   context.Context
-	u                     *Upgrader
+	u                     *cilium.Upgrader
 	h                     *mocks.MockHelm
-	client                *mocks.MockupgraderClient
+	client                *mocks.MockKubernetesClient
 	manifestPre, manifest []byte
 	currentSpec, newSpec  *cluster.Spec
 	cluster               *types.Cluster
@@ -29,9 +30,8 @@ type upgraderTest struct {
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	ctrl := gomock.NewController(t)
 	h := mocks.NewMockHelm(ctrl)
-	client := mocks.NewMockupgraderClient(ctrl)
-	u := NewUpgrader(nil, h)
-	u.client = client
+	client := mocks.NewMockKubernetesClient(ctrl)
+	u := cilium.NewUpgrader(client, cilium.NewTemplater(h))
 	return &upgraderTest{
 		WithT:    NewWithT(t),
 		ctx:      context.Background(),

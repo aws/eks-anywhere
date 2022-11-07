@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -37,27 +38,48 @@ func AssertFilesEquals(t *testing.T, gotPath, wantPath string) {
 
 func AssertContentToFile(t *testing.T, gotContent, wantFile string) {
 	t.Helper()
-	if wantFile == "" && gotContent == "" {
+	if wantFile == "" {
 		return
 	}
-
 	processUpdate(t, wantFile, gotContent)
 
 	fileContent := ReadFile(t, wantFile)
-
 	if gotContent != fileContent {
-		cmd := exec.Command("diff", "-u", wantFile, "-")
-		cmd.Stdin = bytes.NewReader([]byte(gotContent))
-		result, err := cmd.Output()
+		diff, err := computeDiffBetweenContentAndFile([]byte(gotContent), wantFile)
 		if err != nil {
-			if exitError, ok := err.(*exec.ExitError); ok {
-				if exitError.ExitCode() == 1 {
-					t.Fatalf("Results diff expected actual for %s:\n%s", wantFile, string(result))
-				}
-			}
+			t.Fatalf("Content doesn't match file got =\n%s\n\n\nwant =\n%s\n", gotContent, fileContent)
 		}
-		t.Fatalf("Content doesn't match file got =\n%s\n\n\nwant =\n%s\n", gotContent, fileContent)
+		if diff != "" {
+			t.Fatalf("Results diff expected actual for %s:\n%s", wantFile, string(diff))
+		}
 	}
+}
+
+func contentEqualToFile(gotContent []byte, wantFile string) (bool, error) {
+	if wantFile == "" && len(gotContent) == 0 {
+		return false, nil
+	}
+
+	fileContent, err := ioutil.ReadFile(wantFile)
+	if err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(gotContent, fileContent), nil
+}
+
+func computeDiffBetweenContentAndFile(content []byte, file string) (string, error) {
+	cmd := exec.Command("diff", "-u", file, "-")
+	cmd.Stdin = bytes.NewReader([]byte(content))
+	result, err := cmd.Output()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
+			return string(result), nil
+		}
+
+		return "", fmt.Errorf("computing the difference between content and file %s: %v", file, err)
+	}
+	return "", nil
 }
 
 func processUpdate(t *testing.T, filePath, content string) {
