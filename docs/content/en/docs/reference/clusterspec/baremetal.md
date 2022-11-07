@@ -157,9 +157,12 @@ Identifies the name of the management cluster.
 If this is a standalone cluster or if it were serving as the management cluster for other workload clusters, this will be the same as the cluster name.
 Bare Metal EKS Anywhere clusters do not yet support the creation of separate workload clusters.
 
-### workerNodeGroupConfigurations (required)
+### workerNodeGroupConfigurations
 This takes in a list of node groups that you can define for your workers.
-You may define one or more worker node groups.
+
+You may define 0 worker node group for Bare Metal cluster. In this case, control plane nodes will not be tainted and all pods will be running in the control plane nodes. This mechanism can be used to deploy a single node Bare Metal cluster.
+
+>**_NOTE:_** Empty workerNodeGroupConfigurations is not supported when Kubernetes version <= 1.21.
 
 ### workerNodeGroupConfigurations.count
 Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
