@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -23,7 +25,6 @@ const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
-	packagesNamespace = "eksa-packages"
 )
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
@@ -106,18 +107,25 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return err
 	}
 
-	if err = pc.ApplySecret(ctx); err != nil {
-		logger.Info("Warning: No AWS key/license provided. Please be aware this might prevent the package controller from installing curated packages.")
+	if err = pc.CreateCredentials(ctx); err != nil {
+		logger.MarkWarning("Unable to create credentials for curated packages: ", "error", err)
 	}
 
-	if err = pc.CreateCronJob(ctx); err != nil {
-		logger.Info("Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.")
+	return pc.waitForActiveBundle(ctx)
+}
+
+// CreateCredentials creates necessary credentials to enable the installation of curated packages.
+// In order to create the credentials, there are two necessary steps:
+//   - Creating a kubernetes secret
+//   - Creating a single run of the cron job to ensure the secret is consumed
+func (pc *PackageControllerClient) CreateCredentials(ctx context.Context) error {
+	if err := pc.ApplySecret(ctx); err != nil {
+		return errors.New("environment variables EKSA_AWS_SECRET_ACCESS_KEY and EKSA_AWS_ACCESS_KEY_ID not provided")
 	}
 
-	if err := pc.waitForActiveBundle(ctx); err != nil {
-		return err
+	if err := pc.CreateCronJob(ctx); err != nil {
+		return errors.New("not able to trigger cron job to enable curated packages")
 	}
-
 	return nil
 }
 
