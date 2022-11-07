@@ -94,12 +94,20 @@ spec:
 
       # run on each master node
       nodeSelector:
+{{- if .kubeVersion124 }}
+        node-role.kubernetes.io/control-plane: ""
+{{- else }}
         node-role.kubernetes.io/master: ""
+{{- end }}
       tolerations:
       - effect: NoSchedule 
         key: node-role.kubernetes.io/master
       - key: CriticalAddonsOnly
         operator: Exists
+{{- if .kubeVersion124 }}
+      - effect: NoSchedule 
+        key: node-role.kubernetes.io/control-plane
+{{- end }}
 {{- if .controlPlaneTaints }}
 {{- range .controlPlaneTaints }}
       - key: {{ .Key }}
