@@ -37,7 +37,7 @@ func ValidateWorkerNodeLabels(w v1alpha1.WorkerNodeGroupConfiguration, node core
 // ValidateWorkerNodeFailureDomainLabels validate if Cloudstack provider replaces ds.meta_data.failuredomain with proper failuredomain name
 // in worker group node label 'cluster.x-k8s.io/failure-domain'.
 func ValidateWorkerNodeFailureDomainLabels(w v1alpha1.WorkerNodeGroupConfiguration, node corev1.Node) error {
-	if w.MachineGroupRef.Kind == "CloudStackMachineConfig" {
+	if w.MachineGroupRef.Kind == v1alpha1.CloudStackMachineConfigKind {
 		logger.V(4).Info("Validating worker node failuredomain label", "worker node group", w.Name)
 		return validateFailureDomainLabel(w.Labels, node)
 	}
