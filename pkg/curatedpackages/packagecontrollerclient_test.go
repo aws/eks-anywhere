@@ -276,9 +276,7 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, errors.New("error applying secrets"))
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, errors.New("failed applying secrets"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -289,6 +287,22 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when secret creation fails")
+	}
+}
+
+func TestCreateCredentialsCreateCronJobFail(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
+	tt.Expect(err).To(BeNil())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("cron job failed to create"))
+
+	err = tt.command.CreateCredentials(tt.ctx)
+	if err == nil {
+		t.Errorf("Create Credentials should fail when Create CronJob fails")
 	}
 }
 
