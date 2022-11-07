@@ -6,6 +6,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -168,6 +170,41 @@ func packageBundleURI(version v1alpha1.KubernetesVersion) string {
 	return fmt.Sprintf("%s:%s", EksaPackageBundleURI, tag)
 }
 
+func withMgmtCluster(cluster *framework.ClusterE2ETest) *types.Cluster {
+	return &types.Cluster{
+		Name:               cluster.ClusterName,
+		KubeconfigFile:     filepath.Join(cluster.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", cluster.ClusterName)),
+		ExistingManagement: true,
+	}
+}
+
+func setupSimpleMultiCluster(t *testing.T, provider framework.Provider, kubeVersion v1alpha1.KubernetesVersion) *framework.MulticlusterE2ETest {
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(kubeVersion),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(kubeVersion),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+	return test
+}
+
 func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
 	packageName := "hello-eks-anywhere"
@@ -175,7 +212,26 @@ func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
 	test.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
-	test.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
+	test.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test))
+}
+
+func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
+	test.CreateManagementCluster()
+	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
+		e.GenerateClusterConfig()
+		e.CreateCluster()
+		e.VerifyPackageControllerNotInstalled()
+		test.ManagementCluster.SetPackageBundleActive()
+		packageName := "hello-eks-anywhere"
+		packagePrefix := "test"
+		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
+		test.ManagementCluster.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ManagementCluster.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
+		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
+		e.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test.ManagementCluster))
+		e.DeleteCluster()
+	})
+	time.Sleep(5 * time.Minute)
+	test.DeleteManagementCluster()
 }
 
 func runCuratedPackageInstallTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
@@ -299,6 +355,34 @@ func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
+func TestCPackagesVSphereKubernetes121UbuntuWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
+	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
+func TestCPackagesVSphereKubernetes121BottleRocketWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
+	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
+	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
+func TestCPackagesVSphereKubernetes122UbuntuWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewVSphere(t, framework.WithUbuntu122())
+	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
+	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
+func TestCPackagesVSphereKubernetes122BottleRocketWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
+	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
+	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
 func TestCPackagesTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
@@ -308,7 +392,7 @@ func TestCPackagesTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	
+
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
@@ -321,7 +405,6 @@ func TestCPackagesTinkerbellUbuntuKubernetes123SingleNodeFlow(t *testing.T) {
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
@@ -334,7 +417,7 @@ func TestCPackagesTinkerbellBottleRocketKubernetes122SingleNodeFlow(t *testing.T
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	
+
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
@@ -347,6 +430,26 @@ func TestCPackagesTinkerbellBottleRocketKubernetes123SingleNodeFlow(t *testing.T
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	
+
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
+func TestCPackagesCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
+			"my-packages-test", EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesCloudStackRedhatKubernetes121WorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
+	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
+	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }

@@ -19,6 +19,7 @@ import (
 
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
 	rctrl "github.com/tinkerbell/rufio/controllers"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/yaml"
@@ -1091,13 +1092,13 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 }
 
 // VerifyHelloPackageInstalled is checking if the hello eks anywhere package gets installed correctly.
-func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
+func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	ns := constants.EksaPackagesName
 
 	e.T.Log("Waiting for Package", name, "To be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.cluster(), name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+		mgmtCluster, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere package timed out: %s", err)
 	}
@@ -1132,5 +1133,19 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	ok := strings.Contains(logs, "Amazon EKS Anywhere")
 	if !ok {
 		e.T.Fatalf("expected Amazon EKS Anywhere, got %T", logs)
+	}
+}
+
+// VerifyPackageControllerNotInstalled is verifying that package controller is not installed.
+func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
+	ctx := context.Background()
+
+	ns := constants.EksaPackagesName
+	packageDeployment := "eks-anywhere-packages"
+
+	_, err := e.KubectlClient.GetDeployment(ctx, packageDeployment, ns, e.cluster().KubeconfigFile)
+
+	if !apierrors.IsNotFound(err) {
+		e.T.Fatalf("found deployment for package controller in workload cluster %s : %s", e.ClusterName, err)
 	}
 }
