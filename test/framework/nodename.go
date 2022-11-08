@@ -31,8 +31,10 @@ func validateNodeNameMatchCAPIMachineName(node corev1.Node) error {
 	capiMachineName, ok := node.Annotations["cluster.x-k8s.io/machine"]
 	if !ok {
 		return fmt.Errorf("CAPI machine name not found for node %s", node.Name)
-	} else if node.Name != capiMachineName {
-			return fmt.Errorf("node name %s not match CAPI machine name %s", node.Name, capiMachineName)
+	}
+
+	if node.Name != capiMachineName {
+		return fmt.Errorf("node name %s not match CAPI machine name %s", node.Name, capiMachineName)
 	}
 	return nil
 }
