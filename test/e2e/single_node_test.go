@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -49,6 +50,23 @@ func TestTinkerbellKubernetes123UbuntuSingleNode(t *testing.T) {
 			api.RemoveAllWorkerNodeGroups(),
 		),
 		framework.WithControlPlaneHardware(1),
+	)
+
+	runTinkerbellSingleNodeFlow(test)
+}
+
+func TestTinkerbellKubernetes124UbuntuSingleNode(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu124Tinkerbell()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runTinkerbellSingleNodeFlow(test)
