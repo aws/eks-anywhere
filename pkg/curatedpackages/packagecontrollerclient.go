@@ -3,11 +3,10 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -107,8 +106,10 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return err
 	}
 
+	// Customers are currently requesting to show a warning in case
+	// credentials are not provided for curated packages
 	if err = pc.CreateCredentials(ctx); err != nil {
-		logger.MarkWarning("Unable to create credentials for curated packages: ", "error", err)
+		logger.MarkWarning("  Unable to create credentials for curated packages: ", "warning", err)
 	}
 
 	return pc.waitForActiveBundle(ctx)
