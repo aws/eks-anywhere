@@ -66,7 +66,7 @@ export EKSA_VSPHERE_USERNAME=<ADMIN_VSPHERE_USERNAME>
 export EKSA_VSPHERE_PASSWORD=<ADMIN_VSPHERE_PASSWORD>
 ```
 
-If the user does not already exist, you can create the user and all the specified group and role objects by runing:
+If the user does not already exist, you can create the user and all the specified group and role objects by running:
 ```bash
 eksctl anywhere exp vsphere setup user -f user.yaml --password '<NewUserPassword>'
 ```
