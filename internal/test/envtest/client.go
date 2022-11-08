@@ -150,6 +150,22 @@ func (a *APIExpecter) ShouldEventuallyExist(ctx context.Context, obj client.Obje
 	}, a.timeout).Should(gomega.Succeed(), "object %s should eventually exist", obj.GetName())
 }
 
+// ShouldEventuallyMatch defines an eventual expectation that succeeds if the provided object
+// becomes readable by the client and matches the provider expectation before the timeout expires.
+func (a *APIExpecter) ShouldEventuallyMatch(ctx context.Context, obj client.Object, match func(g gomega.Gomega)) {
+	a.t.Helper()
+	key := client.ObjectKeyFromObject(obj)
+	a.g.Eventually(func(g gomega.Gomega) error {
+		if err := a.client.Get(ctx, key, obj); err != nil {
+			return err
+		}
+
+		match(g)
+
+		return nil
+	}, a.timeout).Should(gomega.Succeed(), "object %s should eventually match", obj.GetName())
+}
+
 // ShouldEventuallyNotExist defines an eventual expectation that succeeds if the provided object
 // becomes not found by the client before the timeout expires.
 func (a *APIExpecter) ShouldEventuallyNotExist(ctx context.Context, obj client.Object) {
