@@ -2,20 +2,21 @@ package envtest
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
-	v1 "k8s.io/api/core/v1"
+	"github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Object client.Object
-
 // CreateObjs creates Objects using the provided kube client and waits until its cache
 // has been updated with those objects.
-func CreateObjs(ctx context.Context, t testing.TB, c client.Client, objs ...Object) {
+func CreateObjs(ctx context.Context, t testing.TB, c client.Client, objs ...client.Object) {
 	t.Helper()
 	for _, o := range objs {
 		// we copy objects because the client modifies them while making creating/updating calls
@@ -54,7 +55,7 @@ func CreateObjs(ctx context.Context, t testing.TB, c client.Client, objs ...Obje
 	}
 }
 
-func waitForObjectReady(ctx context.Context, t testing.TB, c client.Client, obj Object) Object {
+func waitForObjectReady(ctx context.Context, t testing.TB, c client.Client, obj client.Object) client.Object {
 	unstructuredObj := &unstructured.Unstructured{}
 	for {
 		unstructuredObj.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
@@ -68,17 +69,100 @@ func waitForObjectReady(ctx context.Context, t testing.TB, c client.Client, obj 
 	return unstructuredObj
 }
 
-func isNamespace(obj Object) bool {
-	_, isNamespace := obj.(*v1.Namespace)
-	return isNamespace
+func isNamespace(obj client.Object) bool {
+	_, isNamespaceStruct := obj.(*corev1.Namespace)
+	return isNamespaceStruct ||
+		obj.GetObjectKind().GroupVersionKind().GroupKind() == corev1.SchemeGroupVersion.WithKind("Namespace").GroupKind()
 }
 
-func copyObject(t testing.TB, obj Object) Object {
+func copyObject(t testing.TB, obj client.Object) client.Object {
 	copyRuntimeObj := obj.DeepCopyObject()
-	copyObj, ok := copyRuntimeObj.(Object)
+	copyObj, ok := copyRuntimeObj.(client.Object)
 	if !ok {
 		t.Fatal("Unexpected error converting back to client.Object after deep copy")
 	}
 
 	return copyObj
+}
+
+// APIExpecter is a helper to define eventual expectations over API resources in tests.
+// It's useful when working with clients that maintain a cache, since changes might not be
+// reflected immediately, causing tests to flake.
+type APIExpecter struct {
+	t       testing.TB
+	client  client.Client
+	g       gomega.Gomega
+	timeout time.Duration
+}
+
+// NewAPIExpecter constructs a new APIExpecter.
+func NewAPIExpecter(t testing.TB, client client.Client) *APIExpecter {
+	return &APIExpecter{
+		t:       t,
+		g:       gomega.NewWithT(t),
+		client:  client,
+		timeout: 5 * time.Second,
+	}
+}
+
+// DeleteAndWait sends delete requests for a collection of objects and waits until
+// the client cache reflects the changes.
+func (a *APIExpecter) DeleteAndWait(ctx context.Context, objs ...client.Object) {
+	a.t.Helper()
+	for _, obj := range objs {
+		// namespaces can't be deleted with envtest
+		if isNamespace(obj) {
+			continue
+		}
+
+		err := a.client.Delete(ctx, obj)
+		if !apierrors.IsNotFound(err) {
+			a.g.Expect(err).To(gomega.Succeed(), "should delete object %s", obj.GetName())
+		}
+		a.ShouldEventuallyNotExist(ctx, obj)
+	}
+}
+
+// DeleteAllOfAndWait deletes all objects of the given type and waits until the client's
+// cache reflects those changes.
+func (a *APIExpecter) DeleteAllOfAndWait(ctx context.Context, obj client.Object) {
+	a.t.Helper()
+	a.g.Eventually(func() error {
+		err := a.client.DeleteAllOf(ctx, obj)
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		return errors.New("some objects still existed before delete operation, try deleting another round")
+	}, a.timeout).Should(gomega.Succeed(), "all objects of kind %s should eventually be deleted", obj.GetObjectKind().GroupVersionKind().Kind)
+}
+
+// ShouldEventuallyExist defines an eventual expectation that succeeds if the provided object
+// becomes readable by the client before the timeout expires.
+func (a *APIExpecter) ShouldEventuallyExist(ctx context.Context, obj client.Object) {
+	a.t.Helper()
+	key := client.ObjectKeyFromObject(obj)
+	a.g.Eventually(func() error {
+		return a.client.Get(ctx, key, obj)
+	}, a.timeout).Should(gomega.Succeed(), "object %s should eventually exist", obj.GetName())
+}
+
+// ShouldEventuallyNotExist defines an eventual expectation that succeeds if the provided object
+// becomes not found by the client before the timeout expires.
+func (a *APIExpecter) ShouldEventuallyNotExist(ctx context.Context, obj client.Object) {
+	key := client.ObjectKeyFromObject(obj)
+	a.g.Eventually(func() error {
+		err := a.client.Get(ctx, key, obj)
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		return errors.New("object still exists")
+	}, a.timeout).Should(gomega.Succeed(), "object %s should eventually be deleted", obj.GetName())
 }

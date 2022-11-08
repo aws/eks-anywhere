@@ -21,6 +21,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
@@ -139,13 +140,8 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		return ctrl.Result{}, nil
 	}
 
-	if cluster.IsSelfManaged() {
-		log.Info("Ignoring self managed cluster")
-		return ctrl.Result{}, nil
-	}
-
 	if cluster.Spec.BundlesRef == nil {
-		if err := r.setBundlesRef(ctx, cluster); err != nil {
+		if err = r.setBundlesRef(ctx, cluster); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
@@ -154,19 +150,21 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		return ctrl.Result{}, err
 	}
 
-	result, err := r.reconcile(ctx, cluster, log)
-	if err != nil {
-		failureMessage := err.Error()
-		cluster.Status.FailureMessage = &failureMessage
-		log.Error(err, "Failed to reconcile Cluster")
-	}
-	return result, err
+	return r.reconcile(ctx, cluster, log)
 }
 
 func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
 	clusterProviderReconciler := r.providerReconcilerRegistry.Get(cluster.Spec.DatacenterRef.Kind)
 
-	reconcileResult, err := clusterProviderReconciler.Reconcile(ctx, log, cluster)
+	var reconcileResult controller.Result
+	var err error
+	if cluster.IsSelfManaged() {
+		// self-managed clusters should only reconcile worker nodes to avoid control plane instability
+		reconcileResult, err = clusterProviderReconciler.ReconcileWorkerNodes(ctx, log, cluster)
+	} else {
+		reconcileResult, err = clusterProviderReconciler.Reconcile(ctx, log, cluster)
+	}
+
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -174,6 +172,10 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.C
 }
 
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster) (ctrl.Result, error) {
+	if cluster.IsSelfManaged() {
+		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
+	}
+
 	capiCluster := &clusterv1.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	r.log.Info("Deleting", "name", cluster.Name)

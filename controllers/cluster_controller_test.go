@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
@@ -12,19 +13,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/aws/eks-anywhere/controllers"
+	"github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/internal/test"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
+	vspheremocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 	vspherereconcilermocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -36,14 +40,14 @@ const (
 )
 
 type vsphereClusterReconcilerTest struct {
-	govcClient *mocks.MockProviderGovcClient
+	govcClient *vspheremocks.MockProviderGovcClient
 	reconciler *controllers.ClusterReconciler
 	client     client.Client
 }
 
 func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsphereClusterReconcilerTest {
 	ctrl := gomock.NewController(t)
-	govcClient := mocks.NewMockProviderGovcClient(ctrl)
+	govcClient := vspheremocks.NewMockProviderGovcClient(ctrl)
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
@@ -74,40 +78,61 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	}
 }
 
-func TestClusterReconcilerSkipManagement(t *testing.T) {
-	secret := createSecret()
-	cluster := createCluster()
-	datacenterConfig := createDataCenter(cluster)
-	bundle := createBundle(cluster)
-	machineConfigCP := createCPMachineConfig()
-	machineConfigWN := createWNMachineConfig()
-
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
-
-	tt := newVsphereClusterReconcilerTest(t, objs...)
-
-	req := clusterRequest(cluster)
-
+func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
+	g := NewWithT(t)
 	ctx := context.Background()
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(0)
-	tt.govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil).Times(0)
-	tt.govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
-	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(2).Times(0)
 
-	_, err := tt.reconciler.Reconcile(ctx, req)
-	if err != nil {
-		t.Fatalf("reconcile: (%v)", err)
+	selfManagedCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-management-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			BundlesRef: &anywherev1.BundlesRef{
+				Name: "my-bundles-ref",
+			},
+		},
 	}
 
-	apiCluster := &anywherev1.Cluster{}
+	log := test.NewNullLogger()
+	controller := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
-	err = tt.client.Get(context.TODO(), req.NamespacedName, apiCluster)
-	if err != nil {
-		t.Fatalf("get cluster: (%v)", err)
+	providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, log, sameName(selfManagedCluster))
+
+	r := controllers.NewClusterReconciler(c, log, registry)
+	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(result).To(Equal(ctrl.Result{}))
+}
+
+func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	deleteTimestamp := metav1.NewTime(time.Now())
+	selfManagedCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "my-management-cluster",
+			DeletionTimestamp: &deleteTimestamp,
+		},
+		Spec: anywherev1.ClusterSpec{
+			BundlesRef: &anywherev1.BundlesRef{
+				Name: "my-bundles-ref",
+			},
+		},
 	}
-	if apiCluster.Status.FailureMessage != nil {
-		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
-	}
+
+	log := test.NewNullLogger()
+	controller := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
+
+	r := controllers.NewClusterReconciler(c, log, registry)
+	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
+	g.Expect(err).To(MatchError(ContainSubstring("deleting self-managed clusters is not supported")))
 }
 
 func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
@@ -396,4 +421,23 @@ func createSecret() *apiv1.Secret {
 			"password": []byte("test"),
 		},
 	}
+}
+
+type sameNameCluster struct{ c *anywherev1.Cluster }
+
+func sameName(c *anywherev1.Cluster) gomock.Matcher {
+	return &sameNameCluster{c}
+}
+
+func (s *sameNameCluster) Matches(x interface{}) bool {
+	cluster, ok := x.(*anywherev1.Cluster)
+	if !ok {
+		return false
+	}
+
+	return s.c.Name == cluster.Name && s.c.Namespace == cluster.Namespace
+}
+
+func (s *sameNameCluster) String() string {
+	return fmt.Sprintf("has name %s and namespace %s", s.c.Name, s.c.Namespace)
 }

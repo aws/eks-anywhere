@@ -11,9 +11,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -66,6 +67,58 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "my-management-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
+	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.machineConfigControlPlane.Spec.Datastore).Return(100.0, nil).Times(2)
+
+	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-management-cluster-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&vspherev1.VSphereMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-management-cluster-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-management-cluster-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
 }
 
 func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
@@ -182,6 +235,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
+	*envtest.APIExpecter
 	ctx                       context.Context
 	cniReconciler             *vspherereconcilermocks.MockCNIReconciler
 	govcClient                *mocks.MockProviderGovcClient
@@ -192,7 +246,7 @@ type reconcilerTest struct {
 	client                    client.Client
 	env                       *envtest.Environment
 	bundle                    *releasev1.Bundles
-	eksaSupportObjs           []envtest.Object
+	eksaSupportObjs           []client.Object
 	datacenterConfig          *anywherev1.VSphereDatacenterConfig
 	machineConfigControlPlane *anywherev1.VSphereMachineConfig
 	machineConfigWorker       *anywherev1.VSphereMachineConfig
@@ -202,7 +256,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ctrl := gomock.NewController(t)
 	cniReconciler := vspherereconcilermocks.NewMockCNIReconciler(ctrl)
 	remoteClientRegistry := vspherereconcilermocks.NewMockRemoteClientRegistry(ctrl)
-	client := env.Client()
+	c := env.Client()
 
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 	vcb := govmomi.NewVMOMIClientBuilder()
@@ -276,15 +330,16 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	tt := &reconcilerTest{
 		t:                    t,
 		WithT:                NewWithT(t),
+		APIExpecter:          envtest.NewAPIExpecter(t, c),
 		ctx:                  context.Background(),
 		cniReconciler:        cniReconciler,
 		govcClient:           govcClient,
 		validator:            validator,
 		defaulter:            defaulter,
 		remoteClientRegistry: remoteClientRegistry,
-		client:               client,
+		client:               c,
 		env:                  env,
-		eksaSupportObjs: []envtest.Object{
+		eksaSupportObjs: []client.Object{
 			namespace(clusterNamespace),
 			namespace(constants.EksaSystemNamespace),
 			managementCluster,
@@ -305,20 +360,11 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 }
 
 func (tt *reconcilerTest) cleanup() {
-	for _, obj := range tt.allObjs() {
-		_, isNamespace := obj.(*corev1.Namespace)
-		if isNamespace {
-			// namespaces can't be deleted with envtest
-			continue
-		}
-		tt.Expect(tt.client.Delete(tt.ctx, obj)).To(Succeed())
-		key := client.ObjectKeyFromObject(obj)
-		for {
-			if err := tt.client.Get(tt.ctx, key, obj); apierrors.IsNotFound(err) {
-				break
-			}
-		}
-	}
+	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+
+	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &vspherev1.VSphereMachineTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {
@@ -342,8 +388,8 @@ func (tt *reconcilerTest) createAllObjs() {
 	envtest.CreateObjs(tt.ctx, tt.t, tt.client, tt.allObjs()...)
 }
 
-func (tt *reconcilerTest) allObjs() []envtest.Object {
-	objs := make([]envtest.Object, 0, len(tt.eksaSupportObjs)+3)
+func (tt *reconcilerTest) allObjs() []client.Object {
+	objs := make([]client.Object, 0, len(tt.eksaSupportObjs)+3)
 	objs = append(objs, tt.eksaSupportObjs...)
 	objs = append(objs, tt.cluster, tt.machineConfigControlPlane, tt.machineConfigWorker)
 

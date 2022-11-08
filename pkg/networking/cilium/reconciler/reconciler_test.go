@@ -381,7 +381,7 @@ func (tt *reconcileTest) cleanup() {
 	tt.Expect(tt.client.DeleteAllOf(tt.ctx, &appsv1.Deployment{}, client.InNamespace("kube-system")))
 }
 
-func (tt *reconcileTest) withObjects(objs ...envtest.Object) *reconcileTest {
+func (tt *reconcileTest) withObjects(objs ...client.Object) *reconcileTest {
 	tt.t.Helper()
 	envtest.CreateObjs(tt.ctx, tt.t, tt.client, objs...)
 	return tt
