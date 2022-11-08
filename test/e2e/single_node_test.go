@@ -39,6 +39,23 @@ func TestTinkerbellKubernetes123BottleRocketSingleNode(t *testing.T) {
 	runTinkerbellSingleNodeFlow(test)
 }
 
+func TestTinkerbellKubernetes124BottleRocketSingleNode(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+
+	runTinkerbellSingleNodeFlow(test)
+}
+
 func TestTinkerbellKubernetes123UbuntuSingleNode(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
