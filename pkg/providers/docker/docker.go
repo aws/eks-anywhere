@@ -141,7 +141,8 @@ func (p *provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ 
 	return nil
 }
 
-func NewDockerTemplateBuilder(now types.NowFunc) providers.TemplateBuilder {
+// NewDockerTemplateBuilder returns a docker template builder object.
+func NewDockerTemplateBuilder(now types.NowFunc) *DockerTemplateBuilder {
 	return &DockerTemplateBuilder{
 		now: now,
 	}
@@ -186,6 +187,26 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 	}
 
 	return templater.AppendYamlResources(workerSpecs...), nil
+}
+
+// CAPIWorkersSpecWithInitialNames generates a yaml spec with the CAPI objects representing the worker
+// nodes for a particular eks-a cluster. It uses default initial names (ended in '-1') for the docker
+// machine templates and kubeadm config templates.
+func (d *DockerTemplateBuilder) CAPIWorkersSpecWithInitialNames(spec *cluster.Spec) (content []byte, err error) {
+	machineTemplateNames, kubeadmConfigTemplateNames := initialNamesForWorkers(spec)
+	return d.GenerateCAPISpecWorkers(spec, machineTemplateNames, kubeadmConfigTemplateNames)
+}
+
+func initialNamesForWorkers(spec *cluster.Spec) (machineTemplateNames, kubeadmConfigTemplateNames map[string]string) {
+	workerGroupsLen := len(spec.Cluster.Spec.WorkerNodeGroupConfigurations)
+	machineTemplateNames = make(map[string]string, workerGroupsLen)
+	kubeadmConfigTemplateNames = make(map[string]string, workerGroupsLen)
+	for _, workerNodeGroupConfiguration := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		machineTemplateNames[workerNodeGroupConfiguration.Name] = clusterapi.WorkerMachineTemplateName(spec, workerNodeGroupConfiguration)
+		kubeadmConfigTemplateNames[workerNodeGroupConfiguration.Name] = clusterapi.DefaultKubeadmConfigTemplateName(spec, workerNodeGroupConfiguration)
+	}
+
+	return machineTemplateNames, kubeadmConfigTemplateNames
 }
 
 func kubeletCgroupDriverExtraArgs(kubeVersion v1alpha1.KubernetesVersion) (clusterapi.ExtraArgs, error) {
