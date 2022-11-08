@@ -111,6 +111,36 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	}
 }
 
+func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
+	tt := newPackageControllerTest(t)
+	tt.command = curatedpackages.NewPackageControllerClient(
+		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		curatedpackages.WithEksaSecretAccessKey(""),
+		curatedpackages.WithEksaRegion(tt.eksaRegion),
+		curatedpackages.WithEksaAccessKeyId(""),
+		curatedpackages.WithManagementClusterName(tt.clusterName),
+	)
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	dat, err := os.ReadFile("testdata/awssecret_test_empty.yaml")
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, fmt.Errorf("boom"))
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName, "cronjob.suspend=true"}
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
+
+	err = tt.command.EnableCuratedPackages(tt.ctx)
+	if err != nil {
+		t.Errorf("Install Controller Should succeed when installation passes")
+	}
+}
+
 func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(

@@ -100,6 +100,9 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
+	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyId == "" {
+		values = append(values, "cronjob.suspend=true")
+	}
 
 	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, "", values)
 	if err != nil {
