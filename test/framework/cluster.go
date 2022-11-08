@@ -922,10 +922,9 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubeconfig, namespace string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
-	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
+	os.Setenv("KUBECONFIG", kubeconfig)
 	e.RunEKSA([]string{
 		"install", "package", packageName,
-		"--source=cluster",
 		"--package-name=" + packagePrefix, "-v=9",
 		"--cluster=" + e.ClusterName,
 		strings.Join(opts, " "),
@@ -935,7 +934,7 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubec
 // InstallCuratedPackageFile will install a curated package from a yaml file, this is useful since target namespace isn't supported on the CLI.
 func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
-	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
+	os.Setenv("KUBECONFIG", kubeconfig)
 	e.T.Log("Installing EKS-A Packages file", packageFile)
 	e.RunEKSA([]string{
 		"apply", "package", "-f", packageFile, "-v=9", strings.Join(opts, " "),
@@ -1032,11 +1031,11 @@ func (e *ClusterE2ETest) WithPersistentCluster(f func(e *ClusterE2ETest)) {
 	f(e)
 }
 
-func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
+// VerifyHarborPackageInstalled is checking if the harbor package gets installed correctly.
+func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string, namespace string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ns := constants.EksaPackagesName
 	deployments := []string{"core", "jobservice", "nginx", "portal", "registry"}
 	statefulsets := []string{"database", "redis", "trivy"}
 
@@ -1051,7 +1050,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 		go func(name string) {
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
-				e.cluster(), "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), ns)
+				e.cluster(), "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), namespace)
 			if err != nil {
 				errCh <- err
 			}
@@ -1061,7 +1060,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 		go func(name string) {
 			defer wg.Done()
 			err := e.KubectlClient.Wait(ctx, e.kubeconfigFilePath(), "5m", "Ready",
-				fmt.Sprintf("pods/%s-harbor-%s-0", prefix, name), ns)
+				fmt.Sprintf("pods/%s-harbor-%s-0", prefix, name), namespace)
 			if err != nil {
 				errCh <- err
 			}
