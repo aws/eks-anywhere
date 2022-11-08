@@ -226,3 +226,28 @@ func TestTinkerbellKubernetes122OIDC(t *testing.T) {
 	)
 	runTinkerbellOIDCFlow(test)
 }
+
+func TestTinkerbellKubernetes123OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellOIDCFlow(test)
+}
+
+func TestTinkerbellKubernetes124OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu124Tinkerbell()),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+	runTinkerbellOIDCFlow(test)
+}
