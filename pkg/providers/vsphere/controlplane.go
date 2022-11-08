@@ -2,7 +2,6 @@ package vsphere
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -62,9 +61,6 @@ func (b *ControlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) erro
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
 	templateBuilder := NewVsphereTemplateBuilder(time.Now)
 
-	if spec == nil {
-		return nil, fmt.Errorf("control plane spec can't be nil")
-	}
 	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(
 		spec,
 		func(values map[string]interface{}) {

@@ -256,8 +256,10 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
+	spec := tt.buildSpec()
+	spec.Cluster.Spec.KubernetesVersion = ""
 
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), nil)
+	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
 
 	tt.Expect(err).To(HaveOccurred())
 }
