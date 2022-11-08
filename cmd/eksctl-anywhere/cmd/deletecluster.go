@@ -80,6 +80,10 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
+	if err := validations.ValidateAuthenticationForRegistryMirror(clusterSpec); err != nil {
+		return err
+	}
+
 	cliConfig := buildCliConfig(clusterSpec)
 	dirs, err := dc.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {

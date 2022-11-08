@@ -81,6 +81,10 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
+	if err := validations.ValidateAuthenticationForRegistryMirror(clusterSpec); err != nil {
+		return err
+	}
+
 	cliConfig := buildCliConfig(clusterSpec)
 	dirs, err := uc.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
