@@ -253,6 +253,15 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	}).Should(Succeed(), "\"object %s should eventually exist", obj.GetName())
 }
 
+func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), nil)
+
+	tt.Expect(err).To(HaveOccurred())
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
