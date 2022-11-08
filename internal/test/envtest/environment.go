@@ -24,6 +24,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,6 +57,7 @@ func init() {
 	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(snowv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(addonsv1.AddToScheme(scheme.Scheme))
 }
 
 var packages = []moduleWithCRD{

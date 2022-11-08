@@ -166,8 +166,14 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
-	// TODO: implement CP reconciliation phase
-	return controller.Result{}, nil
+
+	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
+		cp, err := vsphere.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
+		if err != nil {
+			return nil, err
+		}
+		return cp.Objects(), nil
+	})
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
