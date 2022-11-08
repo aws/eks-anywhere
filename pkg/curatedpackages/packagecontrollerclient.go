@@ -100,7 +100,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
-	if pc.eksaSecretAccessKey == "" {
+	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyId == "" {
 		values = append(values, "cronjob.suspend=true")
 	}
 
@@ -125,9 +125,6 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 func (pc *PackageControllerClient) CreateCredentials(ctx context.Context) error {
 	if err := pc.ApplySecret(ctx); err != nil {
 		return errors.New("environment variables EKSA_AWS_SECRET_ACCESS_KEY and EKSA_AWS_ACCESS_KEY_ID not provided")
-	}
-	if pc.eksaSecretAccessKey == "" {
-		return nil
 	}
 
 	if err := pc.CreateCronJob(ctx); err != nil {

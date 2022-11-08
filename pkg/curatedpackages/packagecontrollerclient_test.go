@@ -123,7 +123,7 @@ func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test_empty.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, fmt.Errorf("boom"))
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
