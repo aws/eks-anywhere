@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -2293,52 +2292,10 @@ func TestValidateMirrorConfig(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:    "authenticate but username not set",
-			wantErr: "please set REGISTRY_USERNAME env var",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint:     "1.2.3.4",
-						Port:         "443",
-						Authenticate: true,
-					},
-					DatacenterRef: Ref{
-						Kind: VSphereDatacenterKind,
-					},
-				},
-			},
-		},
-		{
-			name:    "authenticate but not vsphere",
-			wantErr: "authenticated registry mirror is only supported for vSphere provider currently",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint:     "1.2.3.4",
-						Port:         "443",
-						Authenticate: true,
-					},
-					DatacenterRef: Ref{
-						Kind: TinkerbellDatacenterKind,
-					},
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			if tt.cluster.Spec.RegistryMirrorConfiguration != nil {
-				if tt.cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-					if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
-						t.Fatalf(err.Error())
-					}
-					if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
-						t.Fatalf(err.Error())
-					}
-				}
-			}
 			err := validateMirrorConfig(tt.cluster)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
