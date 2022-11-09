@@ -185,8 +185,6 @@ kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 
 It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
 
-## Bare Metal troubleshooting
-
 ### Bootstrap cluster fails to come up
 
 ```
@@ -202,6 +200,8 @@ If that doesn't work, you can manually delete the old cluster:
 ```bash
 kind delete cluster --name cluster-name
 ```
+
+## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
 
