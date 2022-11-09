@@ -118,6 +118,7 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject
 			APIVersion: etcdClusterAPIVersion,
 			Kind:       etcdadmClusterKind,
 			Name:       clusterName,
+			Namespace:  constants.EksaSystemNamespace,
 		}
 	}
 
