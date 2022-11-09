@@ -869,6 +869,12 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			testName:    "tinkerbell 1.21 cluster without worker nodes",
+			fileName:    "testdata/tinkerbell_121cluster_without_worker_nodes.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
 			testName:    "nontinkerbell datacenter without worker nodes",
 			fileName:    "testdata/vsphere_cluster_without_worker_nodes.yaml",
 			wantCluster: nil,

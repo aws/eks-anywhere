@@ -1,0 +1,44 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: single-node
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "10.80.8.90"
+    machineGroupRef:
+      kind: TinkerbellMachineConfig
+      name: single-node-cp
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: single-node
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: single-node
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: single-node
+spec:
+  tinkerbellIP: "10.80.8.91"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: single-node-cp
+spec:
+  hardwareSelector:
+    type: cp
+  osFamily: bottlerocket
+  templateRef: {}
