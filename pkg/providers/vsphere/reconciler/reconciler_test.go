@@ -15,6 +15,7 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -251,6 +252,26 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 			},
 		},
 	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "workload-cluster",
+				Namespace: "eksa-system",
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&vspherev1.VSphereMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "workload-cluster-control-plane-1",
+				Namespace: "eksa-system",
+			},
+		},
+	)
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = "workload-cluster"
+	})
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
