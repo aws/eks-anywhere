@@ -31,3 +31,7 @@ For official Ubuntu support, see the Canonical [Support](https://ubuntu.com/supp
 As with Ubuntu, Amazon will assist with troubleshooting and configuration guidance with RHEL-based nodes under the [EKS Anywhere Enterprise Subscription.](https://aws.amazon.com/eks/eks-anywhere/pricing/)
 To build your own RHEL-based EKS Anywhere node image, refer to [Building node images]({{< relref "../artifacts/#building-node-images" >}}).
 For official Red Hat support, see the [Red Hat Enterprise Linux Subscriptions](https://www.redhat.com/en/store/linux-platforms) page.
+
+## Curated packages support
+Amazon [EKS Anywhere Curated Packages]({{< relref "../../concepts/packages" >}}) are Amazon-curated software packages that extend the core functionalities of Kubernetes on your EKS Anywhere clusters.
+All curated packages, including the curated OSS packages, are supported under the EKS Anywhere Enterprise Subscription.
