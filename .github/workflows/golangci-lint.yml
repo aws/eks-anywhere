@@ -27,3 +27,4 @@ jobs:
           only-new-issues: true
           # Disable package caching to avoid a double cache with setup-go.
           skip-pkg-cache: true
+          args: --timeout 10m
