@@ -243,14 +243,14 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	obj := &addonsv1.ClusterResourceSet{ObjectMeta: metav1.ObjectMeta{
-		Name:      "workload-cluster-crs-0",
-		Namespace: "eksa-system",
-	}}
-	key := client.ObjectKeyFromObject(obj)
-	tt.Eventually(func() error {
-		return tt.client.Get(tt.ctx, key, obj)
-	}).Should(Succeed(), "\"object %s should eventually exist", obj.GetName())
+	tt.ShouldEventuallyExist(tt.ctx,
+		&addonsv1.ClusterResourceSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "workload-cluster-crs-0",
+				Namespace: "eksa-system",
+			},
+		},
+	)
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {

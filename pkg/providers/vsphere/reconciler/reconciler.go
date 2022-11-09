@@ -163,17 +163,15 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
-func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
+	cp, err := vsphere.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, err
+	}
 
-	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
-		cp, err := vsphere.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
-		if err != nil {
-			return nil, err
-		}
-		return cp.Objects(), nil
-	})
+	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(cp))
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
@@ -205,4 +203,25 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 		}
 		return w.WorkerObjects(), nil
 	})
+}
+
+func toClientControlPlane(cp *vsphere.ControlPlane) *clusters.ControlPlane {
+	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.Secrets)+1)
+	other = append(other, cp.ClusterResourceSet)
+	for _, o := range cp.ConfigMaps {
+		other = append(other, o)
+	}
+	for _, o := range cp.Secrets {
+		other = append(other, o)
+	}
+
+	return &clusters.ControlPlane{
+		Cluster:                     cp.Cluster,
+		ProviderCluster:             cp.ProviderCluster,
+		KubeadmControlPlane:         cp.KubeadmControlPlane,
+		ControlPlaneMachineTemplate: cp.ControlPlaneMachineTemplate,
+		EtcdCluster:                 cp.EtcdCluster,
+		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
+		Other:                       other,
+	}
 }

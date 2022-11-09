@@ -33,6 +33,12 @@ func withAdditionalCustomCRDPath(customCRDPath string) moduleOpt {
 	}
 }
 
+func withMainCustomCRDPath(customCRDPath string) moduleOpt {
+	return func(m *moduleWithCRD) {
+		m.crdPaths[0] = customCRDPath
+	}
+}
+
 type moduleOpt func(*moduleWithCRD)
 
 func buildModuleWithCRD(pkg string, opts ...moduleOpt) (*moduleWithCRD, error) {

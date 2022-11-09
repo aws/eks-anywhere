@@ -37,8 +37,10 @@ import (
 )
 
 const (
-	capiPackage = "sigs.k8s.io/cluster-api"
-	capvPackage = "sigs.k8s.io/cluster-api-provider-vsphere"
+	capiPackage         = "sigs.k8s.io/cluster-api"
+	capdPackage         = "sigs.k8s.io/cluster-api/test"
+	capvPackage         = "sigs.k8s.io/cluster-api-provider-vsphere"
+	etcdProviderPackage = "github.com/mrajashree/etcdadm-controller"
 )
 
 func init() {
@@ -66,6 +68,10 @@ var packages = []moduleWithCRD{
 		withAdditionalCustomCRDPath("controlplane/kubeadm/config/crd/bases"),
 	),
 	mustBuildModuleWithCRDs(capvPackage),
+	mustBuildModuleWithCRDs(capdPackage,
+		withMainCustomCRDPath("infrastructure/docker/config/crd/bases"),
+	),
+	mustBuildModuleWithCRDs(etcdProviderPackage),
 }
 
 type Environment struct {
