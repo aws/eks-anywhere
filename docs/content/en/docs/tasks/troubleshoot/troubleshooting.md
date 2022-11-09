@@ -201,6 +201,44 @@ If that doesn't work, you can manually delete the old cluster:
 kind delete cluster --name cluster-name
 ```
 
+### Cluster upgrade fails with management cluster on bootstrap cluster
+
+If a cluster upgrade of a management (or self managed) cluster fails or is halted in the middle, you may be left in a
+state where the management resources (CAPI) are still on the KinD bootstrap cluster. Right now, you will have to
+manually move the management resources from the KinD cluster back to the management cluster.
+
+First create a backup:
+```shell
+CLUSTER_NAME=squid
+KINDKUBE=${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
+MGMTKUBE=${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+DIRECTORY=backup
+# Substitute the version with whatever version you are using
+CONTAINER=public.ecr.aws/eks-anywhere/cli-tools:v0.12.0-eks-a-19
+
+rm -rf ${DIRECTORY}
+mkdir ${DIRECTORY}
+
+docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} backup \
+        --namespace eksa-system \
+        --kubeconfig $KINDKUBE \
+        --directory ${DIRECTORY}
+
+#After the backup, move the management cluster back
+docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} move \
+        --to-kubeconfig $MGMTKUBE \
+        --namespace eksa-system \
+        --kubeconfig $KINDKUBE
+```
+
+Before you delete your bootstrap KinD cluster, verify there are no import custom resources left on it:
+```shell
+kubectl get crds | grep eks | while read crd rol
+do
+  echo $crd
+  kubectl get $crd -A
+done
+```
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
