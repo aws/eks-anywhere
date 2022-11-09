@@ -192,7 +192,7 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 
 func (f *Factory) withVSphereClusterReconciler() *Factory {
 	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator()
-	f.withTracker()
+	f.withTracker().withCNIReconciler()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.vsphereClusterReconciler != nil {
 			return nil
