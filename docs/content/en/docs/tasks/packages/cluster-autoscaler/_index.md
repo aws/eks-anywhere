@@ -17,7 +17,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package cluster-autoscaler --cluster clusterName > cluster-autoscaler.yaml
+   eksctl anywhere generate package cluster-autoscaler --cluster <cluster-name> > cluster-autoscaler.yaml
    ```
 
 1. Add the desired configuration to `cluster-autoscaler.yaml`

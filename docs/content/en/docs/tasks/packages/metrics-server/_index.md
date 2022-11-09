@@ -15,7 +15,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package metrics-server --cluster clusterName > metrics-server.yaml
+   eksctl anywhere generate package metrics-server --cluster <cluster-name> > metrics-server.yaml
    ```
 
 1. Add the desired configuration to `metrics-server.yaml`
