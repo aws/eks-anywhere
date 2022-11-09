@@ -36,7 +36,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: FluxConfigSpec defines the desired state of FluxConfig
+            description: FluxConfigSpec defines the desired state of FluxConfig.
             properties:
               branch:
                 default: main
@@ -86,7 +86,7 @@ spec:
                 type: string
             type: object
           status:
-            description: FluxConfigStatus defines the observed state of FluxConfig
+            description: FluxConfigStatus defines the observed state of FluxConfig.
             type: object
         type: object
     served: true

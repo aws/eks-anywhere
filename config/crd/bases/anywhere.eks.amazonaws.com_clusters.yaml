@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Cluster is the Schema for the clusters API
+        description: Cluster is the Schema for the clusters API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ClusterSpec defines the desired state of Cluster
+            description: ClusterSpec defines the desired state of Cluster.
             properties:
               bundlesRef:
                 description: BundlesRef contains a reference to the Bundles containing
@@ -177,14 +177,13 @@ spec:
                       to use for rolling upgrades and related parameters/knobs
                     properties:
                       rollingUpdate:
+                        description: ControlPlaneRollingUpdateParams is API for rolling
+                          update strategy knobs.
                         properties:
                           maxSurge:
                             type: integer
-                          maxUnavailable:
-                            type: integer
                         required:
                         - maxSurge
-                        - maxUnavailable
                         type: object
                       type:
                         type: string
@@ -199,7 +198,7 @@ spec:
                 type: object
               externalEtcdConfiguration:
                 description: ExternalEtcdConfiguration defines the configuration options
-                  for using unstacked etcd topology
+                  for using unstacked etcd topology.
                 properties:
                   count:
                     type: integer
@@ -256,7 +255,7 @@ spec:
                 type: object
               registryMirrorConfiguration:
                 description: RegistryMirrorConfiguration defines the settings for
-                  image registry mirror
+                  image registry mirror.
                 properties:
                   authenticate:
                     description: Authenticate defines if registry requires authentication
@@ -352,6 +351,8 @@ spec:
                         to use for rolling upgrades and related parameters/knobs
                       properties:
                         rollingUpdate:
+                          description: WorkerNodesRollingUpdateParams is API for rolling
+                            update strategy knobs.
                           properties:
                             maxSurge:
                               type: integer
@@ -368,7 +369,7 @@ spec:
                 type: array
             type: object
           status:
-            description: ClusterStatus defines the observed state of Cluster
+            description: ClusterStatus defines the observed state of Cluster.
             properties:
               conditions:
                 items:
