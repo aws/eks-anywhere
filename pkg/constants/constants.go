@@ -43,6 +43,11 @@ const (
 	DefaultRegistry            = "public.ecr.aws"
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
+	FailureDomainLabelName = "cluster.x-k8s.io/failure-domain"
+
+	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder.
+	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
+
 	// Provider specific env vars.
 	VSphereUsernameKey = "VSPHERE_USERNAME"
 	VSpherePasswordKey = "VSPHERE_PASSWORD"
