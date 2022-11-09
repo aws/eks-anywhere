@@ -15,7 +15,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package adot --cluster clusterName > adot.yaml
+   eksctl anywhere generate package adot --cluster <cluster-name> > adot.yaml
    ```
 
 1. Add the desired configuration to `adot.yaml`
@@ -97,7 +97,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 1. Validate the installation
 
    ```bash
-   eksctl anywhere get packages
+   eksctl anywhere get packages --cluster <cluster-name>
    ```
 
    Example command output
@@ -121,5 +121,5 @@ ADOT will automatically be upgraded when a new bundle is activated.
 To uninstall ADOT, simply delete the package
 
 ```bash
-eksctl anywhere delete package my-adot
+eksctl anywhere delete package --cluster <cluster-name> my-adot
 ```

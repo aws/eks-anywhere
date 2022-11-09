@@ -15,7 +15,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package harbor --cluster clusterName > harbor.yaml
+   eksctl anywhere generate package harbor --cluster <cluster-name> > harbor.yaml
    ```
 
 1. Add the desired configuration to `harbor.yaml` 
@@ -120,7 +120,7 @@ eksctl anywhere apply package -f harbor.yaml
 1. Check Harbor
 
    ```bash
-   eksctl anywhere get packages
+   eksctl anywhere get packages --cluster <cluster-name>
    ```
 
    Example command output
@@ -138,5 +138,5 @@ eksctl anywhere apply package -f harbor.yaml
 
    {{% /alert %}}
    ```bash
-   eksctl anywhere delete package my-harbor
+   eksctl anywhere delete package --cluster <cluster-name> my-harbor
    ```
