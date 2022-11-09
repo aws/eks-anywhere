@@ -52,6 +52,8 @@ func NewClusterReconcilerLegacy(client client.Client, log logr.Logger, scheme *r
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=snowdatacenterconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=snowmachineconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=gitopsconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=*,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=clusterctl.cluster.x-k8s.io,resources=providers,verbs=get;list;watch
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;vsphereclusters;vspheremachinetemplates,verbs=get;list;watch;create;update;patch;delete
 
