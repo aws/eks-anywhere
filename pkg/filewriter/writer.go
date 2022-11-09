@@ -3,6 +3,8 @@ package filewriter
 import (
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -24,19 +26,11 @@ func NewWriter(dir string) (FileWriter, error) {
 	return &writer{dir: dir, tempDir: newFolder}, nil
 }
 
-func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (string, error) {
-	op := defaultFileOptions() // Default file options. -->> temporary file with default permissions
-	for _, optionFunc := range f {
-		optionFunc(op)
-	}
-	var currentDir string
-	if op.IsTemp {
-		currentDir = t.tempDir
-	} else {
-		currentDir = t.dir
-	}
-	filePath := filepath.Join(currentDir, fileName)
-	err := ioutil.WriteFile(filePath, content, op.Permissions)
+func (w *writer) Write(fileName string, content []byte, opts ...FileOptionsFunc) (string, error) {
+	o := buildOptions(w, opts)
+
+	filePath := filepath.Join(o.BasePath, fileName)
+	err := ioutil.WriteFile(filePath, content, o.Permissions)
 	if err != nil {
 		return "", fmt.Errorf("writing to file [%s]: %v", filePath, err)
 	}
@@ -48,24 +42,58 @@ func (w *writer) WithDir(dir string) (FileWriter, error) {
 	return NewWriter(filepath.Join(w.dir, dir))
 }
 
-func (t *writer) Dir() string {
-	return t.dir
+func (w *writer) Dir() string {
+	return w.dir
 }
 
-func (t *writer) TempDir() string {
-	return t.tempDir
+func (w *writer) TempDir() string {
+	return w.tempDir
 }
 
-func (t *writer) CleanUp() {
-	_, err := os.Stat(t.dir)
+func (w *writer) CleanUp() {
+	_, err := os.Stat(w.dir)
 	if err == nil {
-		os.RemoveAll(t.dir)
+		os.RemoveAll(w.dir)
 	}
 }
 
-func (t *writer) CleanUpTemp() {
-	_, err := os.Stat(t.tempDir)
+func (w *writer) CleanUpTemp() {
+	_, err := os.Stat(w.tempDir)
 	if err == nil {
-		os.RemoveAll(t.tempDir)
+		os.RemoveAll(w.tempDir)
+	}
+}
+
+// Create creates a file with the given name rooted at w's base direcftion.
+func (w *writer) Create(name string, opts ...FileOptionsFunc) (_ io.WriteCloser, path string, _ error) {
+	o := buildOptions(w, opts)
+
+	path = filepath.Join(o.BasePath, name)
+	fh, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, o.Permissions)
+	return fh, path, err
+}
+
+type options struct {
+	BasePath    string
+	Permissions fs.FileMode
+}
+
+// buildOptions converts a set of FileOptionsFunc's to a single options struct.
+func buildOptions(w *writer, opts []FileOptionsFunc) options {
+	op := defaultFileOptions()
+	for _, fn := range opts {
+		fn(op)
+	}
+
+	var basePath string
+	if op.IsTemp {
+		basePath = w.tempDir
+	} else {
+		basePath = w.dir
+	}
+
+	return options{
+		BasePath:    basePath,
+		Permissions: op.Permissions,
 	}
 }

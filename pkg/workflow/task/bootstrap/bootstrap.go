@@ -36,7 +36,7 @@ type Bootstrapper interface {
 	) error
 }
 
-// CreateClusters creates a functional Kubernetes cluster that can be used to faciliate
+// CreateCluster creates a functional Kubernetes cluster that can be used to faciliate
 // EKS-A operations. The bootstrap cluster is populated in the context using
 // workflow.WithBootstrapCluster for subsequent tasks.
 type CreateCluster struct {
@@ -62,7 +62,7 @@ func (t CreateCluster) RunTask(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
-	return workflowcontext.WithBootstrapCluster(ctx, cluster), nil
+	return workflowcontext.WithBootstrapAsManagementCluster(ctx, cluster), nil
 }
 
 // DeleteCluster deletes a bootstrap cluster. It expects the bootstrap cluster to be

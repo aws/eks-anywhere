@@ -37,6 +37,9 @@ type CreateCluster struct {
 	// Bootstrapper creates and destroys bootstrap clusters.
 	Bootstrapper bootstrap.Bootstrapper
 
+	// Cluster represents a logical cluster to be created.
+	Cluster workload.Cluster
+
 	// CNIInstaller installs a CNI in a Kubernetes cluster
 	CNIInstaller workload.CNIInstaller
 
@@ -78,7 +81,8 @@ func (c CreateCluster) build() (*workflow.Workflow, error) {
 	}
 
 	err = wflw.AppendTask(CreateWorkloadCluster, workload.Create{
-		CNI: c.CNIInstaller,
+		Cluster: c.Cluster,
+		CNI:     c.CNIInstaller,
 	})
 	if err != nil {
 		return nil, err
