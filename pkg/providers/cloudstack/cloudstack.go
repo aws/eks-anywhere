@@ -31,6 +31,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -448,6 +449,10 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
+	if err := p.validateK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
+		return fmt.Errorf("validating K8s version for provider: %v", err)
+	}
+
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
@@ -485,6 +490,10 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentSpec *cluster.Spec) error {
 	if err := p.validateEnv(ctx); err != nil {
 		return fmt.Errorf("validating environment variables: %v", err)
+	}
+
+	if err := p.validateK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
+		return fmt.Errorf("validating K8s version for provider: %v", err)
 	}
 
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
@@ -1346,6 +1355,21 @@ func (p *cloudstackProvider) validateMachineConfigNameUniqueness(ctx context.Con
 func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	kubeVipDisabledString := strconv.FormatBool(features.IsActive(features.CloudStackKubeVipDisabled()))
 	return p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackKubeVipDisabledEnvVar, kubeVipDisabledString, kubeconfigFile)
+}
+
+func (p *cloudstackProvider) validateK8sVersion(version v1alpha1.KubernetesVersion) error {
+	kubeVersionSemver, err := semver.New(string(version) + ".0")
+	if err != nil {
+		return fmt.Errorf("error converting kubeVersion %v to semver %v", version, err)
+	}
+
+	kube124Semver, _ := semver.New(string(v1alpha1.Kube124) + ".0")
+
+	if kubeVersionSemver.Compare(kube124Semver) != -1 {
+		return fmt.Errorf("cloudstack provider does not support K8s version > 1.23")
+	}
+
+	return nil
 }
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {

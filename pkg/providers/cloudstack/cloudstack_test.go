@@ -41,6 +41,7 @@ var configFS embed.FS
 const (
 	expectedCloudStackName              = "cloudstack"
 	cloudStackCloudConfigWithInvalidUrl = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0geHh4Cg=="
+	validCloudStackCloudConfig          = "W0dsb2JhbF0KYXBpLWtleSAgICA9IGZha2UtYXBpLWtleQpzZWNyZXQta2V5ID0gZmFrZS1zZWNy\nZXQta2V5CmFwaS11cmwgICAgPSBodHRwOi8vMTAuMTEuMC4yOjgwODAvY2xpZW50L2FwaQoKW0ds\nb2JhbDJdCmFwaS1rZXkgICAgPSBmYWtlLWFwaS1rZXkKc2VjcmV0LWtleSA9IGZha2Utc2VjcmV0\nLWtleQphcGktdXJsICAgID0gaHR0cDovLzEwLjEyLjAuMjo4MDgwL2NsaWVudC9hcGkKCg=="
 	defaultCloudStackCloudConfigPath    = "testdata/cloudstack_config_valid.ini"
 )
 
@@ -300,7 +301,30 @@ func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) 
 
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err.Error()).To(Equal("validating environment variables: CloudStack instance global's managementApiEndpoint xxx is invalid: CloudStack managementApiEndpoint is invalid: #{err}"))
+}
+
+func TestProviderCreateOrUpgradeClusterK8s124(t *testing.T) {
+	tt := NewWithT(t)
+	setupContext(t)
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.24"
+
+	provider := newProviderWithKubectl(t, nil, nil, clusterSpec.Cluster, nil, nil)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, validCloudStackCloudConfig)
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.23"))
+	err = provider.SetupAndValidateUpgradeCluster(ctx, nil, clusterSpec, nil)
+	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.23"))
+
+	clusterSpec.Cluster.Spec.KubernetesVersion = "abcd"
+	err = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: error converting kubeVersion abcd to semver invalid major version in semver abcd.0: strconv.ParseUint: parsing \"\": invalid syntax"))
 }
 
 func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T) {
@@ -322,7 +346,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T)
 
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err.Error()).To(Equal("validating environment variables: CloudStack instance global's managementApiEndpoint xxx is invalid: CloudStack managementApiEndpoint is invalid: #{err}"))
 }
 
 func TestProviderSetupAndValidateDeleteClusterFailureOnInvalidUrl(t *testing.T) {
@@ -344,7 +368,7 @@ func TestProviderSetupAndValidateDeleteClusterFailureOnInvalidUrl(t *testing.T) 
 
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateDeleteCluster(ctx, cluster, nil)
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err.Error()).To(Equal("validating environment variables: CloudStack instance global's managementApiEndpoint xxx is invalid: CloudStack managementApiEndpoint is invalid: #{err}"))
 }
 
 func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *testing.T) {
@@ -361,10 +385,10 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *test
 	validator := givenWildcardValidator(mockCtrl, clusterSpec)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, validator)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewBadRequest(""))
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewBadRequest("test-error"))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
-	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err.Error()).To(Equal("validating secrets unchanged: getting secret for profile global: test-error"))
 }
 
 func TestProviderSetupAndValidateUpgradeClusterSuccessOnSecretNotFound(t *testing.T) {
