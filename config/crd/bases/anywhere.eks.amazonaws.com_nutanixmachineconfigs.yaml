@@ -35,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig
+            description: NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig.
             properties:
               cluster:
                 description: cluster is to identify the cluster (the Prism Element
@@ -120,7 +120,7 @@ spec:
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VM
+                    user to be added to the VM.
                   properties:
                     name:
                       type: string
@@ -156,7 +156,7 @@ spec:
             type: object
           status:
             description: NutanixMachineConfigStatus defines the observed state of
-              NutanixMachineConfig
+              NutanixMachineConfig.
             properties:
               addresses:
                 description: Addresses contains the Nutanix VM associated addresses.
