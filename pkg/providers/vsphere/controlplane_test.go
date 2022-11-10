@@ -220,6 +220,7 @@ func capiCluster() *clusterv1.Cluster {
 				Kind:       "EtcdadmCluster",
 				Name:       "test-etcd",
 				APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+				Namespace:  "eksa-system",
 			},
 			InfrastructureRef: &corev1.ObjectReference{
 				Kind:       "VSphereCluster",
