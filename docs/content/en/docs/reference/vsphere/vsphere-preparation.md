@@ -37,13 +37,13 @@ To configure a new user via CLI, you will need two things:
 apiVersion: "eks-anywhere.amazon.com/v1"
 kind: vSphereUser
 spec:
-  username: "eksa" // optional, default eksa
-  group: "MyExistingGroup" // optional, default EKSAUsers
-  globalRole: "MyGlobalRole" // optional, default EKSAGlobalRole
-  userRole: "MyUserRole" // optional, default EKSAUserRole
-  adminRole: "MyEKSAAdminRole" // optional, default EKSACloudAdminRole
+  username: "eksa"                # optional, default eksa
+  group: "MyExistingGroup"        # optional, default EKSAUsers
+  globalRole: "MyGlobalRole"      # optional, default EKSAGlobalRole
+  userRole: "MyUserRole"          # optional, default EKSAUserRole
+  adminRole: "MyEKSAAdminRole"    # optional, default EKSACloudAdminRole
   datacenter: "MyDatacenter"
-  vSphereDomain: "vsphere.local" // this should be the domain used when you login, e.g. YourUsername@vsphere.local
+  vSphereDomain: "vsphere.local"  # this should be the domain used when you login, e.g. YourUsername@vsphere.local
   connection:
     server: "https://my-vsphere.internal.acme.com"
     insecure: false
