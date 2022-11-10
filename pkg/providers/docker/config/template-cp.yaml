@@ -183,7 +183,10 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if .controlPlaneTaints }}
+{{- if not .workerNodeGroupConfigurations }}
+        taints: []
+{{- end }}
+{{- if and .workerNodeGroupConfigurations .controlPlaneTaints }}
         taints: {{ range .controlPlaneTaints}}
           - key: {{ .Key }}
             value: {{ .Value }}
@@ -201,7 +204,10 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if .controlPlaneTaints }}
+{{- if not .workerNodeGroupConfigurations }}
+        taints: []
+{{- end }}
+{{- if and .workerNodeGroupConfigurations .controlPlaneTaints }}
         taints: {{ range .controlPlaneTaints}}
           - key: {{ .Key }}
             value: {{ .Value }}
