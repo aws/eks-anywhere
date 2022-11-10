@@ -37,5 +37,13 @@ for releasetype in bundle eks-a; do
     wget $WEEKLY_RELEASES_URL_PREFIX/$DATE_YYYYMMDD/$releasetype-release.yaml -O $ARTIFACTS_DIR/$DATE_YYYYMMDD-$releasetype-release.yaml
 done
 
+for os in darwin linux; do
+    EKSA_CLI_URI=yq e ".spec.releases[0].eksABinary.$os.uri" $ARTIFACTS_DIR/$DATE_YYYYMMDD-eks-a-release.yaml
+    wget $EKSA_CLI_URI -O $ARTIFACTS_DIR/$(basename $EKSA_CLI_URI)
+done
+
+IMAGE_BUILDER_CLI_URI=$(yq e ".spec.versionsBundles[0].eksD.imagebuilder.uri" $ARTIFACTS_DIR/$DATE_YYYYMMDD-eks-a-release.yaml)
+wget $IMAGE_BUILDER_CLI_URI -O $ARTIFACTS_DIR/$(basename $IMAGE_BUILDER_CLI_URI)
+
 # Publish the asset as a Github pre-release on main branch with a new dated tag
-gh release create $RELEASE_TAG $ARTIFACTS_DIR/*.yaml --notes-file "$RELEASE_NOTES_PATH" --prerelease --repo "github.com/aws/eks-anywhere" --title "Weekly Release $DATE_YYYYMMDD" --target "main"
+gh release create $RELEASE_TAG $ARTIFACTS_DIR/* --notes-file "$RELEASE_NOTES_PATH" --prerelease --repo "github.com/aws/eks-anywhere" --title "Weekly Release $DATE_YYYYMMDD" --target "main"
