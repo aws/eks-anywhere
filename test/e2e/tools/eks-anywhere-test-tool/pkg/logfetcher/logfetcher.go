@@ -3,7 +3,6 @@ package logfetcher
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	awscodebuild "github.com/aws/aws-sdk-go/service/codebuild"
@@ -11,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
+	"github.com/aws/eks-anywhere-test-tool/pkg/fileutils"
 	"github.com/aws/eks-anywhere-test-tool/pkg/testResults"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -83,24 +83,24 @@ func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloud
 		o(l)
 	}
 
-	defultOutputFolder := time.Now().Format(time.RFC3339 + "-logs")
+	defaultOutputFolder := fileutils.GenOutputDirName("logs")
 
 	if l.filterTests == nil {
 		l.filterTests = testResults.GetFailedTests
 	}
 
 	if l.processCodebuild == nil {
-		_ = l.ensureWriter(defultOutputFolder)
+		_ = l.ensureWriter(defaultOutputFolder)
 		l.processCodebuild = l.writer.writeCodeBuild
 	}
 
 	if l.processMessages == nil {
-		_ = l.ensureWriter(defultOutputFolder)
+		_ = l.ensureWriter(defaultOutputFolder)
 		l.processMessages = l.writer.writeMessages
 	}
 
 	if l.processTest == nil {
-		_ = l.ensureWriter(defultOutputFolder)
+		_ = l.ensureWriter(defaultOutputFolder)
 		l.processTest = l.writer.writeTest
 	}
 

@@ -2,13 +2,13 @@ package providerProxy
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
+	"github.com/aws/eks-anywhere-test-tool/pkg/fileutils"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -67,7 +67,7 @@ func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloud
 		o(l)
 	}
 
-	defaultOutputFolder := fmt.Sprintf("provider-proxy-logs-%s", time.Now().Format(time.RFC3339))
+	defaultOutputFolder := fileutils.GenOutputDirName("provider-proxy-logs")
 
 	if l.filterRequests == nil {
 		l.filterRequests = noFilter
