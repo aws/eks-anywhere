@@ -235,7 +235,7 @@ func (f *Factory) withDockerClusterReconciler() *Factory {
 
 func (f *Factory) withVSphereClusterReconciler() *Factory {
 	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator()
-	f.withTracker()
+	f.withTracker().withCNIReconciler()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.vsphereClusterReconciler != nil {
 			return nil
