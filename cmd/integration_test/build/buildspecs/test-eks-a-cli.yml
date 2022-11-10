@@ -129,7 +129,7 @@ env:
     T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME: "nutanix_ci:nutanix_prism_element_cluster_name"
     T_NUTANIX_SSH_AUTHORIZED_KEY: "nutanix_ci:nutanix_ssh_authorized_key"
     T_NUTANIX_SUBNET_NAME: "nutanix_ci:nutanix_subnet_name"
-    T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP: "nutanix_ci:nutanix_control_plane_endpoint_ip"
+    T_NUTANIX_CONTROL_PLANE_CIDR: "nutanix_ci:nutanix_control_plane_cidr"
     T_NUTANIX_POD_CIDR: "nutanix_ci:nutanix_pod_cidr"
     T_NUTANIX_SERVICE_CIDR: "nutanix_ci:nutanix_service_cidr"
     T_NUTANIX_ADDITIONAL_TRUST_BUNDLE: "nutanix_ci:nutanix_additional_trust_bundle"
