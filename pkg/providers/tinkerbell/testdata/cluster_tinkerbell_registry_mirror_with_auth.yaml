@@ -217,11 +217,3 @@ spec:
         worker: "{{.device_1}}"
     version: "0.1"
 ---
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: OIDCConfig
-metadata:
-  name: test
-  namespace: test-namespace
-spec:
-  issuerUrl: https://mydomain.com/issuer
-  clientId: my-client-id
