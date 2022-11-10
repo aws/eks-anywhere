@@ -362,17 +362,6 @@ func (c *Cmk) GetManagementApiEndpoint(profile string) (string, error) {
 	return "", fmt.Errorf("profile %s does not exist", profile)
 }
 
-// ValidateCloudStackConnection Calls `cmk sync` to ensure that the endpoint and credentials + domain are valid.
-func (c *Cmk) ValidateCloudStackConnection(ctx context.Context, profile string) error {
-	command := newCmkCommand("sync")
-	buffer, err := c.exec(ctx, profile, command...)
-	if err != nil {
-		return fmt.Errorf("validating cloudstack connection for cmk: %s: %v", buffer.String(), err)
-	}
-	logger.MarkPass("Connected to CloudStack server")
-	return nil
-}
-
 func (c *Cmk) CleanupVms(ctx context.Context, profile string, clusterName string, dryRun bool) error {
 	command := newCmkCommand("list virtualmachines")
 	applyCmkArgs(&command, withCloudStackKeyword(clusterName), appendArgs("listall=true"))

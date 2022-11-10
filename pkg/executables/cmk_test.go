@@ -21,7 +21,6 @@ import (
 
 const (
 	cmkConfigFileName  = "cmk_test_name.ini"
-	cmkConfigFileName2 = "cmk_test_name_2.ini"
 	accountName        = "account1"
 	rootDomain         = "ROOT"
 	rootDomainId       = "5300cdac-74d5-11ec-8696-c81f66d3e965"
@@ -101,62 +100,6 @@ var diskOfferingCustomSizeInGB = v1alpha1.CloudStackResourceDiskOffering{
 	Device:     "/dev/vdb",
 	Filesystem: "ext4",
 	Label:      "data_disk",
-}
-
-func TestValidateCloudStackConnectionSuccess(t *testing.T) {
-	_, writer := test.NewWriter(t)
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
-	expectedArgs := []string{"-c", configFilePath, "sync"}
-	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
-	c, _ := executables.NewCmk(executable, writer, execConfig)
-	err := c.ValidateCloudStackConnection(ctx, execConfig.Profiles[0].Name)
-	if err != nil {
-		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
-	}
-}
-
-func TestValidateMultipleCloudStackProfiles(t *testing.T) {
-	_, writer := test.NewWriter(t)
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
-	expectedArgs := []string{"-c", configFilePath, "sync"}
-	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
-	configFilePath2, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName2))
-	expectedArgs2 := []string{"-c", configFilePath2, "sync"}
-	executable.EXPECT().Execute(ctx, expectedArgs2).Return(bytes.Buffer{}, nil)
-
-	c, _ := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles)
-	err := c.ValidateCloudStackConnection(ctx, execConfigWithMultipleProfiles.Profiles[0].Name)
-	if err != nil {
-		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
-	}
-	err = c.ValidateCloudStackConnection(ctx, execConfigWithMultipleProfiles.Profiles[1].Name)
-	if err != nil {
-		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
-	}
-}
-
-func TestValidateCloudStackConnectionError(t *testing.T) {
-	_, writer := test.NewWriter(t)
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
-	expectedArgs := []string{"-c", configFilePath, "sync"}
-	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, errors.New("cmk test error"))
-	c, _ := executables.NewCmk(executable, writer, execConfig)
-	err := c.ValidateCloudStackConnection(ctx, execConfig.Profiles[0].Name)
-	if err == nil {
-		t.Fatalf("Cmk.ValidateCloudStackConnection() didn't throw expected error")
-	}
 }
 
 func TestCmkCleanupVms(t *testing.T) {

@@ -84,20 +84,6 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateAffinityGroupsPresent(arg0,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAffinityGroupsPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateAffinityGroupsPresent), arg0, arg1, arg2, arg3, arg4)
 }
 
-// ValidateCloudStackConnection mocks base method.
-func (m *MockProviderCmkClient) ValidateCloudStackConnection(arg0 context.Context, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateCloudStackConnection", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ValidateCloudStackConnection indicates an expected call of ValidateCloudStackConnection.
-func (mr *MockProviderCmkClientMockRecorder) ValidateCloudStackConnection(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCloudStackConnection", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateCloudStackConnection), arg0, arg1)
-}
-
 // ValidateDiskOfferingPresent mocks base method.
 func (m *MockProviderCmkClient) ValidateDiskOfferingPresent(arg0 context.Context, arg1, arg2 string, arg3 v1alpha1.CloudStackResourceDiskOffering) error {
 	m.ctrl.T.Helper()

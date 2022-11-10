@@ -431,9 +431,6 @@ func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStac
 }
 
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
-	if err := p.validator.ValidateCloudStackAccess(ctx, clusterSpec.CloudStackDatacenter); err != nil {
-		return err
-	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
 	}

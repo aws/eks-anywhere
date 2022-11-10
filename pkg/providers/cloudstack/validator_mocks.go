@@ -35,20 +35,6 @@ func (m *MockProviderValidator) EXPECT() *MockProviderValidatorMockRecorder {
 	return m.recorder
 }
 
-// ValidateCloudStackAccess mocks base method.
-func (m *MockProviderValidator) ValidateCloudStackAccess(arg0 context.Context, arg1 *v1alpha1.CloudStackDatacenterConfig) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateCloudStackAccess", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ValidateCloudStackAccess indicates an expected call of ValidateCloudStackAccess.
-func (mr *MockProviderValidatorMockRecorder) ValidateCloudStackAccess(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCloudStackAccess", reflect.TypeOf((*MockProviderValidator)(nil).ValidateCloudStackAccess), arg0, arg1)
-}
-
 // ValidateCloudStackDatacenterConfig mocks base method.
 func (m *MockProviderValidator) ValidateCloudStackDatacenterConfig(arg0 context.Context, arg1 *v1alpha1.CloudStackDatacenterConfig) error {
 	m.ctrl.T.Helper()

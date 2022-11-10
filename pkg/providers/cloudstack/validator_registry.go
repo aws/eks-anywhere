@@ -32,7 +32,6 @@ type ProviderValidator interface {
 	ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error
 	ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error
 	ValidateControlPlaneEndpointUniqueness(endpoint string) error
-	ValidateCloudStackAccess(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error
 }
 
 // NewValidatorFactory initializes a factory for the CloudStack provider validator.
