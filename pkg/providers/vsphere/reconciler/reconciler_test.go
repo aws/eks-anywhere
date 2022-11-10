@@ -8,6 +8,7 @@ import (
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -15,7 +16,6 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -244,22 +244,13 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	tt.ShouldEventuallyExist(tt.ctx,
-		&addonsv1.ClusterResourceSet{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "workload-cluster-crs-0",
-				Namespace: "eksa-system",
-			},
+	crs := &addonsv1.ClusterResourceSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workload-cluster-crs-0",
+			Namespace: "eksa-system",
 		},
-	)
-	tt.ShouldEventuallyExist(tt.ctx,
-		&controlplanev1.KubeadmControlPlane{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "workload-cluster",
-				Namespace: "eksa-system",
-			},
-		},
-	)
+	}
+	tt.ShouldEventuallyExist(tt.ctx, crs)
 	tt.ShouldEventuallyExist(tt.ctx,
 		&vspherev1.VSphereMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
@@ -272,6 +263,21 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 		c.Name = "workload-cluster"
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyMatch(tt.ctx,
+		crs,
+		func(g gomega.Gomega) {
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "vsphere-csi-controller", Kind: "Secret"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "csi-vsphere-config", Kind: "Secret"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "cloud-controller-manager", Kind: "Secret"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "cloud-provider-vsphere-credentials", Kind: "Secret"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "vsphere-csi-controller-role", Kind: "ConfigMap"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "vsphere-csi-controller-binding", Kind: "ConfigMap"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "csi.vsphere.vmware.com", Kind: "ConfigMap"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "vsphere-csi-node", Kind: "ConfigMap"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "vsphere-csi-controller", Kind: "ConfigMap"}))
+			g.Expect(crs.Spec.Resources).Should(ContainElements(addonsv1.ResourceRef{Name: "cpi-manifests", Kind: "ConfigMap"}))
+		},
+	)
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
