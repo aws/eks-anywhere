@@ -78,7 +78,6 @@ func givenWildcardCmk(mockCtrl *gomock.Controller) ProviderCmkClient {
 	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateZoneAndGetId(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateDomainAndGetId(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()

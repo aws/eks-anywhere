@@ -10,7 +10,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 type Validator struct {
@@ -47,7 +46,6 @@ type localAvailabilityZone struct {
 
 type ProviderCmkClient interface {
 	GetManagementApiEndpoint(profile string) (string, error)
-	ValidateCloudStackConnection(ctx context.Context, profile string) error
 	ValidateServiceOfferingPresent(ctx context.Context, profile string, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
 	ValidateDiskOfferingPresent(ctx context.Context, profile string, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
 	ValidateTemplatePresent(ctx context.Context, profile string, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
@@ -56,25 +54,6 @@ type ProviderCmkClient interface {
 	ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId string, account string) error
 	ValidateDomainAndGetId(ctx context.Context, profile string, domain string) (string, error)
 	ValidateAccountPresent(ctx context.Context, profile string, account string, domainId string) error
-}
-
-func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	refNamesToCheck := []string{}
-	if len(datacenterConfig.Spec.Domain) > 0 {
-		refNamesToCheck = append(refNamesToCheck, decoder.CloudStackGlobalAZ)
-	}
-	for _, az := range datacenterConfig.Spec.AvailabilityZones {
-		refNamesToCheck = append(refNamesToCheck, az.CredentialsRef)
-	}
-
-	for _, refName := range refNamesToCheck {
-		if err := v.cmk.ValidateCloudStackConnection(ctx, refName); err != nil {
-			return fmt.Errorf("validating connection to cloudstack %s: %v", refName, err)
-		}
-	}
-
-	logger.MarkPass(fmt.Sprintf("Connected to servers: %s", strings.Join(refNamesToCheck, ", ")))
-	return nil
 }
 
 func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
