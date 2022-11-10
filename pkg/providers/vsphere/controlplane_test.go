@@ -3,6 +3,7 @@ package vsphere_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
@@ -178,7 +179,55 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	g.Expect(cp.EtcdMachineTemplate).To(Equal(wantEtcdTemplate))
 }
 
-func TestControPlaneSpecErrorFromClient(t *testing.T) {
+func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
+	originalKubeadmControlPlane := kubeadmControlPlane()
+	originalEtcdCluster := etcdCluster()
+	originalEtcdCluster.Spec.InfrastructureTemplate.Name = "test-etcd-1"
+	originalCPMachineTemplate := vsphereMachineTemplate("test-control-plane-1")
+	originalCPMachineTemplate.Spec.Template.Spec.NumCPUs = 2
+	originalCPMachineTemplate.Spec.Template.Spec.MemoryMiB = 8192
+	originalEtcdMachineTemplate := vsphereMachineTemplate("test-etcd-1")
+
+	wantKCP := originalKubeadmControlPlane.DeepCopy()
+	wantEtcd := originalEtcdCluster.DeepCopy()
+	wantCPtemplate := originalCPMachineTemplate.DeepCopy()
+	wantEtcdTemplate := originalEtcdMachineTemplate.DeepCopy()
+
+	// This mimics what would happen if the objects were returned by a real api server
+	// It helps make sure that the immutable object comparison is able to deal with these
+	// kind of changes.
+	originalCPMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
+	originalEtcdMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
+
+	// This is testing defaults. We don't set Snapshot in our machine templates,
+	// but it's possible that some default logic does. We need to take this into
+	// consideration when checking for equality.
+	originalCPMachineTemplate.Spec.Template.Spec.Snapshot = "current"
+	originalEtcdMachineTemplate.Spec.Template.Spec.Snapshot = "current"
+
+	client := test.NewFakeKubeClient(
+		originalKubeadmControlPlane,
+		originalEtcdCluster,
+		originalCPMachineTemplate,
+		originalEtcdMachineTemplate,
+	)
+
+	cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp).NotTo(BeNil())
+	g.Expect(cp.Cluster).To(Equal(capiCluster()))
+	g.Expect(cp.KubeadmControlPlane).To(Equal(wantKCP))
+	g.Expect(cp.EtcdCluster).To(Equal(wantEtcd))
+	g.Expect(cp.ProviderCluster).To(Equal(vsphereCluster()))
+	g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(wantCPtemplate))
+	g.Expect(cp.EtcdMachineTemplate).To(Equal(wantEtcdTemplate))
+}
+
+func TestControlPlaneSpecErrorFromClient(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()
 	ctx := context.Background()
