@@ -7,6 +7,18 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - addons.cluster.x-k8s.io
+  resources:
+  - clusterresourcesets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
   - awsiamconfigs
@@ -106,6 +118,18 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - snowmachineconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - '*'
   verbs:
   - create
   - delete
