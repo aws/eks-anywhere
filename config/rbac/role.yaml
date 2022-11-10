@@ -135,6 +135,8 @@ rules:
   resources:
   - awssnowclusters
   - awssnowmachinetemplates
+  - vsphereclusters
+  - vspheremachinetemplates
   verbs:
   - create
   - delete

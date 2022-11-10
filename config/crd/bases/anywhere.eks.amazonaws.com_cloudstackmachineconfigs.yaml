@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -36,7 +36,7 @@ spec:
             type: object
           spec:
             description: CloudStackMachineConfigSpec defines the desired state of
-              CloudStackMachineConfig
+              CloudStackMachineConfig.
             properties:
               affinity:
                 description: Defaults to `no`. Can be `pro` or `anti`. If set to `pro`
@@ -140,7 +140,7 @@ spec:
                   be authorized to ssh into the machines
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VM
+                    user to be added to the VM.
                   properties:
                     name:
                       type: string
@@ -159,7 +159,7 @@ spec:
             type: object
           status:
             description: CloudStackMachineConfigStatus defines the observed state
-              of CloudStackMachineConfig
+              of CloudStackMachineConfig.
             properties:
               failureMessage:
                 description: FailureMessage indicates that there is a fatal problem

@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: TinkerbellDatacenterConfig is the Schema for the TinkerbellDatacenterConfigs
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -36,7 +36,7 @@ spec:
             type: object
           spec:
             description: TinkerbellDatacenterConfigSpec defines the desired state
-              of TinkerbellDatacenterConfig
+              of TinkerbellDatacenterConfig.
             properties:
               hookImagesURLPath:
                 description: HookImagesURLPath can be used to override the default
@@ -62,7 +62,7 @@ spec:
           status:
             description: "TinkerbellDatacenterConfigStatus defines the observed state
               of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
-              regenerate code after modifying this file"
+              regenerate code after modifying this file."
             type: object
         type: object
     served: true

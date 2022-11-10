@@ -37,7 +37,7 @@ spec:
               repository it links to.
             properties:
               flux:
-                description: Flux defines the Git repository options for Flux v2
+                description: Flux defines the Git repository options for Flux v2.
                 properties:
                   github:
                     description: github is the name of the Git Provider to host the
@@ -74,7 +74,7 @@ spec:
                 type: object
             type: object
           status:
-            description: GitOpsConfigStatus defines the observed state of GitOpsConfig
+            description: GitOpsConfigStatus defines the observed state of GitOpsConfig.
             type: object
         type: object
     served: true

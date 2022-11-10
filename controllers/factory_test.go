@@ -32,6 +32,26 @@ func TestFactoryBuildAllVSphereReconciler(t *testing.T) {
 	g.Expect(reconcilers.VSphereDatacenterReconciler).NotTo(BeNil())
 }
 
+func TestFactoryBuildAllDockerReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager).
+		WithDockerDatacenterReconciler()
+
+	// testing idempotence
+	f.WithDockerDatacenterReconciler()
+
+	reconcilers, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(reconcilers.DockerDatacenterReconciler).NotTo(BeNil())
+}
+
 func TestFactoryBuildClusterReconciler(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
@@ -45,6 +65,10 @@ func TestFactoryBuildClusterReconciler(t *testing.T) {
 		{
 			Type:         string(clusterctlv1.ControlPlaneProviderType),
 			ProviderName: "kubeadm",
+		},
+		{
+			Type:         string(clusterctlv1.InfrastructureProviderType),
+			ProviderName: "docker",
 		},
 		{
 			Type:         string(clusterctlv1.InfrastructureProviderType),

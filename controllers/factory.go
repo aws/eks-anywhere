@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
+	dockerreconciler "github.com/aws/eks-anywhere/pkg/providers/docker/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
@@ -29,6 +30,7 @@ type Factory struct {
 
 	tracker                  *remote.ClusterCacheTracker
 	registry                 *clusters.ProviderClusterReconcilerRegistry
+	dockerClusterReconciler  *dockerreconciler.Reconciler
 	vsphereClusterReconciler *vspherereconciler.Reconciler
 	snowClusterReconciler    *snowreconciler.Reconciler
 	cniReconciler            *cnireconciler.Reconciler
@@ -38,6 +40,7 @@ type Factory struct {
 
 type Reconcilers struct {
 	ClusterReconciler           *ClusterReconciler
+	DockerDatacenterReconciler  *DockerDatacenterReconciler
 	VSphereDatacenterReconciler *VSphereDatacenterReconciler
 	SnowMachineConfigReconciler *SnowMachineConfigReconciler
 }
@@ -85,6 +88,23 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *
 			f.manager.GetClient(),
 			f.logger,
 			f.registry,
+		)
+
+		return nil
+	})
+	return f
+}
+
+// WithDockerDatacenterReconciler adds the DockerDatacenterReconciler to the controller factory.
+func (f *Factory) WithDockerDatacenterReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.DockerDatacenterReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.DockerDatacenterReconciler = NewDockerDatacenterReconciler(
+			f.manager.GetClient(),
+			f.logger,
 		)
 
 		return nil
@@ -155,6 +175,7 @@ func (f *Factory) withTracker() *Factory {
 }
 
 const (
+	dockerProviderName  = "docker"
 	snowProviderName    = "snow"
 	vSphereProviderName = "vsphere"
 )
@@ -168,6 +189,8 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 		}
 
 		switch p.ProviderName {
+		case dockerProviderName:
+			f.withDockerClusterReconciler()
 		case snowProviderName:
 			f.withSnowClusterReconciler()
 		case vSphereProviderName:
@@ -187,6 +210,26 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 
 		return nil
 	})
+	return f
+}
+
+func (f *Factory) withDockerClusterReconciler() *Factory {
+	f.withCNIReconciler().withTracker()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dockerClusterReconciler != nil {
+			return nil
+		}
+
+		f.dockerClusterReconciler = dockerreconciler.New(
+			f.manager.GetClient(),
+			f.cniReconciler,
+			f.tracker,
+		)
+		f.registryBuilder.Add(anywherev1.DockerDatacenterKind, f.vsphereClusterReconciler)
+
+		return nil
+	})
+
 	return f
 }
 

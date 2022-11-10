@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: AWSIamConfig is the Schema for the awsiamconfigs API
+        description: AWSIamConfig is the Schema for the awsiamconfigs API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AWSIamConfigSpec defines the desired state of AWSIamConfig
+            description: AWSIamConfigSpec defines the desired state of AWSIamConfig.
             properties:
               awsRegion:
                 description: AWSRegion defines a region in an AWS partition
@@ -48,7 +48,7 @@ spec:
               mapRoles:
                 items:
                   description: MapRoles defines IAM role to a username and set of
-                    groups mapping using EKSConfigMap BackendMode
+                    groups mapping using EKSConfigMap BackendMode.
                   properties:
                     groups:
                       items:
@@ -66,7 +66,7 @@ spec:
               mapUsers:
                 items:
                   description: MapUsers defines IAM role to a username and set of
-                    groups mapping using EKSConfigMap BackendMode
+                    groups mapping using EKSConfigMap BackendMode.
                   properties:
                     groups:
                       items:
@@ -91,7 +91,7 @@ spec:
             - backendMode
             type: object
           status:
-            description: AWSIamConfigStatus defines the observed state of AWSIamConfig
+            description: AWSIamConfigStatus defines the observed state of AWSIamConfig.
             type: object
         type: object
     served: true

@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: DockerDatacenterConfig is the Schema for the DockerDatacenterConfigs
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,11 +35,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: DockerDatacenterConfigSpec defines the desired state of DockerDatacenterConfig
+            description: DockerDatacenterConfigSpec defines the desired state of DockerDatacenterConfig.
             type: object
           status:
             description: DockerDatacenterConfigStatus defines the observed state of
-              DockerDatacenterConfig
+              DockerDatacenterConfig.
             type: object
         type: object
     served: true

@@ -722,6 +722,41 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 	}
 }
 
+func TestProviderGenerateDeploymentFileForSingleNodeCluster(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	provider := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+	clusterObj := &types.Cluster{Name: "single-node"}
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "single-node"
+		s.Cluster.Spec.KubernetesVersion = "1.21"
+		s.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+		s.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 1
+		s.VersionsBundle = versionsBundle
+		s.Cluster.Spec.WorkerNodeGroupConfigurations = nil
+	})
+
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, _, err := provider.GenerateCAPISpecForCreate(context.Background(), clusterObj, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_docker_cp_single_node.yaml")
+}
+
 func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 	type args struct {
 		clusterSpec *cluster.Spec

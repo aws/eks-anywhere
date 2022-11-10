@@ -15,7 +15,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package emissary --cluster clusterName > emissary.yaml
+   eksctl anywhere generate package emissary --cluster <cluster-name> > emissary.yaml
    ```
 
 1. Add the desired configuration to `emissary.yaml`
@@ -42,7 +42,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 1. Validate the installation
 
    ```bash
-   eksctl anywhere get packages
+   eksctl anywhere get packages --cluster <cluster-name>
    ```
 
    Example command output
@@ -66,5 +66,5 @@ Emissary will automatically be upgraded when a new bundle is activated.
 To uninstall Emissary, simply delete the package
 
 ```bash
-eksctl anywhere delete package emissary
+eksctl anywhere delete package --cluster <cluster-name> emissary
 ```

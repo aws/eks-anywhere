@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: SnowMachineConfig is the Schema for the SnowMachineConfigs API
+        description: SnowMachineConfig is the Schema for the SnowMachineConfigs API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec
+            description: SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec.
             properties:
               amiID:
                 description: The AMI ID from which to create the machine instance.
@@ -98,7 +98,7 @@ spec:
             - amiID
             type: object
           status:
-            description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig
+            description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig.
             properties:
               failureMessage:
                 description: FailureMessage indicates that there is a fatal problem

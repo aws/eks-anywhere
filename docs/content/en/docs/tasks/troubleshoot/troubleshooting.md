@@ -185,8 +185,6 @@ kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 
 It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
 
-## Bare Metal troubleshooting
-
 ### Bootstrap cluster fails to come up
 
 ```
@@ -202,6 +200,8 @@ If that doesn't work, you can manually delete the old cluster:
 ```bash
 kind delete cluster --name cluster-name
 ```
+
+## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
 
@@ -412,8 +412,8 @@ govc vm.power -off -force $VM_NAME
 govc object.destroy $VM_NAME
 ```
 
-### Troubleshooting GitOps integration
-#### Cluster creation failure leaves outdated cluster configuration in GitHub.com repository
+## Troubleshooting GitOps integration
+### Cluster creation failure leaves outdated cluster configuration in GitHub.com repository
 Failed cluster creation can sometimes leave behind cluster configuration files committed to your GitHub.com repository.
 Make sure to delete these configuration files before you re-try `eksctl anywhere create cluster`.
 If these configuration files are not deleted, GitOps installation will fail but cluster creation will continue.
@@ -422,12 +422,12 @@ They'll generally be located under the directory
 `clusters/$CLUSTER_NAME` if you used the default path in your `flux` `gitops` config.
 Delete the entire directory named $CLUSTER_NAME.
 
-#### Cluster creation failure leaves empty GitHub.com repository
+### Cluster creation failure leaves empty GitHub.com repository
 Failed cluster creation can sometimes leave behind a completely empty GitHub.com repository.
 This can cause the GitOps installation to fail if you re-try the creation of a cluster which uses this repository.
 If cluster creation failure leaves behind an empty github repository, please manually delete the created GitHub.com repository before attempting cluster creation again.
 
-#### Changes not syncing to cluster
+### Changes not syncing to cluster
 Please remember that the only fields currently supported for GitOps are:
 
 Cluster
@@ -473,7 +473,7 @@ For example, if the deploy key used by `flux` has been deleted, you'd see someth
 {"level":"error","ts":"2021-07-01T20:04:56.335Z","logger":"controller.gitrepository","msg":"Reconciler error","reconciler group":"source.toolkit.fluxcd.io","reconciler kind":"GitRepository","name":"flux-system","namespace":"flux-system","error":"unable to clone 'ssh://git@github.com/youruser/gitops-vsphere-test', error: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"}
 ```
 
-#### Other ways to troubleshoot GitOps integration
+### Other ways to troubleshoot GitOps integration
 If you're still having problems after deleting any empty EKS Anywhere created GitHub repositories and looking at the `source-controller` logs.
 You can look for additional issues by checking out the deployments in the `flux-system` and `eksa-system` namespaces and ensure they're running and their log streams are free from exceptions.
 
