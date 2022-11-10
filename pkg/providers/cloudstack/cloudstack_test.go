@@ -79,7 +79,6 @@ func givenWildcardValidator(mockCtrl *gomock.Controller, clusterSpec *cluster.Sp
 	setClusterSpecDefaultHostPort(cloudstackSpec)
 	validator.EXPECT().ValidateClusterMachineConfigs(gomock.Any(), gomock.Any()).SetArg(1, *cloudstackSpec).AnyTimes()
 	validator.EXPECT().ValidateCloudStackDatacenterConfig(gomock.Any(), clusterSpec.CloudStackDatacenter).AnyTimes()
-	validator.EXPECT().ValidateCloudStackAccess(gomock.Any(), clusterSpec.CloudStackDatacenter).AnyTimes()
 	validator.EXPECT().ValidateControlPlaneEndpointUniqueness(gomock.Any()).AnyTimes()
 	return validator
 }
