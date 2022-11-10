@@ -30,7 +30,6 @@ import (
 const (
 	maxRetries                = 30
 	backOffPeriod             = 5 * time.Second
-	maxSurgeForRollingUpgrade = 1
 )
 
 var (
