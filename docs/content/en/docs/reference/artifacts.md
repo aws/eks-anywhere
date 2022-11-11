@@ -189,7 +189,7 @@ You can use a proxy server to route outbound requests to the internet. To config
 
 ### Build vSphere OVA node images
 
-These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for vSphere.
+These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere.
 
 1. Create a linux user for running image-builder.
    ```
@@ -223,29 +223,31 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
 1. Create a vsphere configuration file (for example, `vsphere-connection.json`):
    ```json
    {
-     "cluster":"<vsphere cluster used for image building>",
-     "convert_to_template":"false",
-     "create_snapshot":"<creates a snapshot on base OVA after building if set to true>",
-     "datacenter":"<vsphere datacenter used for image building>",
-     "datastore":"<datastore used to store template/for image building>",
-     "folder":"<folder on vsphere to create temporary vm>",
-     "insecure_connection":"true",
-     "linked_clone":"false",
-     "network":"<vsphere network used for image building>",
-     "password":"<vcenter username>",
-     "resource_pool":"<resource pool used for image building vm>",
-     "username":"<vcenter username>",
-     "vcenter_server":"<vcenter fqdn>",
+     "cluster": "<vsphere cluster used for image building>",
+     "convert_to_template": "false",
+     "create_snapshot": "<creates a snapshot on base OVA after building if set to true>",
+     "datacenter": "<vsphere datacenter used for image building>",
+     "datastore": "<datastore used to store template/for image building>",
+     "folder": "<folder on vsphere to create temporary vm>",
+     "insecure_connection": "true",
+     "linked_clone": "false",
+     "network": "<vsphere network used for image building>",
+     "password": "<vcenter username>",
+     "resource_pool": "<resource pool used for image building vm>",
+     "username": "<vcenter username>",
+     "vcenter_server": "<vcenter fqdn>",
      "vsphere_library_name": "<vsphere content library name>"
    }
    ```
    For RHEL images, add the following fields:
    ```json
+   {
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
      "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
      "iso_checksum_type": "<for example: sha256>",
      "rhel_username": "<rhsm username>",
      "rhel_password": "<rhsm password>"
+   }
    ```
 
 1. Create an ubuntu or redhat image:
@@ -271,7 +273,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
       image-builder build --os redhat --hypervisor vsphere --release-channel 1-23 --vsphere-config vsphere-connection.json
       ```
 ### Build Bare Metal node images
-These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for Bare Metal.
+These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal.
 
 1. Create a linux user for running image-builder.
    ```
@@ -308,7 +310,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
      "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
      "iso_checksum_type": "<for example: sha256>",
      "rhel_username": "<rhsm username>",
-     "rhel_password": "<rhsm password>"
+     "rhel_password": "<rhsm password>",
      "extra_rpms": "<Space-separated list of RPM packages. Useful for adding required drivers or other packages>"
    }
    ```
@@ -410,6 +412,77 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
       ```
 
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing Cloudstack]({{< relref "./cloudstack/cloudstack-preparation.md" >}}).
+
+### Building AMI node images
+
+These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes.
+
+1. Create a linux user for running image-builder.
+   ```
+   sudo adduser image-builder
+   ```
+   Follow the prompt to provide a password for the image-builder user.
+1. Add the `image-builder` user to the `sudo` group and switch user to `image-builder`, providing in the password from previous step when prompted.
+   ```
+   sudo usermod -aG sudo image-builder
+   su image-builder
+   ```
+1. Install packages and prepare environment:
+   ```
+   sudo apt update -y
+   sudo apt install jq unzip make ansible -y
+   sudo snap install yq
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   ```
+1. Get `image-builder`:
+   >**_NOTE_**: The version of `image-builder` CLI that includes support for building AMIs has not yet been released to production, so the steps below correspond to the development version of the CLI.
+   
+   ```bash
+    cd /tmp
+    sudo wget https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.4813/image-builder/0.1.2/image-builder-v0.0.0-dev-build.4813-linux-amd64.tar.gz
+    sudo tar xvf image-builder*.tar.gz
+    sudo cp image-builder /usr/local/bin
+    ```
+1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters.
+   ```json
+   {
+     "ami_filter_name": "<Regular expression to filter a source AMI (default: ubuntu/images/*ubuntu-focal-20.04-amd64-server-*)>",
+     "ami_filter_owners": "<AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc (default: 679593333241 - the AWS Marketplace AWS account ID",
+     "ami_regions": "A list of AWS regions to copy the AMI to",
+     "aws_region": "The AWS region in which to launch the EC2 instance to create the AMI",
+     "ansible_extra_vars": "Additional variables to pass to Ansible. These are converted to the `--extra-vars` command-line argument",
+     "builder_instance_type": "The EC2 instance type to use while building the AMI (default: t3.small)",
+     "custom_role": "If set to true, this will run a custom Ansible role before the `sysprep` role to allow for further customization",
+     "custom_role_name_list" : ["List of strings representing the custom roles to run. This field is mutually exclusive with custom_role_names"],
+     "custom_role_names": "Space delimited string of the custom roles to run. This field is mutually exclusive with custom_role_name_list and is provided for compatibility with Ansible's input format",
+     "manifest_output": "The path to write the build artifacts manifest to",
+     "root_device_name": "The device name used by EC2 for the root EBS volume attached to the instance",
+     "volume_size": "The size of the root EBS volume in GiB",
+     "volume_type": "The type of root EBS volume, such as gp2, gp3, io1, etc",
+   }
+   ```
+1. To create an Ubuntu-based image, run `image-builder` with the following options:
+
+   * `--os`: `ubuntu`
+   * `--hypervisor`: For AMI, use `ami`
+   * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+   * `--ami-config`: AMI configuration file (`ami.json` in this example)
+
+   ```bash
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1-23 --ami-config ami.json
+   ```
+1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a Raw image, you can achieve this using the AWS CLI.
+   ```
+   ARTIFACT_ID=$(cat <manifest output location> | jq -r '.builds[0].artifact_id')
+   AMI_ID=$(echo $ARTIFACT_ID | cut -d: -f2)
+   IMAGE_FORMAT=raw
+   AMI_EXPORT_BUCKET_NAME=<S3 bucket to export the AMI to>
+   AMI_EXPORT_PREFIX=<S3 prefix for the exported AMI object>
+   EXPORT_RESPONSE=$(aws ec2 export-image --disk-image-format $IMAGE_FORMAT --s3-export-location S3Bucket=$AMI_EXPORT_BUCKET_NAME,S3Prefix=$AMI_EXPORT_PREFIX --image-id $AMI_ID)
+   EXPORT_TASK_ID=$(echo $EXPORT_RESPONSE | jq -r '.ExportImageTaskId')
+   ```
+   The exported image will be available at the location `s3://$AMI_EXPORT_BUCKET_NAME/$AMI_EXPORT_PREFIX/$EXPORT_IMAGE_TASK_ID.raw`.
 
 ## Images
 
