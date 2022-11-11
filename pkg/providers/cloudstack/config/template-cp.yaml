@@ -351,6 +351,11 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: {{.format}}
   replicas: {{.controlPlaneReplicas}}
+  {{- if .upgradeRolloutStrategy }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}}
+  {{- end }}
   version: {{.kubernetesVersion}}
 {{- if .externalEtcd }}
 ---

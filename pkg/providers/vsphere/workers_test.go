@@ -3,6 +3,7 @@ package vsphere_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -122,6 +123,70 @@ func TestWorkersSpecUpgradeCluster(t *testing.T) {
 	expectedGroup2.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{}
 	expectedGroup2.ProviderMachineTemplate.Name = "test-md-1-2"
 	expectedGroup2.ProviderMachineTemplate.Spec.Template.Spec.NumCPUs = 10
+
+	workers, err := vsphere.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers).NotTo(BeNil())
+	g.Expect(workers.Groups).To(HaveLen(2))
+	g.Expect(workers.Groups).To(ConsistOf(*expectedGroup1, *expectedGroup2))
+}
+
+func TestWorkersSpecUpgradeClusterNoMachineTemplateChanges(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_multiple_worker_node_groups.yaml")
+	oldGroup1 := &clusterapi.WorkerGroup[*vspherev1.VSphereMachineTemplate]{
+		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+		MachineDeployment:       machineDeployment(),
+		ProviderMachineTemplate: machineTemplate(),
+	}
+	oldGroup2 := &clusterapi.WorkerGroup[*vspherev1.VSphereMachineTemplate]{
+		KubeadmConfigTemplate: kubeadmConfigTemplate(
+			func(kct *bootstrapv1.KubeadmConfigTemplate) {
+				kct.Name = "test-md-1-1"
+			},
+		),
+		MachineDeployment: machineDeployment(
+			func(md *clusterv1.MachineDeployment) {
+				md.Name = "test-md-1"
+				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+				md.Spec.Replicas = ptr.Int32(2)
+			},
+		),
+		ProviderMachineTemplate: machineTemplate(
+			func(vmt *vspherev1.VSphereMachineTemplate) {
+				vmt.Name = "test-md-1-1"
+			},
+		),
+	}
+
+	// Always make copies before passing to client since it does modifies the api objects
+	// Like for example, the ResourceVersion
+	expectedGroup1 := oldGroup1.DeepCopy()
+	expectedGroup2 := oldGroup2.DeepCopy()
+
+	// This mimics what would happen if the objects were returned by a real api server
+	// It helps make sure that the immutable object comparison is able to deal with these
+	// kind of changes.
+	oldGroup1.ProviderMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
+	oldGroup2.ProviderMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
+
+	// This is testing defaults. We don't set Snapshot in our machine templates,
+	// but it's possible that some default logic does. We need to take this into
+	// consideration when checking for equality.
+	oldGroup1.ProviderMachineTemplate.Spec.Template.Spec.Snapshot = "current"
+	oldGroup1.ProviderMachineTemplate.Spec.Template.Spec.Snapshot = "current"
+
+	client := test.NewFakeKubeClient(
+		oldGroup1.MachineDeployment,
+		oldGroup1.KubeadmConfigTemplate,
+		oldGroup1.ProviderMachineTemplate,
+		oldGroup2.MachineDeployment,
+		oldGroup2.KubeadmConfigTemplate,
+		oldGroup2.ProviderMachineTemplate,
+	)
 
 	workers, err := vsphere.WorkersSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
