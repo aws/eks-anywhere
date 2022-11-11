@@ -185,11 +185,15 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 		return session.instanceId, nil, err
 	}
 
-	key := "Integration-Test-Done"
-	value := "TRUE"
-	err = testRunner.tagInstance(conf, key, value)
-	if err != nil {
-		return session.instanceId, nil, fmt.Errorf("tagging instance for e2e success: %v", err)
+	// Tagging only successful e2e test instances.
+	// The aws cleanup periodic job deletes the tagged EC2 instances and long lived instances.
+	if testCommandResult.Successful() {
+		key := "Integration-Test-Done"
+		value := "TRUE"
+		err = testRunner.tagInstance(conf, key, value)
+		if err != nil {
+			return session.instanceId, nil, fmt.Errorf("tagging instance for e2e success: %v", err)
+		}
 	}
 
 	return session.instanceId, testCommandResult, nil
@@ -232,9 +236,11 @@ func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult
 		}
 
 		if !testCommandResult.Successful() {
+			// For Tinkerbell tests we run multiple tests on the same instance.
+			// Hence upload fails for passed tests within the instance.
+			// TODO (pokearu): Find a way to only upload for failed tests within the instance.
 			e.uploadGeneratedFilesFromInstance(testName)
 			e.uploadDiagnosticArchiveFromInstance(testName)
-			return nil
 		}
 	}
 
