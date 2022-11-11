@@ -1,4 +1,4 @@
-package docker
+package docker_test
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -23,7 +24,7 @@ func TestValidateControlplaneEndpoint(t *testing.T) {
 	})
 	wantErr := fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
 
-	err := validateControlPlaneEndpoint(clusterSpec)
+	err := docker.ValidateControlPlaneEndpoint(clusterSpec)
 	if err == nil || err.Error() != wantErr.Error() {
 		t.Errorf("Got err %v, wanted %v", err, wantErr)
 	}

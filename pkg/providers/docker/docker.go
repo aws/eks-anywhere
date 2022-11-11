@@ -125,7 +125,7 @@ func (p *provider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Clu
 
 func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The docker infrastructure provider is meant for local development and testing only")
-	if err := validateControlPlaneEndpoint(clusterSpec); err != nil {
+	if err := ValidateControlPlaneEndpoint(clusterSpec); err != nil {
 		return err
 	}
 	return nil
