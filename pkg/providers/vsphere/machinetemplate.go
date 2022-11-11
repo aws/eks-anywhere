@@ -20,5 +20,5 @@ func getMachineTemplate(ctx context.Context, client kubernetes.Client, name, nam
 }
 
 func machineTemplateEqual(new, old *vspherev1.VSphereMachineTemplate) bool {
-	return equality.Semantic.DeepDerivative(new, old)
+	return equality.Semantic.DeepDerivative(new.Spec, old.Spec)
 }
