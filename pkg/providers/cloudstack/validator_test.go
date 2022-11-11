@@ -89,35 +89,6 @@ func TestValidateCloudStackDatacenterConfigWithAZ(t *testing.T) {
 	}
 }
 
-func TestValidateCloudStackConnection(t *testing.T) {
-	ctx := context.Background()
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	validator := NewValidator(cmk, &DummyNetClient{}, true)
-	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get datacenter config from file")
-	}
-
-	cmk.EXPECT().ValidateCloudStackConnection(ctx, "global").Return(nil)
-	if err := validator.validateCloudStackAccess(ctx, datacenterConfig); err != nil {
-		t.Fatalf("failed to validate CloudStackDataCenterConfig: %v", err)
-	}
-}
-
-func TestValidateCloudStackConnectionFailure(t *testing.T) {
-	ctx := context.Background()
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	validator := NewValidator(cmk, &DummyNetClient{}, true)
-	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get datacenter config from file")
-	}
-
-	cmk.EXPECT().ValidateCloudStackConnection(ctx, "global").Return(errors.New("exception"))
-	err = validator.validateCloudStackAccess(ctx, datacenterConfig)
-	thenErrorExpected(t, "validating connection to cloudstack global: exception", err)
-}
-
 func TestValidateSkipControlPlaneIpCheck(t *testing.T) {
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	validator := NewValidator(cmk, &DummyNetClient{}, true)
