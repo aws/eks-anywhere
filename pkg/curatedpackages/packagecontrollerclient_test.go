@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -22,6 +21,15 @@ import (
 
 //go:embed testdata/packagebundlectrl_test.yaml
 var packageBundleControllerTest string
+
+//go:embed testdata/awssecret_test.yaml
+var awsSecretTest []byte
+
+//go:embed testdata/awssecret_test_empty.yaml
+var awsSecretTestEmpty []byte
+
+//go:embed testdata/awssecret_defaultregion.yaml
+var awsSecretDefaultRegion []byte
 
 type packageControllerTest struct {
 	*WithT
@@ -88,9 +96,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -98,7 +104,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -114,9 +120,7 @@ func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test_empty.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, fmt.Errorf("boom"))
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTestEmpty, params).Return(bytes.Buffer{}, fmt.Errorf("boom"))
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
@@ -128,7 +132,7 @@ func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -188,9 +192,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 
 	values := []string{sourceRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -198,7 +200,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -223,9 +225,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -233,7 +233,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -267,9 +267,7 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -277,7 +275,7 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		DoAndReturn(getPBCFail(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -291,9 +289,7 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, errors.New("failed applying secrets"))
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, errors.New("failed applying secrets"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -301,7 +297,7 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when secret creation fails")
 	}
@@ -335,9 +331,7 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -345,7 +339,7 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when cron job fails")
 	}
@@ -382,9 +376,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_defaultregion.yaml")
-	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretDefaultRegion, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -399,7 +391,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when cron job fails")
 	}
@@ -421,9 +413,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -431,7 +421,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -445,9 +435,7 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -455,7 +443,7 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 		DoAndReturn(getPBCLoops(t, 3)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
@@ -493,9 +481,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -503,7 +489,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 		DoAndReturn(getPBCDelay(t, time.Second)).
 		AnyTimes()
 
-	err = tt.command.EnableCuratedPackages(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	expectedErr := fmt.Errorf("timed out finding an active package bundle for the current cluster: %v", context.DeadlineExceeded)
 	if err.Error() != expectedErr.Error() {
 		t.Errorf("expected %v, got %v", expectedErr, err)
