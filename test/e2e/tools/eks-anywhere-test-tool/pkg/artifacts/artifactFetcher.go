@@ -162,11 +162,13 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 func excludedKey(key string) bool {
 	excludedKeys := []string{
 		"/.git/",
+		"/oidc/",
 	}
 
 	excludedSuffixes := []string{
 		"/e2e.test",
 		"/eksctl-anywhere",
+		".csv",
 	}
 
 	for _, s := range excludedKeys {

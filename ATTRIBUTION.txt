@@ -227,7 +227,7 @@ https://github.com/oras-project/oras-go
 ** github.com/mrajashree/cluster-api; version v1.1.3-custom --
 https://github.com/mrajashree/cluster-api
 
-** sigs.k8s.io/cluster-api-provider-cloudstack; version v0.4.7-rc1 --
+** sigs.k8s.io/cluster-api-provider-cloudstack; version v0.4.8-rc1 --
 https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack
 
 ** sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1; version v1.0.1 --
@@ -1292,11 +1292,14 @@ https://github.com/ProtonMail/go-crypto
 ** github.com/vmware/govmomi/vim25/xml; version v0.29.0 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.18.6 --
+** golang.org/go; version go1.18.7 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.0.0-20220622213112-05595931fe9d --
 https://go.googlesource.com/crypto
+
+** golang.org/x/exp/maps; version v0.0.0-20221011201855-a3968a42eed6 --
+https://go.googlesource.com/exp
 
 ** golang.org/x/net; version v0.0.0-20220812174116-3211cb980234 --
 https://go.googlesource.com/net

@@ -214,34 +214,57 @@ func setClusterSpecDefaultHostPort(cloudstackSpec *Spec) {
 }
 
 func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	setupContext(t)
-	ctx := context.Background()
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	cluster := &types.Cluster{
-		Name: "test",
+	tests := []struct {
+		testName          string
+		clusterconfigFile string
+		wantCPFile        string
+		wantMDFile        string
+	}{
+		{
+			testName:          "main",
+			clusterconfigFile: testClusterConfigMainFilename,
+			wantCPFile:        "testdata/expected_results_main_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_md.yaml",
+		},
+		{
+			testName:          "main with rollout strategies",
+			clusterconfigFile: "cluster_main_with_rollout_strategy.yaml",
+			wantCPFile:        "testdata/expected_results_main_rollout_strategy_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_rollout_strategy_md.yaml",
+		},
 	}
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			setupContext(t)
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
 
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	validator := givenWildcardValidator(mockCtrl, clusterSpec)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, validator)
-	if provider == nil {
-		t.Fatalf("provider object is nil")
-	}
+			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
+			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
+			validator := givenWildcardValidator(mockCtrl, clusterSpec)
+			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, validator)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
 
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("failed to setup and validate: %v", err)
-	}
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
 
-	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
-	if err != nil {
-		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			}
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+			test.AssertContentToFile(t, string(md), tt.wantMDFile)
+		})
 	}
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
 }
 
 func TestProviderGenerateCAPISpecForCreateWithAutoscalingConfiguration(t *testing.T) {
@@ -1208,6 +1231,12 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 			clusterconfigFile: "cluster_main_with_node_labels.yaml",
 			wantCPFile:        "testdata/expected_results_main_cp.yaml",
 			wantMDFile:        "testdata/expected_results_main_node_labels_md.yaml",
+		},
+		{
+			testName:          "main with rollout strategies",
+			clusterconfigFile: "cluster_main_with_rollout_strategy.yaml",
+			wantCPFile:        "testdata/expected_results_main_rollout_strategy_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_rollout_strategy_md.yaml",
 		},
 		{
 			testName:          "main with cp node labels",

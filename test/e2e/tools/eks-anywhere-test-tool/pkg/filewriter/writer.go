@@ -26,6 +26,10 @@ func NewWriter(dir string) (FileWriter, error) {
 }
 
 func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (string, error) {
+	if strings.Contains(fileName, "|") {
+		count := strings.Count(fileName, "|") - 1
+		fileName = fmt.Sprintf("%s+%dTests", fileName[:strings.Index(fileName, "|")], count)
+	}
 	op := defaultFileOptions() // Default file options. -->> temporary file with default permissions
 	for _, optionFunc := range f {
 		optionFunc(op)
