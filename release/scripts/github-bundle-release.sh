@@ -23,7 +23,7 @@ WEEKLY_RELEASES_URL_PREFIX="${2?Specify second argument - weekly releases URL pr
 
 SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 RELEASE_NOTES_PATH="$SCRIPT_ROOT/github-bundle-release-notes"
-export DATE_YYYYMMDD=$(date "+%F")
+export DATE_YYYYMMDD="${DATE_YYYYMMDD:-$(date "+%F")}"
 RELEASE_TAG="weekly.$DATE_YYYYMMDD"
 
 # Filling in values for the GitHub Release notes template
