@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
+	"github.com/aws/eks-anywhere-test-tool/pkg/fileutils"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
 	"github.com/aws/eks-anywhere-test-tool/pkg/s3"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -44,8 +44,8 @@ var e2eFetchArtifactsCommand = &cobra.Command{
 			return fmt.Errorf("creating s3 client: %v", err)
 		}
 
-		now := time.Now().Format(time.RFC3339 + "-artifacts")
-		writer, err := filewriter.NewWriter(now)
+		dir := fileutils.GenOutputDirName("artifacts")
+		writer := filewriter.NewWriter(dir)
 		if err != nil {
 			return fmt.Errorf("setting up writer: %v", err)
 		}

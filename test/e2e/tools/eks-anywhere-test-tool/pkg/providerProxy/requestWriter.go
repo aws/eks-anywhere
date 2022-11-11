@@ -2,7 +2,6 @@ package providerProxy
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 
@@ -14,11 +13,7 @@ type requestWriter struct {
 }
 
 func newRequestWriter(folderPath string) (*requestWriter, error) {
-	writer, err := filewriter.NewWriter(folderPath)
-	if err != nil {
-		return nil, fmt.Errorf("setting up tests writer: %v", err)
-	}
-
+	writer := filewriter.NewWriter(folderPath)
 	return &requestWriter{FileWriter: writer}, nil
 }
 
