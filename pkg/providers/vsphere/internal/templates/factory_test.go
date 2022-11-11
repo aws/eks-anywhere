@@ -119,20 +119,20 @@ func (ct *createTest) assertSuccessFromCreateIfMissing() {
 
 func TestFactoryCreateIfMissingSearchTemplate(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return(ct.machineConfig.Spec.Template, nil)
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return(ct.machineConfig.Spec.Template, nil)
 	ct.assertSuccessFromCreateIfMissing()
 }
 
 func TestFactoryCreateIfMissingErrorSearchTemplate(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", ct.dummyError) // error getting template
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", ct.dummyError) // error getting template
 
 	ct.assertErrorFromCreateIfMissing()
 }
 
 func TestFactoryCreateIfMissingErrorLibraryElementExists(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(false, ct.dummyError)
 
 	ct.assertErrorFromCreateIfMissing()
@@ -140,7 +140,7 @@ func TestFactoryCreateIfMissingErrorLibraryElementExists(t *testing.T) {
 
 func TestFactoryCreateIfMissingErrorCreateLibrary(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(false, nil)
 	ct.govc.EXPECT().CreateLibrary(ct.ctx, ct.datastore, ct.templateLibrary).Return(ct.dummyError)
 
@@ -149,7 +149,7 @@ func TestFactoryCreateIfMissingErrorCreateLibrary(t *testing.T) {
 
 func TestFactoryCreateIfMissingErrorTemplateExistsInLibrary(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(false, nil)
 	ct.govc.EXPECT().CreateLibrary(ct.ctx, ct.datastore, ct.templateLibrary).Return(nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return("", ct.dummyError)
@@ -159,7 +159,7 @@ func TestFactoryCreateIfMissingErrorTemplateExistsInLibrary(t *testing.T) {
 
 func TestFactoryCreateIfMissingErrorImport(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(false, nil)
 	ct.govc.EXPECT().CreateLibrary(ct.ctx, ct.datastore, ct.templateLibrary).Return(nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
@@ -170,7 +170,7 @@ func TestFactoryCreateIfMissingErrorImport(t *testing.T) {
 
 func TestFactoryCreateIfMissingErrorDeploy(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(false, nil)
 	ct.govc.EXPECT().CreateLibrary(ct.ctx, ct.datastore, ct.templateLibrary).Return(nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
@@ -184,7 +184,7 @@ func TestFactoryCreateIfMissingErrorDeploy(t *testing.T) {
 
 func TestFactoryCreateIfMissingErrorFromTagFactory(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(false, nil)
 	ct.govc.EXPECT().CreateLibrary(ct.ctx, ct.datastore, ct.templateLibrary).Return(nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
@@ -201,7 +201,7 @@ func TestFactoryCreateIfMissingErrorFromTagFactory(t *testing.T) {
 
 func TestFactoryCreateIfMissingSuccessLibraryDoesNotExist(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(false, nil)
 	ct.govc.EXPECT().CreateLibrary(ct.ctx, ct.datastore, ct.templateLibrary).Return(nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
@@ -219,7 +219,7 @@ func TestFactoryCreateIfMissingSuccessLibraryDoesNotExist(t *testing.T) {
 
 func TestFactoryCreateIfMissingSuccessLibraryExists(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(true, nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
 	ct.govc.EXPECT().ImportTemplate(ct.ctx, ct.templateLibrary, ct.ovaURL, ct.templateName).Return(nil)
@@ -236,7 +236,7 @@ func TestFactoryCreateIfMissingSuccessLibraryExists(t *testing.T) {
 
 func TestFactoryCreateIfMissingSuccessTemplateInLibraryExists(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(true, nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentValid, nil)
 	ct.govc.EXPECT().DeployTemplateFromLibrary(
@@ -252,7 +252,7 @@ func TestFactoryCreateIfMissingSuccessTemplateInLibraryExists(t *testing.T) {
 
 func TestFactoryCreateIfMissingSuccessTemplateInLibraryCorrupted(t *testing.T) {
 	ct := newCreateTest(t)
-	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig).Return("", nil) // template not present
+	ct.govc.EXPECT().SearchTemplate(ct.ctx, ct.datacenter, ct.machineConfig.Spec.Template).Return("", nil) // template not present
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(true, nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentCorrupted, nil)
 	ct.govc.EXPECT().DeleteLibraryElement(ct.ctx, ct.templateInLibrary).Return(nil)

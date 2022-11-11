@@ -143,7 +143,7 @@ func TestVSphereUpgradeMulticlusterWorkloadClusterWithFluxLegacy(t *testing.T) {
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			framework.UpdateUbuntuTemplate121Var(),
+			provider.Ubuntu121Template(),
 		),
 	)
 }
@@ -259,7 +259,7 @@ func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			framework.UpdateUbuntuTemplate122Var(),
+			provider.Ubuntu122Template(),
 		),
 	)
 }

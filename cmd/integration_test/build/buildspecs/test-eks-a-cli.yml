@@ -15,6 +15,7 @@ env:
     TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
     TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
+    T_VSPHERE_TEMPLATES_FOLDER: "/SDDC-Datacenter/vm/Templates"
     T_VSPHERE_TEMPLATE_UBUNTU_KUBERNETES_1_20_EKS_20: "/SDDC-Datacenter/vm/Templates/kubernetes-1-20-eks-20-ubuntu"
     T_VSPHERE_TEMPLATE_UBUNTU_KUBERNETES_1_20_EKS_21: "/SDDC-Datacenter/vm/Templates/kubernetes-1-20-eks-21-ubuntu"
     T_VSPHERE_TEMPLATE_UBUNTU_KUBERNETES_1_21_EKS_18: "/SDDC-Datacenter/vm/Templates/kubernetes-1-21-eks-18-ubuntu"
