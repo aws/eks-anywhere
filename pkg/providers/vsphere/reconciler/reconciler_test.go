@@ -15,6 +15,7 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -243,14 +244,47 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
+	crs := &addonsv1.ClusterResourceSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workload-cluster-crs-0",
+			Namespace: "eksa-system",
+		},
+	}
+	tt.ShouldEventuallyExist(tt.ctx, crs)
+
 	tt.ShouldEventuallyExist(tt.ctx,
-		&addonsv1.ClusterResourceSet{
+		&controlplanev1.KubeadmControlPlane{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "workload-cluster-crs-0",
+				Name:      "workload-cluster",
 				Namespace: "eksa-system",
 			},
 		},
 	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&vspherev1.VSphereMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "workload-cluster-control-plane-1",
+				Namespace: "eksa-system",
+			},
+		},
+	)
+
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = "workload-cluster"
+	})
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vsphere-csi-controller", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "csi-vsphere-config", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "cloud-controller-manager", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "cloud-provider-vsphere-credentials", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "vsphere-csi-controller-role", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "vsphere-csi-controller-binding", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "csi.vsphere.vmware.com", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "vsphere-csi-node", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "vsphere-csi-controller", Namespace: "eksa-system"}})
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cpi-manifests", Namespace: "eksa-system"}})
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
