@@ -2976,13 +2976,19 @@ func TestGetPackageBundleController(t *testing.T) {
 
 func TestGetPackageBundleList(t *testing.T) {
 	tt := newKubectlTest(t)
-	testPbc := &packagesv1.PackageBundleList{}
+	testPbc := &packagesv1.PackageBundleList{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "PackageBundle",
+		},
+	}
 	respJSON, err := json.Marshal(testPbc)
 	if err != nil {
 		t.Errorf("marshaling test service: %s", err)
 	}
 	ret := bytes.NewBuffer(respJSON)
-	expectedParam := []string{"get", "packagebundle", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	expectedParam := []string{"get", "packagebundles", "-o", "jsonpath='{.items}'", "--kubeconfig", "c.kubeconfig", "-n", "eksa-packages"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
+	expectedParam = []string{"get", "packagebundle", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
 	if _, err := tt.k.GetPackageBundleList(tt.ctx, tt.cluster.KubeconfigFile); err != nil {
 		t.Errorf("Kubectl.GetPackageBundleList() error = %v, want nil", err)
