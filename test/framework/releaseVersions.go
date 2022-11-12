@@ -28,7 +28,7 @@ func GetLatestMinorReleaseBinaryFromTestBranch() (binaryPath string, err error) 
 }
 
 func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error) {
-	testBranch := getEnvWithDefault(BranchNameEnvVar, defaultTestBranch)
+	testBranch := testBranch()
 	if testBranch == "main" {
 		return GetLatestMinorReleaseFromMain()
 	}
@@ -43,6 +43,15 @@ func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error)
 	return GetLatestMinorReleaseFromVersion(testBranchFirstSemver)
 }
 
+func getLatestDevRelease() (*releasev1alpha1.EksARelease, error) {
+	releases, err := devReleases()
+	if err != nil {
+		return nil, err
+	}
+
+	return latestRelease(releases)
+}
+
 func GetLatestMinorReleaseBinaryFromMain() (binaryPath string, err error) {
 	return getBinaryFromRelease(GetLatestMinorReleaseFromMain())
 }
@@ -52,6 +61,11 @@ func GetLatestMinorReleaseFromMain() (*releasev1alpha1.EksARelease, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return latestRelease(releases)
+}
+
+func latestRelease(releases *releasev1alpha1.Release) (*releasev1alpha1.EksARelease, error) {
 	var latestRelease *releasev1alpha1.EksARelease
 	for _, release := range releases.Spec.Releases {
 		if release.Version == releases.Spec.LatestVersion {
@@ -162,9 +176,17 @@ func (p *platformAwareRelease) binaryUri() (binaryUri string, err error) {
 }
 
 func prodReleases() (release *releasev1alpha1.Release, err error) {
+	return getReleases(prodReleasesManifest)
+}
+
+func devReleases() (release *releasev1alpha1.Release, err error) {
+	return getReleases(devReleaseURL())
+}
+
+func getReleases(url string) (release *releasev1alpha1.Release, err error) {
 	reader := filereader.NewReader()
-	logger.Info("Reading prod release manifest", "manifest", prodReleasesManifest)
-	releases, err := releases.ReadReleasesFromURL(reader, prodReleasesManifest)
+	logger.Info("Reading release manifest", "manifest", url)
+	releases, err := releases.ReadReleasesFromURL(reader, url)
 	if err != nil {
 		return nil, err
 	}
@@ -195,4 +217,16 @@ func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchV
 
 func getMajorMinorFromTestBranch(testBranch string) string {
 	return strings.TrimPrefix(testBranch, "release-")
+}
+
+func devReleaseURL() string {
+	testBranch := testBranch()
+	if testBranch == "main" {
+		return "https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml"
+	}
+	return fmt.Sprintf("https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/%s/eks-a-release.yaml", testBranch)
+}
+
+func testBranch() string {
+	return getEnvWithDefault(BranchNameEnvVar, defaultTestBranch)
 }

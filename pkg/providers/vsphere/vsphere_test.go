@@ -110,8 +110,8 @@ func (pc *DummyProviderGovcClient) ValidateVCenterSetupMachineConfig(ctx context
 	return nil
 }
 
-func (pc *DummyProviderGovcClient) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
-	return machineConfig.Spec.Template, nil
+func (pc *DummyProviderGovcClient) SearchTemplate(ctx context.Context, datacenter, template string) (string, error) {
+	return template, nil
 }
 
 func (pc *DummyProviderGovcClient) LibraryElementExists(ctx context.Context, library string) (bool, error) {
@@ -2094,7 +2094,7 @@ func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
 	tt.setExpectationForSetup()
 	tt.setExpectationForVCenterValidation()
 	for _, mc := range tt.machineConfigs {
-		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", nil).MaxTimes(1)
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc.Spec.Template).Return("", nil).MaxTimes(1)
 	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
@@ -2109,7 +2109,7 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 	tt.setExpectationForSetup()
 	tt.setExpectationForVCenterValidation()
 	for _, mc := range tt.machineConfigs {
-		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", errors.New(errorMessage)).MaxTimes(1)
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc.Spec.Template).Return("", errors.New(errorMessage)).MaxTimes(1)
 	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
@@ -2126,12 +2126,12 @@ func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
 	tt.setExpectationsForMachineConfigsVCenterValidation()
 
 	for _, mc := range tt.machineConfigs {
-		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return(mc.Spec.Template, nil)
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc.Spec.Template).Return(mc.Spec.Template, nil)
 	}
 	controlPlaneMachineConfigName := tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	controlPlaneMachineConfig := tt.machineConfigs[controlPlaneMachineConfigName]
 
-	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig).Return(controlPlaneMachineConfig.Spec.Template, nil)
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig.Spec.Template).Return(controlPlaneMachineConfig.Spec.Template, nil)
 	tt.govc.EXPECT().GetTags(tt.ctx, controlPlaneMachineConfig.Spec.Template).Return(nil, nil)
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
@@ -2151,9 +2151,9 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
 	for _, mc := range tt.machineConfigs {
-		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return(mc.Spec.Template, nil)
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc.Spec.Template).Return(mc.Spec.Template, nil)
 	}
-	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig).Return(controlPlaneMachineConfig.Spec.Template, nil)
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig.Spec.Template).Return(controlPlaneMachineConfig.Spec.Template, nil)
 	tt.govc.EXPECT().GetTags(tt.ctx, controlPlaneMachineConfig.Spec.Template).Return(nil, errors.New(errorMessage))
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)

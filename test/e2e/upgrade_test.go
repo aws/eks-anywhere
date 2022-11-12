@@ -70,7 +70,7 @@ func TestVSphereKubernetes120UbuntuTo121Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube121,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate121Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu121Template()),
 	)
 }
 
@@ -85,7 +85,7 @@ func TestVSphereKubernetes121UbuntuTo122Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu122Template()),
 	)
 }
 
@@ -100,7 +100,7 @@ func TestVSphereKubernetes122UbuntuTo123Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube123,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate123Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu123Template()),
 	)
 }
 
@@ -116,7 +116,7 @@ func TestVSphereKubernetes123UbuntuTo124Upgrade(t *testing.T) {
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 	)
 }
 
@@ -136,7 +136,7 @@ func TestVSphereKubernetes123UbuntuTo124UpgradeCiliumPolicyEnforcementMode(t *te
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -154,7 +154,7 @@ func TestVSphereKubernetes123UbuntuTo124MultipleFieldsUpgrade(t *testing.T) {
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate124Var(),
+			provider.Ubuntu124Template(),
 			api.WithNumCPUsForAllMachines(vsphereCpVmNumCpuUpdateVar),
 			api.WithMemoryMiBForAllMachines(vsphereCpVmMemoryUpdate),
 			api.WithDiskGiBForAllMachines(vsphereCpDiskGiBUpdateVar),
@@ -185,7 +185,7 @@ func TestVSphereKubernetes123UbuntuTo124WithFluxLegacyUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -208,7 +208,7 @@ func TestVSphereKubernetes123UbuntuTo124DifferentNamespaceWithFluxLegacyUpgrade(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -261,7 +261,7 @@ func TestVSphereKubernetes123BottlerocketTo124Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate124()),
+		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -279,7 +279,7 @@ func TestVSphereKubernetes123BottlerocketTo124MultipleFieldsUpgrade(t *testing.T
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(
-			framework.UpdateBottlerocketTemplate124(),
+			provider.Bottlerocket124Template(),
 			api.WithNumCPUsForAllMachines(vsphereCpVmNumCpuUpdateVar),
 			api.WithMemoryMiBForAllMachines(vsphereCpVmMemoryUpdate),
 			api.WithDiskGiBForAllMachines(vsphereCpDiskGiBUpdateVar),
@@ -310,7 +310,7 @@ func TestVSphereKubernetes123BottlerocketTo124WithFluxLegacyUpgrade(t *testing.T
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate124()),
+		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -332,7 +332,7 @@ func TestVSphereKubernetes123BottlerocketTo124DifferentNamespaceWithFluxLegacyUp
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate124()),
+		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -405,7 +405,7 @@ func TestVSphereKubernetes123UbuntuTo124StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -425,7 +425,7 @@ func TestVSphereKubernetes123BottlerocketTo124StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate124()),
+		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -589,12 +589,12 @@ func TestVSphereKubernetes121UbuntuTo122UpgradeWithCheckpoint(t *testing.T) {
 	)
 
 	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)), framework.ExpectFailure(true),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var(), api.WithResourcePoolForAllMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
+		provider.WithProviderUpgrade(provider.Ubuntu122Template(), api.WithResourcePoolForAllMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
 
 	commandOpts := []framework.CommandOpt{framework.WithExternalEtcdWaitTimeout("10m")}
 
 	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)), framework.ExpectFailure(false),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var(), api.WithResourcePoolForAllMachines(os.Getenv(vsphereResourcePoolVar))), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
+		provider.WithProviderUpgrade(provider.Ubuntu122Template(), api.WithResourcePoolForAllMachines(os.Getenv(vsphereResourcePoolVar))), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
 
 	runUpgradeFlowWithCheckpoint(
 		test,

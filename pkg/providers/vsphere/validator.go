@@ -162,7 +162,7 @@ func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineCon
 }
 
 func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
-	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, machineConfig)
+	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("validating template: %v", err)
 	}

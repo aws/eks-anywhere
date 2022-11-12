@@ -126,8 +126,11 @@ func (g *Govc) Logout(ctx context.Context) error {
 	return nil
 }
 
-func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
-	params := []string{"find", "-json", "/" + datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)}
+// SearchTemplate looks for a vm template with the same base name as the provided template path.
+// If found, it returns the full qualified path to the template.
+// If multiple matching templates are found, it returns an error.
+func (g *Govc) SearchTemplate(ctx context.Context, datacenter, template string) (string, error) {
+	params := []string{"find", "-json", "/" + datacenter, "-type", "VirtualMachine", "-name", filepath.Base(template)}
 
 	var templateResponse bytes.Buffer
 	var err error
@@ -142,7 +145,7 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 	templateJson := templateResponse.String()
 	templateJson = strings.TrimSuffix(templateJson, "\n")
 	if templateJson == "null" || templateJson == "" {
-		logger.V(2).Info(fmt.Sprintf("Template not found: %s", machineConfig.Spec.Template))
+		logger.V(2).Info(fmt.Sprintf("Template not found: %s", template))
 		return "", nil
 	}
 
@@ -155,16 +158,16 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 	bTemplateFound := false
 	var foundTemplate string
 	for _, t := range templateInfo {
-		if strings.HasSuffix(t, machineConfig.Spec.Template) {
+		if strings.HasSuffix(t, template) {
 			if bTemplateFound {
-				return "", fmt.Errorf("specified template '%s' maps to multiple paths within the datacenter '%s'", machineConfig.Spec.Template, datacenter)
+				return "", fmt.Errorf("specified template '%s' maps to multiple paths within the datacenter '%s'", template, datacenter)
 			}
 			bTemplateFound = true
 			foundTemplate = t
 		}
 	}
 	if !bTemplateFound {
-		logger.V(2).Info(fmt.Sprintf("Template '%s' not found", machineConfig.Spec.Template))
+		logger.V(2).Info(fmt.Sprintf("Template '%s' not found", template))
 		return "", nil
 	}
 
