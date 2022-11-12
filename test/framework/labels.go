@@ -65,6 +65,7 @@ func retrieveTestNodeLabels(nodeLabels map[string]string) map[string]string {
 	}
 	return labels
 }
+
 func validateFailureDomainLabel(expectedLabels map[string]string, node corev1.Node) error {
 	if failuredomainSpecified, ok := expectedLabels[constants.FailureDomainLabelName]; ok {
 		if failuredomain, exist := node.Labels[constants.FailureDomainLabelName]; exist {
