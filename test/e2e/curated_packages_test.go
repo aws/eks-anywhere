@@ -210,7 +210,6 @@ func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	packageName := "hello-eks-anywhere"
 	packagePrefix := "test"
 	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
-	test.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
 	test.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test))
 }
@@ -225,7 +224,6 @@ func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.Multicluste
 		packageName := "hello-eks-anywhere"
 		packagePrefix := "test"
 		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
-		test.ManagementCluster.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ManagementCluster.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
 		e.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test.ManagementCluster))
 		e.DeleteCluster()
