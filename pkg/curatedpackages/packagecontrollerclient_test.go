@@ -474,8 +474,9 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 		AnyTimes()
 
 	err = tt.command.EnableCuratedPackages(tt.ctx)
-	if !errors.Is(err, context.DeadlineExceeded) {
-		t.Errorf("expected %v, got %v", context.DeadlineExceeded, err)
+	expectedErr := fmt.Errorf("timed out finding an active bundle for the current cluster: %v", context.DeadlineExceeded)
+	if err.Error() != expectedErr.Error() {
+		t.Errorf("expected %v, got %v", expectedErr, err)
 	}
 }
 
