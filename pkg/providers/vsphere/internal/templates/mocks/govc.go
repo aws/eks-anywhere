@@ -8,7 +8,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -280,18 +279,18 @@ func (mr *MockGovcClientMockRecorder) RoleExists(ctx, name interface{}) *gomock.
 }
 
 // SearchTemplate mocks base method.
-func (m *MockGovcClient) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
+func (m *MockGovcClient) SearchTemplate(ctx context.Context, datacenter, template string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchTemplate", ctx, datacenter, machineConfig)
+	ret := m.ctrl.Call(m, "SearchTemplate", ctx, datacenter, template)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SearchTemplate indicates an expected call of SearchTemplate.
-func (mr *MockGovcClientMockRecorder) SearchTemplate(ctx, datacenter, machineConfig interface{}) *gomock.Call {
+func (mr *MockGovcClientMockRecorder) SearchTemplate(ctx, datacenter, template interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchTemplate", reflect.TypeOf((*MockGovcClient)(nil).SearchTemplate), ctx, datacenter, machineConfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchTemplate", reflect.TypeOf((*MockGovcClient)(nil).SearchTemplate), ctx, datacenter, template)
 }
 
 // SetGroupRoleOnObject mocks base method.

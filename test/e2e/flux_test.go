@@ -269,7 +269,7 @@ func TestVSphereKubernetes123To124FluxUpgradeLegacy(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
@@ -289,7 +289,7 @@ func TestVSphereKubernetes123To124GitFluxUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }

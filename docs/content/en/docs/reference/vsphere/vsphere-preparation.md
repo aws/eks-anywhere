@@ -53,12 +53,14 @@ spec:
     datastores:
       - !!str "/MyDatacenter/datastore/MyDatastore2"
     resourcePools:
-      - !!str "/MyDatacenter/host/Cluster-03/MyResourcePool"
+      - !!str "/MyDatacenter/host/Cluster-03/MyResourcePool" # NOTE: see below if you do not want to use a resource pool
     folders:
       - !!str "/MyDatacenter/vm/OrgDirectory/MyVMs"
     templates:
       - !!str "/MyDatacenter/vm/Templates/MyTemplates"
 ```
+
+*NOTE: if you do not want to create a resource pool, you can instead specify the cluster directly as /MyDatacenter/host/Cluster-03 in user.yaml, where Cluster-03 is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the resourcePool field.*
 
 Set the admin credentials as environment variables:
 ```bash
@@ -75,6 +77,8 @@ If the user or any of the group or role objects already exist, use the force fla
 ```
 eksctl anywhere exp vsphere setup user -f user.yaml --force
 ```
+
+Please note that there is one more manual step to configure global permissions [here](#manually-set-global-permissions-role-in-global-permissions-ui).
 
 ### Configure via govc
 
@@ -115,10 +119,11 @@ govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$
 govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$DATASTORE"
 
 govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$RESOURCE_POOL"
-
-## In addition to the govc permissions.set call against "/", you will need to manually assign the "$USER_ROLE" to your user in the Global Permissions UI. There is no public API for global permissions unfortunately.
-
 ```
+
+*NOTE: if you do not want to create a resource pool, you can instead specify the cluster directly as /MyDatacenter/host/Cluster-03 in user.yaml, where Cluster-03 is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the resourcePool field.*
+
+Please note that there is one more manual step to configure global permissions [here](#manually-set-global-permissions-role-in-global-permissions-ui).
 
 ### Configure via UI
 
@@ -255,6 +260,11 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
 3. **Create a default Administrator role**: The third role is the default system role **Administrator** that you define to the user on the folder level and its children objects (VMs and OVA templates) that was created by the VSphere admistrator for you. 
 
    To create a role and define privileges check [Create a vCenter Server Custom Role](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-41E5E52E-A95B-4E81-9724-6AD6800BEF78.html) and [Defined Privileges](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html#GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62) pages.
+
+
+### Manually set Global Permissions role in Global Permissions UI
+
+vSphere does not currently support a public API for setting global permissions. Because of this, you will need to manually assign the Global Role you created to your user or group in the Global Permissions UI.
 
 ## Deploy an OVA Template
 If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can.
