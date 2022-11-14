@@ -80,6 +80,7 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 	return version, nil
 }
 
+// TagImage tags an image with the new localImage.
 func (d *Docker) TagImage(ctx context.Context, image string, localImage string) error {
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
@@ -88,6 +89,7 @@ func (d *Docker) TagImage(ctx context.Context, image string, localImage string) 
 	return nil
 }
 
+// PushImage pushes an image to the local registry.
 func (d *Docker) PushImage(ctx context.Context, image string, localImage string) error {
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {

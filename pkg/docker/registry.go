@@ -105,7 +105,7 @@ func getUpdatedEndpoint(originalEndpoint, image string) string {
 	return originalEndpoint
 }
 
-// Replace original registries with the new endpoint from the registry mirror configuration
+// Replace original registries with the new endpoint from the registry mirror configuration.
 func getLocalImage(endpoint string, image string) string {
 	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
 	localImage := replacer.Replace(image)
