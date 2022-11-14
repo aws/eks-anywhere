@@ -6,6 +6,7 @@ import (
 	"github.com/go-logr/logr"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
@@ -15,6 +16,8 @@ type ProviderClusterReconciler interface {
 	Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
 	// ReconcileWorkerNodes handles only the worker node reconciliation. Intended to be used on self managed clusters.
 	ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
+	// ReconcileCNI handles the cni reconciliation to install networking on the clusters.
+	ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error)
 }
 
 // ProviderClusterReconcilerRegistry holds a collection of cluster provider reconcilers

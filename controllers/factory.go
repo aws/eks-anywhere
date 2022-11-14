@@ -225,7 +225,7 @@ func (f *Factory) withDockerClusterReconciler() *Factory {
 			f.cniReconciler,
 			f.tracker,
 		)
-		f.registryBuilder.Add(anywherev1.DockerDatacenterKind, f.vsphereClusterReconciler)
+		f.registryBuilder.Add(anywherev1.DockerDatacenterKind, f.dockerClusterReconciler)
 
 		return nil
 	})

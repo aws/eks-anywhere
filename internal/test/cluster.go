@@ -88,7 +88,9 @@ func Bundles(t *testing.T) *releasev1alpha1.Bundles {
 	return bundles
 }
 
-func EksdRelease(t *testing.T) *eksdv1alpha1.Release {
+// EksdReleaseFromTestData returns a test release struct for unit testing from a testdata file.
+// See EksdRelease() for a static struct to test with.
+func EksdReleaseFromTestData(t *testing.T) *eksdv1alpha1.Release {
 	t.Helper()
 	content, err := configFS.ReadFile("testdata/kubernetes-1-21-eks-4.yaml")
 	if err != nil {
