@@ -20,11 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
 )
 
-const (
-	cronJobName = "cronjob/cron-ecr-renew"
-	jobName     = "eksa-auth-refresher"
-)
-
 //go:embed testdata/packagebundlectrl_test.yaml
 var packageBundleControllerTest string
 
@@ -96,8 +91,6 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -198,8 +191,6 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -235,8 +226,6 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -281,8 +270,6 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -320,22 +307,6 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 	}
 }
 
-func TestCreateCredentialsCreateCronJobFail(t *testing.T) {
-	tt := newPackageControllerTest(t)
-
-	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
-	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("cron job failed to create"))
-
-	err = tt.command.CreateCredentials(tt.ctx)
-	if err == nil {
-		t.Errorf("Create Credentials should fail when Create CronJob fails")
-	}
-}
-
 func TestPbcCreationSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
@@ -367,8 +338,6 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -416,8 +385,6 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_defaultregion.yaml")
 	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -457,8 +424,6 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -483,8 +448,6 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
@@ -533,8 +496,6 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().

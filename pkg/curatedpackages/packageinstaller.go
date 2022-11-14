@@ -44,7 +44,7 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	// There is an ask from customers to avoid considering the failure of installing curated packages
 	// controller as an error but rather a warning
 	if err != nil {
-		logger.MarkWarning("  Failed enabling curated packages on the cluster; please install through eksctl anywhere install packagecontroller command", "warning", err)
+		logger.MarkWarning("  Failed to install the optional EKS-A Curated Package Controller. Please try installation again through eksctl after the cluster creation succeeds", "warning", err)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	// as an error but rather a warning
 	err = pi.installPackages(ctx)
 	if err != nil {
-		logger.MarkWarning("Failed installing curated packages on the cluster; please install through eksctl anywhere create packages command", "error", err)
+		logger.MarkWarning("  Failed installing curated packages on the cluster; please install through eksctl anywhere create packages command after the cluster creation succeeds", "error", err)
 	}
 }
 
