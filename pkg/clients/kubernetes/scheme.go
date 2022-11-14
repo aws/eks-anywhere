@@ -6,6 +6,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
@@ -20,6 +21,7 @@ var schemeAdders = []schemeAdder{
 	snowv1.AddToScheme,
 	cloudstackv1.AddToScheme,
 	bootstrapv1.AddToScheme,
+	dockerv1.AddToScheme,
 }
 
 func addToScheme(scheme *runtime.Scheme, schemeAdder ...schemeAdder) error {
