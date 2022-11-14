@@ -135,15 +135,8 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 			password,
 		),
 		TmpArtifactsFolder: artifactsFolder,
-		FileImporter:       fetchFileRegistry(c.RegistryEndpoint, username, password, artifactsFolder, c.includePackages),
+		FileImporter:       oras.NewFileRegistryImporter(c.RegistryEndpoint, username, password, artifactsFolder),
 	}
 
 	return importArtifacts.Run(ctx)
-}
-
-func fetchFileRegistry(registryEndpoint, username, password, artifactsFolder string, includePackages bool) artifacts.FileImporter {
-	if includePackages {
-		return oras.NewFileRegistryImporter(registryEndpoint, username, password, artifactsFolder)
-	}
-	return &artifacts.Noop{}
 }

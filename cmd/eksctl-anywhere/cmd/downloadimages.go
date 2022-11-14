@@ -90,7 +90,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		TmpDowloadFolder:   downloadFolder,
 		DstFile:            c.outputFile,
 		Packager:           packagerForFile(c.outputFile),
-		ManifestDownloader: fetchManifestDownloader(downloadFolder, c.includePackages),
+		ManifestDownloader: oras.NewBundleDownloader(downloadFolder),
 	}
 
 	return downloadArtifacts.Run(ctx)
@@ -114,11 +114,4 @@ func fetchReader(reader *manifests.Reader, includePackages bool) artifacts.Reade
 		return curatedpackages.NewPackageReader(reader)
 	}
 	return reader
-}
-
-func fetchManifestDownloader(downloadFolder string, includePackages bool) artifacts.ManifestDownloader {
-	if includePackages {
-		return oras.NewBundleDownloader(downloadFolder)
-	}
-	return &artifacts.Noop{}
 }
