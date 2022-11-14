@@ -670,6 +670,20 @@ func (mr *MockClusterClientMockRecorder) WaitForDeployment(arg0, arg1, arg2, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForDeployment", reflect.TypeOf((*MockClusterClient)(nil).WaitForDeployment), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// WaitForFirstControlPlaneReady mocks base method.
+func (m *MockClusterClient) WaitForFirstControlPlaneReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForFirstControlPlaneReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForFirstControlPlaneReady indicates an expected call of WaitForFirstControlPlaneReady.
+func (mr *MockClusterClientMockRecorder) WaitForFirstControlPlaneReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForFirstControlPlaneReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForFirstControlPlaneReady), arg0, arg1, arg2, arg3)
+}
+
 // WaitForManagedExternalEtcdNotReady mocks base method.
 func (m *MockClusterClient) WaitForManagedExternalEtcdNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()

@@ -105,11 +105,14 @@ func (c *createTestSetup) expectCreateWorkload() {
 		c.clusterManager.EXPECT().CreateWorkloadCluster(
 			c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider,
 		).Return(c.workloadCluster, nil),
-		c.clusterManager.EXPECT().RunPostCreateWorkloadCluster(
-			c.ctx, c.bootstrapCluster, c.workloadCluster, c.clusterSpec,
-		),
 		c.clusterManager.EXPECT().InstallNetworking(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.provider,
+		),
+		c.clusterManager.EXPECT().InstallMachineHealthChecks(
+			c.ctx, c.clusterSpec, c.bootstrapCluster,
+		),
+		c.clusterManager.EXPECT().RunPostCreateWorkloadCluster(
+			c.ctx, c.bootstrapCluster, c.workloadCluster, c.clusterSpec,
 		),
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
@@ -135,11 +138,15 @@ func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 		c.clusterManager.EXPECT().CreateWorkloadCluster(
 			c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider,
 		).Return(c.workloadCluster, nil),
-		c.clusterManager.EXPECT().RunPostCreateWorkloadCluster(
-			c.ctx, c.bootstrapCluster, c.workloadCluster, c.clusterSpec,
-		),
+
 		c.clusterManager.EXPECT().InstallNetworking(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.provider,
+		),
+		c.clusterManager.EXPECT().InstallMachineHealthChecks(
+			c.ctx, c.clusterSpec, c.bootstrapCluster,
+		),
+		c.clusterManager.EXPECT().RunPostCreateWorkloadCluster(
+			c.ctx, c.bootstrapCluster, c.workloadCluster, c.clusterSpec,
 		),
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
@@ -238,10 +245,8 @@ func (c *createTestSetup) expectNotDeleteBootstrap() {
 }
 
 func (c *createTestSetup) expectInstallMHC() {
-	gomock.InOrder(
-		c.clusterManager.EXPECT().InstallMachineHealthChecks(
-			c.ctx, c.clusterSpec, c.bootstrapCluster,
-		),
+	c.clusterManager.EXPECT().InstallMachineHealthChecks(
+		c.ctx, c.clusterSpec, c.bootstrapCluster,
 	)
 }
 
@@ -265,7 +270,6 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
-	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
 	test.expectCuratedPackagesInstallation()
 
@@ -312,7 +316,7 @@ func TestCreateRunAWSIamConfigSuccess(t *testing.T) {
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
-	test.expectInstallMHC()
+	// test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
 	test.expectCuratedPackagesInstallation()
 
@@ -335,7 +339,6 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
-	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
 	test.expectCuratedPackagesInstallation()
 
@@ -366,7 +369,7 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectNotDeleteBootstrap()
-	test.expectInstallMHC()
+	// test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
 	test.expectCuratedPackagesInstallation()
 
@@ -400,7 +403,7 @@ func TestCreateWorkloadClusterRunAWSIamConfigSuccess(t *testing.T) {
 	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectNotDeleteBootstrap()
-	test.expectInstallMHC()
+	// test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
 	test.expectCuratedPackagesInstallation()
 
@@ -477,6 +480,12 @@ func TestCreateWorkloadClusterTaskRunPostCreateWorkloadClusterFailure(t *testing
 		test.clusterManager.EXPECT().CreateWorkloadCluster(
 			test.ctx, test.bootstrapCluster, test.clusterSpec, test.provider,
 		).Return(test.workloadCluster, nil),
+		test.clusterManager.EXPECT().InstallNetworking(
+			test.ctx, test.workloadCluster, test.clusterSpec, test.provider,
+		),
+		test.clusterManager.EXPECT().InstallMachineHealthChecks(
+			test.ctx, test.clusterSpec, test.bootstrapCluster,
+		),
 		test.clusterManager.EXPECT().RunPostCreateWorkloadCluster(
 			test.ctx, test.bootstrapCluster, test.workloadCluster, test.clusterSpec,
 		).Return(errors.New("test")),

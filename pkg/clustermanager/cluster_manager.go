@@ -1,10 +1,12 @@
 package clustermanager
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"strconv"
 	"strings"
@@ -27,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -73,6 +76,7 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
+	WaitForFirstControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -247,47 +251,47 @@ func (c *ClusterManager) writeCAPISpecFile(clusterName string, content []byte) e
 // and then generates the kubeconfig for the cluster.
 // It returns a struct of type Cluster containing the name and the kubeconfig of the cluster.
 func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error) {
+	clusterName := clusterSpec.Cluster.Name
+
 	workloadCluster := &types.Cluster{
-		Name:               clusterSpec.Cluster.Name,
+		Name:               clusterName,
 		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
-	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, managementCluster, clusterSpec)
-	if err != nil {
-		return nil, fmt.Errorf("generating capi spec: %v", err)
-	}
-
-	content := templater.AppendYamlResources(cpContent, mdContent)
-
-	if err = c.writeCAPISpecFile(clusterSpec.Cluster.Name, content); err != nil {
+	if err := c.applyProviderManifests(ctx, clusterSpec, managementCluster, provider); err != nil {
 		return nil, err
 	}
 
-	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, content, constants.EksaSystemNamespace)
-	if err != nil {
-		return nil, fmt.Errorf("applying capi spec: %v", err)
-	}
+	c.waitUntilFirstControlPlaneReady(ctx, clusterSpec, managementCluster)
 
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", workloadCluster.Name)
-		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, c.externalEtcdWaitTimeout.String(), workloadCluster.Name)
-		if err != nil {
-			return nil, fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
-		}
-		logger.V(3).Info("External etcd is ready")
-		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
-	}
+	// The Docker provider requires a kubeconfig update so we need to cache the Kubeconfig content
+	// outside the retry scope so we can update the Docker provider after.
+	var kubeconfigContent []byte
 
-	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), workloadCluster.Name)
-	if err != nil {
-		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
-	}
+	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", clusterName)
 
-	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
-	err = c.Retrier.Retry(
+	// Kubeconfig generation can take a while to generate hence we retry.
+	err := c.Retrier.Retry(
 		func() error {
-			workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+			var buf bytes.Buffer
+			err := c.getWorkloadClusterKubeconfig(ctx, clusterName, managementCluster, &buf)
+			if err != nil {
+				return err
+			}
+
+			kubeconfigFile, err := c.writer.Write(
+				kubeconfig.FormatWorkloadClusterKubeconfigFilename(clusterName),
+				buf.Bytes(),
+				filewriter.PersistentFile,
+				filewriter.Permission0600,
+			)
+			if err != nil {
+				return fmt.Errorf("writing workload kubeconfig: %v", err)
+			}
+
+			workloadCluster.KubeconfigFile = kubeconfigFile
+			kubeconfigContent = buf.Bytes()
+
 			return err
 		},
 	)
@@ -295,24 +299,86 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		return nil, fmt.Errorf("waiting for workload kubeconfig: %v", err)
 	}
 
+	if err := provider.UpdateKubeConfig(&kubeconfigContent, clusterName); err != nil {
+		return nil, err
+	}
+
 	return workloadCluster, nil
 }
 
-func (c *ClusterManager) generateWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster, provider providers.Provider) (string, error) {
-	fileName := fmt.Sprintf("%s-eks-a-cluster.kubeconfig", clusterName)
-	kubeconfig, err := c.clusterClient.GetWorkloadKubeconfig(ctx, clusterName, cluster)
-	if err != nil {
-		return "", fmt.Errorf("getting workload kubeconfig: %v", err)
-	}
-	if err := provider.UpdateKubeConfig(&kubeconfig, clusterName); err != nil {
-		return "", err
+func (c *ClusterManager) waitUntilFirstControlPlaneReady(
+	ctx context.Context,
+	clusterSpec *cluster.Spec,
+	managementCluster *types.Cluster,
+) error {
+	// If we have exeternal etcd we need to wait for that first as control plane nodes can't
+	// come up without it.
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", clusterSpec.Cluster.Name)
+		err := c.clusterClient.WaitForManagedExternalEtcdReady(
+			ctx,
+			managementCluster,
+			c.externalEtcdWaitTimeout.String(),
+			clusterSpec.Cluster.Name,
+		)
+		if err != nil {
+			return fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
+		}
+		logger.V(3).Info("External etcd is ready")
+		// the condition external etcd ready if true indicates that all etcd machines are ready and
+		// the etcd cluster is ready to accept requests
 	}
 
-	writtenFile, err := c.writer.Write(fileName, kubeconfig, filewriter.PersistentFile, filewriter.Permission0600)
+	logger.V(3).Info("Waiting for first control plane to be ready")
+	err := c.clusterClient.WaitForFirstControlPlaneReady(
+		ctx,
+		managementCluster,
+		c.controlPlaneWaitTimeout.String(),
+		clusterSpec.Cluster.Name,
+	)
 	if err != nil {
-		return "", fmt.Errorf("writing workload kubeconfig: %v", err)
+		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
-	return writtenFile, nil
+
+	return nil
+}
+
+func (c *ClusterManager) applyProviderManifests(
+	ctx context.Context,
+	spec *cluster.Spec,
+	management *types.Cluster,
+	provider providers.Provider,
+) error {
+	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, management, spec)
+	if err != nil {
+		return fmt.Errorf("generating capi spec: %v", err)
+	}
+
+	content := templater.AppendYamlResources(cpContent, mdContent)
+
+	if err = c.writeCAPISpecFile(spec.Cluster.Name, content); err != nil {
+		return err
+	}
+
+	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, management, content, constants.EksaSystemNamespace)
+	if err != nil {
+		return fmt.Errorf("applying capi spec: %v", err)
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) getWorkloadClusterKubeconfig(ctx context.Context, clusterName string, managementCluster *types.Cluster, w io.Writer) error {
+	kubeconfig, err := c.clusterClient.GetWorkloadKubeconfig(ctx, clusterName, managementCluster)
+	if err != nil {
+		return fmt.Errorf("getting workload kubeconfig: %v", err)
+	}
+
+	if _, err := io.Copy(w, bytes.NewReader(kubeconfig)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *ClusterManager) RunPostCreateWorkloadCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
