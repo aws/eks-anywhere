@@ -17,6 +17,7 @@ const (
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 	publicProdECRName = "eks-anywhere"
 	publicDevECRName  = "l0g8r8j6"
+	defaultRegistry   = "public.ecr.aws"
 )
 
 // ImageRegistryDestination implements the ImageDestination interface, writing images and tags from
@@ -41,12 +42,12 @@ func (d *ImageRegistryDestination) Write(ctx context.Context, images ...string) 
 	logger.V(3).Info("Starting registry write", "numberOfImages", len(images))
 	err := d.processor.Process(ctx, images, func(ctx context.Context, image string) error {
 		endpoint := getUpdatedEndpoint(d.endpoint, image)
-		image = removeDigestReference(image)
-		if err := d.client.TagImage(ctx, image, endpoint); err != nil {
+		localImage := getLocalImage(endpoint, image)
+		if err := d.client.TagImage(ctx, image, localImage); err != nil {
 			return err
 		}
 
-		if err := d.client.PushImage(ctx, image, endpoint); err != nil {
+		if err := d.client.PushImage(ctx, image, localImage); err != nil {
 			return err
 		}
 
@@ -102,6 +103,13 @@ func getUpdatedEndpoint(originalEndpoint, image string) string {
 		return originalEndpoint + "/" + publicProdECRName
 	}
 	return originalEndpoint
+}
+
+// Replace original registries with the new endpoint from the registry mirror configuration
+func getLocalImage(endpoint string, image string) string {
+	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
+	localImage := replacer.Replace(image)
+	return removeDigestReference(localImage)
 }
 
 // Curated packages are currently referenced by digest

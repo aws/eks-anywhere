@@ -12,10 +12,7 @@ import (
 // Temporary: Curated packages dev and prod accounts are currently hard coded
 // This is because there is no mechanism to extract these values as of now.
 const (
-	dockerPath        = "docker"
-	defaultRegistry   = "public.ecr.aws"
-	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	dockerPath = "docker"
 )
 
 type Docker struct {
@@ -83,9 +80,7 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 	return version, nil
 }
 
-func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-	localImage := replacer.Replace(image)
+func (d *Docker) TagImage(ctx context.Context, image string, localImage string) error {
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
@@ -93,9 +88,7 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 	return nil
 }
 
-func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-	localImage := replacer.Replace(image)
+func (d *Docker) PushImage(ctx context.Context, image string, localImage string) error {
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {
 		return err
