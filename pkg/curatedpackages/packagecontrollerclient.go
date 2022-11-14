@@ -197,10 +197,10 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 
 	select {
 	case <-timeoutCtx.Done():
-		return fmt.Errorf("timed out finding an active bundle for the current cluster: %v", timeoutCtx.Err())
+		return fmt.Errorf("timed out finding an active package bundle for the current cluster: %v", timeoutCtx.Err())
 	case err := <-done:
 		if err != nil {
-			return fmt.Errorf("couldn't find an active bundle for the current cluster: %v", err)
+			return fmt.Errorf("couldn't find an active package bundle for the current cluster: %v", err)
 		}
 
 		return nil
