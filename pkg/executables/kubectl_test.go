@@ -2893,6 +2893,7 @@ func TestWaitJSONPathLoop(t *testing.T) {
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	err := tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "2m", "status.state", "installed", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")
 	tt.Expect(err).ToNot(HaveOccurred())
+	tt.Expect(b.String()).ToNot(ContainSubstring("waiting 5 seconds...."))
 }
 
 func TestWaitJSONPathLoopTimeParseError(t *testing.T) {
