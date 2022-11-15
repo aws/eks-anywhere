@@ -14,15 +14,15 @@ This document describes those two different EKS Anywhere cluster topologies.
 
 ## What is an EKS Anywhere management cluster?
 An EKS Anywhere management cluster is a long-lived, on-premises Kubernetes cluster that can create and manage a fleet of EKS Anywhere workload clusters.
-The workload clusters are where customers run their applications.
+The workload clusters are where you run your applications.
 The management cluster can only be created and managed by the Amazon CLI `eksctl`.
 
-The management cluster runs on customer hardware on-premises and it does not require any connectivity back to AWS to function.
+The management cluster runs on you hardware on-premises and it does not require any connectivity back to AWS to function.
 Customers are responsible for operating the management cluster including (but not limited to) patching, upgrading, scaling, and monitoring the cluster control plane and data plane.
  
 ## What’s the difference between a management cluster and a standalone cluster?
 From a technical point of view, they are the same.
-Regardless of which deployment topology a customer chooses, you always start by creating a singleton, standalone cluster that’s capable of managing itself.
+Regardless of which deployment topology you choose, you always start by creating a singleton, standalone cluster that’s capable of managing itself.
 This shows examples of separate, standalone clusters:
 
 ![Standalone clusters self-manage and can run applications](/images/eks-a_cluster_standalone.png)
