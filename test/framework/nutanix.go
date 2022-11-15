@@ -35,6 +35,24 @@ const (
 	nutanixTemplateUbuntu123Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_23"
 )
 
+var requiredNutanixEnvVars = []string{
+	nutanixFeatureGateEnvVar,
+	nutanixEndpoint,
+	nutanixPort,
+	nutanixAdditionalTrustBundle,
+	nutanixMachineBootType,
+	nutanixMachineMemorySize,
+	nutanixSystemDiskSize,
+	nutanixMachineVCPUsPerSocket,
+	nutanixMachineVCPUSocket,
+	nutanixMachineTemplateImageName,
+	nutanixPrismElementClusterName,
+	nutanixSSHAuthorizedKey,
+	nutanixSubnetName,
+	nutanixPodCidrVar,
+	nutanixServiceCidrVar,
+}
+
 type Nutanix struct {
 	t                      *testing.T
 	fillers                []api.NutanixFiller
@@ -48,23 +66,6 @@ type Nutanix struct {
 type NutanixOpt func(*Nutanix)
 
 func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
-	requiredNutanixEnvVars := []string{
-		nutanixFeatureGateEnvVar,
-		nutanixEndpoint,
-		nutanixPort,
-		nutanixAdditionalTrustBundle,
-		nutanixMachineBootType,
-		nutanixMachineMemorySize,
-		nutanixSystemDiskSize,
-		nutanixMachineVCPUsPerSocket,
-		nutanixMachineVCPUSocket,
-		nutanixMachineTemplateImageName,
-		nutanixPrismElementClusterName,
-		nutanixSSHAuthorizedKey,
-		nutanixSubnetName,
-		nutanixPodCidrVar,
-		nutanixServiceCidrVar,
-	}
 	checkRequiredEnvVars(t, requiredNutanixEnvVars)
 
 	nutanixProvider := &Nutanix{
@@ -94,6 +95,11 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 	}
 
 	return nutanixProvider
+}
+
+// RequiredNutanixEnvVars returns a list of environment variables needed for Nutanix tests.
+func RequiredNutanixEnvVars() []string {
+	return requiredNutanixEnvVars
 }
 
 func (s *Nutanix) Name() string {
