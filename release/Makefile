@@ -144,6 +144,10 @@ eks-a-release: build ## Perform EKS-A CLI release
 github-bundle-release:
 	scripts/github-bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(WEEKLY_RELEASES_URL_PREFIX)
 
+announce-eks-a-release: CDN=https://anywhere-assets.eks.amazonaws.com
+announce-eks-a-release:
+	scripts/announce_eksa_release.sh $(CDN)
+
 ##@ Deployment
 
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
