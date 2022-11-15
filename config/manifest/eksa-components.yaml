@@ -5502,6 +5502,8 @@ rules:
   resources:
   - awssnowclusters
   - awssnowmachinetemplates
+  - dockerclusters
+  - dockermachinetemplates
   - vsphereclusters
   - vspheremachinetemplates
   verbs:
