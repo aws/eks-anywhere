@@ -878,3 +878,23 @@ func TestTinkerbellKubernetes122UbuntuTo123Upgrade(t *testing.T) {
 		provider.WithProviderUpgrade(framework.UpdateTinkerbellUbuntuTemplate123Var()),
 	)
 }
+
+func TestTinkerbellKubernetes123UbuntuTo124Upgrade(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube124,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		provider.WithProviderUpgrade(framework.UpdateTinkerbellUbuntuTemplate124Var()),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+}
