@@ -111,7 +111,6 @@ func (s *Nutanix) CustomizeProviderConfig(file string) []byte {
 }
 
 func (s *Nutanix) ClusterConfigFillers() []api.ClusterFiller {
-
 	if s.controlPlaneEndpointIP != "" {
 		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
 	} else {
