@@ -41,7 +41,7 @@ You do not need to interact or operate the `kind` cluster.
 The `kind` cluster will be automatically deleted by the end of the initial cluster creation.
 
 ## When should I deploy a management cluster?
-If you want to run three or more EKS Anywhere clusters, we recommend them to choose a management/workload cluster deployment topology because of the advantages listed in the table below.
+If you want to run three or more EKS Anywhere clusters, we recommend that you choose a management/workload cluster deployment topology because of the advantages listed in the table below.
 The EKS Anywhere Curated Packages feature recommends deploying certain packages such as the container registry package or monitoring packages on the management cluster to avoid circular dependency. 
 
 
@@ -60,23 +60,23 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 
 ## Which EKS Anywhere features support the management/workload cluster deployment topology today?
 
-|        | Supported | Notes  |
-|--------|-----------|--------|
-| Create/update/delete a workload cluster on... |||
-| <ul><li>VMware via CLI</li>  | Y | |
-| <ul><li>CloudStack via CLI</li> | Y | |
-| <ul><li>SnowGlobe via CLI</li> | Y | |
-| <ul><li>Bare Metal via CLI</li> | N | ETA: 2022 Q4 |
-| Update a workload cluster on... |||
-| <ul><li>VMware via GitOps/Terraform</li> | Y ||
-| <ul><li>CloudStack via GitOps/Terraform</li> | Y ||
-| <ul><li>SnowGlobe via GitOps/Terraform</li> | N | ETA: 2022 Q4 |
-| <ul><li>Bare Metal via GitOps/Terraform</li> | N | ETA: 2022 Q4 |
+|            | Supported | 
+|------------|-----------|
+| Create/update/delete a workload cluster on... ||
+| <ul><li>VMware via CLI</li>  | Y |
+| <ul><li>CloudStack via CLI</li> | Y |
+| <ul><li>SnowGlobe via CLI</li> | Y |
+| <ul><li>Bare Metal via CLI</li> | N |
+| Update a workload cluster on... ||
+| <ul><li>VMware via GitOps/Terraform</li> | Y |
+| <ul><li>CloudStack via GitOps/Terraform</li> | Y |
+| <ul><li>SnowGlobe via GitOps/Terraform</li> | N |
+| <ul><li>Bare Metal via GitOps/Terraform</li> | N |
 | Create/delete a workload cluster on...
-| <ul><li>VMware via GitOps/Terraform</li> | N | ETA: 2022 Q4 |
-| <ul><li>CloudStack via GitOps/Terraform</li> | N | ETA: TBD |
-| <ul><li>SnowGlobe via GitOps/Terraform</li> | N | ETA: 2022 Q4 |
-| <ul><li>Bare Metal via GitOps/Terraform</li> | N | ETA: TBD |
+| <ul><li>VMware via GitOps/Terraform</li> | N |
+| <ul><li>CloudStack via GitOps/Terraform</li> | N |
+| <ul><li>SnowGlobe via GitOps/Terraform</li> | N |
+| <ul><li>Bare Metal via GitOps/Terraform</li> | N |
 | Install a curated package on the management cluster | Y ||
-| Install a curated package on the workload cluster from the management cluster | N | ETA: 2022 Q4, Workaround: install a package controller instance on each workload cluster to deploy packages |
-| Install a curated package on the management cluster during a workload cluster creation | N | ETA:2022 Q4 |
+| Install a curated package on the workload cluster from the management cluster | N |
+| Install a curated package on the management cluster during a workload cluster creation | N |
