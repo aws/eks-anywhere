@@ -82,7 +82,7 @@ func daemonSetUpgradePlan(ds *appsv1.DaemonSet, clusterSpec *cluster.Spec) Compo
 	for _, c := range containers {
 		if c.Image != dsImage {
 			info.OldImage = c.Image
-			info.UpgradeReason = fmt.Sprintf("DaemonSet container %s doesn't match image", c.Name)
+			info.UpgradeReason = fmt.Sprintf("DaemonSet container %s doesn't match image [%s] -> [%s]", c.Name, c.Image, dsImage)
 			return info
 		}
 	}
@@ -110,7 +110,7 @@ func operatorUpgradePlan(operator *appsv1.Deployment, clusterSpec *cluster.Spec)
 	info.OldImage = oldImage
 
 	if oldImage != newImage {
-		info.UpgradeReason = "Operator container doesn't match the provided image"
+		info.UpgradeReason = fmt.Sprintf("Operator container doesn't match the provided image [%s] -> [%s]", oldImage, newImage)
 		return info
 	}
 

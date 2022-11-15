@@ -72,7 +72,7 @@ func TestBuildUpgradePlan(t *testing.T) {
 			}),
 			want: cilium.UpgradePlan{
 				DaemonSet: cilium.ComponentUpgradePlan{
-					UpgradeReason: "DaemonSet container agent doesn't match image",
+					UpgradeReason: "DaemonSet container agent doesn't match image [cilium:v1.0.0] -> [cilium:v1.0.1]",
 					OldImage:      "cilium:v1.0.0",
 					NewImage:      "cilium:v1.0.1",
 				},
@@ -101,7 +101,7 @@ func TestBuildUpgradePlan(t *testing.T) {
 			}),
 			want: cilium.UpgradePlan{
 				DaemonSet: cilium.ComponentUpgradePlan{
-					UpgradeReason: "DaemonSet container init doesn't match image",
+					UpgradeReason: "DaemonSet container init doesn't match image [cilium:v1.0.0] -> [cilium:v1.0.1]",
 					OldImage:      "cilium:v1.0.0",
 					NewImage:      "cilium:v1.0.1",
 				},
@@ -170,7 +170,7 @@ func TestBuildUpgradePlan(t *testing.T) {
 					NewImage: "cilium:v1.0.0",
 				},
 				Operator: cilium.ComponentUpgradePlan{
-					UpgradeReason: "Operator container doesn't match the provided image",
+					UpgradeReason: "Operator container doesn't match the provided image [cilium-operator:v1.0.0] -> [cilium-operator:v1.0.1]",
 					OldImage:      "cilium-operator:v1.0.0",
 					NewImage:      "cilium-operator:v1.0.1",
 				},
