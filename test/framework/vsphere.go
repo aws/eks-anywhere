@@ -38,7 +38,7 @@ const (
 	govcInsecureVar             = "GOVC_INSECURE"
 	govcDatacenterVar           = "GOVC_DATACENTER"
 	vsphereTemplateEnvVarPrefix = "T_VSPHERE_TEMPLATE_"
-	vsphereTemplatesFolder      = "T_VSPHERE_TEMPLATES_FOLDER"
+	vsphereTemplatesFolder      = "T_VSPHERE_TEMPLATE_FOLDER"
 )
 
 var requiredEnvVars = []string{
