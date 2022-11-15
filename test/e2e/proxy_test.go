@@ -28,7 +28,6 @@ func TestVSphereKubernetes124UbuntuProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }
@@ -43,7 +42,6 @@ func TestVSphereKubernetes124BottlerocketProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }

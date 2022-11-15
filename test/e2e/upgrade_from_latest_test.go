@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -285,7 +284,6 @@ func TestVSphereKubernetes123To124UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
@@ -295,7 +293,6 @@ func TestVSphereKubernetes123To124UbuntuUpgradeFromLatestMinorRelease(t *testing
 			provider.Ubuntu124Template(), // Set the template so it doesn't get autoimported
 		),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -347,14 +344,12 @@ func TestDockerKubernetes123to124UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
 		release,
 		anywherev1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 

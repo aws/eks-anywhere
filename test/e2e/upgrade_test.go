@@ -115,7 +115,6 @@ func TestVSphereKubernetes123UbuntuTo124Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 	)
 }
@@ -129,7 +128,6 @@ func TestVSphereKubernetes123UbuntuTo124UpgradeCiliumPolicyEnforcementMode(t *te
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -137,7 +135,6 @@ func TestVSphereKubernetes123UbuntuTo124UpgradeCiliumPolicyEnforcementMode(t *te
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
 		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -147,7 +144,6 @@ func TestVSphereKubernetes123UbuntuTo124MultipleFieldsUpgrade(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -166,7 +162,6 @@ func TestVSphereKubernetes123UbuntuTo124MultipleFieldsUpgrade(t *testing.T) {
 			// Uncomment the network field once upgrade starts working with it
 			// api.WithNetwork(vsphereNetwork2UpdateVar),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -179,14 +174,12 @@ func TestVSphereKubernetes123UbuntuTo124WithFluxLegacyUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -202,14 +195,12 @@ func TestVSphereKubernetes123UbuntuTo124DifferentNamespaceWithFluxLegacyUpgrade(
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -221,13 +212,11 @@ func TestVSphereKubernetes124UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -239,13 +228,11 @@ func TestVSphereKubernetes124UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -255,14 +242,12 @@ func TestVSphereKubernetes123BottlerocketTo124Upgrade(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -272,7 +257,6 @@ func TestVSphereKubernetes123BottlerocketTo124MultipleFieldsUpgrade(t *testing.T
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -291,7 +275,6 @@ func TestVSphereKubernetes123BottlerocketTo124MultipleFieldsUpgrade(t *testing.T
 			// Uncomment the network field once upgrade starts working with it
 			// api.WithNetwork(vsphereNetwork2UpdateVar),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -304,14 +287,12 @@ func TestVSphereKubernetes123BottlerocketTo124WithFluxLegacyUpgrade(t *testing.T
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -326,14 +307,12 @@ func TestVSphereKubernetes123BottlerocketTo124DifferentNamespaceWithFluxLegacyUp
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -345,13 +324,11 @@ func TestVSphereKubernetes124BottlerocketControlPlaneNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -363,13 +340,11 @@ func TestVSphereKubernetes124BottlerocketWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -380,13 +355,11 @@ func TestDockerKubernetes123To124StackedEtcdUpgrade(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -399,14 +372,12 @@ func TestVSphereKubernetes123UbuntuTo124StackedEtcdUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -419,14 +390,12 @@ func TestVSphereKubernetes123BottlerocketTo124StackedEtcdUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -705,13 +674,11 @@ func TestTinkerbellKubernetes124UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlowForBareMetal(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(2)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -895,6 +862,5 @@ func TestTinkerbellKubernetes123UbuntuTo124Upgrade(t *testing.T) {
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		provider.WithProviderUpgrade(framework.UpdateTinkerbellUbuntuTemplate124Var()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }

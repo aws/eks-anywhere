@@ -33,7 +33,6 @@ func TestVSphereKubernetes124BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runSimpleUpgradeFlow(
@@ -50,7 +49,6 @@ func TestVSphereKubernetes124BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 				api.WithCount(1),
 			),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
