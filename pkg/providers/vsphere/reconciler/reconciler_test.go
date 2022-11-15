@@ -19,6 +19,7 @@ import (
 	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
@@ -135,10 +136,9 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.machineConfigControlPlane.Spec.Datastore).Return(100.0, nil).Times(0)
 
 	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, logger, tt.buildSpec())
-	g := NewWithT(t)
-	g.Expect(err).To(MatchError(ContainSubstring("validating vCenter setup for VSphereMachineConfig")))
-	g.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("validating vCenter setup for VSphereMachineConfig"))
-	g.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("validating vCenter setup for VSphereMachineConfig")))
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
@@ -182,7 +182,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestReconcilerInvalidDatacenterConfig(t *testing.T) {
+func TestReconcilerReconcileInvalidDatacenterConfig(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 	tt.datacenterConfig.Status.SpecValid = false
@@ -190,10 +190,24 @@ func TestReconcilerInvalidDatacenterConfig(t *testing.T) {
 	tt.datacenterConfig.Status.FailureMessage = &m
 	tt.withFakeClient()
 
-	_, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, logger, tt.buildSpec())
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, logger, tt.buildSpec())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("Something wrong")))
+}
+
+func TestReconcilerDatacenterConfigNotValidated(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+	tt.datacenterConfig.Status.SpecValid = false
+	tt.withFakeClient()
+
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, logger, tt.buildSpec())
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 }
 
 func TestReconcileCNISuccess(t *testing.T) {

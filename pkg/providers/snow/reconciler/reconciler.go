@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -76,14 +78,15 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 	log = log.WithValues("phase", "validateMachineConfigs")
 	for _, machineConfig := range clusterSpec.SnowMachineConfigs {
 		if !machineConfig.Status.SpecValid {
-			failureMessage := fmt.Sprintf("SnowMachineConfig %s is invalid", machineConfig.Name)
 			if machineConfig.Status.FailureMessage != nil {
-				failureMessage += ": " + *machineConfig.Status.FailureMessage
+				failureMessage := fmt.Sprintf("Invalid %s SnowMachineConfig: %s", machineConfig.Name, *machineConfig.Status.FailureMessage)
+				clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+				log.Error(errors.New(*machineConfig.Status.FailureMessage), "Invalid SnowMachineConfig", "machineConfig", klog.KObj(machineConfig))
+			} else {
+				log.Info("SnowMachineConfig hasn't been validated yet", klog.KObj(machineConfig))
 			}
 
-			log.Error(nil, failureMessage)
-			clusterSpec.Cluster.Status.FailureMessage = &failureMessage
-			return controller.Result{}, nil
+			return controller.ResultWithReturn(), nil
 		}
 	}
 

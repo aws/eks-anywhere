@@ -15,6 +15,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
@@ -110,11 +111,12 @@ func TestReconcilerValidateMachineConfigsInvalidWorkerMachineConfig(t *testing.T
 	tt.machineConfigWorker.Status.FailureMessage = &m
 	tt.withFakeClient()
 
-	_, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).ToNot(BeZero())
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("SnowMachineConfig worker-machine-config is invalid"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Invalid worker-machine-config SnowMachineConfig"))
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
 }
 
@@ -125,12 +127,25 @@ func TestReconcilerValidateMachineConfigsInvalidControlPlaneMachineConfig(t *tes
 	tt.machineConfigControlPlane.Status.FailureMessage = &m
 	tt.withFakeClient()
 
-	_, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).ToNot(BeZero())
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("SnowMachineConfig cp-machine-config is invalid"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Invalid cp-machine-config SnowMachineConfig"))
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
+}
+
+func TestReconcilerValidateMachineConfigsMachineConfigNotValidated(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.machineConfigWorker.Status.SpecValid = false
+	tt.withFakeClient()
+
+	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 }
 
 func TestReconcilerReconcileWorkers(t *testing.T) {
