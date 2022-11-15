@@ -28,8 +28,8 @@ This shows examples of separate, standalone clusters:
 ![Standalone clusters self-manage and can run applications](/images/eks-a_cluster_standalone.png)
 
 Once a standalone cluster is created, you have an option to use it to use it as a management cluster to create separate workload cluster(s) under it, hence making this cluster a long-lived management cluster.
-You can only use `eksctl` to create or delete the management cluster and the singleton standalone cluster.
-This shows examples of a mamagement cluster that deploys and manages multiple workload clusters:
+You can only use `eksctl` to create or delete the management cluster or a standalone cluster.
+This shows examples of a management cluster that deploys and manages multiple workload clusters:
 
 ![Management clusters can create and manage multiple workload clusters](/images/eks-a_cluster_management.png)
 
