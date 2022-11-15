@@ -200,7 +200,7 @@ func (p *Provider) applyHardwareUpgrade(ctx context.Context, cluster *types.Clus
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
-
+	
 	return nil
 }
 
