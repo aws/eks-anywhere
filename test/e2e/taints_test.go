@@ -47,7 +47,6 @@ func TestDockerKubernetes124Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
 			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -59,7 +58,6 @@ func TestDockerKubernetes124Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -75,7 +73,6 @@ func TestVSphereKubernetes124Taints(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -87,7 +84,6 @@ func TestVSphereKubernetes124Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -103,7 +99,6 @@ func TestVSphereKubernetes124TaintsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -115,7 +110,6 @@ func TestVSphereKubernetes124TaintsBottlerocket(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
