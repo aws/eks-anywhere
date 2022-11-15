@@ -124,9 +124,6 @@ func (pc *PackageControllerClient) CreateCredentials(ctx context.Context) error 
 		return errors.New("environment variables EKSA_AWS_SECRET_ACCESS_KEY and EKSA_AWS_ACCESS_KEY_ID not provided")
 	}
 
-	if err := pc.CreateCronJob(ctx); err != nil {
-		return errors.New("not able to trigger cron job to enable curated packages")
-	}
 	return nil
 }
 
@@ -200,10 +197,10 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 
 	select {
 	case <-timeoutCtx.Done():
-		return timeoutCtx.Err()
+		return fmt.Errorf("timed out finding an active package bundle for the current cluster: %v", timeoutCtx.Err())
 	case err := <-done:
 		if err != nil {
-			return err
+			return fmt.Errorf("couldn't find an active package bundle for the current cluster: %v", err)
 		}
 
 		return nil
@@ -234,16 +231,6 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 		return fmt.Errorf("creating secret %v", err)
 	}
 
-	fmt.Print(&stdOut)
-	return nil
-}
-
-func (pc *PackageControllerClient) CreateCronJob(ctx context.Context) error {
-	params := []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", pc.kubeConfig, "--namespace", constants.EksaPackagesName}
-	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
-	if err != nil {
-		return fmt.Errorf("executing cron job %v", err)
-	}
 	fmt.Print(&stdOut)
 	return nil
 }
