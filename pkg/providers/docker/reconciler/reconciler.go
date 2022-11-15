@@ -40,6 +40,24 @@ func New(client client.Client, cniReconciler CNIReconciler, remoteClientRegistry
 	}
 }
 
-func (v *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+// Reconcile brings the cluster to the desired state for the docker provider.
+func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	return controller.Result{}, nil
+}
+
+// ReconcileCNI takes the Cilium CNI in a cluster to the desired state defined in a cluster spec.
+func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileCNI")
+	client, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
+}
+
+// ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
+// to the desired state.
+func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	return controller.Result{}, nil
 }
