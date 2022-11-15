@@ -58,7 +58,7 @@ Anywhere components mentioned above to their latest available versions. All upgr
 Before you perform an upgrade, check the current and new versions of components that are ready to upgrade by typing:
 
 ```bash
-eksctl anywhere upgrade plan cluster -f cluster.yaml --kubeconfig test-eks-a-cluster.kubeconfig
+eksctl anywhere upgrade plan cluster -f cluster.yaml
 ```
 
 The output should appear similar to the following:
@@ -140,13 +140,13 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
 ##### With hardware CSV
 
 ```
-eksctl anywhere upgrade cluster -f cluster.yaml --hardware-csv <hardware.csv> --kubeconfig test/test-eks-a-cluster.kubeconfig
+eksctl anywhere upgrade cluster -f cluster.yaml --hardware-csv <hardware.csv>
 ```
 
 ##### Without hardware CSV
 
 ```
-eksctl anywhere upgrade cluster -f cluster.yaml --kubeconfig test/test-eks-a-cluster.kubeconfig
+eksctl anywhere upgrade cluster -f cluster.yaml
 ```
 
 This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.
