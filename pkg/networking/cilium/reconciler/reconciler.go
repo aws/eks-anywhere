@@ -141,6 +141,7 @@ func (r *Reconciler) upgrade(ctx context.Context, logger logr.Logger, client cli
 		return controller.Result{}, err
 	}
 
+	logger.Info("Applying Cilium upgrade manifest")
 	if err := serverside.ReconcileYaml(ctx, client, upgradeManifest); err != nil {
 		return controller.Result{}, err
 	}
