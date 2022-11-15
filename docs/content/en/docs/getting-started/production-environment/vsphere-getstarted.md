@@ -72,6 +72,11 @@ Make sure you use single quotes around the values so that your shell does not in
    export EKSA_VSPHERE_PASSWORD='t0p$ecret'
    ```
 
+   {{% alert title="Note" color="primary" %}}
+   If you have a username in the form of `domain_name/user_name`, you must specify it as `user_name@domain_name` to
+   avoid errors in cluster creation. For example, `vsphere.local/admin` should be specific as `admin@vsphere.local`.
+   {{% /alert %}}
+
 1. Set License Environment Variable
 
    Add a license to any cluster for which you want to receive paid support. If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/tasks/cluster/cluster-license" >}}) if you are licensing an existing cluster):
