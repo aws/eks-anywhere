@@ -17,9 +17,18 @@ import (
 )
 
 func TestMachineHealthCheckForControlPlane(t *testing.T) {
-	tt := newApiBuilerTest(t)
+	timeouts := []time.Duration{5 * time.Minute, time.Hour, 30 * time.Second}
+	for _, timeout := range timeouts {
+		tt := newApiBuilerTest(t)
+		want := expectedMachineHealthCheckForControlPlane(timeout)
+		got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout)
+		tt.Expect(got).To(Equal(want))
+	}
+}
+
+func expectedMachineHealthCheckForControlPlane(timeout time.Duration) *clusterv1.MachineHealthCheck {
 	maxUnhealthy := intstr.Parse("100%")
-	want := &clusterv1.MachineHealthCheck{
+	return &clusterv1.MachineHealthCheck{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
 			Kind:       "MachineHealthCheck",
@@ -40,25 +49,32 @@ func TestMachineHealthCheckForControlPlane(t *testing.T) {
 				{
 					Type:    corev1.NodeReady,
 					Status:  corev1.ConditionUnknown,
-					Timeout: metav1.Duration{Duration: 5 * time.Minute},
+					Timeout: metav1.Duration{Duration: timeout},
 				},
 				{
 					Type:    corev1.NodeReady,
 					Status:  corev1.ConditionFalse,
-					Timeout: metav1.Duration{Duration: 5 * time.Minute},
+					Timeout: metav1.Duration{Duration: timeout},
 				},
 			},
 		},
 	}
-	got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec)
-	tt.Expect(got).To(Equal(want))
 }
 
 func TestMachineHealthCheckForWorkers(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
+	timeouts := []time.Duration{5 * time.Minute, time.Hour, 30 * time.Second}
+	for _, timeout := range timeouts {
+		tt := newApiBuilerTest(t)
+		tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
+		want := expectedMachineHealthCheckForWorkers(timeout)
+		got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout)
+		tt.Expect(got).To(Equal(want))
+	}
+}
+
+func expectedMachineHealthCheckForWorkers(timeout time.Duration) []*clusterv1.MachineHealthCheck {
 	maxUnhealthy := intstr.Parse("40%")
-	want := []*clusterv1.MachineHealthCheck{
+	return []*clusterv1.MachineHealthCheck{
 		{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "cluster.x-k8s.io/v1beta1",
@@ -80,29 +96,27 @@ func TestMachineHealthCheckForWorkers(t *testing.T) {
 					{
 						Type:    corev1.NodeReady,
 						Status:  corev1.ConditionUnknown,
-						Timeout: metav1.Duration{Duration: 5 * time.Minute},
+						Timeout: metav1.Duration{Duration: timeout},
 					},
 					{
 						Type:    corev1.NodeReady,
 						Status:  corev1.ConditionFalse,
-						Timeout: metav1.Duration{Duration: 5 * time.Minute},
+						Timeout: metav1.Duration{Duration: timeout},
 					},
 				},
 			},
 		},
 	}
-
-	got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec)
-	tt.Expect(got).To(Equal(want))
 }
 
 func TestMachineHealthCheckObjects(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
+	timeout := 5 * time.Minute
 
-	wantWN := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec)
-	wantCP := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec)
+	wantWN := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout)
+	wantCP := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout)
 
-	got := clusterapi.MachineHealthCheckObjects(tt.clusterSpec)
+	got := clusterapi.MachineHealthCheckObjects(tt.clusterSpec, timeout)
 	tt.Expect(got).To(Equal([]runtime.Object{wantWN[0], wantCP}))
 }

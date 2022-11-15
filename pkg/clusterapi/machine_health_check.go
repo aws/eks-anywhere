@@ -15,13 +15,12 @@ import (
 )
 
 const (
-	unhealthyConditionTimeout = 5 * time.Minute
-	machineHealthCheckKind    = "MachineHealthCheck"
-	maxUnhealthyControlPlane  = "100%"
-	maxUnhealthyWorker        = "40%"
+	machineHealthCheckKind   = "MachineHealthCheck"
+	maxUnhealthyControlPlane = "100%"
+	maxUnhealthyWorker       = "40%"
 )
 
-func machineHealthCheck(clusterName string) *clusterv1.MachineHealthCheck {
+func machineHealthCheck(clusterName string, unhealthyTimeout time.Duration) *clusterv1.MachineHealthCheck {
 	return &clusterv1.MachineHealthCheck{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterAPIVersion,
@@ -40,20 +39,21 @@ func machineHealthCheck(clusterName string) *clusterv1.MachineHealthCheck {
 				{
 					Type:    corev1.NodeReady,
 					Status:  corev1.ConditionUnknown,
-					Timeout: metav1.Duration{Duration: unhealthyConditionTimeout},
+					Timeout: metav1.Duration{Duration: unhealthyTimeout},
 				},
 				{
 					Type:    corev1.NodeReady,
 					Status:  corev1.ConditionFalse,
-					Timeout: metav1.Duration{Duration: unhealthyConditionTimeout},
+					Timeout: metav1.Duration{Duration: unhealthyTimeout},
 				},
 			},
 		},
 	}
 }
 
-func MachineHealthCheckForControlPlane(clusterSpec *cluster.Spec) *clusterv1.MachineHealthCheck {
-	mhc := machineHealthCheck(ClusterName(clusterSpec.Cluster))
+// MachineHealthCheckForControlPlane creates MachineHealthCheck resources for the control plane.
+func MachineHealthCheckForControlPlane(clusterSpec *cluster.Spec, unhealthyTimeout time.Duration) *clusterv1.MachineHealthCheck {
+	mhc := machineHealthCheck(ClusterName(clusterSpec.Cluster), unhealthyTimeout)
 	mhc.SetName(ControlPlaneMachineHealthCheckName(clusterSpec))
 	mhc.Spec.Selector.MatchLabels[clusterv1.MachineControlPlaneLabelName] = ""
 	maxUnhealthy := intstr.Parse(maxUnhealthyControlPlane)
@@ -61,17 +61,18 @@ func MachineHealthCheckForControlPlane(clusterSpec *cluster.Spec) *clusterv1.Mac
 	return mhc
 }
 
-func MachineHealthCheckForWorkers(clusterSpec *cluster.Spec) []*clusterv1.MachineHealthCheck {
+// MachineHealthCheckForWorkers creates MachineHealthCheck resources for the workers.
+func MachineHealthCheckForWorkers(clusterSpec *cluster.Spec, unhealthyTimeout time.Duration) []*clusterv1.MachineHealthCheck {
 	m := make([]*clusterv1.MachineHealthCheck, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		mhc := machineHealthCheckForWorker(clusterSpec, workerNodeGroupConfig)
+		mhc := machineHealthCheckForWorker(clusterSpec, workerNodeGroupConfig, unhealthyTimeout)
 		m = append(m, mhc)
 	}
 	return m
 }
 
-func machineHealthCheckForWorker(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) *clusterv1.MachineHealthCheck {
-	mhc := machineHealthCheck(ClusterName(clusterSpec.Cluster))
+func machineHealthCheckForWorker(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, unhealthyTimeout time.Duration) *clusterv1.MachineHealthCheck {
+	mhc := machineHealthCheck(ClusterName(clusterSpec.Cluster), unhealthyTimeout)
 	mhc.SetName(WorkerMachineHealthCheckName(clusterSpec, workerNodeGroupConfig))
 	mhc.Spec.Selector.MatchLabels[clusterv1.MachineDeploymentLabelName] = MachineDeploymentName(clusterSpec, workerNodeGroupConfig)
 	maxUnhealthy := intstr.Parse(maxUnhealthyWorker)
@@ -80,11 +81,11 @@ func machineHealthCheckForWorker(clusterSpec *cluster.Spec, workerNodeGroupConfi
 }
 
 // MachineHealthCheckObjects creates MachineHealthCheck resources for control plane and all the worker node groups.
-func MachineHealthCheckObjects(clusterSpec *cluster.Spec) []runtime.Object {
-	mhcWorkers := MachineHealthCheckForWorkers(clusterSpec)
+func MachineHealthCheckObjects(clusterSpec *cluster.Spec, unhealthyTimeout time.Duration) []runtime.Object {
+	mhcWorkers := MachineHealthCheckForWorkers(clusterSpec, unhealthyTimeout)
 	o := make([]runtime.Object, 0, len(mhcWorkers)+1)
 	for _, item := range mhcWorkers {
 		o = append(o, item)
 	}
-	return append(o, MachineHealthCheckForControlPlane(clusterSpec))
+	return append(o, MachineHealthCheckForControlPlane(clusterSpec, unhealthyTimeout))
 }
