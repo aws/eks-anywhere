@@ -1,0 +1,6 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+    - make announce-eks-a-release -C $PROJECT_PATH
