@@ -76,7 +76,7 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
-	WaitForFirstControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
+	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -330,7 +330,7 @@ func (c *ClusterManager) waitUntilFirstControlPlaneReady(
 	}
 
 	logger.V(3).Info("Waiting for first control plane to be ready")
-	err := c.clusterClient.WaitForFirstControlPlaneReady(
+	err := c.clusterClient.WaitForControlPlaneAvailable(
 		ctx,
 		managementCluster,
 		c.controlPlaneWaitTimeout.String(),
