@@ -25,6 +25,38 @@ func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.DeleteManagementCluster()
 }
 
+func runTinkerbellWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
+	test.CreateTinkerbellManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfig()
+		w.GenerateHardwareConfig()
+		w.PowerOffHardware()
+		w.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+		w.StopIfFailed()
+		w.DeleteCluster()
+		w.ValidateHardwareDecommissioned()
+	})
+	time.Sleep(5 * time.Minute)
+	test.DeleteTinkerbellManagementCluster()
+}
+
+func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
+	test.CreateTinkerbellManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfig()
+		w.GenerateHardwareConfig()
+		w.PowerOffHardware()
+		w.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+		w.UpgradeCluster(clusterOpts)
+		w.ValidateCluster(updateVersion)
+		w.StopIfFailed()
+		w.DeleteCluster()
+		w.ValidateHardwareDecommissioned()
+	})
+	time.Sleep(5 * time.Minute)
+	test.DeleteManagementCluster()
+}
+
 func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
@@ -358,4 +390,74 @@ func TestCloudStackKubernetes121ManagementClusterUpgradeFromLatest(t *testing.T)
 		),
 	)
 	runWorkloadClusterUpgradeFlowCheckWorkloadRollingUpgrade(test)
+}
+
+func TestTinkerbellKubernetes122UbuntuWorkloadCluster(t *testing.T) {
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithControlPlaneHardware(1),
+			framework.WithWorkerHardware(1),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithControlPlaneHardware(1),
+			framework.WithWorkerHardware(1),
+		),
+	)
+	runTinkerbellWorkloadClusterFlow(test)
+}
+
+func TestTinkerbellKubernetes122BottlerocketWorkloadCluster(t *testing.T) {
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithControlPlaneHardware(1),
+			framework.WithWorkerHardware(1),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithControlPlaneHardware(1),
+			framework.WithWorkerHardware(1),
+		),
+	)
+	runTinkerbellWorkloadClusterFlow(test)
+}
+
+func TestTinkerbellUpgradeMulticlusterWorkloadCluster(t *testing.T) {
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithControlPlaneHardware(1),
+			framework.WithWorkerHardware(1),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithControlPlaneHardware(1),
+			framework.WithWorkerHardware(1),
+		),
+	)
+	runSimpleWorkloadUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube122),
+			api.WithWorkerNodeCount(2),
+		),
+	)
 }

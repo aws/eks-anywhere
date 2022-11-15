@@ -50,6 +50,19 @@ func (m *MulticlusterE2ETest) CreateManagementCluster(opts ...CommandOpt) {
 	m.ManagementCluster.CreateCluster(opts...)
 }
 
+func (m *MulticlusterE2ETest) CreateTinkerbellManagementCluster(opts ...CommandOpt) {
+	m.ManagementCluster.GenerateClusterConfig()
+	m.ManagementCluster.GenerateHardwareConfig()
+	m.ManagementCluster.PowerOffHardware()
+	m.ManagementCluster.CreateCluster(opts...)
+}
+
 func (m *MulticlusterE2ETest) DeleteManagementCluster() {
 	m.ManagementCluster.DeleteCluster()
+}
+
+func (m *MulticlusterE2ETest) DeleteTinkerbellManagementCluster() {
+	m.ManagementCluster.StopIfFailed()
+	m.ManagementCluster.DeleteCluster()
+	m.ManagementCluster.ValidateHardwareDecommissioned()
 }

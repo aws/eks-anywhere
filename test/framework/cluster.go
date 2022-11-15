@@ -407,6 +407,7 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 }
 
 func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {
+	fmt.Println("---------------here inside GenerateHardwareConfig------------------")
 	e.generateHardwareConfig(opts...)
 }
 
