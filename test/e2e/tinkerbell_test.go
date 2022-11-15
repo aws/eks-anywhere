@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -37,6 +38,43 @@ func TestTinkerbellKubernetes122WithNodesPoweredOn(t *testing.T) {
 	test.ValidateHardwareDecommissioned()
 }
 
+func TestTinkerbellKubernetes123WithNodesPoweredOn(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
+func TestTinkerbellKubernetes124WithNodesPoweredOn(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu124Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestTinkerbellKubernetes122SkipPowerActions(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -45,6 +83,49 @@ func TestTinkerbellKubernetes122SkipPowerActions(t *testing.T) {
 		framework.WithNoPowerActions(),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.PXEBootHardware()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
+
+func TestTinkerbellKubernetes123SkipPowerActions(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithNoPowerActions(),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.PXEBootHardware()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
+
+func TestTinkerbellKubernetes124SkipPowerActions(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu124Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithNoPowerActions(),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	test.GenerateClusterConfig()
@@ -78,6 +159,71 @@ func TestTinkerbellKubernetes122UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 		framework.WithControlPlaneHardware(1),
 		framework.WithCustomLabelHardware(1, nodeGroupLabel1),
 		framework.WithCustomLabelHardware(1, nodeGroupLabel2),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints, framework.ValidateWorkerNodeLabels)
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
+func TestTinkerbellKubernetes123UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(
+			t,
+			framework.WithUbuntu123Tinkerbell(),
+			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel1),
+			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel2),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithControlPlaneLabel(cpKey1, cpVal1),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.NoScheduleTaint()}),
+			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			api.WithWorkerNodeGroup(worker0, api.WithMachineGroupRef(nodeGroupLabel1, "TinkerbellMachineConfig"), api.WithTaint(framework.PreferNoScheduleTaint()), api.WithLabel(key1, val1), api.WithCount(1)),
+			api.WithWorkerNodeGroup(worker1, api.WithMachineGroupRef(nodeGroupLabel2, "TinkerbellMachineConfig"), api.WithLabel(key2, val2), api.WithCount(1)),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithCustomLabelHardware(1, nodeGroupLabel1),
+		framework.WithCustomLabelHardware(1, nodeGroupLabel2),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints, framework.ValidateWorkerNodeLabels)
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
+func TestTinkerbellKubernetes124UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(
+			t,
+			framework.WithUbuntu124Tinkerbell(),
+			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel1),
+			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel2),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithControlPlaneLabel(cpKey1, cpVal1),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.NoScheduleTaint()}),
+			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			api.WithWorkerNodeGroup(worker0, api.WithMachineGroupRef(nodeGroupLabel1, "TinkerbellMachineConfig"), api.WithTaint(framework.PreferNoScheduleTaint()), api.WithLabel(key1, val1), api.WithCount(1)),
+			api.WithWorkerNodeGroup(worker1, api.WithMachineGroupRef(nodeGroupLabel2, "TinkerbellMachineConfig"), api.WithLabel(key2, val2), api.WithCount(1)),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithCustomLabelHardware(1, nodeGroupLabel1),
+		framework.WithCustomLabelHardware(1, nodeGroupLabel2),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	test.GenerateClusterConfig()
