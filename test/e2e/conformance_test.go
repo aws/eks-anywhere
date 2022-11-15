@@ -283,6 +283,33 @@ func TestTinkerbellKubernetes122BottleRocketThreeReplicasTwoWorkersConformanceFl
 	runTinkerbellConformanceFlow(test)
 }
 
+func TestTinkerbellKubernetes123BottleRocketThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(2),
+	)
+	runTinkerbellConformanceFlow(test)
+}
+
+func TestTinkerbellKubernetes124BottleRocketThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(2),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+	)
+	runTinkerbellConformanceFlow(test)
+}
+
 func TestSnowKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
