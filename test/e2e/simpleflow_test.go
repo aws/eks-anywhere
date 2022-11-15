@@ -559,3 +559,43 @@ func TestSnowKubernetes123SimpleFlow(t *testing.T) {
 	)
 	runSimpleFlow(test)
 }
+
+func TestNutanixKubernetes120SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes121SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}

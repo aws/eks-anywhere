@@ -25,6 +25,7 @@ const (
 	nutanixSubnetName               = "T_NUTANIX_SUBNET_NAME"
 
 	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
+	nutanixControlPlaneCidrVar    = "T_NUTANIX_CONTROL_PLANE_CIDR"
 	nutanixPodCidrVar             = "T_NUTANIX_POD_CIDR"
 	nutanixServiceCidrVar         = "T_NUTANIX_SERVICE_CIDR"
 
@@ -39,6 +40,7 @@ type Nutanix struct {
 	fillers                []api.NutanixFiller
 	clusterFillers         []api.ClusterFiller
 	controlPlaneEndpointIP string
+	cpCidr                 string
 	podCidr                string
 	serviceCidr            string
 }
@@ -60,7 +62,6 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 		nutanixPrismElementClusterName,
 		nutanixSSHAuthorizedKey,
 		nutanixSubnetName,
-		nutanixControlPlaneEndpointIP,
 		nutanixPodCidrVar,
 		nutanixServiceCidrVar,
 	}
@@ -84,6 +85,7 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 	}
 
 	nutanixProvider.controlPlaneEndpointIP = os.Getenv(nutanixControlPlaneEndpointIP)
+	nutanixProvider.cpCidr = os.Getenv(nutanixControlPlaneCidrVar)
 	nutanixProvider.podCidr = os.Getenv(nutanixPodCidrVar)
 	nutanixProvider.serviceCidr = os.Getenv(nutanixServiceCidrVar)
 
@@ -109,9 +111,14 @@ func (s *Nutanix) CustomizeProviderConfig(file string) []byte {
 }
 
 func (s *Nutanix) ClusterConfigFillers() []api.ClusterFiller {
-	// TODO generate unique IP everytime.
 	if s.controlPlaneEndpointIP != "" {
 		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
+	} else {
+		clusterIP, err := GetIP(s.cpCidr, ClusterIPPoolEnvVar)
+		if err != nil {
+			s.t.Fatalf("failed to get cluster ip for test environment: %v", err)
+		}
+		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 	}
 
 	if s.podCidr != "" {
