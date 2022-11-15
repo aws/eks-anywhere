@@ -74,7 +74,7 @@ Make sure you use single quotes around the values so that your shell does not in
 
    {{% alert title="Note" color="primary" %}}
    If you have a username in the form of `domain_name/user_name`, you must specify it as `user_name@domain_name` to
-   avoid errors in cluster creation. For example, `vsphere.local/admin` should be specific as `admin@vsphere.local`.
+   avoid errors in cluster creation. For example, `vsphere.local/admin` should be specified as `admin@vsphere.local`.
    {{% /alert %}}
 
 1. Set License Environment Variable
