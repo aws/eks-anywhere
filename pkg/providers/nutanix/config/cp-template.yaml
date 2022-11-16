@@ -155,6 +155,9 @@ spec:
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   $(hostname)" >> /etc/hosts
+      - apt update
+      - apt install -y nfs-common open-iscsi
+      - systemctl enable --now iscsid
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
     useExperimentalRetryJoin: true
