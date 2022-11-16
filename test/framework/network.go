@@ -48,13 +48,13 @@ func GetIP(cidr, ipEnvVar string) (string, error) {
 			logger.V(2).Info("WARN: failed to pop ip from environment, attempting to generate unique ip")
 			ip, err = GenerateUniqueIp(cidr)
 			if err != nil {
-				return "", fmt.Errorf("failed to generate ip for vsphere cidr %s: %v", cidr, err)
+				return "", fmt.Errorf("failed to generate ip for cidr %s: %v", cidr, err)
 			}
 		}
 	} else {
 		ip, err = GenerateUniqueIp(cidr)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate ip for vsphere cidr %s: %v", cidr, err)
+			return "", fmt.Errorf("failed to generate ip for cidr %s: %v", cidr, err)
 		}
 	}
 	return ip, nil

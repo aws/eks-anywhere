@@ -9,6 +9,7 @@ import (
 
 const (
 	nutanixFeatureGateEnvVar = "NUTANIX_PROVIDER"
+	nutanixCidrVar           = "T_NUTANIX_CONTROL_PLANE_CIDR"
 	nutanixRegex             = `^.*Nutanix.*$`
 )
 

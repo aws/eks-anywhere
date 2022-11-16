@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	cidrVar               = "T_VSPHERE_CIDR"
-	privateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
-	vsphereRegex          = `^.*VSphere.*$`
+	vsphereCidrVar               = "T_VSPHERE_CIDR"
+	vspherePrivateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
+	vsphereRegex                 = `^.*VSphere.*$`
 )
 
 func (e *E2ESession) setupVSphereEnv(testRegex string) error {
