@@ -36,6 +36,8 @@ env:
     T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_23_EKS_5: "/SDDC-Datacenter/vm/Templates/kubernetes-1-23-eks-5-9fd2167080-bottlerocket"
     T_NUTANIX_MACHINE_VCPU_PER_SOCKET: 1
     T_NUTANIX_MACHINE_VCPU_SOCKET: 2
+    T_NUTANIX_MACHINE_MEMORY_SIZE: "4Gi"
+    T_NUTANIX_SYSTEMDISK_SIZE: "40Gi"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -123,8 +125,6 @@ env:
     T_NUTANIX_ENDPOINT: "nutanix_ci:nutanix_pc_endpoint"
     T_NUTANIX_PORT: "nutanix_ci:nutanix_port"
     T_NUTANIX_MACHINE_BOOT_TYPE: "nutanix_ci:nutanix_machine_boot_type"
-    T_NUTANIX_MACHINE_MEMORY_SIZE: "nutanix_ci:nutanix_machine_memory_size"
-    T_NUTANIX_SYSTEMDISK_SIZE: "nutanix_ci:nutanix_systemdisk_size"
     T_NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME: "nutanix_ci:nutanix_machine_template_image_name"
     T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME: "nutanix_ci:nutanix_prism_element_cluster_name"
     T_NUTANIX_SSH_AUTHORIZED_KEY: "nutanix_ci:nutanix_ssh_authorized_key"
