@@ -14,7 +14,6 @@ const (
 func (e *E2ESession) setupCloudStackEnv(testRegex string) error {
 	re := regexp.MustCompile(cloudstackRegex)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running CloudStack tests, skipping Env variable setup")
 		return nil
 	}
 

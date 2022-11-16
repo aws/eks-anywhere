@@ -18,7 +18,6 @@ const (
 func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 	re := regexp.MustCompile(vsphereRegex)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running VSphere tests, skipping Env variable setup")
 		return nil
 	}
 

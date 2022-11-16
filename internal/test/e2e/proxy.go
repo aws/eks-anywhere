@@ -18,7 +18,6 @@ var proxyVarsByProvider = map[string]e2etests.ProxyRequiredEnvVars{
 func (e *E2ESession) setupProxyEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*Proxy.*$`)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running Proxy tests, skipping Env variable setup")
 		return nil
 	}
 	var requiredEnvVars e2etests.ProxyRequiredEnvVars
