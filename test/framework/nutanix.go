@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const (
@@ -36,6 +37,8 @@ const (
 )
 
 var requiredNutanixEnvVars = []string{
+	constants.NutanixUsernameKey,
+	constants.NutanixPasswordKey,
 	nutanixFeatureGateEnvVar,
 	nutanixEndpoint,
 	nutanixPort,
