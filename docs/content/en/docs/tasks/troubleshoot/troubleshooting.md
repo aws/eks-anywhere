@@ -204,7 +204,7 @@ kind delete cluster --name cluster-name
 ### Cluster upgrade fails with management cluster on bootstrap cluster
 
 If a cluster upgrade of a management (or self managed) cluster fails or is halted in the middle, you may be left in a
-state where the management resources (CAPI) are still on the KinD bootstrap cluster. Right now, you will have to
+state where the management resources (CAPI) are still on the KinD bootstrap cluster on the Admin machine. Right now, you will have to
 manually move the management resources from the KinD cluster back to the management cluster.
 
 First create a backup:
