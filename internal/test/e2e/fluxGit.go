@@ -37,7 +37,6 @@ func (f *fileFromBytes) contentString() string {
 func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*GitFlux.*$`)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running Flux Generic Git Provider tests, skipping environment setup")
 		return nil
 	}
 

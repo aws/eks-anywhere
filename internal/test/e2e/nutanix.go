@@ -16,7 +16,6 @@ const (
 func (e *E2ESession) setupNutanixEnv(testRegex string) error {
 	re := regexp.MustCompile(nutanixRegex)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running Nutanix tests, skipping Env variable setup")
 		return nil
 	}
 

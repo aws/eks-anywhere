@@ -10,7 +10,6 @@ import (
 func (e *E2ESession) setupFluxEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*Flux.*$`)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running Flux tests, skipping Env variable setup")
 		return nil
 	}
 

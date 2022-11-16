@@ -14,7 +14,6 @@ const (
 func (e *E2ESession) setupPackagesEnv(testRegex string) error {
 	re := regexp.MustCompile(packagesRegex)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running Curated Packages tests, skipping Env variable setup")
 		return nil
 	}
 
