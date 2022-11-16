@@ -66,8 +66,10 @@ Follow these steps to create an EKS Anywhere cluster.
      
 1. Create the cluster, using the `hardware.csv` file you made in [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}}):
    ```bash
-   # Create a cluster without curated packages installation
-   eksctl anywhere create cluster --hardware-csv hardware.csv -f eksa-mgmt-cluster.yaml
+   eksctl anywhere create cluster \
+      --hardware-csv hardware.csv \
+      -f eksa-mgmt-cluster.yaml  \
+      # --install-packages packages.yaml # uncomment to install curated packages at cluster creation
    ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
