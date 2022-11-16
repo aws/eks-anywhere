@@ -12,6 +12,7 @@ name: 'Label and close stale issues'
 on:
   schedule:
     - cron: '0 1 * * MON'
+  workflow_dispatch:
 jobs:
   stale:
     runs-on: ubuntu-latest
@@ -26,5 +27,5 @@ jobs:
           stale-issue-label: 'stale issue'
           any-of-issue-labels: 'external'
 env:
-  ISSUE_STALE_DAYS: 60
+  ISSUE_STALE_DAYS: 0
   ISSUE_CLOSE_AFTER_DAYS: 7
