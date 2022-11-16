@@ -17,7 +17,7 @@ OUTPUT_BIN_FOLDER = OUTPUT_PATH + '/bin'
 PKG_FOLDER = PROJECT_ROOT + '/pkg'
 API_FOLDER = PKG_FOLDER + '/api'
 CONFIG_FOLDER = PROJECT_ROOT + '/config'
-KUSTOMIZE_TILT_FOLDER = CONFIG_FOLDER + '/tilt'
+KUSTOMIZE_TILT_FOLDER = CONFIG_FOLDER + '/tilt/'
 KUSTOMIZE_BIN = PROJECT_ROOT + '/hack/tools/bin/kustomize'
 FULL_LIFECYCLE_API_KEY = "FULL_LIFECYCLE_API"
 
@@ -79,7 +79,7 @@ local_resource(
   'eksa-controller-manager-build',
   manager_build_cmd(cluster_os, cluster_arch),
   dir = PROJECT_ROOT,
-  deps = [MANAGER_PATH, CONTROLLERS_FOLDER, PKG_FOLDER],
+  deps = [MANAGER_PATH, CONTROLLERS_FOLDER, PKG_FOLDER, "go.mod", "go.sum"],
   ignore = [manager_binary_dir, API_FOLDER + '/*/zz_generated.deepcopy.go', DOCKERFILE_PATH],
 )
 

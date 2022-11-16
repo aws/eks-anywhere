@@ -534,7 +534,7 @@ func TestFetchCloudStackCluster(t *testing.T) {
 			logger := logr.Discard()
 			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: tt.cluster.Name}, gomock.Any()).Do(
-				func(ctx context.Context, arg1 types.NamespacedName, arg2 *cloudstackv1.CloudStackCluster) {
+				func(ctx context.Context, arg1 types.NamespacedName, arg2 *cloudstackv1.CloudStackCluster, _ ...client.GetOption) {
 					cloudstackCluster.DeepCopyInto(arg2)
 				})
 			_, err := capiResourceFetcher.CloudStackCluster(ctx, tt.cluster, anywherev1.WorkerNodeGroupConfiguration{Name: "test"})
@@ -567,7 +567,7 @@ func TestFetchCloudStackEtcdMachineTemplate(t *testing.T) {
 			logger := logr.Discard()
 			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: "testCluster-etcd"}, gomock.Any()).Do(
-				func(ctx context.Context, arg1 types.NamespacedName, arg2 *etcdv1.EtcdadmCluster) {
+				func(ctx context.Context, arg1 types.NamespacedName, arg2 *etcdv1.EtcdadmCluster, _ ...client.GetOption) {
 					etcdadmCluster.DeepCopyInto(arg2)
 				})
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: etcdadmCluster.Spec.InfrastructureTemplate.Name},
@@ -602,11 +602,11 @@ func TestFetchCloudStackCPMachineTemplate(t *testing.T) {
 			logger := logr.Discard()
 			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: tt.cluster.Name}, gomock.Any()).Do(
-				func(ctx context.Context, arg1 types.NamespacedName, arg2 *clusterv1.Cluster) {
+				func(ctx context.Context, arg1 types.NamespacedName, arg2 *clusterv1.Cluster, _ ...client.GetOption) {
 					capiCluster.DeepCopyInto(arg2)
 				})
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: capiCluster.Spec.ControlPlaneRef.Namespace, Name: capiCluster.Spec.ControlPlaneRef.Name}, gomock.Any()).Do(
-				func(ctx context.Context, arg1 types.NamespacedName, arg2 *controlplanev1.KubeadmControlPlane) {
+				func(ctx context.Context, arg1 types.NamespacedName, arg2 *controlplanev1.KubeadmControlPlane, _ ...client.GetOption) {
 					kubeadmControlPlane.DeepCopyInto(arg2)
 				})
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name},
@@ -851,7 +851,7 @@ type stubbedReader struct {
 	clusterName string
 }
 
-func (s *stubbedReader) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (s *stubbedReader) Get(ctx context.Context, key client.ObjectKey, obj client.Object, _ ...client.GetOption) error {
 	if s.kind == obj.GetObjectKind().GroupVersionKind().Kind {
 		return nil
 	}

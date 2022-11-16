@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	apiv1 "k8s.io/api/core/v1"
@@ -17,11 +18,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
-	"github.com/aws/eks-anywhere/internal/test"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -69,7 +68,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		Add(anywherev1.VSphereDatacenterKind, reconciler).
 		Build()
 
-	r := controllers.NewClusterReconciler(cl, logf.Log, &registry)
+	r := controllers.NewClusterReconciler(cl, &registry)
 
 	return &vsphereClusterReconcilerTest{
 		govcClient: govcClient,
@@ -93,15 +92,14 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 		},
 	}
 
-	log := test.NewNullLogger()
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
-	providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, log, sameName(selfManagedCluster))
+	providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 
-	r := controllers.NewClusterReconciler(c, log, registry)
+	r := controllers.NewClusterReconciler(c, registry)
 	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(ctrl.Result{}))
@@ -124,13 +122,12 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 		},
 	}
 
-	log := test.NewNullLogger()
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
-	r := controllers.NewClusterReconciler(c, log, registry)
+	r := controllers.NewClusterReconciler(c, registry)
 	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).To(MatchError(ContainSubstring("deleting self-managed clusters is not supported")))
 }
