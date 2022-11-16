@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 
@@ -13,7 +14,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/validations"
+)
+
+const (
+	cleanupRetries = 5
+	retryBackoff   = 10 * time.Second
 )
 
 func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) error {
@@ -104,10 +111,13 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 		return fmt.Errorf("building cmk executable: %v", err)
 	}
 	defer cmk.Close(ctx)
+	cleanupRetrier := retrier.NewWithMaxRetries(cleanupRetries, retryBackoff)
 
 	errorsMap := map[string]error{}
 	for _, profile := range execConfig.Profiles {
-		if err := cmk.CleanupVms(ctx, profile.Name, clusterName, dryRun); err != nil {
+		if err := cleanupRetrier.Retry(func() error {
+			return cmk.CleanupVms(ctx, profile.Name, clusterName, dryRun)
+		}); err != nil {
 			errorsMap[profile.Name] = err
 		}
 	}
