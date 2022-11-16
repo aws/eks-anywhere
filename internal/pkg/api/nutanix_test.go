@@ -18,7 +18,7 @@ func TestNutanixDatacenterConfigFillers(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, conf)
 
-	WithNutanixAdditionalTrustBundle("testBundle")(conf)
+	WithNutanixAdditionalTrustBundle("dGVzdEJ1bmRsZQ==")(conf) // "dGVzdEJ1bmRsZQ==" is "testBundle" in base64
 	g.Expect(conf.datacenterConfig.Spec.AdditionalTrustBundle).To(Equal("testBundle"))
 
 	WithNutanixEndpoint("prism-test.nutanix.com")(conf)
