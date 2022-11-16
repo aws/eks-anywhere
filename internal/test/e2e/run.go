@@ -266,12 +266,14 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 
 	vsphereTestsRe := regexp.MustCompile(vsphereRegex)
 	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
+	nutanixTestsRe := regexp.MustCompile(nutanixRegex)
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
 	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
-	ipman := newE2EIPManager(conf.Logger, os.Getenv(cidrVar))
-	privateIpMan := newE2EIPManager(conf.Logger, os.Getenv(privateNetworkCidrVar))
+	vsphereIPMan := newE2EIPManager(conf.Logger, os.Getenv(vsphereCidrVar))
+	vspherePrivateIPMan := newE2EIPManager(conf.Logger, os.Getenv(vspherePrivateNetworkCidrVar))
+	nutanixIPMan := newE2EIPManager(conf.Logger, os.Getenv(nutanixCidrVar))
 
 	awsSession, err := session.NewSession()
 	if err != nil {
@@ -293,18 +295,23 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		multiClusterTest := multiClusterTestsRe.MatchString(testName)
 
 		var ips networkutils.IPPool
-		if privateNetworkTestsRe.MatchString(testName) {
-			if multiClusterTest {
-				ips = privateIpMan.reserveIPPool(maxIPPoolSize)
+		if vsphereTestsRe.MatchString(testName) {
+			if privateNetworkTestsRe.MatchString(testName) {
+				if multiClusterTest {
+					ips = vspherePrivateIPMan.reserveIPPool(maxIPPoolSize)
+				} else {
+					ips = vspherePrivateIPMan.reserveIPPool(minIPPoolSize)
+				}
 			} else {
-				ips = privateIpMan.reserveIPPool(minIPPoolSize)
+				if multiClusterTest {
+					ips = vsphereIPMan.reserveIPPool(maxIPPoolSize)
+				} else {
+					ips = vsphereIPMan.reserveIPPool(minIPPoolSize)
+				}
 			}
-		} else if vsphereTestsRe.MatchString(testName) {
-			if multiClusterTest {
-				ips = ipman.reserveIPPool(maxIPPoolSize)
-			} else {
-				ips = ipman.reserveIPPool(minIPPoolSize)
-			}
+		}
+		if nutanixTestsRe.MatchString(testName) {
+			ips = nutanixIPMan.reserveIPPool(minIPPoolSize)
 		}
 
 		if len(testsInEC2Instance) == testPerInstance || (len(testsList)-1) == i {
