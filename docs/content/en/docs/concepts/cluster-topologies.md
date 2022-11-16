@@ -65,17 +65,14 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 | Create/update/delete a workload cluster on... ||
 | <ul><li>VMware via CLI</li>  | Y |
 | <ul><li>CloudStack via CLI</li> | Y |
-| <ul><li>SnowGlobe via CLI</li> | Y |
 | <ul><li>Bare Metal via CLI</li> | N |
 | Update a workload cluster on... ||
 | <ul><li>VMware via GitOps/Terraform</li> | Y |
 | <ul><li>CloudStack via GitOps/Terraform</li> | Y |
-| <ul><li>SnowGlobe via GitOps/Terraform</li> | N |
 | <ul><li>Bare Metal via GitOps/Terraform</li> | N |
 | Create/delete a workload cluster on...
 | <ul><li>VMware via GitOps/Terraform</li> | N |
 | <ul><li>CloudStack via GitOps/Terraform</li> | N |
-| <ul><li>SnowGlobe via GitOps/Terraform</li> | N |
 | <ul><li>Bare Metal via GitOps/Terraform</li> | N |
 | Install a curated package on the management cluster | Y ||
 | Install a curated package on the workload cluster from the management cluster | N |
