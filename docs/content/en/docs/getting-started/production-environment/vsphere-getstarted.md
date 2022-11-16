@@ -185,16 +185,11 @@ Follow these steps if you want to use your initial cluster to create and manage 
    # Create a cluster without curated packages installation
    eksctl anywhere create cluster \
        -f eksa-w01-cluster.yaml  \
-       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig \
+       # --install-packages packages.yaml # uncomment to install curated packages at cluster creation
    ```
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
-
-
-   {{% alert title="Note" color="primary" %}}
-   Curated packages installation at workload cluster creation is currently not supported.
-   Refer to instructions on how to install curated packages after cluster creation [here.]({{< relref "../../tasks/packages " >}})
-   {{% /alert %}}
 
 1. Check the workload cluster:
 
