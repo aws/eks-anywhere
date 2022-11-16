@@ -11,7 +11,7 @@
 name: 'Label and close stale issues'
 on:
   schedule:
-    - cron: '0 1 * * MON'
+    - cron: '0 1 * * *'
   workflow_dispatch:
 jobs:
   stale:
@@ -25,7 +25,7 @@ jobs:
             This issue has had no activity for ${{ env.ISSUE_STALE_DAYS }} days. 
             Labeling as stale and closing in ${{ env.ISSUE_CLOSE_AFTER_DAYS }} days if no further activity.
           stale-issue-label: 'stale'
-          any-of-issue-labels: 'external'
+          any-of-issue-labels: 'external2'
 env:
   ISSUE_STALE_DAYS: 0
   ISSUE_CLOSE_AFTER_DAYS: 7
