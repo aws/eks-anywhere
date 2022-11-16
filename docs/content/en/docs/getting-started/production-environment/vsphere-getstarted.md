@@ -16,6 +16,7 @@ If your initial cluster is a management cluster, it is intended to stay in place
 Using a management cluster makes it faster to provision and delete workload clusters.
 Also it lets you keep vSphere credentials for a set of clusters in one place: on the management cluster.
 The alternative is to simply use your initial cluster to run workloads.
+See [Cluster topologies]({{< relref "../../concepts/cluster-topologies" >}}) for details.
 
 {{% alert title="Important" color="warning" %}}
 
