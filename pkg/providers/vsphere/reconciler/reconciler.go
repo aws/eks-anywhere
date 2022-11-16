@@ -128,14 +128,15 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 	dataCenterConfig := clusterSpec.VSphereDatacenter
 
 	if !dataCenterConfig.Status.SpecValid {
-		var failureMessage string
 		if dataCenterConfig.Status.FailureMessage != nil {
-			failureMessage = *dataCenterConfig.Status.FailureMessage
+			failureMessage := fmt.Sprintf("Invalid %s VSphereDatacenterConfig: %s", dataCenterConfig.Name, *dataCenterConfig.Status.FailureMessage)
+			clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+			log.Error(errors.New(*dataCenterConfig.Status.FailureMessage), "Invalid VSphereDatacenterConfig", "datacenterConfig", klog.KObj(dataCenterConfig))
+		} else {
+			log.Info("VSphereDatacenterConfig hasn't been validated yet", klog.KObj(dataCenterConfig))
 		}
 
-		log.Error(errors.New(failureMessage), "Invalid VSphereDatacenterConfig", "datacenterConfig", klog.KObj(dataCenterConfig))
-		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
-		return controller.Result{}, nil
+		return controller.ResultWithReturn(), nil
 	}
 	return controller.Result{}, nil
 }
@@ -157,7 +158,7 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 		log.Error(err, "Invalid VSphereMachineConfig")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
-		return controller.Result{}, err
+		return controller.ResultWithReturn(), nil
 	}
 	return controller.Result{}, nil
 }
