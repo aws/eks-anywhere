@@ -440,8 +440,10 @@ func GetPackagesImageTags(eksArtifacts map[string][]releasetypes.Artifact) (map[
 	m := make(map[string]string)
 	for _, artifacts := range eksArtifacts {
 		for _, artifact := range artifacts {
-			if artifact.Image.AssetName == "eks-anywhere-packages" || artifact.Image.AssetName == "ecr-token-refresher" {
-				m[artifact.Image.AssetName] = artifact.Image.ReleaseImageURI
+			if artifact.Image != nil {
+				if artifact.Image.AssetName == "eks-anywhere-packages" || artifact.Image.AssetName == "ecr-token-refresher" {
+					m[artifact.Image.AssetName] = artifact.Image.ReleaseImageURI
+				}
 			}
 		}
 	}
