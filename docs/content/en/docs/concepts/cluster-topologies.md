@@ -60,7 +60,7 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 
 ## Which EKS Anywhere features support the management/workload cluster deployment topology today?
 
-|            | Supported | 
+| Features   | Supported | 
 |------------|-----------|
 | Create/update/delete a workload cluster on... ||
 | <ul><li>VMware via CLI</li>  | Y |
