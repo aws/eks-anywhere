@@ -259,7 +259,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 
 	crs := &addonsv1.ClusterResourceSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workload-cluster-crs-0",
+			Name:      "workload-cluster-cpi-csi",
 			Namespace: "eksa-system",
 		},
 	}

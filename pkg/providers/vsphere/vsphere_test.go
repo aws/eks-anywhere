@@ -300,7 +300,6 @@ type providerTest struct {
 	machineConfigs                     map[string]*v1alpha1.VSphereMachineConfig
 	kubectl                            *mocks.MockProviderKubectlClient
 	govc                               *mocks.MockProviderGovcClient
-	resourceSetManager                 *mocks.MockClusterResourceSetManager
 	clientBuilder                      *mockVSphereClientBuilder
 }
 
@@ -310,7 +309,6 @@ func newProviderTest(t *testing.T) *providerTest {
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
 	govc := mocks.NewMockProviderGovcClient(ctrl)
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	spec := givenClusterSpec(t, testClusterConfigMainFilename)
 	p := &providerTest{
 		t:     t,
@@ -330,7 +328,6 @@ func newProviderTest(t *testing.T) *providerTest {
 		machineConfigs:     spec.VSphereMachineConfigs,
 		kubectl:            kubectl,
 		govc:               govc,
-		resourceSetManager: resourceSetManager,
 		clientBuilder:      vscb,
 	}
 	p.buildNewProvider()
@@ -370,7 +367,6 @@ func (tt *providerTest) buildNewProvider() {
 		tt.clusterSpec.Cluster,
 		tt.govc,
 		tt.kubectl,
-		tt.resourceSetManager,
 		NewValidator(tt.govc, &DummyNetClient{}, tt.clientBuilder),
 	)
 }
@@ -380,7 +376,6 @@ func TestNewProvider(t *testing.T) {
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	govc := NewDummyProviderGovcClient()
 	_, writer := test.NewWriter(t)
 	skipIPCheck := true
@@ -393,7 +388,6 @@ func TestNewProvider(t *testing.T) {
 		writer,
 		time.Now,
 		skipIPCheck,
-		resourceSetManager,
 	)
 
 	if provider == nil {
@@ -426,14 +420,12 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereData
 	govc := NewDummyProviderGovcClient()
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
 	v := NewValidator(govc, &DummyNetClient{}, vscb)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	return newProvider(
 		t,
 		datacenterConfig,
 		clusterConfig,
 		govc,
 		kubectl,
-		resourceSetManager,
 		v,
 	)
 }
@@ -442,7 +434,6 @@ func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacen
 	ctrl := gomock.NewController(t)
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
 	v := NewValidator(govc, &DummyNetClient{}, vscb)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
 	return newProvider(
 		t,
@@ -450,7 +441,6 @@ func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacen
 		clusterConfig,
 		govc,
 		kubectl,
-		resourceSetManager,
 		v,
 	)
 }
@@ -484,7 +474,7 @@ func newMockVSphereClientBuilder(ctrl *gomock.Controller) (*mockVSphereClientBui
 	return &mvscb, err
 }
 
-func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient, kubectl ProviderKubectlClient, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider {
+func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient, kubectl ProviderKubectlClient, v *Validator) *vsphereProvider {
 	_, writer := test.NewWriter(t)
 	netClient := &DummyNetClient{}
 
@@ -497,7 +487,6 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfi
 		netClient,
 		test.FakeNow,
 		false,
-		resourceSetManager,
 		v,
 	)
 }
@@ -927,7 +916,6 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -942,7 +930,6 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 		clusterSpec.Cluster,
 		govc,
 		kubectl,
-		resourceSetManager,
 		v,
 	)
 
@@ -964,7 +951,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -979,7 +965,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 		clusterSpec.Cluster,
 		govc,
 		kubectl,
-		resourceSetManager,
 		v,
 	)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
@@ -1000,7 +985,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -1015,7 +999,6 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 		clusterSpec.Cluster,
 		govc,
 		kubectl,
-		resourceSetManager,
 		v,
 	)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
@@ -2492,7 +2475,6 @@ func TestChangeDiffWithChange(t *testing.T) {
 func TestVsphereProviderRunPostControlPlaneUpgrade(t *testing.T) {
 	tt := newProviderTest(t)
 
-	tt.resourceSetManager.EXPECT().ForceUpdate(tt.ctx, "test-crs-0", "eksa-system", tt.managementCluster, tt.workloadCluster)
 	tt.Expect(tt.provider.RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.workloadCluster, tt.managementCluster)).To(Succeed())
 }
 

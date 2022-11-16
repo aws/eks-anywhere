@@ -426,6 +426,7 @@ metadata:
   name: {{.resourceSetName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
+  strategy: Reconcile
   clusterSelector:
     matchLabels:
       cluster.x-k8s.io/cluster-name: {{.clusterName}}
