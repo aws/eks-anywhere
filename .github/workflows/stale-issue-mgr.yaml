@@ -3,7 +3,7 @@
 # This action will: 
 # * Add a label "stale" on issues after 60 days of inactivity and comment on them if they also have the "external" label
 # * Close the stale issues and pull requests after 7 days of inactivity
-# * If an update/comment occur on stale issues or pull requests, the stale label will be removed and the timer will restartif they have the "external" label
+# * If an update/comment occur on stale issues or pull requests, the stale label will be removed and the timer will restart if they have the "external" label
 
 # Runs every Monday morning at 1AM.
 # Docs: https://github.com/actions/stale
@@ -27,5 +27,5 @@ jobs:
           stale-issue-label: 'stale'
           any-of-issue-labels: 'external'
 env:
-  ISSUE_STALE_DAYS: 60
+  ISSUE_STALE_DAYS: 0
   ISSUE_CLOSE_AFTER_DAYS: 7
