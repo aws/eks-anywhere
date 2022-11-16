@@ -11,6 +11,7 @@ EKS Anywhere allows you to provision and manage Kubernetes clusters based on Ama
 
 This document walks you through setting up EKS Anywhere as a self-managed cluster.
 It does not yet support the concept of a separate management cluster for managing one or more workload clusters.
+See [Cluster topologies]({{< relref "../../concepts/cluster-topologies" >}}) for details.
 
 ## Prerequisite checklist
 
