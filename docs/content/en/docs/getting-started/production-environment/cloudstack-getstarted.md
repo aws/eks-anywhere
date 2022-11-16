@@ -118,7 +118,9 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 1. Create cluster
 
    ```bash
-   eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
+   eksctl anywhere create cluster \
+      # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+      -f eksa-mgmt-cluster.yaml
    ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
@@ -204,8 +206,8 @@ Follow these steps if you want to use your initial cluster to create and manage 
    ```bash
    eksctl anywhere create cluster \
        -f eksa-w01-cluster.yaml  \
-       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig \
-       # --install-packages packages.yaml # uncomment to install curated packages at cluster creation
+       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
    ```
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
