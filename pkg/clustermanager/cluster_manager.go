@@ -262,7 +262,9 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		return nil, err
 	}
 
-	c.waitUntilFirstControlPlaneReady(ctx, clusterSpec, managementCluster)
+	if err := c.waitUntilControlPlaneAvailable(ctx, clusterSpec, managementCluster); err != nil {
+		return nil, err
+	}
 
 	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", clusterName)
 
@@ -298,12 +300,12 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	return workloadCluster, nil
 }
 
-func (c *ClusterManager) waitUntilFirstControlPlaneReady(
+func (c *ClusterManager) waitUntilControlPlaneAvailable(
 	ctx context.Context,
 	clusterSpec *cluster.Spec,
 	managementCluster *types.Cluster,
 ) error {
-	// If we have exeternal etcd we need to wait for that first as control plane nodes can't
+	// If we have external etcd we need to wait for that first as control plane nodes can't
 	// come up without it.
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", clusterSpec.Cluster.Name)
@@ -317,11 +319,9 @@ func (c *ClusterManager) waitUntilFirstControlPlaneReady(
 			return fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
 		}
 		logger.V(3).Info("External etcd is ready")
-		// the condition external etcd ready if true indicates that all etcd machines are ready and
-		// the etcd cluster is ready to accept requests
 	}
 
-	logger.V(3).Info("Waiting for first control plane to be ready")
+	logger.V(3).Info("Waiting for control plane to be available")
 	err := c.clusterClient.WaitForControlPlaneAvailable(
 		ctx,
 		managementCluster,
@@ -329,7 +329,7 @@ func (c *ClusterManager) waitUntilFirstControlPlaneReady(
 		clusterSpec.Cluster.Name,
 	)
 	if err != nil {
-		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
+		return fmt.Errorf("waiting for control plane to be ready: %v", err)
 	}
 
 	return nil
