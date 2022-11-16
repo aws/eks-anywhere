@@ -120,10 +120,11 @@ When you run `image-builder` it will pull in all components needed to create ima
 With this tool, when you build an image you get to choose:
 
 * Operating system type (for example, ubuntu)
-* Provider (vsphere, cloudstack or baremetal)
+* Provider (vsphere, cloudstack, baremetal, ami)
 * Release channel for EKS Distro (generally aligning with Kubernetes releases)
 * vSphere only: configuration file providing information needed to access your vSphere setup
 * CloudStack only: configuration file providing information needed to access your Cloudstack setup
+* AMI only: configuration file providing information needed to customize your AMI build parameters
 
 Because `image-builder` creates images in the same way that the EKS Anywhere project does for their own testing, images built with that tool are supported.
 The following procedure describes how to use `image-builder` to build images for EKS Anywhere on a vSphere or Bare Metal provider.
@@ -178,6 +179,7 @@ To use `image-builder` you must meet the following prerequisites:
     * Network
       * Assign network to vm
 * CloudStack only: See [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) for required CloudStack user permissions.
+* AMI only: Packer will require prior authentication with your AWS account to launch EC2 instances for the AMI build. See [Authentication guide for Amazon EBS Packer builder](https://developer.hashicorp.com/packer/plugins/builders/amazon#authentication) for possible modes of authentication. We recommend that you run `image-builder` on a pre-existing Ubuntu EC2 instance and use an [IAM instance role with the required permissions](https://developer.hashicorp.com/packer/plugins/builders/amazon#iam-task-or-instance-role).
 
 ### Optional Proxy configuration
 You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
@@ -430,7 +432,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 1. Install packages and prepare environment:
    ```
    sudo apt update -y
-   sudo apt install jq unzip make ansible -y
+   sudo apt install jq unzip make ansible python3-pip -y
    sudo snap install yq
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -448,18 +450,18 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    ```json
    {
      "ami_filter_name": "<Regular expression to filter a source AMI (default: ubuntu/images/*ubuntu-focal-20.04-amd64-server-*)>",
-     "ami_filter_owners": "<AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc (default: 679593333241 - the AWS Marketplace AWS account ID",
-     "ami_regions": "A list of AWS regions to copy the AMI to",
+     "ami_filter_owners": "<AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc (default: 679593333241 - the AWS Marketplace AWS account ID)>",
+     "ami_regions": "<A list of AWS regions to copy the AMI to>",
      "aws_region": "The AWS region in which to launch the EC2 instance to create the AMI",
-     "ansible_extra_vars": "Additional variables to pass to Ansible. These are converted to the `--extra-vars` command-line argument",
-     "builder_instance_type": "The EC2 instance type to use while building the AMI (default: t3.small)",
-     "custom_role": "If set to true, this will run a custom Ansible role before the `sysprep` role to allow for further customization",
-     "custom_role_name_list" : ["List of strings representing the custom roles to run. This field is mutually exclusive with custom_role_names"],
-     "custom_role_names": "Space delimited string of the custom roles to run. This field is mutually exclusive with custom_role_name_list and is provided for compatibility with Ansible's input format",
-     "manifest_output": "The path to write the build artifacts manifest to",
-     "root_device_name": "The device name used by EC2 for the root EBS volume attached to the instance",
-     "volume_size": "The size of the root EBS volume in GiB",
-     "volume_type": "The type of root EBS volume, such as gp2, gp3, io1, etc",
+     "ansible_extra_vars": "<The absolute path to the additional variables to pass to Ansible. These are converted to the `--extra-vars` command-line argument. This path must be prefix with '@'>",
+     "builder_instance_type": "<The EC2 instance type to use while building the AMI (default: t3.small)>",
+     "custom_role": "<If set to true, this will run a custom Ansible role before the `sysprep` role to allow for further customization>",
+     "custom_role_name_list" : "<Array of strings representing the absolute paths of custom Ansible roles to run. This field is mutually exclusive with custom_role_names>",
+     "custom_role_names": "<Space-delimited string of the custom roles to run. This field is mutually exclusive with custom_role_name_list and is provided for compatibility with Ansible's input format>",
+     "manifest_output": "<The absolute path to write the build artifacts manifest to. If you wish to export the AMI using this manifest, ensure that you provide a path that is not inside the '/home/$USER/eks-anywhere-build-tooling' path since that will be cleaned up when the build finishes>",
+     "root_device_name": "<The device name used by EC2 for the root EBS volume attached to the instance>",
+     "volume_size": "<The size of the root EBS volume in GiB>",
+     "volume_type": "<The type of root EBS volume, such as gp2, gp3, io1, etc>",
    }
    ```
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
