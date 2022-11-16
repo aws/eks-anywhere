@@ -189,7 +189,6 @@ Follow these steps if you want to use your initial cluster to create and manage 
        -f eksa-w01-cluster.yaml  \
        # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
        --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
-       
    ```
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
