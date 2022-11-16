@@ -25,7 +25,7 @@ jobs:
             This issue has had no activity for ${{ env.ISSUE_STALE_DAYS }} days. 
             Labeling as stale and closing in ${{ env.ISSUE_CLOSE_AFTER_DAYS }} days if no further activity.
           stale-issue-label: 'stale'
-          any-of-issue-labels: 'external2'
+          any-of-issue-labels: 'external'
 env:
-  ISSUE_STALE_DAYS: 0
+  ISSUE_STALE_DAYS: 60
   ISSUE_CLOSE_AFTER_DAYS: 7
