@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
+	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -178,6 +179,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			Bootstrapper:                  deps.Bootstrapper,
 			CreateBootstrapClusterOptions: deps.Provider,
 			CNIInstaller:                  deps.CNIInstaller,
+			Cluster:                       clustermanager.NewCreateClusterShim(clusterSpec, deps.ClusterManager, deps.Provider),
+			FS:                            deps.Writer,
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
 

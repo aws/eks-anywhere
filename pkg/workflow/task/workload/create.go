@@ -18,20 +18,18 @@ type Cluster interface {
 	// thing that may be required.
 	CreateAsync(_ context.Context, management *types.Cluster) error
 
-	// GetName retrieves the cluster name.
-	GetName() string
-
 	// WriteKubeconfig writes the Kuberconfig for this cluster to the io.Writer.
 	WriteKubeconfig(_ context.Context, _ io.Writer, management *types.Cluster) error
 
-	// WaitUntilFirstControlPlaneReady blocks until the first control plane is ready node is ready.
+	// WaitUntilControlPlaneAvailable blocks until the first control plane is ready node is ready.
 	// The node is ready when its possible to interact with the Kube API server using
 	// a Kubeconfig.
-	WaitUntilFirstControlPlaneReady(_ context.Context, management *types.Cluster) error
+	WaitUntilControlPlaneAvailable(_ context.Context, management *types.Cluster) error
 
 	// WaitUntilReady blocks until all nodes within the cluster are ready. Nodes are ready when
 	// they have joined the cluster and their Ready condition is true.
-	WaitUntilReady(_ context.Context, management *types.Cluster) error
+	WaitUntilReady(_ context.Context, management *types.Cluster) error // GetName retrieves the cluster name.
+	GetName() string
 }
 
 // CNIInstaller install a CNI in a given cluster.
@@ -71,7 +69,7 @@ func (t Create) RunTask(ctx context.Context) (context.Context, error) {
 	// assume we can write a Kubeconfig and install the CNI.
 	//
 	// Note we think this is important as the CNI is required for MachineHealthChecks to work.
-	if err := t.Cluster.WaitUntilFirstControlPlaneReady(ctx, management); err != nil {
+	if err := t.Cluster.WaitUntilControlPlaneAvailable(ctx, management); err != nil {
 		return nil, err
 	}
 

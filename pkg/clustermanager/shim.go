@@ -51,13 +51,13 @@ func (s CreateClusterShim) GetName() string {
 }
 
 // WriteKubeconfig satisfies the workload.Cluster interface.
-func (s CreateClusterShim) WriteKubeconfig(ctx context.Context, management *types.Cluster, w io.Writer) error {
+func (s CreateClusterShim) WriteKubeconfig(ctx context.Context, w io.Writer, management *types.Cluster) error {
 	return s.manager.getWorkloadClusterKubeconfig(ctx, s.spec.Cluster.Name, management, w)
 }
 
-// WaitUntilFirstControlPlaneReady satisfies the workload.Cluster interface.
-func (s CreateClusterShim) WaitUntilFirstControlPlaneReady(ctx context.Context, management *types.Cluster) error {
-	return s.manager.waitUntilFirstControlPlaneReady(ctx, s.spec, management)
+// WaitUntilControlPlaneAvailable satisfies the workload.Cluster interface.
+func (s CreateClusterShim) WaitUntilControlPlaneAvailable(ctx context.Context, management *types.Cluster) error {
+	return s.manager.waitUntilControlPlaneAvailable(ctx, s.spec, management)
 }
 
 // WaitUntilReady satisfies the workload.Cluster interface.
