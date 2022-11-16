@@ -1,0 +1,30 @@
+# Stale issue handler (could also be extended for stale PRs in future)
+
+# This action will: 
+# * Add a label "stale issue" on issues after 60 days of inactivity and comment on them if they also have the "external" label
+# * Close the stale issues and pull requests after 7 days of inactivity
+# * If an update/comment occur on stale issues or pull requests, the stale label will be removed and the timer will restartif they have the "external" label
+
+# Runs every Monday morning at 1AM.
+# Docs: https://github.com/actions/stale
+
+name: 'Close stale issues and PRs'
+on:
+  schedule:
+    - cron: '0 1 * * MON'
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v6
+        with:
+          days-before-stale: ${{ env.STALE_ISSUE_DAYS }}
+          days-before-close: ${{ env.CLOSE_AFTER_DAYS }}
+          stale-issue-message: >
+            This issue has had no activity for ${{ env.STALE_ISSUE_DAYS }} days. 
+            Labeling as stale and closing in ${{ env.CLOSE_AFTER_DAYS}} if not further activity.
+          stale-issue-label: 'stale issue'
+          any-of-issue-labels: 'external'
+env:
+  STALE_ISSUE_DAYS: 60
+  CLOSE_AFTER_DAYS: 7
