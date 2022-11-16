@@ -5,7 +5,7 @@
 # * Close the stale issues and pull requests after 7 days of inactivity
 # * If an update/comment occur on stale issues or pull requests, the stale label will be removed and the timer will restart if they have the "external" label
 
-# Runs every Monday morning at 1AM.
+# Runs every morning at 1AM: We don't want people having to wait a whole week to get the stale label removed 
 # Docs: https://github.com/actions/stale
 
 name: 'Label and close stale issues'
