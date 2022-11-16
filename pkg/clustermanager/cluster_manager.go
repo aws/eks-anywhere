@@ -264,44 +264,36 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 
 	c.waitUntilFirstControlPlaneReady(ctx, clusterSpec, managementCluster)
 
-	// The Docker provider requires a kubeconfig update so we need to cache the Kubeconfig content
-	// outside the retry scope so we can update the Docker provider after.
-	var kubeconfigContent []byte
-
 	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", clusterName)
 
-	// Kubeconfig generation can take a while to generate hence we retry.
-	err := c.Retrier.Retry(
-		func() error {
-			var buf bytes.Buffer
-			err := c.getWorkloadClusterKubeconfig(ctx, clusterName, managementCluster, &buf)
-			if err != nil {
-				return err
-			}
-
-			kubeconfigFile, err := c.writer.Write(
-				kubeconfig.FormatWorkloadClusterKubeconfigFilename(clusterName),
-				buf.Bytes(),
-				filewriter.PersistentFile,
-				filewriter.Permission0600,
-			)
-			if err != nil {
-				return fmt.Errorf("writing workload kubeconfig: %v", err)
-			}
-
-			workloadCluster.KubeconfigFile = kubeconfigFile
-			kubeconfigContent = buf.Bytes()
-
-			return err
-		},
-	)
+	// Use a buffer to cache the kubeconfig.
+	var buf bytes.Buffer
+	err := c.Retrier.Retry(func() error {
+		return c.getWorkloadClusterKubeconfig(ctx, clusterName, managementCluster, &buf)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("waiting for workload kubeconfig: %v", err)
 	}
 
-	if err := provider.UpdateKubeConfig(&kubeconfigContent, clusterName); err != nil {
+	rawKubeconfig := buf.Bytes()
+
+	// The Docker provider wants to update the kubeconfig to patch the server address before
+	// we write it to disk. This is to ensure we can communicate with the cluster even when
+	// hosted inside a Docker Desktop VM.
+	if err := provider.UpdateKubeConfig(&rawKubeconfig, clusterName); err != nil {
 		return nil, err
 	}
+
+	kubeconfigFile, err := c.writer.Write(
+		kubeconfig.FormatWorkloadClusterKubeconfigFilename(clusterName),
+		rawKubeconfig,
+		filewriter.PersistentFile,
+		filewriter.Permission0600,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("writing workload kubeconfig: %v", err)
+	}
+	workloadCluster.KubeconfigFile = kubeconfigFile
 
 	return workloadCluster, nil
 }
