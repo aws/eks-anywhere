@@ -311,7 +311,7 @@ func TestSnowKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(SnowProviderEnvVar, "true"),
+		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
 		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runConformanceFlow(test)
@@ -323,7 +323,7 @@ func TestSnowKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(SnowProviderEnvVar, "true"),
+		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
 		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runConformanceFlow(test)
@@ -335,7 +335,7 @@ func TestSnowKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu123()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(SnowProviderEnvVar, "true"),
+		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
 		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runConformanceFlow(test)
