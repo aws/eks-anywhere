@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -93,7 +95,12 @@ func WithNutanixPort(value int) NutanixFiller {
 
 func WithNutanixAdditionalTrustBundle(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
-		config.datacenterConfig.Spec.AdditionalTrustBundle = value
+		certificate, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			logger.Info("Warning: Failed to decode AdditionalTrustBundle. AdditionalTrustBundle won't be added")
+		} else {
+			config.datacenterConfig.Spec.AdditionalTrustBundle = string(certificate)
+		}
 	}
 }
 
