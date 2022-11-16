@@ -890,6 +890,18 @@ func TestClusterEqualClusterNetwork(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			testName: "diff Nodes",
+			cluster1ClusterNetwork: v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{},
+			},
+			cluster2ClusterNetwork: v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{
+					CIDRMaskSize: ptr.Int(3),
+				},
+			},
+			want: false,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -1637,5 +1649,72 @@ func setSelfManaged(c *v1alpha1.Cluster, s bool) {
 		c.SetSelfManaged()
 	} else {
 		c.SetManagedBy("management-cluster")
+	}
+}
+
+func TestNodes_Equal(t *testing.T) {
+	tests := []struct {
+		name           string
+		nodes1, nodes2 *v1alpha1.Nodes
+		want           bool
+	}{
+		{
+			name:   "one nil",
+			nodes1: nil,
+			nodes2: &v1alpha1.Nodes{},
+			want:   false,
+		},
+		{
+			name:   "other nil",
+			nodes1: &v1alpha1.Nodes{},
+			nodes2: nil,
+			want:   false,
+		},
+		{
+			name:   "both nil",
+			nodes1: nil,
+			nodes2: nil,
+			want:   true,
+		},
+		{
+			name:   "one nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{},
+			nodes2: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			want: false,
+		},
+		{
+			name:   "both nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{},
+			nodes2: &v1alpha1.Nodes{},
+			want:   true,
+		},
+		{
+			name: "different not nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(3),
+			},
+			nodes2: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			want: false,
+		},
+		{
+			name: "equal not nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			nodes2: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.nodes1.Equal(tt.nodes2)).To(Equal(tt.want))
+		})
 	}
 }

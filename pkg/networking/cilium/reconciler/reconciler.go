@@ -19,7 +19,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/oci"
 )
 
-const defaultRequeueTime = time.Second * 10
+const (
+	defaultRequeueTime = time.Second * 10
+)
 
 type Templater interface {
 	GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error)
@@ -52,9 +54,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 
 	logger.Info("Cilium is already installed, checking if it needs upgrade")
 	upgradeInfo := cilium.BuildUpgradePlan(installation, spec)
-	if !upgradeInfo.Needed() {
-		logger.Info("Cilium is already in desired version")
-	} else {
+
+	if upgradeInfo.VersionUpgradeNeeded() {
 		logger.Info("Cilium upgrade needed", "reason", upgradeInfo.Reason())
 
 		if result, err := r.upgrade(ctx, logger, client, installation, spec); err != nil {
@@ -62,6 +63,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 		} else if result.Return() {
 			return result, nil
 		}
+	} else if upgradeInfo.ConfigUpdateNeeded() {
+		logger.Info("Cilium config update needed", "reason", upgradeInfo.Reason())
+		if err := r.updateConfig(ctx, client, spec); err != nil {
+			return controller.Result{}, err
+		}
+	} else {
+		logger.Info("Cilium is already up to date")
 	}
 
 	return r.deletePreflightIfExists(ctx, client, spec)
@@ -69,12 +77,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 
 func (r *Reconciler) install(ctx context.Context, log logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
 	log.Info("Installing Cilium")
-	ciliumSpec, err := r.templater.GenerateManifest(ctx, spec)
-	if err != nil {
-		return controller.Result{}, err
-	}
-	if err := serverside.ReconcileYaml(ctx, client, ciliumSpec); err != nil {
-		return controller.Result{}, err
+	if err := r.applyFullManifest(ctx, client, spec); err != nil {
+		return controller.Result{}, errors.Wrap(err, "installing Cilium")
 	}
 
 	return controller.Result{}, nil
@@ -147,6 +151,23 @@ func (r *Reconciler) upgrade(ctx context.Context, logger logr.Logger, client cli
 	}
 
 	return controller.Result{}, nil
+}
+
+func (r *Reconciler) updateConfig(ctx context.Context, client client.Client, spec *cluster.Spec) error {
+	if err := r.applyFullManifest(ctx, client, spec); err != nil {
+		return errors.Wrap(err, "updating cilium config")
+	}
+
+	return nil
+}
+
+func (r *Reconciler) applyFullManifest(ctx context.Context, client client.Client, spec *cluster.Spec) error {
+	upgradeManifest, err := r.templater.GenerateManifest(ctx, spec)
+	if err != nil {
+		return err
+	}
+
+	return serverside.ReconcileYaml(ctx, client, upgradeManifest)
 }
 
 func (r *Reconciler) deletePreflightIfExists(ctx context.Context, client client.Client, spec *cluster.Spec) (controller.Result, error) {

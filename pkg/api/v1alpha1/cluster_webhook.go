@@ -148,10 +148,28 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Forbidden(specPath.Child("datacenterRef"), fmt.Sprintf("field is immutable %v", new.Spec.DatacenterRef)))
 	}
 
-	if !new.Spec.ClusterNetwork.Equal(&old.Spec.ClusterNetwork) {
+	if !new.Spec.ClusterNetwork.Pods.Equal(&old.Spec.ClusterNetwork.Pods) {
 		allErrs = append(
 			allErrs,
-			field.Forbidden(specPath.Child("ClusterNetwork"), fmt.Sprintf("field is immutable %v", new.Spec.ClusterNetwork)))
+			field.Forbidden(specPath.Child("clusterNetwork", "pods"), "field is immutable"))
+	}
+
+	if !new.Spec.ClusterNetwork.Services.Equal(&old.Spec.ClusterNetwork.Services) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("clusterNetwork", "services"), "field is immutable"))
+	}
+
+	if !new.Spec.ClusterNetwork.DNS.Equal(&old.Spec.ClusterNetwork.DNS) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("clusterNetwork", "dns"), "field is immutable"))
+	}
+
+	if !new.Spec.ClusterNetwork.Nodes.Equal(old.Spec.ClusterNetwork.Nodes) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("clusterNetwork", "nodes"), "field is immutable"))
 	}
 
 	if !new.Spec.ProxyConfiguration.Equal(old.Spec.ProxyConfiguration) {

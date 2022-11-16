@@ -518,13 +518,29 @@ func TestClusterValidateUpdateDataCenterRefKindImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestClusterValidateUpdateClusterNetworkImmutable(t *testing.T) {
+func TestClusterValidateUpdateClusterNetworkPodsImmutable(t *testing.T) {
+	features.ClearCache()
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ClusterNetwork: v1alpha1.ClusterNetwork{
 				Pods: v1alpha1.Pods{
 					CidrBlocks: []string{"1.2.3.4/5", "1.2.3.4/6"},
 				},
+			},
+		},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"1.2.3.4/5"}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.pods: Forbidden: field is immutable")))
+}
+
+func TestClusterValidateUpdateClusterNetworkServicesImmutable(t *testing.T) {
+	features.ClearCache()
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ClusterNetwork: v1alpha1.ClusterNetwork{
 				Services: v1alpha1.Services{
 					CidrBlocks: []string{"1.2.3.4/7", "1.2.3.4/8"},
 				},
@@ -532,81 +548,48 @@ func TestClusterValidateUpdateClusterNetworkImmutable(t *testing.T) {
 		},
 	}
 	c := cOld.DeepCopy()
-	c.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
-		Pods: v1alpha1.Pods{
-			CidrBlocks: []string{"1.2.3.4/5"},
-		},
-		Services: v1alpha1.Services{
-			CidrBlocks: []string{"1.2.3.4/9", "1.2.3.4/10"},
-		},
-	}
+	c.Spec.ClusterNetwork.Services.CidrBlocks = []string{"1.2.3.4/9", "1.2.3.4/10"}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.services: Forbidden: field is immutable")))
 }
 
-func TestClusterValidateUpdateClusterNetworkOldEmptyImmutable(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			ClusterNetwork: v1alpha1.ClusterNetwork{},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
-		Pods: v1alpha1.Pods{
-			CidrBlocks: []string{"1.2.3.4/5"},
-		},
-		Services: v1alpha1.Services{
-			CidrBlocks: []string{"1.2.3.4/9", "1.2.3.4/10"},
-		},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
-}
-
-func TestClusterValidateUpdateClusterNetworkNewEmptyImmutable(t *testing.T) {
+func TestClusterValidateUpdateClusterNetworkDNSImmutable(t *testing.T) {
+	features.ClearCache()
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ClusterNetwork: v1alpha1.ClusterNetwork{
-				Pods: v1alpha1.Pods{
-					CidrBlocks: []string{"1.2.3.4/5", "1.2.3.4/6"},
-				},
-			},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
-		Pods: v1alpha1.Pods{},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
-}
-
-func TestClusterValidateUpdateClusterNetworkCiliumConfigImmutable(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			ClusterNetwork: v1alpha1.ClusterNetwork{
-				CNIConfig: &v1alpha1.CNIConfig{
-					Cilium: &v1alpha1.CiliumConfig{
-						PolicyEnforcementMode: "default",
+				DNS: v1alpha1.DNS{
+					ResolvConf: &v1alpha1.ResolvConf{
+						Path: "my-path",
 					},
 				},
 			},
 		},
 	}
 	c := cOld.DeepCopy()
-	c.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
-		CNIConfig: &v1alpha1.CNIConfig{
-			Cilium: &v1alpha1.CiliumConfig{
-				PolicyEnforcementMode: "always",
+	c.Spec.ClusterNetwork.DNS.ResolvConf.Path = "other-path"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.dns: Forbidden: field is immutable")))
+}
+
+func TestClusterValidateUpdateClusterNetworkNodesImmutable(t *testing.T) {
+	features.ClearCache()
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ClusterNetwork: v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{
+					CIDRMaskSize: ptr.Int(5),
+				},
 			},
 		},
 	}
+	c := cOld.DeepCopy()
+	c.Spec.ClusterNetwork.Nodes.CIDRMaskSize = ptr.Int(10)
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.clusterNetwork.nodes: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {

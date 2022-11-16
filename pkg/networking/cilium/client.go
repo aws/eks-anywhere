@@ -18,6 +18,9 @@ const (
 	PreflightDaemonSetName  = "cilium-pre-flight-check"
 	DeploymentName          = "cilium-operator"
 	PreflightDeploymentName = "cilium-pre-flight-check"
+	// ConfigMapName is the default name for the Cilium ConfigMap
+	// containing Cilium's configuration.
+	ConfigMapName = "cilium-config"
 )
 
 // Client allows to interact with the Kubernetes API.
