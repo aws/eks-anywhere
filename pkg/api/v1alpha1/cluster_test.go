@@ -2589,7 +2589,7 @@ func TestValidateControlPlaneEndpoint(t *testing.T) {
 
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
-	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube124))
 }
 
 func TestClusterWorkerNodeConfigCount(t *testing.T) {
