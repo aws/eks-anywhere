@@ -1,0 +1,202 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+    pool: md-0
+  name: test-md-0
+  namespace: eksa-system
+spec:
+  clusterName: test
+  replicas: 1
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: test
+        pool: md-0
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: test-md-0-template-1234567890000
+      clusterName: test
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: TinkerbellMachineTemplate
+        name: test-md-0-1234567890000
+      version: v1.21.2-eks-1-21-4
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: TinkerbellMachineTemplate
+metadata:
+  name: test-md-0-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: worker
+      templateOverride: |
+        global_timeout: 6000
+        id: ""
+        name: tink-test
+        tasks:
+        - actions:
+          - environment:
+              COMPRESSED: "true"
+              DEST_DISK: /dev/sda
+              IMG_URL: ""
+            image: image2disk:v1.0.0
+            name: stream-image
+            timeout: 360
+          - environment:
+              BLOCK_DEVICE: /dev/sda2
+              CHROOT: "y"
+              CMD_LINE: apt -y update && apt -y install openssl
+              DEFAULT_INTERPRETER: /bin/sh -c
+              FS_TYPE: ext4
+            image: cexec:v1.0.0
+            name: install-openssl
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                network:
+                  version: 2
+                  renderer: networkd
+                  ethernets:
+                      eno1:
+                          dhcp4: true
+                      eno2:
+                          dhcp4: true
+                      eno3:
+                          dhcp4: true
+                      eno4:
+                          dhcp4: true
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/netplan/config.yaml
+              DIRMODE: "0755"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-netplan
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                datasource:
+                  Ec2:
+                    metadata_urls: []
+                    strict_id: false
+                system_info:
+                  default_user:
+                    name: tink
+                    groups: [wheel, adm]
+                    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                    shell: /bin/bash
+                manage_etc_hosts: localhost
+                warnings:
+                  dsid_missing_source: off
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0600"
+            image: writefile:v1.0.0
+            name: add-tink-cloud-init-config
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                datasource: Ec2
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/cloud/ds-identify.cfg
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0600"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: add-tink-cloud-init-ds-config
+            timeout: 90
+          - environment:
+              BLOCK_DEVICE: /dev/sda2
+              FS_TYPE: ext4
+            image: kexec:v1.0.0
+            name: kexec-image
+            pid: host
+            timeout: 90
+          name: tink-test
+          volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+          worker: '{{.device_1}}'
+        version: "0.1"
+        
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-md-0-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            provider-id: PROVIDER_ID
+            read-only-port: "0"
+            anonymous-auth: "false"
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      files:
+        - content: |
+            -----BEGIN CERTIFICATE-----
+            MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+            BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+            MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+            CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+            EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+            lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+            2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+            o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+            cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+            LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+            ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+            hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+            iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+            zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+            9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+            -----END CERTIFICATE-----
+          owner: root:root
+          path: "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
+        - content: |
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+                endpoint = ["https://1.2.3.4:1234"]
+              [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".tls]
+                ca_file = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
+              [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".auth]
+                username = "username"
+                password = "password"
+          owner: root:root
+          path: "/etc/containerd/config_append.toml"
+      preKubeadmCommands:
+      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+      - sudo systemctl daemon-reload
+      - sudo systemctl restart containerd
+      users:
+      - name: tink-user
+        sshAuthorizedKeys:
+        - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      format: cloud-config
+
+---

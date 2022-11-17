@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -45,6 +46,7 @@ type Docker interface {
 }
 
 type Helm interface {
+	RegistryLogin(ctx context.Context, endpoint, username, password string) error
 	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
 }
 
@@ -211,6 +213,17 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
 	}
 
+	if s.registryMirror != nil && s.registryMirror.Authenticate {
+		username, password, err := config.ReadCredentials()
+		if err != nil {
+			return err
+		}
+		endpoint := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+			return err
+		}
+	}
+
 	err = s.helm.InstallChartWithValuesFile(
 		ctx,
 		bundle.TinkerbellStack.TinkebellChart.Name,
@@ -269,18 +282,25 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 }
 
 func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP string) map[string]string {
+	bootsEnv := map[string]string{
+		"DATA_MODEL_VERSION":        "kubernetes",
+		"TINKERBELL_TLS":            "false",
+		"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
+	}
+
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
 	if s.registryMirror != nil {
 		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
 		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
+		if s.registryMirror.Authenticate {
+			username, password, _ := config.ReadCredentials()
+			bootsEnv["REGISTRY_USERNAME"] = username
+			bootsEnv["REGISTRY_PASSWORD"] = password
+		}
 	}
+	bootsEnv["BOOTS_EXTRA_KERNEL_ARGS"] = extraKernelArgs
 
-	return map[string]string{
-		"DATA_MODEL_VERSION":        "kubernetes",
-		"TINKERBELL_TLS":            "false",
-		"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
-		"BOOTS_EXTRA_KERNEL_ARGS":   extraKernelArgs,
-	}
+	return bootsEnv
 }
 
 // UninstallLocal currently removes local docker container running Boots.
