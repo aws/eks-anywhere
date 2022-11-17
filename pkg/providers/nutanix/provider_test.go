@@ -262,6 +262,14 @@ func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestNutanixProviderUpdateSecrets(t *testing.T) {
+	provider := testDefaultNutanixProvider(t)
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	err := provider.UpdateSecrets(context.Background(), cluster, clusterSpec)
+	assert.NoError(t, err)
+}
+
 func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
@@ -665,6 +673,14 @@ func TestNutanixProviderMachineDeploymentsToDelete(t *testing.T) {
 	deps := provider.MachineDeploymentsToDelete(cluster, clusterSpec, clusterSpec)
 	assert.NotNil(t, deps)
 	assert.Len(t, deps, 0)
+}
+
+func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
+	provider := testDefaultNutanixProvider(t)
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	err := provider.PreCAPIInstallOnBootstrap(context.Background(), cluster, clusterSpec)
+	assert.NoError(t, err)
 }
 
 func TestNutanixProviderPostMoveManagementToBootstrap(t *testing.T) {
