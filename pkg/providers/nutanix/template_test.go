@@ -97,3 +97,18 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expectedCredSecret, credJSON)
 }
+func TestNewNutanixTemplateBuilderGetCredsJSON(t *testing.T) {
+	storedMarshal := jsonMarshal
+	jsonMarshal = fakemarshal
+	defer restoremarshal(storedMarshal)
+
+	t.Setenv(constants.NutanixUsernameKey, "admin")
+	t.Setenv(constants.NutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(nil, nil, nil, nil, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	credsJSON, err := builder.getCredsJSON()
+	assert.Nil(t, credsJSON)
+	assert.Error(t, err)
+}

@@ -274,6 +274,21 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+
+	storedMarshal := jsonMarshal
+	jsonMarshal = fakemarshal
+	defer restoremarshal(storedMarshal)
+
+	cpSpec, workerSpec, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	assert.Error(t, err)
+	assert.Nil(t, cpSpec)
+	assert.Nil(t, workerSpec)
+}
+
+func TestNutanixProviderGenerateCAPISpecForCreateFailedToGetCreds(t *testing.T) {
+	provider := testDefaultNutanixProvider(t)
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	cpSpec, workerSpec, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	assert.NoError(t, err)
 	assert.NotNil(t, cpSpec)
