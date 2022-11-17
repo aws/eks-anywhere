@@ -1,7 +1,6 @@
 package nutanix
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -84,7 +83,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
-func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+func (ntb *TemplateBuilder) getCredsJson() ([]byte, error) {
 	encodedCreds, err := jsonMarshal(ntb.creds)
 	if err != nil {
 		return nil, err
@@ -98,18 +97,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, bu
 	if err != nil {
 		return nil, err
 	}
-
-	values := buildTemplateMapSecret(clusterSpec, credsJSON)
-	for _, buildOption := range buildOptions {
-		buildOption(values)
-	}
-
-	bytes, err := templater.Execute(secretTemplate, values)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
+	return credsJSON, nil
 }
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
@@ -189,15 +177,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
 		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
 		"workerNodeGroupName":    fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
-	}
-	return values
-}
-
-func buildTemplateMapSecret(clusterSpec *cluster.Spec, creds []byte) map[string]interface{} {
-	values := map[string]interface{}{
-		"clusterName":              clusterSpec.Cluster.Name,
-		"eksaSystemNamespace":      constants.EksaSystemNamespace,
-		"base64EncodedCredentials": base64.StdEncoding.EncodeToString(creds),
 	}
 	return values
 }

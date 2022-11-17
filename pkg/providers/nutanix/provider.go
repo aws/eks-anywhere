@@ -3,6 +3,7 @@ package nutanix
 import (
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"reflect"
@@ -27,9 +28,6 @@ var defaultCAPIConfigCP string
 
 //go:embed config/md-template.yaml
 var defaultClusterConfigMD string
-
-//go:embed config/secret-template.yaml
-var secretTemplate string
 
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
@@ -183,24 +181,23 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.
 }
 
 func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	contents, err := p.templateBuilder.GenerateCAPISpecSecret(clusterSpec)
-	if err != nil {
-		return err
-	}
-
-	if err := p.kubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents); err != nil {
-		return fmt.Errorf("loading secrets object: %v", err)
-	}
 	return nil
 }
 
 func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
+	credsJSON, err := p.templateBuilder.getCredsJson()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
 		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
+		values["base64EncodedCredentials"] = base64.StdEncoding.EncodeToString(credsJSON)
 	}
+
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
@@ -615,8 +612,7 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	logger.Info("Installing secrets on bootstrap cluster")
-	return p.UpdateSecrets(ctx, cluster, clusterSpec)
+	return nil
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
