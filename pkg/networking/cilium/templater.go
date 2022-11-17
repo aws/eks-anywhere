@@ -4,13 +4,13 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -128,7 +128,7 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 			if err != nil {
 				return nil, err
 			}
-			endpoint := spec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings()[constants.DefaultRegistryMirrorKey]
+			endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
 			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
 				return nil, err
 			}
