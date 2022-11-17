@@ -155,6 +155,7 @@ type RegistryMirrorConfiguration struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
+// OCINamespace represents an entity in a local reigstry to group related images.
 type OCINamespace struct {
 	// Name refers to the name of the upstream registry
 	Registry string `json:"registry,omitempty"`
@@ -172,6 +173,8 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate && OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
 }
 
+// GetRegistryMirrorAddressMappings reads OCINamespaces field of RegistryMirrorConfiguration, and returns
+// a mapping from original registry URLs to registry mirror URLs.
 func (n *RegistryMirrorConfiguration) GetRegistryMirrorAddressMappings() map[string]string {
 	registryMirrorMappings := make(map[string]string)
 	base := net.JoinHostPort(n.Endpoint, n.Port)
@@ -197,6 +200,7 @@ func (n *RegistryMirrorConfiguration) GetRegistryMirrorAddressMappings() map[str
 	return registryMirrorMappings
 }
 
+// OCINamespacesSliceEqual is used to check equality of the OCINamespaces fields of two RegistryMirrorConfgiuration.
 func OCINamespacesSliceEqual(a, b []OCINamespace) bool {
 	if len(a) != len(b) {
 		return false
