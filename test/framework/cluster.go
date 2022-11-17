@@ -975,7 +975,7 @@ func (e *ClusterE2ETest) generatePackageConfig(ns, targetns, prefix, packageName
 	}
 	builtpackageB, err := yaml.Marshal(builtpackage)
 	if err != nil {
-		e.T.Fatalf("marshalling package config: %v", err)
+		e.T.Fatalf("marshalling package config file: %v", err)
 	}
 	yamlB = append(yamlB, builtpackageB)
 	return templater.AppendYamlResources(yamlB...)
@@ -1132,6 +1132,102 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *t
 	ok := strings.Contains(logs, "Amazon EKS Anywhere")
 	if !ok {
 		e.T.Fatalf("expected Amazon EKS Anywhere, got %T", logs)
+	}
+}
+
+//go:embed testdata/emissary_listener.yaml
+var emisarryListener []byte
+
+//go:embed testdata/emissary_package.yaml
+var emisarryPackage []byte
+
+// VerifyEmissaryPackageInstalled is checking if emissary package gets installed correctly.
+func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(name string, mgmtCluster *types.Cluster) {
+	ctx := context.Background()
+	ns := constants.EksaPackagesName
+
+	e.T.Log("Waiting for Package", name, "To be installed")
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		mgmtCluster, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+	if err != nil {
+		e.T.Fatalf("waiting for emissary package timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", name, ns)
+	if err != nil {
+		e.T.Fatalf("waiting for emissary deployment timed out: %s", err)
+	}
+	svcAddress := name + "-admin." + ns + ".svc.cluster.local" + ":8877/ambassador/v0/check_alive"
+	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomname, e.kubeconfigFilePath(), []string{"curl", svcAddress})
+	if err != nil {
+		e.T.Fatalf("error launching busybox pod: %s", err)
+	}
+	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
+
+	err = e.KubectlClient.WaitForPodCompleted(ctx,
+		e.cluster(), clientPod, "5m", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
+	}
+
+	e.T.Log("Checking Busybox pod logs", clientPod)
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	fmt.Printf("Logs from curl emissary\n %s\n", logs)
+	ok := strings.Contains(logs, "Ambassador is alive and well")
+	if !ok {
+		e.T.Fatalf("expected a, got %T", logs)
+	}
+}
+
+// TestEmissaryPackageRouting is checking if emissary is able to create Ingress, host, and mapping that function correctly.
+func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *types.Cluster) {
+	ctx := context.Background()
+	ns := constants.EksaPackagesName
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.cluster(), emisarryPackage)
+	if err != nil {
+		e.T.Errorf("Error upgrading emissary package: %v", err)
+		return
+	}
+	e.T.Log("Waiting for Package", name, "To be upgraded")
+	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
+		mgmtCluster, name, "10m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+	if err != nil {
+		e.T.Fatalf("waiting for emissary package upgrade timed out: %s", err)
+	}
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.cluster(), emisarryListener)
+	if err != nil {
+		e.T.Errorf("Error applying roles for oids: %v", err)
+		return
+	}
+
+	//Functional testing of Emissary Ingress
+	ingresssvcAddress := name + "." + ns + ".svc.cluster.local" + "/backend/"
+	randomnameIng := fmt.Sprintf("%s-%s", "busybox-test-ing", utilrand.String(7))
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomnameIng, e.kubeconfigFilePath(), []string{"curl", ingresssvcAddress})
+	if err != nil {
+		e.T.Fatalf("error launching busybox pod: %s", err)
+	}
+	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
+	err = e.KubectlClient.WaitForPodCompleted(ctx,
+		e.cluster(), clientPod, "5m", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
+	}
+	e.T.Log("Checking Busybox pod logs", clientPod)
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	fmt.Printf("Logs from curl emissary\n %s\n", logs)
+	ok := strings.Contains(logs, "quote")
+	if !ok {
+		e.T.Fatalf("expected a, got %T", logs)
 	}
 }
 
