@@ -1,3 +1,38 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  creationTimestamp: null
+  name: snow-test-md-0-1
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      clusterConfiguration:
+        apiServer: {}
+        bottlerocketBootstrap: {}
+        bottlerocketControl: {}
+        controllerManager: {}
+        dns: {}
+        etcd: {}
+        networking: {}
+        pause: {}
+        proxy: {}
+        registryMirror: {}
+        scheduler: {}
+      joinConfiguration:
+        bottlerocketBootstrap: {}
+        bottlerocketControl: {}
+        discovery: {}
+        nodeRegistration:
+          kubeletExtraArgs:
+            provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
+        pause: {}
+        proxy: {}
+        registryMirror: {}
+      preKubeadmCommands:
+      - /etc/eks/bootstrap.sh
+
+---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
@@ -34,41 +69,6 @@ status:
   replicas: 0
   unavailableReplicas: 0
   updatedReplicas: 0
-
----
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-kind: KubeadmConfigTemplate
-metadata:
-  creationTimestamp: null
-  name: snow-test-md-0-1
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      clusterConfiguration:
-        apiServer: {}
-        bottlerocketBootstrap: {}
-        bottlerocketControl: {}
-        controllerManager: {}
-        dns: {}
-        etcd: {}
-        networking: {}
-        pause: {}
-        proxy: {}
-        registryMirror: {}
-        scheduler: {}
-      joinConfiguration:
-        bottlerocketBootstrap: {}
-        bottlerocketControl: {}
-        discovery: {}
-        nodeRegistration:
-          kubeletExtraArgs:
-            provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
-        pause: {}
-        proxy: {}
-        registryMirror: {}
-      preKubeadmCommands:
-      - /etc/eks/bootstrap.sh
 
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

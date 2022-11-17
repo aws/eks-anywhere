@@ -43,15 +43,43 @@ func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeCli
 	return []kubernetes.Object{capiCluster, snowCluster, kubeadmControlPlane, new, capasCredentialsSecret}, nil
 }
 
-func WorkersObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
-	workerMachineTemplates, kubeadmConfigTemplates, err := WorkersMachineAndConfigTemplate(ctx, kubeClient, clusterSpec)
+type (
+	// Workers represents the Snow specific CAPI spec for worker nodes.
+	Workers     = clusterapi.Workers[*snowv1.AWSSnowMachineTemplate]
+	workerGroup = clusterapi.WorkerGroup[*snowv1.AWSSnowMachineTemplate]
+)
+
+// WorkersSpec generates a Snow specific CAPI spec for an eks-a cluster worker nodes.
+// It talks to the cluster with a client to detect changes in immutable objects and generates new
+// names for them.
+func WorkersSpec(ctx context.Context, spec *cluster.Spec, kubeClient kubernetes.Client) (*Workers, error) {
+	workerMachineTemplates, kubeadmConfigTemplates, err := WorkersMachineAndConfigTemplate(ctx, kubeClient, spec)
 	if err != nil {
 		return nil, err
 	}
 
-	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
+	machineDeployments := MachineDeployments(spec, kubeadmConfigTemplates, workerMachineTemplates)
+	w := &Workers{
+		Groups: make([]workerGroup, 0, len(spec.Cluster.Spec.WorkerNodeGroupConfigurations)),
+	}
+	for _, wc := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		w.Groups = append(w.Groups, workerGroup{
+			MachineDeployment:       machineDeployments[wc.Name],
+			KubeadmConfigTemplate:   kubeadmConfigTemplates[wc.Name],
+			ProviderMachineTemplate: workerMachineTemplates[wc.Name],
+		})
+	}
 
-	return concatWorkersObjects(machineDeployments, kubeadmConfigTemplates, workerMachineTemplates), nil
+	return w, nil
+}
+
+func WorkersObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
+	w, err := WorkersSpec(ctx, clusterSpec, kubeClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.WorkerObjects(), nil
 }
 
 func concatWorkersObjects(machineDeployments map[string]*clusterv1.MachineDeployment,

@@ -2,17 +2,16 @@ package reconciler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -194,16 +193,15 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 }
 
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
-func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileWorkers")
 	log.Info("Applying worker CAPI objects")
-	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
-		w, err := vsphere.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
-		if err != nil {
-			return nil, err
-		}
-		return w.WorkerObjects(), nil
-	})
+	w, err := vsphere.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, spec.Cluster, clusters.ToWorkers(w))
 }
 
 func toClientControlPlane(cp *vsphere.ControlPlane) *clusters.ControlPlane {
