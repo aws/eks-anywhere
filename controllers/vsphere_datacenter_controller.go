@@ -17,18 +17,17 @@ import (
 
 // VSphereDatacenterReconciler reconciles a VSphereDatacenterConfig object.
 type VSphereDatacenterReconciler struct {
-	log       logr.Logger
 	client    client.Client
 	defaulter *vsphere.Defaulter
 	validator *vsphere.Validator
 }
 
-func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter) *VSphereDatacenterReconciler {
+// NewVSphereDatacenterReconciler constructs a new VSphereDatacenterReconciler.
+func NewVSphereDatacenterReconciler(client client.Client, validator *vsphere.Validator, defaulter *vsphere.Defaulter) *VSphereDatacenterReconciler {
 	return &VSphereDatacenterReconciler{
 		client:    client,
 		validator: validator,
 		defaulter: defaulter,
-		log:       log,
 	}
 }
 
@@ -40,8 +39,9 @@ func (r *VSphereDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // TODO: add here kubebuilder permissions as neeeded.
+// Reconcile implements the reconcile.Reconciler interface.
 func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := r.log.WithValues("vsphereDatacenter", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx)
 
 	// Fetch the VsphereDatacenter object
 	vsphereDatacenter := &anywherev1.VSphereDatacenterConfig{}

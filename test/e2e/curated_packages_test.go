@@ -294,6 +294,18 @@ func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
+func TestCPackagesDockerUbuntuKubernetes123SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
 func TestCPackagesVSphereKubernetes120SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -354,6 +366,30 @@ func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
+func TestCPackagesVSphereKubernetes123SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewVSphere(t, framework.WithUbuntu123()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesVSphereKubernetes123BottleRocketSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewVSphere(t, framework.WithBottleRocket123()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
 func TestCPackagesVSphereKubernetes121UbuntuWorkloadCluster(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithUbuntu121())
@@ -379,6 +415,20 @@ func TestCPackagesVSphereKubernetes122BottleRocketWorkloadCluster(t *testing.T) 
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
+	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
+func TestCPackagesVSphereKubernetes123UbuntuWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewVSphere(t, framework.WithUbuntu123())
+	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube123)
+	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
+func TestCPackagesVSphereKubernetes123BottleRocketWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	provider := framework.NewVSphere(t, framework.WithBottleRocket123())
+	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube123)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 

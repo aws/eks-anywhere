@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -21,14 +20,13 @@ type Validator interface {
 // SnowMachineConfigReconciler reconciles a SnowMachineConfig object.
 type SnowMachineConfigReconciler struct {
 	client    client.Client
-	log       logr.Logger
 	validator Validator
 }
 
-func NewSnowMachineConfigReconciler(client client.Client, log logr.Logger, validator Validator) *SnowMachineConfigReconciler {
+// NewSnowMachineConfigReconciler constructs a new SnowMachineConfigReconciler.
+func NewSnowMachineConfigReconciler(client client.Client, validator Validator) *SnowMachineConfigReconciler {
 	return &SnowMachineConfigReconciler{
 		client:    client,
-		log:       log,
 		validator: validator,
 	}
 }
@@ -41,8 +39,9 @@ func (r *SnowMachineConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // TODO: add here kubebuilder permissions as needed.
+// Reconcile implements the reconcile.Reconciler interface.
 func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := r.log.WithValues("snowMachineConfig", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx)
 
 	// Fetch the SnowMachineConfig object
 	snowMachineConfig := &anywherev1.SnowMachineConfig{}

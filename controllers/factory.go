@@ -86,7 +86,6 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *
 
 		f.reconcilers.ClusterReconciler = NewClusterReconciler(
 			f.manager.GetClient(),
-			f.logger,
 			f.registry,
 		)
 
@@ -104,7 +103,6 @@ func (f *Factory) WithDockerDatacenterReconciler() *Factory {
 
 		f.reconcilers.DockerDatacenterReconciler = NewDockerDatacenterReconciler(
 			f.manager.GetClient(),
-			f.logger,
 		)
 
 		return nil
@@ -122,7 +120,6 @@ func (f *Factory) WithVSphereDatacenterReconciler() *Factory {
 
 		f.reconcilers.VSphereDatacenterReconciler = NewVSphereDatacenterReconciler(
 			f.manager.GetClient(),
-			f.logger,
 			f.deps.VSphereValidator,
 			f.deps.VSphereDefaulter,
 		)
@@ -141,7 +138,6 @@ func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
 		client := f.manager.GetClient()
 		f.reconcilers.SnowMachineConfigReconciler = NewSnowMachineConfigReconciler(
 			client,
-			f.logger,
 			snow.NewValidator(snowreconciler.NewAwsClientBuilder(client)),
 		)
 		return nil
