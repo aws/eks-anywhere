@@ -210,7 +210,7 @@ func OCINamespacesSliceEqual(a, b []OCINamespace) bool {
 		if _, ok := m[k]; !ok {
 			return false
 		}
-		m[k] -= 1
+		m[k]--
 		if m[k] == 0 {
 			delete(m, k)
 		}

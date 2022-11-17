@@ -189,11 +189,11 @@ var registryMirrorTests = []struct {
 	{
 		name: "with namespace",
 		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
-			Endpoint:      "1.2.3.4",
-			Port:          "443",
+			Endpoint: "1.2.3.4",
+			Port:     "443",
 			OCINamespaces: []v1alpha1.OCINamespace{
 				{
-					Registry: "public.ecr.aws",
+					Registry:  "public.ecr.aws",
 					Namespace: "eks-anywhere",
 				},
 			},
