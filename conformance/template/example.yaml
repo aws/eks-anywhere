@@ -26,7 +26,7 @@ spec:
     machineGroupRef:
       kind: VSphereMachineConfig
       name: prod-etcd
-  kubernetesVersion: "1.21"
+  kubernetesVersion: "1.24"
   managementCluster:
     name: prod
   workerNodeGroupConfigurations:
