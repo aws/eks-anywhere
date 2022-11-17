@@ -192,10 +192,6 @@ phases:
         ./bin/test e2e cleanup vsphere
         -n ${CLUSTER_NAME_PREFIX}
         -v 4
-      - >
-        ./bin/test e2e cleanup cloudstack
-        -n ${CLUSTER_NAME_PREFIX}
-        -v 4
       # Clean up test runner instances in EKS-A Baremetal lab
       - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
       - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
