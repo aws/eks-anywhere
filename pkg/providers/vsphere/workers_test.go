@@ -13,7 +13,9 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -94,14 +96,10 @@ func TestWorkersSpecUpgradeCluster(t *testing.T) {
 	expectedGroup1 := oldGroup1.DeepCopy()
 	expectedGroup2 := oldGroup2.DeepCopy()
 
-	client := test.NewFakeKubeClient(
-		oldGroup1.MachineDeployment,
-		oldGroup1.KubeadmConfigTemplate,
-		oldGroup1.ProviderMachineTemplate,
-		oldGroup2.MachineDeployment,
-		oldGroup2.KubeadmConfigTemplate,
-		oldGroup2.ProviderMachineTemplate,
-	)
+	objs := make([]kubernetes.Object, 0, 6)
+	objs = append(objs, oldGroup1.Objects()...)
+	objs = append(objs, oldGroup2.Objects()...)
+	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(objs)...)
 
 	// This will cause a change in the vsphere machine templates, which is immutable
 	spec.VSphereMachineConfigs["test-wn"].Spec.NumCPUs = 10
