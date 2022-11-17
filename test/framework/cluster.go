@@ -1206,7 +1206,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *ty
 		return
 	}
 
-	//Functional testing of Emissary Ingress
+	// Functional testing of Emissary Ingress
 	ingresssvcAddress := name + "." + ns + ".svc.cluster.local" + "/backend/"
 	randomnameIng := fmt.Sprintf("%s-%s", "busybox-test-ing", utilrand.String(7))
 	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomnameIng, e.kubeconfigFilePath(), []string{"curl", ingresssvcAddress})
