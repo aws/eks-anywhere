@@ -262,21 +262,6 @@ func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestNutanixProviderUpdateSecrets(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	executable := mockexecutables.NewMockExecutable(ctrl)
-	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
-	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
-	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
-
-	cluster := &types.Cluster{Name: "eksa-unit-test"}
-	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	err := provider.UpdateSecrets(context.Background(), cluster, clusterSpec)
-	assert.NoError(t, err)
-}
-
 func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
@@ -680,21 +665,6 @@ func TestNutanixProviderMachineDeploymentsToDelete(t *testing.T) {
 	deps := provider.MachineDeploymentsToDelete(cluster, clusterSpec, clusterSpec)
 	assert.NotNil(t, deps)
 	assert.Len(t, deps, 0)
-}
-
-func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	executable := mockexecutables.NewMockExecutable(ctrl)
-	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
-	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
-	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
-
-	cluster := &types.Cluster{Name: "eksa-unit-test"}
-	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	err := provider.PreCAPIInstallOnBootstrap(context.Background(), cluster, clusterSpec)
-	assert.NoError(t, err)
 }
 
 func TestNutanixProviderPostMoveManagementToBootstrap(t *testing.T) {
