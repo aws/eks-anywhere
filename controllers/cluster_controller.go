@@ -35,7 +35,6 @@ const (
 // ClusterReconciler reconciles a Cluster object.
 type ClusterReconciler struct {
 	client                     client.Client
-	log                        logr.Logger
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
 }
 
@@ -43,17 +42,17 @@ type ProviderClusterReconcilerRegistry interface {
 	Get(datacenterKind string) clusters.ProviderClusterReconciler
 }
 
-func NewClusterReconciler(client client.Client, log logr.Logger, registry ProviderClusterReconcilerRegistry) *ClusterReconciler {
+// NewClusterReconciler constructs a new ClusterReconciler.
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry) *ClusterReconciler {
 	return &ClusterReconciler{
 		client:                     client,
-		log:                        log,
 		providerReconcilerRegistry: registry,
 	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	childObjectHandler := handlers.ChildObjectToClusters(r.log)
+func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) error {
+	childObjectHandler := handlers.ChildObjectToClusters(log)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&anywherev1.Cluster{}).
@@ -104,10 +103,10 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=distro.eks.amazonaws.com,resources=releases,verbs=get;list;watch
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates,verbs=get;list;watch;create;update;patch;delete
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := r.log.WithValues("cluster", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx)
 	// Fetch the Cluster object
 	cluster := &anywherev1.Cluster{}
-	log.Info("Reconciling cluster", "name", req.NamespacedName)
+	log.Info("Reconciling cluster")
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -133,7 +132,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 			controllerutil.AddFinalizer(cluster, clusterFinalizerName)
 		}
 	} else {
-		return r.reconcileDelete(ctx, cluster)
+		return r.reconcileDelete(ctx, log, cluster)
 	}
 
 	// If the cluster is paused, return without any further processing.
@@ -152,10 +151,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		return ctrl.Result{}, err
 	}
 
-	return r.reconcile(ctx, cluster, log)
+	return r.reconcile(ctx, log, cluster)
 }
 
-func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
+func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
 	clusterProviderReconciler := r.providerReconcilerRegistry.Get(cluster.Spec.DatacenterRef.Kind)
 
 	var reconcileResult controller.Result
@@ -173,26 +172,26 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.C
 	return reconcileResult.ToCtrlResult(), nil
 }
 
-func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster) (ctrl.Result, error) {
+func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
 	if cluster.IsSelfManaged() {
 		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
 	}
 
 	capiCluster := &clusterv1.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
-	r.log.Info("Deleting", "name", cluster.Name)
+	log.Info("Deleting", "name", cluster.Name)
 	err := r.client.Get(ctx, capiClusterName, capiCluster)
 
 	switch {
 	case err == nil:
-		r.log.Info("Deleting CAPI cluster", "name", capiCluster.Name)
+		log.Info("Deleting CAPI cluster", "name", capiCluster.Name)
 		if err := r.client.Delete(ctx, capiCluster); err != nil {
-			r.log.Info("Error deleting CAPI cluster", "name", capiCluster.Name)
+			log.Info("Error deleting CAPI cluster", "name", capiCluster.Name)
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{RequeueAfter: defaultRequeueTime}, nil
 	case apierrors.IsNotFound(err):
-		r.log.Info("Deleting EKS Anywhere cluster", "name", capiCluster.Name, "cluster.DeletionTimestamp", cluster.DeletionTimestamp, "finalizer", cluster.Finalizers)
+		log.Info("Deleting EKS Anywhere cluster", "name", capiCluster.Name, "cluster.DeletionTimestamp", cluster.DeletionTimestamp, "finalizer", cluster.Finalizers)
 
 		// TODO delete GitOps,Datacenter and MachineConfig objects
 		controllerutil.RemoveFinalizer(cluster, clusterFinalizerName)

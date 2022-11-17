@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers"
@@ -29,7 +28,7 @@ var (
 
 func TestSnowMachineConfigReconcilerSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewSnowMachineConfigReconciler(client, logf.Log, nil)
+	r := controllers.NewSnowMachineConfigReconciler(client, nil)
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
@@ -50,7 +49,7 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
+	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -88,7 +87,7 @@ func TestSnowMachineConfigReconcilerFailureIncorrectObject(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, nil)
+	r := controllers.NewSnowMachineConfigReconciler(cl, nil)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -113,7 +112,7 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, nil)
+	r := controllers.NewSnowMachineConfigReconciler(cl, nil)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -141,7 +140,7 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
+	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -174,7 +173,7 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
+	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -209,7 +208,7 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
+	r := controllers.NewSnowMachineConfigReconciler(cl, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{

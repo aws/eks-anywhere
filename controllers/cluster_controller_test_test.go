@@ -73,7 +73,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewClusterReconciler(cl, nullLog(), newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).NotTo(HaveOccurred())
 
@@ -90,10 +90,10 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 
 func TestClusterReconcilerSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewClusterReconciler(client, logf.Log, newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(client, newRegistryForDummyProviderReconciler())
 
 	g := NewWithT(t)
-	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
+	g.Expect(r.SetupWithManager(env.Manager(), env.Manager().GetLogger())).To(Succeed())
 }
 
 func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
@@ -118,7 +118,7 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewClusterReconciler(cl, nullLog(), newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).To(MatchError(ContainSubstring("\"my-management-cluster\" not found")))
 }
@@ -152,7 +152,7 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 	mgmtCluster := &anywherev1.Cluster{}
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: managementCluster.Name}, mgmtCluster)).To(Succeed())
 
-	r := controllers.NewClusterReconciler(cl, nullLog(), newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).ToNot(HaveOccurred())
 
