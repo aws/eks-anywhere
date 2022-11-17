@@ -187,7 +187,7 @@ func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, cl
 func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
-	credsJSON, err := p.templateBuilder.getCredsJson()
+	credsJSON, err := p.templateBuilder.getCredsJSON()
 	if err != nil {
 		return nil, nil, err
 	}

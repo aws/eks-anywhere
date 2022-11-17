@@ -83,7 +83,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
-func (ntb *TemplateBuilder) getCredsJson() ([]byte, error) {
+func (ntb *TemplateBuilder) getCredsJSON() ([]byte, error) {
 	encodedCreds, err := jsonMarshal(ntb.creds)
 	if err != nil {
 		return nil, err
