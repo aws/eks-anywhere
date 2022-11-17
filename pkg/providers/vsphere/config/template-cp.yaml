@@ -125,7 +125,7 @@ spec:
 {{- end }}
 {{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
       registryMirror:
-        endpoint: {{.registryMirrorConfiguration}}
+        endpoint: {{index .registryMirrorConfiguration "public.ecr.aws"}}
         {{- if .registryCACert }}
         caCert: |
 {{ .registryCACert | indent 10 }}
@@ -271,19 +271,19 @@ spec:
     - content: |
 {{ .registryCACert | indent 8 }}
       owner: root:root
-      path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+      path: "/etc/containerd/certs.d/{{index .registryMirrorConfiguration "base"}}/ca.crt"
 {{- end }}
 {{- if .registryMirrorConfiguration }}
     - content: |
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://{{.registryMirrorConfiguration}}"]
+            endpoint = ["https://{{index .registryMirrorConfiguration "public.ecr.aws"}}"]
           {{- if .registryCACert }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
-            ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .registryMirrorConfiguration "base"}}".tls]
+            ca_file = "/etc/containerd/certs.d/{{index .registryMirrorConfiguration "base"}}/ca.crt"
           {{- end }}
           {{- if .registryAuth }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".auth]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .registryMirrorConfiguration "base"}}".auth]
             username = "{{.registryUsername}}"
             password = "{{.registryPassword}}"
           {{- end }}
@@ -368,7 +368,7 @@ spec:
 {{- end }}
 {{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
       registryMirror:
-        endpoint: {{.registryMirrorConfiguration}}
+        endpoint: {{index .registryMirrorConfiguration "public.ecr.aws"}}
         {{- if .registryCACert }}
         caCert: |
 {{ .registryCACert | indent 10 }}
@@ -498,7 +498,7 @@ spec:
 {{- end }}
 {{- if .registryMirrorConfiguration }}
     registryMirror:
-      endpoint: {{.registryMirrorConfiguration}}
+      endpoint: {{index .registryMirrorConfiguration "public.ecr.aws"}}
       {{- if .registryCACert }}
       caCert: |
 {{ .registryCACert | indent 8 }}

@@ -21,6 +21,20 @@ var registryMirrorTests = []struct {
 			Endpoint:      "1.2.3.4",
 			Port:          "443",
 			CACertContent: "xyz",
+			OCINamespaces: []v1alpha1.OCINamespace{
+				{
+					Registry:  "public.ecr.aws",
+					Namespace: "eks-anywhere",
+				},
+				{
+					Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+					Namespace: "curated-packages",
+				},
+				{
+					Registry:  "783794618700.dkr.ecr.us-east-1.amazonaws.com",
+					Namespace: "curated-packages",
+				},
+			},
 		},
 		wantFiles: []bootstrapv1.File{
 			{
@@ -28,7 +42,9 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
+    endpoint = ["https://1.2.3.4:443/v2/eks-anywhere"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+    endpoint = ["https://1.2.3.4:443/v2/curated-packages"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
 			},
@@ -53,6 +69,8 @@ var registryMirrorTests = []struct {
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+    endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     insecure_skip_verify = true`,
 			},
@@ -72,6 +90,8 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
     endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"

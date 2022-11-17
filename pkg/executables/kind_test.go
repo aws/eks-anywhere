@@ -147,7 +147,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 	kubeConfigFile := "test_cluster.kind.kubeconfig"
 	registryMirror := "registry-mirror.test"
 	registryMirrorWithPort := net.JoinHostPort(registryMirror, constants.DefaultHttpsPort)
-	kindImage := fmt.Sprintf("%s/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registryMirrorWithPort)
+	kindImage := fmt.Sprintf("%s/eks-anywhere/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registryMirrorWithPort)
 
 	// Initialize gomock
 	mockCtrl := gomock.NewController(t)
@@ -169,6 +169,12 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint: registryMirror,
 					Port:     constants.DefaultHttpsPort,
+					OCINamespaces: []v1alpha1.OCINamespace{
+						{
+							Registry:  "public.ecr.aws",
+							Namespace: "eks-anywhere",
+						},
+					},
 				}
 			}),
 			env:            map[string]string{},
@@ -181,8 +187,14 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.Cluster.Name = clusterName
 				s.VersionsBundle = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
-					Endpoint:      registryMirror,
-					Port:          constants.DefaultHttpsPort,
+					Endpoint: registryMirror,
+					Port:     constants.DefaultHttpsPort,
+					OCINamespaces: []v1alpha1.OCINamespace{
+						{
+							Registry:  "public.ecr.aws",
+							Namespace: "eks-anywhere",
+						},
+					},
 					CACertContent: "test",
 				}
 			}),
@@ -196,8 +208,14 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.Cluster.Name = clusterName
 				s.VersionsBundle = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
-					Endpoint:     registryMirror,
-					Port:         constants.DefaultHttpsPort,
+					Endpoint: registryMirror,
+					Port:     constants.DefaultHttpsPort,
+					OCINamespaces: []v1alpha1.OCINamespace{
+						{
+							Registry:  "public.ecr.aws",
+							Namespace: "eks-anywhere",
+						},
+					},
 					Authenticate: true,
 				}
 			}),

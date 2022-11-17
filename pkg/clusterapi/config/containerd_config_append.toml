@@ -1,10 +1,12 @@
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://{{.registryMirrorAddress}}"]
+    endpoint = ["https://{{index .registryMirrorAddressMappings "public.ecr.aws"}}"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+    endpoint = ["https://{{index .registryMirrorAddressMappings "783794618700.dkr.ecr.*.amazonaws.com"}}"]
 {{- if or .registryCACert .insecureSkip }}
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorAddress}}".tls]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .registryMirrorAddressMappings "base"}}".tls]
 {{- if .registryCACert }}
-    ca_file = "/etc/containerd/certs.d/{{.registryMirrorAddress}}/ca.crt"
+    ca_file = "/etc/containerd/certs.d/{{index .registryMirrorAddressMappings "base"}}/ca.crt"
 {{- end }}
 {{- if .insecureSkip }}
     insecure_skip_verify = {{.insecureSkip}}

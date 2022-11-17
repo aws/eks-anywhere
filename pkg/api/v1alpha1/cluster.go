@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -307,7 +308,7 @@ func (c *Cluster) RegistryMirror() string {
 		return ""
 	}
 
-	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
+	return c.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings()[constants.DefaultRegistry]
 }
 
 // RegistryAuth returns whether registry requires authentication or not.
@@ -707,6 +708,14 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
+	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces != nil {
+		for _, ociNamespace := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
+			if ociNamespace.Registry == "" {
+				return errors.New("no value set for RegistryMirrorConfiguration.OCINamespaces[*].Registry")
+			}
+		}
 	}
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {

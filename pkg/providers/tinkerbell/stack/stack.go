@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"path/filepath"
 	"strings"
 
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -271,7 +271,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP string) map[string]string {
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
 	if s.registryMirror != nil {
-		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		localRegistry := s.registryMirror.GetRegistryMirrorAddressMappings()[constants.DefaultRegistry]
 		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
 	}
 
@@ -330,7 +330,7 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 
 func (s *Installer) localRegistryURL(originalURL string) string {
 	if s.registryMirror != nil {
-		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		localRegistry := s.registryMirror.GetRegistryMirrorAddressMappings()[constants.DefaultRegistry]
 		return urls.ReplaceHost(originalURL, localRegistry)
 	}
 	return originalURL

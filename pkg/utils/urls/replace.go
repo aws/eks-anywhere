@@ -21,5 +21,21 @@ func ReplaceHost(orgURL, host string) string {
 		u.Scheme = ""
 	}
 	u.Host = host
-	return strings.TrimPrefix(u.String(), "//")
+	return strings.ReplaceAll(strings.TrimPrefix(u.String(), "//"), "%2F", "/")
+}
+
+func ToAPIEndpoint(URL string) string {
+	index := strings.Index(URL, "/")
+	if index == -1 {
+		return URL
+	}
+	return URL[:index] + "/v2" + URL[index:]
+}
+
+func ToAPIEndpoints(URLs map[string]string) map[string]string {
+	endpoints := make(map[string]string)
+	for key, url := range URLs {
+		endpoints[key] = ToAPIEndpoint(url)
+	}
+	return endpoints
 }

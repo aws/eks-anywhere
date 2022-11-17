@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"regexp"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -8,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -1094,15 +1096,27 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			want: true,
 		},
 		{
-			testName: "both exist, diff",
+			testName: "both exist, endpoint diff",
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
@@ -1110,6 +1124,61 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.5",
 				CACertContent: "ca",
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (one nil, one exists)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (registry)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (namespace)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "",
+					},
+				},
 			},
 			want: false,
 		},
@@ -1442,10 +1511,22 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			want: true,
 		},
@@ -1467,6 +1548,61 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				CACertContent: "ca2",
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (one nil, one exists)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (registry)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (namespace)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "",
+					},
+				},
 			},
 			want: false,
 		},
@@ -1637,5 +1773,80 @@ func setSelfManaged(c *v1alpha1.Cluster, s bool) {
 		c.SetSelfManaged()
 	} else {
 		c.SetManagedBy("management-cluster")
+	}
+}
+
+func TestGetRegistryMirrorAddressMappings(t *testing.T) {
+	testCases := []struct {
+		testName                    string
+		registryMirrorConfiguration *v1alpha1.RegistryMirrorConfiguration
+		want                        map[string]string
+	}{
+		{
+			testName: "empty OCINamespaces",
+			registryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint: "harbor.eksa.demo",
+				Port:     "30003",
+			},
+			want: map[string]string{
+				"base":                                 "harbor.eksa.demo:30003",
+				"public.ecr.aws":                       "harbor.eksa.demo:30003",
+				"783794618700.dkr,ecr.*.amazonaws.com": "harbor.eksa.demo:30003",
+			},
+		},
+		{
+			testName: "multiple curated package endpoints",
+			registryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint: "harbor.eksa.demo",
+				Port:     "30003",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "783794618700.dkr,ecr.us-west-2.amazonaws.com",
+						Namespace: "curated-packages",
+					},
+					{
+						Registry:  "783794618700.dkr,ecr.us-east-1.amazonaws.com",
+						Namespace: "curated-packages",
+					},
+				},
+			},
+			want: map[string]string{
+				"base":                                 "harbor.eksa.demo:30003",
+				"public.ecr.aws":                       "harbor.eksa.demo:30003",
+				"783794618700.dkr,ecr.*.amazonaws.com": "harbor.eksa.demo:30003/curated-packages",
+			},
+		},
+		{
+			testName: "public.ecr.aws only",
+			registryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint: "harbor.eksa.demo",
+				Port:     "30003",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: map[string]string{
+				"base":                                 "harbor.eksa.demo:30003",
+				"public.ecr.aws":                       "harbor.eksa.demo:30003/eks-anywhere",
+				"783794618700.dkr,ecr.*.amazonaws.com": "harbor.eksa.demo:30003",
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			result := tt.registryMirrorConfiguration.GetRegistryMirrorAddressMappings()
+			g.Expect(len(result)).To(Equal(len(tt.want)))
+			for k, v := range tt.want {
+				if regexp.MustCompile(constants.DefaultPackageRegistryRegex).MatchString(k) {
+					g.Expect(result).Should(HaveKeyWithValue(constants.DefaultPackageRegistryRegex, v))
+				} else {
+					g.Expect(result).Should(HaveKeyWithValue(k, v))
+				}
+			}
+		})
 	}
 }

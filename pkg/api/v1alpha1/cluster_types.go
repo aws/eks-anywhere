@@ -1,12 +1,15 @@
 package v1alpha1
 
 import (
+	"net"
+	"regexp"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -136,6 +139,10 @@ type RegistryMirrorConfiguration struct {
 	// Port defines the port exposed for registry mirror endpoint
 	Port string `json:"port,omitempty"`
 
+	// OCINamespaces defines the mapping from an upstream registry to a local namespace where upstream
+	// artifacts are placed into
+	OCINamespaces []OCINamespace `json:"ociNamespaces,omitempty"`
+
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
 
@@ -148,6 +155,13 @@ type RegistryMirrorConfiguration struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
+type OCINamespace struct {
+	// Name refers to the name of the upstream registry
+	Registry string `json:"registry,omitempty"`
+	// Namespace refers to the name of a namespace in the local registry
+	Namespace string `json:"namespace,omitempty"`
+}
+
 func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
 	if n == o {
 		return true
@@ -155,7 +169,57 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate && OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
+}
+
+func (n *RegistryMirrorConfiguration) GetRegistryMirrorAddressMappings() map[string]string {
+	registryMirrorMappings := make(map[string]string)
+	base := net.JoinHostPort(n.Endpoint, n.Port)
+	// add registry mirror base address
+	registryMirrorMappings[constants.DefaultRegistryMirrorKey] = base
+	re := regexp.MustCompile(constants.DefaultPackageRegistryRegex)
+	// for each namespace, add corresponding endpoint
+	for _, ociNamespace := range n.OCINamespaces {
+		registry := base + "/" + ociNamespace.Namespace
+		if re.MatchString(ociNamespace.Registry) {
+			// handle curated packages in all regions
+			registryMirrorMappings[constants.DefaultPackageRegistryRegex] = registry
+		} else {
+			registryMirrorMappings[ociNamespace.Registry] = registry
+		}
+	}
+	if _, ok := registryMirrorMappings[constants.DefaultRegistry]; !ok {
+		registryMirrorMappings[constants.DefaultRegistry] = base
+	}
+	if _, ok := registryMirrorMappings[constants.DefaultPackageRegistryRegex]; !ok {
+		registryMirrorMappings[constants.DefaultPackageRegistryRegex] = base
+	}
+	return registryMirrorMappings
+}
+
+func OCINamespacesSliceEqual(a, b []OCINamespace) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string]int, len(a))
+	for _, v := range a {
+		m[generateOCINamespaceKey(v)]++
+	}
+	for _, v := range b {
+		k := generateOCINamespaceKey(v)
+		if _, ok := m[k]; !ok {
+			return false
+		}
+		m[k] -= 1
+		if m[k] == 0 {
+			delete(m, k)
+		}
+	}
+	return len(m) == 0
+}
+
+func generateOCINamespaceKey(n OCINamespace) (key string) {
+	return n.Registry + n.Namespace
 }
 
 type ControlPlaneConfiguration struct {

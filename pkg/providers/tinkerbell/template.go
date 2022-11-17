@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"net"
 	"strings"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -23,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 //go:embed config/template-cp.yaml
@@ -422,7 +422,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values = populateRegistryMirrorValues(clusterSpec, values)
 		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
-		localRegistry := values["registryMirrorConfiguration"].(string)
+		localRegistry := values["registryMirrorConfiguration"].(map[string]string)[constants.DefaultRegistry]
 		cpTemplateOverride = strings.ReplaceAll(cpTemplateOverride, defaultRegistry, localRegistry)
 		etcdTemplateOverride = strings.ReplaceAll(etcdTemplateOverride, defaultRegistry, localRegistry)
 	}
@@ -484,7 +484,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values = populateRegistryMirrorValues(clusterSpec, values)
 		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
-		localRegistry := values["registryMirrorConfiguration"].(string)
+		localRegistry := values["registryMirrorConfiguration"].(map[string]string)[constants.DefaultRegistry]
 		workerTemplateOverride = strings.ReplaceAll(workerTemplateOverride, defaultRegistry, localRegistry)
 	}
 
@@ -518,7 +518,7 @@ func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
 }
 
 func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) map[string]interface{} {
-	values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+	values["registryMirrorConfiguration"] = urls.ToAPIEndpoints(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings())
 	if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 		values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 	}

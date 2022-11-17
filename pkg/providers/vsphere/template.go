@@ -2,7 +2,6 @@ package vsphere
 
 import (
 	"fmt"
-	"net"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -15,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 func NewVsphereTemplateBuilder(
@@ -208,7 +208,7 @@ func buildTemplateMapCP(
 	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		values["registryMirrorConfiguration"] = urls.ToAPIEndpoints(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings())
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
@@ -327,7 +327,7 @@ func buildTemplateMapMD(
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		values["registryMirrorConfiguration"] = urls.ToAPIEndpoints(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings())
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}

@@ -13,20 +13,20 @@ kubeadmConfigPatches:
         imageTag: {{.EtcdVersion}}
     imageRepository: {{.KubernetesRepository}}
     kubernetesVersion: {{.KubernetesVersion}}
-{{- if (ne .RegistryMirrorEndpoint "") }}
+{{- if .RegistryMirrorConfiguration }}
 containerdConfigPatches:
   - |
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-        endpoint = ["https://{{.RegistryMirrorEndpoint}}"]
-      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.RegistryMirrorEndpoint}}".tls]
+        endpoint = ["https://{{index .RegistryMirrorConfiguration "public.ecr.aws"}}"]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .RegistryMirrorConfiguration "base"}}".tls]
 {{- if (eq .RegistryCACertPath "") }}
         insecure_skip_verify = true
 {{- else }}
-        ca_file = "/etc/containerd/certs.d/{{.RegistryMirrorEndpoint}}/ca.crt"
+        ca_file = "/etc/containerd/certs.d/{{index .RegistryMirrorConfiguration "base"}}/ca.crt"
 {{- end }}
 {{- if .RegistryAuth }}
-      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.RegistryMirrorEndpoint}}".auth]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .RegistryMirrorConfiguration "base"}}".auth]
         username = "{{.RegistryUsername}}"
         password = "{{.RegistryPassword}}"
 {{- end }}

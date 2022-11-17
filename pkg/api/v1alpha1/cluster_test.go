@@ -892,6 +892,12 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantCluster: nil,
 			wantErr:     true,
 		},
+		{
+			testName:    "Invalid registry",
+			fileName:    "testdata/invalid_registry.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
