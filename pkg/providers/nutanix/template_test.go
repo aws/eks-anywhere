@@ -3,7 +3,6 @@ package nutanix
 import (
 	_ "embed"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
@@ -89,31 +88,4 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	assert.NoError(t, err)
 	assert.NotNil(t, workerSpec)
-
-	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
-	assert.NoError(t, err)
-	assert.NotNil(t, secretSpec)
-	expectedSecret, err := os.ReadFile("testdata/templated_secret.yaml")
-	require.NoError(t, err)
-	assert.Equal(t, expectedSecret, secretSpec)
-}
-
-func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
-	storedMarshal := jsonMarshal
-	jsonMarshal = fakemarshal
-	defer restoremarshal(storedMarshal)
-
-	t.Setenv(constants.NutanixUsernameKey, "admin")
-	t.Setenv(constants.NutanixPasswordKey, "password")
-	creds := GetCredsFromEnv()
-	builder := NewNutanixTemplateBuilder(nil, nil, nil, nil, creds, time.Now)
-	assert.NotNil(t, builder)
-
-	v := version.Info{GitVersion: "v0.0.1"}
-	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
-	assert.NoError(t, err)
-
-	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
-	assert.Nil(t, secretSpec)
-	assert.Error(t, err)
 }
