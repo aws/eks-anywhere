@@ -181,7 +181,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				ManifestFiles: []string{"infrastructure-components.yaml", "metadata.yaml"},
 			},
 		},
-		OnlyForDevRelease: true,
 	},
 	// Cluster-api-provider-cloudstack artifacts
 	{
