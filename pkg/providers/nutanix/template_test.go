@@ -3,6 +3,7 @@ package nutanix
 import (
 	_ "embed"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -88,4 +89,11 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	assert.NoError(t, err)
 	assert.NotNil(t, workerSpec)
+
+	credJSON, err := builder.getCredsJSON()
+	assert.NoError(t, err)
+	assert.NotNil(t, credJSON)
+	expectedCredSecret, err := os.ReadFile("testdata/nutanix_secret_cred.json")
+	require.NoError(t, err)
+	assert.Equal(t, expectedCredSecret, credJSON)
 }
