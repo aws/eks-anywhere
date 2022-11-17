@@ -14,6 +14,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/test/framework"
@@ -24,7 +25,7 @@ const (
 	EksaPackageControllerHelmChartName = "eks-anywhere-packages"
 	EksaPackagesSourceRegistry         = "public.ecr.aws/l0g8r8j6"
 	EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
-	EksaPackageControllerHelmVersion   = "0.2.13-eks-a-v0.0.0-dev-build.4532"
+	EksaPackageControllerHelmVersion   = "0.2.20-eks-a-v0.0.0-dev-build.4894"
 	EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
 )
 
@@ -210,7 +211,6 @@ func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	packageName := "hello-eks-anywhere"
 	packagePrefix := "test"
 	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
-	test.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
 	test.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test))
 }
@@ -225,7 +225,6 @@ func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.Multicluste
 		packageName := "hello-eks-anywhere"
 		packagePrefix := "test"
 		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
-		test.ManagementCluster.KubectlClient.WaitForJobCompleted(context.TODO(), kubeconfig.FromClusterName(test.ManagementCluster.ClusterName), "1m", "complete", "eksa-auth-refresher", EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
 		e.VerifyHelloPackageInstalled(packagePrefix+"-"+packageName, withMgmtCluster(test.ManagementCluster))
 		e.DeleteCluster()
@@ -452,4 +451,52 @@ func TestCPackagesCloudStackRedhatKubernetes121WorkloadCluster(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
+}
+
+func TestCPackagesNutanixKubernetes120SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube120),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesNutanixKubernetes121SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesNutanixKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesNutanixKubernetes123SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
 }

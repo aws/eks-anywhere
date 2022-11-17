@@ -112,7 +112,7 @@ func GetChartImageTags(d *helmDriver, helmDest string) (*Requires, error) {
 	return helmRequires, nil
 }
 
-func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string) error {
+func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksArtifacts map[string][]releasetypes.Artifact) error {
 	helmChart := strings.Split(i.ReleaseImageURI, ":")
 	helmtag := helmChart[1]
 
@@ -128,11 +128,21 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 		return fmt.Errorf("turning Chart.yaml to struct: %w", err)
 	}
 	chartYaml.Version = helmtag
-	
+
 	fmt.Printf("Overwriting helm chart.yaml version to new tag %s\n", chartYaml.Version)
 	err = OverwriteChartYaml(fmt.Sprintf("%s/%s", helmDest, "Chart.yaml"), chartYaml)
 	if err != nil {
 		return fmt.Errorf("overwriting the Chart.yaml version: %w", err)
+	}
+
+	// If the chart is packages, we find the image tag values and overide them in the values.yaml.
+	if strings.Contains(helmDest, "eks-anywhere-packages") {
+		imageTagMap, err := GetPackagesImageTags(eksArtifacts)
+		fmt.Printf("Overwriting helm values.yaml version to new image tags %v\n", imageTagMap)
+		err = OverWriteChartValuesImageTag(helmDest, imageTagMap)
+		if err != nil {
+			return fmt.Errorf("overwriting the values.yaml version: %w", err)
+		}
 	}
 
 	fmt.Printf("Re-Packaging modified helm chart %s\n", helmDest)
@@ -402,4 +412,43 @@ func OverwriteChartYaml(filename string, helmChart *chart.Metadata) error {
 		return err
 	}
 	return nil
+}
+
+func OverWriteChartValuesImageTag(filename string, tagMap map[string]string) error {
+	packagesURI := strings.Split(tagMap["eks-anywhere-packages"], ":")
+	refresherURI := strings.Split(tagMap["ecr-token-refresher"], ":")
+
+	valuesFile := filepath.Join(filename, "values.yaml")
+	values, err := chartutil.ReadValuesFile(valuesFile)
+	if err != nil {
+		return err
+	}
+	values["controller"].(map[string]interface{})["tag"] = packagesURI[len(packagesURI)-1]
+	values["cronjob"].(map[string]interface{})["tag"] = refresherURI[len(refresherURI)-1]
+	yamlData, err := yaml.Marshal(&values)
+	if err != nil {
+		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", values, yamlData, err)
+	}
+	err = ioutil.WriteFile(valuesFile, yamlData, 0o644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetPackagesImageTags(eksArtifacts map[string][]releasetypes.Artifact) (map[string]string, error) {
+	m := make(map[string]string)
+	for _, artifacts := range eksArtifacts {
+		for _, artifact := range artifacts {
+			if artifact.Image != nil {
+				if artifact.Image.AssetName == "eks-anywhere-packages" || artifact.Image.AssetName == "ecr-token-refresher" {
+					m[artifact.Image.AssetName] = artifact.Image.ReleaseImageURI
+				}
+			}
+		}
+	}
+	if len(m) == 0 {
+		return nil, fmt.Errorf("No assets found for eks-anywhere-packages, or ecr-token-refresher in eksArtifacts")
+	}
+	return m, nil
 }

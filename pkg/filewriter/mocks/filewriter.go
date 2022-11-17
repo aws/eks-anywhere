@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	io "io"
 	reflect "reflect"
 
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
@@ -56,6 +57,27 @@ func (m *MockFileWriter) CleanUpTemp() {
 func (mr *MockFileWriterMockRecorder) CleanUpTemp() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanUpTemp", reflect.TypeOf((*MockFileWriter)(nil).CleanUpTemp))
+}
+
+// Create mocks base method.
+func (m *MockFileWriter) Create(arg0 string, arg1 ...filewriter.FileOptionsFunc) (io.WriteCloser, string, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Create", varargs...)
+	ret0, _ := ret[0].(io.WriteCloser)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockFileWriterMockRecorder) Create(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockFileWriter)(nil).Create), varargs...)
 }
 
 // Dir mocks base method.

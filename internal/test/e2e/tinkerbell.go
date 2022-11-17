@@ -26,7 +26,6 @@ const (
 func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 	re := regexp.MustCompile(tinkerbellTestsRe)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running Tinkerbell tests, skipping Env variable setup")
 		return nil
 	}
 

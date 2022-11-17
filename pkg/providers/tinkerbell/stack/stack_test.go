@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
@@ -105,6 +106,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 		hookImageOverride string
 		expectedFile      string
 		installOnDocker   bool
+		registryMirror    *v1alpha1.RegistryMirrorConfiguration
 		opts              []stack.InstallOption
 	}{
 		{
@@ -186,6 +188,22 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			expectedFile:      "testdata/expected_with_hook_override.yaml",
 			opts:              []stack.InstallOption{},
 		},
+		{
+			name:         "with_registry_mirror",
+			expectedFile: "testdata/expected_with_registry_mirror.yaml",
+			registryMirror: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint: "1.2.3.4",
+				Port:     "443",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "custom",
+					},
+				},
+				Authenticate: true,
+			},
+			opts: []stack.InstallOption{},
+		},
 	}
 
 	for _, stackTest := range stackTests {
@@ -196,10 +214,18 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			folder, writer := test.NewWriter(t)
 			cluster := &types.Cluster{Name: "test"}
 			ctx := context.Background()
-			s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+			s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", stackTest.registryMirror)
 
 			generatedOverridesPath := filepath.Join(folder, "generated", overridesFileName)
-			helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, generatedOverridesPath)
+			if stackTest.registryMirror != nil && stackTest.registryMirror.Authenticate {
+				t.Setenv("REGISTRY_USERNAME", "username")
+				t.Setenv("REGISTRY_PASSWORD", "password")
+				helm.EXPECT().RegistryLogin(ctx, "1.2.3.4:443", "username", "password")
+				helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, "oci://1.2.3.4:443/custom/eks-anywhere/tinkerbell/tinkerbell-chart", helmChartVersion, cluster.KubeconfigFile, generatedOverridesPath)
+
+			} else {
+				helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, generatedOverridesPath)
+			}
 
 			if stackTest.installOnDocker {
 				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",

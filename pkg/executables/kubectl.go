@@ -522,7 +522,7 @@ func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 	defer cancel()
 	timedOut := timeoutCtx.Done()
 
-	const pollInterval = time.Second
+	const pollInterval = time.Second * 5
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
@@ -541,10 +541,10 @@ func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 			if err != nil {
 				return fmt.Errorf("waiting for %s %s on %s: %w", jsonpath, forCondition, property, err)
 			}
-			fmt.Printf("%v=%v\n", stdout.String(), fmt.Sprintf("'%s'", forCondition))
-			if stdout.String() == fmt.Sprintf("'%s'", forCondition) {
+			if strings.Contains(stdout.String(), forCondition) {
 				return nil
 			}
+			fmt.Printf("waiting 5 seconds.... current state=%v, desired state=%v\n", stdout.String(), fmt.Sprintf("'%s'", forCondition))
 		}
 	}
 }
@@ -608,6 +608,10 @@ func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile
 
 // GetPackageBundleList will retrieve the packagebundle list from eksa-packages namespace and return the list.
 func (k *Kubectl) GetPackageBundleList(ctx context.Context, kubeconfigFile string) ([]packagesv1.PackageBundle, error) {
+	err := k.WaitJSONPathLoop(ctx, kubeconfigFile, "5m", "items", "PackageBundle", "packagebundles", "eksa-packages")
+	if err != nil {
+		return nil, fmt.Errorf("waiting on package bundle resource to exist %v", err)
+	}
 	params := []string{"get", "packagebundle", "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {

@@ -123,6 +123,11 @@ spec:
               [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .registryMirrorConfiguration "base"}}".tls]
                 ca_file = "/etc/containerd/certs.d/{{index .registryMirrorConfiguration "base"}}/ca.crt"
               {{- end }}
+              {{- if .registryAuth }}
+              [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".auth]
+                username = "{{.registryUsername}}"
+                password = "{{.registryPassword}}"
+              {{- end }}
           owner: root:root
           path: "/etc/containerd/config_append.toml"
 {{- end }}

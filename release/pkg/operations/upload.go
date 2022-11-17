@@ -100,7 +100,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 					}
 
 					fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
-					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, helmDriver, helmDest)
+					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, helmDriver, helmDest, eksArtifacts)
 					if err != nil {
 						return fmt.Errorf("modifying Chart.yaml and pushing Helm chart to destination: %v", err)
 					}

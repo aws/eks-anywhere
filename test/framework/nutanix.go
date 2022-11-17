@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const (
@@ -25,6 +26,7 @@ const (
 	nutanixSubnetName               = "T_NUTANIX_SUBNET_NAME"
 
 	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
+	nutanixControlPlaneCidrVar    = "T_NUTANIX_CONTROL_PLANE_CIDR"
 	nutanixPodCidrVar             = "T_NUTANIX_POD_CIDR"
 	nutanixServiceCidrVar         = "T_NUTANIX_SERVICE_CIDR"
 
@@ -34,11 +36,32 @@ const (
 	nutanixTemplateUbuntu123Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_23"
 )
 
+var requiredNutanixEnvVars = []string{
+	constants.NutanixUsernameKey,
+	constants.NutanixPasswordKey,
+	nutanixFeatureGateEnvVar,
+	nutanixEndpoint,
+	nutanixPort,
+	nutanixAdditionalTrustBundle,
+	nutanixMachineBootType,
+	nutanixMachineMemorySize,
+	nutanixSystemDiskSize,
+	nutanixMachineVCPUsPerSocket,
+	nutanixMachineVCPUSocket,
+	nutanixMachineTemplateImageName,
+	nutanixPrismElementClusterName,
+	nutanixSSHAuthorizedKey,
+	nutanixSubnetName,
+	nutanixPodCidrVar,
+	nutanixServiceCidrVar,
+}
+
 type Nutanix struct {
 	t                      *testing.T
 	fillers                []api.NutanixFiller
 	clusterFillers         []api.ClusterFiller
 	controlPlaneEndpointIP string
+	cpCidr                 string
 	podCidr                string
 	serviceCidr            string
 }
@@ -46,24 +69,6 @@ type Nutanix struct {
 type NutanixOpt func(*Nutanix)
 
 func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
-	requiredNutanixEnvVars := []string{
-		nutanixFeatureGateEnvVar,
-		nutanixEndpoint,
-		nutanixPort,
-		nutanixAdditionalTrustBundle,
-		nutanixMachineBootType,
-		nutanixMachineMemorySize,
-		nutanixSystemDiskSize,
-		nutanixMachineVCPUsPerSocket,
-		nutanixMachineVCPUSocket,
-		nutanixMachineTemplateImageName,
-		nutanixPrismElementClusterName,
-		nutanixSSHAuthorizedKey,
-		nutanixSubnetName,
-		nutanixControlPlaneEndpointIP,
-		nutanixPodCidrVar,
-		nutanixServiceCidrVar,
-	}
 	checkRequiredEnvVars(t, requiredNutanixEnvVars)
 
 	nutanixProvider := &Nutanix{
@@ -84,6 +89,7 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 	}
 
 	nutanixProvider.controlPlaneEndpointIP = os.Getenv(nutanixControlPlaneEndpointIP)
+	nutanixProvider.cpCidr = os.Getenv(nutanixControlPlaneCidrVar)
 	nutanixProvider.podCidr = os.Getenv(nutanixPodCidrVar)
 	nutanixProvider.serviceCidr = os.Getenv(nutanixServiceCidrVar)
 
@@ -92,6 +98,11 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 	}
 
 	return nutanixProvider
+}
+
+// RequiredNutanixEnvVars returns a list of environment variables needed for Nutanix tests.
+func RequiredNutanixEnvVars() []string {
+	return requiredNutanixEnvVars
 }
 
 func (s *Nutanix) Name() string {
@@ -109,9 +120,14 @@ func (s *Nutanix) CustomizeProviderConfig(file string) []byte {
 }
 
 func (s *Nutanix) ClusterConfigFillers() []api.ClusterFiller {
-	// TODO generate unique IP everytime.
 	if s.controlPlaneEndpointIP != "" {
 		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
+	} else {
+		clusterIP, err := GetIP(s.cpCidr, ClusterIPPoolEnvVar)
+		if err != nil {
+			s.t.Fatalf("failed to get cluster ip for test environment: %v", err)
+		}
+		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 	}
 
 	if s.podCidr != "" {

@@ -113,6 +113,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupNutanixEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupFluxEnv(regex)
 	if err != nil {
 		return err

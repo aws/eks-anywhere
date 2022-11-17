@@ -51,7 +51,6 @@ func TestDockerKubernetes124Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -63,7 +62,6 @@ func TestDockerKubernetes124Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -79,7 +77,6 @@ func TestVSphereKubernetes124Labels(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -91,7 +88,6 @@ func TestVSphereKubernetes124Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -107,7 +103,6 @@ func TestVSphereKubernetes124LabelsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -119,7 +114,6 @@ func TestVSphereKubernetes124LabelsBottlerocket(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 

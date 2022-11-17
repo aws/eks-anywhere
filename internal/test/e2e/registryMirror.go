@@ -16,7 +16,6 @@ import (
 func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*RegistryMirror.*$`)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running RegistryMirror tests, skipping Env variable setup")
 		return nil
 	}
 

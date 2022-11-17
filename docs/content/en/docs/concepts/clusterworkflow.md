@@ -9,7 +9,21 @@ description: >
 
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
 Currently, Bare Metal, CloudStack, and VMware vSphere are the recommended providers for supported EKS Anywhere clusters.
-We step through the cluster creation workflow for those two providers here.
+We step through the cluster creation workflow for those providers here.
+
+
+## Management and workload clusters
+
+EKS Anywhere offers two cluster deployment topology options:
+
+* **Standalone cluster**: If want only a single EKS Anywhere cluster, you can deploy a self-managed, standalone cluster.
+This type of cluster contains all Cluster API (CAPI) management components needed to manage itself, including managing its own upgrades.
+It can also run workloads.
+
+* **Management cluster with workload clusters**: If you plan to deploy multiple clusters, the project recommends you first deploy a _management cluster_.
+The management cluster can then be used to deploy, upgrade, delete, and otherwise manage a fleet of _workload clusters_.
+
+For further details about the different cluster topologies, see [Cluster topologies]({{< relref "cluster-topologies.md" >}})
 
 ## Before cluster creation
 

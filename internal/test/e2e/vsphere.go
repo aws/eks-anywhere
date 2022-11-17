@@ -10,15 +10,14 @@ import (
 )
 
 const (
-	cidrVar               = "T_VSPHERE_CIDR"
-	privateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
-	vsphereRegex          = `^.*VSphere.*$`
+	vsphereCidrVar               = "T_VSPHERE_CIDR"
+	vspherePrivateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
+	vsphereRegex                 = `^.*VSphere.*$`
 )
 
 func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 	re := regexp.MustCompile(vsphereRegex)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running VSphere tests, skipping Env variable setup")
 		return nil
 	}
 

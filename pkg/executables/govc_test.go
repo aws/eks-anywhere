@@ -182,35 +182,34 @@ func (dt *deployTemplateTest) assertDeployOptsMatches(t *testing.T) {
 
 func TestSearchTemplateItExists(t *testing.T) {
 	ctx := context.Background()
+	template := "my-template"
 	datacenter := "SDDC-Datacenter"
 
 	_, g, executable, env := setup(t)
-	machineConfig := newMachineConfig(t)
-	machineConfig.Spec.Template = "/SDDC Datacenter/vm/Templates/ubuntu 2004-kube-v1.19.6"
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)).Return(*bytes.NewBufferString("[\"/SDDC Datacenter/vm/Templates/ubuntu 2004-kube-v1.19.6\"]"), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(template)).Return(*bytes.NewBufferString("[\"/SDDC Datacenter/vm/Templates/ubuntu 2004-kube-v1.19.6\"]"), nil)
 
-	_, err := g.SearchTemplate(ctx, datacenter, machineConfig)
+	_, err := g.SearchTemplate(ctx, datacenter, template)
 	if err != nil {
 		t.Fatalf("Govc.SearchTemplate() exists = false, want true %v", err)
 	}
 }
 
 func TestSearchTemplateItDoesNotExists(t *testing.T) {
-	machineConfig := newMachineConfig(t)
+	template := "my-template"
 	ctx := context.Background()
 	datacenter := "SDDC-Datacenter"
 
 	_, g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)).Return(*bytes.NewBufferString(""), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(template)).Return(*bytes.NewBufferString(""), nil)
 
-	templateFullPath, err := g.SearchTemplate(ctx, datacenter, machineConfig)
+	templateFullPath, err := g.SearchTemplate(ctx, datacenter, template)
 	if err == nil && len(templateFullPath) > 0 {
 		t.Fatalf("Govc.SearchTemplate() exists = true, want false %v", err)
 	}
 }
 
 func TestSearchTemplateError(t *testing.T) {
-	machineConfig := newMachineConfig(t)
+	template := "my-template"
 	ctx := context.Background()
 	datacenter := "SDDC-Datacenter"
 
@@ -218,7 +217,7 @@ func TestSearchTemplateError(t *testing.T) {
 	g.Retrier = retrier.NewWithMaxRetries(5, 0)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env")).Times(5)
 
-	_, err := g.SearchTemplate(ctx, datacenter, machineConfig)
+	_, err := g.SearchTemplate(ctx, datacenter, template)
 	if err == nil {
 		t.Fatal("Govc.SearchTemplate() err = nil, want err not nil")
 	}

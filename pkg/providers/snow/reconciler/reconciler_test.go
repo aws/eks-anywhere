@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -15,6 +14,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
@@ -28,7 +28,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -110,11 +109,12 @@ func TestReconcilerValidateMachineConfigsInvalidWorkerMachineConfig(t *testing.T
 	tt.machineConfigWorker.Status.FailureMessage = &m
 	tt.withFakeClient()
 
-	_, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).ToNot(BeZero())
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("SnowMachineConfig worker-machine-config is invalid"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Invalid worker-machine-config SnowMachineConfig"))
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
 }
 
@@ -125,12 +125,25 @@ func TestReconcilerValidateMachineConfigsInvalidControlPlaneMachineConfig(t *tes
 	tt.machineConfigControlPlane.Status.FailureMessage = &m
 	tt.withFakeClient()
 
-	_, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).ToNot(BeZero())
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("SnowMachineConfig cp-machine-config is invalid"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Invalid cp-machine-config SnowMachineConfig"))
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
+}
+
+func TestReconcilerValidateMachineConfigsMachineConfigNotValidated(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.machineConfigWorker.Status.SpecValid = false
+	tt.withFakeClient()
+
+	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 }
 
 func TestReconcilerReconcileWorkers(t *testing.T) {
@@ -229,7 +242,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	remoteClientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	c := env.Client()
 
-	bundle := createBundle()
+	bundle := test.Bundle()
 
 	managementCluster := snowCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -308,12 +321,12 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		client:               c,
 		env:                  env,
 		eksaSupportObjs: []client.Object{
-			namespace(clusterNamespace),
-			namespace(constants.EksaSystemNamespace),
+			test.Namespace(clusterNamespace),
+			test.Namespace(constants.EksaSystemNamespace),
 			managementCluster,
 			workloadClusterDatacenter,
 			bundle,
-			eksdRelease(),
+			test.EksdRelease(),
 			credentialsSecret,
 		},
 		cluster:                   cluster,
@@ -413,106 +426,6 @@ func snowDataCenter(opts ...datacenterOpt) *anywherev1.SnowDatacenterConfig {
 	return d
 }
 
-func createBundle() *releasev1.Bundles {
-	return &releasev1.Bundles{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Bundles",
-			APIVersion: releasev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "bundles-1",
-			Namespace: "default",
-		},
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "1.20",
-					EksD: releasev1.EksDRelease{
-						Name:           "test",
-						EksDReleaseUrl: "testdata/release.yaml",
-						KubeVersion:    "1.20",
-					},
-					CertManager:            releasev1.CertManagerBundle{},
-					ClusterAPI:             releasev1.CoreClusterAPI{},
-					Bootstrap:              releasev1.KubeadmBootstrapBundle{},
-					ControlPlane:           releasev1.KubeadmControlPlaneBundle{},
-					VSphere:                releasev1.VSphereBundle{},
-					Docker:                 releasev1.DockerBundle{},
-					Eksa:                   releasev1.EksaBundle{},
-					Cilium:                 releasev1.CiliumBundle{},
-					Kindnetd:               releasev1.KindnetdBundle{},
-					Flux:                   releasev1.FluxBundle{},
-					BottleRocketBootstrap:  releasev1.BottlerocketBootstrapBundle{},
-					BottleRocketAdmin:      releasev1.BottlerocketAdminBundle{},
-					ExternalEtcdBootstrap:  releasev1.EtcdadmBootstrapBundle{},
-					ExternalEtcdController: releasev1.EtcdadmControllerBundle{},
-					Tinkerbell:             releasev1.TinkerbellBundle{},
-				},
-			},
-		},
-	}
-}
-
-func eksdRelease() *eksdv1.Release {
-	return &eksdv1.Release{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Release",
-			APIVersion: "distro.eks.amazonaws.com/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: "eksa-system",
-		},
-		Spec: eksdv1.ReleaseSpec{
-			Number: 1,
-		},
-		Status: eksdv1.ReleaseStatus{
-			Components: []eksdv1.Component{
-				{
-					Assets: []eksdv1.Asset{
-						{
-							Name:  "etcd-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "node-driver-registrar-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "livenessprobe-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "external-attacher-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "external-provisioner-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "pause-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "aws-iam-authenticator-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "coredns-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "kube-apiserver-image",
-							Image: &eksdv1.AssetImage{},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 type snowMachineOpt func(*anywherev1.SnowMachineConfig)
 
 func snowMachineConfig(opts ...snowMachineOpt) *anywherev1.SnowMachineConfig {
@@ -534,18 +447,6 @@ func snowMachineConfig(opts ...snowMachineOpt) *anywherev1.SnowMachineConfig {
 	}
 
 	return m
-}
-
-func namespace(name string) *corev1.Namespace {
-	return &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
 }
 
 type capiClusterOpt func(*clusterv1.Cluster)

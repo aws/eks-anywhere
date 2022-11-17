@@ -84,7 +84,6 @@ func TestDockerKubernetes124SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -130,7 +129,6 @@ func TestVSphereKubernetes124SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu124()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -197,7 +195,6 @@ func TestVSphereKubernetes124BottleRocketSimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket124()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -209,7 +206,6 @@ func TestVSphereKubernetes124BottleRocketThreeReplicasFiveWorkersSimpleFlow(t *t
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(5)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -221,7 +217,6 @@ func TestVSphereKubernetes124BottleRocketDifferentNamespaceSimpleFlow(t *testing
 			framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -314,7 +309,6 @@ func TestTinkerbellKubernetes124SimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -359,7 +353,6 @@ func TestTinkerbellKubernetes124RedHatSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -404,7 +397,6 @@ func TestTinkerbellKubernetes124BottleRocketSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -469,7 +461,6 @@ func TestTinkerbellKubernetes124BottleRocketThreeReplicasSimpleFlow(t *testing.T
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithControlPlaneHardware(3),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -522,7 +513,6 @@ func TestTinkerbellKubernetes124BottleRocketThreeWorkersSimpleFlow(t *testing.T)
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(3),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -556,6 +546,46 @@ func TestSnowKubernetes123SimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
 		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes120SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes121SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }

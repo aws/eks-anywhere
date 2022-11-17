@@ -29,7 +29,7 @@ type Factory struct {
 type GovcClient interface {
 	CreateLibrary(ctx context.Context, datastore, library string) error
 	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeBRDisk bool) error
-	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
+	SearchTemplate(ctx context.Context, datacenter, template string) (string, error)
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
 	GetLibraryElementContentVersion(ctx context.Context, element string) (string, error)
@@ -62,7 +62,7 @@ func NewFactory(client GovcClient, datacenter, datastore, network, resourcePool,
 }
 
 func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig, ovaURL string, tagsByCategory map[string][]string) error {
-	templateFullPath, err := f.client.SearchTemplate(ctx, datacenter, machineConfig)
+	templateFullPath, err := f.client.SearchTemplate(ctx, datacenter, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("checking for template: %v", err)
 	}

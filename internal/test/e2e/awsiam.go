@@ -10,7 +10,6 @@ import (
 func (e *E2ESession) setupAwsIam(testRegex string) error {
 	re := regexp.MustCompile(`^.*AWSIamAuth.*$`)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running AWSIamAuth tests, skipping Env variable setup")
 		return nil
 	}
 

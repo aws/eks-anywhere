@@ -22,7 +22,6 @@ const (
 func (e *E2ESession) setupOIDC(testRegex string) error {
 	re := regexp.MustCompile(`^.*OIDC.*$`)
 	if !re.MatchString(testRegex) {
-		e.logger.V(2).Info("Not running OIDC tests, skipping setup")
 		return nil
 	}
 

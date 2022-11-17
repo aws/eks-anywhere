@@ -62,6 +62,33 @@ If you are running tests that create clusters using an old release and upgrade t
 
 The format is: `T_VSPHERE_TEMPLATE_{OS}_{EKS-D VERSION}`. For example, for Ubuntu, kubernetes 1.23 and release v0.11.0, which uses eks-d release `kubernetes-1-23-eks-4`: `T_VSPHERE_TEMPLATE_UBUNTU_KUBERNETES_1_23_EKS_4`.
 
+# Nutanix tests requisites
+ The following env variables need to be set:
+
+ ```sh
+ NUTANIX_USER
+ NUTANIX_PASSWORD
+
+ T_NUTANIX_ENDPOINT
+ T_NUTANIX_PORT
+ T_NUTANIX_MACHINE_BOOT_TYPE
+ T_NUTANIX_MACHINE_MEMORY_SIZE
+ T_NUTANIX_SYSTEMDISK_SIZE
+ T_NUTANIX_MACHINE_VCPU_PER_SOCKET
+ T_NUTANIX_MACHINE_VCPU_SOCKET
+ T_NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME
+ T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME
+ T_NUTANIX_SSH_AUTHORIZED_KEY
+ T_NUTANIX_SUBNET_NAME
+ T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP
+ T_NUTANIX_POD_CIDR
+ T_NUTANIX_SERVICE_CIDR
+ T_NUTANIX_ADDITIONAL_TRUST_BUNDLE # This should be set to the base64 encoded CA cert used for Nutanix Prism Central
+ T_NUTANIX_TEMPLATE_UBUNTU_1_20
+ T_NUTANIX_TEMPLATE_UBUNTU_1_21
+ T_NUTANIX_TEMPLATE_UBUNTU_1_22
+ T_NUTANIX_TEMPLATE_UBUNTU_1_23
+ ```
 ## Tinkerbell tests requisites
 The following env variables need to be set:
 

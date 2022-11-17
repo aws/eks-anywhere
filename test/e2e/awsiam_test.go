@@ -83,7 +83,6 @@ func TestDockerKubernetes124AWSIamAuth(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -134,7 +133,6 @@ func TestVSphereKubernetes124AWSIamAuth(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu124()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -185,7 +183,6 @@ func TestVSphereKubernetes124BottleRocketAWSIamAuth(t *testing.T) {
 		framework.NewVSphere(t, framework.WithBottleRocket124()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -197,14 +194,12 @@ func TestVSphereKubernetes123To124AWSIamAuthUpgrade(t *testing.T) {
 		provider,
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithAWSIamAuth(
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
+		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
 	)
 }
 
@@ -252,7 +247,6 @@ func TestTinkerbellKubernetes124AWSIamAuth(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellAWSIamAuthFlow(test)
 }
@@ -301,7 +295,6 @@ func TestTinkerbellKubernetes124BottleRocketAWSIamAuth(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runTinkerbellAWSIamAuthFlow(test)
 }

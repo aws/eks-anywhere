@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -69,7 +68,7 @@ func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testin
 		release,
 		anywherev1.Kube120,
 		provider.WithProviderUpgrade(
-			framework.UpdateBottlerocketTemplate120(), // Set the template so it doesn't get autoimported
+			provider.Bottlerocket120Template(), // Set the template so it doesn't get autoimported
 		),
 	)
 }
@@ -114,7 +113,7 @@ func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testin
 		release,
 		anywherev1.Kube121,
 		provider.WithProviderUpgrade(
-			framework.UpdateBottlerocketTemplate121(), // Set the template so it doesn't get autoimported
+			provider.Bottlerocket121Template(), // Set the template so it doesn't get autoimported
 		),
 	)
 }
@@ -140,7 +139,7 @@ func TestVSphereKubernetes120UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 		release,
 		anywherev1.Kube120,
 		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate120Var(), // Set the template so it doesn't get autoimported
+			provider.Ubuntu120Template(), // Set the template so it doesn't get autoimported
 		),
 	)
 }
@@ -166,7 +165,7 @@ func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 		release,
 		anywherev1.Kube121,
 		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate121Var(), // Set the template so it doesn't get autoimported
+			provider.Ubuntu121Template(), // Set the template so it doesn't get autoimported
 		),
 	)
 }
@@ -193,7 +192,7 @@ func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPol
 		anywherev1.Kube121,
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways)),
 		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate121Var(), // Set the template so it doesn't get autoimported
+			provider.Ubuntu121Template(), // Set the template so it doesn't get autoimported
 		),
 	)
 }
@@ -237,7 +236,7 @@ func TestVSphereKubernetes121To122UbuntuUpgradeFromLatestMinorRelease(t *testing
 		release,
 		anywherev1.Kube122,
 		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate122Var(), // Set the template so it doesn't get autoimported
+			provider.Ubuntu122Template(), // Set the template so it doesn't get autoimported
 		),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube122)),
 	)
@@ -264,7 +263,7 @@ func TestVSphereKubernetes122To123UbuntuUpgradeFromLatestMinorRelease(t *testing
 		release,
 		anywherev1.Kube123,
 		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate123Var(), // Set the template so it doesn't get autoimported
+			provider.Ubuntu123Template(), // Set the template so it doesn't get autoimported
 		),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
 	)
@@ -285,17 +284,15 @@ func TestVSphereKubernetes123To124UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
 		release,
 		anywherev1.Kube124,
 		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate124Var(), // Set the template so it doesn't get autoimported
+			provider.Ubuntu124Template(), // Set the template so it doesn't get autoimported
 		),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -347,14 +344,12 @@ func TestDockerKubernetes123to124UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFromReleaseFlow(
 		test,
 		release,
 		anywherev1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube124)),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 

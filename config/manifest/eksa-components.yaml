@@ -5364,6 +5364,18 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - awsiamconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - awsiamconfigs
   - bundles
   - cloudstackdatacenterconfigs
   - cloudstackmachineconfigs
@@ -5441,8 +5453,12 @@ rules:
   resources:
   - oidcconfigs
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - anywhere.eks.amazonaws.com
@@ -5501,6 +5517,8 @@ rules:
   resources:
   - awssnowclusters
   - awssnowmachinetemplates
+  - dockerclusters
+  - dockermachinetemplates
   - vsphereclusters
   - vspheremachinetemplates
   verbs:
