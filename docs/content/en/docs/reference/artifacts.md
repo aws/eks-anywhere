@@ -54,11 +54,11 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.24 - `eksdRelease:kubernetes-1-24-eks-2`
+1.24 - `eksdRelease:kubernetes-1-24-eks-3`
 
 1.23 - `eksdRelease:kubernetes-1-23-eks-8`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-12`
+1.22 - `eksdRelease:kubernetes-1-22-eks-13`
 
 1.21 - `eksdRelease:kubernetes-1-21-eks-21`
 
