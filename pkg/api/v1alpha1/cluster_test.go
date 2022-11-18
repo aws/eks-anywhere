@@ -886,12 +886,6 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantCluster: nil,
 			wantErr:     true,
 		},
-		{
-			testName:    "docker config with endpoint specified",
-			fileName:    "testdata/cluster_invalid_docker_with_endpoint.yaml",
-			wantCluster: nil,
-			wantErr:     true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -2531,22 +2525,6 @@ func TestValidateControlPlaneEndpoint(t *testing.T) {
 		wantErr string
 		cluster *Cluster
 	}{
-		{
-			name:    "docker provider - control plane endpoint is not nil",
-			wantErr: "specifying endpoint host configuration in Cluster is not supported",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					DatacenterRef: Ref{
-						Kind: DockerDatacenterKind,
-					},
-					ControlPlaneConfiguration: ControlPlaneConfiguration{
-						Endpoint: &Endpoint{
-							Host: "",
-						},
-					},
-				},
-			},
-		},
 		{
 			name:    "docker provider - control plane endpoint is not set",
 			wantErr: "",
