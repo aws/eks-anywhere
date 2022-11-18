@@ -793,3 +793,28 @@ func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidDockerTemplateWithControlplaneEndpoint(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	provider := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "test-cluster"
+		s.Cluster.Spec.KubernetesVersion = "1.19"
+		s.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+		s.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "test-ip"}
+		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}, Name: "md-0"}}
+	})
+	wantErr := fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+
+	if err == nil || err.Error() != wantErr.Error() {
+		t.Fatalf("err %v, wantErr %v", err, wantErr)
+	}
+}
