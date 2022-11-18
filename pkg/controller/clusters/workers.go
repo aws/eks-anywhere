@@ -49,7 +49,7 @@ func (g *WorkerGroup) objects() []client.Object {
 }
 
 // ToWorkers converts the generic clusterapi Workers definition to the concrete one defined
-// here. It's just a helper for callers generating workers spec using the clusterpai package.
+// here. It's just a helper for callers generating workers spec using the clusterapi package.
 func ToWorkers[M clusterapi.Object[M]](capiWorkers *clusterapi.Workers[M]) *Workers {
 	w := &Workers{
 		Groups: make([]WorkerGroup, 0, len(capiWorkers.Groups)),
@@ -76,7 +76,7 @@ func ReconcileWorkersForEKSA(ctx context.Context, log logr.Logger, c client.Clie
 	}
 
 	if capiCluster == nil {
-		// cluster doesn't exit, this might be transient, requeuing
+		// cluster doesn't exist, this might be transient, requeuing
 		log.Info("CAPI cluster doesn't exist yet, this might be transient if the CP have just been created, requeueing")
 		return controller.ResultWithRequeue(5 * time.Second), nil
 	}

@@ -70,7 +70,7 @@ func TestReconcileWorkersErrorApplyingObjects(t *testing.T) {
 	c := env.Client()
 	ctx := context.Background()
 	ns := "fake-ns"
-	// ns doesn't exit, it will fail
+	// ns doesn't exist, it will fail
 	w := workers(ns)
 	cluster := &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
