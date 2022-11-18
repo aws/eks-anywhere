@@ -146,7 +146,7 @@ func TestReconcilerValidateMachineConfigsMachineConfigNotValidated(t *testing.T)
 
 func TestReconcilerReconcileWorkers(t *testing.T) {
 	tt := newReconcilerTest(t)
-	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
