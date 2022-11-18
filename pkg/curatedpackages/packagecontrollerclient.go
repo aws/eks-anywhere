@@ -121,7 +121,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 //   - Creating a single run of the cron job to ensure the secret is consumed
 func (pc *PackageControllerClient) CreateCredentials(ctx context.Context) error {
 	if err := pc.ApplySecret(ctx); err != nil {
-		return errors.New("environment variables EKSA_AWS_SECRET_ACCESS_KEY and EKSA_AWS_ACCESS_KEY_ID not provided")
+		return errors.New("unable to detect AWS authentication credentials for curated packages. Skipping package installation. Follow documentation to set credentials after cluster creation completes")
 	}
 
 	return nil
