@@ -230,7 +230,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 	tt.ShouldEventuallyNotExist(tt.ctx,
 		&dockerv1.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "workload-cluster-etcd-1",
+				Name:      tt.cluster.Name + "-etcd-1",
 				Namespace: constants.EksaSystemNamespace,
 			},
 		},
@@ -238,7 +238,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 	tt.ShouldEventuallyNotExist(tt.ctx,
 		&etcdv1.EtcdadmCluster{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "workload-cluster-etcd",
+				Name:      tt.cluster.Name + "-etcd",
 				Namespace: constants.EksaSystemNamespace,
 			},
 		},
