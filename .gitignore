@@ -21,3 +21,5 @@ support-bundle*
 /.ignore
 coverage.out
 docs/.hugo_build.lock
+*-logs
+*-artifacts
