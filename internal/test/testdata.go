@@ -131,10 +131,11 @@ func Bundle() *releasev1.Bundles {
 	}
 }
 
-type capiClusterOpt func(*clusterv1.Cluster)
+// CAPIClusterOpt represents an function where a capi cluster is passed as an argument.
+type CAPIClusterOpt func(*clusterv1.Cluster)
 
 // CAPICluster returns a capi cluster which can be configured by passing in opts arguments.
-func CAPICluster(opts ...capiClusterOpt) *clusterv1.Cluster {
+func CAPICluster(opts ...CAPIClusterOpt) *clusterv1.Cluster {
 	c := &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       anywherev1.ClusterKind,
