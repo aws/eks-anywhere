@@ -88,15 +88,21 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return pc.InstallPBCResources(ctx)
 	}
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
-	accountName := "eks-anywhere"
-	if strings.Contains(ociUri, "l0g8r8j6") {
-		accountName = "l0g8r8j6"
-	}
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
-	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
-	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", pc.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
+	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+	if pc.registryMirrorAddressMappings != nil {
+		accountName := "eks-anywhere"
+		if strings.Contains(ociUri, "l0g8r8j6") {
+			accountName = "l0g8r8j6"
+		}
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
+		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
+		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", pc.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
+		values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+	} else {
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.uri))
+		values = []string{sourceRegistry, clusterName}
+	}
 
 	// Provide proxy details for curated packages helm chart when proxy details provided
 	if pc.httpProxy != "" {

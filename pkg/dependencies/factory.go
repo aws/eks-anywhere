@@ -954,6 +954,10 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		endpoints := (map[string]string)(nil)
+		if f.registryMirror != nil {
+			endpoints = f.registryMirror.endpoints
+		}
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
@@ -962,7 +966,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			imageUrl,
 			chart.Name,
 			chart.Tag(),
-			f.registryMirror.endpoints,
+			endpoints,
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
