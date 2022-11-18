@@ -114,7 +114,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
-		WithRegistryMirror(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings(), clusterSpec.Cluster.RegistryAuth()).
+		WithRegistryMirror(clusterSpec.Cluster.RegistryMirrors(), clusterSpec.Cluster.RegistryAuth()).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -259,7 +259,11 @@ func (f *Factory) WithDockerLogin() *Factory {
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		username, password, _ := config.ReadCredentials()
-		err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.endpoints[constants.DefaultRegistry], username, password)
+		endpoint := ""
+		if f.registryMirror != nil {
+			endpoint = f.registryMirror.endpoints[constants.DefaultRegistry]
+		}
+		err := f.executablesConfig.dockerClient.Login(context.Background(), endpoint, username, password)
 		if err != nil {
 			return err
 		}

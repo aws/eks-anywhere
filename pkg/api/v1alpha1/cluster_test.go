@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -2436,6 +2438,24 @@ func TestClusterRegistryMirror(t *testing.T) {
 			want: "1.2.3.4:443",
 		},
 		{
+			name: "with registry mirror and namespace",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "public.ecr.aws",
+								Namespace: "eks-anywhere",
+							},
+						},
+					},
+				},
+			},
+			want: "1.2.3.4:443/eks-anywhere",
+		},
+		{
 			name:    "without registry mirror",
 			cluster: &Cluster{},
 			want:    "",
@@ -2445,6 +2465,60 @@ func TestClusterRegistryMirror(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterRegistryMirrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    map[string]string
+	}{
+		{
+			name: "with registry mirror",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "public.ecr.aws",
+								Namespace: "eks-anywhere",
+							},
+							{
+								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Namespace: "curated-packages",
+							},
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				constants.DefaultRegistryMirrorKey:    "1.2.3.4:443",
+				constants.DefaultRegistry:             "1.2.3.4:443/eks-anywhere",
+				constants.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
+			},
+		},
+		{
+			name:    "without registry mirror",
+			cluster: &Cluster{},
+			want:    nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			result := tt.cluster.RegistryMirrors()
+			g.Expect(len(result)).To(Equal(len(tt.want)))
+			for k, v := range tt.want {
+				if regexp.MustCompile(constants.DefaultPackageRegistryRegex).MatchString(k) {
+					g.Expect(result).Should(HaveKeyWithValue(constants.DefaultPackageRegistryRegex, v))
+				} else {
+					g.Expect(result).Should(HaveKeyWithValue(k, v))
+				}
+			}
 		})
 	}
 }

@@ -304,11 +304,21 @@ func (c *Cluster) ClearPauseAnnotation() {
 }
 
 func (c *Cluster) RegistryMirror() string {
-	if c.Spec.RegistryMirrorConfiguration == nil {
+	mirrors := c.RegistryMirrors()
+	if mirrors == nil {
 		return ""
 	}
 
-	return c.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings()[constants.DefaultRegistry]
+	return mirrors[constants.DefaultRegistry]
+}
+
+// RegistryMirrors returns registry mirror mappings of all upstream registries.
+func (c *Cluster) RegistryMirrors() map[string]string {
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return nil
+	}
+
+	return c.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings()
 }
 
 // RegistryAuth returns whether registry requires authentication or not.
