@@ -1,0 +1,16 @@
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: test-emissary
+  namespace: eksa-packages-eksa-test-d1d47d7
+spec:
+  packageName: emissary
+  targetNamespace: eksa-packages
+  config: |-
+    service:
+        type: ClusterIP
+        ports:
+          - port: 80
+            targetPort: 8080
+            name: http
