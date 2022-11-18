@@ -25,21 +25,22 @@ var packageBundleControllerTest string
 
 type packageControllerTest struct {
 	*WithT
-	ctx            context.Context
-	kubectl        *mocks.MockKubectlRunner
-	chartInstaller *mocks.MockChartInstaller
-	command        *curatedpackages.PackageControllerClient
-	clusterName    string
-	kubeConfig     string
-	ociUri         string
-	chartName      string
-	chartVersion   string
-	eksaAccessId   string
-	eksaAccessKey  string
-	eksaRegion     string
-	httpProxy      string
-	httpsProxy     string
-	noProxy        []string
+	ctx                           context.Context
+	kubectl                       *mocks.MockKubectlRunner
+	chartInstaller                *mocks.MockChartInstaller
+	command                       *curatedpackages.PackageControllerClient
+	clusterName                   string
+	kubeConfig                    string
+	ociURI                        string
+	chartName                     string
+	chartVersion                  string
+	eksaAccessID                  string
+	eksaAccessKey                 string
+	eksaRegion                    string
+	httpProxy                     string
+	httpsProxy                    string
+	noProxy                       []string
+	registryMirrorAddressMappings map[string]string
 }
 
 func newPackageControllerTest(t *testing.T) *packageControllerTest {
@@ -61,6 +62,11 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 		chartInstaller: ci,
 		command: curatedpackages.NewPackageControllerClient(
 			ci, k, clusterName, kubeConfig, uri, chartName, chartVersion,
+			map[string]string{
+				"base":                                 "1.2.3.4:443",
+				"public.ecr.aws":                       "1.2.3.4:443/public",
+				"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+			},
 			curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithEksaAccessKeyId(eksaAccessId),
@@ -68,30 +74,36 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 		),
 		clusterName:   clusterName,
 		kubeConfig:    kubeConfig,
-		ociUri:        uri,
+		ociURI:        uri,
 		chartName:     chartName,
 		chartVersion:  chartVersion,
-		eksaAccessId:  eksaAccessId,
+		eksaAccessID:  eksaAccessId,
 		eksaAccessKey: eksaAccessKey,
 		eksaRegion:    eksaRegion,
 		httpProxy:     "1.1.1.1",
 		httpsProxy:    "1.1.1.1",
 		noProxy:       []string{"1.1.1.1/24"},
+		registryMirrorAddressMappings: map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 	}
 }
 
 func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -107,7 +119,12 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociURI, tt.chartName, tt.chartVersion,
+		map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 		curatedpackages.WithEksaSecretAccessKey(""),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(""),
@@ -117,11 +134,12 @@ func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 	dat, err := os.ReadFile("testdata/awssecret_test_empty.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, fmt.Errorf("boom"))
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName, "cronjob.suspend=true"}
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName, "cronjob.suspend=true"}
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -137,7 +155,12 @@ func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociURI, tt.chartName, tt.chartVersion,
+		map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 		curatedpackages.WithManagementClusterName("mgmt"),
 	)
 
@@ -169,29 +192,35 @@ func getPBCFail(t *testing.T) func(context.Context, string, string, string, stri
 func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociURI, tt.chartName, tt.chartVersion,
+		map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
-		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
+		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 		curatedpackages.WithHTTPProxy(tt.httpProxy),
 		curatedpackages.WithHTTPSProxy(tt.httpsProxy),
 		curatedpackages.WithNoProxy(tt.noProxy),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	httpProxy := fmt.Sprintf("proxy.HTTP_PROXY=%s", tt.httpProxy)
 	httpsProxy := fmt.Sprintf("proxy.HTTPS_PROXY=%s", tt.httpsProxy)
 	noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(tt.noProxy, "\\,"))
 
-	values := []string{sourceRegistry, clusterName, httpProxy, httpsProxy, noProxy}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -207,26 +236,32 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociURI, tt.chartName, tt.chartVersion,
+		map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
-		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
+		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 		curatedpackages.WithHTTPProxy(""),
 		curatedpackages.WithHTTPSProxy(""),
 		curatedpackages.WithNoProxy(nil),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -241,12 +276,13 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 
 func TestEnableCuratedPackagesFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(errors.New("login failed"))
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(errors.New("login failed"))
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -262,15 +298,16 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -286,15 +323,16 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, errors.New("failed applying secrets"))
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -330,15 +368,16 @@ func TestPbcCreationFail(t *testing.T) {
 func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -377,15 +416,16 @@ func TestIsInstalledFalse(t *testing.T) {
 func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_defaultregion.yaml")
 	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -393,9 +433,14 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 		AnyTimes()
 
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociURI, tt.chartName, tt.chartVersion,
+		map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 		curatedpackages.WithEksaRegion(""),
-		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
+		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
@@ -408,23 +453,29 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociURI, tt.chartName, tt.chartVersion,
+		map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
-		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
+		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 		curatedpackages.WithActiveBundleTimeout(time.Second),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -440,15 +491,16 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -480,23 +532,29 @@ func getPBCLoops(t *testing.T, loops int) func(context.Context, string, string, 
 func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociURI, tt.chartName, tt.chartVersion,
+		map[string]string{
+			"base":                                 "1.2.3.4:443",
+			"public.ecr.aws":                       "1.2.3.4:443/public",
+			"783794618700.dkr.ecr.*.amazonaws.com": "1.2.3.4:443/private",
+		},
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
-		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
+		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 		curatedpackages.WithActiveBundleTimeout(time.Millisecond),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
-	registry := curatedpackages.GetRegistry(tt.ociUri)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirrorAddressMappings[constants.DefaultRegistry])
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", tt.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociURI, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).

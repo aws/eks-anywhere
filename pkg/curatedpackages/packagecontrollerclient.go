@@ -29,20 +29,21 @@ const (
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
-	kubeConfig            string
-	uri                   string
-	chartName             string
-	chartVersion          string
-	chartInstaller        ChartInstaller
-	clusterName           string
-	managementClusterName string
-	kubectl               KubectlRunner
-	eksaAccessKeyId       string
-	eksaSecretAccessKey   string
-	eksaRegion            string
-	httpProxy             string
-	httpsProxy            string
-	noProxy               []string
+	kubeConfig                    string
+	uri                           string
+	chartName                     string
+	chartVersion                  string
+	chartInstaller                ChartInstaller
+	clusterName                   string
+	managementClusterName         string
+	kubectl                       KubectlRunner
+	eksaAccessKeyID               string
+	eksaSecretAccessKey           string
+	eksaRegion                    string
+	httpProxy                     string
+	httpsProxy                    string
+	noProxy                       []string
+	registryMirrorAddressMappings map[string]string
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
 }
@@ -51,15 +52,17 @@ type ChartInstaller interface {
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
+// NewPackageControllerClient instantiates a new instance of PackageControllerClient.
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, registryMirrorAddressMappings map[string]string, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
-		kubeConfig:     kubeConfig,
-		clusterName:    clusterName,
-		uri:            uri,
-		chartName:      chartName,
-		chartVersion:   chartVersion,
-		chartInstaller: chartInstaller,
-		kubectl:        kubectl,
+		kubeConfig:                    kubeConfig,
+		clusterName:                   clusterName,
+		uri:                           uri,
+		chartName:                     chartName,
+		chartVersion:                  chartVersion,
+		chartInstaller:                chartInstaller,
+		kubectl:                       kubectl,
+		registryMirrorAddressMappings: registryMirrorAddressMappings,
 	}
 
 	for _, o := range options {
@@ -85,11 +88,15 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return pc.InstallPBCResources(ctx)
 	}
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
-	registry := GetRegistry(pc.uri)
-
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	accountName := "eks-anywhere"
+	if strings.Contains(ociUri, "l0g8r8j6") {
+		accountName = "l0g8r8j6"
+	}
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
+	defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
+	defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", pc.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	values := []string{sourceRegistry, clusterName}
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 
 	// Provide proxy details for curated packages helm chart when proxy details provided
 	if pc.httpProxy != "" {
@@ -100,7 +107,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
-	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyId == "" {
+	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyID == "" {
 		values = append(values, "cronjob.suspend=true")
 	}
 
@@ -218,7 +225,7 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     pc.eksaAccessKeyId,
+		"eksaAccessKeyId":     pc.eksaAccessKeyID,
 		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
 		"eksaRegion":          pc.eksaRegion,
 	}
@@ -240,7 +247,7 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
-		config.eksaAccessKeyId = eksaAccessKeyId
+		config.eksaAccessKeyID = eksaAccessKeyId
 	}
 }
 

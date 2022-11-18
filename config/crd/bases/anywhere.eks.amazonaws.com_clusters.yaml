@@ -279,6 +279,8 @@ spec:
                       registry to a local namespace where upstream artifacts are placed
                       into
                     items:
+                      description: OCINamespace represents an entity in a local reigstry
+                        to group related images.
                       properties:
                         namespace:
                           description: Namespace refers to the name of a namespace

@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
@@ -113,7 +114,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
-		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror(), clusterSpec.Cluster.RegistryAuth()).
+		WithRegistryMirror(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings(), clusterSpec.Cluster.RegistryAuth()).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -138,8 +139,8 @@ type executablesConfig struct {
 }
 
 type registryMirror struct {
-	endpoint string
-	auth     bool
+	endpoints map[string]string
+	auth      bool
 }
 
 type buildStep func(ctx context.Context) error
@@ -176,8 +177,8 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 }
 
 // WithRegistryMirror configures the factory to use registry mirror wherever applicable.
-func (f *Factory) WithRegistryMirror(endpoint string, auth bool) *Factory {
-	f.registryMirror = &registryMirror{endpoint: endpoint, auth: auth}
+func (f *Factory) WithRegistryMirror(endpoints map[string]string, auth bool) *Factory {
+	f.registryMirror = &registryMirror{endpoints: endpoints, auth: auth}
 
 	return f
 }
@@ -258,7 +259,7 @@ func (f *Factory) WithDockerLogin() *Factory {
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		username, password, _ := config.ReadCredentials()
-		err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.endpoint, username, password)
+		err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.endpoints[constants.DefaultRegistry], username, password)
 		if err != nil {
 			return err
 		}
@@ -284,7 +285,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		if f.executablesConfig.useDockerContainer {
 			image := f.executablesConfig.image
 			if f.registryMirror != nil {
-				image = urls.ReplaceHost(f.executablesConfig.image, f.registryMirror.endpoint)
+				image = urls.ReplaceHost(f.executablesConfig.image, f.registryMirror.endpoints[constants.DefaultRegistry])
 			}
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
@@ -659,7 +660,7 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.registryMirror != nil {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror.endpoint))
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror.endpoints[constants.DefaultRegistry]))
 		}
 
 		if f.proxyConfiguration != nil {
@@ -961,6 +962,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			imageUrl,
 			chart.Name,
 			chart.Tag(),
+			f.registryMirror.endpoints,
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),

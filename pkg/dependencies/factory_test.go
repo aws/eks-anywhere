@@ -264,7 +264,11 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithRegistryMirror("1.2.3.4:443", false).
+		WithRegistryMirror(
+			map[string]string{
+				"base":           "1.2.3.4:443",
+				"public.ecr.aws": "1.2.3.4:443/custom",
+			}, false).
 		WithHelm(executables.WithInsecure()).
 		Build(context.Background())
 
@@ -276,7 +280,11 @@ func TestFactoryBuildWithRegistryMirrorAuth(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithRegistryMirror("1.2.3.4:443", true).
+		WithRegistryMirror(
+			map[string]string{
+				"base":           "1.2.3.4:443",
+				"public.ecr.aws": "1.2.3.4:443/custom",
+			}, true).
 		WithHelm(executables.WithInsecure()).
 		Build(context.Background())
 
