@@ -20,6 +20,7 @@ The following table shows EKS Anywhere version support for different Kubernetes 
 
 | Kubernetes version      | Supported EKS Anywhere version | First supported | End of support  |
 |------------|---------------------|---------------------------------|-------------------------|
+| 1.24 | 0.12 | November 17, 2022	 | October 2023 | 
 | 1.23 | 0.12, 0.11 | August 18, 2022	 | October 2023 | 
 | 1.22 | 0.12, 0.11, 0.10, 0.9, 0.8 | March 31, 2022 | May 2023 | 
 | 1.21 | 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5 | September 8, 2021 | February 2023 | 
