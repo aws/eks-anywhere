@@ -81,6 +81,15 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 			},
 		},
 	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&dockerv1.DockerMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
@@ -130,6 +139,33 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&dockerv1.DockerMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
 }
 
 func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
@@ -148,6 +184,7 @@ func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
 	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(err).To(MatchError(ContainSubstring("Failed to construct cluster Spec")))
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
