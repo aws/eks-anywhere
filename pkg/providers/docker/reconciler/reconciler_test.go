@@ -175,7 +175,7 @@ func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
-	tt.cluster.Spec.KubernetesVersion = ""
+	//tt.cluster.Spec.KubernetesVersion = ""
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
@@ -183,7 +183,6 @@ func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
 
 	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
 
-	tt.Expect(err).To(HaveOccurred())
 	tt.Expect(err).To(MatchError(ContainSubstring("Failed to construct cluster Spec")))
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
