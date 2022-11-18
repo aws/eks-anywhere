@@ -34,12 +34,12 @@ Bottlerocket vends its Baremetal variant Images using a secure distribution tool
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
 ## vSphere artifacts
@@ -90,7 +90,7 @@ export KUBEVERSION="1.23"
 
     a. To download VMware variant Bottlerocket OVA
     ```
-    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.10.0.ova"
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.10.1.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -100,7 +100,7 @@ export KUBEVERSION="1.23"
 
     b. To download Baremetal variant Bottlerocket image
     ```
-    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.10.0.img.lz4"
+    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.10.1.img.lz4"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-metal} --target-name "${IMAGE}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/metal-k8s-${KUBEVERSION}/x86_64/" \
@@ -214,7 +214,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
@@ -258,21 +258,21 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, 1-23, and 1-24.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-23 --vsphere-config vsphere-connection.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-24 --vsphere-config vsphere-connection.json
       ```
    * To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, 1-23, and 1-24.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1-23 --vsphere-config vsphere-connection.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-24 --vsphere-config vsphere-connection.json
       ```
 ### Build Bare Metal node images
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal.
@@ -301,7 +301,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
@@ -324,21 +324,21 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For Bare Metal use `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, 1-23, and 1-24.
       * `--baremetal-config`: Bare Metal configuration file (`baremetal.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-23 --baremetal-config baremetal.json
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-24 --baremetal-config baremetal.json
       ```
    * To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
       * `--hypervisor`: For Bare Metal use `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, 1-23, and 1-24.
       * `--baremetal-config`: Bare Metal configuration file (`baremetal.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor baremetal --release-channel 1-23 --baremetal-config baremetal.json
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1-24 --baremetal-config baremetal.json
       ```
 
 1. To consume the resulting Ubuntu-based or RHEL-based image, serve the image from an accessible Web server. For example, add the image to a server called `my-web-server`:
