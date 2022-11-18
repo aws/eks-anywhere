@@ -22,7 +22,7 @@ type Workers[M Object[M]] struct {
 func (w *Workers[M]) WorkerObjects() []kubernetes.Object {
 	objs := make([]kubernetes.Object, 0, len(w.Groups)*3)
 	for _, g := range w.Groups {
-		objs = append(objs, g.workerGroupObjects()...)
+		objs = append(objs, g.Objects()...)
 	}
 
 	return objs
@@ -53,7 +53,8 @@ type WorkerGroup[M Object[M]] struct {
 	ProviderMachineTemplate M
 }
 
-func (g *WorkerGroup[M]) workerGroupObjects() []kubernetes.Object {
+// Objects returns a list of API objects for a provider-specific of the worker group.
+func (g *WorkerGroup[M]) Objects() []kubernetes.Object {
 	return []kubernetes.Object{
 		g.KubeadmConfigTemplate,
 		g.MachineDeployment,

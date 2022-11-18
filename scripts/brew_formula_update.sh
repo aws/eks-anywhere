@@ -18,8 +18,11 @@ ORIGIN_ORG="eks-anywhere-brew-pr-bot"
 UPSTREAM_ORG="aws"
 YQ_LATEST_RELEASE_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
 
-wget -qO /usr/local/bin/yq $YQ_LATEST_RELEASE_URL
-chmod a+x /usr/local/bin/yq
+if ! command -v yq &> /dev/null
+then
+  wget -qO /usr/local/bin/yq $YQ_LATEST_RELEASE_URL
+  chmod a+x /usr/local/bin/yq
+fi
 
 curl --silent 'https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml' -o release.yaml
 

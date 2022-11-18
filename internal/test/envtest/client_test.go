@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -69,23 +70,21 @@ func TestCreateObjs(t *testing.T) {
 			Namespace: "eksa-system",
 		},
 	}
-
-	envtest.CreateObjs(ctx, t, client, secret, cm)
-}
-
-func TestCreateObjsErrorGet(t *testing.T) {
-	client := fake.NewClientBuilder().Build()
-	ctx := context.Background()
-	secret := &corev1.Secret{
+	pod := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "s",
+			Name:      "my-pod",
 			Namespace: "eksa-system",
+		},
+		Status: appsv1.DeploymentStatus{
+			Replicas: 10,
 		},
 	}
 
-	expectToFailTest(t, func(tb testing.TB) {
-		envtest.CreateObjs(ctx, tb, client, secret)
-	})
+	envtest.CreateObjs(ctx, t, client, secret, cm, pod)
 }
 
 func TestCreateObjsErrorCreate(t *testing.T) {

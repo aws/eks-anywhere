@@ -1,10 +1,16 @@
 package test
 
 import (
+	"time"
+
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -12,7 +18,7 @@ import (
 func Namespace(name string) *corev1.Namespace {
 	return &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "namespace",
+			Kind:       "Namespace",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -123,4 +129,34 @@ func Bundle() *releasev1.Bundles {
 			},
 		},
 	}
+}
+
+type capiClusterOpt func(*clusterv1.Cluster)
+
+// CAPICluster returns a capi cluster which can be configured by passing in opts arguments.
+func CAPICluster(opts ...capiClusterOpt) *clusterv1.Cluster {
+	c := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.ClusterKind,
+			APIVersion: clusterv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: clusterv1.ClusterStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ControlPlaneReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+		},
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }

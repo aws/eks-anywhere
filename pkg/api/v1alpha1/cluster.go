@@ -424,14 +424,7 @@ func validateControlPlaneLabels(clusterConfig *Cluster) error {
 }
 
 func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
-	if clusterConfig.Spec.DatacenterRef.Kind == DockerDatacenterKind {
-		if clusterConfig.Spec.ControlPlaneConfiguration.Endpoint != nil {
-			return fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
-		}
-		return nil
-	}
-
-	if clusterConfig.Spec.ControlPlaneConfiguration.Endpoint == nil || len(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
+	if (clusterConfig.Spec.ControlPlaneConfiguration.Endpoint == nil || len(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0) && clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
 

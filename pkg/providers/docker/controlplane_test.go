@@ -254,6 +254,11 @@ func testClusterSpec() *cluster.Spec {
 						MachineGroupRef: &anywherev1.Ref{Name: name},
 						Name:            "md-0",
 					},
+					{
+						Count:           ptr.Int(3),
+						MachineGroupRef: &anywherev1.Ref{Name: name},
+						Name:            "md-1",
+					},
 				},
 				ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
 					Count: 3,
