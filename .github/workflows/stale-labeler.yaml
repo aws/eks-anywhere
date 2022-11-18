@@ -33,7 +33,7 @@ jobs:
           stale-pr-label: 'stale'
           any-of-issue-labels: 'status/needinfo,priority/p2' # Only checks issues that have any of these labels 
 env:
-  ISSUE_STALE_DAYS: 0
+  ISSUE_STALE_DAYS: 60
   ISSUE_CLOSE_AFTER_DAYS: 7
   PR_STALE_DAYS: 60
   PR_CLOSE_AFTER_DAYS: 7
