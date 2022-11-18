@@ -10,6 +10,11 @@ description: >
 If you have not already done so, make sure your cluster meets the [package prerequisites.]({{< relref "../prereq" >}})
 Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/packages" >}}) in the event of a problem.
 
+  {{% alert title="Important" color="warning" %}}
+   * Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster.
+   * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster. The only exception is the `kubectl create namespace` command below, which should be ran with `kubeconfig` pointing to the workload cluster.
+   {{% /alert %}}
+
 ## Install on workload cluster
 
 **NOTE: The cert-manager package can only be installed on a workload cluster**
