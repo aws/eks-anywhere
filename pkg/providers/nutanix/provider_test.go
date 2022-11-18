@@ -278,7 +278,14 @@ func TestNutanixProviderUpdateSecrets(t *testing.T) {
 }
 
 func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	cpSpec, workerSpec, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
@@ -287,9 +294,27 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	assert.NotNil(t, workerSpec)
 }
 
+func TestNutanixProviderGenerateCAPISpecForCreate_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, errors.New("test error"))
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	cpSpec, workerSpec, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	assert.EqualError(t, err, "updating Nutanix credentials: loading secrets object: executing apply: test error")
+	assert.Nil(t, cpSpec)
+	assert.Nil(t, workerSpec)
+}
+
 func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
 	executable.EXPECT().Execute(gomock.Any(), "get",
 		"clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", "testdata/kubeconfig.yaml", "--field-selector=metadata.name=eksa-unit-test").Return(*bytes.NewBufferString(nutanixClusterConfigSpecJSON), nil)
 	executable.EXPECT().Execute(gomock.Any(), "get",
@@ -311,6 +336,23 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, cpSpec)
 	assert.NotEmpty(t, workerSpec)
+}
+
+func TestNutanixProviderGenerateCAPISpecForUpgrade_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, errors.New("test error"))
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+
+	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	cpSpec, workerSpec, err := provider.GenerateCAPISpecForUpgrade(context.Background(), cluster, cluster, clusterSpec, clusterSpec)
+	assert.EqualError(t, err, "updating Nutanix credentials: loading secrets object: executing apply: test error")
+	assert.Nil(t, cpSpec)
+	assert.Nil(t, workerSpec)
 }
 
 func TestNeedsNewControlPlaneTemplate(t *testing.T) {
@@ -683,13 +725,7 @@ func TestNutanixProviderMachineDeploymentsToDelete(t *testing.T) {
 }
 
 func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	executable := mockexecutables.NewMockExecutable(ctrl)
-	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
-	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
-	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	provider := testDefaultNutanixProvider(t)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
