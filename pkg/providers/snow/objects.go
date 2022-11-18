@@ -73,6 +73,7 @@ func WorkersSpec(ctx context.Context, spec *cluster.Spec, kubeClient kubernetes.
 	return w, nil
 }
 
+// WorkersObjects generates all the objects that compose a Snow specific CAPI spec for the worker nodes of an eks-a cluster.
 func WorkersObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
 	w, err := WorkersSpec(ctx, clusterSpec, kubeClient)
 	if err != nil {
