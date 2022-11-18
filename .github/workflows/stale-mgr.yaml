@@ -19,13 +19,17 @@ jobs:
     steps:
       - uses: actions/stale@v6
         with:
-          days-before-stale: ${{ env.ISSUE_STALE_DAYS }}
-          days-before-close: ${{ env.ISSUE_CLOSE_AFTER_DAYS }}
+          days-before-stale: ${{ env.STALE_DAYS }}
+          days-before-close: ${{ env.CLOSE_AFTER_DAYS }}
           stale-issue-message: >
-            This issue has had no activity for ${{ env.ISSUE_STALE_DAYS }} days. 
-            Labeling as stale and closing in ${{ env.ISSUE_CLOSE_AFTER_DAYS }} days if no further activity.
+            There has been no activity on this issue for ${{ env.STALE_DAYS }} days. 
+            Labeling as stale and closing in ${{ env.CLOSE_AFTER_DAYS }} days if no further activity.
+          stale-pr-message: >
+            There has been no activity on this PR for ${{ env.STALE_DAYS }} days. 
+            Labeling as stale and closing in ${{ env.CLOSE_AFTER_DAYS }} days if no further activity.
           stale-issue-label: 'stale'
-          any-of-issue-labels: 'external'
+          stale-pr-label: 'stale'
+          any-of-labels: 'external'
 env:
-  ISSUE_STALE_DAYS: 60
-  ISSUE_CLOSE_AFTER_DAYS: 7
+  STALE_DAYS: 60
+  CLOSE_AFTER_DAYS: 7
