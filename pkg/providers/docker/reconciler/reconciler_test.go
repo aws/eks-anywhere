@@ -5,12 +5,10 @@ import (
 	"errors"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -23,7 +21,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -426,34 +423,4 @@ func dataCenter() *anywherev1.DockerDatacenterConfig {
 			Namespace: clusterNamespace,
 		},
 	}
-}
-
-type capiClusterOpt func(*clusterv1.Cluster)
-
-func capiCluster(opts ...capiClusterOpt) *clusterv1.Cluster {
-	c := &clusterv1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: clusterv1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "eksa-system",
-		},
-		Status: clusterv1.ClusterStatus{
-			Conditions: clusterv1.Conditions{
-				{
-					Type:               clusterapi.ControlPlaneReadyCondition,
-					Status:             corev1.ConditionTrue,
-					LastTransitionTime: metav1.NewTime(time.Now()),
-				},
-			},
-		},
-	}
-
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	return c
 }
