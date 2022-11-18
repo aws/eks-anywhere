@@ -134,8 +134,9 @@ kubectl delete secret -n eksa-packages aws-secret
 kubectl create secret -n eksa-packages generic aws-secret --from-literal=ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=SECRET=${EKSA_AWS_SECRET_ACCESS_KEY}
 ```
 
-If you recreate secrets, you can manually run the job to update the image pull secrets:
+If you recreate secrets, you can manually re-enable the cronjob and run the job to update the image pull secrets:
 ```bash
+kubectl get cronjob -n eksa-packages cron-ecr-renew -o yaml | yq e '.spec.suspend |= false' - | kubectl apply -f -
 kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
 ```
 
