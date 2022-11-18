@@ -67,7 +67,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 	tt.ShouldEventuallyExist(tt.ctx,
 		&clusterv1.MachineDeployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0",
+				Name:      tt.cluster.Name + "-md-0",
 				Namespace: constants.EksaSystemNamespace,
 			},
 		},
@@ -76,7 +76,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 	tt.ShouldEventuallyExist(tt.ctx,
 		&bootstrapv1.KubeadmConfigTemplate{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-management-cluster-md-0-1",
+				Name:      tt.cluster.Name + "-md-0-1",
 				Namespace: constants.EksaSystemNamespace,
 			},
 		},
@@ -129,6 +129,25 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "my-management-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.cluster.Spec.KubernetesVersion = ""
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
