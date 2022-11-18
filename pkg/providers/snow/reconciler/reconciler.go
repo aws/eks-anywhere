@@ -83,7 +83,7 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 				clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 				log.Error(errors.New(*machineConfig.Status.FailureMessage), "Invalid SnowMachineConfig", "machineConfig", klog.KObj(machineConfig))
 			} else {
-				log.Info("SnowMachineConfig hasn't been validated yet", klog.KObj(machineConfig))
+				log.Info("SnowMachineConfig hasn't been validated yet", "machineConfig", klog.KObj(machineConfig))
 			}
 
 			return controller.ResultWithReturn(), nil

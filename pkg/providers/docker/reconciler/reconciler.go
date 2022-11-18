@@ -13,6 +13,7 @@ import (
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 )
@@ -88,5 +89,23 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 			fmt.Printf("%v \n", w.GetName())
 		}
 		return w.WorkerObjects(), nil
+	})
+}
+
+// ReconcileControlPlane applies the control plane CAPI objects to the cluster.
+func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileControlPlane")
+	log.Info("Applying control plane CAPI objects")
+	cp, err := docker.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, err
+	}
+	return clusters.ReconcileControlPlane(ctx, r.client, &clusters.ControlPlane{
+		Cluster:                     cp.Cluster,
+		ProviderCluster:             cp.ProviderCluster,
+		KubeadmControlPlane:         cp.KubeadmControlPlane,
+		ControlPlaneMachineTemplate: cp.ControlPlaneMachineTemplate,
+		EtcdCluster:                 cp.EtcdCluster,
+		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
 	})
 }

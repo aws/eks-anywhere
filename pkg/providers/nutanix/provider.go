@@ -195,6 +195,10 @@ func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, cl
 }
 
 func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	if err := p.UpdateSecrets(ctx, cluster, clusterSpec); err != nil {
+		return nil, nil, fmt.Errorf("updating Nutanix credentials: %v", err)
+	}
+
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -326,6 +330,10 @@ func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupC
 }
 
 func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	if err := p.UpdateSecrets(ctx, bootstrapCluster, newClusterSpec); err != nil {
+		return nil, nil, fmt.Errorf("updating Nutanix credentials: %v", err)
+	}
+
 	clusterName := newClusterSpec.Cluster.Name
 	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
 
@@ -615,8 +623,7 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	logger.Info("Installing secrets on bootstrap cluster")
-	return p.UpdateSecrets(ctx, cluster, clusterSpec)
+	return nil
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
