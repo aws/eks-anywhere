@@ -44,7 +44,7 @@ const (
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
-	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -75,7 +75,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "my-management-cluster"
 	tt.cluster.SetSelfManaged()
-	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -142,7 +142,7 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt := newReconcilerTest(t)
-	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	capiCluster.Status.Conditions = clusterv1.Conditions{
@@ -283,7 +283,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 		},
 	)
 
-	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = "workload-cluster"
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
@@ -562,36 +562,6 @@ func machineConfig(opts ...vsphereMachineOpt) *anywherev1.VSphereMachineConfig {
 	}
 
 	return m
-}
-
-type capiClusterOpt func(*clusterv1.Cluster)
-
-func capiCluster(opts ...capiClusterOpt) *clusterv1.Cluster {
-	c := &clusterv1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: clusterv1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "eksa-system",
-		},
-		Status: clusterv1.ClusterStatus{
-			Conditions: clusterv1.Conditions{
-				{
-					Type:               clusterapi.ControlPlaneReadyCondition,
-					Status:             corev1.ConditionTrue,
-					LastTransitionTime: metav1.NewTime(time.Now()),
-				},
-			},
-		},
-	}
-
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	return c
 }
 
 func createSecret() *corev1.Secret {
