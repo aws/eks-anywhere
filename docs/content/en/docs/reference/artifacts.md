@@ -434,7 +434,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 1. Install packages and prepare environment:
    ```
    sudo apt update -y
-   sudo apt install jq unzip make ansible python3-pip -y
+   sudo apt install gh jq unzip make ansible python3-pip -y
    sudo snap install yq
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
@@ -444,7 +444,8 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    
    ```bash
     cd /tmp
-    sudo wget https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.4813/image-builder/0.1.2/image-builder-v0.0.0-dev-build.4813-linux-amd64.tar.gz
+    LATEST_WEEKLY_RELEASE=$(gh release list --repo aws/eks-anywhere | grep Weekly | awk 'NR==1 {print $5}')
+    gh release download $LATEST_WEEKLY_RELEASE --pattern "image-builder*.tar.gz"
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
