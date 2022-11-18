@@ -2,7 +2,6 @@ package reconciler
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -84,9 +83,6 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 		w, err := docker.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
 		if err != nil {
 			return nil, err
-		}
-		for _, w := range w.WorkerObjects() {
-			fmt.Printf("%v \n", w.GetName())
 		}
 		return w.WorkerObjects(), nil
 	})

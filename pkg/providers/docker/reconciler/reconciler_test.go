@@ -52,7 +52,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "my-management-cluster"
 	tt.cluster.SetSelfManaged()
-	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 
@@ -129,11 +129,11 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.createAllObjs()
 
 	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildSpec())
-  
-  tt.Expect(err).NotTo(HaveOccurred())
+
+	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
-}  
+}
 
 func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
@@ -357,11 +357,6 @@ func (tt *reconcilerTest) cleanup() {
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
 	return reconciler.New(tt.client, tt.cniReconciler, tt.remoteClientRegistry)
-}
-
-func (tt *reconcilerTest) createAllObjs() {
-	tt.t.Helper()
-	envtest.CreateObjs(tt.ctx, tt.t, tt.client, tt.allObjs()...)
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {
