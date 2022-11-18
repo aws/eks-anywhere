@@ -8,7 +8,7 @@
 # Runs every morning at 1AM: We don't want people having to wait a whole week to get the stale label removed 
 # Docs: https://github.com/actions/stale
 
-name: 'Label and close stale issues and PRs'
+name: 'Stale Labeler and Closer'
 on:
   schedule:
     - cron: '0 1 * * *'
