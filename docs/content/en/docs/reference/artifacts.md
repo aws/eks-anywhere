@@ -54,13 +54,15 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-22`
+1.24 - `eksdRelease:kubernetes-1-24-eks-2`
+
+1.23 - `eksdRelease:kubernetes-1-23-eks-8`
 
 1.22 - `eksdRelease:kubernetes-1-22-eks-12`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-20`
+1.21 - `eksdRelease:kubernetes-1-21-eks-21`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-20`
+1.20 - `eksdRelease:kubernetes-1-20-eks-22`
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
