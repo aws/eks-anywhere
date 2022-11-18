@@ -31,7 +31,7 @@ jobs:
             Labeling as stale and closing in ${{ env.PR_CLOSE_AFTER_DAYS }} days if no further activity.
           stale-issue-label: 'stale'
           stale-pr-label: 'stale'
-          only-issue-labels: 'status/needsinfo,priority/p2' # Only checks issues that have these labels 
+          any-of-issue-labels: 'status/needinfo,priority/p2' # Only checks issues that have any of these labels 
 env:
   ISSUE_STALE_DAYS: 0
   ISSUE_CLOSE_AFTER_DAYS: 7
