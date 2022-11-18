@@ -31,5 +31,5 @@ jobs:
           stale-pr-label: 'stale'
           any-of-labels: 'external'
 env:
-  STALE_DAYS: 60
+  STALE_DAYS: 0
   CLOSE_AFTER_DAYS: 7
