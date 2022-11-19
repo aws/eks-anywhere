@@ -553,7 +553,7 @@ func TestSnowKubernetes123SimpleFlow(t *testing.T) {
 func TestNutanixKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu120Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
@@ -563,7 +563,7 @@ func TestNutanixKubernetes120SimpleFlow(t *testing.T) {
 func TestNutanixKubernetes121SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu121Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
@@ -573,7 +573,7 @@ func TestNutanixKubernetes121SimpleFlow(t *testing.T) {
 func TestNutanixKubernetes122SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
@@ -583,7 +583,7 @@ func TestNutanixKubernetes122SimpleFlow(t *testing.T) {
 func TestNutanixKubernetes123SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)

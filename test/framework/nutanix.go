@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -20,10 +21,9 @@ const (
 	nutanixMachineVCPUsPerSocket = "T_NUTANIX_MACHINE_VCPU_PER_SOCKET"
 	nutanixMachineVCPUSocket     = "T_NUTANIX_MACHINE_VCPU_SOCKET"
 
-	nutanixMachineTemplateImageName = "T_NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME"
-	nutanixPrismElementClusterName  = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
-	nutanixSSHAuthorizedKey         = "T_NUTANIX_SSH_AUTHORIZED_KEY"
-	nutanixSubnetName               = "T_NUTANIX_SUBNET_NAME"
+	nutanixPrismElementClusterName = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
+	nutanixSSHAuthorizedKey        = "T_NUTANIX_SSH_AUTHORIZED_KEY"
+	nutanixSubnetName              = "T_NUTANIX_SUBNET_NAME"
 
 	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
 	nutanixControlPlaneCidrVar    = "T_NUTANIX_CONTROL_PLANE_CIDR"
@@ -34,6 +34,7 @@ const (
 	nutanixTemplateUbuntu121Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_21"
 	nutanixTemplateUbuntu122Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_22"
 	nutanixTemplateUbuntu123Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_23"
+	nutanixTemplateUbuntu124Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_24"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -48,12 +49,15 @@ var requiredNutanixEnvVars = []string{
 	nutanixSystemDiskSize,
 	nutanixMachineVCPUsPerSocket,
 	nutanixMachineVCPUSocket,
-	nutanixMachineTemplateImageName,
 	nutanixPrismElementClusterName,
 	nutanixSSHAuthorizedKey,
 	nutanixSubnetName,
 	nutanixPodCidrVar,
 	nutanixServiceCidrVar,
+	nutanixTemplateUbuntu120Var,
+	nutanixTemplateUbuntu121Var,
+	nutanixTemplateUbuntu122Var,
+	nutanixTemplateUbuntu123Var,
 }
 
 type Nutanix struct {
@@ -81,7 +85,6 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 			api.WithNutanixStringFromEnvVar(nutanixSystemDiskSize, api.WithNutanixMachineSystemDiskSize),
 			api.WithNutanixInt32FromEnvVar(nutanixMachineVCPUsPerSocket, api.WithNutanixMachineVCPUsPerSocket),
 			api.WithNutanixInt32FromEnvVar(nutanixMachineVCPUSocket, api.WithNutanixMachineVCPUSocket),
-			api.WithNutanixStringFromEnvVar(nutanixMachineTemplateImageName, api.WithNutanixMachineTemplateImageName),
 			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterName, api.WithNutanixPrismElementClusterName),
 			api.WithNutanixStringFromEnvVar(nutanixSSHAuthorizedKey, api.WithNutanixSSHAuthorizedKey),
 			api.WithNutanixStringFromEnvVar(nutanixSubnetName, api.WithNutanixSubnetName),
@@ -152,6 +155,61 @@ func (s *Nutanix) customizeProviderConfig(file string, fillers ...api.NutanixFil
 func (s *Nutanix) WithProviderUpgrade(fillers ...api.NutanixFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ProviderConfigB = s.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+	}
+}
+
+// WithUbuntu120Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.20
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu120Nutanix() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu120Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithUbuntu121Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.21
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu121Nutanix() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu121Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithUbuntu122Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.22
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu122Nutanix() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu122Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithUbuntu123Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.23
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu123Nutanix() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu123Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithUbuntu124Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.24
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu124Nutanix() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu124Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
 	}
 }
 

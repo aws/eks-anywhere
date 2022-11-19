@@ -144,6 +144,15 @@ func WithNutanixMachineTemplateImageName(value string) NutanixFiller {
 	}
 }
 
+// WithOsFamilyForAllNutanixMachines sets the osFamily for all Nutanix machines to value.
+func WithOsFamilyForAllNutanixMachines(value anywherev1.OSFamily) NutanixFiller {
+	return func(config *NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.OSFamily = value
+		}
+	}
+}
+
 func WithNutanixSubnetName(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
