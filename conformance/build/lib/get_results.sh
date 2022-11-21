@@ -24,5 +24,5 @@ RESULTS_DIR=$(mktemp -d results.XXXXXX)
 RESULTS=$(./sonobuoy retrieve ${RESULTS_DIR})
 tar xzf $RESULTS -C ${RESULTS_DIR}
 mv ${RESULTS_DIR}/plugins/e2e/results/global/* ${TARGET_DIR}
-./sonobuoy e2e ${RESULTS}
+./sonobuoy results ${RESULTS}
 rm -rf ${RESULTS_DIR}
