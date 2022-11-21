@@ -10,6 +10,7 @@ import (
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -132,6 +133,10 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
 	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildSpec())
@@ -166,6 +171,18 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 			},
 		},
 	)
+}
+
+func TestReconcilerReconcileWorkersErrorGeneratingSpec(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	spec := tt.buildSpec()
+	// this will always return an error since objects are not registered in the scheme
+	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+
+	tt.Expect(
+		tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), spec),
+	).Error().To(MatchError(ContainSubstring("generating workers spec")))
 }
 
 func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
