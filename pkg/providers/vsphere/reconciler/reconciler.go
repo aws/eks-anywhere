@@ -98,6 +98,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	return controller.NewPhaseRunner().Register(
 		r.ValidateDatacenterConfig,
 		r.ValidateMachineConfigs,
+		clusters.CleanupStatusAfterValidate,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
