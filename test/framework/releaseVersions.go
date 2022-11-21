@@ -108,9 +108,13 @@ func GetReleaseBinaryFromVersion(version *semver.Version) (binaryPath string, er
 	var targetVersion *releasev1alpha1.EksARelease
 	for _, release := range releases.Spec.Releases {
 		releaseVersion := newVersion(release.Version)
-		if releaseVersion == version {
+		if releaseVersion.SamePatch(version) {
 			targetVersion = &release
+			break
 		}
+	}
+	if targetVersion == nil {
+		return "", fmt.Errorf("unable to find matching version in release manifest for %v", version)
 	}
 
 	binaryPath, err = getBinary(targetVersion)
@@ -123,7 +127,6 @@ func GetReleaseBinaryFromVersion(version *semver.Version) (binaryPath string, er
 
 func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
 	r := platformAwareRelease{release}
-
 	latestReleaseBinaryFolder := filepath.Join("bin", r.Version)
 	latestReleaseBinaryPath := filepath.Join(latestReleaseBinaryFolder, releaseBinaryName)
 
