@@ -28,7 +28,6 @@ sonobuoy:
 .PHONY: sonobuoy-run
 sonobuoy-run:
 	./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image k8s.gcr.io/conformance:$(K8S_VERSION)
-	build/lib/get_results.sh $(TARGET_DIR)
 
 .PHONY: sonobuoy-results
 sonobuoy-results:
