@@ -35,7 +35,7 @@ type SnowMachineConfigSpec struct {
 	InstanceType SnowInstanceType `json:"instanceType,omitempty"`
 
 	// PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
-	// Valid values: "SFP_PLUS" (default) and "QSFP"
+	// Valid values: "SFP_PLUS" (default) and "QSFP".
 	PhysicalNetworkConnector PhysicalNetworkConnectorType `json:"physicalNetworkConnector,omitempty"`
 
 	// SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
@@ -46,6 +46,10 @@ type SnowMachineConfigSpec struct {
 
 	// ContainersVolume provides the configuration options for the containers data storage volume.
 	ContainersVolume *snowv1.Volume `json:"containersVolume,omitempty"`
+
+	// OSFamily is the node instance OS.
+	// Valid values: "bottlerocket" (default) and "ubuntu".
+	OSFamily OSFamily `json:"osFamily,omitempty"`
 }
 
 func (s *SnowMachineConfig) SetManagedBy(clusterName string) {
@@ -56,7 +60,7 @@ func (s *SnowMachineConfig) SetManagedBy(clusterName string) {
 }
 
 func (s *SnowMachineConfig) OSFamily() OSFamily {
-	return ""
+	return s.Spec.OSFamily
 }
 
 // SnowMachineConfigStatus defines the observed state of SnowMachineConfig.
