@@ -336,7 +336,7 @@ func (c *ClusterManager) waitUntilControlPlaneAvailable(
 	}
 
 	logger.V(3).Info("Waiting for control plane to be available")
-	err := c.clusterClient.WaitForControlPlaneAvailable(
+	err := c.clusterClient.WaitForControlPlaneReady(
 		ctx,
 		managementCluster,
 		c.controlPlaneWaitTimeout.String(),
