@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -76,16 +76,15 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 }
 
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
-func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileWorkers")
 	log.Info("Applying worker CAPI objects")
-	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
-		w, err := docker.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
-		if err != nil {
-			return nil, err
-		}
-		return w.WorkerObjects(), nil
-	})
+	w, err := docker.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "generating workers spec")
+	}
+
+	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, spec.Cluster, clusters.ToWorkers(w))
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
