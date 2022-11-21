@@ -1698,7 +1698,7 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 1
 	g := NewWithT(t)
 	err := cNew.ValidateUpdate(cOld)
-	g.Expect(err).To(MatchError(ContainSubstring("upgrading self managed clusters is not supported")))
+	g.Expect(err).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
 }
 
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {

@@ -84,10 +84,6 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
 	}
 
-	if r.IsSelfManaged() && !r.IsReconcilePaused() && features.IsActive(features.FullLifecycleAPI()) && !r.Equal(oldCluster) {
-		return apierrors.NewBadRequest(fmt.Sprintf("upgrading self managed clusters is not supported: %s", r.Name))
-	}
-
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
