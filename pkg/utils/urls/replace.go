@@ -2,6 +2,7 @@ package urls
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 )
 
@@ -10,16 +11,44 @@ import (
 // If the provided original url is malformed, the are no guarantees
 // that the returned value will be valid
 // If host is empty, it will return the original URL.
-func ReplaceHost(orgURL, host string) string {
-	if host == "" {
+func ReplaceHost(orgURL, replace string) string {
+	if replace == "" {
 		return orgURL
 	}
 
-	u, _ := url.Parse(orgURL)
-	if u.Scheme == "" {
-		u, _ = url.Parse("oci://" + orgURL)
+	o := tryParse(orgURL)
+	if o == nil {
+		return orgURL
+	}
+
+	r := tryParse(replace)
+	if r == nil {
+		return orgURL
+	}
+
+	o.Host = r.Host
+
+	if r.Path != "" {
+		o.Path = filepath.Join(r.Path, o.Path)
+	}
+
+	if r.Scheme != "" {
+		o.Scheme = r.Scheme
+	}
+
+	return strings.TrimPrefix(o.String(), "//")
+}
+
+func tryParse(in string) *url.URL {
+	u, err := url.Parse(in)
+	if err != nil || u.Scheme == "" {
+		u, err = url.Parse("//" + in)
+		if err != nil {
+			return nil
+		}
+
 		u.Scheme = ""
 	}
-	u.Host = host
-	return strings.TrimPrefix(u.String(), "//")
+
+	return u
 }

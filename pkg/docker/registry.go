@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 // These constants are temporary since currently there is a limitation on harbor
@@ -107,11 +108,8 @@ func getUpdatedEndpoint(originalEndpoint, image string) string {
 
 // Replace original registries with the new endpoint from the registry mirror configuration.
 func getLocalImage(endpoint string, image string) string {
-	// Performing a string replacement instead of url replacement because the url parsing
-	// has an issue distinguishing between / and %2f when parsing the url
-	// Issue can be found here: https://github.com/golang/go/issues/10887.
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-	localImage := replacer.Replace(image)
+	localImage := urls.ReplaceHost(image, endpoint)
+	// Some images contain digest reference on them.
 	return removeDigestReference(localImage)
 }
 
