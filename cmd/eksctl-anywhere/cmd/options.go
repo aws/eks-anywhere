@@ -26,6 +26,7 @@ type timeoutOptions struct {
 	cpWaitTimeout           string
 	externalEtcdWaitTimeout string
 	perMachineWaitTimeout   string
+	unhealthyMachineTimeout string
 }
 
 func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
@@ -37,6 +38,9 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 
 	flagSet.StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout (10m)/per machine ")
 	markFlagHidden(flagSet, perMachineWaitTimeoutFlag)
+
+	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, clustermanager.DefaultUnhealthyMachineTimeout.String(), "Override the default unhealthy machine timeout (5m) ")
+	markFlagHidden(flagSet, unhealthyMachineTimeoutFlag)
 }
 
 func buildClusterManagerOpts(t timeoutOptions) ([]clustermanager.ClusterManagerOpt, error) {
@@ -55,10 +59,16 @@ func buildClusterManagerOpts(t timeoutOptions) ([]clustermanager.ClusterManagerO
 		return nil, fmt.Errorf(timeoutErrorTemplate, perMachineWaitTimeoutFlag, err)
 	}
 
+	unhealthyMachineTimeout, err := time.ParseDuration(t.unhealthyMachineTimeout)
+	if err != nil {
+		return nil, fmt.Errorf(timeoutErrorTemplate, unhealthyMachineTimeoutFlag, err)
+	}
+
 	return []clustermanager.ClusterManagerOpt{
 		clustermanager.WithControlPlaneWaitTimeout(cpWaitTimeout),
 		clustermanager.WithExternalEtcdWaitTimeout(externalEtcdWaitTimeout),
 		clustermanager.WithMachineMaxWait(perMachineWaitTimeout),
+		clustermanager.WithUnhealthyMachineTimeout(unhealthyMachineTimeout),
 	}, nil
 }
 

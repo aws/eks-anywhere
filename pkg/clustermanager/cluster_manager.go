@@ -39,18 +39,23 @@ import (
 )
 
 const (
-	maxRetries                = 30
-	defaultBackOffPeriod      = 5 * time.Second
-	machineBackoff            = 1 * time.Second
-	defaultMachinesMinWait    = 30 * time.Minute
-	moveCAPIWait              = 15 * time.Minute
-	DefaultMaxWaitPerMachine  = 10 * time.Minute
-	clusterWaitStr            = "60m"
+	maxRetries             = 30
+	defaultBackOffPeriod   = 5 * time.Second
+	machineBackoff         = 1 * time.Second
+	defaultMachinesMinWait = 30 * time.Minute
+	moveCAPIWait           = 15 * time.Minute
+	// DefaultMaxWaitPerMachine is the default max time the cluster manager will wait per a machine.
+	DefaultMaxWaitPerMachine = 10 * time.Minute
+	clusterWaitStr           = "60m"
+	// DefaultControlPlaneWait is the default time the cluster manager will wait for the control plane to be ready.
 	DefaultControlPlaneWait   = 60 * time.Minute
 	deploymentWaitStr         = "30m"
 	controlPlaneInProgressStr = "1m"
 	etcdInProgressStr         = "1m"
-	DefaultEtcdWait           = 60 * time.Minute
+	// DefaultEtcdWait is the default time the cluster manager will wait for ectd to be ready.
+	DefaultEtcdWait = 60 * time.Minute
+	// DefaultUnhealthyMachineTimeout is the default timeout for an unhealthy machine health check.
+	DefaultUnhealthyMachineTimeout = 5 * time.Minute
 )
 
 var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
@@ -68,6 +73,7 @@ type ClusterManager struct {
 	awsIamAuth              AwsIamAuth
 	controlPlaneWaitTimeout time.Duration
 	externalEtcdWaitTimeout time.Duration
+	unhealthyMachineTimeout time.Duration
 }
 
 type ClusterClient interface {
@@ -149,6 +155,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		awsIamAuth:              awsIamAuth,
 		controlPlaneWaitTimeout: DefaultControlPlaneWait,
 		externalEtcdWaitTimeout: DefaultEtcdWait,
+		unhealthyMachineTimeout: DefaultUnhealthyMachineTimeout,
 	}
 
 	for _, o := range opts {
@@ -185,6 +192,13 @@ func WithMachineMaxWait(machineMaxWait time.Duration) ClusterManagerOpt {
 func WithMachineMinWait(machineMinWait time.Duration) ClusterManagerOpt {
 	return func(c *ClusterManager) {
 		c.machinesMinWait = machineMinWait
+	}
+}
+
+// WithUnhealthyMachineTimeout sets the timeout of an unhealthy machine health check.
+func WithUnhealthyMachineTimeout(timeout time.Duration) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.unhealthyMachineTimeout = timeout
 	}
 }
 
@@ -663,7 +677,7 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 }
 
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
-	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
+	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec, c.unhealthyMachineTimeout)...)
 	if err != nil {
 		return err
 	}
