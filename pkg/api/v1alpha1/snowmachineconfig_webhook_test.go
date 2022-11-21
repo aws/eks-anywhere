@@ -25,6 +25,7 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 	sOld := snowMachineConfig()
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.Devices = []string{"1.2.3.4"}
+	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
 
 	g.Expect(sOld.ValidateCreate()).To(Succeed())
 }
@@ -45,6 +46,7 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 	sOld.Spec.AMIID = "testAMI"
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.Devices = []string{"1.2.3.4"}
+	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
 
 	g.Expect(sOld.ValidateCreate()).To(Succeed())
 }
@@ -57,6 +59,7 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	sNew.Spec.AMIID = "testAMI"
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
 	sNew.Spec.Devices = []string{"1.2.3.4"}
+	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
 	g.Expect(sNew.ValidateUpdate(&sOld)).To(Succeed())
 }
@@ -68,6 +71,7 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
 	g.Expect(sNew.ValidateUpdate(&sOld)).NotTo(Succeed())
 }

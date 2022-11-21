@@ -61,6 +61,10 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return errors.New("SnowMachineConfig Devices must contain at least one device IP")
 	}
 
+	if config.Spec.OSFamily != Bottlerocket && config.Spec.OSFamily != Ubuntu {
+		return fmt.Errorf("SnowMachineConfig OSFamily %s is not supported, please use one of the following: %s, %s", config.Spec.OSFamily, Bottlerocket, Ubuntu)
+	}
+
 	return nil
 }
 
@@ -73,5 +77,10 @@ func setSnowMachineConfigDefaults(config *SnowMachineConfig) {
 	if config.Spec.PhysicalNetworkConnector == "" {
 		config.Spec.PhysicalNetworkConnector = DefaultSnowPhysicalNetworkConnectorType
 		logger.V(1).Info("SnowMachineConfig PhysicalNetworkConnector is empty. Using default", "default physical network connector", DefaultSnowPhysicalNetworkConnectorType)
+	}
+
+	if config.Spec.OSFamily == "" {
+		config.Spec.OSFamily = Bottlerocket
+		logger.V(1).Info("SnowMachineConfig OSFamily is empty. Using default", "default os family", Bottlerocket)
 	}
 }

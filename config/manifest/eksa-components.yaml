@@ -4761,10 +4761,14 @@ spec:
                   values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge"
                   and "sbe-c.4xlarge".'
                 type: string
+              osFamily:
+                description: 'OSFamily is the node instance OS. Valid values: "bottlerocket"
+                  (default) and "ubuntu".'
+                type: string
               physicalNetworkConnector:
                 description: 'PhysicalNetworkConnector is the physical network connector
                   type to use for creating direct network interfaces (DNI). Valid
-                  values: "SFP_PLUS" (default) and "QSFP"'
+                  values: "SFP_PLUS" (default) and "QSFP".'
                 type: string
               sshKeyName:
                 description: SSHKeyName is the name of the ssh key defined in the

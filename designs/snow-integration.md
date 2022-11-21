@@ -63,6 +63,10 @@ type SnowMachineConfigSpec struct {
 	// ContainersVolume provides the configuration options for the containers data storage volume.
 	ContainersVolume *snowv1.Volume `json:"containersVolume,omitempty"`
 
+	// OSFamily is the node instance OS.
+	// Valid values: "bottlerocket" (default) and "ubuntu".
+	OSFamily OSFamily `json:"osFamily,omitempty"`
+
 }
 ```
 

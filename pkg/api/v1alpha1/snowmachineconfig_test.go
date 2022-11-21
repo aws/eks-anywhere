@@ -24,6 +24,7 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             DefaultSnowInstanceType,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					OSFamily:                 Bottlerocket,
 				},
 			},
 		},
@@ -38,6 +39,7 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             "instance-type-1",
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					OSFamily:                 Bottlerocket,
 				},
 			},
 		},
@@ -53,6 +55,7 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 					SshKeyName:               "ssh-name",
 					InstanceType:             DefaultSnowInstanceType,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					OSFamily:                 Bottlerocket,
 				},
 			},
 		},
@@ -67,6 +70,22 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					PhysicalNetworkConnector: "network-1",
 					InstanceType:             DefaultSnowInstanceType,
+					OSFamily:                 Bottlerocket,
+				},
+			},
+		},
+		{
+			name: "os family exists",
+			before: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					OSFamily: "ubuntu",
+				},
+			},
+			after: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					InstanceType:             DefaultSnowInstanceType,
+					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					OSFamily:                 Ubuntu,
 				},
 			},
 		},
@@ -87,12 +106,13 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name: "valid config with amiID, instance type, devices",
+			name: "valid config with amiID, instance type, devices, osFamily",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Bottlerocket,
 				},
 			},
 			wantErr: "",
@@ -103,6 +123,7 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Ubuntu,
 				},
 			},
 			wantErr: "",
@@ -114,6 +135,7 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					AMIID:        "ami-1",
 					InstanceType: "invalid-instance-type",
 					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Bottlerocket,
 				},
 			},
 			wantErr: "InstanceType invalid-instance-type is not supported",
@@ -124,6 +146,7 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
+					OSFamily:     Bottlerocket,
 				},
 			},
 			wantErr: "Devices must contain at least one device IP",
@@ -138,9 +161,22 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					ContainersVolume: &snowv1.Volume{
 						Size: 7,
 					},
+					OSFamily: Bottlerocket,
 				},
 			},
 			wantErr: "ContainersVolume.Size must be no smaller than 8 Gi",
+		},
+		{
+			name: "invalid os family",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					OSFamily:     "invalidOS",
+				},
+			},
+			wantErr: "SnowMachineConfig OSFamily invalidOS is not supported",
 		},
 	}
 	for _, tt := range tests {
