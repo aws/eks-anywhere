@@ -156,9 +156,6 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		}
 		resources = append(resources, r...)
 	case anywherev1.NutanixDatacenterKind:
-		if !features.IsActive(features.NutanixProvider()) {
-			return fmt.Errorf("nutanix provider is not supported in eks-a controller")
-		}
 		dcConf := &anywherev1.NutanixDatacenterConfig{}
 		if err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, dcConf); err != nil {
 			return err

@@ -147,7 +147,6 @@ func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementClus
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	logger.Info("Warning: The nutanix infrastructure provider is still in development and should not be used in production")
 	if err := setupEnvVars(clusterSpec.NutanixDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
