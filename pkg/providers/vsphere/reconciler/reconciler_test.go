@@ -44,6 +44,8 @@ const (
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	// We want to check that the cluster status is cleaned up if validations are passed
+	tt.cluster.Status.FailureMessage = ptr.String("invalid cluster")
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
@@ -69,6 +71,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
