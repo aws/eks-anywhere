@@ -13,7 +13,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
