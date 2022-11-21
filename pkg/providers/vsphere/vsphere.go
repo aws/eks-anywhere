@@ -75,7 +75,6 @@ type vsphereProvider struct {
 	templateBuilder       *VsphereTemplateBuilder
 	skipIPCheck           bool
 	csiEnabled            bool
-	resourceSetManager    ClusterResourceSetManager
 	Retrier               *retrier.Retrier
 	validator             *Validator
 	defaulter             *Defaulter
@@ -136,11 +135,7 @@ type ProviderKubectlClient interface {
 	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error
 }
 
-type ClusterResourceSetManager interface {
-	ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error
-}
-
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider { //nolint:revive
+func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	netClient := &networkutils.DefaultNetClient{}
@@ -160,12 +155,11 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConf
 		netClient,
 		now,
 		skipIpCheck,
-		resourceSetManager,
 		v,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider { //nolint:revive
+func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, v *Validator) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
@@ -179,7 +173,6 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, cl
 		),
 		skipIPCheck:        skipIpCheck,
 		csiEnabled:         !datacenterConfig.Spec.DisableCSI,
-		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
 		validator:          v,
 		defaulter:          NewDefaulter(providerGovcClient),
@@ -966,26 +959,13 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 	}
 }
 
-func (p *vsphereProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
-	// Use retrier so that cluster upgrade does not fail due to any intermittent failure while connecting to kube-api server
+func (p *vsphereProvider) RunPostControlPlaneUpgrade(_ context.Context, _ *cluster.Spec, _ *cluster.Spec, _ *types.Cluster, _ *types.Cluster) error {
 
-	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
-	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
-	// The long term solution is to add this capability to the cluster-api controller,
-	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
-	err := p.Retrier.Retry(
-		func() error {
-			return p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed updating the vsphere provider resource set post upgrade: %v", err)
-	}
 	return nil
 }
 
 func resourceSetName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-crs-0", clusterSpec.Cluster.Name)
+	return fmt.Sprintf("%s-cpi-csi", clusterSpec.Cluster.Name)
 }
 
 func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
