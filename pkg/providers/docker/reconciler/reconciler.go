@@ -2,11 +2,13 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -61,8 +63,29 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 
 // ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
 // to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	return controller.Result{}, nil
+func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
+	log = log.WithValues("provider", "docker", "reconcile type", "workers")
+	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
+	if err != nil {
+		return controller.Result{}, fmt.Errorf("Failed to construct cluster Spec: %v", err)
+	}
+
+	return controller.NewPhaseRunner().Register(
+		r.ReconcileWorkers,
+	).Run(ctx, log, clusterSpec)
+}
+
+// ReconcileWorkers applies the worker CAPI objects to the cluster.
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileWorkers")
+	log.Info("Applying worker CAPI objects")
+	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
+		w, err := docker.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
+		if err != nil {
+			return nil, err
+		}
+		return w.WorkerObjects(), nil
+	})
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
