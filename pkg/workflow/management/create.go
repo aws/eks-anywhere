@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/workflow"
 	"github.com/aws/eks-anywhere/pkg/workflow/task/bootstrap"
 	"github.com/aws/eks-anywhere/pkg/workflow/task/workload"
@@ -42,6 +43,9 @@ type CreateCluster struct {
 
 	// CNIInstaller installs a CNI in a Kubernetes cluster
 	CNIInstaller workload.CNIInstaller
+
+	// FS is a file system abstraction used to write files.
+	FS filewriter.FileWriter
 
 	// hookRegistrars are data structures that wish to bind runtime hooks to the workflow.
 	// They should be added via the WithHookRegistrar method.
@@ -83,6 +87,7 @@ func (c CreateCluster) build() (*workflow.Workflow, error) {
 	err = wflw.AppendTask(CreateWorkloadCluster, workload.Create{
 		Cluster: c.Cluster,
 		CNI:     c.CNIInstaller,
+		FS:      c.FS,
 	})
 	if err != nil {
 		return nil, err
