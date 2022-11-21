@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -618,7 +617,7 @@ func (p *Provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, cu
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return p.kubectlClient.SetEksaControllerEnvVar(ctx, features.NutanixProviderEnvVar, "true", kubeconfigFile)
+	return nil
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {

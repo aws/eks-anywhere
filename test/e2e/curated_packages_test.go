@@ -536,7 +536,6 @@ func TestCPackagesNutanixKubernetes121SimpleFlow(t *testing.T) {
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -548,7 +547,6 @@ func TestCPackagesNutanixKubernetes122SimpleFlow(t *testing.T) {
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -560,7 +558,6 @@ func TestCPackagesNutanixKubernetes123SimpleFlow(t *testing.T) {
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }

@@ -519,7 +519,6 @@ func TestNutanixKubernetes121SimpleFlow(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu121Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -529,7 +528,6 @@ func TestNutanixKubernetes122SimpleFlow(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -539,7 +537,6 @@ func TestNutanixKubernetes123SimpleFlow(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
