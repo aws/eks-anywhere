@@ -363,7 +363,10 @@ func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
 		return false
 	}
 
-	return n.Pods.Equal(&o.Pods) && n.Services.Equal(&o.Services) && n.DNS.Equal(&o.DNS)
+	return n.Pods.Equal(&o.Pods) &&
+		n.Services.Equal(&o.Services) &&
+		n.DNS.Equal(&o.DNS) &&
+		n.Nodes.Equal(o.Nodes)
 }
 
 func getCNIConfig(cn *ClusterNetwork) *CNIConfig {
@@ -551,6 +554,25 @@ type ResolvConf struct {
 type Nodes struct {
 	// CIDRMaskSize defines the mask size for node cidr in the cluster, default for ipv4 is 24. This is an optional field
 	CIDRMaskSize *int `json:"cidrMaskSize,omitempty"`
+}
+
+// Equal compares two Nodes definitions and return true if the are equivalent.
+func (n *Nodes) Equal(o *Nodes) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+
+	if n.CIDRMaskSize == o.CIDRMaskSize {
+		return true
+	}
+	if n.CIDRMaskSize == nil || o.CIDRMaskSize == nil {
+		return false
+	}
+
+	return *n.CIDRMaskSize == *o.CIDRMaskSize
 }
 
 func (n *ResolvConf) Equal(o *ResolvConf) bool {
