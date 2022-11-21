@@ -12,6 +12,7 @@ weight: 35
 ### Fixed
 - Fix authenticated registry mirror validations
 - Fix capc bug causing orphaned VM's in slow environments
+- Bundle activation problem for pacakge controller
 
 ## [v0.12.1](https://github.com/aws/eks-anywhere/releases/tag/v0.12.1)
 
