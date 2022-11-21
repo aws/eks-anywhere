@@ -11,6 +11,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 // Validator is a client to validate nutanix resources.
@@ -29,6 +30,9 @@ func NewValidator(client Client, certValidator crypto.TlsValidator) *Validator {
 
 // ValidateDatacenterConfig validates the datacenter config.
 func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywherev1.NutanixDatacenterConfig) error {
+	if config.Spec.Insecure {
+		logger.Info("WARNING: Skipping TLS validation for insecure connection; this is not recommended for production use")
+	}
 	return v.validateTrustBundleConfig(config.Spec)
 }
 
