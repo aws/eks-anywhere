@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -46,6 +47,7 @@ type snowTest struct {
 	provider         *snow.SnowProvider
 	cluster          *types.Cluster
 	clusterSpec      *cluster.Spec
+	logger           logr.Logger
 }
 
 func newSnowTest(t *testing.T) snowTest {
@@ -67,6 +69,7 @@ func newSnowTest(t *testing.T) snowTest {
 		provider:         provider,
 		cluster:          cluster,
 		clusterSpec:      givenClusterSpec(),
+		logger:           test.NewNullLogger(),
 	}
 }
 
@@ -135,6 +138,9 @@ func givenClusterSpec() *cluster.Spec {
 					Repository: "public.ecr.aws/eks-distro/etcd-io",
 					Tag:        "v3.4.16-eks-1-21-9",
 				},
+				Pause: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+				},
 			},
 			VersionsBundle: &releasev1alpha1.VersionsBundle{
 				KubeVersion: "1.21",
@@ -155,6 +161,11 @@ func givenClusterSpec() *cluster.Spec {
 						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
 						Description: "Container image for cluster-api-snow-controller image",
 						Arch:        []string{"amd64"},
+					},
+				},
+				BottleRocketBootstrap: releasev1alpha1.BottlerocketBootstrapBundle{
+					Bootstrap: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
 					},
 				},
 			},
@@ -204,6 +215,7 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 					"1.2.3.4",
 					"1.2.3.5",
 				},
+				OSFamily: v1alpha1.Ubuntu,
 			},
 		},
 		"test-wn": {
@@ -223,6 +235,7 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 					"1.2.3.4",
 					"1.2.3.5",
 				},
+				OSFamily: v1alpha1.Ubuntu,
 			},
 		},
 	}

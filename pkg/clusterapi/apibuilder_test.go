@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type apiBuilerTest struct {
@@ -87,12 +88,33 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 				KubernetesVersion: "1.21",
 			},
 		}
-		s.VersionsBundle.KubeDistro.Kubernetes.Repository = "public.ecr.aws/eks-distro/kubernetes"
-		s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.21.5-eks-1-21-9"
-		s.VersionsBundle.KubeDistro.CoreDNS.Repository = "public.ecr.aws/eks-distro/coredns"
-		s.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.4-eks-1-21-9"
-		s.VersionsBundle.KubeDistro.Etcd.Repository = "public.ecr.aws/eks-distro/etcd-io"
-		s.VersionsBundle.KubeDistro.Etcd.Tag = "v3.4.16-eks-1-21-9"
+
+		s.VersionsBundle = &cluster.VersionsBundle{
+			KubeDistro: &cluster.KubeDistro{
+				Kubernetes: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/kubernetes",
+					Tag:        "v1.21.5-eks-1-21-9",
+				},
+				CoreDNS: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/coredns",
+					Tag:        "v1.8.4-eks-1-21-9",
+				},
+				Etcd: cluster.VersionedRepository{
+					Repository: "public.ecr.aws/eks-distro/etcd-io",
+					Tag:        "v3.4.16-eks-1-21-9",
+				},
+				Pause: v1alpha1.Image{
+					URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+				},
+			},
+			VersionsBundle: &v1alpha1.VersionsBundle{
+				BottleRocketBootstrap: v1alpha1.BottlerocketBootstrapBundle{
+					Bootstrap: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+					},
+				},
+			},
+		}
 	})
 
 	controlPlane := &controlplanev1.KubeadmControlPlane{

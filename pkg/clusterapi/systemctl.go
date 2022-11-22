@@ -16,30 +16,34 @@ var restartContainerdCommands = []string{
 	"sudo systemctl restart containerd",
 }
 
-func CreateContainerdConfigFileInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, cluster v1alpha1.ClusterSpec) {
-	if cluster.RegistryMirrorConfiguration != nil {
+// CreateContainerdConfigFileInKubeadmControlPlane adds the prekubeadm command to create containerd config file in kubeadmControlPlane if registry mirror config exists.
+func CreateContainerdConfigFileInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, cluster *v1alpha1.Cluster) {
+	if cluster.Spec.RegistryMirrorConfiguration != nil {
 		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, buildContainerdConfigCommands...)
 	}
 }
 
-func CreateContainerdConfigFileInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, cluster v1alpha1.ClusterSpec) {
-	if cluster.RegistryMirrorConfiguration != nil {
+// CreateContainerdConfigFileInKubeadmConfigTemplate adds the prekubeadm command to create containerd config file in kubeadmConfigTemplate if registry mirror config exists.
+func CreateContainerdConfigFileInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) {
+	if cluster.Spec.RegistryMirrorConfiguration != nil {
 		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, buildContainerdConfigCommands...)
 	}
 }
 
-func RestartContainerdInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, cluster v1alpha1.ClusterSpec) {
+// RestartContainerdInKubeadmControlPlane adds the prekubeadm command to restart containerd daemon in kubeadmControlPlane if registry mirror or proxy config exists.
+func RestartContainerdInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, cluster *v1alpha1.Cluster) {
 	if restartContainerdNeeded(cluster) {
 		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, restartContainerdCommands...)
 	}
 }
 
-func RestartContainerdInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, cluster v1alpha1.ClusterSpec) {
+// RestartContainerdInKubeadmConfigTemplate adds the prekubeadm command to restart containerd daemon in kubeadmConfigTemplate if registry mirror or proxy config exists.
+func RestartContainerdInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) {
 	if restartContainerdNeeded(cluster) {
 		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, restartContainerdCommands...)
 	}
 }
 
-func restartContainerdNeeded(cluster v1alpha1.ClusterSpec) bool {
-	return cluster.RegistryMirrorConfiguration != nil || cluster.ProxyConfiguration != nil
+func restartContainerdNeeded(cluster *v1alpha1.Cluster) bool {
+	return cluster.Spec.RegistryMirrorConfiguration != nil || cluster.Spec.ProxyConfiguration != nil
 }

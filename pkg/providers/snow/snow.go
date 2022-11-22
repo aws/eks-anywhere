@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -42,6 +43,7 @@ type SnowProvider struct {
 	retrier          *retrier.Retrier
 	configManager    *ConfigManager
 	skipIpCheck      bool
+	log              logr.Logger
 }
 
 type KubeUnAuthClient interface {
@@ -57,6 +59,7 @@ func NewProvider(kubeUnAuthClient KubeUnAuthClient, configManager *ConfigManager
 		retrier:          retrier,
 		configManager:    configManager,
 		skipIpCheck:      skipIpCheck,
+		log:              logger.Get(),
 	}
 }
 
@@ -99,8 +102,9 @@ func (p *SnowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
-func CAPIObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneObjs, err := ControlPlaneObjects(ctx, clusterSpec, kubeClient)
+// CAPIObjects generates the control plane and worker nodes objects for snow provider from clusterSpec.
+func CAPIObjects(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneObjs, err := ControlPlaneObjects(ctx, log, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -110,7 +114,7 @@ func CAPIObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kube
 		return nil, nil, err
 	}
 
-	workersObjs, err := WorkersObjects(ctx, clusterSpec, kubeClient)
+	workersObjs, err := WorkersObjects(ctx, log, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -134,7 +138,7 @@ func kubernetesToRuntimeObjects(objs []kubernetes.Object) []runtime.Object {
 
 func (p *SnowProvider) generateCAPISpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	kubeconfigClient := p.kubeUnAuthClient.KubeconfigClient(cluster.KubeconfigFile)
-	return CAPIObjects(ctx, clusterSpec, kubeconfigClient)
+	return CAPIObjects(ctx, p.log, clusterSpec, kubeconfigClient)
 }
 
 func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {

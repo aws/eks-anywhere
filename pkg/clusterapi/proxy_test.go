@@ -11,9 +11,10 @@ import (
 )
 
 var proxyTests = []struct {
-	name      string
-	proxy     *v1alpha1.ProxyConfiguration
-	wantFiles []bootstrapv1.File
+	name            string
+	proxy           *v1alpha1.ProxyConfiguration
+	wantFiles       []bootstrapv1.File
+	wantProxyConfig bootstrapv1.ProxyConfiguration
 }{
 	{
 		name:      "proxy config nil",
@@ -40,16 +41,44 @@ Environment="HTTPS_PROXY=1.2.3.4:8888"
 Environment="NO_PROXY=1.2.3.4/5,1.2.3.4/5,1.2.3.4/0,1.2.3.5/0,localhost,127.0.0.1,.svc,1.2.3.4"`,
 			},
 		},
+		wantProxyConfig: bootstrapv1.ProxyConfiguration{
+			HTTPSProxy: "1.2.3.4:8888",
+			NoProxy: []string{
+				"1.2.3.4/5",
+				"1.2.3.4/5",
+				"1.2.3.4/0",
+				"1.2.3.5/0",
+				"localhost",
+				"127.0.0.1",
+				".svc",
+				"1.2.3.4",
+			},
+		},
 	},
 }
 
-func TestSetProxyConfigInKubeadmControlPlane(t *testing.T) {
+func TestSetProxyConfigInKubeadmControlPlaneBottlerocket(t *testing.T) {
 	for _, tt := range proxyTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			got := wantKubeadmControlPlane()
 			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
-			g.Expect(clusterapi.SetProxyConfigInKubeadmControlPlane(got, g.clusterSpec.Cluster.Spec)).To(Succeed())
+			clusterapi.SetProxyConfigInKubeadmControlPlaneForBottlerocket(got, g.clusterSpec.Cluster)
+			want := wantKubeadmControlPlane()
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Proxy = tt.wantProxyConfig
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.Proxy = tt.wantProxyConfig
+			g.Expect(got).To(Equal(want))
+		})
+	}
+}
+
+func TestSetProxyConfigInKubeadmControlPlaneUbuntu(t *testing.T) {
+	for _, tt := range proxyTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			got := wantKubeadmControlPlane()
+			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
+			g.Expect(clusterapi.SetProxyConfigInKubeadmControlPlaneForUbuntu(got, g.clusterSpec.Cluster)).To(Succeed())
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
 			g.Expect(got).To(Equal(want))
@@ -57,13 +86,27 @@ func TestSetProxyConfigInKubeadmControlPlane(t *testing.T) {
 	}
 }
 
-func TestSetProxyConfigInKubeadmConfigTemplate(t *testing.T) {
+func TestSetProxyConfigInKubeadmConfigTemplateBottlerocket(t *testing.T) {
 	for _, tt := range proxyTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			got := wantKubeadmConfigTemplate()
 			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
-			g.Expect(clusterapi.SetProxyConfigInKubeadmConfigTemplate(got, g.clusterSpec.Cluster.Spec)).To(Succeed())
+			clusterapi.SetProxyConfigInKubeadmConfigTemplateForBottlerocket(got, g.clusterSpec.Cluster)
+			want := wantKubeadmConfigTemplate()
+			want.Spec.Template.Spec.JoinConfiguration.Proxy = tt.wantProxyConfig
+			g.Expect(got).To(Equal(want))
+		})
+	}
+}
+
+func TestSetProxyConfigInKubeadmConfigTemplateUbuntu(t *testing.T) {
+	for _, tt := range proxyTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			got := wantKubeadmConfigTemplate()
+			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
+			g.Expect(clusterapi.SetProxyConfigInKubeadmConfigTemplateForUbuntu(got, g.clusterSpec.Cluster)).To(Succeed())
 			want := wantKubeadmConfigTemplate()
 			want.Spec.Template.Spec.Files = tt.wantFiles
 			g.Expect(got).To(Equal(want))
