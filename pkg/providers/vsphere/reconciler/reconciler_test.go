@@ -44,6 +44,8 @@ const (
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	// We want to check that the cluster status is cleaned up if validations are passed
+	tt.cluster.Status.FailureMessage = ptr.String("invalid cluster")
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
@@ -69,6 +71,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
@@ -172,6 +176,10 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
 	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildSpec())
@@ -259,7 +267,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 
 	crs := &addonsv1.ClusterResourceSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workload-cluster-crs-0",
+			Name:      "workload-cluster-cpi-csi",
 			Namespace: "eksa-system",
 		},
 	}

@@ -6,12 +6,17 @@ weight: 35
 
 ## Unreleased
 
-### Added
-- Add support for Kubernetes 1.24 [#3491  ](https://github.com/aws/eks-anywhere/issues/3491)
 
-### Changed
+
+## [v0.12.2](https://github.com/aws/eks-anywhere/releases/tag/v0.12.2)
+
+### Added
+- Add support for Kubernetes 1.24 (CloudStack support to come in future releases)[#3491](https://github.com/aws/eks-anywhere/issues/3491)
 
 ### Fixed
+- Fix authenticated registry mirror validations
+- Fix capc bug causing orphaned VM's in slow environments
+- Bundle activation problem for pacakge controller
 
 ## [v0.12.1](https://github.com/aws/eks-anywhere/releases/tag/v0.12.1)
 

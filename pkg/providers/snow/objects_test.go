@@ -262,7 +262,7 @@ func TestWorkersObjects(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{md, wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsFromBetaMachineTemplateName(t *testing.T) {
@@ -321,7 +321,7 @@ func TestWorkersObjectsFromBetaMachineTemplateName(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{md, kct, mt}))
+	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, kct, mt}))
 }
 
 func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
@@ -338,7 +338,7 @@ func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsOldKubeadmConfigTemplateNotExists(t *testing.T) {
@@ -376,7 +376,7 @@ func TestWorkersObjectsOldKubeadmConfigTemplateNotExists(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
@@ -417,7 +417,7 @@ func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsTaintsUpdated(t *testing.T) {
@@ -476,7 +476,7 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 	mt.SetName("snow-test-md-0-2")
 
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{md, kct, mt}))
+	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, kct, mt}))
 }
 
 func TestWorkersObjectsLabelsUpdated(t *testing.T) {
@@ -540,7 +540,7 @@ func TestWorkersObjectsLabelsUpdated(t *testing.T) {
 	mt.SetName("snow-test-md-0-2")
 
 	g.Expect(err).To(Succeed())
-	g.Expect(got[1]).To(Equal(kct))
+	g.Expect(got).To(ContainElement(kct))
 }
 
 func TestWorkersObjectsGetMachineDeploymentError(t *testing.T) {

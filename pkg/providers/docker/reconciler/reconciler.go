@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -44,8 +45,26 @@ func New(client client.Client, cniReconciler CNIReconciler, remoteClientRegistry
 }
 
 // Reconcile brings the cluster to the desired state for the docker provider.
-func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	return controller.Result{}, nil
+func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
+	log = log.WithValues("provider", "docker")
+	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return controller.NewPhaseRunner().Register(
+		r.ReconcileControlPlane,
+		r.CheckControlPlaneReady,
+		r.ReconcileCNI,
+		r.ReconcileWorkers,
+	).Run(ctx, log, clusterSpec)
+}
+
+// CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
+// Requeues with the appropriate wait times whenever the cluster is not ready yet.
+func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "checkControlPlaneReady")
+	return clusters.CheckControlPlaneReady(ctx, r.client, log, spec.Cluster)
 }
 
 // ReconcileCNI takes the Cilium CNI in a cluster to the desired state defined in a cluster spec.
@@ -61,8 +80,28 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 
 // ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
 // to the desired state.
-func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	return controller.Result{}, nil
+func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
+	log = log.WithValues("provider", "docker", "reconcile type", "workers")
+	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
+	}
+
+	return controller.NewPhaseRunner().Register(
+		r.ReconcileWorkers,
+	).Run(ctx, log, clusterSpec)
+}
+
+// ReconcileWorkers applies the worker CAPI objects to the cluster.
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileWorkers")
+	log.Info("Applying worker CAPI objects")
+	w, err := docker.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "generating workers spec")
+	}
+
+	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, spec.Cluster, clusters.ToWorkers(w))
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.

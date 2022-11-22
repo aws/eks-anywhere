@@ -227,14 +227,21 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 	commandContext.WorkloadCluster = workloadCluster
 
-	if err = commandContext.ClusterManager.RunPostCreateWorkloadCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec); err != nil {
+	logger.Info("Installing networking on workload cluster")
+	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec, commandContext.Provider)
+	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
-	logger.Info("Installing networking on workload cluster")
-	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec, commandContext.Provider)
+	logger.V(4).Info("Installing machine health checks on bootstrap cluster")
+	err = commandContext.ClusterManager.InstallMachineHealthChecks(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
 	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
+	if err = commandContext.ClusterManager.RunPostCreateWorkloadCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
@@ -275,13 +282,6 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
 		}
-	}
-
-	logger.V(4).Info("Installing machine health checks on bootstrap cluster")
-	err = commandContext.ClusterManager.InstallMachineHealthChecks(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
 	}
 
 	return &InstallResourcesOnManagementTask{}

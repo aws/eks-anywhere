@@ -4,11 +4,17 @@ import (
 	"context"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
+)
+
+const (
+	ciliumConfigMapName   = "cilium-config"
+	ciliumConfigNamespace = "kube-system"
 )
 
 func getInstallation(ctx context.Context, client client.Client) (*cilium.Installation, error) {
@@ -22,9 +28,15 @@ func getInstallation(ctx context.Context, client client.Client) (*cilium.Install
 		return nil, err
 	}
 
+	cm, err := getConfigMap(ctx, client, ciliumConfigMapName, ciliumConfigNamespace)
+	if err != nil {
+		return nil, err
+	}
+
 	return &cilium.Installation{
 		DaemonSet: ds,
 		Operator:  operator,
+		ConfigMap: cm,
 	}, nil
 }
 
@@ -47,6 +59,19 @@ func getDaemonSet(ctx context.Context, client client.Client, name, namespace str
 	}
 
 	return ds, nil
+}
+
+func getConfigMap(ctx context.Context, client client.Client, name string, namespace string) (*corev1.ConfigMap, error) {
+	c := &corev1.ConfigMap{}
+	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, c)
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
 func getCiliumDeployment(ctx context.Context, client client.Client) (*appsv1.Deployment, error) {

@@ -19,6 +19,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
@@ -60,10 +61,11 @@ func TestReconcilerReconcileErrorYamlReconcile(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("error unmarshaling JSON")))
 }
 
-func TestReconcilerReconcileAlreadyInDesiredVersion(t *testing.T) {
+func TestReconcilerReconcileAlreadyUpToDate(t *testing.T) {
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
-	tt := newReconcileTest(t).withObjects(ds, operator)
+	cm := ciliumConfigMap()
+	tt := newReconcileTest(t).withObjects(ds, operator, cm)
 
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
@@ -76,6 +78,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflightDS := ciliumPreflightDaemonSet()
+	cm := ciliumConfigMap()
 	preflightDeployment := ciliumPreflightDeployment()
 	tt := newReconcileTest(t)
 
@@ -83,7 +86,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
 	preflightManifest := tt.buildManifest(preflightDS, preflightDeployment)
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return(preflightManifest, nil)
 
-	tt.withObjects(ds, operator, preflightDS, preflightDeployment)
+	tt.withObjects(ds, operator, preflightDS, preflightDeployment, cm)
 
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
@@ -97,6 +100,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplater(t *testing.T) {
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
+	cm := ciliumConfigMap()
 	preflightDS := ciliumPreflightDaemonSet()
 	preflightDeployment := ciliumPreflightDeployment()
 	tt := newReconcileTest(t)
@@ -104,7 +108,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplat
 	// for deleting the preflight
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return(nil, errors.New("generating preflight"))
 
-	tt.withObjects(ds, operator, preflightDS, preflightDeployment)
+	tt.withObjects(ds, operator, cm, preflightDS, preflightDeployment)
 
 	result, err := tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)
 	tt.Expect(result).To(Equal(controller.Result{}))
@@ -114,6 +118,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplat
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYaml(t *testing.T) {
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
+	cm := ciliumConfigMap()
 	preflightDS := ciliumPreflightDaemonSet()
 	preflightDeployment := ciliumPreflightDeployment()
 	tt := newReconcileTest(t)
@@ -121,7 +126,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYam
 	// for deleting the preflight
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return([]byte("invalid yaml"), nil)
 
-	tt.withObjects(ds, operator, preflightDS, preflightDeployment)
+	tt.withObjects(ds, operator, cm, preflightDS, preflightDeployment)
 
 	result, err := tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)
 	tt.Expect(result).To(Equal(controller.Result{}))
@@ -135,6 +140,9 @@ func TestReconcilerReconcileUpgradeButCiliumDaemonSetNotReady(t *testing.T) {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
 		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
@@ -149,6 +157,9 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDaemonSetNotAvailab
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
 		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec)
 
@@ -165,6 +176,9 @@ func TestReconcilerReconcileUpgradeErrorGeneratingPreflight(t *testing.T) {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
 		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return(nil, errors.New("generating preflight"))
 
@@ -181,6 +195,9 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDeploymentNotAvaila
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
 		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 	preflightManifest := tt.buildManifest(ciliumPreflightDaemonSet())
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return(preflightManifest, nil)
@@ -198,6 +215,9 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightNotReady(t *testing
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
 		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 	preflightManifest := tt.buildManifest(ciliumPreflightDaemonSet(), ciliumPreflightDeployment())
 	tt.templater.EXPECT().GenerateUpgradePreflightManifest(tt.ctx, tt.spec).Return(preflightManifest, nil)
@@ -215,6 +235,9 @@ func TestReconcilerReconcileUpgradePreflightDaemonSetNotReady(t *testing.T) {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
 		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 
 	tt.makeCiliumDaemonSetReady()
@@ -231,6 +254,9 @@ func TestReconcilerReconcileUpgradePreflightDeploymentSetNotReady(t *testing.T) 
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.11.1-eksa-1"
 		s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.11.1-eksa-1"
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 
 	tt.makeCiliumDaemonSetReady()
@@ -252,6 +278,9 @@ func TestReconcilerReconcileUpgradeInvalidCiliumInstalledVersion(t *testing.T) {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
 		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 
 	tt.makeCiliumDaemonSetReady()
@@ -274,6 +303,9 @@ func TestReconcilerReconcileUpgradeErrorGeneratingManifest(t *testing.T) {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
 		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 
 	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec, gomock.Not(gomock.Nil())).Return(nil, errors.New("generating manifest"))
@@ -298,6 +330,9 @@ func TestReconcilerReconcileUpgradePreflightErrorYamlReconcile(t *testing.T) {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
 		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 
 	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec, gomock.Not(gomock.Nil())).Return([]byte("invalid yaml"), nil)
@@ -325,6 +360,9 @@ func TestReconcilerReconcileUpgradePreflightReady(t *testing.T) {
 	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
 		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{},
+		}
 	})
 
 	upgradeManifest := tt.buildManifest(wantDS, wantOperator)
@@ -337,6 +375,33 @@ func TestReconcilerReconcileUpgradePreflightReady(t *testing.T) {
 	tt.makeCiliumDaemonSetReady()
 	tt.makePreflightDaemonSetReady()
 	tt.makePreflightDeploymentReady()
+	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
+		Equal(controller.Result{}),
+	)
+}
+
+func TestReconcilerReconcileUpdateConfigConfigMapEnablePolicyChange(t *testing.T) {
+	ds := ciliumDaemonSet()
+	operator := ciliumOperator()
+	cm := ciliumConfigMap()
+	tt := newReconcileTest(t).withObjects(ds, operator, cm)
+
+	newDSImage := "cilium:1.10.1-eksa-1"
+	newOperatorImage := "cilium-operator:1.10.1-eksa-1"
+
+	upgradeManifest := tt.buildManifest(ds, operator, cm)
+
+	tt.spec = test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.Cilium.Cilium.URI = newDSImage
+		s.VersionsBundle.Cilium.Operator.URI = newOperatorImage
+		s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+			Cilium: &anywherev1.CiliumConfig{
+				PolicyEnforcementMode: "always",
+			},
+		}
+	})
+	tt.templater.EXPECT().GenerateManifest(tt.ctx, tt.spec, gomock.Not(gomock.Nil())).Return(upgradeManifest, nil)
+
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
 	)
@@ -364,6 +429,11 @@ func newReconcileTest(t *testing.T) *reconcileTest {
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.10.1-eksa-1"
 			s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:1.10.1-eksa-1"
+			s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+				Cilium: &anywherev1.CiliumConfig{
+					PolicyEnforcementMode: "default",
+				},
+			}
 		}),
 		client:     env.Client(),
 		env:        env,
@@ -379,6 +449,7 @@ func newReconcileTest(t *testing.T) *reconcileTest {
 func (tt *reconcileTest) cleanup() {
 	tt.Expect(tt.client.DeleteAllOf(tt.ctx, &appsv1.DaemonSet{}, client.InNamespace("kube-system")))
 	tt.Expect(tt.client.DeleteAllOf(tt.ctx, &appsv1.Deployment{}, client.InNamespace("kube-system")))
+	tt.Expect(tt.client.DeleteAllOf(tt.ctx, &corev1.ConfigMap{}, client.InNamespace("kube-system")))
 }
 
 func (tt *reconcileTest) withObjects(objs ...client.Object) *reconcileTest {
@@ -526,6 +597,10 @@ func ciliumOperator() *appsv1.Deployment {
 	return simpleDeployment(cilium.DeploymentName, "cilium-operator:1.10.1-eksa-1")
 }
 
+func ciliumConfigMap() *corev1.ConfigMap {
+	return simpleConfigMap(cilium.ConfigMapName, "default")
+}
+
 func ciliumPreflightDaemonSet() *appsv1.DaemonSet {
 	return simpleDaemonSet(cilium.PreflightDaemonSetName, "cilium-pre-flight-check:1.10.1-eksa-1")
 }
@@ -600,6 +675,22 @@ func simpleDaemonSet(name, image string) *appsv1.DaemonSet {
 					},
 				},
 			},
+		},
+	}
+}
+
+func simpleConfigMap(name, enablePolicy string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "kube-system",
+		},
+		Data: map[string]string{
+			"enable-policy": enablePolicy,
 		},
 	}
 }

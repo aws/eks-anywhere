@@ -84,7 +84,6 @@ type Dependencies struct {
 	CollectorFactory            diagnostics.CollectorFactory
 	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
 	CAPIManager                 *clusterapi.Manager
-	ResourceSetManager          *clusterapi.ResourceSetManager
 	FileReader                  *files.Reader
 	ManifestReader              *manifests.Reader
 	closers                     []types.Closer
@@ -320,7 +319,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
-		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
+		f.WithKubectl().WithGovc().WithWriter()
 	case v1alpha1.CloudStackDatacenterKind:
 		f.WithKubectl().WithCloudStackValidatorRegistry(skipIpCheck).WithWriter()
 	case v1alpha1.DockerDatacenterKind:
@@ -357,7 +356,6 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Writer,
 				time.Now,
 				skipIpCheck,
-				f.dependencies.ResourceSetManager,
 			)
 
 		case v1alpha1.CloudStackDatacenterKind:
@@ -1096,21 +1094,6 @@ func (f *Factory) WithCAPIManager() *Factory {
 		}
 
 		f.dependencies.CAPIManager = clusterapi.NewManager(f.dependencies.Clusterctl, f.dependencies.Kubectl)
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithCAPIClusterResourceSetManager() *Factory {
-	f.WithKubectl()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.ResourceSetManager != nil {
-			return nil
-		}
-
-		f.dependencies.ResourceSetManager = clusterapi.NewResourceSetManager(f.dependencies.Kubectl)
 		return nil
 	})
 

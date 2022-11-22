@@ -97,6 +97,7 @@ manager_binary_path = manager_binary_dir + "/manager"
 # It's important to use a folder where the nonroot user can write,
 # since Tilt needs to write to that folder in order to replace the binary (live_update)
 manager_binary_dir_in_container = '/home/nonroot'
+manager_binary_path_in_container = manager_binary_dir_in_container + '/manager'
 
 # Build image for controller manager, trigger when the manager binary changes
 # This uses live_update, so it won't rebuild the whole container image every time
@@ -118,13 +119,13 @@ docker_build_with_restart(
 		'MANAGER_BIN_PATH': os.path.relpath(manager_binary_path, basepath = PROJECT_ROOT),
 		'DST_MANAGER_BINARY_DIR': manager_binary_dir_in_container, 
 	},
-	entrypoint=['manager', '--feature-gates', full_lifecycle_api_flag],
+	entrypoint=[manager_binary_path_in_container, '--feature-gates', full_lifecycle_api_flag],
 	# `only` is a mix between the context passed to the docker build and the paths that will
 	# trigger a new build. This means we need to include all paths needed in the dockerfile
 	# but nothing else, so we don't trigger image builds unnecessary 
 	only=[manager_binary_path, '_output', 'ATTRIBUTION.txt'],
 	trigger=[manager_binary_path],
 	live_update=[
-		sync(manager_binary_path, manager_binary_dir_in_container + '/manager'),
+		sync(manager_binary_path, manager_binary_path_in_container),
 	]
 )
