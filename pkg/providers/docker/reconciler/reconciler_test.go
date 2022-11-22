@@ -36,14 +36,90 @@ const (
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
-
 	logger := test.NewNullLogger()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
 
-	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	remoteClient := fake.NewClientBuilder().Build()
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: tt.cluster.Name, Namespace: constants.EksaSystemNamespace},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
 
-	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)).To(Equal(controller.Result{}))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
-	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name,
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&dockerv1.DockerMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-control-plane-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&dockerv1.DockerCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name,
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyNotExist(tt.ctx,
+		&dockerv1.DockerMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-etcd-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyNotExist(tt.ctx,
+		&etcdv1.EtcdadmCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-etcd",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&dockerv1.DockerMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
@@ -200,7 +276,7 @@ func TestReconcilerReconcileWorkerNodesFail(t *testing.T) {
 
 	_, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
 
-	tt.Expect(err).To(MatchError(ContainSubstring("Failed to construct cluster Spec")))
+	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
 }
 
 func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
