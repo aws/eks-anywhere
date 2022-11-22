@@ -31,7 +31,7 @@ func NewValidator(client Client, certValidator crypto.TlsValidator) *Validator {
 // ValidateDatacenterConfig validates the datacenter config.
 func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywherev1.NutanixDatacenterConfig) error {
 	if config.Spec.Insecure {
-		logger.Info("WARNING: Skipping TLS validation for insecure connection; this is not recommended for production use")
+		logger.Info("Warning: Skipping TLS validation for insecure connection to Nutanix Prism Central; this is not recommended for production use")
 	}
 	return v.validateTrustBundleConfig(config.Spec)
 }

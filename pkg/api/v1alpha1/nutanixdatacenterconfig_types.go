@@ -27,14 +27,12 @@ type NutanixDatacenterConfigSpec struct {
 	// configured their Prism Central with certificates from non-publicly trusted CAs
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 
-	// Insecure is the optional flag to skip TLS verification. Nutanix Prism installs by default ship
-	// with a self-signed certificate that will fail TLS verification because of two reasons:
-	// 1. The certificate is not issued by a public CA
-	// 2. The certificate does not have the IP SANs for the Prism Central endpoint
-	//
-	// To accommodate for the scenario where the user has not changed the default Certificate that
+	// Insecure is the optional flag to skip TLS verification. Nutanix Prism Central installation by default ships
+	// with a self-signed certificate that will fail TLS verification because the certificate is not issued by
+	// a public CA and does not have the IP SANs with the Prism Central endpoint.
+	// To accommodate the scenario where the user has not changed the default Certificate that
 	// ships with Prism Central, we allow the user to skip TLS verification. This is not recommended for
-	// production use as skipping TLS verification opens up the user to potential MITM attacks.
+	// production use.
 	Insecure bool `json:"insecure,omitempty"`
 }
 
