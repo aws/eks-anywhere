@@ -15,7 +15,18 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
    * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster. The only exception is the `kubectl create namespace` command below, which should be ran with `kubeconfig` pointing to the workload cluster.
    {{% /alert %}}
 
-## Install
+## Choose a Deployment Approach
+
+Each Cluster Autoscaler instance can target one cluster for autoscaling.
+
+There are three ways to deploy a Cluster Autoscaler instance:
+
+1. Cluster Autoscaler deployed in the management cluster to autoscale the management cluster itself
+1. Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
+1. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
+
+To read more about the tradeoffs of these different approaches, see [here](../../../reference/clusterspec/optional/autoscaling/#cluster-autoscaler-deployment-topologies).
+## Install Cluster Autoscaler in management cluster
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here](../../../reference/clusterspec/optional/autoscaling/)
@@ -29,7 +40,10 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 
    Please see [complete configuration options]({{< relref "../../../reference/packagespec/cluster-autoscaler" >}}) for all configuration options and their default values.
 
-    Example package file configuring a cluster autoscaler package to run on a management cluster.
+    Example package file configuring a cluster autoscaler package to run in the management cluster.
+
+    *Note: Here, the `<cluster-name>` value represents the name of the management or workload cluster you would like to autoscale.*
+
     ```yaml
     apiVersion: packages.eks.amazonaws.com/v1alpha1
     kind: Package
@@ -82,9 +96,9 @@ To uninstall Cluster Autoscaler, simply delete the package
 eksctl anywhere delete package --cluster <cluster-name> cluster-autoscaler
 ```
 
-## Installing Cluster Autoscaler on workload cluster
+## Install Cluster Autoscaler in workload cluster
 
-A few extra steps are required to install cluster autoscaler on a workload cluster instead of the management cluster.
+A few extra steps are required to install cluster autoscaler in a workload cluster instead of the management cluster.
 
 First, retrieve the management cluster's kubeconfig secret:
 ```yaml
