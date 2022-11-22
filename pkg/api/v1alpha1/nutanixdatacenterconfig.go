@@ -16,7 +16,11 @@ func NewNutanixDatacenterConfigGenerate(clusterName string) *NutanixDatacenterCo
 		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
-		Spec: NutanixDatacenterConfigSpec{},
+		Spec: NutanixDatacenterConfigSpec{
+			Endpoint:              "<enter Prism Central Endpoint (FQDN or IP) here>",
+			Port:                  9440,
+			AdditionalTrustBundle: "",
+		},
 	}
 }
 
