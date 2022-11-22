@@ -2,7 +2,6 @@ package reconciler
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -46,8 +45,26 @@ func New(client client.Client, cniReconciler CNIReconciler, remoteClientRegistry
 }
 
 // Reconcile brings the cluster to the desired state for the docker provider.
-func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	return controller.Result{}, nil
+func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
+	log = log.WithValues("provider", "docker")
+	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return controller.NewPhaseRunner().Register(
+		r.ReconcileControlPlane,
+		r.CheckControlPlaneReady,
+		r.ReconcileCNI,
+		r.ReconcileWorkers,
+	).Run(ctx, log, clusterSpec)
+}
+
+// CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
+// Requeues with the appropriate wait times whenever the cluster is not ready yet.
+func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "checkControlPlaneReady")
+	return clusters.CheckControlPlaneReady(ctx, r.client, log, spec.Cluster)
 }
 
 // ReconcileCNI takes the Cilium CNI in a cluster to the desired state defined in a cluster spec.
@@ -67,7 +84,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	log = log.WithValues("provider", "docker", "reconcile type", "workers")
 	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("Failed to construct cluster Spec: %v", err)
+		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
 	}
 
 	return controller.NewPhaseRunner().Register(
