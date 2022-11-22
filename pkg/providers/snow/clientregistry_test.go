@@ -27,6 +27,7 @@ func TestGetSnowAwsClientMapSuccess(t *testing.T) {
 
 func TestBuildSnowAwsClientMapFailure(t *testing.T) {
 	g := NewWithT(t)
+	t.Setenv(credsFileEnvVar, "")
 	ctx := context.Background()
 	clientBuilder := snow.NewAwsClientRegistry()
 
