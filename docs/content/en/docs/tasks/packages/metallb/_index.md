@@ -33,7 +33,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
     kind: Package
     metadata:
       name: mylb
-      namespace: eksa-packages
+      namespace: eksa-packages-<cluster-name>
     spec:
       packageName: metallb
       config: |
