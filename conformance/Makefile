@@ -40,7 +40,7 @@ generate:
 
 .PHONY: git-commit
 git-commit:
-	cd k8s-conformance ; git add $(TARGET_DIR)/*
+	cd k8s-conformance ; git add v$(TARGET_RELEASE)/eks-a/*
 	cd k8s-conformance ; git commit -a -m "AWS EKS Anywhere v$(TARGET_RELEASE) conformance" --signoff
 	cd k8s-conformance ; git push
 
