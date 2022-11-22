@@ -57,8 +57,9 @@ func TestRestartContainerdInKubeadmControlPlane(t *testing.T) {
 	for _, tt := range restartContainerdTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec = tt.cluster
 			got := wantKubeadmControlPlane()
-			clusterapi.RestartContainerdInKubeadmControlPlane(got, tt.cluster)
+			clusterapi.RestartContainerdInKubeadmControlPlane(got, g.clusterSpec.Cluster)
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = tt.want
 
@@ -71,8 +72,9 @@ func TestRestartContainerdInKubeadmConfigTemplate(t *testing.T) {
 	for _, tt := range restartContainerdTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec = tt.cluster
 			got := wantKubeadmConfigTemplate()
-			clusterapi.RestartContainerdInKubeadmConfigTemplate(got, tt.cluster)
+			clusterapi.RestartContainerdInKubeadmConfigTemplate(got, g.clusterSpec.Cluster)
 			want := wantKubeadmConfigTemplate()
 			want.Spec.Template.Spec.PreKubeadmCommands = tt.want
 			g.Expect(got).To(Equal(want))
@@ -111,8 +113,9 @@ func TestCreateContainerdConfigFileInKubeadmControlPlane(t *testing.T) {
 	for _, tt := range createContainerdConfigTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec = tt.cluster
 			got := wantKubeadmControlPlane()
-			clusterapi.CreateContainerdConfigFileInKubeadmControlPlane(got, tt.cluster)
+			clusterapi.CreateContainerdConfigFileInKubeadmControlPlane(got, g.clusterSpec.Cluster)
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = tt.want
 			g.Expect(got).To(Equal(want))
@@ -124,8 +127,9 @@ func TestCreateContainerdConfigFileInKubeadmConfigTemplate(t *testing.T) {
 	for _, tt := range createContainerdConfigTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec = tt.cluster
 			got := wantKubeadmConfigTemplate()
-			clusterapi.CreateContainerdConfigFileInKubeadmConfigTemplate(got, tt.cluster)
+			clusterapi.CreateContainerdConfigFileInKubeadmConfigTemplate(got, g.clusterSpec.Cluster)
 			want := wantKubeadmConfigTemplate()
 			want.Spec.Template.Spec.PreKubeadmCommands = tt.want
 			g.Expect(got).To(Equal(want))

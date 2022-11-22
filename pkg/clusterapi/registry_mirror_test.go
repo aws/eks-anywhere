@@ -14,7 +14,13 @@ var registryMirrorTests = []struct {
 	name                 string
 	registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration
 	wantFiles            []bootstrapv1.File
+	wantRegistryConfig   bootstrapv1.RegistryMirrorConfiguration
 }{
+	{
+		name:               "registry config nil",
+		wantFiles:          []bootstrapv1.File{},
+		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{},
+	},
 	{
 		name: "with ca cert",
 		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
@@ -38,6 +44,10 @@ var registryMirrorTests = []struct {
 				Content: "xyz",
 			},
 		},
+		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443",
+			CACert:   "xyz",
+		},
 	},
 	{
 		name: "with insecure skip",
@@ -56,6 +66,9 @@ var registryMirrorTests = []struct {
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     insecure_skip_verify = true`,
 			},
+		},
+		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443",
 		},
 	},
 	{
@@ -83,15 +96,33 @@ var registryMirrorTests = []struct {
 				Content: "xyz",
 			},
 		},
+		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443",
+			CACert:   "xyz",
+		},
 	},
 }
 
-func TestSetRegistryMirrorInKubeadmControlPlane(t *testing.T) {
+func TestSetRegistryMirrorInKubeadmControlPlaneBottleRocket(t *testing.T) {
 	for _, tt := range registryMirrorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			got := wantKubeadmControlPlane()
-			g.Expect(clusterapi.SetRegistryMirrorInKubeadmControlPlane(got, tt.registryMirrorConfig)).To(Succeed())
+			clusterapi.SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(got, tt.registryMirrorConfig)
+			want := wantKubeadmControlPlane()
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.RegistryMirror = tt.wantRegistryConfig
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.RegistryMirror = tt.wantRegistryConfig
+			g.Expect(got).To(Equal(want))
+		})
+	}
+}
+
+func TestSetRegistryMirrorInKubeadmControlPlaneUbuntu(t *testing.T) {
+	for _, tt := range registryMirrorTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			got := wantKubeadmControlPlane()
+			g.Expect(clusterapi.SetRegistryMirrorInKubeadmControlPlaneForUbuntu(got, tt.registryMirrorConfig)).To(Succeed())
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
 			g.Expect(got).To(Equal(want))
@@ -99,12 +130,25 @@ func TestSetRegistryMirrorInKubeadmControlPlane(t *testing.T) {
 	}
 }
 
-func TestSetRegistryMirrorInKubeadmConfigTemplate(t *testing.T) {
+func TestSetRegistryMirrorInKubeadmConfigTemplateBottlerocket(t *testing.T) {
 	for _, tt := range registryMirrorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			got := wantKubeadmConfigTemplate()
-			g.Expect(clusterapi.SetRegistryMirrorInKubeadmConfigTemplate(got, tt.registryMirrorConfig)).To(Succeed())
+			clusterapi.SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket(got, tt.registryMirrorConfig)
+			want := wantKubeadmConfigTemplate()
+			want.Spec.Template.Spec.JoinConfiguration.RegistryMirror = tt.wantRegistryConfig
+			g.Expect(got).To(Equal(want))
+		})
+	}
+}
+
+func TestSetRegistryMirrorInKubeadmConfigTemplateUbuntu(t *testing.T) {
+	for _, tt := range registryMirrorTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			got := wantKubeadmConfigTemplate()
+			g.Expect(clusterapi.SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(got, tt.registryMirrorConfig)).To(Succeed())
 			want := wantKubeadmConfigTemplate()
 			want.Spec.Template.Spec.Files = tt.wantFiles
 			g.Expect(got).To(Equal(want))

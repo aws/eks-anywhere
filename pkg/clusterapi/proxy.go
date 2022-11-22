@@ -14,6 +14,50 @@ import (
 //go:embed config/http-proxy.conf
 var proxyConfig string
 
+func proxy(cluster *v1alpha1.Cluster) bootstrapv1.ProxyConfiguration {
+	return bootstrapv1.ProxyConfiguration{
+		HTTPSProxy: cluster.Spec.ProxyConfiguration.HttpsProxy,
+		NoProxy:    noProxyList(cluster),
+	}
+}
+
+// SetProxyConfigInKubeadmControlPlaneForBottlerocket sets up proxy configuration in kubeadmControlPlane for bottlerocket.
+func SetProxyConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.KubeadmControlPlane, cluster *v1alpha1.Cluster) {
+	if cluster.Spec.ProxyConfiguration == nil {
+		return
+	}
+
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Proxy = proxy(cluster)
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.Proxy = proxy(cluster)
+}
+
+// SetProxyConfigInKubeadmControlPlaneForUbuntu sets up proxy configuration in kubeadmControlPlane for ubuntu.
+func SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.KubeadmControlPlane, cluster *v1alpha1.Cluster) error {
+	if cluster.Spec.ProxyConfiguration == nil {
+		return nil
+	}
+
+	return addProxyConfigInKubeadmConfigSpecFiles(&kcp.Spec.KubeadmConfigSpec, cluster)
+}
+
+// SetProxyConfigInKubeadmConfigTemplateForBottlerocket sets up proxy configuration in kubeadmConfigTemplate for bottlerocket.
+func SetProxyConfigInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) {
+	if cluster.Spec.ProxyConfiguration == nil {
+		return
+	}
+
+	kct.Spec.Template.Spec.JoinConfiguration.Proxy = proxy(cluster)
+}
+
+// SetProxyConfigInKubeadmConfigTemplateForUbuntu sets up proxy configuration in kubeadmConfigTemplate for ubuntu.
+func SetProxyConfigInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) error {
+	if cluster.Spec.ProxyConfiguration == nil {
+		return nil
+	}
+
+	return addProxyConfigInKubeadmConfigSpecFiles(&kct.Spec.Template.Spec, cluster)
+}
+
 func NoProxyDefaults() []string {
 	return []string{
 		"localhost",
@@ -22,24 +66,28 @@ func NoProxyDefaults() []string {
 	}
 }
 
-func proxyConfigContent(cluster v1alpha1.ClusterSpec) (string, error) {
-	capacity := len(cluster.ClusterNetwork.Pods.CidrBlocks) +
-		len(cluster.ClusterNetwork.Services.CidrBlocks) +
-		len(cluster.ProxyConfiguration.NoProxy) + 4
+func noProxyList(cluster *v1alpha1.Cluster) []string {
+	capacity := len(cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+		len(cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+		len(cluster.Spec.ProxyConfiguration.NoProxy) + 4
 
 	noProxyList := make([]string, 0, capacity)
-	noProxyList = append(noProxyList, cluster.ClusterNetwork.Pods.CidrBlocks...)
-	noProxyList = append(noProxyList, cluster.ClusterNetwork.Services.CidrBlocks...)
-	noProxyList = append(noProxyList, cluster.ProxyConfiguration.NoProxy...)
+	noProxyList = append(noProxyList, cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+	noProxyList = append(noProxyList, cluster.Spec.ProxyConfiguration.NoProxy...)
 
 	// Add no-proxy defaults
 	noProxyList = append(noProxyList, NoProxyDefaults()...)
-	noProxyList = append(noProxyList, cluster.ControlPlaneConfiguration.Endpoint.Host)
+	noProxyList = append(noProxyList, cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 
+	return noProxyList
+}
+
+func proxyConfigContent(cluster *v1alpha1.Cluster) (string, error) {
 	val := values{
-		"httpProxy":  cluster.ProxyConfiguration.HttpProxy,
-		"httpsProxy": cluster.ProxyConfiguration.HttpsProxy,
-		"noProxy":    noProxyList,
+		"httpProxy":  cluster.Spec.ProxyConfiguration.HttpProxy,
+		"httpsProxy": cluster.Spec.ProxyConfiguration.HttpsProxy,
+		"noProxy":    noProxyList(cluster),
 	}
 
 	config, err := templater.Execute(proxyConfig, val)
@@ -49,7 +97,7 @@ func proxyConfigContent(cluster v1alpha1.ClusterSpec) (string, error) {
 	return string(config), nil
 }
 
-func proxyConfigFile(cluster v1alpha1.ClusterSpec) (bootstrapv1.File, error) {
+func proxyConfigFile(cluster *v1alpha1.Cluster) (bootstrapv1.File, error) {
 	proxyConfig, err := proxyConfigContent(cluster)
 	if err != nil {
 		return bootstrapv1.File{}, err
@@ -62,32 +110,13 @@ func proxyConfigFile(cluster v1alpha1.ClusterSpec) (bootstrapv1.File, error) {
 	}, nil
 }
 
-func SetProxyConfigInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, cluster v1alpha1.ClusterSpec) error {
-	if cluster.ProxyConfiguration == nil {
-		return nil
-	}
-
+func addProxyConfigInKubeadmConfigSpecFiles(kcs *bootstrapv1.KubeadmConfigSpec, cluster *v1alpha1.Cluster) error {
 	proxyConfigFile, err := proxyConfigFile(cluster)
 	if err != nil {
 		return err
 	}
 
-	kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, proxyConfigFile)
-
-	return nil
-}
-
-func SetProxyConfigInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, cluster v1alpha1.ClusterSpec) error {
-	if cluster.ProxyConfiguration == nil {
-		return nil
-	}
-
-	proxyConfigFile, err := proxyConfigFile(cluster)
-	if err != nil {
-		return err
-	}
-
-	kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, proxyConfigFile)
+	kcs.Files = append(kcs.Files, proxyConfigFile)
 
 	return nil
 }

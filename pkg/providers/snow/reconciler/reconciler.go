@@ -99,7 +99,7 @@ func (s *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	log.Info("Applying control plane CAPI objects")
 
 	return s.Apply(ctx, func() ([]kubernetes.Object, error) {
-		return snow.ControlPlaneObjects(ctx, clusterSpec, clientutil.NewKubeClient(s.client))
+		return snow.ControlPlaneObjects(ctx, log, clusterSpec, clientutil.NewKubeClient(s.client))
 	})
 }
 
@@ -123,7 +123,7 @@ func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 	log = log.WithValues("phase", "reconcileWorkers")
 	log.Info("Applying worker CAPI objects")
 
-	w, err := snow.WorkersSpec(ctx, clusterSpec, clientutil.NewKubeClient(s.client))
+	w, err := snow.WorkersSpec(ctx, log, clusterSpec, clientutil.NewKubeClient(s.client))
 	if err != nil {
 		return controller.Result{}, err
 	}
