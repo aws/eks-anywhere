@@ -5,6 +5,7 @@ package e2e
 
 import (
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"testing"
 	"time"
 
@@ -66,6 +67,36 @@ func runWorkloadClusterUpgradeFlowCheckWorkloadRollingUpgrade(test *framework.Mu
 		w.DeleteCluster()
 	})
 	test.DeleteManagementCluster()
+}
+
+func runCustomUpgradeFlow(test *framework.MulticlusterE2ETest, longLivedClusterName string) {
+	v12Semver, err := semver.New("v0.12.0")
+	if err != nil {
+		test.T.Fatalf("Unable to generate semver from '0.12.0'")
+	}
+	v121Semver, err := semver.New("v0.12.1")
+	if err != nil {
+		test.T.Fatalf("Unable to generate semver from '0.12.1'")
+	}
+
+	test.UseExistingManagementCluster(longLivedClusterName)
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfigForVersion(v12Semver.String())
+		w.CreateCluster(framework.ExecuteWithEksaVersion(v12Semver))
+	})
+	for _, workloadCluster := range test.WorkloadClusters {
+		test.T.Logf("Waiting for cluster %v machine deployments to be ready", workloadCluster)
+		mdName := fmt.Sprintf("%s-%s", workloadCluster.ClusterName, "md-0")
+		test.ManagementCluster.WaitForMachineDeploymentReady(mdName)
+	}
+	var testOpts []framework.ClusterE2ETestOpt
+	testOpts = append(testOpts, framework.WithEksaVersion(v121Semver))
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.UpgradeCluster(testOpts)
+	})
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.DeleteCluster()
+	})
 }
 
 func anyMachinesChanged(machineMap1 map[string]types.Machine, machineMap2 map[string]types.Machine) bool {
@@ -358,4 +389,45 @@ func TestCloudStackKubernetes121ManagementClusterUpgradeFromLatest(t *testing.T)
 		),
 	)
 	runWorkloadClusterUpgradeFlowCheckWorkloadRollingUpgrade(test)
+}
+
+func TestCloudStackKubernetes121UpgradeCustom(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
+	longLivedClusterName := "long-lived-drib"
+	mgmtCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithEtcdCountIfExternal(1),
+		),
+	)
+	mgmtCluster.ClusterName = longLivedClusterName
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		mgmtCluster,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithEtcdCountIfExternal(1),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithEtcdCountIfExternal(1),
+			),
+		),
+	)
+	runCustomUpgradeFlow(test, longLivedClusterName)
 }

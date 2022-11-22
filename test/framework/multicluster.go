@@ -45,6 +45,10 @@ func (m *MulticlusterE2ETest) CreateManagementClusterForVersion(eksaVersion stri
 	m.ManagementCluster.CreateCluster(opts...)
 }
 
+func (m *MulticlusterE2ETest) UseExistingManagementCluster(clusterName string) {
+	m.ManagementCluster.ClusterName = clusterName
+}
+
 func (m *MulticlusterE2ETest) CreateManagementCluster(opts ...CommandOpt) {
 	m.ManagementCluster.GenerateClusterConfig()
 	m.ManagementCluster.CreateCluster(opts...)
