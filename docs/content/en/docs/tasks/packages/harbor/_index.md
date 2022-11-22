@@ -43,7 +43,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
    kind: Package
    metadata:
       name: my-harbor
-      namespace: eksa-packages
+      namespace: eksa-packages-<cluster-name>
    spec:
       packageName: harbor
       config: |-
@@ -62,7 +62,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
    kind: Package
    metadata:
       name: my-harbor
-      namespace: eksa-packages
+      namespace: eksa-packages-<cluster-name>
    spec:
       packageName: harbor
       config: |-

@@ -33,7 +33,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
     kind: Package
     metadata:
       name: my-adot
-      namespace: eksa-packages
+      namespace: eksa-packages-<cluster-name>
     spec:
       packageName: adot
       targetNamespace: observability
@@ -48,7 +48,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
     kind: Package
     metadata:
       name: my-adot
-      namespace: eksa-packages
+      namespace: eksa-packages-<cluster-name>
     spec:
       packageName: adot
       targetNamespace: observability
