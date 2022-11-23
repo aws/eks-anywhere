@@ -1748,6 +1748,7 @@ func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
 
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(nil)
+	tt.mocks.client.EXPECT().SetEksaControllerEnvVar(tt.ctx, features.FullLifecycleAPIEnvVar, "true", tt.cluster.KubeconfigFile).AnyTimes()
 
 	for namespace, deployments := range internal.EksaDeployments {
 		for _, deployment := range deployments {
