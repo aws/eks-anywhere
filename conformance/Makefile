@@ -5,6 +5,7 @@ SONOBUOY_OSARCH?=darwin_amd64
 TARGET_RELEASE?=1.24
 TARGET_DIR=k8s-conformance/v$(TARGET_RELEASE)/eks-a
 K8S_VERSION=v1.24.6
+YOUR_EMAIL=$(shell git config --get user.email)
 
 .PHONY: default
 default: clean k8s-conformance sonobuoy sonobuoy-run sonobuoy-results generate git-commit
@@ -35,7 +36,7 @@ sonobuoy-results:
 
 .PHONY: generate
 generate:
-	sed -e "s/{{k8s_version}}/$(K8S_VERSION)/" <template/PRODUCT.yaml >$(TARGET_DIR)/PRODUCT.yaml
+	sed -e "s/{{k8s_version}}/$(K8S_VERSION)/" -e "s/{{your_email}}/$(YOUR_EMAIL)/" <template/PRODUCT.yaml >$(TARGET_DIR)/PRODUCT.yaml
 	build/lib/generate_readme.sh $(TARGET_RELEASE) $(K8S_VERSION) $(TARGET_DIR)
 
 .PHONY: git-commit
