@@ -764,6 +764,14 @@ func TestNutanixProviderMachineDeploymentsToDelete(t *testing.T) {
 	assert.Len(t, deps, 0)
 }
 
+func TestNutanixProviderInstallCustomProviderComponents(t *testing.T) {
+	provider := testDefaultNutanixProvider(t)
+
+	kubeConfigFile := "test"
+	err := provider.InstallCustomProviderComponents(context.Background(), kubeConfigFile)
+	assert.NoError(t, err)
+}
+
 func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 
