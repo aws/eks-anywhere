@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Release is the Schema for the releases API
+        description: Release is the Schema for the releases API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ReleaseSpec defines the desired state of Release
+            description: ReleaseSpec defines the desired state of Release.
             properties:
               latestVersion:
                 description: EKS-A Latest Release version following semver
@@ -42,7 +42,7 @@ spec:
               releases:
                 description: List of all eks-a releases
                 items:
-                  description: EksARelease defines each release of EKS-Anywhere
+                  description: EksARelease defines each release of EKS-Anywhere.
                   properties:
                     bundleManifestUrl:
                       description: Manifest url to parse bundle information from for
@@ -158,7 +158,7 @@ spec:
             - releases
             type: object
           status:
-            description: ReleaseStatus defines the observed state of Release
+            description: ReleaseStatus defines the observed state of Release.
             type: object
         required:
         - spec

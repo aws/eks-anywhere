@@ -297,7 +297,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.2-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -306,9 +306,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -317,7 +317,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.2-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -414,11 +414,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.17.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
-      version: v0.14.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.17.0/kindnetd.yaml
+      version: v0.17.0+abcdef1
     kubeVersion: "1.20"
     nutanix:
       clusterAPIController:
@@ -472,6 +472,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.20-eks-a-v0.0.0-dev-build.1
       version: v0.2.20+abcdef1
     snow:
+      bottlerocketBootstrapSnow:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-snow image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-snow
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
       kubeVip:
@@ -1056,7 +1065,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.2-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1065,9 +1074,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1076,7 +1085,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.2-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -1173,11 +1182,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.17.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
-      version: v0.14.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.17.0/kindnetd.yaml
+      version: v0.17.0+abcdef1
     kubeVersion: "1.21"
     nutanix:
       clusterAPIController:
@@ -1231,6 +1240,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.20-eks-a-v0.0.0-dev-build.1
       version: v0.2.20+abcdef1
     snow:
+      bottlerocketBootstrapSnow:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-snow image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-snow
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-21-21-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
       kubeVip:
@@ -1815,7 +1833,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.2-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1824,9 +1842,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1835,7 +1853,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.2-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -1932,11 +1950,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.17.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
-      version: v0.14.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.17.0/kindnetd.yaml
+      version: v0.17.0+abcdef1
     kubeVersion: "1.22"
     nutanix:
       clusterAPIController:
@@ -1990,6 +2008,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.20-eks-a-v0.0.0-dev-build.1
       version: v0.2.20+abcdef1
     snow:
+      bottlerocketBootstrapSnow:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-snow image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-snow
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-22-13-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
       kubeVip:
@@ -2574,7 +2601,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.2-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -2583,9 +2610,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -2594,7 +2621,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.2-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -2691,11 +2718,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.17.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
-      version: v0.14.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.17.0/kindnetd.yaml
+      version: v0.17.0+abcdef1
     kubeVersion: "1.23"
     nutanix:
       clusterAPIController:
@@ -2749,6 +2776,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.20-eks-a-v0.0.0-dev-build.1
       version: v0.2.20+abcdef1
     snow:
+      bottlerocketBootstrapSnow:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-snow image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-snow
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-23-8-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
       kubeVip:
@@ -3315,7 +3351,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.12.2-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -3324,9 +3360,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.12.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.1/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.12.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -3335,7 +3371,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.12.2-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
@@ -3432,11 +3468,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.17.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
-      version: v0.14.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.17.0/kindnetd.yaml
+      version: v0.17.0+abcdef1
     kubeVersion: "1.24"
     nutanix:
       clusterAPIController:
@@ -3490,6 +3526,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.20-eks-a-v0.0.0-dev-build.1
       version: v0.2.20+abcdef1
     snow:
+      bottlerocketBootstrapSnow:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-snow image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-snow
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-24-3-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
       kubeVip:

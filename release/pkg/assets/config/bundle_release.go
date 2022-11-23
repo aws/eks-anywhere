@@ -50,6 +50,14 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 					ReleaseImageTagFormat:       "v<eksDReleaseChannel>-<eksDReleaseNumber>",
 				},
 			},
+			{
+				RepoName: "bottlerocket-bootstrap-snow",
+				ImageTagConfiguration: assettypes.ImageTagConfiguration{
+					NonProdSourceImageTagFormat: "v<eksDReleaseChannel>-<eksDReleaseNumber>",
+					ProdSourceImageTagFormat:    "v<eksDReleaseChannel>-<eksDReleaseNumber>",
+					ReleaseImageTagFormat:       "v<eksDReleaseChannel>-<eksDReleaseNumber>",
+				},
+			},
 		},
 		ImageTagOptions: []string{
 			"eksDReleaseChannel",
