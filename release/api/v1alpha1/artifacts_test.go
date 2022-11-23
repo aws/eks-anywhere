@@ -68,7 +68,24 @@ func TestVersionsBundleSnowImages(t *testing.T) {
 			},
 		},
 		{
-			name: "both images",
+			name: "bootstrap-snow images",
+			versionsBundle: &v1alpha1.VersionsBundle{
+				Snow: v1alpha1.SnowBundle{
+					Manager: v1alpha1.Image{
+						Name: "bootstrap-snow",
+						URI:  "uri",
+					},
+				},
+			},
+			want: []v1alpha1.Image{
+				{
+					Name: "bootstrap-snow",
+					URI:  "uri",
+				},
+			},
+		},
+		{
+			name: "all images",
 			versionsBundle: &v1alpha1.VersionsBundle{
 				Snow: v1alpha1.SnowBundle{
 					KubeVip: v1alpha1.Image{
@@ -77,6 +94,10 @@ func TestVersionsBundleSnowImages(t *testing.T) {
 					},
 					Manager: v1alpha1.Image{
 						Name: "manage",
+						URI:  "uri",
+					},
+					BottlerocketBootstrapSnow: v1alpha1.Image{
+						Name: "bootstrap-snow",
 						URI:  "uri",
 					},
 				},
@@ -88,6 +109,10 @@ func TestVersionsBundleSnowImages(t *testing.T) {
 				},
 				{
 					Name: "manage",
+					URI:  "uri",
+				},
+				{
+					Name: "bootstrap-snow",
 					URI:  "uri",
 				},
 			},

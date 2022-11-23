@@ -21,7 +21,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
-func GetBottlerocketBootstrapBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, eksDReleaseNumber string, imageDigests map[string]string) (anywherev1alpha1.BottlerocketBootstrapBundle, error) {
+func GetBottlerocketBootstrapBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.BottlerocketBootstrapBundle, error) {
 	artifacts := r.BundleArtifactsTable[fmt.Sprintf("bottlerocket-bootstrap-%s", eksDReleaseChannel)]
 
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}

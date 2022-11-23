@@ -136,13 +136,8 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
 	}
 
-	var snowBundle anywherev1alpha1.SnowBundle
 	var nutanixBundle anywherev1alpha1.NutanixBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
-		snowBundle, err = GetSnowBundle(r, imageDigests)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
-		}
 		nutanixBundle, err = GetNutanixBundle(r, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Nutanix infrastructure provider")
@@ -180,9 +175,14 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			return nil, errors.Wrapf(err, "Error getting bundle for vSphere infrastructure provider")
 		}
 
-		bottlerocketBootstrapBundle, err := GetBottlerocketBootstrapBundle(r, channel, number, imageDigests)
+		bottlerocketBootstrapBundle, err := GetBottlerocketBootstrapBundle(r, channel, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
+		}
+
+		snowBundle, err := GetSnowBundle(r, channel, imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
 		}
 
 		versionsBundle := anywherev1alpha1.VersionsBundle{

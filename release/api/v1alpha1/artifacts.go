@@ -123,6 +123,9 @@ func (vb *VersionsBundle) SnowImages() []Image {
 	if vb.Snow.Manager.URI != "" {
 		i = append(i, vb.Snow.Manager)
 	}
+	if vb.Snow.BottlerocketBootstrapSnow.URI != "" {
+		i = append(i, vb.Snow.BottlerocketBootstrapSnow)
+	}
 
 	return i
 }
