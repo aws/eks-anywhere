@@ -267,8 +267,8 @@ func buildTemplateMapCP(
 		values["format"] = string(anywherev1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
+		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
+		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
 	if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
@@ -366,8 +366,8 @@ func buildTemplateMapMD(
 		values["format"] = string(anywherev1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
+		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
+		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
 	return values, nil

@@ -116,11 +116,6 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for external Etcdadm controller")
 	}
 
-	bottlerocketBundle, err := GetBottlerocketBundle(r)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket containers")
-	}
-
 	packageBundle, err := GetPackagesBundle(r, imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
@@ -175,9 +170,9 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			return nil, errors.Wrapf(err, "Error getting bundle for vSphere infrastructure provider")
 		}
 
-		bottlerocketBootstrapBundle, err := GetBottlerocketBootstrapBundle(r, channel, imageDigests)
+		bottlerocketHostContainersBundle, err := GetBottlerocketHostContainersBundle(r, channel, imageDigests)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
+			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket host containers")
 		}
 
 		snowBundle, err := GetSnowBundle(r, channel, imageDigests)
@@ -186,28 +181,27 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		}
 
 		versionsBundle := anywherev1alpha1.VersionsBundle{
-			KubeVersion:            shortKubeVersion,
-			EksD:                   eksDReleaseBundle,
-			CertManager:            certManagerBundle,
-			ClusterAPI:             coreClusterApiBundle,
-			Bootstrap:              kubeadmBootstrapBundle,
-			ControlPlane:           kubeadmControlPlaneBundle,
-			VSphere:                vsphereBundle,
-			CloudStack:             cloudStackBundle,
-			Docker:                 dockerBundle,
-			Eksa:                   eksaBundle,
-			Cilium:                 ciliumBundle,
-			Kindnetd:               kindnetdBundle,
-			Flux:                   fluxBundle,
-			PackageController:      packageBundle,
-			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
-			ExternalEtcdController: etcdadmControllerBundle,
-			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
-			BottleRocket:           bottlerocketBundle,
-			Tinkerbell:             tinkerbellBundle,
-			Haproxy:                haproxyBundle,
-			Snow:                   snowBundle,
-			Nutanix:                nutanixBundle,
+			KubeVersion:                shortKubeVersion,
+			EksD:                       eksDReleaseBundle,
+			CertManager:                certManagerBundle,
+			ClusterAPI:                 coreClusterApiBundle,
+			Bootstrap:                  kubeadmBootstrapBundle,
+			ControlPlane:               kubeadmControlPlaneBundle,
+			VSphere:                    vsphereBundle,
+			CloudStack:                 cloudStackBundle,
+			Docker:                     dockerBundle,
+			Eksa:                       eksaBundle,
+			Cilium:                     ciliumBundle,
+			Kindnetd:                   kindnetdBundle,
+			Flux:                       fluxBundle,
+			PackageController:          packageBundle,
+			ExternalEtcdBootstrap:      etcdadmBootstrapBundle,
+			ExternalEtcdController:     etcdadmControllerBundle,
+			BottleRocketHostContainers: bottlerocketHostContainersBundle,
+			Tinkerbell:                 tinkerbellBundle,
+			Haproxy:                    haproxyBundle,
+			Snow:                       snowBundle,
+			Nutanix:                    nutanixBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}

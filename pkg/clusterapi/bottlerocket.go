@@ -28,7 +28,7 @@ func pause(image v1alpha1.Image) bootstrapv1.Pause {
 
 // SetBottlerocketInKubeadmControlPlane adds bottlerocket bootstrap image metadata in kubeadmControlPlane.
 func SetBottlerocketInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, versionsBundle *cluster.VersionsBundle) {
-	b := bottlerocketBootstrap(versionsBundle.BottleRocketBootstrap.Bootstrap)
+	b := bottlerocketBootstrap(versionsBundle.BottleRocketHostContainers.KubeadmBootstrap)
 	p := pause(versionsBundle.KubeDistro.Pause)
 	kcp.Spec.KubeadmConfigSpec.Format = bootstrapv1.Bottlerocket
 	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = b
@@ -40,6 +40,6 @@ func SetBottlerocketInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlan
 // SetBottlerocketInKubeadmConfigTemplate adds bottlerocket bootstrap image metadata in kubeadmConfigTemplate.
 func SetBottlerocketInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, versionsBundle *cluster.VersionsBundle) {
 	kct.Spec.Template.Spec.Format = bootstrapv1.Bottlerocket
-	kct.Spec.Template.Spec.JoinConfiguration.BottlerocketBootstrap = bottlerocketBootstrap(versionsBundle.BottleRocketBootstrap.Bootstrap)
+	kct.Spec.Template.Spec.JoinConfiguration.BottlerocketBootstrap = bottlerocketBootstrap(versionsBundle.BottleRocketHostContainers.KubeadmBootstrap)
 	kct.Spec.Template.Spec.JoinConfiguration.Pause = pause(versionsBundle.KubeDistro.Pause)
 }

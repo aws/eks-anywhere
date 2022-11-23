@@ -163,8 +163,8 @@ func givenClusterSpec() *cluster.Spec {
 						Arch:        []string{"amd64"},
 					},
 				},
-				BottleRocketBootstrap: releasev1alpha1.BottlerocketBootstrapBundle{
-					Bootstrap: releasev1alpha1.Image{
+				BottleRocketHostContainers: releasev1alpha1.BottlerocketHostContainersBundle{
+					KubeadmBootstrap: releasev1alpha1.Image{
 						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
 					},
 				},

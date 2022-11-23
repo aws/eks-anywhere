@@ -108,8 +108,8 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 				},
 			},
 			VersionsBundle: &v1alpha1.VersionsBundle{
-				BottleRocketBootstrap: v1alpha1.BottlerocketBootstrapBundle{
-					Bootstrap: v1alpha1.Image{
+				BottleRocketHostContainers: v1alpha1.BottlerocketHostContainersBundle{
+					KubeadmBootstrap: v1alpha1.Image{
 						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
 					},
 				},

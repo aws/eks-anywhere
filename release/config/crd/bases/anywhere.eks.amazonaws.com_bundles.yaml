@@ -216,7 +216,7 @@ spec:
                       - metadata
                       - version
                       type: object
-                    bottlerocket:
+                    bottlerocketHostContainers:
                       properties:
                         admin:
                           properties:
@@ -276,13 +276,7 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
-                      required:
-                      - admin
-                      - control
-                      type: object
-                    bottlerocketBootstrap:
-                      properties:
-                        bootstrap:
+                        kubeadmBootstrap:
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -312,7 +306,9 @@ spec:
                               type: string
                           type: object
                       required:
-                      - bootstrap
+                      - admin
+                      - control
+                      - kubeadmBootstrap
                       type: object
                     certManager:
                       properties:
@@ -2926,8 +2922,7 @@ spec:
                       type: object
                   required:
                   - bootstrap
-                  - bottlerocket
-                  - bottlerocketBootstrap
+                  - bottlerocketHostContainers
                   - certManager
                   - cilium
                   - clusterAPI
