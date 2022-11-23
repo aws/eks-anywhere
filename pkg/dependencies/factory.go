@@ -796,15 +796,22 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...cl
 			return nil
 		}
 
-		f.dependencies.ClusterManager = clustermanager.New(
+		client := clustermanager.NewRetrierClient(
 			&clusterManagerClient{
 				f.dependencies.Clusterctl,
 				f.dependencies.Kubectl,
 			},
+			clustermanager.DefaultRetrier(),
+		)
+		installer := clustermanager.NewEKSAInstaller(client)
+
+		f.dependencies.ClusterManager = clustermanager.New(
+			client,
 			f.dependencies.Networking,
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			installer,
 			opts...,
 		)
 		return nil
