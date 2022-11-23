@@ -571,6 +571,30 @@ func TestTinkerbellKubernetes125BottlerocketRegistryMirror(t *testing.T) {
 	runTinkerbellRegistryMirrorFlow(test)
 }
 
+func TestTinkerbellKubernetes125UbuntuAuthenticatedRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithAuthenticatedRegistryMirror(constants.TinkerbellProviderName),
+	)
+	runTinkerbellRegistryMirrorFlow(test)
+}
+
+func TestTinkerbellKubernetes125BottlerocketAuthenticatedRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithAuthenticatedRegistryMirror(constants.TinkerbellProviderName),
+	)
+	runTinkerbellRegistryMirrorFlow(test)
+}
+
 // Simpleflow
 func TestTinkerbellKubernetes122UbuntuSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
