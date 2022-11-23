@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net"
 	"os"
 	"path"
 	"strings"
@@ -198,16 +197,6 @@ func (pc *DummyProviderGovcClient) SetGroupRoleOnObject(ctx context.Context, pri
 	return nil
 }
 
-type DummyNetClient struct{}
-
-func (n *DummyNetClient) DialTimeout(network, address string, timeout time.Duration) (net.Conn, error) {
-	// add dummy case for coverage
-	if address == "255.255.255.255:22" {
-		return &net.IPConn{}, nil
-	}
-	return nil, errors.New("")
-}
-
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {
 	return givenClusterSpec(t, fileName).Cluster
 }
@@ -367,7 +356,7 @@ func (tt *providerTest) buildNewProvider() {
 		tt.clusterSpec.Cluster,
 		tt.govc,
 		tt.kubectl,
-		NewValidator(tt.govc, &DummyNetClient{}, tt.clientBuilder),
+		NewValidator(tt.govc, tt.clientBuilder),
 	)
 }
 
@@ -419,7 +408,7 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereData
 	ctrl := gomock.NewController(t)
 	govc := NewDummyProviderGovcClient()
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
+	v := NewValidator(govc, vscb)
 	return newProvider(
 		t,
 		datacenterConfig,
@@ -433,7 +422,7 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereData
 func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient) *vsphereProvider {
 	ctrl := gomock.NewController(t)
 	vscb, _ := newMockVSphereClientBuilder(ctrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
+	v := NewValidator(govc, vscb)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
 	return newProvider(
 		t,
@@ -476,7 +465,6 @@ func newMockVSphereClientBuilder(ctrl *gomock.Controller) (*mockVSphereClientBui
 
 func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient, kubectl ProviderKubectlClient, v *Validator) *vsphereProvider {
 	_, writer := test.NewWriter(t)
-	netClient := &DummyNetClient{}
 
 	return NewProviderCustomNet(
 		datacenterConfig,
@@ -484,7 +472,6 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfi
 		govc,
 		kubectl,
 		writer,
-		netClient,
 		test.FakeNow,
 		false,
 		v,
@@ -922,7 +909,7 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
+	v := NewValidator(govc, vscb)
 	govc.osTag = bottlerocketOSTag
 	provider := newProvider(
 		t,
@@ -957,7 +944,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
+	v := NewValidator(govc, vscb)
 	govc.osTag = bottlerocketOSTag
 	provider := newProvider(
 		t,
@@ -992,7 +979,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = bottlerocketOSTag
 	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
+	v := NewValidator(govc, vscb)
 	provider := newProvider(
 		t,
 		datacenterConfig,
@@ -1776,18 +1763,6 @@ func TestSetupAndValidateCreateClusterBogusIp(t *testing.T) {
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
 	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is invalid: bogus", err)
-}
-
-func TestSetupAndValidateCreateClusterUsedIp(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "255.255.255.255"
-	setupContext(t)
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host <255.255.255.255> is already in use, please provide a unique IP", err)
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {

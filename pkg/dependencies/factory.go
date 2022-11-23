@@ -1156,7 +1156,6 @@ func (f *Factory) WithVSphereValidator() *Factory {
 		vcb := govmomi.NewVMOMIClientBuilder()
 		v := vsphere.NewValidator(
 			f.dependencies.Govc,
-			&networkutils.DefaultNetClient{},
 			vcb,
 		)
 		f.dependencies.VSphereValidator = v

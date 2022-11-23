@@ -29,7 +29,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
@@ -347,7 +346,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 	vcb := govmomi.NewVMOMIClientBuilder()
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{}, vcb)
+	validator := vsphere.NewValidator(govcClient, vcb)
 	defaulter := vsphere.NewDefaulter(govcClient)
 
 	bundle := test.Bundle()

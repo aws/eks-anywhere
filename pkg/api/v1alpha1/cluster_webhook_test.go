@@ -1483,7 +1483,7 @@ func TestClusterValidateUpdateInvalidWorkloadCluster(t *testing.T) {
 			// Invalid control plane configuration
 			tt.clusterNew.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.1.1.1",
+					Host: "1.2.3.4",
 				},
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
@@ -1727,7 +1727,7 @@ func createCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				Count: 3,
 				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.1.1.1",
+					Host: "1.2.3.4",
 				},
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
