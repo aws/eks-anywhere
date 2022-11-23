@@ -166,8 +166,9 @@ func (vb *VersionsBundle) SharedImages() []Image {
 	return []Image{
 		vb.Bootstrap.Controller,
 		vb.Bootstrap.KubeProxy,
-		vb.BottleRocketBootstrap.Bootstrap,
-		vb.BottleRocketAdmin.Admin,
+		vb.BottleRocketHostContainers.Admin,
+		vb.BottleRocketHostContainers.Control,
+		vb.BottleRocketHostContainers.KubeadmBootstrap,
 		vb.CertManager.Acmesolver,
 		vb.CertManager.Cainjector,
 		vb.CertManager.Controller,

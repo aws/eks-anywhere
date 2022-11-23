@@ -167,19 +167,19 @@ func GetBottlerocketSupportedK8sVersionsByFormat(r *releasetypes.ReleaseConfig, 
 	return bottlerocketSupportedK8sVersions, nil
 }
 
-func GetBottlerocketAdminContainerMetadata(r *releasetypes.ReleaseConfig) (string, string, error) {
-	var bottlerocketAdminContainerMetadataMap map[string]interface{}
-	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, constants.ImageBuilderProjectPath, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
-	metadata, err := ioutil.ReadFile(bottlerocketAdminContainerMetadataFilePath)
+func GetBottlerocketContainerMetadata(r *releasetypes.ReleaseConfig, filename string) (string, string, error) {
+	var bottlerocketContainerMetadataMap map[string]interface{}
+	bottlerocketContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, constants.ImageBuilderProjectPath, filename)
+	metadata, err := ioutil.ReadFile(bottlerocketContainerMetadataFilePath)
 	if err != nil {
 		return "", "", errors.Cause(err)
 	}
-	err = yaml.Unmarshal(metadata, &bottlerocketAdminContainerMetadataMap)
+	err = yaml.Unmarshal(metadata, &bottlerocketContainerMetadataMap)
 	if err != nil {
 		return "", "", errors.Cause(err)
 	}
 
-	tag, imageDigest := bottlerocketAdminContainerMetadataMap["tag"].(string), bottlerocketAdminContainerMetadataMap["imageDigest"].(string)
+	tag, imageDigest := bottlerocketContainerMetadataMap["tag"].(string), bottlerocketContainerMetadataMap["imageDigest"].(string)
 
 	return tag, imageDigest, nil
 }

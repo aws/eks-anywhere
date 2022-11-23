@@ -17,8 +17,8 @@ spec:
       metadata:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/metadata.yaml
       version: v0.6.4
-    bottlerocketBootstrap:
-      bootstrap:
+    bottlerocketHostContainers:
+      kubeadmBootstrap:
         uri: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-18-7-51a138f2cb28ccc98ced838ffc6ab984110123b1
     bootstrap:
       components:
@@ -169,8 +169,8 @@ spec:
       metadata:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/metadata.yaml
       version: v0.6.4
-    bottlerocketBootstrap:
-      bootstrap:
+    bottlerocketHostContainers:
+      kubeadmBootstrap:
         uri: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-19-6-51a138f2cb28ccc98ced838ffc6ab984110123b
     bootstrap:
       components:
@@ -309,8 +309,8 @@ spec:
       metadata:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/metadata.yaml
       version: v0.6.4
-    bottlerocketBootstrap:
-      bootstrap:
+    bottlerocketHostContainers:
+      kubeadmBootstrap:
         uri: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-20-3-51a138f2cb28ccc98ced838ffc6ab984110123b1
     bootstrap:
       components:
@@ -507,8 +507,8 @@ spec:
       metadata:
         uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/bootstrap-kubeadm/v0.3.23/metadata.yaml
       version: v0.3.23
-    bottlerocketBootstrap:
-      bootstrap:
+    bottlerocketHostContainers:
+      kubeadmBootstrap:
         arch:
           - amd64
         description: Container image for bottlerocket-bootstrap image

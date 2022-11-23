@@ -442,8 +442,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		values["format"] = string(v1alpha1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
+		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
+		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
 	if clusterSpec.AWSIamConfig != nil {
@@ -478,8 +478,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["format"] = string(v1alpha1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
+		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
+		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
