@@ -75,7 +75,7 @@ type VersionsBundle struct {
 	Flux                   FluxBundle                  `json:"flux"`
 	PackageController      PackageBundle               `json:"packageController"`
 	BottleRocketBootstrap  BottlerocketBootstrapBundle `json:"bottlerocketBootstrap"`
-	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
+	BottleRocket           BottlerocketBundle          `json:"bottlerocket"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
@@ -137,8 +137,9 @@ type BottlerocketBootstrapBundle struct {
 	Bootstrap Image `json:"bootstrap"`
 }
 
-type BottlerocketAdminBundle struct {
-	Admin Image `json:"admin"`
+type BottlerocketBundle struct {
+	Admin   Image `json:"admin"`
+	Control Image `json:"control"`
 }
 
 type CertManagerBundle struct {

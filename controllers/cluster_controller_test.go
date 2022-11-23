@@ -331,7 +331,7 @@ func createBundle(cluster *anywherev1.Cluster) *v1alpha1.Bundles {
 					Kindnetd:               v1alpha1.KindnetdBundle{},
 					Flux:                   v1alpha1.FluxBundle{},
 					BottleRocketBootstrap:  v1alpha1.BottlerocketBootstrapBundle{},
-					BottleRocketAdmin:      v1alpha1.BottlerocketAdminBundle{},
+					BottleRocket:           v1alpha1.BottlerocketBundle{},
 					ExternalEtcdBootstrap:  v1alpha1.EtcdadmBootstrapBundle{},
 					ExternalEtcdController: v1alpha1.EtcdadmControllerBundle{},
 					Tinkerbell:             v1alpha1.TinkerbellBundle{},

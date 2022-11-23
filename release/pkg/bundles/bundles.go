@@ -116,9 +116,9 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for external Etcdadm controller")
 	}
 
-	bottlerocketAdminBundle, err := GetBottlerocketAdminBundle(r)
+	bottlerocketBundle, err := GetBottlerocketBundle(r)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
+		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket containers")
 	}
 
 	packageBundle, err := GetPackagesBundle(r, imageDigests)
@@ -203,7 +203,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
 			ExternalEtcdController: etcdadmControllerBundle,
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
-			BottleRocketAdmin:      bottlerocketAdminBundle,
+			BottleRocket:           bottlerocketBundle,
 			Tinkerbell:             tinkerbellBundle,
 			Haproxy:                haproxyBundle,
 			Snow:                   snowBundle,

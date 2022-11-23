@@ -121,7 +121,7 @@ func Bundle() *releasev1.Bundles {
 					Kindnetd:               releasev1.KindnetdBundle{},
 					Flux:                   releasev1.FluxBundle{},
 					BottleRocketBootstrap:  releasev1.BottlerocketBootstrapBundle{},
-					BottleRocketAdmin:      releasev1.BottlerocketAdminBundle{},
+					BottleRocket:           releasev1.BottlerocketBundle{},
 					ExternalEtcdBootstrap:  releasev1.EtcdadmBootstrapBundle{},
 					ExternalEtcdController: releasev1.EtcdadmControllerBundle{},
 					Tinkerbell:             releasev1.TinkerbellBundle{},

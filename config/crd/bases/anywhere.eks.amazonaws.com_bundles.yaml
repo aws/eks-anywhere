@@ -216,7 +216,7 @@ spec:
                       - metadata
                       - version
                       type: object
-                    bottlerocketAdmin:
+                    bottlerocket:
                       properties:
                         admin:
                           properties:
@@ -247,8 +247,38 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        control:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                       required:
                       - admin
+                      - control
                       type: object
                     bottlerocketBootstrap:
                       properties:
@@ -2896,7 +2926,7 @@ spec:
                       type: object
                   required:
                   - bootstrap
-                  - bottlerocketAdmin
+                  - bottlerocket
                   - bottlerocketBootstrap
                   - certManager
                   - cilium
