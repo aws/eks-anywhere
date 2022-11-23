@@ -534,6 +534,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/snowballdevice.go -package=mocks -source "pkg/aws/snowballdevice.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/nutanix/mock_client_test.go -package=nutanix -source "pkg/providers/nutanix/client.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/nutanix/mock_roundtripper_test.go -package=nutanix net/http RoundTripper
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/client.go -package=mocks -source "pkg/providers/snow/snow.go"

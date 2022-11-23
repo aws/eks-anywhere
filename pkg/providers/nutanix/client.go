@@ -15,4 +15,6 @@ type Client interface {
 
 	GetCluster(ctx context.Context, uuid string) (*v3.ClusterIntentResponse, error)
 	ListCluster(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ClusterListIntentResponse, error)
+
+	GetCurrentLoggedInUser(ctx context.Context) (*v3.UserIntentResponse, error)
 }

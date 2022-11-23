@@ -50,6 +50,21 @@ func (mr *MockClientMockRecorder) GetCluster(ctx, uuid interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*MockClient)(nil).GetCluster), ctx, uuid)
 }
 
+// GetCurrentLoggedInUser mocks base method.
+func (m *MockClient) GetCurrentLoggedInUser(ctx context.Context) (*v3.UserIntentResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCurrentLoggedInUser", ctx)
+	ret0, _ := ret[0].(*v3.UserIntentResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCurrentLoggedInUser indicates an expected call of GetCurrentLoggedInUser.
+func (mr *MockClientMockRecorder) GetCurrentLoggedInUser(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentLoggedInUser", reflect.TypeOf((*MockClient)(nil).GetCurrentLoggedInUser), ctx)
+}
+
 // GetImage mocks base method.
 func (m *MockClient) GetImage(ctx context.Context, uuid string) (*v3.ImageIntentResponse, error) {
 	m.ctrl.T.Helper()

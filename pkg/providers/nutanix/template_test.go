@@ -23,26 +23,8 @@ var nutanixClusterConfigSpec string
 //go:embed testdata/datacenterConfig.yaml
 var nutanixDatacenterConfigSpec string
 
-//go:embed testdata/datacenterConfig_with_trust_bundle.yaml
-var nutanixDatacenterConfigSpecWithTrustBundle string
-
-//go:embed testdata/datacenterConfig_with_insecure.yaml
-var nutanixDatacenterConfigSpecWithInsecure string
-
-//go:embed testdata/eksa-cluster.json
-var nutanixClusterConfigSpecJSON string
-
 //go:embed testdata/machineConfig.yaml
 var nutanixMachineConfigSpec string
-
-//go:embed testdata/datacenterConfig.json
-var nutanixDatacenterConfigSpecJSON string
-
-//go:embed testdata/machineConfig.json
-var nutanixMachineConfigSpecJSON string
-
-//go:embed testdata/machineDeployment.json
-var nutanixMachineDeploymentSpecJSON string
 
 func fakemarshal(v interface{}) ([]byte, error) {
 	return []byte{}, errors.New("marshalling failed")

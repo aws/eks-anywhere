@@ -3,29 +3,41 @@ package nutanix
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
-	"go.uber.org/multierr"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
+)
+
+const (
+	minNutanixCPUSockets   = 1
+	minNutanixCPUPerSocket = 1
+	minNutanixMemoryMiB    = 2048
+	minNutanixDiskGiB      = 20
 )
 
 // Validator is a client to validate nutanix resources.
 type Validator struct {
 	client        Client
+	httpClient    *http.Client
 	certValidator crypto.TlsValidator
 }
 
 // NewValidator returns a new validator client.
-func NewValidator(client Client, certValidator crypto.TlsValidator) *Validator {
+func NewValidator(client Client, certValidator crypto.TlsValidator, httpClient *http.Client) *Validator {
 	return &Validator{
 		client:        client,
 		certValidator: certValidator,
+		httpClient:    httpClient,
 	}
 }
 
@@ -34,32 +46,108 @@ func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywhe
 	if config.Spec.Insecure {
 		logger.Info("Warning: Skipping TLS validation for insecure connection to Nutanix Prism Central; this is not recommended for production use")
 	}
-	return v.validateTrustBundleConfig(config.Spec)
+
+	if err := v.validateEndpointAndPort(config.Spec); err != nil {
+		return err
+	}
+
+	if err := v.validateCredentials(ctx); err != nil {
+		return err
+	}
+
+	if err := v.validateTrustBundleConfig(config.Spec); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Validator) validateEndpointAndPort(dcConf anywherev1.NutanixDatacenterConfigSpec) error {
+	if !networkutils.IsPortValid(strconv.Itoa(dcConf.Port)) {
+		return fmt.Errorf("nutanix prism central port %q out of range", dcConf.Port)
+	}
+
+	if dcConf.Endpoint == "" {
+		return fmt.Errorf("nutanix prism central endpoint must be provided")
+	}
+	server := fmt.Sprintf("%s:%d", dcConf.Endpoint, dcConf.Port)
+	if !strings.HasPrefix(server, "https://") {
+		server = fmt.Sprintf("https://%s", server)
+	}
+
+	if _, err := v.httpClient.Get(server); err != nil {
+		return fmt.Errorf("failed to reach server %s: %v", server, err)
+	}
+
+	return nil
+}
+
+func (v *Validator) validateCredentials(ctx context.Context) error {
+	_, err := v.client.GetCurrentLoggedInUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (v *Validator) validateTrustBundleConfig(dcConf anywherev1.NutanixDatacenterConfigSpec) error {
 	if dcConf.AdditionalTrustBundle == "" {
 		return nil
 	}
+
 	return v.certValidator.ValidateCert(dcConf.Endpoint, fmt.Sprintf("%d", dcConf.Port), dcConf.AdditionalTrustBundle)
+}
+
+func (v *Validator) validateMachineSpecs(machineSpec anywherev1.NutanixMachineConfigSpec) error {
+	if machineSpec.VCPUSockets < minNutanixCPUSockets {
+		return fmt.Errorf("vCPU sockets %d must be greater than or equal to %d", machineSpec.VCPUSockets, minNutanixCPUSockets)
+	}
+
+	if machineSpec.VCPUsPerSocket < minNutanixCPUPerSocket {
+		return fmt.Errorf("vCPUs per socket %d must be greater than or equal to %d", machineSpec.VCPUsPerSocket, minNutanixCPUPerSocket)
+	}
+
+	minNutanixMemory, err := resource.ParseQuantity(fmt.Sprintf("%dMi", minNutanixMemoryMiB))
+	if err != nil {
+		return err
+	}
+
+	if machineSpec.MemorySize.Cmp(minNutanixMemory) < 0 {
+		return fmt.Errorf("MemorySize must be greater than or equal to %dMi", minNutanixMemoryMiB)
+	}
+
+	minNutanixDisk, err := resource.ParseQuantity(fmt.Sprintf("%dGi", minNutanixDiskGiB))
+	if err != nil {
+		return err
+	}
+
+	if machineSpec.SystemDiskSize.Cmp(minNutanixDisk) < 0 {
+		return fmt.Errorf("SystemDiskSize must be greater than or equal to %dGi", minNutanixDiskGiB)
+	}
+
+	return nil
 }
 
 // ValidateMachineConfig validates the Prism Element cluster, subnet, and image for the machine.
 func (v *Validator) ValidateMachineConfig(ctx context.Context, config *anywherev1.NutanixMachineConfig) error {
-	var errors error
+	if err := v.validateMachineSpecs(config.Spec); err != nil {
+		return err
+	}
+
 	if err := v.validateClusterConfig(ctx, config.Spec.Cluster); err != nil {
-		errors = multierr.Append(errors, err)
+		return err
 	}
 
 	if err := v.validateSubnetConfig(ctx, config.Spec.Subnet); err != nil {
-		errors = multierr.Append(errors, err)
+		return err
 	}
 
 	if err := v.validateImageConfig(ctx, config.Spec.Image); err != nil {
-		errors = multierr.Append(errors, err)
+		return err
 	}
 
-	return errors
+	return nil
 }
 
 func (v *Validator) validateClusterConfig(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier) error {

@@ -3,7 +3,9 @@ package nutanix
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"errors"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -27,6 +29,18 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
+//go:embed testdata/eksa-cluster.json
+var nutanixClusterConfigSpecJSON string
+
+//go:embed testdata/datacenterConfig.json
+var nutanixDatacenterConfigSpecJSON string
+
+//go:embed testdata/machineConfig.json
+var nutanixMachineConfigSpecJSON string
+
+//go:embed testdata/machineDeployment.json
+var nutanixMachineDeploymentSpecJSON string
+
 func thenErrorExpected(t *testing.T, expected string, err error) {
 	if err == nil {
 		t.Fatalf("Expected=<%s> actual=<nil>", expected)
@@ -44,11 +58,16 @@ func testDefaultNutanixProvider(t *testing.T) *Provider {
 
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 	return provider
 }
 
-func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator) *Provider {
+func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator, httpClient *http.Client) *Provider {
 	clusterConf := &anywherev1.Cluster{}
 	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
 	require.NoError(t, err)
@@ -68,7 +87,7 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	t.Setenv(constants.NutanixUsernameKey, "admin")
 	t.Setenv(constants.NutanixPasswordKey, "password")
 
-	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, certValidator, time.Now)
+	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, certValidator, httpClient, time.Now)
 	require.NotNil(t, provider)
 	return provider
 }
@@ -139,7 +158,10 @@ func TestNutanixProviderDeleteResources(t *testing.T) {
 
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	clusterSpec.ManagementCluster = &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	err := provider.DeleteResources(context.Background(), clusterSpec)
@@ -206,6 +228,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 
 	mockClient := NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
 	clusters := &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
 			{
@@ -300,7 +323,10 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("invalid cert"))
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 	assert.NotNil(t, provider)
 
 	for _, tt := range tests {
@@ -400,7 +426,10 @@ func TestNutanixProviderUpdateSecrets(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -415,7 +444,10 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -432,7 +464,10 @@ func TestNutanixProviderGenerateCAPISpecForCreate_Error(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -459,7 +494,10 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -476,7 +514,10 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade_Error(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -829,7 +870,10 @@ func TestNutanixProviderUpgradeNeeded(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator)
+	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
 
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
