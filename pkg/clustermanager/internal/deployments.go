@@ -1,5 +1,7 @@
 package internal
 
+import "github.com/aws/eks-anywhere/pkg/constants"
+
 // CAPIDeployments is a map where key = namespace and value is a capi deployment.
 var CAPIDeployments = map[string][]string{
 	"capi-kubeadm-bootstrap-system":     {"capi-kubeadm-bootstrap-controller-manager"},
@@ -14,5 +16,5 @@ var ExternalEtcdDeployments = map[string][]string{
 }
 
 var EksaDeployments = map[string][]string{
-	"eksa-system": {"eksa-controller-manager"},
+	constants.EksaSystemNamespace: {constants.EksaControllerManagerDeployment},
 }
