@@ -134,7 +134,23 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		return err
 	}
 
-	return p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec)
+	if err := p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec); err != nil {
+		return err
+	}
+
+	if p.clusterConfig.IsManaged() {
+		if err := p.applyHardwareUpgrade(ctx, clusterSpec.ManagementCluster); err != nil {
+			return err
+		}
+		if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
+			err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+			if err != nil {
+				return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, currentSpec, newClusterSpec *cluster.Spec) (err error) {
@@ -167,11 +183,15 @@ func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 }
 
 func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return p.applyHardwareUpgrade(ctx, cluster)
+}
+
+// ApplyHardwareToCluster adds all the hardwares to the cluster.
+func (p *Provider) applyHardwareUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	allHardware := p.catalogue.AllHardware()
 	if len(allHardware) == 0 {
 		return nil
 	}
-
 	hardwareSpec, err := hardware.MarshalCatalogue(p.catalogue)
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
