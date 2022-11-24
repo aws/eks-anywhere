@@ -142,7 +142,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		if err := p.applyHardwareUpgrade(ctx, clusterSpec.ManagementCluster); err != nil {
 			return err
 		}
-		if len(p.catalogue.AllBMCs()) > 0 {
+		if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
 			err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
 			if err != nil {
 				return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)

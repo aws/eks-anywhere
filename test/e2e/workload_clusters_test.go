@@ -55,6 +55,25 @@ func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETes
 	test.DeleteManagementCluster()
 }
 
+func runTinkerbellWorkloadClusterFlowSkipPowerActions(test *framework.MulticlusterE2ETest) {
+	test.CreateTinkerbellManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfig()
+		w.PowerOffHardware()
+		w.PXEBootHardware()
+		w.PowerOnHardware()
+		w.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+		w.StopIfFailed()
+		w.DeleteCluster()
+		w.PowerOffHardware()
+		w.ValidateHardwareDecommissioned()
+	})
+	test.ManagementCluster.StopIfFailed()
+	test.ManagementCluster.DeleteCluster()
+	test.ManagementCluster.PowerOffHardware()
+	test.ManagementCluster.ValidateHardwareDecommissioned()
+}
+
 func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
@@ -428,6 +447,28 @@ func TestTinkerbellKubernetes122BottlerocketWorkloadCluster(t *testing.T) {
 		),
 	)
 	runTinkerbellWorkloadClusterFlow(test)
+}
+
+func TestTinkerbellKubernetes122BottlerocketWorkloadClusterSkipPowerActions(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithNoPowerActions(),
+			framework.WithControlPlaneHardware(2),
+			framework.WithWorkerHardware(2),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+			framework.WithNoPowerActions(),
+		),
+	)
+	runTinkerbellWorkloadClusterFlowSkipPowerActions(test)
 }
 
 func TestTinkerbellUpgradeMulticlusterWorkloadClusterWorkerScaleup(t *testing.T) {
