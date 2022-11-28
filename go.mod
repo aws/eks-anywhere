@@ -209,5 +209,5 @@ replace (
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
 	// need the modifications eksa made to the capi api structs
-	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc2
+	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc3
 )

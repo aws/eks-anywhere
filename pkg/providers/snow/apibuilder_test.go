@@ -330,6 +330,31 @@ var bootstrap = bootstrapv1.BottlerocketBootstrap{
 	},
 }
 
+var admin = bootstrapv1.BottlerocketAdmin{
+	ImageMeta: bootstrapv1.ImageMeta{
+		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-admin",
+		ImageTag:        "0.0.1",
+	},
+}
+
+var control = bootstrapv1.BottlerocketControl{
+	ImageMeta: bootstrapv1.ImageMeta{
+		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-control",
+		ImageTag:        "0.0.1",
+	},
+}
+
+var bootstrapCustom = []bootstrapv1.BottlerocketBootstrapContainer{
+	{
+		Name: "bottlerocket-bootstrap-snow",
+		ImageMeta: bootstrapv1.ImageMeta{
+			ImageRepository: "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow",
+			ImageTag:        "v1-20-22-eks-a-v0.0.0-dev-build.4984",
+		},
+		Mode: "always",
+	},
+}
+
 func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 	for _, tt := range registryMirrorTests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -342,8 +367,14 @@ func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketAdmin = admin
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketControl = control
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketCustomBootstrapContainers = bootstrapCustom
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Pause = pause
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketBootstrap = bootstrap
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketAdmin = admin
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketControl = control
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketCustomBootstrapContainers = bootstrapCustom
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.RegistryMirror = tt.wantRegistryConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.RegistryMirror = tt.wantRegistryConfig
@@ -429,8 +460,14 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketAdmin = admin
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketControl = control
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketCustomBootstrapContainers = bootstrapCustom
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Pause = pause
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketBootstrap = bootstrap
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketAdmin = admin
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketControl = control
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketCustomBootstrapContainers = bootstrapCustom
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Proxy = tt.wantProxyConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Proxy = tt.wantProxyConfig

@@ -23,6 +23,20 @@ var bootstrap = bootstrapv1.BottlerocketBootstrap{
 	},
 }
 
+var adminContainer = bootstrapv1.BottlerocketAdmin{
+	ImageMeta: bootstrapv1.ImageMeta{
+		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-admin",
+		ImageTag:        "0.0.1",
+	},
+}
+
+var controlContainer = bootstrapv1.BottlerocketControl{
+	ImageMeta: bootstrapv1.ImageMeta{
+		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-control",
+		ImageTag:        "0.0.1",
+	},
+}
+
 func TestSetBottlerocketInKubeadmControlPlane(t *testing.T) {
 	g := newApiBuilerTest(t)
 	got := wantKubeadmControlPlane()
@@ -37,6 +51,28 @@ func TestSetBottlerocketInKubeadmControlPlane(t *testing.T) {
 	g.Expect(got).To(Equal(want))
 }
 
+func TestSetBottlerocketAdminContainerImageInKubeadmControlPlane(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmControlPlane()
+	want := got.DeepCopy()
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketAdmin = adminContainer
+	want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketAdmin = adminContainer
+
+	clusterapi.SetBottlerocketAdminContainerImageInKubeadmControlPlane(got, g.clusterSpec.VersionsBundle)
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketControlContainerImageInKubeadmControlPlane(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmControlPlane()
+	want := got.DeepCopy()
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketControl = controlContainer
+	want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketControl = controlContainer
+
+	clusterapi.SetBottlerocketControlContainerImageInKubeadmControlPlane(got, g.clusterSpec.VersionsBundle)
+	g.Expect(got).To(Equal(want))
+}
+
 func TestSetBottlerocketInKubeadmConfigTemplate(t *testing.T) {
 	g := newApiBuilerTest(t)
 	got := wantKubeadmConfigTemplate()
@@ -46,5 +82,25 @@ func TestSetBottlerocketInKubeadmConfigTemplate(t *testing.T) {
 	want.Spec.Template.Spec.JoinConfiguration.Pause = pause
 
 	clusterapi.SetBottlerocketInKubeadmConfigTemplate(got, g.clusterSpec.VersionsBundle)
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketAdminContainerImageInKubeadmConfigTemplate(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmConfigTemplate()
+	want := got.DeepCopy()
+	want.Spec.Template.Spec.JoinConfiguration.BottlerocketAdmin = adminContainer
+
+	clusterapi.SetBottlerocketAdminContainerImageInKubeadmConfigTemplate(got, g.clusterSpec.VersionsBundle)
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketControlContainerImageInKubeadmConfigTemplate(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmConfigTemplate()
+	want := got.DeepCopy()
+	want.Spec.Template.Spec.JoinConfiguration.BottlerocketControl = controlContainer
+
+	clusterapi.SetBottlerocketControlContainerImageInKubeadmConfigTemplate(got, g.clusterSpec.VersionsBundle)
 	g.Expect(got).To(Equal(want))
 }

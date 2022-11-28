@@ -17,6 +17,24 @@ func bottlerocketBootstrap(image v1alpha1.Image) bootstrapv1.BottlerocketBootstr
 	}
 }
 
+func bottlerocketAdmin(image v1alpha1.Image) bootstrapv1.BottlerocketAdmin {
+	return bootstrapv1.BottlerocketAdmin{
+		ImageMeta: bootstrapv1.ImageMeta{
+			ImageRepository: image.Image(),
+			ImageTag:        image.Tag(),
+		},
+	}
+}
+
+func bottlerocketControl(image v1alpha1.Image) bootstrapv1.BottlerocketControl {
+	return bootstrapv1.BottlerocketControl{
+		ImageMeta: bootstrapv1.ImageMeta{
+			ImageRepository: image.Image(),
+			ImageTag:        image.Tag(),
+		},
+	}
+}
+
 func pause(image v1alpha1.Image) bootstrapv1.Pause {
 	return bootstrapv1.Pause{
 		ImageMeta: bootstrapv1.ImageMeta{
@@ -37,9 +55,33 @@ func SetBottlerocketInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlan
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = p
 }
 
+// SetBottlerocketAdminContainerImageInKubeadmControlPlane overrides the default bottlerocket admin container image metadata in kubeadmControlPlane.
+func SetBottlerocketAdminContainerImageInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, versionsBundle *cluster.VersionsBundle) {
+	b := bottlerocketAdmin(versionsBundle.BottleRocketHostContainers.Admin)
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketAdmin = b
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketAdmin = b
+}
+
+// SetBottlerocketControlContainerImageInKubeadmControlPlane overrides the default bottlerocket control container image metadata in kubeadmControlPlane.
+func SetBottlerocketControlContainerImageInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, versionsBundle *cluster.VersionsBundle) {
+	b := bottlerocketControl(versionsBundle.BottleRocketHostContainers.Control)
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketControl = b
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketControl = b
+}
+
 // SetBottlerocketInKubeadmConfigTemplate adds bottlerocket bootstrap image metadata in kubeadmConfigTemplate.
 func SetBottlerocketInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, versionsBundle *cluster.VersionsBundle) {
 	kct.Spec.Template.Spec.Format = bootstrapv1.Bottlerocket
 	kct.Spec.Template.Spec.JoinConfiguration.BottlerocketBootstrap = bottlerocketBootstrap(versionsBundle.BottleRocketHostContainers.KubeadmBootstrap)
 	kct.Spec.Template.Spec.JoinConfiguration.Pause = pause(versionsBundle.KubeDistro.Pause)
+}
+
+// SetBottlerocketAdminContainerImageInKubeadmConfigTemplate overrides the default bottlerocket admin container image metadata in kubeadmConfigTemplate.
+func SetBottlerocketAdminContainerImageInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, versionsBundle *cluster.VersionsBundle) {
+	kct.Spec.Template.Spec.JoinConfiguration.BottlerocketAdmin = bottlerocketAdmin(versionsBundle.BottleRocketHostContainers.Admin)
+}
+
+// SetBottlerocketControlContainerImageInKubeadmConfigTemplate overrides the default bottlerocket control container image metadata in kubeadmConfigTemplate.
+func SetBottlerocketControlContainerImageInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, versionsBundle *cluster.VersionsBundle) {
+	kct.Spec.Template.Spec.JoinConfiguration.BottlerocketControl = bottlerocketControl(versionsBundle.BottleRocketHostContainers.Control)
 }

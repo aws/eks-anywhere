@@ -109,6 +109,12 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 			},
 			VersionsBundle: &v1alpha1.VersionsBundle{
 				BottleRocketHostContainers: v1alpha1.BottlerocketHostContainersBundle{
+					Admin: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+					},
+					Control: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+					},
 					KubeadmBootstrap: v1alpha1.Image{
 						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
 					},
