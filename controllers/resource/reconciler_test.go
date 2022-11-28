@@ -28,7 +28,6 @@ import (
 	"github.com/aws/eks-anywhere/controllers/resource/mocks"
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -1186,9 +1185,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 }
 
 func TestClusterReconcilerReconcileNutanix(t *testing.T) {
-	t.Setenv(features.NutanixProviderEnvVar, "true")
-	assert.True(t, features.NutanixProvider().IsActive())
-
 	type args struct {
 		objectKey types.NamespacedName
 		name      string
