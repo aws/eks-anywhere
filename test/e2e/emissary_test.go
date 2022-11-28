@@ -23,6 +23,9 @@ func runCuratedPackageEmissaryInstall(test *framework.ClusterE2ETest) {
 	packageFile := test.BuildPackageConfigFile(emissaryPackageName, emissaryPackagePrefix, EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
 	test.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
+}
+
+func runCuratedPackageEmissaryIngressTest(test *framework.ClusterE2ETest) {
 	test.TestEmissaryPackageRouting(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
 }
 
@@ -58,6 +61,11 @@ func runCuratedPackageEmissaryInstallSimpleFlow(test *framework.ClusterE2ETest) 
 	test.WithCluster(runCuratedPackageEmissaryInstall)
 }
 
+func runCuratedPackageEmissaryInstallAdvancedFlow(test *framework.ClusterE2ETest) {
+	test.WithCluster(runCuratedPackageEmissaryInstall)
+	test.WithCluster(runCuratedPackageEmissaryIngressTest)
+}
+
 func TestCPackagesEmissaryDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -67,7 +75,7 @@ func TestCPackagesEmissaryDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
+	runCuratedPackageEmissaryInstallAdvancedFlow(test)
 }
 
 func TestCPackagesEmissaryVSphereKubernetes122SimpleFlow(t *testing.T) {
