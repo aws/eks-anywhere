@@ -162,8 +162,22 @@ func givenClusterSpec() *cluster.Spec {
 						Description: "Container image for cluster-api-snow-controller image",
 						Arch:        []string{"amd64"},
 					},
+					BottlerocketBootstrapSnow: releasev1alpha1.Image{
+						Name:        "bottlerocket-bootstrap-snow",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
+						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+						Description: "Container image for bottlerocket-bootstrap-snow image",
+						Arch:        []string{"amd64"},
+					},
 				},
 				BottleRocketHostContainers: releasev1alpha1.BottlerocketHostContainersBundle{
+					Admin: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+					},
+					Control: releasev1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+					},
 					KubeadmBootstrap: releasev1alpha1.Image{
 						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
 					},

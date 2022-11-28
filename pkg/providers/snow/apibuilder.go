@@ -69,6 +69,9 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		clusterapi.SetProxyConfigInKubeadmControlPlaneForBottlerocket(kcp, clusterSpec.Cluster)
 		clusterapi.SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
 		clusterapi.SetBottlerocketInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketAdminContainerImageInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketControlContainerImageInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
+		addBottlerocketBootstrapSnowInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
 	case v1alpha1.Ubuntu:
 		if err := clusterapi.SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster); err != nil {
@@ -113,6 +116,9 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 		clusterapi.SetProxyConfigInKubeadmConfigTemplateForBottlerocket(kct, clusterSpec.Cluster)
 		clusterapi.SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
 		clusterapi.SetBottlerocketInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketAdminContainerImageInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketControlContainerImageInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
+		addBottlerocketBootstrapSnowInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
 	case v1alpha1.Ubuntu:
 		if err := clusterapi.SetProxyConfigInKubeadmConfigTemplateForUbuntu(kct, clusterSpec.Cluster); err != nil {

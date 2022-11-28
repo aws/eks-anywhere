@@ -62,6 +62,7 @@ spec:
   kubeadmConfigSpec:
     clusterConfiguration:
       apiServer: {}
+      bottlerocketAdmin: {}
       bottlerocketBootstrap: {}
       bottlerocketControl: {}
       controllerManager:
@@ -145,6 +146,7 @@ spec:
           provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
+      bottlerocketAdmin: {}
       bottlerocketBootstrap: {}
       bottlerocketControl: {}
       discovery: {}

@@ -9,6 +9,7 @@ spec:
     spec:
       clusterConfiguration:
         apiServer: {}
+        bottlerocketAdmin: {}
         bottlerocketBootstrap: {}
         bottlerocketControl: {}
         controllerManager: {}
@@ -20,6 +21,7 @@ spec:
         registryMirror: {}
         scheduler: {}
       joinConfiguration:
+        bottlerocketAdmin: {}
         bottlerocketBootstrap: {}
         bottlerocketControl: {}
         discovery: {}
