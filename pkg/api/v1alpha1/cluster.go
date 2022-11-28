@@ -90,7 +90,7 @@ func WorkerNodeConfigName(name string) ClusterGenerateOpt {
 
 func WithClusterEndpoint() ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
-		c.Spec.ControlPlaneConfiguration.Endpoint = &Endpoint{Host: ""}
+		c.Spec.ControlPlaneConfiguration.Endpoint = &Endpoint{Host: "<Enter endpoint FQDN or IP for Control plane>"}
 	}
 }
 
