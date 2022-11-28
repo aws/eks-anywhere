@@ -131,6 +131,69 @@ func TestWorkersSpecUpgradeCluster(t *testing.T) {
 	g.Expect(workers.Groups).To(ConsistOf(*expectedGroup1, *expectedGroup2))
 }
 
+func TestWorkersSpecUpgradeClusterRemoveLabels(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := testClusterSpec()
+
+	kct := kubeadmConfigTemplate()
+	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
+		"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"cgroup-driver":     "cgroupfs",
+		"node-labels":       "foo=bar",
+		"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
+	}
+
+	currentGroup1 := clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
+		KubeadmConfigTemplate:   kct,
+		MachineDeployment:       machineDeployment(),
+		ProviderMachineTemplate: dockerMachineTemplate("test-md-0-1"),
+	}
+
+	currentGroup2 := clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
+		KubeadmConfigTemplate: kubeadmConfigTemplate(
+			func(kct *bootstrapv1.KubeadmConfigTemplate) {
+				kct.Name = "test-md-1-1"
+			},
+		),
+		MachineDeployment: machineDeployment(
+			func(md *clusterv1.MachineDeployment) {
+				md.Name = "test-md-1"
+				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+			},
+		),
+		ProviderMachineTemplate: dockerMachineTemplate("test-md-1-1"),
+	}
+
+	// Always make copies before passing to client since it does modifies the api objects
+	// Like for example, the ResourceVersion
+	expectedGroup1 := currentGroup1.DeepCopy()
+	expectedGroup2 := currentGroup2.DeepCopy()
+
+	objs := make([]kubernetes.Object, 0, 6)
+	objs = append(objs, currentGroup1.Objects()...)
+	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(objs)...)
+
+	// This will cause a change in the kubeadmconfigtemplate which we also treat as immutable
+	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Labels = map[string]string{}
+
+	expectedGroup1.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
+		"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"cgroup-driver":     "cgroupfs",
+		"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
+	}
+	expectedGroup1.KubeadmConfigTemplate.Name = "test-md-0-2"
+	expectedGroup1.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
+
+	workers, err := docker.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers).NotTo(BeNil())
+	g.Expect(workers.Groups).To(HaveLen(2))
+	g.Expect(workers.Groups).To(ConsistOf(*expectedGroup1, *expectedGroup2))
+}
+
 func TestWorkersSpecNoMachineTemplateChanges(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()

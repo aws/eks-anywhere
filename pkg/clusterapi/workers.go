@@ -119,12 +119,12 @@ func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, nam
 }
 
 // KubeadmConfigTemplateEqual returns true only if the new version of a KubeadmConfigTemplate
-// involves changes with respect6 to the old one when applied to the cluster
+// involves changes with respect to the old one when applied to the cluster.
 // Implements ObjectComparator.
 func KubeadmConfigTemplateEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
 	// DeepDerivative treats empty map (length == 0) as unset field. We need to manually compare certain fields
 	// such as taints, so that setting it to empty will trigger machine recreate
-	return kubeadmConfigTemplateTaintsEqual(new, old) &&
+	return kubeadmConfigTemplateTaintsEqual(new, old) && kubeadmConfigTemplateExtraArgsEqual(new, old) &&
 		equality.Semantic.DeepDerivative(new.Spec, old.Spec)
 }
 
@@ -134,5 +134,14 @@ func kubeadmConfigTemplateTaintsEqual(new, old *kubeadmv1.KubeadmConfigTemplate)
 		anywherev1.TaintsSliceEqual(
 			new.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints,
 			old.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints,
+		)
+}
+
+func kubeadmConfigTemplateExtraArgsEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
+	return new.Spec.Template.Spec.JoinConfiguration == nil ||
+		old.Spec.Template.Spec.JoinConfiguration == nil ||
+		anywherev1.MapEqual(
+			new.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs,
+			old.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs,
 		)
 }
