@@ -22,9 +22,8 @@ type (
 	// store them in a type implementing Builder
 	// It allows to dynamically register configuration for mappings between kind and concrete types.
 	Parser struct {
-		apiObjectMapping   map[string]APIObjectGenerator
-		generateObjAnyKind APIObjectGenerator
-		logger             logr.Logger
+		apiObjectMapping map[string]APIObjectGenerator
+		logger           logr.Logger
 	}
 )
 
@@ -79,12 +78,6 @@ func (c *Parser) RegisterMappings(mappings ...Mapping[APIObject]) error {
 	}
 
 	return nil
-}
-
-// RegisterMappingForAnyKind records an object generator that will be used
-// as fallback when there is not a specific APIObjectGenerator registered for that particular kind.
-func (c *Parser) RegisterMappingForAnyKind(generator APIObjectGenerator) {
-	c.generateObjAnyKind = generator
 }
 
 // Builder processes the parsed API objects contained in a lookup.
@@ -155,8 +148,6 @@ func (p *Parser) unmarshal(reader io.Reader) (*parsed, error) {
 		var obj APIObject
 		if generateApiObj, ok := p.apiObjectMapping[k.Kind]; ok {
 			obj = generateApiObj()
-		} else if p.generateObjAnyKind != nil {
-			obj = p.generateObjAnyKind()
 		} else {
 			p.logger.V(2).Info("Ignoring object in yaml of unknown type during parsing", "kind", k.Kind)
 			continue

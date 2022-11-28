@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/utils/integer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -60,8 +61,8 @@ const (
 var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 
 type ClusterManager struct {
-	eksaComponents          EKSAComponents
-	clusterClient           *RetrierClient
+	*Upgrader
+	clusterClient           *retrierClient
 	writer                  filewriter.FileWriter
 	networking              Networking
 	diagnosticsFactory      diagnostics.DiagnosticBundleFactory
@@ -76,8 +77,10 @@ type ClusterManager struct {
 }
 
 type ClusterClient interface {
-	KubernetesClient
 	MoveManagement(ctx context.Context, org, target *types.Cluster) error
+	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
+	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -103,6 +106,8 @@ type ClusterClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
+	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
+	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
@@ -132,27 +137,17 @@ type AwsIamAuth interface {
 	UpgradeAWSIAMAuth(ctx context.Context, cluster *types.Cluster, spec *cluster.Spec) error
 }
 
-// EKSAComponents allows to manage the eks-a components installation in a cluster.
-type EKSAComponents interface {
-	Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error
-	Upgrade(ctx context.Context, log logr.Logger, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
-}
-
 type ClusterManagerOpt func(*ClusterManager)
 
-// DefaultRetrier builds a retrier with the default configuration.
-func DefaultRetrier() *retrier.Retrier {
-	return retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
-}
-
-// New constructs a new ClusterManager.
-func New(clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+	retrier := retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
+	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		eksaComponents:          eksaComponents,
-		clusterClient:           clusterClient,
+		Upgrader:                NewUpgrader(retrierClient),
+		clusterClient:           retrierClient,
 		writer:                  writer,
 		networking:              networking,
-		Retrier:                 DefaultRetrier(),
+		Retrier:                 retrier,
 		diagnosticsFactory:      diagnosticBundleFactory,
 		machineMaxWait:          DefaultMaxWaitPerMachine,
 		machineBackoff:          machineBackoff,
@@ -939,17 +934,17 @@ func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workload
 }
 
 func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
-	if err := c.eksaComponents.Install(ctx, logger.Get(), cluster, clusterSpec); err != nil {
+	if err := c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
-
-	// TODO(g-gaston): should this be moved inside the components installer?
+	fullLifecycleAPI := features.IsActive(features.FullLifecycleAPI())
+	if fullLifecycleAPI {
+		err := c.clusterClient.SetEksaControllerEnvVar(ctx, features.FullLifecycleAPIEnvVar, strconv.FormatBool(fullLifecycleAPI), cluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+	}
 	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
-}
-
-// Upgrade updates the eksa components in a cluster according to a Spec.
-func (c *ClusterManager) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
-	return c.eksaComponents.Upgrade(ctx, logger.Get(), cluster, currentSpec, newSpec)
 }
 
 func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error {

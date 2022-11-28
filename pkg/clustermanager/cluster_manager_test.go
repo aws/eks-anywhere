@@ -24,7 +24,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -87,12 +86,11 @@ func TestClusterManagerInstallStorageClass(t *testing.T) {
 	writer := mockswriter.NewMockFileWriter(mockCtrl)
 	networking := mocksmanager.NewMockNetworking(mockCtrl)
 	awsIamAuth := mocksmanager.NewMockAwsIamAuth(mockCtrl)
-	client := clustermanager.NewRetrierClient(mocksmanager.NewMockClusterClient(mockCtrl), clustermanager.DefaultRetrier())
-	eksaComponents := mocksmanager.NewMockEKSAComponents(mockCtrl)
+	client := mocksmanager.NewMockClusterClient(mockCtrl)
 	provider := &storageClassProviderMock{Provider: mocksprovider.NewMockProvider(mockCtrl)}
 	diagnosticsFactory := mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl)
 
-	c := clustermanager.New(client, networking, writer, diagnosticsFactory, awsIamAuth, eksaComponents)
+	c := clustermanager.New(client, networking, writer, diagnosticsFactory, awsIamAuth)
 
 	err := c.InstallStorageClass(ctx, cluster, provider)
 	if err != nil {
@@ -1745,19 +1743,59 @@ func TestResumeEKSAControllerReconcileManagementClusterListObjectsError(t *testi
 
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 	features.ClearCache()
+	ctx := context.Background()
 	tt := newTest(t)
+	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
 
-	tt.mocks.eksaComponents.EXPECT().Install(tt.ctx, logger.Get(), tt.cluster, tt.clusterSpec)
-	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(tt.ctx, tt.cluster.KubeconfigFile)
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(nil)
+	tt.mocks.client.EXPECT().SetEksaControllerEnvVar(tt.ctx, features.FullLifecycleAPIEnvVar, "true", tt.cluster.KubeconfigFile).AnyTimes()
+
+	for namespace, deployments := range internal.EksaDeployments {
+		for _, deployment := range deployments {
+			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
+		}
+	}
+	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(ctx, tt.cluster.KubeconfigFile)
 	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err != nil {
 		t.Errorf("ClusterManager.InstallCustomComponents() error = %v, wantErr nil", err)
 	}
 }
 
-func TestClusterManagerInstallCustomComponentsErrorInstalling(t *testing.T) {
-	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
+func TestClusterManagerInstallCustomComponentsSuccessWithFullLifecycleAPI(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
 
-	tt.mocks.eksaComponents.EXPECT().Install(tt.ctx, logger.Get(), tt.cluster, tt.clusterSpec).Return(errors.New("error from apply"))
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(nil)
+
+	for namespace, deployments := range internal.EksaDeployments {
+		for _, deployment := range deployments {
+			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
+		}
+	}
+	tt.mocks.client.EXPECT().SetEksaControllerEnvVar(tt.ctx, features.FullLifecycleAPIEnvVar, "true", tt.cluster.KubeconfigFile)
+	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(ctx, tt.cluster.KubeconfigFile)
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err != nil {
+		t.Errorf("ClusterManager.InstallCustomComponents() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerInstallCustomComponentsErrorReadingManifest(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "fake.yaml"
+
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err == nil {
+		t.Error("ClusterManager.InstallCustomComponents() error = nil, wantErr not nil")
+	}
+}
+
+func TestClusterManagerInstallCustomComponentsErrorApplying(t *testing.T) {
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
+	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
+
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(errors.New("error from apply")).Times(2)
 
 	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, nil); err == nil {
 		t.Error("ClusterManager.InstallCustomComponents() error = nil, wantErr not nil")
@@ -1972,7 +2010,6 @@ type clusterManagerMocks struct {
 	provider           *mocksprovider.MockProvider
 	diagnosticsBundle  *mocksdiagnostics.MockDiagnosticBundle
 	diagnosticsFactory *mocksdiagnostics.MockDiagnosticBundleFactory
-	eksaComponents     *mocksmanager.MockEKSAComponents
 }
 
 func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (*clustermanager.ClusterManager, *clusterManagerMocks) {
@@ -1985,11 +2022,9 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 		provider:           mocksprovider.NewMockProvider(mockCtrl),
 		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
 		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
-		eksaComponents:     mocksmanager.NewMockEKSAComponents(mockCtrl),
 	}
 
-	client := clustermanager.NewRetrierClient(m.client, clustermanager.DefaultRetrier())
-	c := clustermanager.New(client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, m.eksaComponents, opts...)
+	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, opts...)
 
 	return c, m
 }
