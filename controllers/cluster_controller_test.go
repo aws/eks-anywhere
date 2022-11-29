@@ -18,9 +18,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/internal/test/envtest"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -32,10 +34,6 @@ import (
 	vspherereconcilermocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
-)
-
-const (
-	clusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
 
 type vsphereClusterReconcilerTest struct {
@@ -172,6 +170,49 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 	}
 }
 
+func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
+	cluster := createCluster()
+	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
+	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
+
+	// Mark cluster for deletion
+	now := metav1.Now()
+	cluster.DeletionTimestamp = &now
+
+	// Mark as paused
+	cluster.PauseReconcile()
+
+	controller := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(
+		managementCluster, cluster, capiCluster,
+	).Build()
+
+	r := controllers.NewClusterReconciler(c, registry)
+	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
+	api := envtest.NewAPIExpecter(t, c)
+
+	cl := envtest.CloneNameNamespace(cluster)
+	api.ShouldEventuallyMatch(ctx, cl, func(g Gomega) {
+		g.Expect(
+			controllerutil.ContainsFinalizer(cluster, controllers.ClusterFinalizerName),
+		).To(BeTrue(), "Cluster should still have the finalizer")
+	})
+
+	capiCl := envtest.CloneNameNamespace(capiCluster)
+	api.ShouldEventuallyMatch(ctx, capiCl, func(g Gomega) {
+		g.Expect(
+			capiCluster.DeletionTimestamp.IsZero(),
+		).To(BeTrue(), "CAPI cluster should exist and not be marked for deletion")
+	})
+}
+
 func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 	g := NewWithT(t)
 
@@ -190,7 +231,7 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
 
-	g.Expect(cluster.Finalizers).NotTo(ContainElement(clusterFinalizerName))
+	g.Expect(cluster.Finalizers).NotTo(ContainElement(controllers.ClusterFinalizerName))
 
 	tt := newVsphereClusterReconcilerTest(t, objs...)
 
@@ -198,7 +239,7 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	controllerutil.AddFinalizer(cluster, clusterFinalizerName)
+	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
 	_, err := tt.reconciler.Reconcile(ctx, req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
