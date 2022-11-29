@@ -23,16 +23,18 @@ type NutanixDatacenterConfigSpec struct {
 	// +kubebuilder:validation:Minimum=9440
 	Port int `json:"port"`
 
-	// AdditionalTrustBundle is the optional PEM-encoded certificate bundle for users that
-	// configured their Prism Central with certificates from non-publicly trusted CAs
+	// AdditionalTrustBundle is the optional PEM-encoded certificate bundle for
+	// users that configured their Prism Central with certificates from non-publicly
+	// trusted CAs
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 
-	// Insecure is the optional flag to skip TLS verification. Nutanix Prism Central installation by default ships
-	// with a self-signed certificate that will fail TLS verification because the certificate is not issued by
+	// Insecure is the optional flag to skip TLS verification. Nutanix Prism
+	// Central installation by default ships with a self-signed certificate
+	// that will fail TLS verification because the certificate is not issued by
 	// a public CA and does not have the IP SANs with the Prism Central endpoint.
-	// To accommodate the scenario where the user has not changed the default Certificate that
-	// ships with Prism Central, we allow the user to skip TLS verification. This is not recommended for
-	// production use.
+	// To accommodate the scenario where the user has not changed the default
+	// Certificate that ships with Prism Central, we allow the user to skip TLS
+	// verification. This is not recommended for production use.
 	Insecure bool `json:"insecure,omitempty"`
 }
 
