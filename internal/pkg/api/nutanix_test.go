@@ -42,6 +42,7 @@ func TestNutanixMachineConfigFillers(t *testing.T) {
 	WithNutanixSubnetName("testSubnet")(conf)
 	WithNutanixPrismElementClusterName("testCluster")(conf)
 	WithNutanixMachineTemplateImageName("testImage")(conf)
+	WithOsFamilyForAllNutanixMachines("ubuntu")(conf)
 	WithNutanixSSHAuthorizedKey("testKey")(conf)
 
 	for _, machineConfig := range conf.machineConfigs {
@@ -56,6 +57,7 @@ func TestNutanixMachineConfigFillers(t *testing.T) {
 		g.Expect(machineConfig.Spec.Image.Type).To(Equal(anywherev1.NutanixIdentifierName))
 		g.Expect(*machineConfig.Spec.Image.Name).To(Equal("testImage"))
 		g.Expect(machineConfig.Spec.Users[0].SshAuthorizedKeys[0]).To(Equal("testKey"))
+		g.Expect(machineConfig.Spec.OSFamily).To(Equal(anywherev1.Ubuntu))
 	}
 
 	WithNutanixSubnetUUID("90ad37a4-6dc0-4ae7-bcb3-a121dfb3fffa")(conf)

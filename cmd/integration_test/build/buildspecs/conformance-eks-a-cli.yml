@@ -72,7 +72,6 @@ env:
     T_NUTANIX_ENDPOINT: "nutanix_ci:nutanix_pc_endpoint"
     T_NUTANIX_PORT: "nutanix_ci:nutanix_port"
     T_NUTANIX_MACHINE_BOOT_TYPE: "nutanix_ci:nutanix_machine_boot_type"
-    T_NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME: "nutanix_ci:nutanix_machine_template_image_name"
     T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME: "nutanix_ci:nutanix_prism_element_cluster_name"
     T_NUTANIX_SSH_AUTHORIZED_KEY: "nutanix_ci:nutanix_ssh_authorized_key"
     T_NUTANIX_SUBNET_NAME: "nutanix_ci:nutanix_subnet_name"
