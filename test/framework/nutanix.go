@@ -14,6 +14,7 @@ const (
 	nutanixEndpoint              = "T_NUTANIX_ENDPOINT"
 	nutanixPort                  = "T_NUTANIX_PORT"
 	nutanixAdditionalTrustBundle = "T_NUTANIX_ADDITIONAL_TRUST_BUNDLE"
+	nutanixInsecure              = "T_NUTANIX_INSECURE"
 
 	nutanixMachineBootType       = "T_NUTANIX_MACHINE_BOOT_TYPE"
 	nutanixMachineMemorySize     = "T_NUTANIX_MACHINE_MEMORY_SIZE"
@@ -88,6 +89,7 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterName, api.WithNutanixPrismElementClusterName),
 			api.WithNutanixStringFromEnvVar(nutanixSSHAuthorizedKey, api.WithNutanixSSHAuthorizedKey),
 			api.WithNutanixStringFromEnvVar(nutanixSubnetName, api.WithNutanixSubnetName),
+			api.WithNutanixBoolFromEnvVar(nutanixInsecure, api.WithNutanixInsecure),
 		},
 	}
 
