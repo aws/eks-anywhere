@@ -25,7 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/eks-anywhere/pkg/features"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 // log is for logging in this package.
@@ -64,10 +63,6 @@ func (r *Cluster) ValidateCreate() error {
 		} else if !features.IsActive(features.FullLifecycleAPI()) {
 			return apierrors.NewBadRequest("creating new managed cluster on existing cluster is not supported")
 		}
-	}
-
-	if err := ValidateControlPlaneIPUniqueness(r); err != nil {
-		return err
 	}
 
 	if err := r.Validate(); err != nil {
@@ -121,19 +116,6 @@ func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 	}
 
 	return allErrs
-}
-
-// ValidateControlPlaneIPUniqueness checks whether or not the control plane endpoint defined
-// in the cluster spec is available.
-func ValidateControlPlaneIPUniqueness(cluster *Cluster) error {
-	netClient := &networkutils.DefaultNetClient{}
-	if cluster.Spec.DatacenterRef.Kind != DockerDatacenterKind {
-		ip := cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-		if networkutils.IsIPInUse(netClient, ip) {
-			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
-		}
-	}
-	return nil
 }
 
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {

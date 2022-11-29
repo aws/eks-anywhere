@@ -55,6 +55,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	validator := vsphere.NewValidator(govcClient, vcb)
 	defaulter := vsphere.NewDefaulter(govcClient)
 	cniReconciler := vspherereconcilermocks.NewMockCNIReconciler(ctrl)
+	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
 
 	reconciler := vspherereconciler.New(
 		cl,
@@ -62,6 +63,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		defaulter,
 		cniReconciler,
 		nil,
+		ipValidator,
 	)
 	registry := clusters.NewProviderClusterReconcilerRegistryBuilder().
 		Add(anywherev1.VSphereDatacenterKind, reconciler).

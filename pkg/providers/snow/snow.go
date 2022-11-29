@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	providerValidator "github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -40,6 +41,7 @@ type SnowProvider struct {
 	kubeUnAuthClient KubeUnAuthClient
 	retrier          *retrier.Retrier
 	configManager    *ConfigManager
+	ipValidator      *providerValidator.IPValidator
 	skipIpCheck      bool
 	log              logr.Logger
 }
@@ -56,6 +58,7 @@ func NewProvider(kubeUnAuthClient KubeUnAuthClient, configManager *ConfigManager
 		kubeUnAuthClient: kubeUnAuthClient,
 		retrier:          retrier,
 		configManager:    configManager,
+		ipValidator:      providerValidator.NewIPValidator(),
 		skipIpCheck:      skipIpCheck,
 		log:              logger.Get(),
 	}
@@ -70,7 +73,7 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
 	}
 	if !p.skipIpCheck {
-		if err := v1alpha1.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
+		if err := p.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
 			return err
 		}
 	} else {
