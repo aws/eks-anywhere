@@ -85,11 +85,13 @@ func runCustomUpgradeFlow(test *framework.MulticlusterE2ETest, longLivedClusterN
 		w.CreateCluster(framework.ExecuteWithEksaVersion(v12Semver))
 	})
 	for _, workloadCluster := range test.WorkloadClusters {
-		test.T.Logf("Waiting for cluster %v machine deployments to be ready", workloadCluster)
+		test.T.Logf("Waiting for cluster %v machine deployments and KCP to be ready", workloadCluster)
 		mdName := fmt.Sprintf("%s-%s", workloadCluster.ClusterName, "md-0")
 		test.ManagementCluster.WaitForMachineDeploymentReady(mdName)
+		test.ManagementCluster.WaitForWorkloadClusterControlPlaneReady(workloadCluster.ClusterName)
 	}
 	var testOpts []framework.ClusterE2ETestOpt
+	time.Sleep(1 * time.Minute)
 	testOpts = append(testOpts, framework.WithEksaVersion(v121Semver))
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.UpgradeCluster(testOpts)
@@ -417,6 +419,7 @@ func TestCloudStackKubernetes121UpgradeCustom(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithEtcdCountIfExternal(1),
 			),
+			framework.WithClusterName(fmt.Sprintf("%s-w-0", mgmtCluster.ClusterName)),
 		),
 		framework.NewClusterE2ETest(
 			t,
@@ -427,6 +430,7 @@ func TestCloudStackKubernetes121UpgradeCustom(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithEtcdCountIfExternal(1),
 			),
+			framework.WithClusterName(fmt.Sprintf("%s-w-1", mgmtCluster.ClusterName)),
 		),
 	)
 	runCustomUpgradeFlow(test, longLivedClusterName)

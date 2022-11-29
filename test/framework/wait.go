@@ -16,3 +16,11 @@ func (e *ClusterE2ETest) WaitForControlPlaneReady() {
 		e.T.Fatal(err)
 	}
 }
+func (e *ClusterE2ETest) WaitForWorkloadClusterControlPlaneReady(clusterName string) {
+	ctx := context.Background()
+	e.T.Logf("Waiting for control plane %s to be ready for cluster %s", clusterName, e.ClusterName)
+	err := e.KubectlClient.WaitForControlPlaneReady(ctx, e.cluster(), "5m", clusterName)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+}

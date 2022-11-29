@@ -93,7 +93,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	e := &ClusterE2ETest{
 		T:                     t,
 		Provider:              provider,
-		ClusterConfigLocation: defaultClusterConfigFile,
+		ClusterConfigLocation: fmt.Sprintf("%s-eks-a-cluster.yaml", getClusterName(t)),
 		ClusterName:           getClusterName(t),
 		clusterFillers:        make([]api.ClusterFiller, 0),
 		KubectlClient:         buildKubectl(t),
@@ -171,6 +171,12 @@ func WithWorkerHardware(requiredCount int) ClusterE2ETestOpt {
 
 func WithCustomLabelHardware(requiredCount int, label string) ClusterE2ETestOpt {
 	return withHardware(requiredCount, api.Worker, map[string]string{api.HardwareLabelTypeKeyName: label})
+}
+
+func WithClusterName(clusterName string) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ClusterName = clusterName
+	}
 }
 
 func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
