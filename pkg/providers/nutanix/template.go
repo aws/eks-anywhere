@@ -149,7 +149,6 @@ func buildTemplateMapCP(
 		"nutanixEndpoint":              datacenterSpec.Endpoint,
 		"nutanixPort":                  datacenterSpec.Port,
 		"nutanixAdditionalTrustBundle": datacenterSpec.AdditionalTrustBundle,
-		"nutanixInsecure":              datacenterSpec.Insecure,
 		"vcpusPerSocket":               controlPlaneMachineSpec.VCPUsPerSocket,
 		"vcpuSockets":                  controlPlaneMachineSpec.VCPUSockets,
 		"memorySize":                   controlPlaneMachineSpec.MemorySize.String(),
@@ -158,6 +157,7 @@ func buildTemplateMapCP(
 		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
 	}
+	values["nutanixInsecure"] = datacenterSpec.AdditionalTrustBundle != ""
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true

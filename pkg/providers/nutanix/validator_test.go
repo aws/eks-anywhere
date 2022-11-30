@@ -227,10 +227,6 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 			name:       "valid datacenter config with trust bundle",
 			dcConfFile: nutanixDatacenterConfigSpecWithTrustBundle,
 		},
-		{
-			name:       "valid datacenter config with insecure",
-			dcConfFile: nutanixDatacenterConfigSpecWithInsecure,
-		},
 	}
 
 	for _, tt := range tests {

@@ -15,7 +15,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
-// NutanixConfig is a wrapper for the Nutanix provider spec.
 type NutanixConfig struct {
 	datacenterConfig *anywherev1.NutanixDatacenterConfig
 	machineConfigs   map[string]*anywherev1.NutanixMachineConfig
@@ -36,7 +35,6 @@ func newNutanixConfig(filename string) (*NutanixConfig, error) {
 	return nutanixConfig, nil
 }
 
-// AutoFillNutanixProvider fills in the fields for the Nutanix provider spec.
 func AutoFillNutanixProvider(filename string, fillers ...NutanixFiller) ([]byte, error) {
 	nutanixConfig, err := newNutanixConfig(filename)
 	if err != nil {
@@ -65,43 +63,36 @@ func AutoFillNutanixProvider(filename string, fillers ...NutanixFiller) ([]byte,
 	return templater.AppendYamlResources(yamlResources...), nil
 }
 
-// WithNutanixStringFromEnvVar returns a NutanixFiller that sets the given string value to the given environment variable.
 func WithNutanixStringFromEnvVar(envVar string, opt func(string) NutanixFiller) NutanixFiller {
 	return opt(os.Getenv(envVar))
 }
 
-// WithNutanixIntFromEnvVar returns a NutanixFiller that sets the given integer value to the given environment variable.
 func WithNutanixIntFromEnvVar(envVar string, opt func(int) NutanixFiller) NutanixFiller {
 	intVar, _ := strconv.Atoi(os.Getenv(envVar))
 	return opt(intVar)
 }
 
-// WithNutanixInt32FromEnvVar returns a NutanixFiller that sets the given int32 value to the given environment variable.
 func WithNutanixInt32FromEnvVar(envVar string, opt func(int32) NutanixFiller) NutanixFiller {
 	intVar, _ := strconv.Atoi(os.Getenv(envVar))
 	return opt(int32(intVar))
 }
 
-// WithNutanixBoolFromEnvVar returns a NutanixFiller that sets the given int32 value to the given environment variable.
 func WithNutanixBoolFromEnvVar(envVar string, opt func(bool) NutanixFiller) NutanixFiller {
 	return opt(os.Getenv(envVar) == "true")
 }
 
-// WithNutanixEndpoint returns a NutanixFiller that sets the endpoint for the Nutanix provider.
 func WithNutanixEndpoint(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		config.datacenterConfig.Spec.Endpoint = value
 	}
 }
 
-// WithNutanixPort returns a NutanixFiller that sets the port for the Nutanix provider.
 func WithNutanixPort(value int) NutanixFiller {
 	return func(config *NutanixConfig) {
 		config.datacenterConfig.Spec.Port = value
 	}
 }
 
-// WithNutanixAdditionalTrustBundle returns a NutanixFiller that sets the additional trust bundle for the Nutanix provider.
 func WithNutanixAdditionalTrustBundle(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		certificate, err := base64.StdEncoding.DecodeString(value)
@@ -113,14 +104,6 @@ func WithNutanixAdditionalTrustBundle(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixInsecure returns a NutanixFiller that sets the insecure for the Nutanix provider.
-func WithNutanixInsecure(value bool) NutanixFiller {
-	return func(config *NutanixConfig) {
-		config.datacenterConfig.Spec.Insecure = value
-	}
-}
-
-// WithNutanixMachineMemorySize returns a NutanixFiller that sets the memory size for the Nutanix machine.
 func WithNutanixMachineMemorySize(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -129,7 +112,6 @@ func WithNutanixMachineMemorySize(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixMachineSystemDiskSize returns a NutanixFiller that sets the system disk size for the Nutanix machine.
 func WithNutanixMachineSystemDiskSize(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -138,7 +120,6 @@ func WithNutanixMachineSystemDiskSize(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixMachineVCPUsPerSocket returns a NutanixFiller that sets the vCPUs per socket for the Nutanix machine.
 func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -147,7 +128,6 @@ func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
 	}
 }
 
-// WithNutanixMachineVCPUSocket returns a NutanixFiller that sets the vCPU sockets for the Nutanix machine.
 func WithNutanixMachineVCPUSocket(value int32) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -156,7 +136,6 @@ func WithNutanixMachineVCPUSocket(value int32) NutanixFiller {
 	}
 }
 
-// WithNutanixMachineTemplateImageName returns a NutanixFiller that sets the image name for the Nutanix machine template.
 func WithNutanixMachineTemplateImageName(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -174,7 +153,6 @@ func WithOsFamilyForAllNutanixMachines(value anywherev1.OSFamily) NutanixFiller 
 	}
 }
 
-// WithNutanixSubnetName returns a NutanixFiller that sets the subnet name for the Nutanix machine.
 func WithNutanixSubnetName(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -183,7 +161,6 @@ func WithNutanixSubnetName(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixPrismElementClusterName returns a NutanixFiller that sets the cluster name for the Nutanix machine.
 func WithNutanixPrismElementClusterName(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -192,7 +169,6 @@ func WithNutanixPrismElementClusterName(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixMachineTemplateImageUUID returns a NutanixFiller that sets the image UUID for the Nutanix machine.
 func WithNutanixMachineTemplateImageUUID(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -201,7 +177,6 @@ func WithNutanixMachineTemplateImageUUID(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixSubnetUUID returns a NutanixFiller that sets the subnet UUID for the Nutanix machine.
 func WithNutanixSubnetUUID(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -210,7 +185,6 @@ func WithNutanixSubnetUUID(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixPrismElementClusterUUID returns a NutanixFiller that sets the cluster UUID for the Nutanix machine.
 func WithNutanixPrismElementClusterUUID(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
@@ -219,7 +193,6 @@ func WithNutanixPrismElementClusterUUID(value string) NutanixFiller {
 	}
 }
 
-// WithNutanixSSHAuthorizedKey returns a NutanixFiller that sets the SSH authorized key for the Nutanix machine.
 func WithNutanixSSHAuthorizedKey(value string) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {

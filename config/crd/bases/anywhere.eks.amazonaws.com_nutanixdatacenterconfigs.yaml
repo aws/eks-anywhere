@@ -46,16 +46,6 @@ spec:
               endpoint:
                 description: Endpoint is the Endpoint of Nutanix Prism Central
                 type: string
-              insecure:
-                description: Insecure is the optional flag to skip TLS verification.
-                  Nutanix Prism Central installation by default ships with a self-signed
-                  certificate that will fail TLS verification because the certificate
-                  is not issued by a public CA and does not have the IP SANs with
-                  the Prism Central endpoint. To accommodate the scenario where the
-                  user has not changed the default Certificate that ships with Prism
-                  Central, we allow the user to skip TLS verification. This is not
-                  recommended for production use.
-                type: boolean
               port:
                 description: Port is the Port of Nutanix Prism Central
                 minimum: 9440

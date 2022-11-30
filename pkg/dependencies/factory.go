@@ -1230,7 +1230,6 @@ func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
 			Password: creds.PrismCentral.Password,
 			Endpoint: endpoint,
 			Port:     fmt.Sprintf("%d", port),
-			Insecure: datacenterConfig.Spec.Insecure,
 		}
 
 		client, err := v3.NewV3Client(nutanixCreds, clientOpts...)

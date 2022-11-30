@@ -26,9 +26,6 @@ func TestNutanixDatacenterConfigFillers(t *testing.T) {
 
 	WithNutanixPort(8080)(conf)
 	g.Expect(conf.datacenterConfig.Spec.Port).To(Equal(8080))
-
-	WithNutanixInsecure(true)(conf)
-	g.Expect(conf.datacenterConfig.Spec.Insecure).To(Equal(true))
 }
 
 func TestNutanixMachineConfigFillers(t *testing.T) {
