@@ -32,7 +32,9 @@ func TestValidateControlPlaneIpUniqueness(t *testing.T) {
 	client.EXPECT().DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
 		Times(5).
 		Return(nil, errors.New("no connection"))
-	g.Expect(validator.ValidateControlPlaneIpUniqueness(cluster, client)).To(Succeed())
+	ipValidator := validator.NewIPValidator(validator.CustomNetClient(client))
+
+	g.Expect(ipValidator.ValidateControlPlaneIPUniqueness(cluster)).To(Succeed())
 }
 
 func TestValidateSupportedProvider(t *testing.T) {

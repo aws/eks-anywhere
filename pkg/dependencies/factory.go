@@ -45,6 +45,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -95,6 +96,7 @@ type Dependencies struct {
 	VSphereDefaulter            *vsphere.Defaulter
 	NutanixPrismClient          *v3.Client
 	SnowValidator               *snow.AwsClientValidator
+	IPValidator                 *validator.IPValidator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -349,6 +351,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Govc,
 				f.dependencies.Kubectl,
 				f.dependencies.Writer,
+				f.dependencies.IPValidator,
 				time.Now,
 				skipIpCheck,
 			)
@@ -763,6 +766,18 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 	return f
 }
 
+// WithIPValidator builds the IPValidator for the given cluster.
+func (f *Factory) WithIPValidator() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.IPValidator != nil {
+			return nil
+		}
+		f.dependencies.IPValidator = validator.NewIPValidator()
+		return nil
+	})
+	return f
+}
+
 type bootstrapperClient struct {
 	*executables.Kind
 	*executables.Kubectl
@@ -1156,7 +1171,6 @@ func (f *Factory) WithVSphereValidator() *Factory {
 		vcb := govmomi.NewVMOMIClientBuilder()
 		v := vsphere.NewValidator(
 			f.dependencies.Govc,
-			&networkutils.DefaultNetClient{},
 			vcb,
 		)
 		f.dependencies.VSphereValidator = v

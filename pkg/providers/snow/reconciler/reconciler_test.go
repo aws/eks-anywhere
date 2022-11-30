@@ -45,6 +45,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := fake.NewClientBuilder().Build()
 
+	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster).Return(nil)
+
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
 	).Return(remoteClient, nil)
@@ -209,6 +211,19 @@ func TestReconcilerReconcileCNISuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerCPIsInUse(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+	tt.withFakeClient()
+
+	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster).Return(errors.New("already in use"))
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("already in use")))
+}
+
 func TestReconcilerReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.withFakeClient()
@@ -234,6 +249,7 @@ type reconcilerTest struct {
 	ctx                       context.Context
 	cniReconciler             *mocks.MockCNIReconciler
 	remoteClientRegistry      *mocks.MockRemoteClientRegistry
+	ipValidator               *mocks.MockIPValidator
 	cluster                   *anywherev1.Cluster
 	client                    client.Client
 	env                       *envtest.Environment
@@ -246,6 +262,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ctrl := gomock.NewController(t)
 	cniReconciler := mocks.NewMockCNIReconciler(ctrl)
 	remoteClientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+	ipValidator := mocks.NewMockIPValidator(ctrl)
 	c := env.Client()
 
 	bundle := test.Bundle()
@@ -324,6 +341,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		ctx:                  context.Background(),
 		cniReconciler:        cniReconciler,
 		remoteClientRegistry: remoteClientRegistry,
+		ipValidator:          ipValidator,
 		client:               c,
 		env:                  env,
 		eksaSupportObjs: []client.Object{
@@ -364,7 +382,7 @@ func (tt *reconcilerTest) withFakeClient() {
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
-	return reconciler.New(tt.client, tt.cniReconciler, tt.remoteClientRegistry)
+	return reconciler.New(tt.client, tt.cniReconciler, tt.remoteClientRegistry, tt.ipValidator)
 }
 
 func (tt *reconcilerTest) createAllObjs() {

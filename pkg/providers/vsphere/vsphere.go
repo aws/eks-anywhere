@@ -25,7 +25,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -78,6 +77,7 @@ type vsphereProvider struct {
 	Retrier               *retrier.Retrier
 	validator             *Validator
 	defaulter             *Defaulter
+	ipValidator           IPValidator
 }
 
 type ProviderGovcClient interface {
@@ -135,14 +135,17 @@ type ProviderKubectlClient interface {
 	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *vsphereProvider { //nolint:revive
+// IPValidator is an interface that defines methods to validate the control plane IP.
+type IPValidator interface {
+	ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error
+}
+
+func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
-	netClient := &networkutils.DefaultNetClient{}
 	vcb := govmomi.NewVMOMIClientBuilder()
 	v := NewValidator(
 		providerGovcClient,
-		netClient,
 		vcb,
 	)
 
@@ -152,14 +155,14 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConf
 		providerGovcClient,
 		providerKubectlClient,
 		writer,
-		netClient,
+		ipValidator,
 		now,
 		skipIpCheck,
 		v,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, v *Validator) *vsphereProvider { //nolint:revive
+func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool, v *Validator) *vsphereProvider { //nolint:revive
 	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
@@ -171,11 +174,12 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, cl
 		templateBuilder: NewVsphereTemplateBuilder(
 			now,
 		),
-		skipIPCheck:        skipIpCheck,
-		csiEnabled:         !datacenterConfig.Spec.DisableCSI,
-		Retrier:            retrier,
-		validator:          v,
-		defaulter:          NewDefaulter(providerGovcClient),
+		skipIPCheck: skipIpCheck,
+		csiEnabled:  !datacenterConfig.Spec.DisableCSI,
+		Retrier:     retrier,
+		validator:   v,
+		defaulter:   NewDefaulter(providerGovcClient),
+		ipValidator: ipValidator,
 	}
 }
 
@@ -323,7 +327,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	}
 
 	if !p.skipIPCheck {
-		if err := p.validator.validateControlPlaneIpUniqueness(vSphereClusterSpec); err != nil {
+		if err := p.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
 			return err
 		}
 	} else {

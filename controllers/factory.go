@@ -230,7 +230,7 @@ func (f *Factory) withDockerClusterReconciler() *Factory {
 }
 
 func (f *Factory) withVSphereClusterReconciler() *Factory {
-	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator()
+	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator().WithIPValidator()
 	f.withTracker().withCNIReconciler()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.vsphereClusterReconciler != nil {
@@ -243,6 +243,7 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 			f.deps.VSphereDefaulter,
 			f.cniReconciler,
 			f.tracker,
+			f.deps.IPValidator,
 		)
 		f.registryBuilder.Add(anywherev1.VSphereDatacenterKind, f.vsphereClusterReconciler)
 
@@ -253,6 +254,7 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 }
 
 func (f *Factory) withSnowClusterReconciler() *Factory {
+	f.dependencyFactory.WithIPValidator()
 	f.withCNIReconciler().withTracker()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -264,6 +266,7 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 			f.manager.GetClient(),
 			f.cniReconciler,
 			f.tracker,
+			f.deps.IPValidator,
 		)
 		f.registryBuilder.Add(anywherev1.SnowDatacenterKind, f.snowClusterReconciler)
 

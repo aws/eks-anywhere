@@ -29,7 +29,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
@@ -55,6 +54,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := fake.NewClientBuilder().Build()
 
+	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster).Return(nil)
 	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
@@ -161,6 +161,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 	logger := test.NewNullLogger()
 
+	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster).Return(nil)
 	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
@@ -187,6 +188,19 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerCPIsInUse(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+	tt.withFakeClient()
+
+	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster).Return(errors.New("already in use"))
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("already in use")))
 }
 
 func TestReconcilerReconcileInvalidDatacenterConfig(t *testing.T) {
@@ -337,6 +351,7 @@ type reconcilerTest struct {
 	datacenterConfig          *anywherev1.VSphereDatacenterConfig
 	machineConfigControlPlane *anywherev1.VSphereMachineConfig
 	machineConfigWorker       *anywherev1.VSphereMachineConfig
+	ipValidator               *vspherereconcilermocks.MockIPValidator
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -347,8 +362,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 	vcb := govmomi.NewVMOMIClientBuilder()
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{}, vcb)
+	validator := vsphere.NewValidator(govcClient, vcb)
 	defaulter := vsphere.NewDefaulter(govcClient)
+	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
 
@@ -423,6 +439,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		govcClient:           govcClient,
 		validator:            validator,
 		defaulter:            defaulter,
+		ipValidator:          ipValidator,
 		remoteClientRegistry: remoteClientRegistry,
 		client:               c,
 		env:                  env,
@@ -467,7 +484,7 @@ func (tt *reconcilerTest) withFakeClient() {
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
-	return reconciler.New(tt.client, tt.validator, tt.defaulter, tt.cniReconciler, tt.remoteClientRegistry)
+	return reconciler.New(tt.client, tt.validator, tt.defaulter, tt.cniReconciler, tt.remoteClientRegistry, tt.ipValidator)
 }
 
 func (tt *reconcilerTest) createAllObjs() {

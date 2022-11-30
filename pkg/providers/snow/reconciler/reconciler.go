@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 type CNIReconciler interface {
@@ -27,18 +28,26 @@ type RemoteClientRegistry interface {
 	GetClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error)
 }
 
+// IPValidator defines an interface for the methods to validate the control plane IP.
+type IPValidator interface {
+	ValidateControlPlaneIPUniqueness(cluster *anywherev1.Cluster) error
+}
+
 type Reconciler struct {
 	client               client.Client
 	cniReconciler        CNIReconciler
 	remoteClientRegistry RemoteClientRegistry
+	ipValidator          IPValidator
 	*serverside.ObjectApplier
 }
 
-func New(client client.Client, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry) *Reconciler {
+// New initializes a new reconciler for the Snow provider.
+func New(client client.Client, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry, ipValidator IPValidator) *Reconciler {
 	return &Reconciler{
 		client:               client,
 		cniReconciler:        cniReconciler,
 		remoteClientRegistry: remoteClientRegistry,
+		ipValidator:          ipValidator,
 		ObjectApplier:        serverside.NewObjectApplier(client),
 	}
 }
@@ -51,6 +60,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 	}
 
 	return controller.NewPhaseRunner().Register(
+		r.ValidateControlPlaneIP,
 		r.ValidateMachineConfigs,
 		clusters.CleanupStatusAfterValidate,
 		r.ReconcileControlPlane,
@@ -73,6 +83,18 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 		r.ValidateMachineConfigs,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
+}
+
+// ValidateControlPlaneIP validates that the control plane IP is unique.
+func (r *Reconciler) ValidateControlPlaneIP(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateControlPlaneIP")
+
+	if err := r.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
+		clusterSpec.Cluster.Status.FailureMessage = ptr.String(err.Error())
+		log.Error(err, "Unavailable control plane IP")
+		return controller.ResultWithReturn(), nil
+	}
+	return controller.Result{}, nil
 }
 
 func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {

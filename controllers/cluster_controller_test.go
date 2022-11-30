@@ -27,7 +27,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	vspheremocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
@@ -51,9 +50,10 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 
 	vcb := govmomi.NewVMOMIClientBuilder()
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{}, vcb)
+	validator := vsphere.NewValidator(govcClient, vcb)
 	defaulter := vsphere.NewDefaulter(govcClient)
 	cniReconciler := vspherereconcilermocks.NewMockCNIReconciler(ctrl)
+	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
 
 	reconciler := vspherereconciler.New(
 		cl,
@@ -61,6 +61,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		defaulter,
 		cniReconciler,
 		nil,
+		ipValidator,
 	)
 	registry := clusters.NewProviderClusterReconcilerRegistryBuilder().
 		Add(anywherev1.VSphereDatacenterKind, reconciler).
