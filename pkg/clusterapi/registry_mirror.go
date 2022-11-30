@@ -16,6 +16,50 @@ import (
 //go:embed config/containerd_config_append.toml
 var containerdConfig string
 
+// SetRegistryMirrorInKubeadmControlPlaneForBottlerocket sets up registry mirror configuration in kubeadmControlPlane for bottlerocket.
+func SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
+	if mirrorConfig == nil {
+		return
+	}
+
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.RegistryMirror = registryMirror(mirrorConfig)
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.RegistryMirror = registryMirror(mirrorConfig)
+}
+
+// SetRegistryMirrorInKubeadmControlPlaneForUbuntu sets up registry mirror configuration in kubeadmControlPlane for ubuntu.
+func SetRegistryMirrorInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
+	if mirrorConfig == nil {
+		return nil
+	}
+
+	return addRegistryMirrorInKubeadmConfigSpecFiles(&kcp.Spec.KubeadmConfigSpec, mirrorConfig)
+}
+
+// SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket sets up registry mirror configuration in kubeadmConfigTemplate for bottlerocket.
+func SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
+	if mirrorConfig == nil {
+		return
+	}
+
+	kct.Spec.Template.Spec.JoinConfiguration.RegistryMirror = registryMirror(mirrorConfig)
+}
+
+// SetRegistryMirrorInKubeadmConfigTemplateForUbuntu sets up registry mirror configuration in kubeadmConfigTemplate for ubuntu.
+func SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
+	if mirrorConfig == nil {
+		return nil
+	}
+
+	return addRegistryMirrorInKubeadmConfigSpecFiles(&kct.Spec.Template.Spec, mirrorConfig)
+}
+
+func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstrapv1.RegistryMirrorConfiguration {
+	return bootstrapv1.RegistryMirrorConfiguration{
+		Endpoint: net.JoinHostPort(mirrorConfig.Endpoint, mirrorConfig.Port),
+		CACert:   mirrorConfig.CACertContent,
+	}
+}
+
 type values map[string]interface{}
 
 func registryMirrorConfigContent(registryMirror *registrymirror.RegistryMirror, registryCert string, insecureSkip bool) (string, error) {
@@ -58,32 +102,13 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 	return files, nil
 }
 
-func SetRegistryMirrorInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
-	if mirrorConfig == nil {
-		return nil
-	}
-
+func addRegistryMirrorInKubeadmConfigSpecFiles(kcs *bootstrapv1.KubeadmConfigSpec, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
 	containerdFiles, err := registryMirrorConfig(mirrorConfig)
 	if err != nil {
 		return fmt.Errorf("setting registry mirror configuration: %v", err)
 	}
 
-	kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, containerdFiles...)
-
-	return nil
-}
-
-func SetRegistryMirrorInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
-	if mirrorConfig == nil {
-		return nil
-	}
-
-	containerdFiles, err := registryMirrorConfig(mirrorConfig)
-	if err != nil {
-		return fmt.Errorf("setting registry mirror configuration: %v", err)
-	}
-
-	kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, containerdFiles...)
+	kcs.Files = append(kcs.Files, containerdFiles...)
 
 	return nil
 }

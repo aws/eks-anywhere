@@ -33,7 +33,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
     kind: Package
     metadata:
       name: mylb
-      namespace: eksa-packages
+      namespace: eksa-packages-<cluster-name>
     spec:
       packageName: metallb
       config: |
@@ -43,7 +43,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
               - 10.220.0.93/32
               - 10.220.0.97-10.220.0.120
         BGPAdvertisements:
-          - IPAddressPools:
+          - ipAddressPools:
             - default
         BGPPeers:
           - peerAddress: 10.220.0.2
@@ -67,7 +67,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
               - 10.220.0.93/32
               - 10.220.0.97-10.220.0.120
         L2Advertisements:
-          - IPAddressPools:
+          - ipAddressPools:
             - default
     ```
 
@@ -92,7 +92,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
    Example command output
    ```
    NAME   PACKAGE   AGE   STATE       CURRENTVERSION                                    TARGETVERSION                                              DETAIL
-   mylb   metallb   22h   installed   0.12.1-ce5b5de19014202cebd4ab4c091830a3b6dfea06   0.12.1-ce5b5de19014202cebd4ab4c091830a3b6dfea06 (latest)
+   mylb   metallb   22h   installed   0.13.5-ce5b5de19014202cebd4ab4c091830a3b6dfea06   0.13.5-ce5b5de19014202cebd4ab4c091830a3b6dfea06 (latest)
    ```
 
 ## Update

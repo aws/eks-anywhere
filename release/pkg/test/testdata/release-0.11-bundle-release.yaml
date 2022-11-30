@@ -32,7 +32,7 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
-    bottlerocketAdmin:
+    bottlerocketHostContainers:
       admin:
         arch:
         - amd64
@@ -41,8 +41,7 @@ spec:
         name: bottlerocket-admin
         os: linux
         uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
-    bottlerocketBootstrap:
-      bootstrap:
+      kubeadmBootstrap:
         arch:
         - amd64
         - arm64
@@ -758,7 +757,7 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
-    bottlerocketAdmin:
+    bottlerocketHostContainers:
       admin:
         arch:
         - amd64
@@ -767,8 +766,7 @@ spec:
         name: bottlerocket-admin
         os: linux
         uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
-    bottlerocketBootstrap:
-      bootstrap:
+      kubeadmBootstrap:
         arch:
         - amd64
         - arm64
@@ -1493,7 +1491,7 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
-    bottlerocketAdmin:
+    bottlerocketHostContainers:
       admin:
         arch:
         - amd64
@@ -1502,8 +1500,7 @@ spec:
         name: bottlerocket-admin
         os: linux
         uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
-    bottlerocketBootstrap:
-      bootstrap:
+      kubeadmBootstrap:
         arch:
         - amd64
         - arm64
@@ -2228,7 +2225,7 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
-    bottlerocketAdmin:
+    bottlerocketHostContainers:
       admin:
         arch:
         - amd64
@@ -2237,8 +2234,7 @@ spec:
         name: bottlerocket-admin
         os: linux
         uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
-    bottlerocketBootstrap:
-      bootstrap:
+      kubeadmBootstrap:
         arch:
         - amd64
         - arm64

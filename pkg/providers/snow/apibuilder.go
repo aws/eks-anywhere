@@ -3,6 +3,7 @@ package snow
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -26,10 +27,15 @@ func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, 
 	return clusterapi.Cluster(clusterSpec, snowCluster, kubeadmControlPlane)
 }
 
-func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) (*controlplanev1.KubeadmControlPlane, error) {
+// KubeadmControlPlane generates the kubeadmControlPlane object for snow provider from clusterSpec and snowMachineTemplate.
+func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) (*controlplanev1.KubeadmControlPlane, error) {
 	kcp, err := clusterapi.KubeadmControlPlane(clusterSpec, snowMachineTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("generating KubeadmControlPlane: %v", err)
+	}
+
+	if err := clusterapi.SetKubeVipInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage()); err != nil {
+		return nil, fmt.Errorf("setting kube-vip: %v", err)
 	}
 
 	// TODO: support unstacked etcd
@@ -57,21 +63,35 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	)
 
-	if err := clusterapi.SetRegistryMirrorInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
-		return nil, err
-	}
+	osFamily := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name).OSFamily()
+	switch osFamily {
+	case v1alpha1.Bottlerocket:
+		clusterapi.SetProxyConfigInKubeadmControlPlaneForBottlerocket(kcp, clusterSpec.Cluster)
+		clusterapi.SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
+		clusterapi.SetBottlerocketInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketAdminContainerImageInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketControlContainerImageInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
+		addBottlerocketBootstrapSnowInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
-	if err := clusterapi.SetProxyConfigInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec); err != nil {
-		return nil, err
-	}
+	case v1alpha1.Ubuntu:
+		if err := clusterapi.SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster); err != nil {
+			return nil, err
+		}
+		if err := clusterapi.SetRegistryMirrorInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
+			return nil, err
+		}
+		clusterapi.CreateContainerdConfigFileInKubeadmControlPlane(kcp, clusterSpec.Cluster)
+		clusterapi.RestartContainerdInKubeadmControlPlane(kcp, clusterSpec.Cluster)
 
-	clusterapi.CreateContainerdConfigFileInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec)
-	clusterapi.RestartContainerdInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec)
+	default:
+		log.Info("Warning: unsupported OS family when setting up KubeadmControlPlane", "OS family", osFamily)
+	}
 
 	return kcp, nil
 }
 
-func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
+// KubeadmConfigTemplate generates the kubeadmConfigTemplate object for snow provider from clusterSpec and workerNodeGroupConfig.
+func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
 	kct, err := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
 	if err != nil {
 		return nil, fmt.Errorf("generating KubeadmConfigTemplate: %v", err)
@@ -90,16 +110,29 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 		)
 	}
 
-	if err := clusterapi.SetRegistryMirrorInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
-		return nil, err
-	}
+	osFamily := clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name).OSFamily()
+	switch osFamily {
+	case v1alpha1.Bottlerocket:
+		clusterapi.SetProxyConfigInKubeadmConfigTemplateForBottlerocket(kct, clusterSpec.Cluster)
+		clusterapi.SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
+		clusterapi.SetBottlerocketInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketAdminContainerImageInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketControlContainerImageInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
+		addBottlerocketBootstrapSnowInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
-	if err := clusterapi.SetProxyConfigInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec); err != nil {
-		return nil, err
-	}
+	case v1alpha1.Ubuntu:
+		if err := clusterapi.SetProxyConfigInKubeadmConfigTemplateForUbuntu(kct, clusterSpec.Cluster); err != nil {
+			return nil, err
+		}
+		if err := clusterapi.SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
+			return nil, err
+		}
+		clusterapi.CreateContainerdConfigFileInKubeadmConfigTemplate(kct, clusterSpec.Cluster)
+		clusterapi.RestartContainerdInKubeadmConfigTemplate(kct, clusterSpec.Cluster)
 
-	clusterapi.CreateContainerdConfigFileInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec)
-	clusterapi.RestartContainerdInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec)
+	default:
+		log.Info("Warning: unsupported OS family when setting up KubeadmConfigTemplate", "OS family", osFamily)
+	}
 
 	return kct, nil
 }

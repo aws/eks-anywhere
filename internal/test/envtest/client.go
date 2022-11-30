@@ -232,6 +232,20 @@ func (a *APIExpecter) ShouldEventuallyMatch(ctx context.Context, obj client.Obje
 	}, a.timeout).Should(gomega.Succeed(), "object %s should eventually match", obj.GetName())
 }
 
+// CloneNameNamespace returns an empty client object of the same type
+// with the same and namespace. This is a helper to pass a new object to the "Eventually"
+// methods while preserving the original object's data.
+func CloneNameNamespace[T any, PT interface {
+	*T
+	client.Object
+}](obj PT,
+) PT {
+	copyObj := PT(new(T))
+	copyObj.SetName(obj.GetName())
+	copyObj.SetNamespace(obj.GetNamespace())
+	return copyObj
+}
+
 // ShouldEventuallyNotExist defines an eventual expectation that succeeds if the provided object
 // becomes not found by the client before the timeout expires.
 func (a *APIExpecter) ShouldEventuallyNotExist(ctx context.Context, obj client.Object) {

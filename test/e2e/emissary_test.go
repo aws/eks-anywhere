@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -23,7 +24,9 @@ func runCuratedPackageEmissaryInstall(test *framework.ClusterE2ETest) {
 	packageFile := test.BuildPackageConfigFile(emissaryPackageName, emissaryPackagePrefix, EksaPackagesNamespace)
 	test.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ClusterName))
 	test.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
-	test.TestEmissaryPackageRouting(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
+	if test.Provider.Name() == constants.DockerProviderName {
+		test.TestEmissaryPackageRouting(emissaryPackagePrefix+"-"+emissaryPackageName, withMgmtCluster(test))
+	}
 }
 
 func runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {

@@ -54,7 +54,7 @@ func TestControlPlaneObjects(t *testing.T) {
 	kcp := wantKubeadmControlPlane()
 	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
 
-	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt, wantSnowCredentialsSecret()}))
 }
@@ -62,7 +62,7 @@ func TestControlPlaneObjects(t *testing.T) {
 func TestControlPlaneObjectsCredentialsNil(t *testing.T) {
 	g := newSnowTest(t)
 	g.clusterSpec.SnowCredentialsSecret = nil
-	_, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(MatchError(ContainSubstring("snowCredentialsSecret in clusterSpec shall not be nil")))
 }
 
@@ -72,7 +72,7 @@ func TestControlPlaneObjectsSecretMissCredentialsKey(t *testing.T) {
 		"ca-bundle": []byte("eksa-certs"),
 	}
 
-	_, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(MatchError(ContainSubstring("unable to retrieve credentials from secret")))
 }
 
@@ -82,7 +82,7 @@ func TestControlPlaneObjectsSecretMissCertificatesKey(t *testing.T) {
 		"credentials": []byte("eksa-creds"),
 	}
 
-	_, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(MatchError(ContainSubstring("unable to retrieve ca-bundle from secret")))
 }
 
@@ -120,7 +120,7 @@ func TestControlPlaneObjectsUpgradeFromBetaMachineTemplateName(t *testing.T) {
 	kcp := wantKubeadmControlPlane()
 	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
 
-	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt, wantSnowCredentialsSecret()}))
 }
@@ -140,7 +140,7 @@ func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
 	mt.SetName("snow-test-control-plane-1")
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
 
-	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt, wantSnowCredentialsSecret()}))
 }
@@ -171,7 +171,7 @@ func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
 	mt.SetName("snow-test-control-plane-1")
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
 
-	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt, wantSnowCredentialsSecret()}))
 }
@@ -187,7 +187,7 @@ func TestControlPlaneObjectsGetOldControlPlaneError(t *testing.T) {
 		).
 		Return(errors.New("get cp error"))
 
-	_, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).NotTo(Succeed())
 }
 
@@ -210,7 +210,7 @@ func TestControlPlaneObjectsGetOldMachineTemplateError(t *testing.T) {
 		).
 		Return(errors.New("get mt error"))
 
-	_, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).NotTo(Succeed())
 }
 
@@ -260,7 +260,7 @@ func TestWorkersObjects(t *testing.T) {
 	md := wantMachineDeployment()
 	md.Spec.Template.Spec.InfrastructureRef.Name = wantMachineTemplateName
 
-	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, wantKubeadmConfigTemplate(), mt}))
 }
@@ -319,7 +319,7 @@ func TestWorkersObjectsFromBetaMachineTemplateName(t *testing.T) {
 	kct.SetName(wantKctName)
 	md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = wantKctName
 
-	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, kct, mt}))
 }
@@ -336,7 +336,7 @@ func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
 		).
 		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
-	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
@@ -374,7 +374,7 @@ func TestWorkersObjectsOldKubeadmConfigTemplateNotExists(t *testing.T) {
 		).
 		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
-	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
@@ -415,7 +415,7 @@ func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
 		).
 		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
-	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
@@ -466,7 +466,7 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 			return nil
 		})
 
-	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 
 	md := wantMachineDeployment()
 	md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-2"
@@ -526,7 +526,7 @@ func TestWorkersObjectsLabelsUpdated(t *testing.T) {
 			return nil
 		})
 
-	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 
 	md := wantMachineDeployment()
 	md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-2"
@@ -554,7 +554,7 @@ func TestWorkersObjectsGetMachineDeploymentError(t *testing.T) {
 		).
 		Return(errors.New("get md error"))
 
-	_, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).NotTo(Succeed())
 }
 
@@ -590,7 +590,7 @@ func TestWorkersObjectsGetKubeadmConfigTemplateError(t *testing.T) {
 		).
 		Return(nil)
 
-	_, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).NotTo(Succeed())
 }
 
@@ -618,7 +618,7 @@ func TestWorkersObjectsGetMachineTemplateError(t *testing.T) {
 		).
 		Return(errors.New("get mt error"))
 
-	_, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+	_, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).NotTo(Succeed())
 }
 
@@ -637,7 +637,7 @@ func TestKubeadmConfigTemplatesWithRegistryMirror(t *testing.T) {
 				Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
 			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			gotMt, gotKct, err := snow.WorkersMachineAndConfigTemplate(g.ctx, g.kubeconfigClient, g.clusterSpec)
+			gotMt, gotKct, err := snow.WorkersMachineAndConfigTemplate(g.ctx, g.logger, g.kubeconfigClient, g.clusterSpec)
 			g.Expect(err).To(Succeed())
 			wantMt := map[string]*snowv1.AWSSnowMachineTemplate{
 				"md-0": wantSnowMachineTemplate(),
@@ -669,7 +669,7 @@ func TestKubeadmConfigTemplatesWithProxyConfig(t *testing.T) {
 
 			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
 
-			_, got, err := snow.WorkersMachineAndConfigTemplate(g.ctx, g.kubeconfigClient, g.clusterSpec)
+			_, got, err := snow.WorkersMachineAndConfigTemplate(g.ctx, g.logger, g.kubeconfigClient, g.clusterSpec)
 			g.Expect(err).To(Succeed())
 			want := map[string]*bootstrapv1.KubeadmConfigTemplate{
 				"md-0": wantKubeadmConfigTemplate(),

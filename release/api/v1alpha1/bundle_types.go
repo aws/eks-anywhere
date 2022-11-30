@@ -60,28 +60,27 @@ func init() {
 }
 
 type VersionsBundle struct {
-	KubeVersion            string                      `json:"kubeVersion"`
-	EksD                   EksDRelease                 `json:"eksD"`
-	CertManager            CertManagerBundle           `json:"certManager"`
-	ClusterAPI             CoreClusterAPI              `json:"clusterAPI"`
-	Bootstrap              KubeadmBootstrapBundle      `json:"bootstrap"`
-	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
-	VSphere                VSphereBundle               `json:"vSphere"`
-	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
-	Docker                 DockerBundle                `json:"docker"`
-	Eksa                   EksaBundle                  `json:"eksa"`
-	Cilium                 CiliumBundle                `json:"cilium"`
-	Kindnetd               KindnetdBundle              `json:"kindnetd"`
-	Flux                   FluxBundle                  `json:"flux"`
-	PackageController      PackageBundle               `json:"packageController"`
-	BottleRocketBootstrap  BottlerocketBootstrapBundle `json:"bottlerocketBootstrap"`
-	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
-	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
-	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
-	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
-	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
-	Snow                   SnowBundle                  `json:"snow,omitempty"`
-	Nutanix                NutanixBundle               `json:"nutanix,omitempty"`
+	KubeVersion                string                           `json:"kubeVersion"`
+	EksD                       EksDRelease                      `json:"eksD"`
+	CertManager                CertManagerBundle                `json:"certManager"`
+	ClusterAPI                 CoreClusterAPI                   `json:"clusterAPI"`
+	Bootstrap                  KubeadmBootstrapBundle           `json:"bootstrap"`
+	ControlPlane               KubeadmControlPlaneBundle        `json:"controlPlane"`
+	VSphere                    VSphereBundle                    `json:"vSphere"`
+	CloudStack                 CloudStackBundle                 `json:"cloudStack,omitempty"`
+	Docker                     DockerBundle                     `json:"docker"`
+	Eksa                       EksaBundle                       `json:"eksa"`
+	Cilium                     CiliumBundle                     `json:"cilium"`
+	Kindnetd                   KindnetdBundle                   `json:"kindnetd"`
+	Flux                       FluxBundle                       `json:"flux"`
+	PackageController          PackageBundle                    `json:"packageController"`
+	BottleRocketHostContainers BottlerocketHostContainersBundle `json:"bottlerocketHostContainers"`
+	ExternalEtcdBootstrap      EtcdadmBootstrapBundle           `json:"etcdadmBootstrap"`
+	ExternalEtcdController     EtcdadmControllerBundle          `json:"etcdadmController"`
+	Tinkerbell                 TinkerbellBundle                 `json:"tinkerbell,omitempty"`
+	Haproxy                    HaproxyBundle                    `json:"haproxy,omitempty"`
+	Snow                       SnowBundle                       `json:"snow,omitempty"`
+	Nutanix                    NutanixBundle                    `json:"nutanix,omitempty"`
 	// This field has been deprecated
 	Aws *AwsBundle `json:"aws,omitempty"`
 }
@@ -133,12 +132,10 @@ type OSImageBundle struct {
 	Bottlerocket Archive `json:"bottlerocket,omitempty"`
 }
 
-type BottlerocketBootstrapBundle struct {
-	Bootstrap Image `json:"bootstrap"`
-}
-
-type BottlerocketAdminBundle struct {
-	Admin Image `json:"admin"`
+type BottlerocketHostContainersBundle struct {
+	Admin            Image `json:"admin"`
+	Control          Image `json:"control"`
+	KubeadmBootstrap Image `json:"kubeadmBootstrap"`
 }
 
 type CertManagerBundle struct {
@@ -323,11 +320,12 @@ type HaproxyBundle struct {
 }
 
 type SnowBundle struct {
-	Version    string   `json:"version"`
-	Manager    Image    `json:"manager"`
-	KubeVip    Image    `json:"kubeVip"`
-	Components Manifest `json:"components"`
-	Metadata   Manifest `json:"metadata"`
+	Version                   string   `json:"version"`
+	Manager                   Image    `json:"manager"`
+	KubeVip                   Image    `json:"kubeVip"`
+	Components                Manifest `json:"components"`
+	Metadata                  Manifest `json:"metadata"`
+	BottlerocketBootstrapSnow Image    `json:"bottlerocketBootstrapSnow"`
 }
 
 type NutanixBundle struct {

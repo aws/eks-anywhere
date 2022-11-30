@@ -26,12 +26,14 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
 
-func GetSnowBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.SnowBundle, error) {
+func GetSnowBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.SnowBundle, error) {
 	capasBundleArtifacts := map[string][]releasetypes.Artifact{
 		"cluster-api-provider-aws-snow": r.BundleArtifactsTable["cluster-api-provider-aws-snow"],
 		"kube-rbac-proxy":               r.BundleArtifactsTable["kube-rbac-proxy"],
 		"kube-vip":                      r.BundleArtifactsTable["kube-vip"],
+		"bottlerocket-bootstrap-snow":   r.BundleArtifactsTable[fmt.Sprintf("bottlerocket-bootstrap-%s", eksDReleaseChannel)],
 	}
+
 	sortedComponentNames := bundleutils.SortArtifactsMap(capasBundleArtifacts)
 
 	var sourceBranch string
@@ -91,11 +93,12 @@ func GetSnowBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string
 	}
 
 	bundle := anywherev1alpha1.SnowBundle{
-		Version:    version,
-		Manager:    bundleImageArtifacts["cluster-api-snow-controller"],
-		KubeVip:    bundleImageArtifacts["kube-vip"],
-		Components: bundleManifestArtifacts["infrastructure-components.yaml"],
-		Metadata:   bundleManifestArtifacts["metadata.yaml"],
+		Version:                   version,
+		Manager:                   bundleImageArtifacts["cluster-api-snow-controller"],
+		KubeVip:                   bundleImageArtifacts["kube-vip"],
+		BottlerocketBootstrapSnow: bundleImageArtifacts["bottlerocket-bootstrap-snow"],
+		Components:                bundleManifestArtifacts["infrastructure-components.yaml"],
+		Metadata:                  bundleManifestArtifacts["metadata.yaml"],
 	}
 
 	return bundle, nil

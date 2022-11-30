@@ -925,6 +925,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 		e.RunEKSA([]string{
 			"upgrade", "packages",
 			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
+			"--cluster=" + e.ClusterName,
 		})
 	}
 }
@@ -1181,7 +1182,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(name string, mgmtCluster
 	fmt.Printf("Logs from curl emissary\n %s\n", logs)
 	ok := strings.Contains(logs, "Ambassador is alive and well")
 	if !ok {
-		e.T.Fatalf("expected a, got %T", logs)
+		e.T.Fatalf("expected Ambassador is alive and well, got %s", logs)
 	}
 }
 
@@ -1227,7 +1228,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *ty
 	fmt.Printf("Logs from curl emissary\n %s\n", logs)
 	ok := strings.Contains(logs, "quote")
 	if !ok {
-		e.T.Fatalf("expected a, got %T", logs)
+		e.T.Fatalf("expected quote, got %s", logs)
 	}
 }
 

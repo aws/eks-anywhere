@@ -123,6 +123,9 @@ func (vb *VersionsBundle) SnowImages() []Image {
 	if vb.Snow.Manager.URI != "" {
 		i = append(i, vb.Snow.Manager)
 	}
+	if vb.Snow.BottlerocketBootstrapSnow.URI != "" {
+		i = append(i, vb.Snow.BottlerocketBootstrapSnow)
+	}
 
 	return i
 }
@@ -163,8 +166,9 @@ func (vb *VersionsBundle) SharedImages() []Image {
 	return []Image{
 		vb.Bootstrap.Controller,
 		vb.Bootstrap.KubeProxy,
-		vb.BottleRocketBootstrap.Bootstrap,
-		vb.BottleRocketAdmin.Admin,
+		vb.BottleRocketHostContainers.Admin,
+		vb.BottleRocketHostContainers.Control,
+		vb.BottleRocketHostContainers.KubeadmBootstrap,
 		vb.CertManager.Acmesolver,
 		vb.CertManager.Cainjector,
 		vb.CertManager.Controller,

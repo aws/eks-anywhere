@@ -28,8 +28,9 @@ import (
 )
 
 const (
-	defaultRequeueTime   = time.Minute
-	clusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
+	defaultRequeueTime = time.Minute
+	// ClusterFinalizerName is the finalizer added to clusters to handle deletion.
+	ClusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
 
 // ClusterReconciler reconciles a Cluster object.
@@ -127,18 +128,18 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}()
 
-	if cluster.DeletionTimestamp.IsZero() {
-		if !controllerutil.ContainsFinalizer(cluster, clusterFinalizerName) {
-			controllerutil.AddFinalizer(cluster, clusterFinalizerName)
-		}
-	} else {
-		return r.reconcileDelete(ctx, log, cluster)
-	}
-
 	// If the cluster is paused, return without any further processing.
 	if cluster.IsReconcilePaused() {
 		log.Info("Cluster reconciliation is paused")
 		return ctrl.Result{}, nil
+	}
+
+	if cluster.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(cluster, ClusterFinalizerName) {
+			controllerutil.AddFinalizer(cluster, ClusterFinalizerName)
+		}
+	} else {
+		return r.reconcileDelete(ctx, log, cluster)
 	}
 
 	if cluster.Spec.BundlesRef == nil {
@@ -194,7 +195,7 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 		log.Info("Deleting EKS Anywhere cluster", "name", capiCluster.Name, "cluster.DeletionTimestamp", cluster.DeletionTimestamp, "finalizer", cluster.Finalizers)
 
 		// TODO delete GitOps,Datacenter and MachineConfig objects
-		controllerutil.RemoveFinalizer(cluster, clusterFinalizerName)
+		controllerutil.RemoveFinalizer(cluster, ClusterFinalizerName)
 	default:
 		return ctrl.Result{}, err
 

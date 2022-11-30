@@ -116,11 +116,6 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for external Etcdadm controller")
 	}
 
-	bottlerocketAdminBundle, err := GetBottlerocketAdminBundle(r)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
-	}
-
 	packageBundle, err := GetPackagesBundle(r, imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
@@ -136,13 +131,8 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
 	}
 
-	var snowBundle anywherev1alpha1.SnowBundle
 	var nutanixBundle anywherev1alpha1.NutanixBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
-		snowBundle, err = GetSnowBundle(r, imageDigests)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
-		}
 		nutanixBundle, err = GetNutanixBundle(r, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Nutanix infrastructure provider")
@@ -180,34 +170,38 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			return nil, errors.Wrapf(err, "Error getting bundle for vSphere infrastructure provider")
 		}
 
-		bottlerocketBootstrapBundle, err := GetBottlerocketBootstrapBundle(r, channel, number, imageDigests)
+		bottlerocketHostContainersBundle, err := GetBottlerocketHostContainersBundle(r, channel, imageDigests)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
+			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket host containers")
+		}
+
+		snowBundle, err := GetSnowBundle(r, channel, imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
 		}
 
 		versionsBundle := anywherev1alpha1.VersionsBundle{
-			KubeVersion:            shortKubeVersion,
-			EksD:                   eksDReleaseBundle,
-			CertManager:            certManagerBundle,
-			ClusterAPI:             coreClusterApiBundle,
-			Bootstrap:              kubeadmBootstrapBundle,
-			ControlPlane:           kubeadmControlPlaneBundle,
-			VSphere:                vsphereBundle,
-			CloudStack:             cloudStackBundle,
-			Docker:                 dockerBundle,
-			Eksa:                   eksaBundle,
-			Cilium:                 ciliumBundle,
-			Kindnetd:               kindnetdBundle,
-			Flux:                   fluxBundle,
-			PackageController:      packageBundle,
-			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
-			ExternalEtcdController: etcdadmControllerBundle,
-			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
-			BottleRocketAdmin:      bottlerocketAdminBundle,
-			Tinkerbell:             tinkerbellBundle,
-			Haproxy:                haproxyBundle,
-			Snow:                   snowBundle,
-			Nutanix:                nutanixBundle,
+			KubeVersion:                shortKubeVersion,
+			EksD:                       eksDReleaseBundle,
+			CertManager:                certManagerBundle,
+			ClusterAPI:                 coreClusterApiBundle,
+			Bootstrap:                  kubeadmBootstrapBundle,
+			ControlPlane:               kubeadmControlPlaneBundle,
+			VSphere:                    vsphereBundle,
+			CloudStack:                 cloudStackBundle,
+			Docker:                     dockerBundle,
+			Eksa:                       eksaBundle,
+			Cilium:                     ciliumBundle,
+			Kindnetd:                   kindnetdBundle,
+			Flux:                       fluxBundle,
+			PackageController:          packageBundle,
+			ExternalEtcdBootstrap:      etcdadmBootstrapBundle,
+			ExternalEtcdController:     etcdadmControllerBundle,
+			BottleRocketHostContainers: bottlerocketHostContainersBundle,
+			Tinkerbell:                 tinkerbellBundle,
+			Haproxy:                    haproxyBundle,
+			Snow:                       snowBundle,
+			Nutanix:                    nutanixBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}

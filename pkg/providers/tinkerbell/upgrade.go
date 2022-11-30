@@ -44,7 +44,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1
 }
 
 func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
-	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
+	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
 func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfig, oldTmc, newTmc *v1alpha1.TinkerbellMachineConfig) bool {
@@ -134,7 +134,23 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		return err
 	}
 
-	return p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec)
+	if err := p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec); err != nil {
+		return err
+	}
+
+	if p.clusterConfig.IsManaged() {
+		if err := p.applyHardwareUpgrade(ctx, clusterSpec.ManagementCluster); err != nil {
+			return err
+		}
+		if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
+			err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+			if err != nil {
+				return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, currentSpec, newClusterSpec *cluster.Spec) (err error) {
@@ -167,11 +183,15 @@ func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 }
 
 func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return p.applyHardwareUpgrade(ctx, cluster)
+}
+
+// ApplyHardwareToCluster adds all the hardwares to the cluster.
+func (p *Provider) applyHardwareUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	allHardware := p.catalogue.AllHardware()
 	if len(allHardware) == 0 {
 		return nil
 	}
-
 	hardwareSpec, err := hardware.MarshalCatalogue(p.catalogue)
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)

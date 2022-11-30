@@ -187,7 +187,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Bundles is the Schema for the bundles API
+        description: Bundles is the Schema for the bundles API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -202,7 +202,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: BundlesSpec defines the desired state of Bundles
+            description: BundlesSpec defines the desired state of Bundles.
             properties:
               cliMaxVersion:
                 type: string
@@ -384,7 +384,7 @@ spec:
                       - metadata
                       - version
                       type: object
-                    bottlerocketAdmin:
+                    bottlerocketHostContainers:
                       properties:
                         admin:
                           properties:
@@ -415,12 +415,36 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
-                      required:
-                      - admin
-                      type: object
-                    bottlerocketBootstrap:
-                      properties:
-                        bootstrap:
+                        control:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                        kubeadmBootstrap:
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -450,7 +474,9 @@ spec:
                               type: string
                           type: object
                       required:
-                      - bootstrap
+                      - admin
+                      - control
+                      - kubeadmBootstrap
                       type: object
                     certManager:
                       properties:
@@ -1944,6 +1970,35 @@ spec:
                       type: object
                     snow:
                       properties:
+                        bottlerocketBootstrapSnow:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         components:
                           properties:
                             uri:
@@ -2017,6 +2072,7 @@ spec:
                         version:
                           type: string
                       required:
+                      - bottlerocketBootstrapSnow
                       - components
                       - kubeVip
                       - manager
@@ -2133,7 +2189,7 @@ spec:
                         tinkerbellStack:
                           properties:
                             actions:
-                              description: Tinkerbell Template Actions
+                              description: Tinkerbell Template Actions.
                               properties:
                                 cexec:
                                   properties:
@@ -2388,7 +2444,7 @@ spec:
                                   type: string
                               type: object
                             hook:
-                              description: Tinkerbell hook OS
+                              description: Tinkerbell hook OS.
                               properties:
                                 bootkit:
                                   properties:
@@ -3034,8 +3090,7 @@ spec:
                       type: object
                   required:
                   - bootstrap
-                  - bottlerocketAdmin
-                  - bottlerocketBootstrap
+                  - bottlerocketHostContainers
                   - certManager
                   - cilium
                   - clusterAPI
@@ -3059,7 +3114,7 @@ spec:
             - versionsBundles
             type: object
           status:
-            description: BundlesStatus defines the observed state of Bundles
+            description: BundlesStatus defines the observed state of Bundles.
             type: object
         type: object
     served: true

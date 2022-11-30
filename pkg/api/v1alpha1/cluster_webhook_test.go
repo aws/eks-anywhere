@@ -1296,6 +1296,7 @@ func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
 
 func TestClusterValidateCreateManagedUnpaused(t *testing.T) {
 	features.ClearCache()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "")
 	cluster := createCluster()
 	g := NewWithT(t)
 	cluster.SetManagedBy("mgmt2")

@@ -289,6 +289,55 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "diff labels",
+			new: &kubeadmv1.KubeadmConfigTemplate{
+				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
+					Template: kubeadmv1.KubeadmConfigTemplateResource{
+						Spec: kubeadmv1.KubeadmConfigSpec{
+							JoinConfiguration: &kubeadmv1.JoinConfiguration{
+								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
+									KubeletExtraArgs: map[string]string{
+										"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+										"cgroup-driver":     "cgroupfs",
+										"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
+									},
+								},
+							},
+							Files: []kubeadmv1.File{
+								{
+									Owner: "me",
+								},
+							},
+						},
+					},
+				},
+			},
+			old: &kubeadmv1.KubeadmConfigTemplate{
+				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
+					Template: kubeadmv1.KubeadmConfigTemplateResource{
+						Spec: kubeadmv1.KubeadmConfigSpec{
+							JoinConfiguration: &kubeadmv1.JoinConfiguration{
+								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
+									KubeletExtraArgs: map[string]string{
+										"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+										"cgroup-driver":     "cgroupfs",
+										"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
+										"node-labels":       "foo-bar",
+									},
+								},
+							},
+							Files: []kubeadmv1.File{
+								{
+									Owner: "me",
+								},
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
 			name: "new JoinConfiguration nil",
 			new: &kubeadmv1.KubeadmConfigTemplate{
 				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
