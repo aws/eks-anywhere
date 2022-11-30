@@ -21,5 +21,5 @@ func ReplaceHost(orgURL, host string) string {
 		u.Scheme = ""
 	}
 	u.Host = host
-	return strings.ReplaceAll(strings.TrimPrefix(u.String(), "//"), "%2F", "/")
+	return strings.TrimPrefix(u.String(), "//")
 }

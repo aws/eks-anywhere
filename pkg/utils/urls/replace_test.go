@@ -38,12 +38,6 @@ func TestReplaceHost(t *testing.T) {
 			orgURL: "public.ecr.aws/product/image:tag",
 			want:   "public.ecr.aws/product/image:tag",
 		},
-		{
-			name:   "host contains slashes",
-			orgURL: "public.ecr.aws/product/image:tag",
-			host:   "1.2.3.4:443/namespace",
-			want:   "1.2.3.4:443/namespace/product/image:tag",
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
