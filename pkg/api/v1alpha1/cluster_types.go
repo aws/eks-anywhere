@@ -15,6 +15,11 @@ const (
 	// object to prevent a controller from processing a resource.
 	pausedAnnotation = "anywhere.eks.amazonaws.com/paused"
 
+	// ManagedByCLIAnnotation can be applied to an EKS-A Cluster to signal when the CLI is currently
+	// performing an operation so the controller should not take any action. When marked for deletion,
+	// the controller will remove the finalizer and let the cluster be deleted.
+	ManagedByCLIAnnotation = "anywhere.eks.amazonaws.com/managed-by-cli"
+
 	// ControlPlaneAnnotation is an annotation that can be applied to EKS-A machineconfig
 	// object to prevent a controller from making changes to that resource.
 	controlPlaneAnnotation = "anywhere.eks.amazonaws.com/control-plane"
