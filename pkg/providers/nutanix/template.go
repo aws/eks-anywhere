@@ -159,6 +159,18 @@ func buildTemplateMapCP(
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
 	}
 
+	// We intend on supporting three options until Prism Central starts shipping with
+	// valid self-signed certificates. The recommended order from a customer guidance
+	// perspective should be:
+	// - Use a Legitimate certificate
+	// - Use a valid self-signed cert and provide the CA cert through the trust bundle
+	// - Skip TLS verification
+
+	// set Insecure to always true if AdditionalTrustBundle if provided
+	if datacenterSpec.AdditionalTrustBundle != "" {
+		values["nutanixInsecure"] = true
+	}
+
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
