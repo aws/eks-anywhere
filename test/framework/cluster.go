@@ -925,6 +925,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 		e.RunEKSA([]string{
 			"upgrade", "packages",
 			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
+			"--cluster=" + e.ClusterName,
 		})
 	}
 }
