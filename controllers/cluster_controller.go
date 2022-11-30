@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -128,19 +129,18 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}()
 
+	if !cluster.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, log, cluster)
+	}
+
 	// If the cluster is paused, return without any further processing.
 	if cluster.IsReconcilePaused() {
 		log.Info("Cluster reconciliation is paused")
 		return ctrl.Result{}, nil
 	}
 
-	if cluster.DeletionTimestamp.IsZero() {
-		if !controllerutil.ContainsFinalizer(cluster, ClusterFinalizerName) {
-			controllerutil.AddFinalizer(cluster, ClusterFinalizerName)
-		}
-	} else {
-		return r.reconcileDelete(ctx, log, cluster)
-	}
+	// AddFinalizer	is idempotent
+	controllerutil.AddFinalizer(cluster, ClusterFinalizerName)
 
 	if cluster.Spec.BundlesRef == nil {
 		if err = r.setBundlesRef(ctx, cluster); err != nil {
@@ -176,6 +176,17 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
 	if cluster.IsSelfManaged() {
 		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
+	}
+
+	if metav1.HasAnnotation(cluster.ObjectMeta, anywherev1.ManagedByCLIAnnotation) {
+		log.Info("Clusters is managed by CLI, removing finalizer")
+		controllerutil.RemoveFinalizer(cluster, ClusterFinalizerName)
+		return ctrl.Result{}, nil
+	}
+
+	if cluster.IsReconcilePaused() {
+		log.Info("Cluster reconciliation is paused, won't process cluster deletion")
+		return ctrl.Result{}, nil
 	}
 
 	capiCluster := &clusterv1.Cluster{}
