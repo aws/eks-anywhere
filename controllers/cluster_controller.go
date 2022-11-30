@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -26,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const (
@@ -218,6 +220,10 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 	builder := cluster.NewDefaultConfigClientBuilder()
 	config, err := builder.Build(ctx, clientutil.NewKubeClient(r.client), clus)
 	if err != nil {
+		var notFound apierrors.APIStatus
+		if apierrors.IsNotFound(err) && errors.As(err, &notFound) {
+			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound))
+		}
 		return err
 	}
 
@@ -244,6 +250,9 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.Cluster) error {
 	mgmtCluster := &anywherev1.Cluster{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name))
+		}
 		return err
 	}
 	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
