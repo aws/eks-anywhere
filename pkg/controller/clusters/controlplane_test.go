@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,7 +74,7 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 	api.ShouldEventuallyMatch(
 		ctx,
 		etcdadmCluster,
-		func(g gomega.Gomega) {
+		func(g Gomega) {
 			g.Expect(etcdadmCluster.Spec.Replicas).To(HaveValue(BeEquivalentTo(5)), "etcdadm replicas should have been updated")
 			g.Expect(etcdadmCluster.Annotations).To(
 				HaveKeyWithValue(etcdv1.UpgradeInProgressAnnotation, "true"),
@@ -87,7 +86,7 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 	api.ShouldEventuallyMatch(
 		ctx,
 		etcdadmCluster,
-		func(g gomega.Gomega) {
+		func(g Gomega) {
 			g.Expect(kcp.Annotations).To(
 				HaveKeyWithValue(clusterv1.PausedAnnotation, "true"),
 				"kcp paused annotation should have been added",
@@ -103,6 +102,25 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithNoDiff(t *testing.T) {
 	ctx := context.Background()
 	ns := env.CreateNamespaceForTest(ctx, t)
 	cp := controlPlaneExternalEtcd(ns)
+	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
+
+	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))
+	api.ShouldEventuallyExist(ctx, cp.Cluster)
+	api.ShouldEventuallyExist(ctx, cp.KubeadmControlPlane)
+	api.ShouldEventuallyExist(ctx, cp.ControlPlaneMachineTemplate)
+	api.ShouldEventuallyExist(ctx, cp.ProviderCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdCluster)
+	api.ShouldEventuallyExist(ctx, cp.EtcdMachineTemplate)
+}
+
+func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
+	g := NewWithT(t)
+	c := env.Client()
+	api := envtest.NewAPIExpecter(t, c)
+	ctx := context.Background()
+	ns := env.CreateNamespaceForTest(ctx, t)
+	cp := controlPlaneExternalEtcd(ns)
+	cp.Cluster.Spec.ManagedExternalEtcdRef.Namespace = ""
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
 
 	g.Expect(clusters.ReconcileControlPlane(ctx, c, cp)).To(Equal(controller.Result{}))

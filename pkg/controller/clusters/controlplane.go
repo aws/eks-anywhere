@@ -2,7 +2,6 @@ package clusters
 
 import (
 	"context"
-
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -70,10 +69,19 @@ func ReconcileControlPlane(ctx context.Context, c client.Client, cp *ControlPlan
 		return controller.Result{}, errors.Wrap(err, "reading CAPI cluster")
 	}
 
+	externalEtcdNamespace := cluster.Spec.ManagedExternalEtcdRef.Namespace
+	// This can happen when a user has a workload cluster that is older than the following PR, causing cluster
+	// reconcilation to fail. By inferring namespace from clusterv1.Cluster, we will be able to retrieve the object correctly.
+	// PR: https://github.com/aws/eks-anywhere/pull/4025
+	// TODO: See if it is possible to propagate the namespace field in the clusterv1.Cluster object in cluster-api like the other refs.
+	if externalEtcdNamespace == "" {
+		externalEtcdNamespace = cluster.Namespace
+	}
+
 	etcdadmCluster := &etcdv1.EtcdadmCluster{}
 	key := client.ObjectKey{
 		Name:      cluster.Spec.ManagedExternalEtcdRef.Name,
-		Namespace: cluster.Spec.ManagedExternalEtcdRef.Namespace,
+		Namespace: externalEtcdNamespace,
 	}
 	if err = c.Get(ctx, key, etcdadmCluster); err != nil {
 		return controller.Result{}, errors.Wrap(err, "reading etcdadm cluster")
