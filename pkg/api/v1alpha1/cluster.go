@@ -708,15 +708,13 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
 	}
 
-	if clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces != nil {
-		cnt := 0
-		re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
-		for _, ociNamespace := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
-			if re.MatchString(ociNamespace.Registry) {
-				cnt++
-				if cnt > 1 {
-					return errors.New("only one registry mirror for curated packages is suppported")
-				}
+	cnt := 0
+	re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
+	for _, ociNamespace := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
+		if re.MatchString(ociNamespace.Registry) {
+			cnt++
+			if cnt > 1 {
+				return errors.New("only one registry mirror for curated packages is suppported")
 			}
 		}
 	}

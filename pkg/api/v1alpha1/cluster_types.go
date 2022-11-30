@@ -171,7 +171,9 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate && OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent &&
+		n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate &&
+		OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
 }
 
 // RegistryMirror returns a struct storing registry mirror mappings of all upstream registries.
