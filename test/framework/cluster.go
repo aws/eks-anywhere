@@ -1029,7 +1029,7 @@ func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	e.GenerateClusterConfig()
 	e.CreateCluster()
-	// defer e.DeleteCluster()
+	defer e.DeleteCluster()
 	f(e)
 }
 
