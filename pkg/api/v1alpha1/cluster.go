@@ -711,6 +711,9 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	cnt := 0
 	re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
 	for _, ociNamespace := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
+		if ociNamespace.Registry == "" {
+			return errors.New("registry can't be set to empty in OCINamespaces")
+		}
 		if re.MatchString(ociNamespace.Registry) {
 			cnt++
 			if cnt > 1 {

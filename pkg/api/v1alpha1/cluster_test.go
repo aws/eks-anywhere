@@ -2296,6 +2296,24 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
+			name:    "empty registry in OCINamespace",
+			wantErr: "registry can't be set to empty in OCINamespaces",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "",
+								Namespace: "",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "insecureSkipVerify on non snow provider",
 			wantErr: "insecureSkipVerify is only supported for snow provider",
 			cluster: &Cluster{
@@ -2505,7 +2523,8 @@ func TestClusterRegistryMirror(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry: "1.2.3.4:443/eks-anywhere",
+					registrymirror.DefaultRegistry:             "1.2.3.4:443/eks-anywhere",
+					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443",
 				},
 			},
 		},
@@ -2528,6 +2547,7 @@ func TestClusterRegistryMirror(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry:             "1.2.3.4:443",
 					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
 				},
 			},

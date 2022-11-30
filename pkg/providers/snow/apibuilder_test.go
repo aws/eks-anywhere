@@ -204,10 +204,10 @@ var registryMirrorTests = []struct {
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443/v2/eks-anywhere"]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
     endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443/v2/eks-anywhere"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
 			},
@@ -230,9 +230,9 @@ var registryMirrorTests = []struct {
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
@@ -256,9 +256,9 @@ var registryMirrorTests = []struct {
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     insecure_skip_verify = true`,
@@ -276,9 +276,9 @@ var registryMirrorTests = []struct {
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]`,
 			},
 		},
@@ -296,9 +296,9 @@ var registryMirrorTests = []struct {
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"

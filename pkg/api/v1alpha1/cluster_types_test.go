@@ -1703,6 +1703,7 @@ func TestRegistryMirror(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "harbor.eksa.demo:30003",
 				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry:             "harbor.eksa.demo:30003",
 					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003",
 					"1.2.3.4": "harbor.eksa.demo:30003",
 				},
