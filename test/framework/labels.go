@@ -48,7 +48,7 @@ func validateLabels(expectedLabels map[string]string, node corev1.Node) error {
 	actualLabels := retrieveTestNodeLabels(node.Labels)
 	expectedBytes, _ := json.Marshal(expectedLabels)
 	actualBytes, _ := json.Marshal(actualLabels)
-	if !v1alpha1.LabelsMapEqual(expectedLabels, actualLabels) {
+	if !v1alpha1.MapEqual(expectedLabels, actualLabels) {
 		return fmt.Errorf("labels on node %v and corresponding configuration do not match; configured labels: %v; node labels: %v",
 			node.Name, string(expectedBytes), string(actualBytes))
 	}

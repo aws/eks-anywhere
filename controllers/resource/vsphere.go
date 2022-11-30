@@ -14,7 +14,7 @@ func needsVSphereNewKubeadmConfigTemplate(
 	newWorkerNodeGroup, oldWorkerNodeGroup *anywherev1.WorkerNodeGroupConfiguration,
 	oldWorkerNodeVmc, newWorkerNodeVmc *anywherev1.VSphereMachineConfig,
 ) bool {
-	return !anywherev1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !anywherev1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels) ||
+	return !anywherev1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !anywherev1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels) ||
 		!equivalentUsers(oldWorkerNodeVmc.Spec.Users, newWorkerNodeVmc.Spec.Users)
 }
 

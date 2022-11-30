@@ -191,7 +191,8 @@ func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	return true
 }
 
-func LabelsMapEqual(s1, s2 map[string]string) bool {
+// MapEqual compares two maps to check whether or not they are equal.
+func MapEqual(s1, s2 map[string]string) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
@@ -215,7 +216,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 		return false
 	}
 	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
-		TaintsSliceEqual(n.Taints, o.Taints) && LabelsMapEqual(n.Labels, o.Labels)
+		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels)
 }
 
 type Endpoint struct {
@@ -324,7 +325,7 @@ func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfigura
 			// if a node group is present in a but not b, or vise versa, it's immaterial
 			continue
 		} else {
-			if !LabelsMapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
+			if !MapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
 				return false
 			}
 		}
