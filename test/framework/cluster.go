@@ -925,6 +925,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 		e.RunEKSA([]string{
 			"upgrade", "packages",
 			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
+			"--cluster=" + e.ClusterName,
 		})
 	}
 }
@@ -1028,7 +1029,7 @@ func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	e.GenerateClusterConfig()
 	e.CreateCluster()
-	defer e.DeleteCluster()
+	// defer e.DeleteCluster()
 	f(e)
 }
 
