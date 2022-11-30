@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
-	"github.com/nutanix-cloud-native/prism-go-client/v3"
+	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"go.uber.org/multierr"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -177,7 +177,7 @@ func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName str
 					isPrismCentral = true
 				}
 			}
-			if !isPrismCentral {
+			if !isPrismCentral && *entity.Spec.Name == clusterName {
 				entities = append(entities, entity)
 			}
 		}
