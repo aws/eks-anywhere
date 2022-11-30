@@ -59,6 +59,7 @@ var requiredNutanixEnvVars = []string{
 	nutanixTemplateUbuntu121Var,
 	nutanixTemplateUbuntu122Var,
 	nutanixTemplateUbuntu123Var,
+	nutanixInsecure,
 }
 
 type Nutanix struct {
