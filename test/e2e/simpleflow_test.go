@@ -543,3 +543,13 @@ func TestNutanixKubernetes123SimpleFlow(t *testing.T) {
 	)
 	runSimpleFlow(test)
 }
+
+func TestNutanixKubernetes124SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}

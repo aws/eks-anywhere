@@ -564,3 +564,15 @@ func TestCPackagesNutanixKubernetes123SimpleFlow(t *testing.T) {
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
+
+func TestCPackagesNutanixKubernetes124SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
