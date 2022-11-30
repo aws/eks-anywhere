@@ -230,6 +230,10 @@ var registryMirrorTests = []struct {
 				Content: "xyz",
 			},
 		},
+		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443",
+			CACert:   "xyz",
+		},
 	},
 	{
 		name: "with ca cert",

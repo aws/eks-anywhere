@@ -25,6 +25,7 @@ type Helm struct {
 
 type HelmOpt func(*Helm)
 
+// WithRegistryMirror sets up registry mirror for helm.
 func WithRegistryMirror(mirror *registrymirror.RegistryMirror) HelmOpt {
 	return func(h *Helm) {
 		h.registryMirror = mirror
