@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -61,7 +62,7 @@ func checkImages(context context.Context, spec string) error {
 		return err
 	}
 
-	myRegistry := constants.DefaultRegistry
+	myRegistry := registrymirror.DefaultRegistry
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
@@ -76,13 +77,13 @@ func checkImages(context context.Context, spec string) error {
 
 	checkImageExistence := artifacts.CheckImageExistence{}
 	for _, image := range images {
-		myImageUri := strings.ReplaceAll(image.URI, constants.DefaultRegistry, myRegistry)
-		checkImageExistence.ImageUri = myImageUri
+		myImageURI := strings.ReplaceAll(image.URI, registrymirror.DefaultRegistry, myRegistry)
+		checkImageExistence.ImageUri = myImageURI
 		if err = checkImageExistence.Run(context); err != nil {
 			fmt.Println(err.Error())
-			logger.MarkFail(myImageUri)
+			logger.MarkFail(myImageURI)
 		} else {
-			logger.MarkPass(myImageUri)
+			logger.MarkPass(myImageURI)
 		}
 	}
 

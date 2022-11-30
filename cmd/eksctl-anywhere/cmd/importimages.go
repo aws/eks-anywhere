@@ -96,7 +96,7 @@ func importImages(ctx context.Context, spec string) error {
 		}
 	}
 
-	endpoint := clusterSpec.Cluster.RegistryMirror()
+	endpoint := clusterSpec.Cluster.RegistryMirror().BaseRegistry
 	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
 }
 

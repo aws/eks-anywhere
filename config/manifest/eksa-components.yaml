@@ -3766,6 +3766,9 @@ spec:
                         registry:
                           description: Name refers to the name of the upstream registry
                           type: string
+                      required:
+                      - namespace
+                      - registry
                       type: object
                     type: array
                   port:

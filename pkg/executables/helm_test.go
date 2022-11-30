@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 type helmTest struct {
@@ -80,7 +81,9 @@ func TestHelmTemplateSuccessWithInsecure(t *testing.T) {
 }
 
 func TestHelmTemplateSuccessWithRegistryMirror(t *testing.T) {
-	tt := newHelmTemplateTest(t, executables.WithRegistryMirror("1.2.3.4:443"))
+	tt := newHelmTemplateTest(t, executables.WithRegistryMirror(&registrymirror.RegistryMirror{
+		BaseRegistry: "1.2.3.4:443",
+	}))
 	ociRegistryMirror := "oci://1.2.3.4:443/account/charts"
 	expectCommand(
 		tt.e, tt.ctx, "template", ociRegistryMirror, "--version", tt.version, "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",

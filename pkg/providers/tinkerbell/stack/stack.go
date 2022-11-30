@@ -12,7 +12,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -291,7 +290,7 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
 	if s.registryMirror != nil {
-		localRegistry := s.registryMirror.GetRegistryMirrorAddressMappings()[constants.DefaultRegistry]
+		localRegistry := s.registryMirror.RegistryMirror().BaseRegistry
 		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
 		if s.registryMirror.Authenticate {
 			username, password, _ := config.ReadCredentials()
@@ -351,7 +350,7 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 
 func (s *Installer) localRegistryURL(originalURL string) string {
 	if s.registryMirror != nil {
-		localRegistry := s.registryMirror.GetRegistryMirrorAddressMappings()[constants.DefaultRegistry]
+		localRegistry := s.registryMirror.RegistryMirror().RegistryMirrorWithOCINamespace()
 		return urls.ReplaceHost(originalURL, localRegistry)
 	}
 	return originalURL

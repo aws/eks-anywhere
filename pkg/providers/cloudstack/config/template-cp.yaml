@@ -206,16 +206,18 @@ spec:
     - content: |
 {{ .registryCACert | indent 8 }}
       owner: root:root
-      path: "/etc/containerd/certs.d/{{index .registryMirrorConfiguration "base"}}/ca.crt"
+      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
 {{- end }}
-{{- if .registryMirrorConfiguration }}
+{{- if .registryMirrorMap }}
     - content: |
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://{{index .registryMirrorConfiguration "public.ecr.aws"}}"]
+          {{- range $orig, $mirror := .registryMirrorMap }}
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+            endpoint = ["https://{{ $mirror }}"]
+          {{- end }}
           {{- if .registryCACert }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .registryMirrorConfiguration "base"}}".tls]
-            ca_file = "/etc/containerd/certs.d/{{index .registryMirrorConfiguration "base"}}/ca.crt"
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
           {{- end }}
       owner: root:root
       path: "/etc/containerd/config_append.toml"
@@ -303,10 +305,10 @@ spec:
 {{- end }}
     preKubeadmCommands:
     - swapoff -a
-{{- if.registryMirrorConfiguration }}
+{{- if.registryMirrorMap }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
-{{- if or .proxyConfig .registryMirrorConfiguration }}
+{{- if or .proxyConfig .registryMirrorMap }}
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
 {{- end }}
@@ -418,9 +420,9 @@ spec:
         - {{ . }}
       {{- end }}
 {{- end }}
-{{- if .registryMirrorConfiguration }}
+{{- if .registryMirrorMap }}
     registryMirror:
-      endpoint: {{index .registryMirrorConfiguration "public.ecr.aws"}}
+      endpoint: {{ .publicMirror }}
       {{- if .registryCACert }}
       caCert: |
 {{ .registryCACert | indent 8 }}

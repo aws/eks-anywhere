@@ -17,9 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -303,22 +303,13 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
-func (c *Cluster) RegistryMirror() string {
-	mirrors := c.RegistryMirrors()
-	if mirrors == nil {
-		return ""
-	}
-
-	return mirrors[constants.DefaultRegistry]
-}
-
-// RegistryMirrors returns registry mirror mappings of all upstream registries.
-func (c *Cluster) RegistryMirrors() map[string]string {
-	if c.Spec.RegistryMirrorConfiguration == nil {
+// RegistryMirror returns a struct storing registry mirror mappings of all upstream registries.
+func (c *Cluster) RegistryMirror() *registrymirror.RegistryMirror {
+	config := c.Spec.RegistryMirrorConfiguration
+	if config == nil {
 		return nil
 	}
-
-	return c.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings()
+	return config.RegistryMirror()
 }
 
 // RegistryAuth returns whether registry requires authentication or not.
@@ -713,16 +704,21 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
-	if clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces != nil {
-		for _, ociNamespace := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
-			if ociNamespace.Registry == "" {
-				return errors.New("no value set for RegistryMirrorConfiguration.OCINamespaces[*].Registry")
-			}
-		}
-	}
-
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces != nil {
+		cnt := 0
+		re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
+		for _, ociNamespace := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
+			if re.MatchString(ociNamespace.Registry) {
+				cnt++
+				if cnt > 1 {
+					return errors.New("only one registry mirror for curated packages is suppported")
+				}
+			}
+		}
 	}
 	return nil
 }

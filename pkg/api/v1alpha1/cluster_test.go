@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -12,7 +11,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -2275,6 +2274,28 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
+			name:    "multiple mappings for curated packages",
+			wantErr: "only one registry mirror for curated packages is suppported",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Namespace: "",
+							},
+							{
+								Registry:  "783794618700.dkr.ecr.us-east-1.amazonaws.com",
+								Namespace: "",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "insecureSkipVerify on non snow provider",
 			wantErr: "insecureSkipVerify is only supported for snow provider",
 			cluster: &Cluster{
@@ -2417,7 +2438,7 @@ func TestClusterRegistryMirror(t *testing.T) {
 	tests := []struct {
 		name    string
 		cluster *Cluster
-		want    string
+		want    *registrymirror.RegistryMirror
 	}{
 		{
 			name: "with registry mirror",
@@ -2429,7 +2450,13 @@ func TestClusterRegistryMirror(t *testing.T) {
 					},
 				},
 			},
-			want: "1.2.3.4:443",
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry:             "1.2.3.4:443",
+					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443",
+				},
+			},
 		},
 		{
 			name: "with registry mirror and namespace",
@@ -2443,34 +2470,24 @@ func TestClusterRegistryMirror(t *testing.T) {
 								Registry:  "public.ecr.aws",
 								Namespace: "eks-anywhere",
 							},
+							{
+								Registry:  "783794618700.dkr,ecr.us-west-2.amazonaws.com",
+								Namespace: "curated-packages",
+							},
 						},
 					},
 				},
 			},
-			want: "1.2.3.4:443/eks-anywhere",
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry:             "1.2.3.4:443/eks-anywhere",
+					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
+				},
+			},
 		},
 		{
-			name:    "without registry mirror",
-			cluster: &Cluster{},
-			want:    "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
-		})
-	}
-}
-
-func TestClusterRegistryMirrors(t *testing.T) {
-	tests := []struct {
-		name    string
-		cluster *Cluster
-		want    map[string]string
-	}{
-		{
-			name: "with registry mirror",
+			name: "with registry mirror and public.ecr.aws only",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
@@ -2481,18 +2498,38 @@ func TestClusterRegistryMirrors(t *testing.T) {
 								Registry:  "public.ecr.aws",
 								Namespace: "eks-anywhere",
 							},
+						},
+					},
+				},
+			},
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry: "1.2.3.4:443/eks-anywhere",
+				},
+			},
+		},
+		{
+			name: "with registry mirror and curated packages only",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+						OCINamespaces: []OCINamespace{
 							{
-								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Registry:  "783794618700.dkr,ecr.us-west-2.amazonaws.com",
 								Namespace: "curated-packages",
 							},
 						},
 					},
 				},
 			},
-			want: map[string]string{
-				constants.DefaultRegistryMirrorKey:    "1.2.3.4:443",
-				constants.DefaultRegistry:             "1.2.3.4:443/eks-anywhere",
-				constants.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
+				},
 			},
 		},
 		{
@@ -2504,13 +2541,14 @@ func TestClusterRegistryMirrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			result := tt.cluster.RegistryMirrors()
-			g.Expect(len(result)).To(Equal(len(tt.want)))
-			for k, v := range tt.want {
-				if regexp.MustCompile(constants.DefaultPackageRegistryRegex).MatchString(k) {
-					g.Expect(result).Should(HaveKeyWithValue(constants.DefaultPackageRegistryRegex, v))
-				} else {
-					g.Expect(result).Should(HaveKeyWithValue(k, v))
+			result := tt.cluster.RegistryMirror()
+			if tt.want == nil {
+				g.Expect(result).To(BeNil())
+			} else {
+				g.Expect(result.BaseRegistry).To(Equal(tt.want.BaseRegistry))
+				g.Expect(len(result.NamespacedRegistryMap)).To(Equal(len(tt.want.NamespacedRegistryMap)))
+				for k, v := range tt.want.NamespacedRegistryMap {
+					g.Expect(result.NamespacedRegistryMap).Should(HaveKeyWithValue(k, v))
 				}
 			}
 		})

@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -18,14 +18,14 @@ const (
 
 type Helm struct {
 	executable     Executable
-	registryMirror string
+	registryMirror *registrymirror.RegistryMirror
 	env            map[string]string
 	insecure       bool
 }
 
 type HelmOpt func(*Helm)
 
-func WithRegistryMirror(mirror string) HelmOpt {
+func WithRegistryMirror(mirror *registrymirror.RegistryMirror) HelmOpt {
 	return func(h *Helm) {
 		h.registryMirror = mirror
 	}
@@ -166,7 +166,7 @@ func (h *Helm) addInsecureFlagIfProvided(params []string) []string {
 }
 
 func (h *Helm) url(originalURL string) string {
-	return urls.ReplaceHost(originalURL, h.registryMirror)
+	return registrymirror.ReplaceRegistry(originalURL, h.registryMirror)
 }
 
 func GetHelmValueArgs(values []string) []string {

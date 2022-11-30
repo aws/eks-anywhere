@@ -23,23 +23,3 @@ func ReplaceHost(orgURL, host string) string {
 	u.Host = host
 	return strings.ReplaceAll(strings.TrimPrefix(u.String(), "//"), "%2F", "/")
 }
-
-// ToAPIEndpoint turns URL to a valid API endpoint used in
-// a containerd config file for a local registry.
-func ToAPIEndpoint(URL string) string {
-	index := strings.Index(URL, "/")
-	if index == -1 {
-		return URL
-	}
-	return URL[:index] + "/v2" + URL[index:]
-}
-
-// ToAPIEndpoints utilizes ToAPIEndpoint to turn all URLs from a
-// map to valid API endpoints for a local registry.
-func ToAPIEndpoints(URLs map[string]string) map[string]string {
-	endpoints := make(map[string]string)
-	for key, url := range URLs {
-		endpoints[key] = ToAPIEndpoint(url)
-	}
-	return endpoints
-}

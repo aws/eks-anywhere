@@ -40,10 +40,7 @@ const (
 	EksaLicenseName        = "eksa-license"
 	EksaPackagesName       = "eksa-packages"
 
-	DefaultRegistryMirrorKey    = "base"
-	DefaultRegistry             = "public.ecr.aws"
-	DefaultPackageRegistryRegex = "783794618700.dkr.ecr.*.amazonaws.com"
-	CloudstackAnnotationSuffix  = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
+	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
 	FailureDomainLabelName = "cluster.x-k8s.io/failure-domain"
 

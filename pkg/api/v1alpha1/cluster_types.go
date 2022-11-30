@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"net"
+	"path/filepath"
 	"regexp"
 	"strconv"
 
@@ -9,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -158,9 +159,9 @@ type RegistryMirrorConfiguration struct {
 // OCINamespace represents an entity in a local reigstry to group related images.
 type OCINamespace struct {
 	// Name refers to the name of the upstream registry
-	Registry string `json:"registry,omitempty"`
+	Registry string `json:"registry"`
 	// Namespace refers to the name of a namespace in the local registry
-	Namespace string `json:"namespace,omitempty"`
+	Namespace string `json:"namespace"`
 }
 
 func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
@@ -173,31 +174,36 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate && OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
 }
 
-// GetRegistryMirrorAddressMappings reads OCINamespaces field of RegistryMirrorConfiguration, and returns
-// a mapping from original registry URLs to registry mirror URLs.
-func (n *RegistryMirrorConfiguration) GetRegistryMirrorAddressMappings() map[string]string {
-	registryMirrorMappings := make(map[string]string)
+// RegistryMirror returns a struct storing registry mirror mappings of all upstream registries.
+func (n *RegistryMirrorConfiguration) RegistryMirror() *registrymirror.RegistryMirror {
+	if n == nil {
+		return nil
+	}
+	registryMap := make(map[string]string)
 	base := net.JoinHostPort(n.Endpoint, n.Port)
 	// add registry mirror base address
-	registryMirrorMappings[constants.DefaultRegistryMirrorKey] = base
-	re := regexp.MustCompile(constants.DefaultPackageRegistryRegex)
+	re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
 	// for each namespace, add corresponding endpoint
 	for _, ociNamespace := range n.OCINamespaces {
-		registry := base + "/" + ociNamespace.Namespace
+		registry := filepath.Join(base, ociNamespace.Namespace)
 		if re.MatchString(ociNamespace.Registry) {
 			// handle curated packages in all regions
-			registryMirrorMappings[constants.DefaultPackageRegistryRegex] = registry
+			registryMap[registrymirror.DefaultPackageRegistryRegex] = registry
 		} else {
-			registryMirrorMappings[ociNamespace.Registry] = registry
+			registryMap[ociNamespace.Registry] = registry
 		}
 	}
-	if _, ok := registryMirrorMappings[constants.DefaultRegistry]; !ok {
-		registryMirrorMappings[constants.DefaultRegistry] = base
+	if _, ok := registryMap[registrymirror.DefaultRegistry]; !ok {
+		registryMap[registrymirror.DefaultRegistry] = base
 	}
-	if _, ok := registryMirrorMappings[constants.DefaultPackageRegistryRegex]; !ok {
-		registryMirrorMappings[constants.DefaultPackageRegistryRegex] = base
+	if _, ok := registryMap[registrymirror.DefaultPackageRegistryRegex]; !ok {
+		registryMap[registrymirror.DefaultPackageRegistryRegex] = base
 	}
-	return registryMirrorMappings
+	return &registrymirror.RegistryMirror{
+		BaseRegistry:          base,
+		NamespacedRegistryMap: registryMap,
+		Auth:                  n.Authenticate,
+	}
 }
 
 // OCINamespacesSliceEqual is used to check equality of the OCINamespaces fields of two RegistryMirrorConfgiuration.

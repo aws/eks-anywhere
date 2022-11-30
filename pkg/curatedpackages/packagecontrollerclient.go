@@ -11,6 +11,7 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -29,21 +30,21 @@ const (
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
-	kubeConfig                    string
-	uri                           string
-	chartName                     string
-	chartVersion                  string
-	chartInstaller                ChartInstaller
-	clusterName                   string
-	managementClusterName         string
-	kubectl                       KubectlRunner
-	eksaAccessKeyID               string
-	eksaSecretAccessKey           string
-	eksaRegion                    string
-	httpProxy                     string
-	httpsProxy                    string
-	noProxy                       []string
-	registryMirrorAddressMappings map[string]string
+	kubeConfig            string
+	uri                   string
+	chartName             string
+	chartVersion          string
+	chartInstaller        ChartInstaller
+	clusterName           string
+	managementClusterName string
+	kubectl               KubectlRunner
+	eksaAccessKeyID       string
+	eksaSecretAccessKey   string
+	eksaRegion            string
+	httpProxy             string
+	httpsProxy            string
+	noProxy               []string
+	registryMirror        *registrymirror.RegistryMirror
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
 }
@@ -53,16 +54,16 @@ type ChartInstaller interface {
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, registryMirrorAddressMappings map[string]string, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
-		kubeConfig:                    kubeConfig,
-		clusterName:                   clusterName,
-		uri:                           uri,
-		chartName:                     chartName,
-		chartVersion:                  chartVersion,
-		chartInstaller:                chartInstaller,
-		kubectl:                       kubectl,
-		registryMirrorAddressMappings: registryMirrorAddressMappings,
+		kubeConfig:     kubeConfig,
+		clusterName:    clusterName,
+		uri:            uri,
+		chartName:      chartName,
+		chartVersion:   chartVersion,
+		chartInstaller: chartInstaller,
+		kubectl:        kubectl,
+		registryMirror: registryMirror,
 	}
 
 	for _, o := range options {
@@ -90,14 +91,14 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	if pc.registryMirrorAddressMappings != nil {
+	if pc.registryMirror != nil {
 		accountName := "eks-anywhere"
 		if strings.Contains(ociUri, "l0g8r8j6") {
 			accountName = "l0g8r8j6"
 		}
-		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
-		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirrorAddressMappings[constants.DefaultRegistry], accountName)
-		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", pc.registryMirrorAddressMappings[constants.DefaultPackageRegistryRegex])
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirror.RegistryMirrorWithOCINamespace(), accountName)
+		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirror.RegistryMirrorWithOCINamespace(), accountName)
+		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", pc.registryMirror.RegistryMirrorWithGatedOCINamespace())
 		values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 	} else {
 		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.uri))

@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"regexp"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -9,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -1167,7 +1166,7 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				OCINamespaces: []v1alpha1.OCINamespace{
 					{
-						Registry:  "",
+						Registry:  "1.2.3.4",
 						Namespace: "eks-anywhere",
 					},
 				},
@@ -1627,6 +1626,108 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 	}
 }
 
+func TestRegistryMirror(t *testing.T) {
+	testCases := []struct {
+		testName string
+		config   *v1alpha1.RegistryMirrorConfiguration
+		want     *registrymirror.RegistryMirror
+	}{
+		{
+			testName: "empty config",
+			config:   nil,
+			want:     nil,
+		},
+		{
+			testName: "no OCINamespaces",
+			config: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint:      "harbor.eksa.demo",
+				Port:          "30003",
+				OCINamespaces: nil,
+				Authenticate:  true,
+			},
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "harbor.eksa.demo:30003",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry:             "harbor.eksa.demo:30003",
+					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003",
+				},
+				Auth: true,
+			},
+		},
+		{
+			testName: "non empty namespace",
+			config: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint: "harbor.eksa.demo",
+				Port:     "30003",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+					{
+						Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+						Namespace: "curated-packages",
+					},
+					{
+						Registry:  "1.2.3.4",
+						Namespace: "random",
+					},
+				},
+			},
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "harbor.eksa.demo:30003",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry:             "harbor.eksa.demo:30003/eks-anywhere",
+					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003/curated-packages",
+					"1.2.3.4": "harbor.eksa.demo:30003/random",
+				},
+				Auth: false,
+			},
+		},
+		{
+			testName: "empty namespace",
+			config: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint: "harbor.eksa.demo",
+				Port:     "30003",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+						Namespace: "",
+					},
+					{
+						Registry:  "1.2.3.4",
+						Namespace: "",
+					},
+				},
+			},
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "harbor.eksa.demo:30003",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003",
+					"1.2.3.4": "harbor.eksa.demo:30003",
+				},
+				Auth: false,
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			result := tt.config.RegistryMirror()
+			if tt.want == nil {
+				g.Expect(result).To(BeNil())
+			} else {
+				g.Expect(result.BaseRegistry).To(Equal(tt.want.BaseRegistry))
+				g.Expect(len(result.NamespacedRegistryMap)).To(Equal(len(tt.want.NamespacedRegistryMap)))
+				for k, v := range tt.want.NamespacedRegistryMap {
+					g.Expect(result.NamespacedRegistryMap).Should(HaveKeyWithValue(k, v))
+				}
+				g.Expect(result.Auth).To(Equal(tt.want.Auth))
+			}
+		})
+	}
+}
+
 func TestPodIAMServiceAccountIssuerHasNotChanged(t *testing.T) {
 	testCases := []struct {
 		testName                                   string
@@ -1785,81 +1886,6 @@ func setSelfManaged(c *v1alpha1.Cluster, s bool) {
 		c.SetSelfManaged()
 	} else {
 		c.SetManagedBy("management-cluster")
-	}
-}
-
-func TestGetRegistryMirrorAddressMappings(t *testing.T) {
-	testCases := []struct {
-		testName                    string
-		registryMirrorConfiguration *v1alpha1.RegistryMirrorConfiguration
-		want                        map[string]string
-	}{
-		{
-			testName: "empty OCINamespaces",
-			registryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint: "harbor.eksa.demo",
-				Port:     "30003",
-			},
-			want: map[string]string{
-				"base":                                 "harbor.eksa.demo:30003",
-				"public.ecr.aws":                       "harbor.eksa.demo:30003",
-				"783794618700.dkr,ecr.*.amazonaws.com": "harbor.eksa.demo:30003",
-			},
-		},
-		{
-			testName: "multiple curated package endpoints",
-			registryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint: "harbor.eksa.demo",
-				Port:     "30003",
-				OCINamespaces: []v1alpha1.OCINamespace{
-					{
-						Registry:  "783794618700.dkr,ecr.us-west-2.amazonaws.com",
-						Namespace: "curated-packages",
-					},
-					{
-						Registry:  "783794618700.dkr,ecr.us-east-1.amazonaws.com",
-						Namespace: "curated-packages",
-					},
-				},
-			},
-			want: map[string]string{
-				"base":                                 "harbor.eksa.demo:30003",
-				"public.ecr.aws":                       "harbor.eksa.demo:30003",
-				"783794618700.dkr,ecr.*.amazonaws.com": "harbor.eksa.demo:30003/curated-packages",
-			},
-		},
-		{
-			testName: "public.ecr.aws only",
-			registryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint: "harbor.eksa.demo",
-				Port:     "30003",
-				OCINamespaces: []v1alpha1.OCINamespace{
-					{
-						Registry:  "public.ecr.aws",
-						Namespace: "eks-anywhere",
-					},
-				},
-			},
-			want: map[string]string{
-				"base":                                 "harbor.eksa.demo:30003",
-				"public.ecr.aws":                       "harbor.eksa.demo:30003/eks-anywhere",
-				"783794618700.dkr,ecr.*.amazonaws.com": "harbor.eksa.demo:30003",
-			},
-		},
-	}
-	for _, tt := range testCases {
-		t.Run(tt.testName, func(t *testing.T) {
-			g := NewWithT(t)
-			result := tt.registryMirrorConfiguration.GetRegistryMirrorAddressMappings()
-			g.Expect(len(result)).To(Equal(len(tt.want)))
-			for k, v := range tt.want {
-				if regexp.MustCompile(constants.DefaultPackageRegistryRegex).MatchString(k) {
-					g.Expect(result).Should(HaveKeyWithValue(constants.DefaultPackageRegistryRegex, v))
-				} else {
-					g.Expect(result).Should(HaveKeyWithValue(k, v))
-				}
-			}
-		})
 	}
 }
 

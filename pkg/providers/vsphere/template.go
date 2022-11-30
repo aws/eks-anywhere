@@ -11,10 +11,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 func NewVsphereTemplateBuilder(
@@ -208,7 +208,10 @@ func buildTemplateMapCP(
 	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = urls.ToAPIEndpoints(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings())
+		registryMirror := clusterSpec.Cluster.RegistryMirror()
+		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.RegistryMirrorWithOCINamespace())
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
@@ -327,7 +330,10 @@ func buildTemplateMapMD(
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = urls.ToAPIEndpoints(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.GetRegistryMirrorAddressMappings())
+		registryMirror := clusterSpec.Cluster.RegistryMirror()
+		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.RegistryMirrorWithOCINamespace())
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}

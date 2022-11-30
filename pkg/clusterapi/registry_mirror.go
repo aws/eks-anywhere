@@ -8,9 +8,9 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/templater"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 //go:embed config/containerd_config_append.toml
@@ -18,11 +18,12 @@ var containerdConfig string
 
 type values map[string]interface{}
 
-func registryMirrorConfigContent(registryAddressMappings map[string]string, registryCert string, insecureSkip bool) (string, error) {
+func registryMirrorConfigContent(registryMirror *registrymirror.RegistryMirror, registryCert string, insecureSkip bool) (string, error) {
 	val := values{
-		"registryMirrorAddressMappings": registryAddressMappings,
-		"registryCACert":                registryCert,
-		"insecureSkip":                  insecureSkip,
+		"registryMirrorMap": containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap),
+		"mirrorBase":        registryMirror.BaseRegistry,
+		"registryCACert":    registryCert,
+		"insecureSkip":      insecureSkip,
 	}
 
 	config, err := templater.Execute(containerdConfig, val)
@@ -33,8 +34,8 @@ func registryMirrorConfigContent(registryAddressMappings map[string]string, regi
 }
 
 func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
-	registryAddressMappings := urls.ToAPIEndpoints(registryMirrorConfig.GetRegistryMirrorAddressMappings())
-	registryConfig, err := registryMirrorConfigContent(registryAddressMappings, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
+	registryMirror := registryMirrorConfig.RegistryMirror()
+	registryConfig, err := registryMirrorConfigContent(registryMirror, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 
 	if registryMirrorConfig.CACertContent != "" {
 		files = append(files, bootstrapv1.File{
-			Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/ca.crt", registryAddressMappings[constants.DefaultRegistryMirrorKey]),
+			Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/ca.crt", registryMirror.BaseRegistry),
 			Owner:   "root:root",
 			Content: registryMirrorConfig.CACertContent,
 		})

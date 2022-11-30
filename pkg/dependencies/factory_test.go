@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -265,10 +266,13 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithRegistryMirror(
-			map[string]string{
-				"base":           "1.2.3.4:443",
-				"public.ecr.aws": "1.2.3.4:443/custom",
-			}, false).
+			&registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry: "1.2.3.4:443/custom",
+				},
+				Auth: false,
+			}).
 		WithHelm(executables.WithInsecure()).
 		Build(context.Background())
 
@@ -281,10 +285,13 @@ func TestFactoryBuildWithRegistryMirrorAuth(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithRegistryMirror(
-			map[string]string{
-				"base":           "1.2.3.4:443",
-				"public.ecr.aws": "1.2.3.4:443/custom",
-			}, true).
+			&registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					registrymirror.DefaultRegistry: "1.2.3.4:443/custom",
+				},
+				Auth: true,
+			}).
 		WithHelm(executables.WithInsecure()).
 		Build(context.Background())
 

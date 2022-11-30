@@ -79,9 +79,9 @@ spec:
           imageRepository: {{.bottlerocketBootstrapRepository}}
           imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
+{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
         registryMirror:
-          endpoint: {{index .registryMirrorConfiguration "public.ecr.aws"}}
+          endpoint: {{ .publicMirror }}
           {{- if .registryCACert }}
           caCert: |
 {{ .registryCACert | indent 12 }}
@@ -106,25 +106,27 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
-{{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
+{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
       files:
 {{- if .registryCACert }}
         - content: |
 {{ .registryCACert | indent 12 }}
           owner: root:root
-          path: "/etc/containerd/certs.d/{{index .registryMirrorConfiguration "base"}}/ca.crt"
+          path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
 {{- end }}
-{{- if .registryMirrorConfiguration }}
+{{- if .registryMirrorMap }}
         - content: |
             [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-                endpoint = ["https://{{index .registryMirrorConfiguration "public.ecr.aws"}}"]
+              {{- range $orig, $mirror := .registryMirrorMap }}
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+                endpoint = ["https://{{ $mirror }}"]
+              {{- end }}
               {{- if .registryCACert }}
-              [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .registryMirrorConfiguration "base"}}".tls]
-                ca_file = "/etc/containerd/certs.d/{{index .registryMirrorConfiguration "base"}}/ca.crt"
+              [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+                ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
               {{- end }}
               {{- if .registryAuth }}
-              [plugins."io.containerd.grpc.v1.cri".registry.configs."{{index .registryMirrorConfiguration "base"}}".auth]
+              [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
                 username = "{{.registryUsername}}"
                 password = "{{.registryPassword}}"
               {{- end }}
@@ -132,7 +134,7 @@ spec:
           path: "/etc/containerd/config_append.toml"
 {{- end }}
 {{- end }}
-{{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
+{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
       preKubeadmCommands:
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
       - sudo systemctl daemon-reload
