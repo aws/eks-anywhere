@@ -373,11 +373,11 @@ spec:
       cluster.x-k8s.io/cluster-name: test
   resources:
   - kind: Secret
-    name: cloud-controller-manager
+    name: test-cloud-controller-manager
   - kind: Secret
-    name: cloud-provider-vsphere-credentials
+    name: test-cloud-provider-vsphere-credentials
   - kind: ConfigMap
-    name: cpi-manifests
+    name: test-cpi-manifests
 ---
 apiVersion: v1
 kind: Secret
@@ -393,7 +393,7 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-controller-manager
+  name: test-cloud-controller-manager
   namespace: eksa-system
 stringData:
   data: |
@@ -407,7 +407,7 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-provider-vsphere-credentials
+  name: test-cloud-provider-vsphere-credentials
   namespace: eksa-system
 stringData:
   data: |
@@ -625,5 +625,5 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: cpi-manifests
+  name: test-cpi-manifests
   namespace: eksa-system

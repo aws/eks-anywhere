@@ -433,19 +433,19 @@ spec:
       cluster.x-k8s.io/cluster-name: {{.clusterName}}
   resources:
   - kind: Secret
-    name: vsphere-csi-controller
+    name: {{.clusterName}}-vsphere-csi-controller
   - kind: ConfigMap
-    name: vsphere-csi-controller-role
+    name: {{.clusterName}}-vsphere-csi-controller-role
   - kind: ConfigMap
-    name: vsphere-csi-controller-binding
+    name: {{.clusterName}}-vsphere-csi-controller-binding
   - kind: Secret
-    name: csi-vsphere-config
+    name: {{.clusterName}}-csi-vsphere-config
   - kind: ConfigMap
-    name: csi.vsphere.vmware.com
+    name: {{.clusterName}}-csi.vsphere.vmware.com
   - kind: ConfigMap
-    name: vsphere-csi-node
+    name: {{.clusterName}}-vsphere-csi-node
   - kind: ConfigMap
-    name: vsphere-csi-controller
+    name: {{.clusterName}}-vsphere-csi-controller
 ---
 {{- end }}
 apiVersion: addons.cluster.x-k8s.io/v1beta1
@@ -462,11 +462,11 @@ spec:
       cluster.x-k8s.io/cluster-name: {{.clusterName}}
   resources:
   - kind: Secret
-    name: cloud-controller-manager
+    name: {{.clusterName}}-cloud-controller-manager
   - kind: Secret
-    name: cloud-provider-vsphere-credentials
+    name: {{.clusterName}}-cloud-provider-vsphere-credentials
   - kind: ConfigMap
-    name: cpi-manifests
+    name: {{.clusterName}}-cpi-manifests
 ---
 {{- if .externalEtcd }}
 kind: EtcdadmCluster
@@ -567,7 +567,7 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: vsphere-csi-controller
+  name: {{.clusterName}}-vsphere-csi-controller
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -581,7 +581,7 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: csi-vsphere-config
+  name: {{.clusterName}}-csi-vsphere-config
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -716,7 +716,7 @@ data:
       - list
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller-role
+  name: {{.clusterName}}-vsphere-csi-controller-role
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -736,7 +736,7 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller-binding
+  name: {{.clusterName}}-vsphere-csi-controller-binding
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -750,7 +750,7 @@ data:
       attachRequired: true
 kind: ConfigMap
 metadata:
-  name: csi.vsphere.vmware.com
+  name: {{.clusterName}}-csi.vsphere.vmware.com
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -883,7 +883,7 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-node
+  name: {{.clusterName}}-vsphere-csi-node
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -1018,7 +1018,7 @@ data:
             name: socket-dir
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller
+  name: {{.clusterName}}-vsphere-csi-controller
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -1033,14 +1033,14 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: internal-feature-states.csi.vsphere.vmware.com
+  name: {{.clusterName}}-internal-feature-states.csi.vsphere.vmware.com
   namespace: {{.eksaSystemNamespace}}
 ---
 {{- end }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-controller-manager
+  name: {{.clusterName}}-cloud-controller-manager
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -1054,7 +1054,7 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-provider-vsphere-credentials
+  name: {{.clusterName}}-cloud-provider-vsphere-credentials
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -1282,5 +1282,5 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: cpi-manifests
+  name: {{.clusterName}}-cpi-manifests
   namespace: {{.eksaSystemNamespace}}
