@@ -227,8 +227,10 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec
 }
 
 func toClientControlPlane(cp *vsphere.ControlPlane) *clusters.ControlPlane {
-	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.Secrets)+1)
-	other = append(other, cp.ClusterResourceSet)
+	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.Secrets)+len(cp.ClusterResourceSets)+1)
+	for _, o := range cp.ClusterResourceSets {
+		other = append(other, o)
+	}
 	for _, o := range cp.ConfigMaps {
 		other = append(other, o)
 	}

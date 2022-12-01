@@ -24,9 +24,9 @@ type BaseControlPlane = clusterapi.ControlPlane[*vspherev1.VSphereCluster, *vsph
 // ControlPlane holds the VSphere specific objects for a CAPI VSphere control plane.
 type ControlPlane struct {
 	BaseControlPlane
-	Secrets            []*corev1.Secret
-	ConfigMaps         []*corev1.ConfigMap
-	ClusterResourceSet *addonsv1.ClusterResourceSet
+	Secrets             []*corev1.Secret
+	ConfigMaps          []*corev1.ConfigMap
+	ClusterResourceSets []*addonsv1.ClusterResourceSet
 }
 
 // Objects returns the control plane objects associated with the VSphere cluster.
@@ -34,7 +34,7 @@ func (p ControlPlane) Objects() []kubernetes.Object {
 	o := p.BaseControlPlane.Objects()
 	o = getSecrets(o, p.Secrets)
 	o = getConfigMaps(o, p.ConfigMaps)
-	o = append(o, p.ClusterResourceSet)
+	o = getClusterResourceSets(o, p.ClusterResourceSets)
 
 	return o
 }
@@ -143,7 +143,7 @@ func processObjects(c *ControlPlane, lookup yamlutil.ObjectLookup) {
 		case constants.ConfigMapKind:
 			c.ConfigMaps = append(c.ConfigMaps, obj.(*corev1.ConfigMap))
 		case constants.ClusterResourceSetKind:
-			c.ClusterResourceSet = obj.(*addonsv1.ClusterResourceSet)
+			c.ClusterResourceSets = append(c.ClusterResourceSets, obj.(*addonsv1.ClusterResourceSet))
 		}
 	}
 }
@@ -158,6 +158,13 @@ func getSecrets(o []kubernetes.Object, secrets []*corev1.Secret) []kubernetes.Ob
 func getConfigMaps(o []kubernetes.Object, configMaps []*corev1.ConfigMap) []kubernetes.Object {
 	for _, m := range configMaps {
 		o = append(o, m)
+	}
+	return o
+}
+
+func getClusterResourceSets(o []kubernetes.Object, clusterResourceSets []*addonsv1.ClusterResourceSet) []kubernetes.Object {
+	for _, s := range clusterResourceSets {
+		o = append(o, s)
 	}
 	return o
 }

@@ -15,6 +15,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -278,8 +279,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	// TODO: Uncomment when we add support for multiple CRS
-	/*tt.ShouldEventuallyExist(tt.ctx,
+	tt.ShouldEventuallyExist(tt.ctx,
 		&addonsv1.ClusterResourceSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "workload-cluster-cpi",
@@ -295,7 +295,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 				Namespace: "eksa-system",
 			},
 		},
-	)*/
+	)
 
 	tt.ShouldEventuallyExist(tt.ctx,
 		&controlplanev1.KubeadmControlPlane{
