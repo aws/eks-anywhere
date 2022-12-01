@@ -85,6 +85,7 @@ The format is: `T_VSPHERE_TEMPLATE_{OS}_{EKS-D VERSION}`. For example, for Ubunt
  T_NUTANIX_TEMPLATE_UBUNTU_1_21
  T_NUTANIX_TEMPLATE_UBUNTU_1_22
  T_NUTANIX_TEMPLATE_UBUNTU_1_23
+ T_NUTANIX_TEMPLATE_UBUNTU_1_24
  ```
 ## Tinkerbell tests requisites
 The following env variables need to be set:

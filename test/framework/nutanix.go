@@ -57,6 +57,7 @@ var requiredNutanixEnvVars = []string{
 	nutanixTemplateUbuntu121Var,
 	nutanixTemplateUbuntu122Var,
 	nutanixTemplateUbuntu123Var,
+	nutanixTemplateUbuntu124Var,
 	nutanixInsecure,
 }
 
@@ -203,14 +204,26 @@ func WithUbuntu124Nutanix() NutanixOpt {
 	}
 }
 
+// UpdateNutanixUbuntuTemplate121Var returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
 func UpdateNutanixUbuntuTemplate121Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu121Var, api.WithNutanixMachineTemplateImageName)
 }
 
+// UpdateNutanixUbuntuTemplate122Var returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
 func UpdateNutanixUbuntuTemplate122Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu122Var, api.WithNutanixMachineTemplateImageName)
 }
 
+// UpdateNutanixUbuntuTemplate123Var returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
 func UpdateNutanixUbuntuTemplate123Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu123Var, api.WithNutanixMachineTemplateImageName)
+}
+
+// UpdateNutanixUbuntuTemplate124Var returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
+func UpdateNutanixUbuntuTemplate124Var() api.NutanixFiller {
+	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu124Var, api.WithNutanixMachineTemplateImageName)
 }
