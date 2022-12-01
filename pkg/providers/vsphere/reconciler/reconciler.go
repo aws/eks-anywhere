@@ -3,14 +3,6 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"os"
-
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -20,6 +12,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	apiv1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
+	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // CNIReconciler is an interface for reconciling CNI in the VSphere cluster reconciler.
@@ -131,15 +131,21 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	).Run(ctx, log, clusterSpec)
 }
 
-// ValidateControlPlaneIP validates that the control plane IP is unique.
+// ValidateControlPlaneIP validates that the control plane IP is unique only on cluster creation.
 func (r *Reconciler) ValidateControlPlaneIP(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "validateControlPlaneIP")
 
-	if err := r.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
-		clusterSpec.Cluster.Status.FailureMessage = ptr.String(err.Error())
-		log.Error(err, "Unavailable control plane IP")
-		return controller.ResultWithReturn(), nil
+	cluster := &anywherev1.Cluster{}
+	clusterName := types.NamespacedName{Namespace: clusterSpec.Cluster.ObjectMeta.Namespace, Name: cluster.Name}
+
+	if err := r.client.Get(ctx, clusterName, cluster); err != nil && apierrors.IsNotFound(err) {
+		if err = r.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
+			clusterSpec.Cluster.Status.FailureMessage = ptr.String(err.Error())
+			log.Error(err, "Unavailable control plane IP")
+			return controller.ResultWithReturn(), nil
+		}
 	}
+
 	return controller.Result{}, nil
 }
 
