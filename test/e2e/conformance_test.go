@@ -333,3 +333,14 @@ func TestNutanixKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
 	)
 	runConformanceFlow(test)
 }
+
+func TestNutanixKubernetes124ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
+	)
+	runConformanceFlow(test)
+}
