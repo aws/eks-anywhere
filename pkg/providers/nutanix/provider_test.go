@@ -164,6 +164,16 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			clusterConfFile: "testdata/cluster_nutanix_with_invalid_trust_bundle.yaml",
 			expectErr:       true,
 		},
+		{
+			name:            "valid cluster config with invalid pe cluster name - same as pc name",
+			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-pc.yaml",
+			expectErr:       true,
+		},
+		{
+			name:            "valid cluster config with invalid pe cluster name - non existent pe name",
+			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-random-name.yaml",
+			expectErr:       true,
+		},
 	}
 
 	executable := mockexecutables.NewMockExecutable(ctrl)
