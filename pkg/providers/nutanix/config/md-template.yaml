@@ -41,14 +41,29 @@ spec:
       memorySize: {{.memorySize}}
       systemDiskSize: {{.systemDiskSize}}
       image:
+{{- if and .imageIDType (eq .format "name") }}
         type: name
         name: "{{.imageName}}"
+{{ else if and .imageIDType (eq .format "uuid") }}
+        type: uuid
+        name: "{{.imageUUID}}"
+{{ end }}
       cluster:
+{{- if and .nutanixPEClusterIDType (eq .format "name") }}
         type: name
         name: "{{.nutanixPEClusterName}}"
+{{- else if and .nutanixPEClusterIDType (eq .format "uuid") }}
+        type: uuid
+        name: "{{.nutanixPEClusterUUID}}"
+{{ end }}
       subnet:
+{{- if and .subnetIDType (eq .format "name") }}
         - type: name
           name: "{{.subnetName}}"
+{{- else if and .subnetIDType (eq .format "uuid") }}
+        - type: uuid
+          name: "{{.subnetUUID}}"
+{{ end }}
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate

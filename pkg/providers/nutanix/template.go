@@ -154,9 +154,15 @@ func buildTemplateMapCP(
 		"vcpuSockets":                  controlPlaneMachineSpec.VCPUSockets,
 		"memorySize":                   controlPlaneMachineSpec.MemorySize.String(),
 		"systemDiskSize":               controlPlaneMachineSpec.SystemDiskSize.String(),
-		"imageName":                    controlPlaneMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
-		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
-		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
+		"imageIDType":                  controlPlaneMachineSpec.Image.Type,
+		"imageName":                    controlPlaneMachineSpec.Image.Name,
+		"imageUUID":                    controlPlaneMachineSpec.Image.UUID,
+		"nutanixPEClusterIDType":       controlPlaneMachineSpec.Cluster.Type,
+		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name,
+		"nutanixPEClusterUUID":         controlPlaneMachineSpec.Cluster.UUID,
+		"subnetIDType":                 controlPlaneMachineSpec.Subnet.Type,
+		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,
+		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
