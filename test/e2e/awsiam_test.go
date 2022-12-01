@@ -42,15 +42,6 @@ func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 	test.ValidateHardwareDecommissioned()
 }
 
-func TestDockerKubernetes120AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
 func TestDockerKubernetes121AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -83,16 +74,6 @@ func TestDockerKubernetes124AWSIamAuth(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes120AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu120()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -133,16 +114,6 @@ func TestVSphereKubernetes124AWSIamAuth(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu124()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes120BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket120()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 	)
 	runAWSIamAuthFlow(test)
 }
