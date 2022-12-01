@@ -921,11 +921,13 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 	if err != nil {
 		e.T.Fatalf("Error getting PackageBundle: %v", err)
 	}
+	os.Setenv("KUBECONFIG", kubeconfig)
 	if pbc.Spec.ActiveBundle != pb[0].ObjectMeta.Name {
 		e.RunEKSA([]string{
 			"upgrade", "packages",
 			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
 			"--cluster=" + e.ClusterName,
+			"--kubeconfig" + e.kubeconfigFilePath(),
 		})
 	}
 }
