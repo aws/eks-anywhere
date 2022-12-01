@@ -57,6 +57,7 @@ var requiredNutanixEnvVars = []string{
 	nutanixTemplateUbuntu121Var,
 	nutanixTemplateUbuntu122Var,
 	nutanixTemplateUbuntu123Var,
+	nutanixTemplateUbuntu124Var,
 	nutanixInsecure,
 }
 
@@ -213,4 +214,8 @@ func UpdateNutanixUbuntuTemplate122Var() api.NutanixFiller {
 
 func UpdateNutanixUbuntuTemplate123Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu123Var, api.WithNutanixMachineTemplateImageName)
+}
+
+func UpdateNutanixUbuntuTemplate124Var() api.NutanixFiller {
+	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu124Var, api.WithNutanixMachineTemplateImageName)
 }
