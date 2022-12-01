@@ -42,15 +42,6 @@ func runUpgradeFlowWithOIDC(test *framework.ClusterE2ETest, updateVersion v1alph
 	test.DeleteCluster()
 }
 
-func TestDockerKubernetes120OIDC(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-	)
-	runOIDCFlow(test)
-}
-
 func TestDockerKubernetes121OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -87,19 +78,6 @@ func TestDockerKubernetes124OIDC(t *testing.T) {
 	runOIDCFlow(test)
 }
 
-func TestVSphereKubernetes120OIDC(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu120()),
-		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runOIDCFlow(test)
-}
-
 func TestVSphereKubernetes121OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -123,19 +101,6 @@ func TestSnowKubernetes121OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
 		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
-	)
-	runOIDCFlow(test)
-}
-
-func TestCloudStackKubernetes120OIDC(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat120()),
-		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
 }

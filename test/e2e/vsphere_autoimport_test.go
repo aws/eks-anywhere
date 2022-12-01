@@ -42,21 +42,6 @@ func deleteTemplates(test *framework.ClusterE2ETest, provider *framework.VSphere
 	}
 }
 
-func TestVSphereKubernetes120BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
 func TestVSphereKubernetes121BottlerocketAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
