@@ -399,19 +399,19 @@ spec:
       cluster.x-k8s.io/cluster-name: test
   resources:
   - kind: Secret
-    name: vsphere-csi-controller
+    name: test-vsphere-csi-controller
   - kind: ConfigMap
-    name: vsphere-csi-controller-role
+    name: test-vsphere-csi-controller-role
   - kind: ConfigMap
-    name: vsphere-csi-controller-binding
+    name: test-vsphere-csi-controller-binding
   - kind: Secret
-    name: csi-vsphere-config
+    name: test-csi-vsphere-config
   - kind: ConfigMap
-    name: csi.vsphere.vmware.com
+    name: test-csi.vsphere.vmware.com
   - kind: ConfigMap
-    name: vsphere-csi-node
+    name: test-vsphere-csi-node
   - kind: ConfigMap
-    name: vsphere-csi-controller
+    name: test-vsphere-csi-controller
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
@@ -427,11 +427,11 @@ spec:
       cluster.x-k8s.io/cluster-name: test
   resources:
   - kind: Secret
-    name: cloud-controller-manager
+    name: test-cloud-controller-manager
   - kind: Secret
-    name: cloud-provider-vsphere-credentials
+    name: test-cloud-provider-vsphere-credentials
   - kind: ConfigMap
-    name: cpi-manifests
+    name: test-cpi-manifests
 ---
 kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
@@ -502,7 +502,7 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: vsphere-csi-controller
+  name: test-vsphere-csi-controller
   namespace: eksa-system
 stringData:
   data: |
@@ -516,7 +516,7 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: csi-vsphere-config
+  name: test-csi-vsphere-config
   namespace: eksa-system
 stringData:
   data: |
@@ -651,7 +651,7 @@ data:
       - list
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller-role
+  name: test-vsphere-csi-controller-role
   namespace: eksa-system
 ---
 apiVersion: v1
@@ -671,7 +671,7 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller-binding
+  name: test-vsphere-csi-controller-binding
   namespace: eksa-system
 ---
 apiVersion: v1
@@ -685,7 +685,7 @@ data:
       attachRequired: true
 kind: ConfigMap
 metadata:
-  name: csi.vsphere.vmware.com
+  name: test-csi.vsphere.vmware.com
   namespace: eksa-system
 ---
 apiVersion: v1
@@ -818,7 +818,7 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-node
+  name: test-vsphere-csi-node
   namespace: eksa-system
 ---
 apiVersion: v1
@@ -952,7 +952,7 @@ data:
             name: socket-dir
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller
+  name: test-vsphere-csi-controller
   namespace: eksa-system
 ---
 apiVersion: v1
@@ -967,13 +967,13 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: internal-feature-states.csi.vsphere.vmware.com
+  name: test-internal-feature-states.csi.vsphere.vmware.com
   namespace: eksa-system
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-controller-manager
+  name: test-cloud-controller-manager
   namespace: eksa-system
 stringData:
   data: |
@@ -987,7 +987,7 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-provider-vsphere-credentials
+  name: test-cloud-provider-vsphere-credentials
   namespace: eksa-system
 stringData:
   data: |
@@ -1214,5 +1214,5 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: cpi-manifests
+  name: test-cpi-manifests
   namespace: eksa-system
