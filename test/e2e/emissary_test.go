@@ -155,18 +155,6 @@ func TestCPackagesEmissaryVSphereKubernetes122BottleRocketWorkloadCluster(t *tes
 	runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryNutanixKubernetes120SimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu120Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube120),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
-}
-
 func TestCPackagesEmissaryNutanixKubernetes121SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
