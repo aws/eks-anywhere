@@ -968,8 +968,12 @@ func (p *vsphereProvider) RunPostControlPlaneUpgrade(_ context.Context, _ *clust
 	return nil
 }
 
-func resourceSetName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-cpi-csi", clusterSpec.Cluster.Name)
+func cpiResourceSetName(clusterSpec *cluster.Spec) string {
+	return fmt.Sprintf("%s-cpi", clusterSpec.Cluster.Name)
+}
+
+func csiResourceSetName(clusterSpec *cluster.Spec) string {
+	return fmt.Sprintf("%s-csi", clusterSpec.Cluster.Name)
 }
 
 func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
