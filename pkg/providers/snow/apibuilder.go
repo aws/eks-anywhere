@@ -236,6 +236,7 @@ func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig)
 					PhysicalNetworkConnectorType: &networkConnector,
 					Devices:                      machineConfig.Spec.Devices,
 					ContainersVolume:             machineConfig.Spec.ContainersVolume,
+					Network:                      machineConfig.Spec.Network,
 				},
 			},
 		},
