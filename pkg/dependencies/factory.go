@@ -316,7 +316,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
-		f.WithKubectl().WithGovc().WithWriter()
+		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
 	case v1alpha1.CloudStackDatacenterKind:
 		f.WithKubectl().WithCloudStackValidatorRegistry(skipIpCheck).WithWriter()
 	case v1alpha1.DockerDatacenterKind:
