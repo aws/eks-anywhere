@@ -927,7 +927,6 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 			"upgrade", "packages",
 			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
 			"--cluster=" + e.ClusterName,
-			"--kubeconfig" + e.kubeconfigFilePath(),
 		})
 	}
 }
