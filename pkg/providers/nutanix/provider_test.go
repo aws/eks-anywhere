@@ -212,6 +212,36 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 					},
 				},
 			},
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1abc"),
+				},
+				Spec: &v3.Cluster{
+					Name: utils.StringPtr("prism-cluster-2"),
+				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("AOS")},
+						},
+					},
+				},
+			},
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1xyz"),
+				},
+				Spec: &v3.Cluster{
+					Name: utils.StringPtr("prism-cluster-3"),
+				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("AOS")},
+						},
+					},
+				},
+			},
 		},
 	}
 	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil).AnyTimes()
