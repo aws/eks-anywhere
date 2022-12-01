@@ -103,9 +103,16 @@ func ControlPlaneNodeLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) Ext
 }
 
 // CgroupDriverExtraArgs args added for kube versions below 1.24.
-func CgroupDriverExtraArgs() ExtraArgs {
+func CgroupDriverCgroupfsExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("cgroup-driver", "cgroupfs")
+	return args
+}
+
+// CgroupDriverSystemdExtraArgs args added for kube versions 1.24 and above.
+func CgroupDriverSystemdExtraArgs() ExtraArgs {
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("cgroup-driver", "systemd")
 	return args
 }
 

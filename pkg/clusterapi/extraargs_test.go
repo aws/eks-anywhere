@@ -310,7 +310,7 @@ func TestSecureEtcdTlsCipherSuitesExtraArgs(t *testing.T) {
 	}
 }
 
-func TestCgroupDriverExtraArgs(t *testing.T) {
+func TestCgroupDriverCgroupfsExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string
 		want     clusterapi.ExtraArgs
@@ -325,8 +325,30 @@ func TestCgroupDriverExtraArgs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			if got := clusterapi.CgroupDriverExtraArgs(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CgroupDriverExtraArgs() = %v, want %v", got, tt.want)
+			if got := clusterapi.CgroupDriverCgroupfsExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CgroupDriverCgroupfsExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCgroupDriverSystemdExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"cgroup-driver": "systemd",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.CgroupDriverSystemdExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CgroupDriverSystemdExtraArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}
