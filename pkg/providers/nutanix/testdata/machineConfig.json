@@ -15,7 +15,7 @@
     },
     "cluster": {
       "type": "name",
-      "name": "prism-element"
+      "name": "prism-cluster"
     },
     "subnet": {
       "type": "name",
