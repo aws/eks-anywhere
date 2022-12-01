@@ -1149,13 +1149,13 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 	}
 
 	e.T.Log("Launching Busybox pod to test Package", packageName)
-	podIpAddress, err := e.KubectlClient.GetPodIpByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
+	podIPAddress, err := e.KubectlClient.GetPodIPByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("unable to get ip of the collector pod: %s", err)
 	}
-	podFullIdAddress := strings.Trim(podIpAddress, `'"`) + ":8888/metrics"
+	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
 	busyBoxName := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), targetNamespace, busyBoxName, e.kubeconfigFilePath(), []string{"curl", podFullIdAddress})
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), targetNamespace, busyBoxName, e.kubeconfigFilePath(), []string{"curl", podFullIPAddress})
 	if err != nil {
 		e.T.Fatalf("error launching busybox pod: %s", err)
 	}

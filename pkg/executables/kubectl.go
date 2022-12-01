@@ -907,8 +907,8 @@ func (k *Kubectl) RunBusyBoxPod(ctx context.Context, namespace, name, kubeconfig
 	return name, err
 }
 
-// GetPodIpByLabel will return the ip of the first pod that matches the label.
-func (k *Kubectl) GetPodIpByLabel(ctx context.Context, namespace, label, kubeconfig string) (string, error) {
+// GetPodIPByLabel will return the ip of the first pod that matches the label.
+func (k *Kubectl) GetPodIPByLabel(ctx context.Context, namespace, label, kubeconfig string) (string, error) {
 	params := []string{"get", "pod", "-l=" + label, "-o=jsonpath='{.items[0].status.podIP}'", "--kubeconfig", kubeconfig, "--namespace", namespace}
 	fmt.Print(params)
 	ip, err := k.Execute(ctx, params...)

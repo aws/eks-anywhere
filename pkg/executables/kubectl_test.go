@@ -3006,13 +3006,13 @@ func TestRunBusyBoxPod(t *testing.T) {
 	}
 }
 
-func TestGetPodIpByLabel(t *testing.T) {
+func TestGetPodIPByLabel(t *testing.T) {
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
 	expectedParam := []string{"get", "pod", "-l=app.kubernetes.io/name=aws-otel-collector", "-o=jsonpath='{.items[0].status.podIP}'", "--kubeconfig", "c.kubeconfig", "--namespace", "observability"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	if _, err := tt.k.GetPodIpByLabel(tt.ctx, "observability", "app.kubernetes.io/name=aws-otel-collector", tt.cluster.KubeconfigFile); err != nil {
-		t.Errorf("Kubectl.GetPodIpByLabel() error = %v, want nil", err)
+	if _, err := tt.k.GetPodIPByLabel(tt.ctx, "observability", "app.kubernetes.io/name=aws-otel-collector", tt.cluster.KubeconfigFile); err != nil {
+		t.Errorf("Kubectl.GetPodIPByLabel() error = %v, want nil", err)
 	}
 }
 
