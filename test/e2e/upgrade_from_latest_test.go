@@ -47,6 +47,24 @@ func latestMinorRelease(t testing.TB) *releasev1.EksARelease {
 	return latestRelease
 }
 
+func TestCloudStackKubernetes121UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		anywherev1.Kube121,
+		provider.WithProviderUpgrade(),
+	)
+}
 
 func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)

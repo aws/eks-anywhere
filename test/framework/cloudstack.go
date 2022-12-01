@@ -22,7 +22,6 @@ const (
 	cloudstackManagementServerVar      = "T_CLOUDSTACK_MANAGEMENT_SERVER"
 	cloudstackManagementServer2Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
-	cloudstackTemplateRedhat120Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_20"
 	cloudstackTemplateRedhat121Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_21"
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
@@ -47,7 +46,6 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackManagementServerVar,
 	cloudstackManagementServer2Var,
 	cloudstackSshAuthorizedKeyVar,
-	cloudstackTemplateRedhat120Var,
 	cloudstackTemplateRedhat121Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
@@ -100,7 +98,7 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
 				cloudstackManagementServerVar, api.WithCloudStackAz),
 			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
 			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOfferingForAllMachines),
 		},
 	}
@@ -128,15 +126,6 @@ func WithCloudStackRedhat121() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
-		)
-	}
-}
-
-// WithCloudStackRedhat120 sets the cloudstack template for all machines in the cluster to the one provided via env var.
-func WithCloudStackRedhat120() CloudStackOpt {
-	return func(c *CloudStack) {
-		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),
 		)
 	}
 }

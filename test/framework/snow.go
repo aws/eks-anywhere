@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	snowAMIIDUbuntu120   = "T_SNOW_AMIID_UBUNTU_1_20"
 	snowAMIIDUbuntu121   = "T_SNOW_AMIID_UBUNTU_1_21"
 	snowAMIIDUbuntu122   = "T_SNOW_AMIID_UBUNTU_1_22"
 	snowAMIIDUbuntu123   = "T_SNOW_AMIID_UBUNTU_1_23"
@@ -21,7 +20,6 @@ const (
 )
 
 var requiredSnowEnvVars = []string{
-	snowAMIIDUbuntu120,
 	snowAMIIDUbuntu121,
 	snowAMIIDUbuntu122,
 	snowAMIIDUbuntu123,
@@ -45,7 +43,7 @@ func NewSnow(t *testing.T, opts ...SnowOpt) *Snow {
 	s := &Snow{
 		t: t,
 		fillers: []api.SnowFiller{
-			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu120, api.WithSnowAMIIDForAllMachines),
+			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu121, api.WithSnowAMIIDForAllMachines),
 		},
 	}
 
