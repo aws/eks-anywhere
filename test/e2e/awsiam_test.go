@@ -41,7 +41,6 @@ func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
-
 func TestDockerKubernetes121AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
