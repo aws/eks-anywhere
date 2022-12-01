@@ -255,17 +255,22 @@ More details on the driver are [here](https://docs.vmware.com/en/VMware-vSphere-
 > rely on the other resources. This should be done after setting `disableCSI` to `true` and running `upgrade cluster`.
 > 
 > These are the resources you would need to delete:
-> * vsphere-csi-controller-role (kind: ClusterRole)
-> * vsphere-csi-controller-binding (kind: ClusterRoleBinding)
-> * csi.vsphere.vmware.com (kind: CSIDriver)
+> * `vsphere-csi-controller-role` (kind: ClusterRole)
+> * `vsphere-csi-controller-binding` (kind: ClusterRoleBinding)
+> * `csi.vsphere.vmware.com` (kind: CSIDriver)
 > 
 > These are the resources you would need to delete
 > in the `kube-system` namespace:
-> * vsphere-csi-controller (kind: ServiceAccount)
-> * csi-vsphere-config (kind: Secret)
-> * vsphere-csi-node (kind: DaemonSet)
-> * vsphere-csi-controller (kind: Deployment)
->
+> * `vsphere-csi-controller` (kind: ServiceAccount)
+> * `csi-vsphere-config` (kind: Secret)
+> * `vsphere-csi-node` (kind: DaemonSet)
+> * `vsphere-csi-controller` (kind: Deployment)
+> 
+> These are the resources you would need to delete
+> in the `eksa-system` namespace from the management cluster.
+> * `<cluster-name>-csi` (kind: ClusterResourceSet)
+> 
+> **_Note:_** If your cluster is self-managed, you would delete `<cluster-name>-csi` (kind: ClusterResourceSet) from the same cluster.
 
 ## VSphereMachineConfig Fields
 
