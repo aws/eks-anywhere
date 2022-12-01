@@ -29,6 +29,7 @@ env:
     T_NUTANIX_MACHINE_VCPU_SOCKET: 2
     T_NUTANIX_MACHINE_MEMORY_SIZE: "4Gi"
     T_NUTANIX_SYSTEMDISK_SIZE: "40Gi"
+    T_NUTANIX_INSECURE: true
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
