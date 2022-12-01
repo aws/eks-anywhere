@@ -1000,7 +1000,7 @@ func TestNutanixKubernetes121UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar("features.NutanixProviderEnvVarProviderEnvVar", "true"),
+		framework.WithEnvVar("features.NutanixProviderEnvVar", "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -1036,7 +1036,7 @@ func TestNutanixKubernetes122UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar("features.NutanixProviderEnvVarProviderEnvVar", "true"),
+		framework.WithEnvVar("features.NutanixProviderEnvVar", "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -1072,7 +1072,7 @@ func TestNutanixKubernetes123UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar("features.NutanixProviderEnvVarProviderEnvVar", "true"),
+		framework.WithEnvVar("features.NutanixProviderEnvVar", "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -1108,7 +1108,7 @@ func TestNutanixKubernetes124UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar("features.NutanixProviderEnvVarProviderEnvVar", "true"),
+		framework.WithEnvVar("features.NutanixProviderEnvVar", "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
