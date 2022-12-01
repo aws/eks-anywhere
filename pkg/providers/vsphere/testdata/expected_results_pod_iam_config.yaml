@@ -371,7 +371,7 @@ kind: ClusterResourceSet
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
-  name: test-cpi-csi
+  name: test-csi
   namespace: eksa-system
 spec:
   strategy: Reconcile
@@ -393,6 +393,20 @@ spec:
     name: vsphere-csi-node
   - kind: ConfigMap
     name: vsphere-csi-controller
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+  name: test-cpi
+  namespace: eksa-system
+spec:
+  strategy: Reconcile
+  clusterSelector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: test
+  resources:
   - kind: Secret
     name: cloud-controller-manager
   - kind: Secret
