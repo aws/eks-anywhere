@@ -153,7 +153,6 @@ func TestNewIPNotInUseAssertion_NotInUseSucceeds(t *testing.T) {
 	netClient := mocks.NewMockNetClient(ctrl)
 	netClient.EXPECT().
 		DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
-		Times(5).
 		Return(nil, errors.New("failed to connect"))
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
@@ -187,7 +186,6 @@ func TestAssertTinkerbellIPNotInUse_NotInUseSucceeds(t *testing.T) {
 	netClient := mocks.NewMockNetClient(ctrl)
 	netClient.EXPECT().
 		DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
-		Times(5).
 		Return(nil, errors.New("failed to connect"))
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()

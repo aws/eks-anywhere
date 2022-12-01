@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"reflect"
+	"syscall"
 	"testing"
 	"time"
 
@@ -41,11 +42,22 @@ func TestIsIPInUsePass(t *testing.T) {
 
 	client := mocks.NewMockNetClient(ctrl)
 	client.EXPECT().DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
-		Times(5).
 		Return(nil, errors.New("no connection"))
 
 	res := networkutils.IsIPInUse(client, "10.10.10.10")
 	g.Expect(res).To(gomega.BeFalse())
+}
+
+func TestIsIPInUseConnectionRefused(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	g := gomega.NewWithT(t)
+
+	client := mocks.NewMockNetClient(ctrl)
+	client.EXPECT().DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, syscall.ECONNREFUSED)
+
+	res := networkutils.IsIPInUse(client, "10.10.10.10")
+	g.Expect(res).To(gomega.BeTrue())
 }
 
 func TestIsIPInUseFail(t *testing.T) {
