@@ -117,6 +117,14 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
+	if clusterSpec.Cluster.IsManaged() && options.managementKubeconfig == "" {
+		options.managementKubeconfig = kubeconfig.FromEnvironment()
+		clusterSpec.ManagementCluster = &types.Cluster{
+			Name:               clusterSpec.Cluster.ManagedBy(),
+			KubeconfigFile:     options.managementKubeconfig,
+			ExistingManagement: true,
+		}
+	}
 	return clusterSpec, nil
 }
 

@@ -348,6 +348,21 @@ func TestDockerKubernetes123To124StackedEtcdUpgrade(t *testing.T) {
 	)
 }
 
+func TestDockerKubernetes123To124ExternalEtcdUpgrade(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube124,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
+	)
+}
+
 func TestVSphereKubernetes123UbuntuTo124StackedEtcdUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu123())
 	test := framework.NewClusterE2ETest(
@@ -827,7 +842,7 @@ func TestNutanixKubernetes123To124UbuntuUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate123Var()),
+		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate124Var()),
 	)
 }
 
