@@ -2001,7 +2001,7 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"get", "clusterresourcesets.addons.cluster.x-k8s.io", resourceSetName, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "clusterresourcesets.addons.cluster.x-k8s.io", "--namespace", tt.namespace, resourceSetName,
 	).Return(*bytes.NewBufferString(resourceSetJson), nil)
 
 	gotResourceSet, err := tt.k.GetClusterResourceSet(tt.ctx, tt.cluster.KubeconfigFile, resourceSetName, tt.namespace)
