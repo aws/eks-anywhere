@@ -167,7 +167,7 @@ func (h *Helm) addInsecureFlagIfProvided(params []string) []string {
 }
 
 func (h *Helm) url(originalURL string) string {
-	return registrymirror.ReplaceRegistry(originalURL, h.registryMirror)
+	return h.registryMirror.ReplaceRegistry(originalURL)
 }
 
 func GetHelmValueArgs(values []string) []string {

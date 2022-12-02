@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -350,7 +349,7 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 
 func (s *Installer) localRegistryURL(originalURL string) string {
 	if s.registryMirror != nil {
-		return registrymirror.ReplaceRegistry(originalURL, s.registryMirror.RegistryMirror())
+		return s.registryMirror.RegistryMirror().ReplaceRegistry(originalURL)
 	}
 	return originalURL
 }

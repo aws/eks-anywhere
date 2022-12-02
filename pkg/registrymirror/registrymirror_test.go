@@ -170,7 +170,7 @@ func TestReplaceRegistry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			g.Expect(registrymirror.ReplaceRegistry(tt.URL, tt.registryMirror)).To(Equal(tt.want))
+			g.Expect(tt.registryMirror.ReplaceRegistry(tt.URL)).To(Equal(tt.want))
 		})
 	}
 }

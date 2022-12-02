@@ -282,7 +282,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		if f.executablesConfig.useDockerContainer {
 			image := f.executablesConfig.image
 			if f.registryMirror != nil {
-				image = registrymirror.ReplaceRegistry(image, f.registryMirror)
+				image = f.registryMirror.ReplaceRegistry(image)
 			}
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
@@ -953,7 +953,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
-		imageURL := registrymirror.ReplaceRegistry(chart.Image(), spec.Cluster.RegistryMirror())
+		imageURL := f.registryMirror.ReplaceRegistry(chart.Image())
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)

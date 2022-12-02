@@ -15,7 +15,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -184,12 +183,12 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	registryMirror := clusterSpec.Cluster.RegistryMirror()
 	k.execConfig = &kindExecConfig{
-		KindImage:            registrymirror.ReplaceRegistry(bundle.EksD.KindNode.VersionedImage(), registryMirror),
-		KubernetesRepository: registrymirror.ReplaceRegistry(bundle.KubeDistro.Kubernetes.Repository, registryMirror),
+		KindImage:            registryMirror.ReplaceRegistry(bundle.EksD.KindNode.VersionedImage()),
+		KubernetesRepository: registryMirror.ReplaceRegistry(bundle.KubeDistro.Kubernetes.Repository),
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
-		EtcdRepository:       registrymirror.ReplaceRegistry(bundle.KubeDistro.Etcd.Repository, registryMirror),
+		EtcdRepository:       registryMirror.ReplaceRegistry(bundle.KubeDistro.Etcd.Repository),
 		EtcdVersion:          bundle.KubeDistro.Etcd.Tag,
-		CorednsRepository:    registrymirror.ReplaceRegistry(bundle.KubeDistro.CoreDNS.Repository, registryMirror),
+		CorednsRepository:    registryMirror.ReplaceRegistry(bundle.KubeDistro.CoreDNS.Repository),
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}

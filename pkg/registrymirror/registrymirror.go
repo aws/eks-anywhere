@@ -35,8 +35,8 @@ func (r *RegistryMirror) RegistryMirrorWithGatedOCINamespace() string {
 // If the provided original url is malformed, there are no guarantees
 // that the returned value will be valid
 // If no corresponding registry mirror, it will return the original URL.
-func ReplaceRegistry(URL string, registryMirror *RegistryMirror) string {
-	if registryMirror == nil {
+func (r *RegistryMirror) ReplaceRegistry(URL string) string {
+	if r == nil {
 		return URL
 	}
 
@@ -49,7 +49,7 @@ func ReplaceRegistry(URL string, registryMirror *RegistryMirror) string {
 	if regexp.MustCompile(DefaultPackageRegistryRegex).MatchString(key) {
 		key = DefaultPackageRegistryRegex
 	}
-	if v, ok := registryMirror.NamespacedRegistryMap[key]; ok {
+	if v, ok := r.NamespacedRegistryMap[key]; ok {
 		return strings.ReplaceAll(URL, u.Host, v)
 	}
 	return URL
