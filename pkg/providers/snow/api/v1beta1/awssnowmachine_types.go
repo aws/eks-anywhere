@@ -181,6 +181,7 @@ type AWSSnowMachineSpec struct {
 type AWSSnowNetwork struct {
 	// DirectNetworkInterfaces is the configuration requirements for DNIs
 	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=8
 	DirectNetworkInterfaces []AWSSnowDirectNetworkInterface `json:"directNetworkInterfaces,omitempty"`
 	// DNS is just for bottlerocket static ip config
 	// +optional
@@ -191,7 +192,7 @@ type AWSSnowNetwork struct {
 type AWSSnowDirectNetworkInterface struct {
 	// Index is the index number of DNI
 	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=7
+	// +kubebuilder:validation:Maximum=8
 	// +optional
 	Index int `json:"index,omitempty"`
 	// VlanID is the vlan ID assigned by the user
