@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -40,6 +41,7 @@ const (
 type ClusterReconciler struct {
 	client                     client.Client
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
+	awsIamAuth                 reconciler.AWSIamConfigReconciler
 }
 
 type ProviderClusterReconcilerRegistry interface {
@@ -47,10 +49,11 @@ type ProviderClusterReconcilerRegistry interface {
 }
 
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth reconciler.AWSIamConfigReconciler) *ClusterReconciler {
 	return &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
+		awsIamAuth:                 awsIamAuth,
 	}
 }
 
@@ -162,6 +165,11 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 
 	var reconcileResult controller.Result
 	var err error
+
+	if _, err = r.preClusterProviderReconcile(ctx, log, cluster); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if cluster.IsSelfManaged() {
 		// self-managed clusters should only reconcile worker nodes to avoid control plane instability
 		reconcileResult, err = clusterProviderReconciler.ReconcileWorkerNodes(ctx, log, cluster)
@@ -172,7 +180,42 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	if reconcileResult.Return() {
+		return reconcileResult.ToCtrlResult(), nil
+	}
+
+	if reconcileResult, err = r.postClusterProviderReconcile(ctx, log, cluster); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return reconcileResult.ToCtrlResult(), nil
+}
+
+func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	// Reconcile Cluster IdentityProviders
+	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
+		switch identityProvider.Kind {
+		case anywherev1.AWSIamConfigKind:
+			// Reconcile AWS IAM Authenticator CA secret for cluster
+			return r.awsIamAuth.ReconcileAWSIAMAuthCASecret(ctx, log, r.client, cluster.Name)
+		}
+	}
+
+	return controller.Result{}, nil
+}
+
+func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	// Reconcile Cluster IdentityProviders
+	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
+		switch identityProvider.Kind {
+		case anywherev1.AWSIamConfigKind:
+			// Reconcile AWS IAM Authenticator Config
+			return r.awsIamAuth.Reconcile(ctx, log, r.client, cluster)
+		}
+	}
+
+	return controller.Result{}, nil
 }
 
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {

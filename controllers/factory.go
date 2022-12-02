@@ -4,12 +4,15 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/google/uuid"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	awsiamconfigreconciler "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
@@ -34,7 +37,11 @@ type Factory struct {
 	vsphereClusterReconciler *vspherereconciler.Reconciler
 	snowClusterReconciler    *snowreconciler.Reconciler
 	cniReconciler            *cnireconciler.Reconciler
+<<<<<<< HEAD
 	ipValidator              *clusters.IPValidator
+=======
+	awsIamConfigReconciler   *awsiamconfigreconciler.Reconciler
+>>>>>>> 654c9327 (Adding logic to reconcile AWSIAMConfig identity provider to cluster controller)
 	logger                   logr.Logger
 	deps                     *dependencies.Dependencies
 }
@@ -78,7 +85,7 @@ func (f *Factory) Build(ctx context.Context) (*Reconcilers, error) {
 
 func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
 	f.dependencyFactory.WithGovc()
-	f.withTracker().WithProviderClusterReconcilerRegistry(capiProviders)
+	f.withTracker().WithProviderClusterReconcilerRegistry(capiProviders).withAWSIamConfigReconciler()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.ClusterReconciler != nil {
@@ -88,6 +95,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *
 		f.reconcilers.ClusterReconciler = NewClusterReconciler(
 			f.manager.GetClient(),
 			f.registry,
+			f.awsIamConfigReconciler,
 		)
 
 		return nil
@@ -301,6 +309,29 @@ func (f *Factory) withIPValidator() *Factory {
 		}
 
 		f.ipValidator = clusters.NewIPValidator(f.deps.IPValidator, f.manager.GetClient())
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withAWSIamConfigReconciler() *Factory {
+	f.withTracker()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.awsIamConfigReconciler != nil {
+			return nil
+		}
+
+		certgen := crypto.NewCertificateGenerator()
+		clusterID := uuid.New()
+
+		f.awsIamConfigReconciler = awsiamconfigreconciler.New(
+			certgen,
+			clusterID,
+			f.tracker,
+		)
 
 		return nil
 	})

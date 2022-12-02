@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	awsiamreconcilermocks "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -74,7 +76,11 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
+	iam := newMockAWSIamConfigReconciler(t)
+	iam.EXPECT().ReconcileAWSIAMAuthCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), cl, cluster.Name).Return(controller.Result{}, nil)
+	iam.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), cl, gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
+
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).NotTo(HaveOccurred())
 
@@ -135,7 +141,7 @@ func TestClusterReconcilerReconcileChildObjectNotFound(t *testing.T) {
 
 func TestClusterReconcilerSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewClusterReconciler(client, newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(client, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t))
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager(), env.Manager().GetLogger())).To(Succeed())
@@ -164,7 +170,7 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 	api := envtest.NewAPIExpecter(t, cl)
 
-	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t))
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).Error().To(MatchError(ContainSubstring("\"my-management-cluster\" not found")))
 	c := envtest.CloneNameNamespace(cluster)
 	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
@@ -201,7 +207,7 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 	mgmtCluster := &anywherev1.Cluster{}
 	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: managementCluster.Name}, mgmtCluster)).To(Succeed())
 
-	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), newMockAWSIamConfigReconciler(t))
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).ToNot(HaveOccurred())
 
@@ -253,4 +259,9 @@ func clusterRequest(cluster *anywherev1.Cluster) reconcile.Request {
 
 func nullLog() logr.Logger {
 	return logr.New(logf.NullLogSink{})
+}
+
+func newMockAWSIamConfigReconciler(t *testing.T) *awsiamreconcilermocks.MockAWSIamConfigReconciler {
+	ctrl := gomock.NewController(t)
+	return awsiamreconcilermocks.NewMockAWSIamConfigReconciler(ctrl)
 }
