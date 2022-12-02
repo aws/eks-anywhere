@@ -531,7 +531,7 @@ func TestCPackagesCloudStackRedhatKubernetes121WorkloadCluster(t *testing.T) {
 
 func TestCPackagesNutanixKubernetes121SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu121Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -543,7 +543,7 @@ func TestCPackagesNutanixKubernetes121SimpleFlow(t *testing.T) {
 
 func TestCPackagesNutanixKubernetes122SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -555,7 +555,7 @@ func TestCPackagesNutanixKubernetes122SimpleFlow(t *testing.T) {
 
 func TestCPackagesNutanixKubernetes123SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -567,7 +567,7 @@ func TestCPackagesNutanixKubernetes123SimpleFlow(t *testing.T) {
 
 func TestCPackagesNutanixKubernetes124SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t),
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
