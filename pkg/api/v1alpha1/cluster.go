@@ -418,13 +418,6 @@ func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
 	if (clusterConfig.Spec.ControlPlaneConfiguration.Endpoint == nil || len(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0) && clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
-
-	// TODO: validate IP
-	//if err := networkutils.ValidateIP(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
-	//
-	//	return fmt.Errorf("invalid control plane endpoint host: %v", err)
-	//}
-
 	return nil
 }
 

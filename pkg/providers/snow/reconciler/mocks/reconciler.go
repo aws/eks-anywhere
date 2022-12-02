@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	controller "github.com/aws/eks-anywhere/pkg/controller"
 	logr "github.com/go-logr/logr"
@@ -89,4 +90,41 @@ func (m *MockRemoteClientRegistry) GetClient(ctx context.Context, cluster client
 func (mr *MockRemoteClientRegistryMockRecorder) GetClient(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClient", reflect.TypeOf((*MockRemoteClientRegistry)(nil).GetClient), ctx, cluster)
+}
+
+// MockIPValidator is a mock of IPValidator interface.
+type MockIPValidator struct {
+	ctrl     *gomock.Controller
+	recorder *MockIPValidatorMockRecorder
+}
+
+// MockIPValidatorMockRecorder is the mock recorder for MockIPValidator.
+type MockIPValidatorMockRecorder struct {
+	mock *MockIPValidator
+}
+
+// NewMockIPValidator creates a new mock instance.
+func NewMockIPValidator(ctrl *gomock.Controller) *MockIPValidator {
+	mock := &MockIPValidator{ctrl: ctrl}
+	mock.recorder = &MockIPValidatorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIPValidator) EXPECT() *MockIPValidatorMockRecorder {
+	return m.recorder
+}
+
+// ValidateControlPlaneIPUniqueness mocks base method.
+func (m *MockIPValidator) ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateControlPlaneIPUniqueness", cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateControlPlaneIPUniqueness indicates an expected call of ValidateControlPlaneIPUniqueness.
+func (mr *MockIPValidatorMockRecorder) ValidateControlPlaneIPUniqueness(cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneIPUniqueness", reflect.TypeOf((*MockIPValidator)(nil).ValidateControlPlaneIPUniqueness), cluster)
 }

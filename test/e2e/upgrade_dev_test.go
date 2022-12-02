@@ -11,182 +11,20 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func TestVSphereKubernetes118To119CpVmNumCpuUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithControlPlaneVMsNumCPUs(vsphereCpVmNumCpuUpdateVar),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119CpVmMemoryUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithControlPlaneVMsMemoryMiB(vsphereCpVmMemoryUpdate),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119CpDiskGiBUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithControlPlaneDiskGiB(vsphereCpDiskGiBUpdateVar),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119WlVmNumCpuUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithWorkloadVMsNumCPUs(vsphereWlVmNumCpuUpdateVar),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119WlVmMemoryUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithWorkloadVMsMemoryMiB(vsphereWlVmMemoryUpdate),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119WlDiskGiBUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithWorkloadDiskGiB(vsphereWlDiskGiBUpdate),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119FolderUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithFolder(vsphereFolderUpdateVar),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119Network1to2Upgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithNetwork(vsphereNetwork2UpdateVar),
-		),
-	)
-}
-
-func TestVSphereKubernetes118To119Network1to3Upgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu118())
-	test := framework.NewE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube118)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube119,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate119Var(),
-			api.WithNetwork(vsphereNetwork3UpdateVar),
-		),
-	)
-}
-
-func TestCloudStackKubernetes120To121CpComputeOfferingUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
+func TestCloudStackKubernetes121To122CpComputeOfferingUpgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
 	test := framework.NewE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube120,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		provider.WithProviderUpgrade(
-			framework.UpdateRedhatTemplate121Var(),
+			framework.UpdateRedhatTemplate122Var(),
 			api.WithCloudStackComputeOfferingForAllMachines(cloudstackComputeOfferingUpdateVar),
 		),
 	)

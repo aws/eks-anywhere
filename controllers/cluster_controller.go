@@ -2,11 +2,13 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -25,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const (
@@ -128,19 +131,18 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}()
 
+	if !cluster.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, log, cluster)
+	}
+
 	// If the cluster is paused, return without any further processing.
 	if cluster.IsReconcilePaused() {
 		log.Info("Cluster reconciliation is paused")
 		return ctrl.Result{}, nil
 	}
 
-	if cluster.DeletionTimestamp.IsZero() {
-		if !controllerutil.ContainsFinalizer(cluster, ClusterFinalizerName) {
-			controllerutil.AddFinalizer(cluster, ClusterFinalizerName)
-		}
-	} else {
-		return r.reconcileDelete(ctx, log, cluster)
-	}
+	// AddFinalizer	is idempotent
+	controllerutil.AddFinalizer(cluster, ClusterFinalizerName)
 
 	if cluster.Spec.BundlesRef == nil {
 		if err = r.setBundlesRef(ctx, cluster); err != nil {
@@ -178,6 +180,17 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
 	}
 
+	if metav1.HasAnnotation(cluster.ObjectMeta, anywherev1.ManagedByCLIAnnotation) {
+		log.Info("Clusters is managed by CLI, removing finalizer")
+		controllerutil.RemoveFinalizer(cluster, ClusterFinalizerName)
+		return ctrl.Result{}, nil
+	}
+
+	if cluster.IsReconcilePaused() {
+		log.Info("Cluster reconciliation is paused, won't process cluster deletion")
+		return ctrl.Result{}, nil
+	}
+
 	capiCluster := &clusterv1.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	log.Info("Deleting", "name", cluster.Name)
@@ -207,6 +220,10 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 	builder := cluster.NewDefaultConfigClientBuilder()
 	config, err := builder.Build(ctx, clientutil.NewKubeClient(r.client), clus)
 	if err != nil {
+		var notFound apierrors.APIStatus
+		if apierrors.IsNotFound(err) && errors.As(err, &notFound) {
+			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound))
+		}
 		return err
 	}
 
@@ -233,6 +250,9 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.Cluster) error {
 	mgmtCluster := &anywherev1.Cluster{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name))
+		}
 		return err
 	}
 	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef

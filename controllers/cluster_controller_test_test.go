@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers"
+	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -88,6 +89,50 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	g.Expect(newAWSIam.OwnerReferences[0]).To(Equal(awsIAM.OwnerReferences[0]))
 }
 
+func TestClusterReconcilerReconcileChildObjectNotFound(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-management-cluster",
+			Namespace: "my-namespace",
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "my-namespace",
+		},
+	}
+	cluster.Spec.IdentityProviderRefs = []anywherev1.Ref{
+		{
+			Kind: anywherev1.OIDCConfigKind,
+			Name: "my-oidc",
+		},
+		{
+			Kind: anywherev1.AWSIamConfigKind,
+			Name: "my-iam",
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	objs := []runtime.Object{cluster, managementCluster}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+	api := envtest.NewAPIExpecter(t, cl)
+
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
+	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).Error().To(MatchError(ContainSubstring("not found")))
+	c := envtest.CloneNameNamespace(cluster)
+	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal(
+			"Dependent cluster objects don't exist: oidcconfigs.anywhere.eks.amazonaws.com \"my-oidc\" not found",
+		)))
+	})
+}
+
 func TestClusterReconcilerSetupWithManager(t *testing.T) {
 	client := env.Client()
 	r := controllers.NewClusterReconciler(client, newRegistryForDummyProviderReconciler())
@@ -117,10 +162,14 @@ func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
 	objs := []runtime.Object{cluster, managementCluster}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
+	api := envtest.NewAPIExpecter(t, cl)
 
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler())
-	_, err := r.Reconcile(ctx, clusterRequest(cluster))
-	g.Expect(err).To(MatchError(ContainSubstring("\"my-management-cluster\" not found")))
+	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).Error().To(MatchError(ContainSubstring("\"my-management-cluster\" not found")))
+	c := envtest.CloneNameNamespace(cluster)
+	api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+		g.Expect(c.Status.FailureMessage).To(HaveValue(Equal("Management cluster my-management-cluster does not exist")))
+	})
 }
 
 func TestClusterReconcilerSetBundlesRef(t *testing.T) {

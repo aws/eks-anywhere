@@ -212,6 +212,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithVSphereDefaulter().
 		WithVSphereValidator().
 		WithCiliumTemplater().
+		WithIPValidator().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -231,6 +232,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.VSphereDefaulter).NotTo(BeNil())
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
+	tt.Expect(deps.IPValidator).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithProxyConfiguration(t *testing.T) {

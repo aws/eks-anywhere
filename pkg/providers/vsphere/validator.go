@@ -15,7 +15,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -42,14 +41,13 @@ type VSphereClientBuilder interface {
 
 type Validator struct {
 	govc                 ProviderGovcClient
-	netClient            networkutils.NetClient
 	vSphereClientBuilder VSphereClientBuilder
 }
 
-func NewValidator(govc ProviderGovcClient, netClient networkutils.NetClient, vscb VSphereClientBuilder) *Validator {
+// NewValidator initializes the client for VSphere provider validations.
+func NewValidator(govc ProviderGovcClient, vscb VSphereClientBuilder) *Validator {
 	return &Validator{
 		govc:                 govc,
-		netClient:            netClient,
 		vSphereClientBuilder: vscb,
 	}
 }
@@ -302,14 +300,6 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 		return fmt.Errorf("network %s not found", network)
 	}
 
-	return nil
-}
-
-func (v *Validator) validateControlPlaneIpUniqueness(spec *Spec) error {
-	ip := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if networkutils.IsIPInUse(v.netClient, ip) {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
-	}
 	return nil
 }
 

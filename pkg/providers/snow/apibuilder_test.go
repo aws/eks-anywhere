@@ -762,6 +762,38 @@ func TestSnowMachineTemplate(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
+func TestSnowMachineTemplateWithNetwork(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	network := &snowv1.AWSSnowNetwork{
+		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			{
+				Index: 1,
+				DHCP:  false,
+				IPPool: snowv1.AWSSnowIPPool{
+					Spec: snowv1.AWSSnowIPPoolSpec{
+						IPPools: []snowv1.IPPool{
+							{
+								IPStart: "start",
+								IPEnd:   "end",
+								Subnet:  "subnet",
+								Gateway: "gateway",
+							},
+						},
+					},
+				},
+				Primary: true,
+			},
+		},
+	}
+	tt.machineConfigs["test-cp"].Spec.Network = network
+	got := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"])
+	want := wantSnowMachineTemplate()
+	want.SetName("snow-test-control-plane-1")
+	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
+	want.Spec.Template.Spec.Network = network
+	tt.Expect(got).To(Equal(want))
+}
+
 func tlsCipherSuitesArgs() map[string]string {
 	return map[string]string{"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"}
 }

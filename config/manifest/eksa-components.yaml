@@ -4295,6 +4295,16 @@ spec:
               endpoint:
                 description: Endpoint is the Endpoint of Nutanix Prism Central
                 type: string
+              insecure:
+                description: Insecure is the optional flag to skip TLS verification.
+                  Nutanix Prism Central installation by default ships with a self-signed
+                  certificate that will fail TLS verification because the certificate
+                  is not issued by a public CA and does not have the IP SANs with
+                  the Prism Central endpoint. To accommodate the scenario where the
+                  user has not changed the default Certificate that ships with Prism
+                  Central, we allow the user to skip TLS verification. This is not
+                  recommended for production use.
+                type: boolean
               port:
                 description: Port is the Port of Nutanix Prism Central
                 minimum: 9440
@@ -4836,6 +4846,98 @@ spec:
                   values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge"
                   and "sbe-c.4xlarge".'
                 type: string
+              network:
+                description: Network provides the custom network setting for the machine.
+                properties:
+                  directNetworkInterfaces:
+                    description: DirectNetworkInterfaces is the configuration requirements
+                      for DNIs
+                    items:
+                      description: AWSSnowDirectNetworkInterface is configuration
+                        of DNIs specified by customers.
+                      properties:
+                        dhcp:
+                          description: DHCP is whether we assign ip using DHCP for
+                            this DNI
+                          type: boolean
+                        index:
+                          description: Index is the index number of DNI
+                          maximum: 7
+                          minimum: 1
+                          type: integer
+                        ipPool:
+                          description: IPPool is the ip pool for this DNI if customers
+                            want to specify
+                          properties:
+                            apiVersion:
+                              description: 'APIVersion defines the versioned schema
+                                of this representation of an object. Servers should
+                                convert recognized schemas to the latest internal
+                                value, and may reject unrecognized values. More info:
+                                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                              type: string
+                            kind:
+                              description: 'Kind is a string value representing the
+                                REST resource this object represents. Servers may
+                                infer this from the endpoint the client submits requests
+                                to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                              type: string
+                            metadata:
+                              type: object
+                            spec:
+                              description: AWSSnowIPPoolSpec defines the desired state
+                                of AWSSnowIPPool
+                              properties:
+                                pools:
+                                  description: IPPools is the configuration of static
+                                    ips used for machine's ip.
+                                  items:
+                                    description: IPPool is the configuration of static
+                                      ips used for machine's ip.
+                                    properties:
+                                      gateway:
+                                        description: Gateway is the gateway of this
+                                          subnet. Used for routing purpose
+                                        type: string
+                                      ipEnd:
+                                        description: IPEnd is the end of an ip range
+                                        type: string
+                                      ipStart:
+                                        description: IPStart is the start of an ip
+                                          range
+                                        type: string
+                                      subnet:
+                                        description: Subnet is customers' network
+                                          subnet, we can use it to determine if two
+                                          ip addresses are in the same subnet.
+                                        type: string
+                                    type: object
+                                  type: array
+                              type: object
+                            status:
+                              description: AWSSnowIPPoolStatus defines the observed
+                                state of AWSSnowIPPool
+                              type: object
+                          type: object
+                        primary:
+                          description: Primary indicates whether the DNI is primary
+                            or not
+                          type: boolean
+                        vlanID:
+                          description: VlanID is the vlan ID assigned by the user
+                          format: int64
+                          maximum: 4095
+                          minimum: 0
+                          type: integer
+                      type: object
+                    minItems: 1
+                    type: array
+                  dns:
+                    description: DNS is just for bottlerocket static ip config
+                    items:
+                      type: string
+                    type: array
+                type: object
               osFamily:
                 description: 'OSFamily is the node instance OS. Valid values: "bottlerocket"
                   (default) and "ubuntu".'

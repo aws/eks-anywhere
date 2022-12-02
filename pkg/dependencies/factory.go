@@ -45,6 +45,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -95,6 +96,7 @@ type Dependencies struct {
 	VSphereDefaulter            *vsphere.Defaulter
 	NutanixPrismClient          *v3.Client
 	SnowValidator               *snow.AwsClientValidator
+	IPValidator                 *validator.IPValidator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -313,7 +315,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
-		f.WithKubectl().WithGovc().WithWriter()
+		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
 	case v1alpha1.CloudStackDatacenterKind:
 		f.WithKubectl().WithCloudStackValidatorRegistry(skipIpCheck).WithWriter()
 	case v1alpha1.DockerDatacenterKind:
@@ -348,6 +350,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Govc,
 				f.dependencies.Kubectl,
 				f.dependencies.Writer,
+				f.dependencies.IPValidator,
 				time.Now,
 				skipIpCheck,
 			)
@@ -762,6 +765,18 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 	return f
 }
 
+// WithIPValidator builds the IPValidator for the given cluster.
+func (f *Factory) WithIPValidator() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.IPValidator != nil {
+			return nil
+		}
+		f.dependencies.IPValidator = validator.NewIPValidator()
+		return nil
+	})
+	return f
+}
+
 type bootstrapperClient struct {
 	*executables.Kind
 	*executables.Kubectl
@@ -1156,7 +1171,6 @@ func (f *Factory) WithVSphereValidator() *Factory {
 		vcb := govmomi.NewVMOMIClientBuilder()
 		v := vsphere.NewValidator(
 			f.dependencies.Govc,
-			&networkutils.DefaultNetClient{},
 			vcb,
 		)
 		f.dependencies.VSphereValidator = v

@@ -2,7 +2,8 @@ package cluster
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/pkg/errors"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -43,7 +44,7 @@ func (b *ConfigClientBuilder) Build(ctx context.Context, client Client, cluster 
 
 	for _, p := range b.processors {
 		if err := p(ctx, client, c); err != nil {
-			return nil, fmt.Errorf("building Config from a cluster client: %v", err)
+			return nil, errors.Wrap(err, "building Config from a cluster client")
 		}
 	}
 

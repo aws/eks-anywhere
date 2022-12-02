@@ -222,10 +222,10 @@ func kubeletCgroupDriverExtraArgs(kubeVersion v1alpha1.KubernetesVersion) (clust
 		return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", v1alpha1.Kube124, err)
 	}
 	if clusterKubeVersionSemver.Compare(kube124Semver) != -1 {
-		return nil, nil
+		return clusterapi.CgroupDriverSystemdExtraArgs(), nil
 	}
 
-	return clusterapi.CgroupDriverExtraArgs(), nil
+	return clusterapi.CgroupDriverCgroupfsExtraArgs(), nil
 }
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, error) {

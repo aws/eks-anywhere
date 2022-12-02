@@ -55,6 +55,7 @@ AWS_REGION=us-west-2
 
 BIN_DIR := bin
 TOOLS_BIN_DIR := hack/tools/bin
+TOOLS_BIN_DIR_ABS := $(shell pwd)/$(TOOLS_BIN_DIR)
 
 OUTPUT_DIR := _output
 OUTPUT_BIN_DIR := ${OUTPUT_DIR}/bin
@@ -251,7 +252,10 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
+	GOBIN=$(TOOLS_BIN_DIR_ABS) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
+
+$(GO_VULNCHECK): $(TOOLS_BIN_DIR)
+	GOBIN=$(TOOLS_BIN_DIR_ABS) go install golang.org/x/vuln/cmd/govulncheck@latest
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
@@ -265,12 +269,8 @@ $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_CONFIG)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_VERSION)
 
 .PHONY: vulncheck
-vulncheck: govulncheck
-	$(TOOLS_BIN_DIR)/govulncheck ./...
-
-govulncheck: ## Download and install govulncheck
-govulncheck:
-	$(call go-get-tool,$(GO_VULNCHECK),golang.org/x/vuln/cmd/govulncheck@latest)
+vulncheck: $(GO_VULNCHECK)
+	$(GO_VULNCHECK) ./...
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
@@ -492,7 +492,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,SSHAuthKeyGenerator
 	${GOPATH}/bin/mockgen -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient,ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/cloudstack/validator_mocks.go -package=cloudstack "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderValidator
-	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient
+	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,IPValidator
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/setupuser/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${GOPATH}/bin/mockgen -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
@@ -689,21 +689,6 @@ fake-controller-image-deps:
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller: $(KUSTOMIZE) $(ORGANIZE_BINARIES_TARGETS) fake-controller-image-deps
 	tilt up --file manager/Tiltfile
-
-# go-get-tool will 'go get' any package $2 and install it to $1.
-# originally copied from kubebuilder
-define go-get-tool
-@[ -f $(1) ] || { \
-set -e ;\
-BIN_PATH=$$(realpath $$(dirname $(1))) ;\
-PKG_BIN_NAME=$$(echo "$(2)" | sed 's,^.*/\(.*\)@v.*$$,\1,') ;\
-BIN_NAME=$$(basename $(1)) ;\
-echo "Install dir $$BIN_PATH" ;\
-echo "Downloading $(2)" ;\
-GOBIN=$$BIN_PATH go install $(2) ;\
-[[ $$PKG_BIN_NAME == $$BIN_NAME ]] || mv -f $$BIN_PATH/$$PKG_BIN_NAME $$BIN_PATH/$$BIN_NAME ;\
-}
-endef
 
 define BUILDCTL
 	$(BUILDKIT) \

@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -75,6 +76,60 @@ func (c *RetrierClient) RemoveAnnotationInNamespace(ctx context.Context, resourc
 	return c.Retry(
 		func() error {
 			return c.ClusterClient.RemoveAnnotationInNamespace(ctx, resourceType, objectName, key, cluster, namespace)
+		},
+	)
+}
+
+// ListObjects reads all Objects of a particular resource type in a namespace.
+func (c *RetrierClient) ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.ListObjects(ctx, resourceType, namespace, kubeconfig, list)
+		},
+	)
+}
+
+// DeleteGitOpsConfig deletes a GitOpsConfigObject from the cluster.
+func (c *RetrierClient) DeleteGitOpsConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.DeleteGitOpsConfig(ctx, cluster, name, namespace)
+		},
+	)
+}
+
+// DeleteEKSACluster deletes an EKSA Cluster object from the cluster.
+func (c *RetrierClient) DeleteEKSACluster(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.DeleteEKSACluster(ctx, cluster, name, namespace)
+		},
+	)
+}
+
+// DeleteAWSIamConfig deletes an AWSIamConfig object from the cluster.
+func (c *RetrierClient) DeleteAWSIamConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.DeleteAWSIamConfig(ctx, cluster, name, namespace)
+		},
+	)
+}
+
+// DeleteOIDCConfig deletes a OIDCConfig object from the cluster.
+func (c *RetrierClient) DeleteOIDCConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.DeleteOIDCConfig(ctx, cluster, name, namespace)
+		},
+	)
+}
+
+// DeleteCluster deletes a CAPI Cluster from the cluster.
+func (c *RetrierClient) DeleteCluster(ctx context.Context, cluster, clusterToDelete *types.Cluster) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.DeleteCluster(ctx, cluster, clusterToDelete)
 		},
 	)
 }

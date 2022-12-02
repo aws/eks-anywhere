@@ -27,7 +27,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	vspheremocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
@@ -51,9 +50,10 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 
 	vcb := govmomi.NewVMOMIClientBuilder()
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{}, vcb)
+	validator := vsphere.NewValidator(govcClient, vcb)
 	defaulter := vsphere.NewDefaulter(govcClient)
 	cniReconciler := vspherereconcilermocks.NewMockCNIReconciler(ctrl)
+	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
 
 	reconciler := vspherereconciler.New(
 		cl,
@@ -61,6 +61,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		defaulter,
 		cniReconciler,
 		nil,
+		ipValidator,
 	)
 	registry := clusters.NewProviderClusterReconcilerRegistryBuilder().
 		Add(anywherev1.VSphereDatacenterKind, reconciler).
@@ -101,6 +102,37 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(ctrl.Result{}))
+}
+
+func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
+	cluster := createCluster()
+	cluster.SetManagedBy(managementCluster.Name)
+	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
+
+	// Mark as paused
+	cluster.PauseReconcile()
+
+	c := fake.NewClientBuilder().WithRuntimeObjects(
+		managementCluster, cluster, capiCluster,
+	).Build()
+
+	ctrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
+	registry := newRegistryMock(providerReconciler)
+	r := controllers.NewClusterReconciler(c, registry)
+	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
+	api := envtest.NewAPIExpecter(t, c)
+
+	cl := envtest.CloneNameNamespace(cluster)
+	api.ShouldEventuallyMatch(ctx, cl, func(g Gomega) {
+		g.Expect(
+			controllerutil.ContainsFinalizer(cluster, controllers.ClusterFinalizerName),
+		).To(BeFalse(), "Cluster should not have the finalizer added")
+	})
 }
 
 func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
@@ -187,14 +219,11 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	// Mark as paused
 	cluster.PauseReconcile()
 
-	controller := gomock.NewController(t)
-	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
-	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(
 		managementCluster, cluster, capiCluster,
 	).Build()
 
-	r := controllers.NewClusterReconciler(c, registry)
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler())
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -204,6 +233,42 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 			controllerutil.ContainsFinalizer(cluster, controllers.ClusterFinalizerName),
 		).To(BeTrue(), "Cluster should still have the finalizer")
 	})
+
+	capiCl := envtest.CloneNameNamespace(capiCluster)
+	api.ShouldEventuallyMatch(ctx, capiCl, func(g Gomega) {
+		g.Expect(
+			capiCluster.DeletionTimestamp.IsZero(),
+		).To(BeTrue(), "CAPI cluster should exist and not be marked for deletion")
+	})
+}
+
+func TestClusterReconcilerReconcileDeleteClusterManagedByCLI(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
+	cluster := createCluster()
+	cluster.SetManagedBy(managementCluster.Name)
+	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
+	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
+
+	// Mark cluster for deletion
+	now := metav1.Now()
+	cluster.DeletionTimestamp = &now
+
+	// Mark as managed by CLI
+	cluster.Annotations[anywherev1.ManagedByCLIAnnotation] = "true"
+
+	c := fake.NewClientBuilder().WithRuntimeObjects(
+		managementCluster, cluster, capiCluster,
+	).Build()
+
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler())
+	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
+	api := envtest.NewAPIExpecter(t, c)
+
+	cl := envtest.CloneNameNamespace(cluster)
+	api.ShouldEventuallyNotExist(ctx, cl)
 
 	capiCl := envtest.CloneNameNamespace(capiCluster)
 	api.ShouldEventuallyMatch(ctx, capiCl, func(g Gomega) {

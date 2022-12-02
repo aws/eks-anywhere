@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 // CNIReconciler is an interface for reconciling CNI in the VSphere cluster reconciler.
@@ -31,23 +32,30 @@ type RemoteClientRegistry interface {
 	GetClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error)
 }
 
+// IPValidator is an interface that defines methods to validate the control plane IP.
+type IPValidator interface {
+	ValidateControlPlaneIPUniqueness(cluster *anywherev1.Cluster) error
+}
+
 type Reconciler struct {
 	client               client.Client
 	validator            *vsphere.Validator
 	defaulter            *vsphere.Defaulter
 	cniReconciler        CNIReconciler
 	remoteClientRegistry RemoteClientRegistry
+	ipValidator          IPValidator
 	*serverside.ObjectApplier
 }
 
 // New defines a new VSphere reconciler.
-func New(client client.Client, validator *vsphere.Validator, defaulter *vsphere.Defaulter, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry) *Reconciler {
+func New(client client.Client, validator *vsphere.Validator, defaulter *vsphere.Defaulter, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry, ipValidator IPValidator) *Reconciler {
 	return &Reconciler{
 		client:               client,
 		validator:            validator,
 		defaulter:            defaulter,
 		cniReconciler:        cniReconciler,
 		remoteClientRegistry: remoteClientRegistry,
+		ipValidator:          ipValidator,
 		ObjectApplier:        serverside.NewObjectApplier(client),
 	}
 }
@@ -96,6 +104,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	}
 
 	return controller.NewPhaseRunner().Register(
+		r.ValidateControlPlaneIP,
 		r.ValidateDatacenterConfig,
 		r.ValidateMachineConfigs,
 		clusters.CleanupStatusAfterValidate,
@@ -120,6 +129,18 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 		r.ValidateMachineConfigs,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
+}
+
+// ValidateControlPlaneIP validates that the control plane IP is unique.
+func (r *Reconciler) ValidateControlPlaneIP(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateControlPlaneIP")
+
+	if err := r.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
+		clusterSpec.Cluster.Status.FailureMessage = ptr.String(err.Error())
+		log.Error(err, "Unavailable control plane IP")
+		return controller.ResultWithReturn(), nil
+	}
+	return controller.Result{}, nil
 }
 
 // ValidateDatacenterConfig updates the cluster status if the VSphereDatacenter status indicates that the spec is invalid.
@@ -206,8 +227,10 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec
 }
 
 func toClientControlPlane(cp *vsphere.ControlPlane) *clusters.ControlPlane {
-	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.Secrets)+1)
-	other = append(other, cp.ClusterResourceSet)
+	other := make([]client.Object, 0, len(cp.ConfigMaps)+len(cp.Secrets)+len(cp.ClusterResourceSets)+1)
+	for _, o := range cp.ClusterResourceSets {
+		other = append(other, o)
+	}
 	for _, o := range cp.ConfigMaps {
 		other = append(other, o)
 	}

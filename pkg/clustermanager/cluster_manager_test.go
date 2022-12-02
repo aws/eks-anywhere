@@ -1417,10 +1417,7 @@ func TestPauseEKSAControllerReconcileWorkloadCluster(t *testing.T) {
 		},
 	}
 
-	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
-	tt.mocks.provider.EXPECT().MachineResourceType().Return("")
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
-	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.expectPauseClusterReconciliation()
 
 	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
@@ -1507,13 +1504,33 @@ func TestPauseEKSAControllerReconcileManagementCluster(t *testing.T) {
 	tt.mocks.provider.EXPECT().MachineResourceType().Return("").Times(2)
 	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil).Times(2)
 	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(
+		tt.ctx,
+		eksaClusterResourceType,
+		tt.clusterSpec.Cluster.Name,
+		map[string]string{
+			v1alpha1.ManagedByCLIAnnotation: "true",
+		},
+		tt.cluster,
+		"",
+	).Return(nil)
 	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, "workload-cluster-1", expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(
+		tt.ctx,
+		eksaClusterResourceType,
+		"workload-cluster-1",
+		map[string]string{
+			v1alpha1.ManagedByCLIAnnotation: "true",
+		},
+		tt.cluster,
+		"",
+	).Return(nil)
 
 	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
 
 func TestPauseEKSAControllerReconcileManagementClusterListObjectsError(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: tt.clusterName,
@@ -1560,6 +1577,16 @@ func TestPauseEKSAControllerReconcileWorkloadClusterWithMachineConfig(t *testing
 	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereMachineResourceType, tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
 	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereMachineResourceType, tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
 	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(
+		tt.ctx,
+		eksaClusterResourceType,
+		tt.clusterSpec.Cluster.Name,
+		map[string]string{
+			v1alpha1.ManagedByCLIAnnotation: "true",
+		},
+		tt.cluster,
+		"",
+	).Return(nil)
 
 	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
@@ -1596,6 +1623,14 @@ func TestResumeEKSAControllerReconcileWorkloadCluster(t *testing.T) {
 	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
 	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, tt.cluster, "").Return(nil)
 	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(
+		tt.ctx,
+		eksaClusterResourceType,
+		tt.clusterSpec.Cluster.Name,
+		v1alpha1.ManagedByCLIAnnotation,
+		tt.cluster,
+		"",
+	).Return(nil)
 
 	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
@@ -1706,17 +1741,36 @@ func TestResumeEKSAControllerReconcileManagementCluster(t *testing.T) {
 	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
 	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, tt.cluster, "").Return(nil).Times(2)
 	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(
+		tt.ctx,
+		eksaClusterResourceType,
+		tt.clusterSpec.Cluster.Name,
+		v1alpha1.ManagedByCLIAnnotation,
+		tt.cluster,
+		"",
+	).Return(nil)
 	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, "workload-cluster-1", pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(
+		tt.ctx,
+		eksaClusterResourceType,
+		"workload-cluster-1",
+		v1alpha1.ManagedByCLIAnnotation,
+		tt.cluster,
+		"",
+	).Return(nil)
 
 	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 	annotations := tt.clusterSpec.Cluster.GetAnnotations()
 	if _, ok := annotations[pauseAnnotation]; ok {
 		t.Errorf("%s annotation exists, should be removed", pauseAnnotation)
 	}
+	if _, ok := annotations[v1alpha1.ManagedByCLIAnnotation]; ok {
+		t.Errorf("%s annotation exists, should be removed", v1alpha1.ManagedByCLIAnnotation)
+	}
 }
 
 func TestResumeEKSAControllerReconcileManagementClusterListObjectsError(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: tt.clusterName,
@@ -1948,6 +2002,28 @@ type testSetup struct {
 	clusterName    string
 }
 
+func (tt *testSetup) expectPauseClusterReconciliation() *gomock.Call {
+	lastCall := tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(
+		tt.ctx,
+		eksaClusterResourceType,
+		tt.clusterSpec.Cluster.Name,
+		map[string]string{
+			v1alpha1.ManagedByCLIAnnotation: "true",
+		},
+		tt.cluster,
+		"",
+	).Return(nil)
+	gomock.InOrder(
+		tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType),
+		tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil),
+		tt.mocks.provider.EXPECT().MachineResourceType().Return(""),
+		tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil),
+		lastCall,
+	)
+
+	return lastCall
+}
+
 func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup {
 	c, m := newClusterManager(t, opts...)
 	clusterName := "cluster-name"
@@ -2029,4 +2105,59 @@ func TestCreateAwsIamAuthCaSecretSuccess(t *testing.T) {
 
 	err := tt.clusterManager.CreateAwsIamAuthCaSecret(tt.ctx, tt.cluster, tt.clusterName)
 	tt.Expect(err).To(BeNil())
+}
+
+func TestClusterManagerDeleteClusterSelfManagedCluster(t *testing.T) {
+	tt := newTest(t)
+	managementCluster := &types.Cluster{
+		Name: "m-cluster",
+	}
+
+	tt.mocks.client.EXPECT().DeleteCluster(tt.ctx, managementCluster, tt.cluster)
+	tt.mocks.provider.EXPECT().PostClusterDeleteValidate(tt.ctx, managementCluster)
+
+	tt.Expect(
+		tt.clusterManager.DeleteCluster(tt.ctx, managementCluster, tt.cluster, tt.mocks.provider, tt.clusterSpec),
+	).To(Succeed())
+}
+
+func TestClusterManagerDeleteClusterManagedCluster(t *testing.T) {
+	tt := newTest(t)
+	managementCluster := &types.Cluster{
+		Name: "m-cluster",
+	}
+	tt.clusterSpec.Cluster.SetManagedBy("m-cluster")
+	tt.clusterSpec.GitOpsConfig = &v1alpha1.GitOpsConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-config-git",
+			Namespace: "my-ns",
+		},
+	}
+	tt.clusterSpec.OIDCConfig = &v1alpha1.OIDCConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-config-oidc",
+			Namespace: "my-ns",
+		},
+	}
+	tt.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-config-aws",
+			Namespace: "my-ns",
+		},
+	}
+
+	gomock.InOrder(
+		tt.expectPauseClusterReconciliation(),
+		tt.mocks.client.EXPECT().DeleteEKSACluster(tt.ctx, managementCluster, tt.clusterSpec.Cluster.Name, tt.clusterSpec.Cluster.Namespace),
+		tt.mocks.client.EXPECT().DeleteGitOpsConfig(tt.ctx, managementCluster, "my-config-git", "my-ns"),
+		tt.mocks.client.EXPECT().DeleteOIDCConfig(tt.ctx, managementCluster, "my-config-oidc", "my-ns"),
+		tt.mocks.client.EXPECT().DeleteAWSIamConfig(tt.ctx, managementCluster, "my-config-aws", "my-ns"),
+		tt.mocks.provider.EXPECT().DeleteResources(tt.ctx, tt.clusterSpec),
+		tt.mocks.client.EXPECT().DeleteCluster(tt.ctx, managementCluster, tt.cluster),
+		tt.mocks.provider.EXPECT().PostClusterDeleteValidate(tt.ctx, managementCluster),
+	)
+
+	tt.Expect(
+		tt.clusterManager.DeleteCluster(tt.ctx, managementCluster, tt.cluster, tt.mocks.provider, tt.clusterSpec),
+	).To(Succeed())
 }

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint
 package snow
 
 import (
@@ -29,6 +30,9 @@ const (
 	// AWSSnowMachineFinalizer allows ReconcileAWSSnowMachine to clean up AWS Snow resources associated with AWSSnowMachine before
 	// removing it from the apiserver.
 	AWSSnowMachineFinalizer = "awssnowmachine.infrastructure.cluster.x-k8s.io"
+
+	// MachineEtcdLabelName is the label set on machines or related objects that are part of an etcd node.
+	MachineEtcdLabelName = "cluster.x-k8s.io/etcd-cluster"
 )
 
 // AWSSnowMachineSpec defines the desired state of AWSSnowMachine.
@@ -152,6 +156,15 @@ type AWSSnowMachineSpec struct {
 	// +kubebuilder:validation:MinItems=1
 	Devices []string `json:"devices,omitempty"`
 
+	// OSFamily is the OS flavor which is used as the node instance OS, currently support ubuntu and bottlerocket
+	// +kubebuilder:validation:Enum:=ubuntu;bottlerocket
+	// +optional
+	OSFamily *OSFamily `json:"osFamily,omitempty"`
+
+	// Network is the DNI and ip address settings for this machine
+	// +optional
+	Network *AWSSnowNetwork `json:"network,omitempty"`
+
 	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
 	// TODO: Evaluate the need or remove completely.
 	// +optional
@@ -162,6 +175,39 @@ type AWSSnowMachineSpec struct {
 	// TODO: Evaluate the need or remove completely.
 	// +kubebuilder:validation:Enum:=default;dedicated;host
 	// Tenancy string `json:"tenancy,omitempty"`
+}
+
+// AWSSnowNetwork is network configuration including DNI and DNS now. We can add more in the future if need
+type AWSSnowNetwork struct {
+	// DirectNetworkInterfaces is the configuration requirements for DNIs
+	// +kubebuilder:validation:MinItems=1
+	DirectNetworkInterfaces []AWSSnowDirectNetworkInterface `json:"directNetworkInterfaces,omitempty"`
+	// DNS is just for bottlerocket static ip config
+	// +optional
+	DNS []string `json:"dns,omitempty"`
+}
+
+// AWSSnowDirectNetworkInterface is configuration of DNIs specified by customers.
+type AWSSnowDirectNetworkInterface struct {
+	// Index is the index number of DNI
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=7
+	// +optional
+	Index int `json:"index,omitempty"`
+	// VlanID is the vlan ID assigned by the user
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=4095
+	// +optional
+	VlanID *int64 `json:"vlanID,omitempty"`
+	// DHCP is whether we assign ip using DHCP for this DNI
+	// +optional
+	DHCP bool `json:"dhcp,omitempty"`
+	// IPPool is the ip pool for this DNI if customers want to specify
+	// +optional
+	IPPool AWSSnowIPPool `json:"ipPool,omitempty"`
+	// Primary indicates whether the DNI is primary or not
+	// +optional
+	Primary bool `json:"primary,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
@@ -195,7 +241,7 @@ type CloudInit struct {
 	// SecureSecretsBackend SecretBackend `json:"secureSecretsBackend,omitempty"`
 }
 
-// AWSSnowMachineStatus defines the observed state of AWSSnowMachine.
+// AWSSnowMachineStatus defines the observed state of AWSSnowMachine
 type AWSSnowMachineStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -257,19 +303,19 @@ type AWSSnowMachineStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// AWSSnowMachine is the Schema for the awssnowmachines API.
+// AWSSnowMachine is the Schema for the awssnowmachines API
 type AWSSnowMachine struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	DeviceIp string               `json:"deviceIp,omitempty"`
+	DeviceIP string               `json:"deviceIP,omitempty"`
 	Spec     AWSSnowMachineSpec   `json:"spec,omitempty"`
 	Status   AWSSnowMachineStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// AWSSnowMachineList contains a list of AWSSnowMachine.
+// AWSSnowMachineList contains a list of AWSSnowMachine
 type AWSSnowMachineList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -286,6 +332,11 @@ func (r *AWSSnowMachine) SetConditions(conditions clusterv1.Conditions) {
 
 func (r *AWSSnowMachine) IsControlPlane() bool {
 	_, keyExists := r.ObjectMeta.Labels[clusterv1.MachineControlPlaneLabelName]
+	return keyExists
+}
+
+func (r *AWSSnowMachine) IsEtcd() bool {
+	_, keyExists := r.ObjectMeta.Labels[MachineEtcdLabelName]
 	return keyExists
 }
 

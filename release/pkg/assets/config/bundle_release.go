@@ -257,6 +257,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 		OnlyForDevRelease: true,
+		UsesKubeRbacProxy: true,
 	},
 	// Cluster-api-provider-tinkerbell artifacts
 	{

@@ -399,46 +399,61 @@ func (c *ClusterManager) RunPostCreateWorkloadCluster(ctx context.Context, manag
 }
 
 func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error {
-	return c.Retrier.Retry(
-		func() error {
-			if clusterSpec.Cluster.IsManaged() {
-				if err := c.PauseEKSAControllerReconcile(ctx, clusterToDelete, clusterSpec, provider); err != nil {
-					return err
-				}
+	if clusterSpec.Cluster.IsManaged() {
+		if err := c.deleteEKSAObjects(ctx, managementCluster, clusterToDelete, provider, clusterSpec); err != nil {
+			return err
+		}
+	}
 
-				if clusterSpec.GitOpsConfig != nil {
-					if err := c.DeleteGitOpsConfig(ctx, managementCluster, clusterSpec.GitOpsConfig.Name, clusterSpec.GitOpsConfig.Namespace); err != nil {
-						return err
-					}
-				}
-				if clusterSpec.OIDCConfig != nil {
-					if err := c.DeleteOIDCConfig(ctx, managementCluster, clusterSpec.OIDCConfig.Name, clusterSpec.OIDCConfig.Namespace); err != nil {
-						return err
-					}
-				}
+	logger.V(1).Info("Deleting CAPI cluster", "name", clusterToDelete.Name)
+	if err := c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete); err != nil {
+		return err
+	}
 
-				if clusterSpec.AWSIamConfig != nil {
-					if err := c.DeleteAWSIamConfig(ctx, managementCluster, clusterSpec.AWSIamConfig.Name, clusterSpec.AWSIamConfig.Namespace); err != nil {
-						return err
-					}
-				}
+	return provider.PostClusterDeleteValidate(ctx, managementCluster)
+}
 
-				if err := provider.DeleteResources(ctx, clusterSpec); err != nil {
-					return err
-				}
+func (c *ClusterManager) deleteEKSAObjects(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error {
+	log := logger.Get()
+	log.V(1).Info("Deleting EKS-A objects", "cluster", clusterSpec.Cluster.Name)
 
-				if err := c.DeleteEKSACluster(ctx, managementCluster, clusterSpec.Cluster.Name, clusterSpec.Cluster.Namespace); err != nil {
-					return err
-				}
-			}
+	log.V(2).Info("Pausing EKS-A reconciliation", "cluster", clusterSpec.Cluster.Name)
+	if err := c.PauseEKSAControllerReconcile(ctx, clusterToDelete, clusterSpec, provider); err != nil {
+		return err
+	}
 
-			if err := c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete); err != nil {
-				return err
-			}
+	log.V(2).Info("Deleting EKS-A Cluster", "name", clusterSpec.Cluster.Name)
+	if err := c.clusterClient.DeleteEKSACluster(ctx, managementCluster, clusterSpec.Cluster.Name, clusterSpec.Cluster.Namespace); err != nil {
+		return err
+	}
 
-			return provider.PostClusterDeleteValidate(ctx, managementCluster)
-		},
-	)
+	if clusterSpec.GitOpsConfig != nil {
+		log.V(2).Info("Deleting GitOpsConfig", "name", clusterSpec.GitOpsConfig.Name)
+		if err := c.clusterClient.DeleteGitOpsConfig(ctx, managementCluster, clusterSpec.GitOpsConfig.Name, clusterSpec.GitOpsConfig.Namespace); err != nil {
+			return err
+		}
+	}
+
+	if clusterSpec.OIDCConfig != nil {
+		log.V(2).Info("Deleting OIDCConfig", "name", clusterSpec.OIDCConfig.Name)
+		if err := c.clusterClient.DeleteOIDCConfig(ctx, managementCluster, clusterSpec.OIDCConfig.Name, clusterSpec.OIDCConfig.Namespace); err != nil {
+			return err
+		}
+	}
+
+	if clusterSpec.AWSIamConfig != nil {
+		log.V(2).Info("Deleting AWSIamConfig", "name", clusterSpec.AWSIamConfig.Name)
+		if err := c.clusterClient.DeleteAWSIamConfig(ctx, managementCluster, clusterSpec.AWSIamConfig.Name, clusterSpec.AWSIamConfig.Namespace); err != nil {
+			return err
+		}
+	}
+
+	log.V(2).Info("Cleaning up provider specific resources")
+	if err := provider.DeleteResources(ctx, clusterSpec); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, provider providers.Provider) error {
@@ -1041,7 +1056,17 @@ func (c *ClusterManager) pauseReconcileForCluster(ctx context.Context, clusterCr
 
 	err = c.clusterClient.UpdateAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
-		return fmt.Errorf("updating annotation when pausing cluster reconciliation: %v", err)
+		return fmt.Errorf("updating paused annotation in cluster reconciliation: %v", err)
+	}
+
+	if err = c.clusterClient.UpdateAnnotationInNamespace(ctx,
+		cluster.ResourceType(),
+		cluster.Name,
+		map[string]string{v1alpha1.ManagedByCLIAnnotation: "true"},
+		clusterCreds,
+		cluster.Namespace,
+	); err != nil {
+		return fmt.Errorf("updating managed by cli annotation in cluster when pausing cluster reconciliation: %v", err)
 	}
 	return nil
 }
@@ -1082,20 +1107,31 @@ func (c *ClusterManager) resumeReconcileForCluster(ctx context.Context, clusterC
 	pausedAnnotation := cluster.PausedAnnotation()
 	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), cluster.Spec.DatacenterRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
-		return fmt.Errorf("updating annotation when unpausing datacenterconfig reconciliation: %v", err)
+		return fmt.Errorf("removing paused annotation when resuming datacenterconfig reconciliation: %v", err)
 	}
+
 	if provider.MachineResourceType() != "" {
 		for _, machineConfigRef := range cluster.MachineConfigRefs() {
 			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 			if err != nil {
-				return fmt.Errorf("updating annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
+				return fmt.Errorf("removing paused annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
 	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
-		return fmt.Errorf("updating annotation when unpausing cluster reconciliation: %v", err)
+		return fmt.Errorf("removing paused annotation when resuming cluster reconciliation: %v", err)
+	}
+
+	if err = c.clusterClient.RemoveAnnotationInNamespace(ctx,
+		cluster.ResourceType(),
+		cluster.Name,
+		v1alpha1.ManagedByCLIAnnotation,
+		clusterCreds,
+		cluster.Namespace,
+	); err != nil {
+		return fmt.Errorf("removing managed by CLI annotation when resuming cluster reconciliation: %v", err)
 	}
 
 	return nil
@@ -1156,22 +1192,6 @@ func (c *ClusterManager) awsIamConfigFetcher(cluster *types.Cluster) cluster.AWS
 	return func(ctx context.Context, name, namespace string) (*v1alpha1.AWSIamConfig, error) {
 		return c.clusterClient.GetEksaAWSIamConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
-}
-
-func (c *ClusterManager) DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
-	return c.clusterClient.DeleteGitOpsConfig(ctx, managementCluster, name, namespace)
-}
-
-func (c *ClusterManager) DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
-	return c.clusterClient.DeleteOIDCConfig(ctx, managementCluster, name, namespace)
-}
-
-func (c *ClusterManager) DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
-	return c.clusterClient.DeleteAWSIamConfig(ctx, managementCluster, name, namespace)
-}
-
-func (c *ClusterManager) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
-	return c.clusterClient.DeleteEKSACluster(ctx, managementCluster, name, namespace)
 }
 
 func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
