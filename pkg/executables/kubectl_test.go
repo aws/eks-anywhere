@@ -3006,13 +3006,23 @@ func TestRunBusyBoxPod(t *testing.T) {
 	}
 }
 
-func TestGetPodIPByLabel(t *testing.T) {
+func TestGetPodNameByLabel(t *testing.T) {
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
-	expectedParam := []string{"get", "pod", "-l=app.kubernetes.io/name=aws-otel-collector", "-o=jsonpath='{.items[0].status.podIP}'", "--kubeconfig", "c.kubeconfig", "--namespace", "observability"}
+	expectedParam := []string{"get", "pod", "-l=app.kubernetes.io/name=aws-otel-collector", "-o=jsonpath='{.items[0].metadata.name}'", "--kubeconfig", "c.kubeconfig", "--namespace", "observability"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	if _, err := tt.k.GetPodIPByLabel(tt.ctx, "observability", "app.kubernetes.io/name=aws-otel-collector", tt.cluster.KubeconfigFile); err != nil {
-		t.Errorf("Kubectl.GetPodIPByLabel() error = %v, want nil", err)
+	if _, err := tt.k.GetPodNameByLabel(tt.ctx, "observability", "app.kubernetes.io/name=aws-otel-collector", tt.cluster.KubeconfigFile); err != nil {
+		t.Errorf("Kubectl.GetPodNameByLabel() error = %v, want nil", err)
+	}
+}
+
+func TestGetPodIP(t *testing.T) {
+	tt := newKubectlTest(t)
+	var b bytes.Buffer
+	expectedParam := []string{"get", "pod", "generated-adot-75f769bc7-f7pmv", "-o=jsonpath='{.status.podIP}'", "--kubeconfig", "c.kubeconfig", "--namespace", "observability"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
+	if _, err := tt.k.GetPodIP(tt.ctx, "observability", "generated-adot-75f769bc7-f7pmv", tt.cluster.KubeconfigFile); err != nil {
+		t.Errorf("Kubectl.GetPodIP() error = %v, want nil", err)
 	}
 }
 

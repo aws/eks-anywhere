@@ -1148,10 +1148,22 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
 
-	e.T.Log("Launching Busybox pod to test Package", packageName)
-	podIPAddress, err := e.KubectlClient.GetPodIPByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
+	e.T.Log("Reading", packageName, "pod logs")
+	adotPodName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
 	if err != nil {
-		e.T.Fatalf("unable to get ip of the collector pod: %s", err)
+		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
+	}
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
+	ok := strings.Contains(logs, "Everything is ready")
+	if !ok {
+		e.T.Fatalf("expected to find 'Everything is ready' in the log, got %s", logs)
+	}
+
+	e.T.Log("Launching Busybox pod to test Package", packageName)
+	podIPAddress, err := e.KubectlClient.GetPodIP(context.TODO(), targetNamespace, adotPodName, e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("unable to get ip of the aws-otel-collector pod: %s", err)
 	}
 	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
 	busyBoxName := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
@@ -1167,12 +1179,12 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
 	}
 	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
+	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from curl adot\n %s\n", logs)
-	ok := strings.Contains(logs, "otelcol_exporter")
+	ok = strings.Contains(logs, "otelcol_exporter")
 	if !ok {
 		e.T.Fatalf("expected to find otelcol_exporter in the log, got %s", logs)
 	}
