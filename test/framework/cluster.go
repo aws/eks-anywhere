@@ -1154,6 +1154,9 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
 	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
 	ok := strings.Contains(logs, "Everything is ready")
 	if !ok {
