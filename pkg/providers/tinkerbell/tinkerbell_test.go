@@ -1371,8 +1371,8 @@ func TestSetupAndValidateCreateWorkloadClusterErrorManagementClusterTinkerbellIP
 	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
 	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, fmt.Errorf("error getting management cluster tinkerbellIP"))
+	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, fmt.Errorf("error"))
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	assertError(t, "error getting management cluster tinkerbellIP", err)
+	assertError(t, "getting TinkerbellIP of management cluster: error", err)
 }
