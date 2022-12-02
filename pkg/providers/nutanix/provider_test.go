@@ -26,6 +26,7 @@ import (
 	mockCrypto "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
+	mocknutanix "github.com/aws/eks-anywhere/pkg/providers/nutanix/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -56,10 +57,10 @@ func testDefaultNutanixProvider(t *testing.T) *Provider {
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	kubectl := executables.NewKubectl(executable)
 
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
 
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 
@@ -156,9 +157,9 @@ func TestNutanixProviderDeleteResources(t *testing.T) {
 	executable.EXPECT().Execute(gomock.Any(), "delete", []string{"nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", "testdata/kubeconfig.yaml", "--namespace", "default", "--ignore-not-found=true"}, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
 	kubectl := executables.NewKubectl(executable)
 
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
@@ -227,7 +228,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	kubectl := executables.NewKubectl(executable)
 
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
 	clusters := &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
@@ -323,7 +324,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("invalid cert"))
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
@@ -424,9 +425,9 @@ func TestNutanixProviderUpdateSecrets(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
 	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
@@ -442,9 +443,9 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
 	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
@@ -462,9 +463,9 @@ func TestNutanixProviderGenerateCAPISpecForCreate_Error(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, errors.New("test error"))
 	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
@@ -492,9 +493,9 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	executable.EXPECT().Execute(gomock.Any(), "get",
 		"kubeadmcontrolplanes.controlplane.cluster.x-k8s.io", "eksa-unit-test", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "--namespace", "eksa-system").Return(*bytes.NewBufferString(nutanixMachineDeploymentSpecJSON), nil)
 	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
@@ -512,9 +513,9 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade_Error(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, errors.New("test error"))
 	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
@@ -868,9 +869,9 @@ func TestNutanixProviderUpgradeNeeded(t *testing.T) {
 		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "--namespace", "default", "eksa-unit-test"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil)
 	kubectl := executables.NewKubectl(executable)
-	mockClient := NewMockClient(ctrl)
+	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
-	mockTransport := NewMockRoundTripper(ctrl)
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
