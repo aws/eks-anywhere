@@ -827,7 +827,7 @@ func TestNutanixKubernetes123To124UbuntuUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate123Var()),
+		provider.WithProviderUpgrade(framework.UpdateNutanixUbuntuTemplate124Var()),
 	)
 }
 
