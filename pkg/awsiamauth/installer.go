@@ -2,8 +2,6 @@ package awsiamauth
 
 import (
 	"context"
-	_ "embed"
-	"encoding/base64"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -13,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -28,15 +25,6 @@ type KubernetesClient interface {
 		namespace string,
 	) ([]byte, error)
 }
-
-//go:embed config/aws-iam-authenticator.yaml
-var awsIamAuthTemplate string
-
-//go:embed config/aws-iam-authenticator-ca-secret.yaml
-var awsIamAuthCaSecretTemplate string
-
-//go:embed config/aws-iam-authenticator-kubeconfig.yaml
-var awsIamAuthKubeconfigTemplate string
 
 // Installer provides the necessary behavior for installing the AWS IAM Authenticator.
 type Installer struct {
@@ -124,35 +112,11 @@ func (i *Installer) generateManifestForUpgrade(clusterSpec *cluster.Spec) ([]byt
 }
 
 func (i *Installer) generateCertKeyPairSecret(managementClusterName string) ([]byte, error) {
-	certPemBytes, keyPemBytes, err := i.certgen.GenerateIamAuthSelfSignCertKeyPair()
-	if err != nil {
-		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
-	}
-	data := map[string]string{
-		"clusterName":  managementClusterName,
-		"namespace":    constants.EksaSystemNamespace,
-		"certPemBytes": base64.StdEncoding.EncodeToString(certPemBytes),
-		"keyPemBytes":  base64.StdEncoding.EncodeToString(keyPemBytes),
-	}
-	awsIamAuthCaSecret, err := templater.Execute(awsIamAuthCaSecretTemplate, data)
-	if err != nil {
-		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
-	}
-	return awsIamAuthCaSecret, nil
+	return i.templateBuilder.GenerateCertKeyPairSecret(i.certgen, managementClusterName)
 }
 
 func (i *Installer) generateInstallerKubeconfig(clusterSpec *cluster.Spec, serverURL, tlsCert string) ([]byte, error) {
-	data := map[string]string{
-		"clusterName": clusterSpec.Cluster.Name,
-		"server":      serverURL,
-		"cert":        tlsCert,
-		"clusterID":   i.clusterID.String(),
-	}
-	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
-	if err != nil {
-		return nil, fmt.Errorf("generating aws-iam-authenticator kubeconfig content: %v", err)
-	}
-	return awsIamAuthKubeconfig, nil
+	return i.templateBuilder.GenerateKubeconfig(clusterSpec, i.clusterID, serverURL, tlsCert)
 }
 
 func (i *Installer) generateKubeconfig(

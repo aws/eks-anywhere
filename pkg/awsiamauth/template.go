@@ -1,6 +1,8 @@
 package awsiamauth
 
 import (
+	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -9,8 +11,19 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
+
+//go:embed config/aws-iam-authenticator.yaml
+var awsIamAuthTemplate string
+
+//go:embed config/aws-iam-authenticator-ca-secret.yaml
+var awsIamAuthCaSecretTemplate string
+
+//go:embed config/aws-iam-authenticator-kubeconfig.yaml
+var awsIamAuthKubeconfigTemplate string
 
 // TemplateBuilder generates manifest files from templates.
 type TemplateBuilder struct{}
@@ -82,4 +95,38 @@ func (t *TemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (string, error) 
 	s = strings.TrimSuffix(s, "\n")
 
 	return s, nil
+}
+
+// GenerateCertKeyPairSecret generates a YAML Kubernetes Secret for deploying the AWS IAM Authenticator.
+func (t *TemplateBuilder) GenerateCertKeyPairSecret(certgen crypto.CertificateGenerator, managementClusterName string) ([]byte, error) {
+	certPemBytes, keyPemBytes, err := certgen.GenerateIamAuthSelfSignCertKeyPair()
+	if err != nil {
+		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
+	}
+	data := map[string]string{
+		"name":         GetAwsIamAuthCaSecretName(managementClusterName),
+		"namespace":    constants.EksaSystemNamespace,
+		"certPemBytes": base64.StdEncoding.EncodeToString(certPemBytes),
+		"keyPemBytes":  base64.StdEncoding.EncodeToString(keyPemBytes),
+	}
+	awsIamAuthCaSecret, err := templater.Execute(awsIamAuthCaSecretTemplate, data)
+	if err != nil {
+		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
+	}
+	return awsIamAuthCaSecret, nil
+}
+
+// GenerateKubeconfig generates a Kubeconfig for access management with AWS IAM Authenticator.
+func (t *TemplateBuilder) GenerateKubeconfig(clusterSpec *cluster.Spec, clusterID uuid.UUID, serverURL, tlsCert string) ([]byte, error) {
+	data := map[string]string{
+		"clusterName": clusterSpec.Cluster.Name,
+		"server":      serverURL,
+		"cert":        tlsCert,
+		"clusterID":   clusterID.String(),
+	}
+	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
+	if err != nil {
+		return nil, fmt.Errorf("generating aws-iam-authenticator kubeconfig content: %v", err)
+	}
+	return awsIamAuthKubeconfig, nil
 }
