@@ -747,7 +747,6 @@ func validatePodIAMConfig(clusterConfig *Cluster) error {
 
 func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy == nil {
-		logger.Info("ControlPlaneConfiguration: UpgradeRolloutStrategy not specified in cluster config. CAPI will default to 'RollingUpdate' with maxSurge=1")
 		return nil
 	}
 
@@ -768,7 +767,6 @@ func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
 
 func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
 	if w.UpgradeRolloutStrategy == nil {
-		logger.Info("WorkerNodeGroupConfigurations: UpgradeRolloutStrategy not specified in cluster config. CAPI will default to 'RollingUpdate' with maxSurge=1 and maxUnavailable=0")
 		return nil
 	}
 
