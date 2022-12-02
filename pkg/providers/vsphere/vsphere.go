@@ -271,6 +271,9 @@ func (p *vsphereProvider) PostMoveManagementToBootstrap(_ context.Context, _ *ty
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -367,6 +370,9 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -448,6 +454,9 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 }
 
 func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, spec *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(spec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	if err := SetupEnvVars(spec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
