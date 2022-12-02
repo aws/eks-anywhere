@@ -160,7 +160,7 @@ Bare Metal EKS Anywhere clusters do not yet support the creation of separate wor
 ### workerNodeGroupConfigurations
 This takes in a list of node groups that you can define for your workers.
 
-You may define 0 worker node group for Bare Metal cluster. In this case, control plane nodes will not be tainted and all pods will be running in the control plane nodes. This mechanism can be used to deploy a single node Bare Metal cluster.
+You can omit workerNodeGroupConfigurations when creating Bare Metal clusters. In this case, control plane nodes will not be tainted and all pods will run on the control plane nodes. This mechanism can be used to deploy Bare Metal clusters on a single server.
 
 >**_NOTE:_** Empty workerNodeGroupConfigurations is not supported when Kubernetes version <= 1.21.
 

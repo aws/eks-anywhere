@@ -48,11 +48,11 @@ The following sections describe each value.
 
 ### hostname
 The hostname assigned to the machine.
-### bmc_ip
+### bmc_ip (optional)
 The IP address assigned to the IPMI interface on the machine.
-### bmc_username
+### bmc_username (optional)
 The username assigned to the IPMI interface on the machine.
-### bmc_password
+### bmc_password (optional)
 The password associated with the `bmc_username` assigned to the IPMI interface on the machine.
 ### mac
 The MAC address of the network interface card (NIC) that provides access to the host computer.
