@@ -907,6 +907,26 @@ func (k *Kubectl) RunBusyBoxPod(ctx context.Context, namespace, name, kubeconfig
 	return name, err
 }
 
+// GetPodNameByLabel will return the name of the first pod that matches the label.
+func (k *Kubectl) GetPodNameByLabel(ctx context.Context, namespace, label, kubeconfig string) (string, error) {
+	params := []string{"get", "pod", "-l=" + label, "-o=jsonpath='{.items[0].metadata.name}'", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	podName, err := k.Execute(ctx, params...)
+	if err != nil {
+		return "", err
+	}
+	return strings.Trim(podName.String(), `'"`), err
+}
+
+// GetPodIP will return the ip of the pod.
+func (k *Kubectl) GetPodIP(ctx context.Context, namespace, podName, kubeconfig string) (string, error) {
+	params := []string{"get", "pod", podName, "-o=jsonpath='{.status.podIP}'", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	ip, err := k.Execute(ctx, params...)
+	if err != nil {
+		return "", err
+	}
+	return strings.Trim(ip.String(), `'"`), err
+}
+
 // GetPodLogs returns the logs of the specified container (namespace/pod/container).
 func (k *Kubectl) GetPodLogs(ctx context.Context, namespace, podName, containerName, kubeconfig string) (string, error) {
 	return k.getPodLogs(ctx, namespace, podName, containerName, kubeconfig, nil, nil)

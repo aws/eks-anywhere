@@ -1136,6 +1136,63 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *t
 	}
 }
 
+// VerifyAdotPackageInstalled is checking if the ADOT package gets installed correctly.
+func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNamespace string) {
+	ctx := context.Background()
+
+	e.T.Log("Waiting for Package", packageName, "deployment to be healthy")
+	time.Sleep(3 * time.Minute) // Add sleep to allow deployment to be created
+	err := e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
+	}
+
+	e.T.Log("Reading", packageName, "pod logs")
+	adotPodName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
+	}
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
+	ok := strings.Contains(logs, "Everything is ready")
+	if !ok {
+		e.T.Fatalf("expected to find 'Everything is ready' in the log, got %s", logs)
+	}
+
+	e.T.Log("Launching Busybox pod to test Package", packageName)
+	podIPAddress, err := e.KubectlClient.GetPodIP(context.TODO(), targetNamespace, adotPodName, e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("unable to get ip of the aws-otel-collector pod: %s", err)
+	}
+	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
+	busyBoxName := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), targetNamespace, busyBoxName, e.kubeconfigFilePath(), []string{"curl", podFullIPAddress})
+	if err != nil {
+		e.T.Fatalf("error launching busybox pod: %s", err)
+	}
+
+	e.T.Log("Waiting Busybox pod", clientPod, "to be ready")
+	err = e.KubectlClient.WaitForPodCompleted(ctx,
+		e.cluster(), clientPod, "5m", targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
+	}
+	e.T.Log("Checking Busybox pod logs", clientPod)
+	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	fmt.Printf("Logs from curl adot\n %s\n", logs)
+	ok = strings.Contains(logs, "otelcol_exporter")
+	if !ok {
+		e.T.Fatalf("expected to find otelcol_exporter in the log, got %s", logs)
+	}
+}
+
 //go:embed testdata/emissary_listener.yaml
 var emisarryListener []byte
 
