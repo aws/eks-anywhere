@@ -17,4 +17,5 @@ description: >
 | [Harbor]({{< relref "./harbor" >}}) | Harbor is an open source trusted cloud native registry project that stores, signs, and scans content. | [v2.5.0]({{< relref "./harbor/v2.5.0.md" >}})<br> [v2.5.1]({{< relref "./harbor/v2.5.1.md" >}}) | https://github.com/goharbor/harbor<br>https://github.com/goharbor/harbor-helm |
 | [MetalLB]({{< relref "./metallb" >}}) | MetalLB is a virtual IP provider for services of type `LoadBalancer` supporting ARP and BGP. | [v0.12.1]({{< relref "./metallb/v0.12.1.md" >}}) | https://github.com/metallb/metallb/ |
 | [Metrics Server]({{< relref "./metrics-server" >}}) | Metrics Server is a scalable, efficient source of container resource metrics for Kubernetes built-in autoscaling pipelines. | [v3.8.2]({{< relref "./metrics-server/v3.8.2.md" >}}) | https://github.com/kubernetes-sigs/metrics-server |
+| [Prometheus]({{< relref "./prometheus" >}}) | Prometheus is an open-source systems monitoring and alerting toolkit that collects and stores metrics as time series data. | [v2.39.1]({{< relref "./prometheus/v2.39.1.md" >}}) | https://github.com/prometheus/prometheus |
 
