@@ -558,6 +558,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/validations/createcluster/mocks/createcluster.go -package=mocks -source "pkg/validations/createcluster/createcluster.go"
 	${GOPATH}/bin/mockgen -destination=pkg/awsiamauth/mock_test.go -package=awsiamauth_test -source "pkg/awsiamauth/installer.go"
 	${GOPATH}/bin/mockgen -destination=controllers/mocks/provider.go -package=mocks -source "pkg/controller/clusters/registry.go"
+	${GOPATH}/bin/mockgen -destination=pkg/controller/clusters/mocks/validations.go -package=mocks -source "pkg/controller/clusters/validations.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

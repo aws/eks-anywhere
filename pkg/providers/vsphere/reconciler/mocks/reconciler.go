@@ -8,7 +8,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	controller "github.com/aws/eks-anywhere/pkg/controller"
 	logr "github.com/go-logr/logr"
@@ -115,16 +114,17 @@ func (m *MockIPValidator) EXPECT() *MockIPValidatorMockRecorder {
 	return m.recorder
 }
 
-// ValidateControlPlaneIPUniqueness mocks base method.
-func (m *MockIPValidator) ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error {
+// ValidateControlPlaneIP mocks base method.
+func (m *MockIPValidator) ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateControlPlaneIPUniqueness", cluster)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "ValidateControlPlaneIP", ctx, log, spec)
+	ret0, _ := ret[0].(controller.Result)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// ValidateControlPlaneIPUniqueness indicates an expected call of ValidateControlPlaneIPUniqueness.
-func (mr *MockIPValidatorMockRecorder) ValidateControlPlaneIPUniqueness(cluster interface{}) *gomock.Call {
+// ValidateControlPlaneIP indicates an expected call of ValidateControlPlaneIP.
+func (mr *MockIPValidatorMockRecorder) ValidateControlPlaneIP(ctx, log, spec interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneIPUniqueness", reflect.TypeOf((*MockIPValidator)(nil).ValidateControlPlaneIPUniqueness), cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneIP", reflect.TypeOf((*MockIPValidator)(nil).ValidateControlPlaneIP), ctx, log, spec)
 }
