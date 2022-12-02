@@ -4842,7 +4842,7 @@ spec:
                           type: boolean
                         index:
                           description: Index is the index number of DNI
-                          maximum: 7
+                          maximum: 8
                           minimum: 1
                           type: integer
                         ipPool:
@@ -4910,6 +4910,7 @@ spec:
                           minimum: 0
                           type: integer
                       type: object
+                    maxItems: 8
                     minItems: 1
                     type: array
                   dns:
