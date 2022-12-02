@@ -125,8 +125,9 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
+	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(ctrl)
 	registry := newRegistryMock(providerReconciler)
-	r := controllers.NewClusterReconciler(c, registry)
+	r := controllers.NewClusterReconciler(c, registry, iam)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -268,8 +269,10 @@ func TestClusterReconcilerReconcileDeleteClusterManagedByCLI(t *testing.T) {
 	c := fake.NewClientBuilder().WithRuntimeObjects(
 		managementCluster, cluster, capiCluster,
 	).Build()
+	controller := gomock.NewController(t)
+	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(controller)
 
-	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler())
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
