@@ -110,7 +110,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			expectedError: "vCPUs per socket 0 must be greater than or equal to 1",
 		},
 		{
-			name: "invalid memory size",
+			name: "memory size less than min required",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.MemorySize = resource.MustParse("100Mi")
 				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
@@ -316,25 +316,25 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		machineConfig := &anywherev1.NutanixMachineConfig{}
-		err := yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
-		require.NoError(t, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			machineConfig := &anywherev1.NutanixMachineConfig{}
+			err := yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
+			require.NoError(t, err)
 
-		mockClient := mocknutanix.NewMockClient(ctrl)
-		validator := tt.setup(machineConfig, mockClient, mockCrypto.NewMockTlsValidator(ctrl), mocknutanix.NewMockRoundTripper(ctrl))
-		err = validator.ValidateMachineConfig(context.Background(), machineConfig)
-		if tt.expectedError != "" {
-			assert.Contains(t, err.Error(), tt.expectedError)
-		} else {
-			assert.NoError(t, err)
-		}
+			mockClient := mocknutanix.NewMockClient(ctrl)
+			validator := tc.setup(machineConfig, mockClient, mockCrypto.NewMockTlsValidator(ctrl), mocknutanix.NewMockRoundTripper(ctrl))
+			err = validator.ValidateMachineConfig(context.Background(), machineConfig)
+			if tc.expectedError != "" {
+				assert.Contains(t, err.Error(), tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }
 
 func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
-	ctrl := gomock.NewController(t)
-
 	tests := []struct {
 		name       string
 		dcConfFile string
@@ -364,29 +364,76 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		dcConf := &anywherev1.NutanixDatacenterConfig{}
-		err := yaml.Unmarshal([]byte(tt.dcConfFile), dcConf)
-		require.NoError(t, err)
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
 
-		mockClient := mocknutanix.NewMockClient(ctrl)
-		mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-		mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
-		mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 
-		mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
-		mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	validator := NewValidator(mockClient, mockTLSValidator, mockHTTPClient)
+	require.NotNil(t, validator)
 
-		mockHTTPClient := &http.Client{Transport: mockTransport}
-		validator := NewValidator(mockClient, mockTLSValidator, mockHTTPClient)
-		require.NotNil(t, validator)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dcConf := &anywherev1.NutanixDatacenterConfig{}
+			err := yaml.Unmarshal([]byte(tc.dcConfFile), dcConf)
+			require.NoError(t, err)
 
-		err = validator.ValidateDatacenterConfig(context.Background(), dcConf)
-		if tt.expectErr {
-			assert.Error(t, err, tt.name)
-		} else {
-			assert.NoError(t, err, tt.name)
-		}
+			err = validator.ValidateDatacenterConfig(context.Background(), dcConf)
+			if tc.expectErr {
+				assert.Error(t, err, tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+			}
+		})
+	}
+}
+
+func TestNutanixValidatorValidateDatacenterConfigWithInvalidCreds(t *testing.T) {
+	tests := []struct {
+		name       string
+		dcConfFile string
+		expectErr  bool
+	}{
+		{
+			name:       "valid datacenter config without trust bundle",
+			dcConfFile: nutanixDatacenterConfigSpec,
+			expectErr:  true,
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	mockClient := mocknutanix.NewMockClient(ctrl)
+	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, errors.New("GetCurrentLoggedInUser returned error")).AnyTimes()
+
+	mockTLSValidator := mockCrypto.NewMockTlsValidator(ctrl)
+	mockTLSValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
+	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
+
+	mockHTTPClient := &http.Client{Transport: mockTransport}
+	validator := NewValidator(mockClient, mockTLSValidator, mockHTTPClient)
+	require.NotNil(t, validator)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			dcConf := &anywherev1.NutanixDatacenterConfig{}
+			err := yaml.Unmarshal([]byte(tc.dcConfFile), dcConf)
+			require.NoError(t, err)
+
+			err = validator.ValidateDatacenterConfig(context.Background(), dcConf)
+			if tc.expectErr {
+				assert.Error(t, err, tc.name)
+			} else {
+				assert.NoError(t, err, tc.name)
+			}
+
+		})
 	}
 }
