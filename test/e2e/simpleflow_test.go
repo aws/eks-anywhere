@@ -546,7 +546,6 @@ func TestNutanixKubernetes124SimpleFlow(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }

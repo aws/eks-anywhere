@@ -568,7 +568,6 @@ func TestCPackagesNutanixKubernetes124SimpleFlow(t *testing.T) {
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
