@@ -146,28 +146,6 @@ func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementClus
 	return nil
 }
 
-func (p *Provider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1alpha1.VSphereMachineConfig) error {
-	var generatedKey string
-	for _, machineConfig := range machineConfigs {
-		user := machineConfig.Spec.Users[0]
-		if user.SshAuthorizedKeys[0] == "" {
-			if generatedKey != "" { // use the same key
-				user.SshAuthorizedKeys[0] = generatedKey
-			} else {
-				logger.Info("Provided sshAuthorizedKey is not set or is empty, auto-generating new key pair...", "vSphereMachineConfig", machineConfig.Name)
-				var err error
-				generatedKey, err = common.GenerateSSHAuthKey(p.writer)
-				if err != nil {
-					return err
-				}
-				user.SshAuthorizedKeys[0] = generatedKey
-			}
-		}
-	}
-
-	return nil
-}
-
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The nutanix infrastructure provider is still in development and should not be used in production")
 	if err := setupEnvVars(clusterSpec.NutanixDatacenter); err != nil {
@@ -182,10 +160,6 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		if err := p.validator.ValidateMachineConfig(ctx, conf); err != nil {
 			return fmt.Errorf("failed to validate machine config: %v", err)
 		}
-	}
-
-	if err := p.generateSSHKeysIfNotSet(clusterSpec.VSphereMachineConfigs); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
 	return nil
