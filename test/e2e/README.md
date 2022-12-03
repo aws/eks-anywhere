@@ -64,8 +64,8 @@ The format is: `T_VSPHERE_TEMPLATE_{OS}_{EKS-D VERSION}`. For example, for Ubunt
  The following env variables need to be set:
 
  ```sh
- EKSA_NUTANIX_USERNAME
- EKSA_NUTANIX_PASSWORD
+ NUTANIX_USER
+ NUTANIX_PASSWORD
 
  T_NUTANIX_ENDPOINT
  T_NUTANIX_PORT

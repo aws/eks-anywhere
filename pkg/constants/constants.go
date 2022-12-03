@@ -56,8 +56,8 @@ const (
 	GovcPasswordKey    = "GOVC_PASSWORD"
 	SnowCredentialsKey = "AWS_B64ENCODED_CREDENTIALS"
 	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
-	NutanixUsernameKey = "EKSA_NUTANIX_USERNAME"
-	NutanixPasswordKey = "EKSA_NUTANIX_PASSWORD"
+	NutanixUsernameKey = "NUTANIX_USER"
+	NutanixPasswordKey = "NUTANIX_PASSWORD"
 
 	SecretKind             = "Secret"
 	ConfigMapKind          = "ConfigMap"
