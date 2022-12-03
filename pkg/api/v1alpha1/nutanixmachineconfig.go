@@ -45,7 +45,7 @@ type NutanixResourceIdentifier struct {
 
 	// name is the resource name in the PC
 	// +optional
-	Name *string `json:"name"`
+	Name *string `json:"name,omitempty"`
 }
 
 // NutanixMachineConfigGenerateOpt is a functional option that can be passed to NewNutanixMachineConfigGenerate to
