@@ -57,7 +57,7 @@ type NutanixMachineConfigGenerateOpt func(config *NutanixMachineConfigGenerate)
 // NewNutanixMachineConfigGenerate returns a new instance of NutanixMachineConfigGenerate
 // used for generating yaml for generate clusterconfig command.
 func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGenerateOpt) *NutanixMachineConfigGenerate {
-	enterNameString := "<Enter name here>"
+	enterNameString := "<Enter %s name here>"
 	machineConfig := &NutanixMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       NutanixMachineConfigKind,
@@ -77,9 +77,9 @@ func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGe
 			VCPUsPerSocket: defaultNutanixVCPUsPerSocket,
 			VCPUSockets:    defaultNutanixVCPUSockets,
 			MemorySize:     resource.MustParse(defaultNutanixMemorySizeGi),
-			Image:          NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &enterNameString},
-			Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &enterNameString},
-			Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &enterNameString},
+			Image:          NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "image"); return &s }()},
+			Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "Prism Element cluster"); return &s }()},
+			Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "subnet"); return &s }()},
 			SystemDiskSize: resource.MustParse(defaultNutanixSystemDiskSizeGi),
 		},
 	}
