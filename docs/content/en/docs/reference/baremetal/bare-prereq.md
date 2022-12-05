@@ -15,25 +15,21 @@ Set up an Administrative machine as described in [Install EKS Anywhere ]({{< rel
 
 ## Compute server requirements
 
-The minimum number of physical machines needed to run EKS Anywhere in a non-production mode is:
-
-* Control plane physical machines: 1
-* Worker physical machines: 1
+The minimum number of physical machines needed to run EKS Anywhere on bare metal is 1. To configure EKS Anywhere to run on a single server, set [controlPlaneConfiguration.count]({{< relref "../clusterspec/baremetal/#controlplaneconfigurationcount-required" >}}) to 1, and omit [workerNodeGroupConfigurations]({{< relref "../clusterspec/baremetal/#workernodegroupconfigurations" >}}) from your cluster configuration. 
 
 The recommended number of physical machines for production is at least:
 
 * Control plane physical machines: 3
 * Worker physical machines: 2
 
-You will need an additional, temporary machine for each control plane node grouping and worker node grouping later when you go to upgrade a node.
-That machine must have the same specs as all the machines in that group.
-This comes from the need to use the same template to populate data on the disks for all nodes in a group.
-
 The compute hardware you need for your Bare Metal cluster must meet the following capacity requirements:
 
-* CPU: 2
+* vCPU: 2
 * Memory: 8GB RAM
 * Storage: 25GB
+
+## Upgrade requirements
+If you are running a standalone cluster, you will need an additional, temporary machine for each control plane node grouping and worker node grouping later when you go to upgrade a node.
 
 ## Network requirements
 
