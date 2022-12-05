@@ -64,7 +64,7 @@ func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywhe
 
 func (v *Validator) validateEndpointAndPort(dcConf anywherev1.NutanixDatacenterConfigSpec) error {
 	if !networkutils.IsPortValid(strconv.Itoa(dcConf.Port)) {
-		return fmt.Errorf("nutanix prism central port %q out of range", dcConf.Port)
+		return fmt.Errorf("nutanix prism central port %d out of range", dcConf.Port)
 	}
 
 	if dcConf.Endpoint == "" {
