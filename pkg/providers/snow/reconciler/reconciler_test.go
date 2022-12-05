@@ -45,7 +45,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := fake.NewClientBuilder().Build()
 
-	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster).Return(nil)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
@@ -209,19 +209,6 @@ func TestReconcilerReconcileCNISuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
-}
-
-func TestReconcilerCPIsInUse(t *testing.T) {
-	tt := newReconcilerTest(t)
-	logger := test.NewNullLogger()
-	tt.withFakeClient()
-
-	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster).Return(errors.New("already in use"))
-
-	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
-	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
-	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
-	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("already in use")))
 }
 
 func TestReconcilerReconcileCNIErrorClientRegistry(t *testing.T) {

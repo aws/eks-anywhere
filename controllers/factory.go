@@ -34,6 +34,7 @@ type Factory struct {
 	vsphereClusterReconciler *vspherereconciler.Reconciler
 	snowClusterReconciler    *snowreconciler.Reconciler
 	cniReconciler            *cnireconciler.Reconciler
+	ipValidator              *clusters.IPValidator
 	logger                   logr.Logger
 	deps                     *dependencies.Dependencies
 }
@@ -230,8 +231,8 @@ func (f *Factory) withDockerClusterReconciler() *Factory {
 }
 
 func (f *Factory) withVSphereClusterReconciler() *Factory {
-	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator().WithIPValidator()
-	f.withTracker().withCNIReconciler()
+	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator()
+	f.withTracker().withCNIReconciler().withIPValidator()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.vsphereClusterReconciler != nil {
 			return nil
@@ -243,7 +244,7 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 			f.deps.VSphereDefaulter,
 			f.cniReconciler,
 			f.tracker,
-			f.deps.IPValidator,
+			f.ipValidator,
 		)
 		f.registryBuilder.Add(anywherev1.VSphereDatacenterKind, f.vsphereClusterReconciler)
 
@@ -254,8 +255,7 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 }
 
 func (f *Factory) withSnowClusterReconciler() *Factory {
-	f.dependencyFactory.WithIPValidator()
-	f.withCNIReconciler().withTracker()
+	f.withCNIReconciler().withTracker().withIPValidator()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.snowClusterReconciler != nil {
@@ -266,7 +266,7 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 			f.manager.GetClient(),
 			f.cniReconciler,
 			f.tracker,
-			f.deps.IPValidator,
+			f.ipValidator,
 		)
 		f.registryBuilder.Add(anywherev1.SnowDatacenterKind, f.snowClusterReconciler)
 
@@ -285,6 +285,22 @@ func (f *Factory) withCNIReconciler() *Factory {
 		}
 
 		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.deps.CiliumTemplater))
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withIPValidator() *Factory {
+	f.dependencyFactory.WithIPValidator()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.ipValidator != nil {
+			return nil
+		}
+
+		f.ipValidator = clusters.NewIPValidator(f.deps.IPValidator, f.manager.GetClient())
 
 		return nil
 	})
