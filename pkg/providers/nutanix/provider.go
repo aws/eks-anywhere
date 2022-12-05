@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net/http"
 	"os"
 	"reflect"
 
@@ -60,6 +61,7 @@ func NewProvider(
 	providerKubectlClient ProviderKubectlClient,
 	nutanixClient Client,
 	certValidator crypto.TlsValidator,
+	httpClient *http.Client,
 	now types.NowFunc,
 ) *Provider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
@@ -76,8 +78,8 @@ func NewProvider(
 	creds := GetCredsFromEnv()
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
 	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now)
-	nutanixValidator := NewValidator(nutanixClient, certValidator)
 
+	nutanixValidator := NewValidator(nutanixClient, certValidator, httpClient)
 	return &Provider{
 		clusterConfig:    clusterConfig,
 		datacenterConfig: datacenterConfig,

@@ -2,9 +2,11 @@ package dependencies
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -448,6 +450,9 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			skipVerifyTransport := http.DefaultTransport.(*http.Transport).Clone()
+			skipVerifyTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			httpClient := &http.Client{Transport: skipVerifyTransport}
 			provider := nutanix.NewProvider(
 				datacenterConfig,
 				machineConfigs,
@@ -455,6 +460,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Kubectl,
 				f.dependencies.NutanixPrismClient.V3,
 				crypto.NewTlsValidator(),
+				httpClient,
 				time.Now,
 			)
 			f.dependencies.Provider = provider
