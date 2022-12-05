@@ -24,7 +24,6 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             DefaultSnowInstanceType,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
-					OSFamily:                 Bottlerocket,
 				},
 			},
 		},
@@ -39,7 +38,6 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             "instance-type-1",
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
-					OSFamily:                 Bottlerocket,
 				},
 			},
 		},
@@ -55,7 +53,6 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 					SshKeyName:               "ssh-name",
 					InstanceType:             DefaultSnowInstanceType,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
-					OSFamily:                 Bottlerocket,
 				},
 			},
 		},
@@ -70,7 +67,6 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					PhysicalNetworkConnector: "network-1",
 					InstanceType:             DefaultSnowInstanceType,
-					OSFamily:                 Bottlerocket,
 				},
 			},
 		},
@@ -177,6 +173,18 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 				},
 			},
 			wantErr: "SnowMachineConfig OSFamily invalidOS is not supported",
+		},
+		{
+			name: "empty os family",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					OSFamily:     "",
+				},
+			},
+			wantErr: "SnowMachineConfig OSFamily must be specified",
 		},
 	}
 	for _, tt := range tests {
