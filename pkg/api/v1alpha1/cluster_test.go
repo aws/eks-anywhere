@@ -2296,7 +2296,7 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
-			name:    "one registry in OCINamespace but not pucli.ecr.aws",
+			name:    "one registry in OCINamespace but not public.ecr.aws",
 			wantErr: "registry must be public.ecr.aws when only one mapping is specified",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
