@@ -9,7 +9,9 @@ description: >
 
 ## OIDC support (optional)
 EKS Anywhere can create clusters that support api server OIDC authentication.
-In order to add OIDC support, you need to configure your cluster by updating the configuration file before creating the cluster.
+
+In order to add OIDC support, you need to configure your cluster by updating the configuration file to include the details below. The OIDC configuration can be added at cluster creation time, or introduced via a cluster upgrade in VMware and CloudStack.
+
 This is a generic template with detailed descriptions below for reference:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
