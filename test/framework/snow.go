@@ -104,6 +104,7 @@ func WithSnowUbuntu121() SnowOpt {
 		s.fillers = append(s.fillers,
 			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu121, api.WithSnowAMIIDForAllMachines),
 			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
 		)
 	}
 }
@@ -113,6 +114,7 @@ func WithSnowUbuntu122() SnowOpt {
 		s.fillers = append(s.fillers,
 			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu122, api.WithSnowAMIIDForAllMachines),
 			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
 		)
 	}
 }
@@ -122,6 +124,7 @@ func WithSnowUbuntu123() SnowOpt {
 		s.fillers = append(s.fillers,
 			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines),
 			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
 		)
 	}
 }
