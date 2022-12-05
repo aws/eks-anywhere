@@ -482,7 +482,7 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
-	importImagesArgs := []string{"import-images", "-f", e.ClusterConfigLocation}
+	importImagesArgs := []string{"import images", "-i", e.ClusterConfigLocation}
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
