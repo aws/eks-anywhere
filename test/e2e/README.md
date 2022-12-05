@@ -138,9 +138,12 @@ The following env variables need to be set:
 T_SNOW_AMIID_UBUNTU_1_21
 T_SNOW_CONTROL_PLANE_CIDR
 T_SNOW_POD_CIDR
+T_SNOW_DEVICES
 EKSA_AWS_CREDENTIALS_FILE
 EKSA_AWS_CA_BUNDLES_FILE
 ```
+
+T_SNOW_DEVICES should be a comma-separated list of device IPs.
 
 ## OIDC tests requisites
 The following env variables need to be set:
