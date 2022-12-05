@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/tags"
 )
@@ -34,7 +35,7 @@ type GovcClient interface {
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
 	GetLibraryElementContentVersion(ctx context.Context, element string) (string, error)
 	DeleteLibraryElement(ctx context.Context, element string) error
-	ListTags(ctx context.Context) ([]string, error)
+	ListTags(ctx context.Context) ([]executables.Tag, error)
 	CreateTag(ctx context.Context, tag, category string) error
 	AddTag(ctx context.Context, path, tag string) error
 	ListCategories(ctx context.Context) ([]string, error)

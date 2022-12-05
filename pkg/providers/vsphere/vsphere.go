@@ -99,7 +99,7 @@ type ProviderGovcClient interface {
 	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	GetTags(ctx context.Context, path string) (tags []string, err error)
-	ListTags(ctx context.Context) ([]string, error)
+	ListTags(ctx context.Context) ([]executables.Tag, error)
 	CreateTag(ctx context.Context, tag, category string) error
 	AddTag(ctx context.Context, path, tag string) error
 	ListCategories(ctx context.Context) ([]string, error)

@@ -344,10 +344,10 @@ func (mr *MockProviderGovcClientMockRecorder) ListCategories(arg0 interface{}) *
 }
 
 // ListTags mocks base method.
-func (m *MockProviderGovcClient) ListTags(arg0 context.Context) ([]string, error) {
+func (m *MockProviderGovcClient) ListTags(arg0 context.Context) ([]executables.Tag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListTags", arg0)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]executables.Tag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
