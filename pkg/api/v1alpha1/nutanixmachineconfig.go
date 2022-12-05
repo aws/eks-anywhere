@@ -41,11 +41,11 @@ type NutanixResourceIdentifier struct {
 
 	// uuid is the UUID of the resource in the PC.
 	// +optional
-	UUID *string `json:"uuid"`
+	UUID *string `json:"uuid,omitempty"`
 
 	// name is the resource name in the PC
 	// +optional
-	Name *string `json:"name"`
+	Name *string `json:"name,omitempty"`
 }
 
 // NutanixMachineConfigGenerateOpt is a functional option that can be passed to NewNutanixMachineConfigGenerate to
@@ -57,7 +57,7 @@ type NutanixMachineConfigGenerateOpt func(config *NutanixMachineConfigGenerate)
 // NewNutanixMachineConfigGenerate returns a new instance of NutanixMachineConfigGenerate
 // used for generating yaml for generate clusterconfig command.
 func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGenerateOpt) *NutanixMachineConfigGenerate {
-	emptyString := ""
+	enterNameString := "<Enter %s name here>"
 	machineConfig := &NutanixMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       NutanixMachineConfigKind,
@@ -77,9 +77,9 @@ func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGe
 			VCPUsPerSocket: defaultNutanixVCPUsPerSocket,
 			VCPUSockets:    defaultNutanixVCPUSockets,
 			MemorySize:     resource.MustParse(defaultNutanixMemorySizeGi),
-			Image:          NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &emptyString},
-			Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &emptyString},
-			Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &emptyString},
+			Image:          NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "image"); return &s }()},
+			Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "Prism Element cluster"); return &s }()},
+			Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "subnet"); return &s }()},
 			SystemDiskSize: resource.MustParse(defaultNutanixSystemDiskSizeGi),
 		},
 	}
