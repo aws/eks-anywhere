@@ -122,6 +122,10 @@ spec:
         caCert: |
 {{ .registryCACert | indent 10 }}
         {{- end }}
+        {{- if .registryAuth }}
+        username: {{.registryUsername}}
+        password: {{.registryPassword}}
+        {{- end }}
 {{- end }}
       nodeRegistration:
         ignorePreflightErrors:
