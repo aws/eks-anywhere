@@ -27,6 +27,16 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
+func thenErrorExpected(t *testing.T, expected string, err error) {
+	if err == nil {
+		t.Fatalf("Expected=<%s> actual=<nil>", expected)
+	}
+	actual := err.Error()
+	if expected != actual {
+		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
+	}
+}
+
 func testDefaultNutanixProvider(t *testing.T) *Provider {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
@@ -148,6 +158,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 		name            string
 		clusterConfFile string
 		expectErr       bool
+		expectErrStr    string
 	}{
 		{
 			name:            "valid cluster config",
@@ -163,16 +174,31 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			name:            "valid cluster config with invalid trust bundle",
 			clusterConfFile: "testdata/cluster_nutanix_with_invalid_trust_bundle.yaml",
 			expectErr:       true,
+			expectErrStr:    "failed to validate datacenter config: invalid cert",
 		},
 		{
 			name:            "valid cluster config with invalid pe cluster name - same as pc name",
 			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-pc.yaml",
 			expectErr:       true,
+			expectErrStr:    "failed to validate machine config: failed to find cluster with name \"prism-central\": failed to find cluster by name \"prism-central\": <nil>",
 		},
 		{
 			name:            "valid cluster config with invalid pe cluster name - non existent pe name",
 			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-random-name.yaml",
 			expectErr:       true,
+			expectErrStr:    "failed to validate machine config: failed to find cluster with name \"non-existent-cluster\": failed to find cluster by name \"non-existent-cluster\": <nil>",
+		},
+		{
+			name:            "cluster config with unsupported upgrade strategy configuration for cp",
+			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_cp.yaml",
+			expectErr:       true,
+			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+		},
+		{
+			name:            "cluster config with unsupported upgrade strategy configuration for md",
+			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_md.yaml",
+			expectErr:       true,
+			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
 		},
 	}
 
@@ -282,6 +308,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
 		if tt.expectErr {
 			assert.Error(t, err, tt.name)
+			thenErrorExpected(t, tt.expectErrStr, err)
 		} else {
 			assert.NoError(t, err, tt.name)
 		}
@@ -290,16 +317,80 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 
 func TestNutanixProviderSetupAndValidateDeleteCluster(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
-	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	err := provider.SetupAndValidateDeleteCluster(context.Background(), &types.Cluster{Name: "eksa-unit-test"}, clusterSpec)
-	assert.NoError(t, err)
+	tests := []struct {
+		name            string
+		clusterConfFile string
+		expectErr       bool
+		expectErrStr    string
+	}{
+		{
+			name:            "valid cluster config",
+			clusterConfFile: "testdata/eksa-cluster.yaml",
+			expectErr:       false,
+		},
+		{
+			name:            "cluster config with unsupported upgrade strategy configuration for cp",
+			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_cp.yaml",
+			expectErr:       true,
+			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+		},
+		{
+			name:            "cluster config with unsupported upgrade strategy configuration for md",
+			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_md.yaml",
+			expectErr:       true,
+			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+		},
+	}
+
+	for _, tt := range tests {
+		clusterSpec := test.NewFullClusterSpec(t, tt.clusterConfFile)
+		err := provider.SetupAndValidateDeleteCluster(context.Background(), &types.Cluster{Name: "eksa-unit-test"}, clusterSpec)
+		if tt.expectErr {
+			assert.Error(t, err, tt.name)
+			thenErrorExpected(t, tt.expectErrStr, err)
+		} else {
+			assert.NoError(t, err, tt.name)
+		}
+	}
 }
 
 func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
-	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	err := provider.SetupAndValidateUpgradeCluster(context.Background(), &types.Cluster{Name: "eksa-unit-test"}, clusterSpec, clusterSpec)
-	assert.NoError(t, err)
+	tests := []struct {
+		name            string
+		clusterConfFile string
+		expectErr       bool
+		expectErrStr    string
+	}{
+		{
+			name:            "valid cluster config",
+			clusterConfFile: "testdata/eksa-cluster.yaml",
+			expectErr:       false,
+		},
+		{
+			name:            "cluster config with unsupported upgrade strategy configuration for cp",
+			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_cp.yaml",
+			expectErr:       true,
+			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+		},
+		{
+			name:            "cluster config with unsupported upgrade strategy configuration for md",
+			clusterConfFile: "testdata/cluster_nutanix_with_upgrade_strategy_md.yaml",
+			expectErr:       true,
+			expectErrStr:    "failed setup and validations: Upgrade rollout strategy customization is not supported for nutanix provider",
+		},
+	}
+
+	for _, tt := range tests {
+		clusterSpec := test.NewFullClusterSpec(t, tt.clusterConfFile)
+		err := provider.SetupAndValidateUpgradeCluster(context.Background(), &types.Cluster{Name: "eksa-unit-test"}, clusterSpec, clusterSpec)
+		if tt.expectErr {
+			assert.Error(t, err, tt.name)
+			thenErrorExpected(t, tt.expectErrStr, err)
+		} else {
+			assert.NoError(t, err, tt.name)
+		}
+	}
 }
 
 func TestNutanixProviderUpdateSecrets(t *testing.T) {

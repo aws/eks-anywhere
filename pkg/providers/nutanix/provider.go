@@ -146,6 +146,9 @@ func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementClus
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	if err := setupEnvVars(clusterSpec.NutanixDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -164,6 +167,9 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 }
 
 func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -171,7 +177,11 @@ func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *t
 	return nil
 }
 
-func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
+// SetupAndValidateUpgradeCluster - Performs necessary setup and validations for upgrade cluster operation.
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	// TODO(nutanix): Add validations when this is supported
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)

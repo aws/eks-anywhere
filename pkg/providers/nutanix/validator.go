@@ -10,6 +10,7 @@ import (
 	"go.uber.org/multierr"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -207,4 +208,16 @@ func findImageUUIDByName(ctx context.Context, v3Client Client, imageName string)
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
+}
+
+func (v *Validator) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+	}
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
+			return fmt.Errorf("Upgrade rollout strategy customization is not supported for nutanix provider")
+		}
+	}
+	return nil
 }
