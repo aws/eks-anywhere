@@ -1153,6 +1153,7 @@ func (k *Kubectl) Version(ctx context.Context, cluster *types.Cluster) (*Version
 
 type KubectlOpt func(*[]string)
 
+// WithToken is a kubectl option to pass a token when making a kubectl call.
 func WithToken(t string) KubectlOpt {
 	return appendOpt("--token", t)
 }
@@ -1173,10 +1174,12 @@ func WithNamespace(n string) KubectlOpt {
 	return appendOpt("--namespace", n)
 }
 
+// WithResourceName is a kubectl option to pass a resource name when making a kubectl call.
 func WithResourceName(name string) KubectlOpt {
 	return appendOpt(name)
 }
 
+// WithAllNamespaces is a kubectl option to add all namespaces when making a kubectl call.
 func WithAllNamespaces() KubectlOpt {
 	return appendOpt("-A")
 }
@@ -1191,6 +1194,11 @@ func WithOverwrite() KubectlOpt {
 
 func WithWaitAll() KubectlOpt {
 	return appendOpt("--all")
+}
+
+// WithSelector is a kubectl option to pass a selector when making kubectl calls.
+func WithSelector(selector string) KubectlOpt {
+	return appendOpt("--selector=" + selector)
 }
 
 func appendOpt(new ...string) KubectlOpt {
@@ -1315,6 +1323,7 @@ func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName 
 	return response, nil
 }
 
+// GetMachineDeployments retrieves all Machine Deployments.
 func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
 	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), "-o", "json"}
 	applyOpts(&params, opts...)
@@ -1330,6 +1339,11 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 	}
 
 	return response.Items, nil
+}
+
+// GetMachineDeploymentsForCluster retrieves all the Machine Deployments for a cluster with name "clusterName".
+func (k *Kubectl) GetMachineDeploymentsForCluster(ctx context.Context, clusterName string, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
+	return k.GetMachineDeployments(ctx, append(opts, WithSelector(fmt.Sprintf("cluster.x-k8s.io/cluster-name=%s", clusterName)))...)
 }
 
 func (k *Kubectl) UpdateEnvironmentVariables(ctx context.Context, resourceType, resourceName string, envMap map[string]string, opts ...KubectlOpt) error {

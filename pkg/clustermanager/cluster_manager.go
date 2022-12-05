@@ -16,6 +16,7 @@ import (
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/utils/integer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -115,6 +116,8 @@ type ClusterClient interface {
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
 	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
 	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig string) error
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
+	GetMachineDeploymentsForCluster(ctx context.Context, clusterName string, opts ...executables.KubectlOpt) ([]clusterv1.MachineDeployment, error)
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error)
 	ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error
@@ -828,14 +831,19 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 }
 
 func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) error {
-	readyNodes, totalNodes := 0, 0
+	totalNodes, err := c.getNodesCount(ctx, managementCluster, clusterName, labels)
+	if err != nil {
+		return fmt.Errorf("getting the total count of nodes: %v", err)
+	}
+
+	readyNodes := 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
 		return true, c.machineBackoff * time.Duration(integer.IntMax(1, totalNodes-readyNodes))
 	}
 
 	areNodesReady := func() error {
 		var err error
-		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, clusterName, labels, checkers...)
+		readyNodes, err = c.countNodesReady(ctx, managementCluster, clusterName, labels, checkers...)
 		if err != nil {
 			return err
 		}
@@ -849,7 +857,7 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 		return nil
 	}
 
-	err := areNodesReady()
+	err = areNodesReady()
 	if err == nil {
 		return nil
 	}
@@ -867,10 +875,39 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 	return nil
 }
 
-func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
+func (c *ClusterManager) getNodesCount(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string) (int, error) {
+	totalNodes := 0
+
+	labelsMap := make(map[string]interface{}, len(labels))
+	for _, label := range labels {
+		labelsMap[label] = nil
+	}
+
+	if _, ok := labelsMap[clusterv1.MachineControlPlaneLabelName]; ok {
+		kcp, err := c.clusterClient.GetKubeadmControlPlane(ctx, managementCluster, clusterName, executables.WithCluster(managementCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		if err != nil {
+			return 0, fmt.Errorf("getting KubeadmControlPlane for cluster %s: %v", clusterName, err)
+		}
+		totalNodes += int(*kcp.Spec.Replicas)
+	}
+
+	if _, ok := labelsMap[clusterv1.MachineDeploymentLabelName]; ok {
+		mds, err := c.clusterClient.GetMachineDeploymentsForCluster(ctx, clusterName, executables.WithCluster(managementCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		if err != nil {
+			return 0, fmt.Errorf("getting KubeadmControlPlane for cluster %s: %v", clusterName, err)
+		}
+		for _, md := range mds {
+			totalNodes += int(*md.Spec.Replicas)
+		}
+	}
+
+	return totalNodes, nil
+}
+
+func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) (ready int, err error) {
 	machines, err := c.clusterClient.GetMachines(ctx, managementCluster, clusterName)
 	if err != nil {
-		return 0, 0, fmt.Errorf("getting machines resources from management cluster: %v", err)
+		return 0, fmt.Errorf("getting machines resources from management cluster: %v", err)
 	}
 
 	for _, m := range machines {
@@ -879,8 +916,6 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 		if !m.HasAnyLabel(labels) {
 			continue
 		}
-
-		total += 1
 
 		passed := true
 		for _, checker := range checkers {
@@ -893,7 +928,7 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 			ready += 1
 		}
 	}
-	return ready, total, nil
+	return ready, nil
 }
 
 func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *types.Cluster, waitForCluster time.Duration) error {

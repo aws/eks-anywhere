@@ -21,6 +21,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	v1beta10 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 )
 
 // MockClusterClient is a mock of ClusterClient interface.
@@ -425,6 +426,26 @@ func (mr *MockClusterClientMockRecorder) GetEksdRelease(arg0, arg1, arg2, arg3 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksdRelease", reflect.TypeOf((*MockClusterClient)(nil).GetEksdRelease), arg0, arg1, arg2, arg3)
 }
 
+// GetKubeadmControlPlane mocks base method.
+func (m *MockClusterClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta10.KubeadmControlPlane, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetKubeadmControlPlane", varargs...)
+	ret0, _ := ret[0].(*v1beta10.KubeadmControlPlane)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetKubeadmControlPlane indicates an expected call of GetKubeadmControlPlane.
+func (mr *MockClusterClientMockRecorder) GetKubeadmControlPlane(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKubeadmControlPlane", reflect.TypeOf((*MockClusterClient)(nil).GetKubeadmControlPlane), varargs...)
+}
+
 // GetMachineDeployment mocks base method.
 func (m *MockClusterClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta1.MachineDeployment, error) {
 	m.ctrl.T.Helper()
@@ -443,6 +464,26 @@ func (mr *MockClusterClientMockRecorder) GetMachineDeployment(arg0, arg1 interfa
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockClusterClient)(nil).GetMachineDeployment), varargs...)
+}
+
+// GetMachineDeploymentsForCluster mocks base method.
+func (m *MockClusterClient) GetMachineDeploymentsForCluster(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) ([]v1beta1.MachineDeployment, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMachineDeploymentsForCluster", varargs...)
+	ret0, _ := ret[0].([]v1beta1.MachineDeployment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMachineDeploymentsForCluster indicates an expected call of GetMachineDeploymentsForCluster.
+func (mr *MockClusterClientMockRecorder) GetMachineDeploymentsForCluster(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeploymentsForCluster", reflect.TypeOf((*MockClusterClient)(nil).GetMachineDeploymentsForCluster), varargs...)
 }
 
 // GetMachines mocks base method.
