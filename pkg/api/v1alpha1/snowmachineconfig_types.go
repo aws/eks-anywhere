@@ -48,7 +48,7 @@ type SnowMachineConfigSpec struct {
 	ContainersVolume *snowv1.Volume `json:"containersVolume,omitempty"`
 
 	// OSFamily is the node instance OS.
-	// Valid values: "bottlerocket" (default) and "ubuntu".
+	// Valid values: "bottlerocket" and "ubuntu".
 	OSFamily OSFamily `json:"osFamily,omitempty"`
 
 	// Network provides the custom network setting for the machine.

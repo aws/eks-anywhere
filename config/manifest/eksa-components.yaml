@@ -4921,7 +4921,7 @@ spec:
                 type: object
               osFamily:
                 description: 'OSFamily is the node instance OS. Valid values: "bottlerocket"
-                  (default) and "ubuntu".'
+                  and "ubuntu".'
                 type: string
               physicalNetworkConnector:
                 description: 'PhysicalNetworkConnector is the physical network connector
