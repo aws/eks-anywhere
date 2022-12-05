@@ -3136,3 +3136,33 @@ func TestKubectlSearchTinkerbellDatacenterConfigNotFound(t *testing.T) {
 	_, err := tt.k.SearchTinkerbellDatacenterConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
 	tt.Expect(err).NotTo(BeNil())
 }
+
+func TestGetMachineDeploymentsForCluster(t *testing.T) {
+	k, ctx, _, e := newKubectl(t)
+	clusterName := "test0"
+	fileContent := test.ReadFile(t, "testdata/kubectl_machine_deployments.json")
+	wantMachineDeploymentNames := []string{
+		"test0-md-0",
+		"test1-md-0",
+	}
+
+	params := []string{
+		"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), "-o", "json",
+		fmt.Sprintf("--selector=cluster.x-k8s.io/cluster-name=%s", clusterName),
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), nil).Return(*bytes.NewBufferString(fileContent), nil)
+
+	gotMachineDeployments, err := k.GetMachineDeploymentsForCluster(ctx, clusterName)
+	if err != nil {
+		t.Fatalf("Kubectl.GetMachineDeploymentsForCluster() error = %v, want nil", err)
+	}
+
+	gotMachineDeploymentNames := make([]string, 0, len(gotMachineDeployments))
+	for _, p := range gotMachineDeployments {
+		gotMachineDeploymentNames = append(gotMachineDeploymentNames, p.Name)
+	}
+
+	if !reflect.DeepEqual(gotMachineDeploymentNames, wantMachineDeploymentNames) {
+		t.Fatalf("Kubectl.GetMachineDeployments() deployments = %+v, want %+v", gotMachineDeploymentNames, wantMachineDeploymentNames)
+	}
+}
