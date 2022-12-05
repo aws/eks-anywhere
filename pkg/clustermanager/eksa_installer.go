@@ -150,7 +150,8 @@ func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
 	// We can use some kind of configurator registering that allow to decouple this generator
 	// from the logic that drives the gates.
 	return cluster.Spec.DatacenterRef.Kind == anywherev1.VSphereDatacenterKind ||
-		cluster.Spec.DatacenterRef.Kind == anywherev1.DockerDatacenterKind
+		cluster.Spec.DatacenterRef.Kind == anywherev1.DockerDatacenterKind ||
+		cluster.Spec.DatacenterRef.Kind == anywherev1.SnowDatacenterKind
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {
