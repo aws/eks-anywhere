@@ -71,18 +71,19 @@ export REGISTRY_PASSWORD=<password>
 ```
 
 ## Import images into a private registry
-You can use the `import images` command to pull images from `public.ecr.aws` and push them to your
+You can use the `download images` and `import images` command to pull images from `public.ecr.aws` and push them to your
 private registry.
-The `import images` command also pulls the cilium chart from `public.ecr.aws` and pushes it to the registry mirror. It requires the registry credentials for performing a login. Set the following environment variables for the login:
+The `download images` command also pulls the cilium chart from `public.ecr.aws` and pushes it to the registry mirror. It requires the registry credentials for performing a login. Set the following environment variables for the login:
 ```bash
 export REGISTRY_USERNAME=<username>
 export REGISTRY_PASSWORD=<password>
 ```
 
 ```bash
+eksctl anywhere download images -o images.tar
 docker login https://<private registry endpoint>
 ...
-eksctl anywhere import images -i cluster-spec.yaml
+eksctl anywhere import images -i images.tar
 ```
 ## Docker configurations
 It is necessary to add the private registry's CA Certificate
