@@ -217,10 +217,6 @@ func generateClusterConfig(clusterName string) error {
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 	case constants.NutanixProviderName:
-		if !features.IsActive(features.NutanixProvider()) {
-			return fmt.Errorf("the nutanix infrastructure provider is still under development")
-		}
-
 		datacenterConfig := v1alpha1.NewNutanixDatacenterConfigGenerate(clusterName)
 		dcYaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {

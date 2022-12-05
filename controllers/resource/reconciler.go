@@ -13,7 +13,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
@@ -156,9 +155,6 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		}
 		resources = append(resources, r...)
 	case anywherev1.NutanixDatacenterKind:
-		if !features.IsActive(features.NutanixProvider()) {
-			return fmt.Errorf("nutanix provider is not supported in eks-a controller")
-		}
 		dcConf := &anywherev1.NutanixDatacenterConfig{}
 		if err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, dcConf); err != nil {
 			return err

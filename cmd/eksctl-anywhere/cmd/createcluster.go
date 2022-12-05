@@ -139,10 +139,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return fmt.Errorf("provider snow is not supported in this release")
 	}
 
-	if !features.IsActive(features.NutanixProvider()) && deps.Provider.Name() == constants.NutanixProviderName {
-		return fmt.Errorf("provider nutanix is not supported in this release")
-	}
-
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
 		deps.Provider,
