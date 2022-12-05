@@ -3,7 +3,6 @@ package clusterapi
 import (
 	_ "embed"
 	"fmt"
-	"net"
 
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -56,7 +55,7 @@ func SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmC
 
 func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstrapv1.RegistryMirrorConfiguration {
 	return bootstrapv1.RegistryMirrorConfiguration{
-		Endpoint: net.JoinHostPort(mirrorConfig.Endpoint, mirrorConfig.Port),
+		Endpoint: containerd.ToAPIEndpoint(mirrorConfig.RegistryMirror().RegistryMirrorWithOCINamespace()),
 		CACert:   mirrorConfig.CACertContent,
 	}
 }

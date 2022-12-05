@@ -703,7 +703,8 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	cnt := 0
 	re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
-	for _, ociNamespace := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
+	ociNamespaces := clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces
+	for _, ociNamespace := range ociNamespaces {
 		if ociNamespace.Registry == "" {
 			return errors.New("registry can't be set to empty in OCINamespaces")
 		}
@@ -712,6 +713,11 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 			if cnt > 1 {
 				return errors.New("only one registry mirror for curated packages is suppported")
 			}
+		}
+	}
+	if cnt == 1 {
+		if ociNamespaces[0].Registry != registrymirror.DefaultRegistry {
+			return errors.New("registry must be public.ecr.aws when only one mapping is specified")
 		}
 	}
 	return nil

@@ -27,7 +27,7 @@ func (r *RegistryMirror) RegistryMirrorWithGatedOCINamespace() string {
 	if v, ok := r.NamespacedRegistryMap[DefaultPackageRegistryRegex]; ok {
 		return v
 	}
-	return r.BaseRegistry
+	return DefaultPackageRegistry
 }
 
 // ReplaceRegistry replaces the host in a url with corresponding registry mirror

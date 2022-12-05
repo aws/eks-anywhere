@@ -200,11 +200,8 @@ func (n *RegistryMirrorConfiguration) RegistryMirror() *registrymirror.RegistryM
 			registryMap[ociNamespace.Registry] = registry
 		}
 	}
-	if _, ok := registryMap[registrymirror.DefaultRegistry]; !ok {
+	if len(registryMap) == 0 {
 		registryMap[registrymirror.DefaultRegistry] = base
-	}
-	if _, ok := registryMap[registrymirror.DefaultPackageRegistryRegex]; !ok {
-		registryMap[registrymirror.DefaultPackageRegistryRegex] = base
 	}
 	return &registrymirror.RegistryMirror{
 		BaseRegistry:          base,

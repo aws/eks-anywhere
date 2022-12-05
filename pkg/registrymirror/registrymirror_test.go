@@ -67,7 +67,7 @@ func TestRegistryMirrorWithGatedOCINamespace(t *testing.T) {
 					registrymirror.DefaultRegistry: "1.2.3.4:443/eks-anywhere",
 				},
 			},
-			want: "1.2.3.4:443",
+			want: registrymirror.DefaultPackageRegistry,
 		},
 	}
 	for _, tt := range testCases {

@@ -2296,6 +2296,24 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
+			name:    "one registry in OCINamespace but not pucli.ecr.aws",
+			wantErr: "registry must be public.ecr.aws when only one mapping is specified",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Namespace: "curated-packages",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "empty registry in OCINamespace",
 			wantErr: "registry can't be set to empty in OCINamespaces",
 			cluster: &Cluster{
@@ -2471,8 +2489,7 @@ func TestClusterRegistryMirror(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry:             "1.2.3.4:443",
-					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443",
+					registrymirror.DefaultRegistry: "1.2.3.4:443",
 				},
 			},
 		},
@@ -2523,32 +2540,7 @@ func TestClusterRegistryMirror(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry:             "1.2.3.4:443/eks-anywhere",
-					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443",
-				},
-			},
-		},
-		{
-			name: "with registry mirror and curated packages only",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint: "1.2.3.4",
-						Port:     "443",
-						OCINamespaces: []OCINamespace{
-							{
-								Registry:  "783794618700.dkr,ecr.us-west-2.amazonaws.com",
-								Namespace: "curated-packages",
-							},
-						},
-					},
-				},
-			},
-			want: &registrymirror.RegistryMirror{
-				BaseRegistry: "1.2.3.4:443",
-				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry:             "1.2.3.4:443",
-					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
+					registrymirror.DefaultRegistry: "1.2.3.4:443/eks-anywhere",
 				},
 			},
 		},

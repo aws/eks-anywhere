@@ -1648,14 +1648,13 @@ func TestRegistryMirror(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "harbor.eksa.demo:30003",
 				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry:             "harbor.eksa.demo:30003",
-					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003",
+					registrymirror.DefaultRegistry: "harbor.eksa.demo:30003",
 				},
 				Auth: true,
 			},
 		},
 		{
-			testName: "non empty namespace",
+			testName: "namespace for both eksa and curated packages",
 			config: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint: "harbor.eksa.demo",
 				Port:     "30003",
@@ -1668,10 +1667,6 @@ func TestRegistryMirror(t *testing.T) {
 						Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
 						Namespace: "curated-packages",
 					},
-					{
-						Registry:  "1.2.3.4",
-						Namespace: "random",
-					},
 				},
 			},
 			want: &registrymirror.RegistryMirror{
@@ -1679,23 +1674,18 @@ func TestRegistryMirror(t *testing.T) {
 				NamespacedRegistryMap: map[string]string{
 					registrymirror.DefaultRegistry:             "harbor.eksa.demo:30003/eks-anywhere",
 					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003/curated-packages",
-					"1.2.3.4": "harbor.eksa.demo:30003/random",
 				},
 				Auth: false,
 			},
 		},
 		{
-			testName: "empty namespace",
+			testName: "namespace for eksa only",
 			config: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint: "harbor.eksa.demo",
 				Port:     "30003",
 				OCINamespaces: []v1alpha1.OCINamespace{
 					{
-						Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
-						Namespace: "",
-					},
-					{
-						Registry:  "1.2.3.4",
+						Registry:  "public.ecr.aws",
 						Namespace: "",
 					},
 				},
@@ -1703,9 +1693,7 @@ func TestRegistryMirror(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "harbor.eksa.demo:30003",
 				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry:             "harbor.eksa.demo:30003",
-					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003",
-					"1.2.3.4": "harbor.eksa.demo:30003",
+					registrymirror.DefaultRegistry: "harbor.eksa.demo:30003",
 				},
 				Auth: false,
 			},

@@ -16,8 +16,6 @@ kubeadmConfigPatches:
 containerdConfigPatches:
   - |
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
-        endpoint = ["https://registry-mirror.test:443"]
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
         endpoint = ["https://registry-mirror.test:443"]
       [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test:443".tls]
