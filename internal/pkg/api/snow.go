@@ -118,3 +118,12 @@ func WithSnowMachineConfig(name string, fillers ...SnowMachineConfigFiller) Snow
 		FillSnowMachineConfig(m, fillers...)
 	}
 }
+
+// WithOsFamilyForAllSnowMachines sets the OSFamily in the SnowMachineConfig.
+func WithOsFamilyForAllSnowMachines(value anywherev1.OSFamily) SnowFiller {
+	return func(config SnowConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.OSFamily = value
+		}
+	}
+}
