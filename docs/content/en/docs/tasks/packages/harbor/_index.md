@@ -82,7 +82,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
 1. Check Harbor
 
    ```bash
-   eksctl anywhere get packages
+   eksctl anywhere get packages --cluster <cluster-name>
    ```
 
    Example command output
