@@ -549,3 +549,47 @@ func TestNutanixKubernetes124SimpleFlow(t *testing.T) {
 	)
 	runSimpleFlow(test)
 }
+
+func TestNutanixKubernetes121SimpleFlowUUID(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu121NutanixUUID(),
+			framework.WithPrismElementClusterUUID(),
+			framework.WithSubnetUUID()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes122SimpleFlowUUID(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu122NutanixUUID(),
+			framework.WithPrismElementClusterUUID(),
+			framework.WithSubnetUUID()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes123SimpleFlowUUID(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu123NutanixUUID(),
+			framework.WithPrismElementClusterUUID(),
+			framework.WithSubnetUUID()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestNutanixKubernetes124SimpleFlowUUID(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu124NutanixUUID(),
+			framework.WithPrismElementClusterUUID(),
+			framework.WithSubnetUUID()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+	)
+	runSimpleFlow(test)
+}
