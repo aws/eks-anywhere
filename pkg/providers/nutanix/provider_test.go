@@ -72,8 +72,7 @@ func testDefaultNutanixProvider(t *testing.T) *Provider {
 	return provider
 }
 
-func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl,
-	certValidator crypto.TlsValidator, httpClient *http.Client, writer filewriter.FileWriter) *Provider {
+func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator, httpClient *http.Client, writer filewriter.FileWriter) *Provider {
 	clusterConf := &anywherev1.Cluster{}
 	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
 	require.NoError(t, err)
