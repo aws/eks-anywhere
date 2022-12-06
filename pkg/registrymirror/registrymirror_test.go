@@ -107,7 +107,7 @@ func TestFromCluster(t *testing.T) {
 	}
 }
 
-func TestRegistryMirror(t *testing.T) {
+func TestFromClusterRegistryMirrorConfiguration(t *testing.T) {
 	testCases := []struct {
 		testName string
 		config   *v1alpha1.RegistryMirrorConfiguration
