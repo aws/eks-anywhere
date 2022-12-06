@@ -188,7 +188,6 @@ func WithUbuntu121Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu121Var, api.WithNutanixMachineTemplateImageName),
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu121Var, api.WithNutanixMachineTemplateImageUUID),
 			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -200,7 +199,6 @@ func WithUbuntu122Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu122Var, api.WithNutanixMachineTemplateImageName),
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu122Var, api.WithNutanixMachineTemplateImageUUID),
 			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -212,7 +210,6 @@ func WithUbuntu123Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu123Var, api.WithNutanixMachineTemplateImageName),
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu123Var, api.WithNutanixMachineTemplateImageUUID),
 			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -224,7 +221,6 @@ func WithUbuntu124Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName),
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu124Var, api.WithNutanixMachineTemplateImageUUID),
 			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
 		)
 	}
