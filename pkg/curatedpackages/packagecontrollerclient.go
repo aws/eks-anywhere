@@ -89,7 +89,8 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
 	if pc.registryMirror != nil {
-		// account is added as part of registry name in package controller chart
+		// account is added as part of registry name in package controller helm chart
+		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
 		accountName := "eks-anywhere"
 		if strings.Contains(ociURI, "l0g8r8j6") {
 			accountName = "l0g8r8j6"
