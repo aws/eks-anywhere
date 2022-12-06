@@ -270,7 +270,7 @@ func WithUbuntu124NutanixUUID() NutanixOpt {
 	}
 }
 
-// WithPrismElementClusterUUID returns a NutanixOpt that adds API fillers to use a PE Cluster UUID
+// WithPrismElementClusterUUID returns a NutanixOpt that adds API fillers to use a PE Cluster UUID.
 func WithPrismElementClusterUUID() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
@@ -279,7 +279,7 @@ func WithPrismElementClusterUUID() NutanixOpt {
 	}
 }
 
-// WithSubnetUUID returns a NutanixOpt that adds API fillers to use a Subnet UUID
+// WithSubnetUUID returns a NutanixOpt that adds API fillers to use a Subnet UUID.
 func WithSubnetUUID() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
