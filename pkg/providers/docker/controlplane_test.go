@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mrajashree/etcdadm-bootstrap-provider/api/v1beta1"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	"github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

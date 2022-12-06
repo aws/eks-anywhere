@@ -13,6 +13,8 @@ require (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
+	github.com/aws/etcdadm-bootstrap-provider v1.0.5
+	github.com/aws/etcdadm-controller v1.0.4
 	github.com/aws/smithy-go v1.13.2
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
@@ -22,7 +24,6 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
-	github.com/mrajashree/etcdadm-controller v1.0.0-rc3
 	github.com/nutanix-cloud-native/prism-go-client v0.3.0
 	github.com/onsi/gomega v1.20.1
 	github.com/pkg/errors v0.9.1
@@ -150,7 +151,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/mrajashree/etcdadm-bootstrap-provider v1.0.0-rc3
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect

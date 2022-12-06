@@ -6,8 +6,8 @@ import (
 	"os"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"

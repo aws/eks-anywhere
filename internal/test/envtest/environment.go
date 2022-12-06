@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,7 +40,7 @@ const (
 	capiPackage         = "sigs.k8s.io/cluster-api"
 	capdPackage         = "sigs.k8s.io/cluster-api/test"
 	capvPackage         = "sigs.k8s.io/cluster-api-provider-vsphere"
-	etcdProviderPackage = "github.com/mrajashree/etcdadm-controller"
+	etcdProviderPackage = "github.com/aws/etcdadm-controller"
 )
 
 func init() {
