@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 )
@@ -83,6 +84,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 	clusterSpec, err := anywhereCluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
 	if err != nil {
 		return controller.Result{}, err
+	}
+
+	result, err := clusters.CheckControlPlaneReady(ctx, r.client, logger, cluster)
+	if err != nil {
+		return controller.Result{}, fmt.Errorf("checking controlplane ready: %v", err)
+	}
+
+	if result.Return() {
+		return result, nil
 	}
 
 	rClient, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(cluster))
