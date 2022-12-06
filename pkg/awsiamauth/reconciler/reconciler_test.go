@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -27,7 +28,6 @@ import (
 func TestEnsureCASecret_SecretFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	r := newReconciler(t)
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
@@ -44,8 +44,9 @@ func TestEnsureCASecret_SecretFound(t *testing.T) {
 	objs := []runtime.Object{sec}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
+	r := newReconciler(t, cl)
 
-	result, err := r.EnsureCASecret(ctx, nullLog(), cl, cluster)
+	result, err := r.EnsureCASecret(ctx, nullLog(), cluster)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(controller.Result{}))
 }
@@ -53,7 +54,6 @@ func TestEnsureCASecret_SecretFound(t *testing.T) {
 func TestEnsureCASecret_SecretNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	r := newReconciler(t)
 	cb := fake.NewClientBuilder()
 	cl := cb.Build()
 	cluster := &anywherev1.Cluster{
@@ -62,21 +62,22 @@ func TestEnsureCASecret_SecretNotFound(t *testing.T) {
 			Namespace: "my-namespace",
 		},
 	}
+	r := newReconciler(t, cl)
 
-	result, err := r.EnsureCASecret(ctx, nullLog(), cl, cluster)
+	result, err := r.EnsureCASecret(ctx, nullLog(), cluster)
 	g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func newReconciler(t *testing.T) *reconciler.Reconciler {
+func newReconciler(t *testing.T, client client.WithWatch) *reconciler.Reconciler {
 	ctrl := gomock.NewController(t)
 	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
-	clusterID := uuid.MustParse("36db102f-9e1e-4ca4-8300-271d30b14161")
+	generateUUID := uuid.New
 	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
 
 	certs.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte("ca-cert"), []byte("ca-key"), nil).MinTimes(0).MaxTimes(1)
 
-	return reconciler.New(certs, clusterID, remoteClientRegistry)
+	return reconciler.New(certs, generateUUID, client, remoteClientRegistry)
 }
 
 func nullLog() logr.Logger {

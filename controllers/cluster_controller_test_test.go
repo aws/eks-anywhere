@@ -77,8 +77,8 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	iam := newMockAWSIamConfigReconciler(t)
-	iam.EXPECT().EnsureCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), cl, gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
-	iam.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), cl, gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
+	iam.EXPECT().EnsureCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
+	iam.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
 
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))

@@ -49,8 +49,8 @@ type ProviderClusterReconcilerRegistry interface {
 
 // AWSIamConfigReconciler manages aws-iam-authenticator installation and configuration for an eks-a cluster.
 type AWSIamConfigReconciler interface {
-	EnsureCASecret(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) (controller.Result, error)
-	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) (controller.Result, error)
+	EnsureCASecret(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
+	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
 }
 
 // NewClusterReconciler constructs a new ClusterReconciler.
@@ -171,8 +171,13 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 	var reconcileResult controller.Result
 	var err error
 
-	if _, err = r.preClusterProviderReconcile(ctx, log, cluster); err != nil {
+	reconcileResult, err = r.preClusterProviderReconcile(ctx, log, cluster)
+	if err != nil {
 		return ctrl.Result{}, err
+	}
+
+	if reconcileResult.Return() {
+		return reconcileResult.ToCtrlResult(), nil
 	}
 
 	if cluster.IsSelfManaged() {
@@ -198,26 +203,16 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 }
 
 func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	// Reconcile Cluster IdentityProviders
-	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
-		switch identityProvider.Kind {
-		case anywherev1.AWSIamConfigKind:
-			// Reconcile AWS IAM Authenticator CA secret for cluster
-			return r.awsIamAuth.EnsureCASecret(ctx, log, r.client, cluster)
-		}
+	if cluster.HasAWSIamConfig() {
+		return r.awsIamAuth.EnsureCASecret(ctx, log, cluster)
 	}
 
 	return controller.Result{}, nil
 }
 
 func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	// Reconcile Cluster IdentityProviders
-	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
-		switch identityProvider.Kind {
-		case anywherev1.AWSIamConfigKind:
-			// Reconcile AWS IAM Authenticator Config
-			return r.awsIamAuth.Reconcile(ctx, log, r.client, cluster)
-		}
+	if cluster.HasAWSIamConfig() {
+		return r.awsIamAuth.Reconcile(ctx, log, cluster)
 	}
 
 	return controller.Result{}, nil
