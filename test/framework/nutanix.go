@@ -1,7 +1,9 @@
 package framework
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -35,7 +37,7 @@ const (
 	nutanixPodCidrVar             = "T_NUTANIX_POD_CIDR"
 	nutanixServiceCidrVar         = "T_NUTANIX_SERVICE_CIDR"
 
-	nutanixMachineTemplateIDTypeVar = "T_NUTANIX_TEMPLATE_ID_TYPE"
+	nutanixMachineTemplateIDTypeVar = "T_NUTANIX_MACHINE_TEMPLATE_ID_TYPE"
 
 	nutanixTemplateNameUbuntu121Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_21"
 	nutanixTemplateNameUbuntu122Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_22"
@@ -184,18 +186,7 @@ func (s *Nutanix) WithProviderUpgrade(fillers ...api.NutanixFiller) ClusterE2ETe
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu121Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
-		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu121Var, api.WithNutanixMachineTemplateImageName),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu121Var, api.WithNutanixMachineTemplateImageUUID),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		}
+		v.fillers = append(v.fillers, GetUbuntu121NutanixFillers()...)
 	}
 }
 
@@ -203,18 +194,7 @@ func WithUbuntu121Nutanix() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu122Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
-		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu122Var, api.WithNutanixMachineTemplateImageName),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu122Var, api.WithNutanixMachineTemplateImageUUID),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		}
+		v.fillers = append(v.fillers, GetUbuntu122NutanixFillers()...)
 	}
 }
 
@@ -222,18 +202,7 @@ func WithUbuntu122Nutanix() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu123Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
-		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu123Var, api.WithNutanixMachineTemplateImageName),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu123Var, api.WithNutanixMachineTemplateImageUUID),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		}
+		v.fillers = append(v.fillers, GetUbuntu123NutanixFillers()...)
 	}
 }
 
@@ -241,41 +210,87 @@ func WithUbuntu123Nutanix() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu124Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
-		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
-			v.fillers = append(v.fillers,
-				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu124Var, api.WithNutanixMachineTemplateImageUUID),
-				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-			)
-		}
+		v.fillers = append(v.fillers, GetUbuntu124NutanixFillers()...)
 	}
 }
 
-// UpdateNutanixUbuntuTemplate121Var returns NutanixFiller by reading the env var and setting machine config's
+// GetUbuntu121NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
 // image name parameter in the spec.
-func UpdateNutanixUbuntuTemplate121Var() api.NutanixFiller {
-	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu121Var, api.WithNutanixMachineTemplateImageName)
+func GetUbuntu121NutanixFillers() []api.NutanixFiller {
+	var fillers []api.NutanixFiller
+	nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu121Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu121Var, api.WithNutanixMachineTemplateImageUUID),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+	return fillers
 }
 
-// UpdateNutanixUbuntuTemplate122Var returns NutanixFiller by reading the env var and setting machine config's
+// GetUbuntu122NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
 // image name parameter in the spec.
-func UpdateNutanixUbuntuTemplate122Var() api.NutanixFiller {
-	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu122Var, api.WithNutanixMachineTemplateImageName)
+func GetUbuntu122NutanixFillers() []api.NutanixFiller {
+	var fillers []api.NutanixFiller
+	nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu122Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu122Var, api.WithNutanixMachineTemplateImageUUID),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+	return fillers
 }
 
-// UpdateNutanixUbuntuTemplate123Var returns NutanixFiller by reading the env var and setting machine config's
+// GetUbuntu123NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
 // image name parameter in the spec.
-func UpdateNutanixUbuntuTemplate123Var() api.NutanixFiller {
-	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu123Var, api.WithNutanixMachineTemplateImageName)
+func GetUbuntu123NutanixFillers() []api.NutanixFiller {
+	var fillers []api.NutanixFiller
+	nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu123Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu123Var, api.WithNutanixMachineTemplateImageUUID),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+	return fillers
 }
 
-// UpdateNutanixUbuntuTemplate124Var returns NutanixFiller by reading the env var and setting machine config's
+// GetUbuntu124NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
 // image name parameter in the spec.
-func UpdateNutanixUbuntuTemplate124Var() api.NutanixFiller {
-	return api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu124Var, api.WithNutanixMachineTemplateImageName)
+func GetUbuntu124NutanixFillers() []api.NutanixFiller {
+	fmt.Println("here 1")
+	var fillers []api.NutanixFiller
+	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
+	nutanixMachineTemplateIDType = strings.Trim(nutanixMachineTemplateIDType, "'")
+	fmt.Printf("nutanixMachineTemplateIDType %s\n", nutanixMachineTemplateIDType)
+	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+		fmt.Println("here name")
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+		fmt.Println("here uuid")
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu124Var, api.WithNutanixMachineTemplateImageUUID),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+	return fillers
 }

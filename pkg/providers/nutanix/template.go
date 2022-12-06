@@ -191,9 +191,15 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"vcpuSockets":            workerNodeGroupMachineSpec.VCPUSockets,
 		"memorySize":             workerNodeGroupMachineSpec.MemorySize.String(),
 		"systemDiskSize":         workerNodeGroupMachineSpec.SystemDiskSize.String(),
-		"imageName":              workerNodeGroupMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
-		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
-		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
+		"imageIDType":            workerNodeGroupMachineSpec.Image.Type,
+		"imageName":              workerNodeGroupMachineSpec.Image.Name,
+		"imageUUID":              workerNodeGroupMachineSpec.Image.UUID,
+		"nutanixPEClusterIDType": workerNodeGroupMachineSpec.Cluster.Type,
+		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name,
+		"nutanixPEClusterUUID":   workerNodeGroupMachineSpec.Cluster.UUID,
+		"subnetIDType":           workerNodeGroupMachineSpec.Subnet.Type,
+		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,
+		"subnetUUID":             workerNodeGroupMachineSpec.Subnet.UUID,
 		"workerNodeGroupName":    fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 	}
 	return values
