@@ -8,65 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	controller "github.com/aws/eks-anywhere/pkg/controller"
-	logr "github.com/go-logr/logr"
 	gomock "github.com/golang/mock/gomock"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-// MockAWSIamConfigReconciler is a mock of AWSIamConfigReconciler interface.
-type MockAWSIamConfigReconciler struct {
-	ctrl     *gomock.Controller
-	recorder *MockAWSIamConfigReconcilerMockRecorder
-}
-
-// MockAWSIamConfigReconcilerMockRecorder is the mock recorder for MockAWSIamConfigReconciler.
-type MockAWSIamConfigReconcilerMockRecorder struct {
-	mock *MockAWSIamConfigReconciler
-}
-
-// NewMockAWSIamConfigReconciler creates a new mock instance.
-func NewMockAWSIamConfigReconciler(ctrl *gomock.Controller) *MockAWSIamConfigReconciler {
-	mock := &MockAWSIamConfigReconciler{ctrl: ctrl}
-	mock.recorder = &MockAWSIamConfigReconcilerMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAWSIamConfigReconciler) EXPECT() *MockAWSIamConfigReconcilerMockRecorder {
-	return m.recorder
-}
-
-// Reconcile mocks base method.
-func (m *MockAWSIamConfigReconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, cluster *v1alpha1.Cluster) (controller.Result, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Reconcile", ctx, logger, client, cluster)
-	ret0, _ := ret[0].(controller.Result)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Reconcile indicates an expected call of Reconcile.
-func (mr *MockAWSIamConfigReconcilerMockRecorder) Reconcile(ctx, logger, client, cluster interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).Reconcile), ctx, logger, client, cluster)
-}
-
-// ReconcileAWSIAMAuthCASecret mocks base method.
-func (m *MockAWSIamConfigReconciler) ReconcileAWSIAMAuthCASecret(ctx context.Context, logger logr.Logger, client client.Client, clusterName string) (controller.Result, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReconcileAWSIAMAuthCASecret", ctx, logger, client, clusterName)
-	ret0, _ := ret[0].(controller.Result)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReconcileAWSIAMAuthCASecret indicates an expected call of ReconcileAWSIAMAuthCASecret.
-func (mr *MockAWSIamConfigReconcilerMockRecorder) ReconcileAWSIAMAuthCASecret(ctx, logger, client, clusterName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileAWSIAMAuthCASecret", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).ReconcileAWSIAMAuthCASecret), ctx, logger, client, clusterName)
-}
 
 // MockRemoteClientRegistry is a mock of RemoteClientRegistry interface.
 type MockRemoteClientRegistry struct {

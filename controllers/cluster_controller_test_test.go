@@ -16,9 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers"
+	"github.com/aws/eks-anywhere/controllers/mocks"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	awsiamreconcilermocks "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -77,7 +77,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	iam := newMockAWSIamConfigReconciler(t)
-	iam.EXPECT().ReconcileAWSIAMAuthCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), cl, cluster.Name).Return(controller.Result{}, nil)
+	iam.EXPECT().EnsureCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), cl, gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
 	iam.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), cl, gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
 
 	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam)
@@ -261,7 +261,7 @@ func nullLog() logr.Logger {
 	return logr.New(logf.NullLogSink{})
 }
 
-func newMockAWSIamConfigReconciler(t *testing.T) *awsiamreconcilermocks.MockAWSIamConfigReconciler {
+func newMockAWSIamConfigReconciler(t *testing.T) *mocks.MockAWSIamConfigReconciler {
 	ctrl := gomock.NewController(t)
-	return awsiamreconcilermocks.NewMockAWSIamConfigReconciler(ctrl)
+	return mocks.NewMockAWSIamConfigReconciler(ctrl)
 }

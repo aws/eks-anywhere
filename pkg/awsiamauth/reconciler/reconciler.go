@@ -21,13 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/crypto"
 )
 
-// AWSIamConfigReconciler is an interface for reconciling AWSIAMConfig in the Cluster reconciler.
-type AWSIamConfigReconciler interface {
-	ReconcileAWSIAMAuthCASecret(ctx context.Context, logger logr.Logger, client client.Client, clusterName string) (controller.Result, error)
-	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) (controller.Result, error)
-}
-
-// RemoteClientRegistry is an interface that defines methods for remote clients.
+// RemoteClientRegistry defines methods for remote cluster controller clients.
 type RemoteClientRegistry interface {
 	GetClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error)
 }
@@ -50,27 +44,25 @@ func New(certgen crypto.CertificateGenerator, clusterID uuid.UUID, remoteClientR
 	}
 }
 
-// ReconcileAWSIAMAuthCASecret ensures the AWS IAM Authenticator secret is present.
+// EnsureCASecret ensures the AWS IAM Authenticator secret is present.
 // It uses a controller.Result to indicate when requeues are needed.
-func (r *Reconciler) ReconcileAWSIAMAuthCASecret(ctx context.Context, logger logr.Logger, client client.Client, clusterName string) (controller.Result, error) {
-	// Fetch the CA Secret
+func (r *Reconciler) EnsureCASecret(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) (controller.Result, error) {
+	clusterName := cluster.Name
 	s := &corev1.Secret{}
-	err := client.Get(ctx, types.NamespacedName{Name: awsiamauth.GetAwsIamAuthCaSecretName(clusterName), Namespace: constants.EksaSystemNamespace}, s)
+	err := client.Get(ctx, types.NamespacedName{Name: awsiamauth.CASecretName(clusterName), Namespace: constants.EksaSystemNamespace}, s)
 	if apierrors.IsNotFound(err) {
-		logger.Info("Applying aws-iam-authenticator CA secret")
-		return r.applyCASecret(ctx, client, clusterName)
+		logger.Info("Creating aws-iam-authenticator CA secret")
+		return r.createCASecret(ctx, client, clusterName)
 	}
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("fetching secret %s: %v", awsiamauth.GetAwsIamAuthCaSecretName(clusterName), err)
+		return controller.Result{}, fmt.Errorf("fetching secret %s: %v", awsiamauth.CASecretName(clusterName), err)
 	}
 
-	// If Secret is present, no-op
-	logger.Info("aws-iam-authenticator CA secret found", "Name", awsiamauth.GetAwsIamAuthCaSecretName(clusterName))
+	logger.Info("aws-iam-authenticator CA secret found. Skipping secret create.", "Name", awsiamauth.CASecretName(clusterName))
 	return controller.Result{}, nil
 }
 
-func (r *Reconciler) applyCASecret(ctx context.Context, client client.Client, clusterName string) (controller.Result, error) {
-	// Generate k8s secret yaml for aws-iam-authenticator
+func (r *Reconciler) createCASecret(ctx context.Context, client client.Client, clusterName string) (controller.Result, error) {
 	yaml, err := r.templateBuilder.GenerateCertKeyPairSecret(r.certgen, clusterName)
 	if err != nil {
 		return controller.Result{}, fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
@@ -79,32 +71,28 @@ func (r *Reconciler) applyCASecret(ctx context.Context, client client.Client, cl
 	return controller.Result{}, serverside.ReconcileYaml(ctx, client, yaml)
 }
 
-// Reconcile takes the AWS IAM Authenticator indentity provider to the desired state defined in AWSIAMConfig.
+// Reconcile takes the AWS IAM Authenticator installation to the desired state defined in AWSIAMConfig.
 // It uses a controller.Result to indicate when requeues are needed.
 // Intended to be used in a kubernetes controller.
 func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) (controller.Result, error) {
-	// Build the cluster spec for the Cluster
 	clusterSpec, err := anywhereCluster.BuildSpec(ctx, clientutil.NewKubeClient(client), cluster)
 	if err != nil {
 		return controller.Result{}, err
 	}
 
-	// Get the client object for the workload cluster
 	rClient, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(cluster))
 	if err != nil {
 		return controller.Result{}, err
 	}
 
 	var clusterID uuid.UUID
-	// Fetch the aws-iam-authenticator config map.
 	cm := &corev1.ConfigMap{}
 	err = rClient.Get(ctx, types.NamespacedName{Name: awsiamauth.AwsIamAuthConfigMapName, Namespace: constants.KubeSystemNamespace}, cm)
 	if apierrors.IsNotFound(err) {
-		// Use a new clusterID
+		// If configmap is not found, this is a first time install of aws-iam-authenticator on the cluster.
+		// We use a newly generated UUID.
 		clusterID = r.clusterID
-		return r.applyIAMAuthManifest(ctx, rClient, clusterSpec, clusterID)
-	}
-	if err != nil {
+	} else if err != nil {
 		return controller.Result{}, fmt.Errorf("fetching configmap %s: %v", awsiamauth.AwsIamAuthConfigMapName, err)
 	}
 
@@ -113,7 +101,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 }
 
 func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Client, clusterSpec *anywhereCluster.Spec, clusterID uuid.UUID) (controller.Result, error) {
-	// Generate AWS IAM Authenticator manifest yaml
 	yaml, err := r.templateBuilder.GenerateManifest(clusterSpec, clusterID)
 	if err != nil {
 		return controller.Result{}, fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
