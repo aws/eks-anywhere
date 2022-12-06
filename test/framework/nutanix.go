@@ -22,12 +22,10 @@ const (
 	nutanixMachineVCPUsPerSocket = "T_NUTANIX_MACHINE_VCPU_PER_SOCKET"
 	nutanixMachineVCPUSocket     = "T_NUTANIX_MACHINE_VCPU_SOCKET"
 
-	// nutanixPrismElementClusterIDTypeVar = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_ID_TYPE".
 	nutanixPrismElementClusterName = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
 	nutanixPrismElementClusterUUID = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_UUID"
 	nutanixSSHAuthorizedKey        = "T_NUTANIX_SSH_AUTHORIZED_KEY"
 
-	// nutanixSubnetIDTypeVar = "T_NUTANIX_SUBNET_ID_TYPE".
 	nutanixSubnetName = "T_NUTANIX_SUBNET_NAME"
 	nutanixSubnetUUID = "T_NUTANIX_SUBNET_UUID"
 
@@ -36,7 +34,6 @@ const (
 	nutanixPodCidrVar             = "T_NUTANIX_POD_CIDR"
 	nutanixServiceCidrVar         = "T_NUTANIX_SERVICE_CIDR"
 
-	// nutanixMachineTemplateIDTypeVar = "T_NUTANIX_MACHINE_TEMPLATE_ID_TYPE".
 	nutanixTemplateNameUbuntu121Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_21"
 	nutanixTemplateNameUbuntu122Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_22"
 	nutanixTemplateNameUbuntu123Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23"
