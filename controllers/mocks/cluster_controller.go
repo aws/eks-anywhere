@@ -12,7 +12,6 @@ import (
 	controller "github.com/aws/eks-anywhere/pkg/controller"
 	logr "github.com/go-logr/logr"
 	gomock "github.com/golang/mock/gomock"
-	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // MockAWSIamConfigReconciler is a mock of AWSIamConfigReconciler interface.
@@ -39,31 +38,31 @@ func (m *MockAWSIamConfigReconciler) EXPECT() *MockAWSIamConfigReconcilerMockRec
 }
 
 // EnsureCASecret mocks base method.
-func (m *MockAWSIamConfigReconciler) EnsureCASecret(arg0 context.Context, arg1 logr.Logger, arg2 client.Client, arg3 *v1alpha1.Cluster) (controller.Result, error) {
+func (m *MockAWSIamConfigReconciler) EnsureCASecret(arg0 context.Context, arg1 logr.Logger, arg2 *v1alpha1.Cluster) (controller.Result, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnsureCASecret", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "EnsureCASecret", arg0, arg1, arg2)
 	ret0, _ := ret[0].(controller.Result)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EnsureCASecret indicates an expected call of EnsureCASecret.
-func (mr *MockAWSIamConfigReconcilerMockRecorder) EnsureCASecret(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockAWSIamConfigReconcilerMockRecorder) EnsureCASecret(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureCASecret", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).EnsureCASecret), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureCASecret", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).EnsureCASecret), arg0, arg1, arg2)
 }
 
 // Reconcile mocks base method.
-func (m *MockAWSIamConfigReconciler) Reconcile(arg0 context.Context, arg1 logr.Logger, arg2 client.Client, arg3 *v1alpha1.Cluster) (controller.Result, error) {
+func (m *MockAWSIamConfigReconciler) Reconcile(arg0 context.Context, arg1 logr.Logger, arg2 *v1alpha1.Cluster) (controller.Result, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Reconcile", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Reconcile", arg0, arg1, arg2)
 	ret0, _ := ret[0].(controller.Result)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Reconcile indicates an expected call of Reconcile.
-func (mr *MockAWSIamConfigReconcilerMockRecorder) Reconcile(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockAWSIamConfigReconcilerMockRecorder) Reconcile(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).Reconcile), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).Reconcile), arg0, arg1, arg2)
 }

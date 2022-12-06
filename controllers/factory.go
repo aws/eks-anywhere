@@ -322,11 +322,12 @@ func (f *Factory) withAWSIamConfigReconciler() *Factory {
 		}
 
 		certgen := crypto.NewCertificateGenerator()
-		clusterID := uuid.New()
+		generateUUID := uuid.New
 
 		f.awsIamConfigReconciler = awsiamconfigreconciler.New(
 			certgen,
-			clusterID,
+			generateUUID,
+			f.manager.GetClient(),
 			f.tracker,
 		)
 
