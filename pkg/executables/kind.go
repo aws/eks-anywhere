@@ -185,11 +185,11 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	k.execConfig = &kindExecConfig{
 		KindImage:            registryMirror.ReplaceRegistry(bundle.EksD.KindNode.VersionedImage()),
-		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
+		KubernetesRepository: registryMirror.ReplaceRegistry(bundle.KubeDistro.Kubernetes.Repository),
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
-		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
+		EtcdRepository:       registryMirror.ReplaceRegistry(bundle.KubeDistro.Etcd.Repository),
 		EtcdVersion:          bundle.KubeDistro.Etcd.Tag,
-		CorednsRepository:    bundle.KubeDistro.CoreDNS.Repository,
+		CorednsRepository:    registryMirror.ReplaceRegistry(bundle.KubeDistro.CoreDNS.Repository),
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
