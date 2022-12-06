@@ -11,8 +11,8 @@ import (
 	"path"
 	"testing"
 
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/golang/mock/gomock"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

@@ -11,8 +11,8 @@ import (
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	types "github.com/aws/eks-anywhere/pkg/types"
+	v1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	gomock "github.com/golang/mock/gomock"
-	v1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
 	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 )
