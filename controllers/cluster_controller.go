@@ -21,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -41,15 +40,21 @@ const (
 type ClusterReconciler struct {
 	client                     client.Client
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
-	awsIamAuth                 reconciler.AWSIamConfigReconciler
+	awsIamAuth                 AWSIamConfigReconciler
 }
 
 type ProviderClusterReconcilerRegistry interface {
 	Get(datacenterKind string) clusters.ProviderClusterReconciler
 }
 
+// AWSIamConfigReconciler manages aws-iam-authenticator installation and configuration for an eks-a cluster.
+type AWSIamConfigReconciler interface {
+	EnsureCASecret(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) (controller.Result, error)
+	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) (controller.Result, error)
+}
+
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth reconciler.AWSIamConfigReconciler) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler) *ClusterReconciler {
 	return &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
@@ -198,7 +203,7 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 		switch identityProvider.Kind {
 		case anywherev1.AWSIamConfigKind:
 			// Reconcile AWS IAM Authenticator CA secret for cluster
-			return r.awsIamAuth.ReconcileAWSIAMAuthCASecret(ctx, log, r.client, cluster.Name)
+			return r.awsIamAuth.EnsureCASecret(ctx, log, r.client, cluster)
 		}
 	}
 

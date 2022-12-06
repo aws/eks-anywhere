@@ -24,7 +24,6 @@ import (
 	"github.com/aws/eks-anywhere/controllers/mocks"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	awsiamreconcilermocks "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -47,7 +46,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
-	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(ctrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
 
 	vcb := govmomi.NewVMOMIClientBuilder()
 
@@ -94,7 +93,7 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
-	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
@@ -124,7 +123,7 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
-	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(ctrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
 	registry := newRegistryMock(providerReconciler)
 	r := controllers.NewClusterReconciler(c, registry, iam)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
@@ -157,7 +156,7 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
-	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
@@ -224,7 +223,7 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	cluster.PauseReconcile()
 
 	controller := gomock.NewController(t)
-	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	c := fake.NewClientBuilder().WithRuntimeObjects(
 		managementCluster, cluster, capiCluster,
 	).Build()
@@ -269,7 +268,7 @@ func TestClusterReconcilerReconcileDeleteClusterManagedByCLI(t *testing.T) {
 		managementCluster, cluster, capiCluster,
 	).Build()
 	controller := gomock.NewController(t)
-	iam := awsiamreconcilermocks.NewMockAWSIamConfigReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 
 	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))

@@ -12,7 +12,7 @@ const (
 	AwsAuthConfigMapName = "aws-auth"
 )
 
-// GetAwsIamAuthCaSecretName returns the name of AWS IAM Authenticator secret for the cluster.
-func GetAwsIamAuthCaSecretName(clusterName string) string {
+// CASecretName returns the name of AWS IAM Authenticator secret containing the CA for the cluster.
+func CASecretName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, awsIamAuthCaSecretSuffix)
 }

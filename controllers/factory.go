@@ -37,11 +37,8 @@ type Factory struct {
 	vsphereClusterReconciler *vspherereconciler.Reconciler
 	snowClusterReconciler    *snowreconciler.Reconciler
 	cniReconciler            *cnireconciler.Reconciler
-<<<<<<< HEAD
 	ipValidator              *clusters.IPValidator
-=======
 	awsIamConfigReconciler   *awsiamconfigreconciler.Reconciler
->>>>>>> 654c9327 (Adding logic to reconcile AWSIAMConfig identity provider to cluster controller)
 	logger                   logr.Logger
 	deps                     *dependencies.Dependencies
 }

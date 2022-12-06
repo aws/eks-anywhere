@@ -104,7 +104,7 @@ func (t *TemplateBuilder) GenerateCertKeyPairSecret(certgen crypto.CertificateGe
 		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
 	data := map[string]string{
-		"name":         GetAwsIamAuthCaSecretName(managementClusterName),
+		"name":         CASecretName(managementClusterName),
 		"namespace":    constants.EksaSystemNamespace,
 		"certPemBytes": base64.StdEncoding.EncodeToString(certPemBytes),
 		"keyPemBytes":  base64.StdEncoding.EncodeToString(keyPemBytes),
@@ -116,7 +116,7 @@ func (t *TemplateBuilder) GenerateCertKeyPairSecret(certgen crypto.CertificateGe
 	return awsIamAuthCaSecret, nil
 }
 
-// GenerateKubeconfig generates a Kubeconfig for access management with AWS IAM Authenticator.
+// GenerateKubeconfig generates a Kubeconfig in yaml format to authenticate with AWS IAM Authenticator.
 func (t *TemplateBuilder) GenerateKubeconfig(clusterSpec *cluster.Spec, clusterID uuid.UUID, serverURL, tlsCert string) ([]byte, error) {
 	data := map[string]string{
 		"clusterName": clusterSpec.Cluster.Name,

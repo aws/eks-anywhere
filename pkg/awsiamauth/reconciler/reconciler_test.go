@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
 	reconcilermocks "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler/mocks"
@@ -23,13 +24,19 @@ import (
 	cryptomocks "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 )
 
-func TestReconcileAWSIAMAuthCASecret_SecretFound(t *testing.T) {
+func TestEnsureCASecret_SecretFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	r := newReconciler(t)
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "my-namespace",
+		},
+	}
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      awsiamauth.GetAwsIamAuthCaSecretName("test-cluster"),
+			Name:      awsiamauth.CASecretName(cluster.Name),
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
@@ -38,19 +45,25 @@ func TestReconcileAWSIAMAuthCASecret_SecretFound(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	result, err := r.ReconcileAWSIAMAuthCASecret(ctx, nullLog(), cl, "test-cluster")
+	result, err := r.EnsureCASecret(ctx, nullLog(), cl, cluster)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestReconcileAWSIAMAuthCASecret_SecretNotFound(t *testing.T) {
+func TestEnsureCASecret_SecretNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	r := newReconciler(t)
 	cb := fake.NewClientBuilder()
 	cl := cb.Build()
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "my-namespace",
+		},
+	}
 
-	result, err := r.ReconcileAWSIAMAuthCASecret(ctx, nullLog(), cl, "test-cluster")
+	result, err := r.EnsureCASecret(ctx, nullLog(), cl, cluster)
 	g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 	g.Expect(result).To(Equal(controller.Result{}))
 }
