@@ -702,7 +702,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		}
 		if re.MatchString(ociNamespace.Registry) {
 			mirrorCount++
-			// More than one curated package mirrors would confuse package controller where to pull packages
+			// More than one mirror for curated package would introduce ambiguity in the package controller
 			if mirrorCount > 1 {
 				return errors.New("only one registry mirror for curated packages is suppported")
 			}

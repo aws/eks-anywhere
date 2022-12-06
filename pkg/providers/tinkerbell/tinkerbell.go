@@ -142,7 +142,7 @@ func NewProvider(
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromClusterRegistryMirrorConfiguration(clusterConfig.Spec.RegistryMirrorConfiguration)),
+		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromCluster(clusterConfig)),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,

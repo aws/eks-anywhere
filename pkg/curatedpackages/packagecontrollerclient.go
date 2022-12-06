@@ -96,8 +96,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		}
 		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
 		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
-		gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror()
-		if gatedOCINamespace == "" {
+		if gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 			// no registry mirror for curated packages
 			values = []string{sourceRegistry, defaultRegistry, clusterName}
 		} else {

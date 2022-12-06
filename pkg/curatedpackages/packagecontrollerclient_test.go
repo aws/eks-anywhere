@@ -131,8 +131,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -176,8 +175,7 @@ func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName, "cronjob.suspend=true"}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -257,8 +255,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -303,8 +300,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -338,8 +334,7 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -371,8 +366,7 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -406,8 +400,7 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -462,8 +455,7 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -521,8 +513,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -573,8 +564,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -608,8 +598,7 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
@@ -668,8 +657,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 		if tt.registryMirror != nil {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror()
-			if gatedOCINamespace == "" {
+			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
 				values = []string{sourceRegistry, defaultRegistry, clusterName}
 			} else {
 				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)

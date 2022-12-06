@@ -13,11 +13,11 @@ import (
 
 // RegistryMirror configures mirror mappings for artifact registries.
 type RegistryMirror struct {
-	// the address of registry mirror without namespace
+	// BaseRegistry is the address of the registry mirror without namespace. Just the host and the port.
 	BaseRegistry string
-	// it stores mirror mappings for artifact registries
+	// NamespacedRegistryMap stores mirror mappings for artifact registries
 	NamespacedRegistryMap map[string]string
-	// if authentication is required for the registry mirror
+	// Auth should be marked as true if authentication is required for the registry mirror
 	Auth bool
 }
 
@@ -61,19 +61,12 @@ func FromClusterRegistryMirrorConfiguration(config *v1alpha1.RegistryMirrorConfi
 
 // CoreEKSAMirror returns the configured mirror for public.ecr.aws.
 func (r *RegistryMirror) CoreEKSAMirror() string {
-	if v, ok := r.NamespacedRegistryMap[constants.DefaultCoreEKSARegistry]; ok {
-		return v
-	}
-	// TODO: handle this case after BottleRocket supports multiple registry mirros
-	return ""
+	return r.NamespacedRegistryMap[constants.DefaultCoreEKSARegistry]
 }
 
 // CuratedPackagesMirror returns the mirror for curated packages.
 func (r *RegistryMirror) CuratedPackagesMirror() string {
-	if v, ok := r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistryRegex]; ok {
-		return v
-	}
-	return ""
+	return r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistryRegex]
 }
 
 // ReplaceRegistry replaces the host in a url with corresponding registry mirror
