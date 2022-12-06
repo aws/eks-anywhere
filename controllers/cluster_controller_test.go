@@ -23,7 +23,6 @@ import (
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
-	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	awsiamreconcilermocks "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
