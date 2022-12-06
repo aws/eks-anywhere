@@ -17,9 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -28,6 +28,8 @@ const (
 	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
 	podSubnetNodeMaskMaxDiff = 16
 )
+
+var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
 
 // +kubebuilder:object:generate=false
 type ClusterGenerateOpt func(config *ClusterGenerate)
@@ -301,15 +303,6 @@ func (c *Cluster) ClearPauseAnnotation() {
 	if c.Annotations != nil {
 		delete(c.Annotations, pausedAnnotation)
 	}
-}
-
-// RegistryMirror returns a struct storing registry mirror mappings of all upstream registries.
-func (c *Cluster) RegistryMirror() *registrymirror.RegistryMirror {
-	config := c.Spec.RegistryMirrorConfiguration
-	if config == nil {
-		return nil
-	}
-	return config.RegistryMirror()
 }
 
 // RegistryAuth returns whether registry requires authentication or not.
@@ -701,22 +694,24 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
 	}
 
-	cnt := 0
-	re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
+	mirrorCount := 0
 	ociNamespaces := clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces
 	for _, ociNamespace := range ociNamespaces {
 		if ociNamespace.Registry == "" {
 			return errors.New("registry can't be set to empty in OCINamespaces")
 		}
 		if re.MatchString(ociNamespace.Registry) {
-			cnt++
-			if cnt > 1 {
+			mirrorCount++
+			// More than one curated package mirrors would confuse package controller where to pull packages
+			if mirrorCount > 1 {
 				return errors.New("only one registry mirror for curated packages is suppported")
 			}
 		}
 	}
-	if cnt == 1 {
-		if ociNamespaces[0].Registry != registrymirror.DefaultRegistry {
+	if mirrorCount == 1 {
+		// BottleRocket accepts only one registry mirror and that is hardcoded for public.ecr.aws at this moment.
+		// Such a validation will be removed once CAPI is patched to support more than one endpoints for BottleRocket.
+		if ociNamespaces[0].Registry != constants.DefaultCoreEKSARegistry {
 			return errors.New("registry must be public.ecr.aws when only one mapping is specified")
 		}
 	}

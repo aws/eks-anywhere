@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
@@ -115,8 +116,8 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		WithRegistryMirror(&registrymirror.RegistryMirror{
 			BaseRegistry: c.RegistryEndpoint,
 			NamespacedRegistryMap: map[string]string{
-				registrymirror.DefaultRegistry:             c.RegistryEndpoint,
-				registrymirror.DefaultPackageRegistryRegex: c.RegistryEndpoint,
+				constants.DefaultCoreEKSARegistry:             c.RegistryEndpoint,
+				constants.DefaultCuratedPackagesRegistryRegex: c.RegistryEndpoint,
 			},
 			Auth: false,
 		}).

@@ -271,7 +271,7 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 			&registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry: "1.2.3.4:443/custom",
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443/custom",
 				},
 				Auth: false,
 			}).
@@ -290,7 +290,7 @@ func TestFactoryBuildWithRegistryMirrorAuth(t *testing.T) {
 			&registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry: "1.2.3.4:443/custom",
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443/custom",
 				},
 				Auth: true,
 			}).

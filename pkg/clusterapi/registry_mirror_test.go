@@ -22,7 +22,7 @@ var registryMirrorTests = []struct {
 		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{},
 	},
 	{
-		name: "with ca cert",
+		name: "with ca cert and namespace mapping for eksa and curated packages",
 		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
 			Endpoint:      "1.2.3.4",
 			Port:          "443",

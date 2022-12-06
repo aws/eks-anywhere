@@ -8,7 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -1622,97 +1621,6 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.cluster1Regi.Equal(tt.cluster2Regi)).To(Equal(tt.want))
-		})
-	}
-}
-
-func TestRegistryMirror(t *testing.T) {
-	testCases := []struct {
-		testName string
-		config   *v1alpha1.RegistryMirrorConfiguration
-		want     *registrymirror.RegistryMirror
-	}{
-		{
-			testName: "empty config",
-			config:   nil,
-			want:     nil,
-		},
-		{
-			testName: "no OCINamespaces",
-			config: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint:      "harbor.eksa.demo",
-				Port:          "30003",
-				OCINamespaces: nil,
-				Authenticate:  true,
-			},
-			want: &registrymirror.RegistryMirror{
-				BaseRegistry: "harbor.eksa.demo:30003",
-				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry: "harbor.eksa.demo:30003",
-				},
-				Auth: true,
-			},
-		},
-		{
-			testName: "namespace for both eksa and curated packages",
-			config: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint: "harbor.eksa.demo",
-				Port:     "30003",
-				OCINamespaces: []v1alpha1.OCINamespace{
-					{
-						Registry:  "public.ecr.aws",
-						Namespace: "eks-anywhere",
-					},
-					{
-						Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
-						Namespace: "curated-packages",
-					},
-				},
-			},
-			want: &registrymirror.RegistryMirror{
-				BaseRegistry: "harbor.eksa.demo:30003",
-				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry:             "harbor.eksa.demo:30003/eks-anywhere",
-					registrymirror.DefaultPackageRegistryRegex: "harbor.eksa.demo:30003/curated-packages",
-				},
-				Auth: false,
-			},
-		},
-		{
-			testName: "namespace for eksa only",
-			config: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint: "harbor.eksa.demo",
-				Port:     "30003",
-				OCINamespaces: []v1alpha1.OCINamespace{
-					{
-						Registry:  "public.ecr.aws",
-						Namespace: "",
-					},
-				},
-			},
-			want: &registrymirror.RegistryMirror{
-				BaseRegistry: "harbor.eksa.demo:30003",
-				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry: "harbor.eksa.demo:30003",
-				},
-				Auth: false,
-			},
-		},
-	}
-	for _, tt := range testCases {
-		t.Run(tt.testName, func(t *testing.T) {
-			g := NewWithT(t)
-			result := tt.config.RegistryMirror()
-			if tt.want == nil {
-				g.Expect(result).To(BeNil())
-			} else {
-				g.Expect(result.BaseRegistry).To(Equal(tt.want.BaseRegistry))
-				g.Expect(len(result.NamespacedRegistryMap)).To(Equal(len(tt.want.NamespacedRegistryMap)))
-				for k, v := range tt.want.NamespacedRegistryMap {
-					g.Expect(result.NamespacedRegistryMap).Should(HaveKeyWithValue(k, v))
-				}
-				g.Expect(result.Auth).To(Equal(tt.want.Auth))
-			}
 		})
 	}
 }

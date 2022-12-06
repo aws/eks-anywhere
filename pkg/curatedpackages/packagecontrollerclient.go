@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 //go:embed config/awssecret.yaml
@@ -31,9 +32,7 @@ type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
 	kubeConfig            string
-	uri                   string
-	chartName             string
-	chartVersion          string
+	chart                 *v1alpha1.Image
 	chartInstaller        ChartInstaller
 	clusterName           string
 	managementClusterName string
@@ -54,13 +53,11 @@ type ChartInstaller interface {
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig string, chart *v1alpha1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		clusterName:    clusterName,
-		uri:            uri,
-		chartName:      chartName,
-		chartVersion:   chartVersion,
+		chart:          chart,
 		chartInstaller: chartInstaller,
 		kubectl:        kubectl,
 		registryMirror: registryMirror,
@@ -88,20 +85,27 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	if pc.managementClusterName != pc.clusterName {
 		return pc.InstallPBCResources(ctx)
 	}
-	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
+	ociURI := fmt.Sprintf("%s%s", "oci://", pc.registryMirror.ReplaceRegistry(pc.chart.Image()))
 	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
 	if pc.registryMirror != nil {
+		// account is added as part of registry name in package controller chart
 		accountName := "eks-anywhere"
-		if strings.Contains(ociUri, "l0g8r8j6") {
+		if strings.Contains(ociURI, "l0g8r8j6") {
 			accountName = "l0g8r8j6"
 		}
-		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirror.RegistryMirrorWithOCINamespace(), accountName)
-		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirror.RegistryMirrorWithOCINamespace(), accountName)
-		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", pc.registryMirror.RegistryMirrorWithGatedOCINamespace())
-		values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
+		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
+		gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror()
+		if gatedOCINamespace == "" {
+			// no registry mirror for curated packages
+			values = []string{sourceRegistry, defaultRegistry, clusterName}
+		} else {
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
+			values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+		}
 	} else {
-		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.uri))
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.chart.Image()))
 		values = []string{sourceRegistry, clusterName}
 	}
 
@@ -118,7 +122,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		values = append(values, "cronjob.suspend=true")
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, "", values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", values)
 	if err != nil {
 		return err
 	}

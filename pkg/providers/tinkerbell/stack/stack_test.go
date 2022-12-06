@@ -15,11 +15,11 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -106,7 +106,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 		hookImageOverride string
 		expectedFile      string
 		installOnDocker   bool
-		registryMirror    *v1alpha1.RegistryMirrorConfiguration
+		registryMirror    *registrymirror.RegistryMirror
 		opts              []stack.InstallOption
 	}{
 		{
@@ -191,16 +191,12 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 		{
 			name:         "with_registry_mirror",
 			expectedFile: "testdata/expected_with_registry_mirror.yaml",
-			registryMirror: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint: "1.2.3.4",
-				Port:     "443",
-				OCINamespaces: []v1alpha1.OCINamespace{
-					{
-						Registry:  "public.ecr.aws",
-						Namespace: "custom",
-					},
+			registryMirror: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					"public.ecr.aws": "1.2.3.4:443/custom",
 				},
-				Authenticate: true,
+				Auth: true,
 			},
 			opts: []stack.InstallOption{},
 		},
@@ -217,7 +213,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", stackTest.registryMirror)
 
 			generatedOverridesPath := filepath.Join(folder, "generated", overridesFileName)
-			if stackTest.registryMirror != nil && stackTest.registryMirror.Authenticate {
+			if stackTest.registryMirror != nil && stackTest.registryMirror.Auth {
 				t.Setenv("REGISTRY_USERNAME", "username")
 				t.Setenv("REGISTRY_PASSWORD", "password")
 				helm.EXPECT().RegistryLogin(ctx, "1.2.3.4:443", "username", "password")

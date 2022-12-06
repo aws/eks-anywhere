@@ -55,7 +55,7 @@ func SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmC
 
 func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstrapv1.RegistryMirrorConfiguration {
 	return bootstrapv1.RegistryMirrorConfiguration{
-		Endpoint: containerd.ToAPIEndpoint(mirrorConfig.RegistryMirror().RegistryMirrorWithOCINamespace()),
+		Endpoint: containerd.ToAPIEndpoint(registrymirror.FromClusterRegistryMirrorConfiguration(mirrorConfig).CoreEKSAMirror()),
 		CACert:   mirrorConfig.CACertContent,
 	}
 }
@@ -78,7 +78,7 @@ func registryMirrorConfigContent(registryMirror *registrymirror.RegistryMirror, 
 }
 
 func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
-	registryMirror := registryMirrorConfig.RegistryMirror()
+	registryMirror := registrymirror.FromClusterRegistryMirrorConfiguration(registryMirrorConfig)
 	registryConfig, err := registryMirrorConfigContent(registryMirror, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
 	if err != nil {
 		return nil, err

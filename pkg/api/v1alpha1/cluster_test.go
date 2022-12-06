@@ -11,7 +11,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -2465,103 +2464,6 @@ func TestValidateAutoscalingConfig(t *testing.T) {
 				g.Expect(err).To(BeNil())
 			} else {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
-			}
-		})
-	}
-}
-
-func TestClusterRegistryMirror(t *testing.T) {
-	tests := []struct {
-		name    string
-		cluster *Cluster
-		want    *registrymirror.RegistryMirror
-	}{
-		{
-			name: "with registry mirror",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint: "1.2.3.4",
-						Port:     "443",
-					},
-				},
-			},
-			want: &registrymirror.RegistryMirror{
-				BaseRegistry: "1.2.3.4:443",
-				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry: "1.2.3.4:443",
-				},
-			},
-		},
-		{
-			name: "with registry mirror and namespace",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint: "1.2.3.4",
-						Port:     "443",
-						OCINamespaces: []OCINamespace{
-							{
-								Registry:  "public.ecr.aws",
-								Namespace: "eks-anywhere",
-							},
-							{
-								Registry:  "783794618700.dkr,ecr.us-west-2.amazonaws.com",
-								Namespace: "curated-packages",
-							},
-						},
-					},
-				},
-			},
-			want: &registrymirror.RegistryMirror{
-				BaseRegistry: "1.2.3.4:443",
-				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry:             "1.2.3.4:443/eks-anywhere",
-					registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
-				},
-			},
-		},
-		{
-			name: "with registry mirror and public.ecr.aws only",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint: "1.2.3.4",
-						Port:     "443",
-						OCINamespaces: []OCINamespace{
-							{
-								Registry:  "public.ecr.aws",
-								Namespace: "eks-anywhere",
-							},
-						},
-					},
-				},
-			},
-			want: &registrymirror.RegistryMirror{
-				BaseRegistry: "1.2.3.4:443",
-				NamespacedRegistryMap: map[string]string{
-					registrymirror.DefaultRegistry: "1.2.3.4:443/eks-anywhere",
-				},
-			},
-		},
-		{
-			name:    "without registry mirror",
-			cluster: &Cluster{},
-			want:    nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			result := tt.cluster.RegistryMirror()
-			if tt.want == nil {
-				g.Expect(result).To(BeNil())
-			} else {
-				g.Expect(result.BaseRegistry).To(Equal(tt.want.BaseRegistry))
-				g.Expect(len(result.NamespacedRegistryMap)).To(Equal(len(tt.want.NamespacedRegistryMap)))
-				for k, v := range tt.want.NamespacedRegistryMap {
-					g.Expect(result.NamespacedRegistryMap).Should(HaveKeyWithValue(k, v))
-				}
 			}
 		})
 	}

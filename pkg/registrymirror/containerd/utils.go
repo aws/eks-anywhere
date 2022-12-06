@@ -2,30 +2,30 @@ package containerd
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 )
 
 // ToAPIEndpoint turns URL to a valid API endpoint used in
 // a containerd config file for a local registry.
-func ToAPIEndpoint(URL string) string {
-	cnt := strings.Count(URL, "/")
-	index := -1
-	if cnt > 1 {
-		u, _ := url.Parse(URL)
-		if u.Scheme == "" {
-			u, _ = url.Parse("oci://" + URL)
-			u.Scheme = ""
-		}
-		if u.Path != "" {
-			index = strings.Index(URL, u.Path)
-		}
-	} else {
-		index = strings.Index(URL, "/")
+// Original input is returned in case of malformed inputs.
+func ToAPIEndpoint(url string) string {
+	u, err := parseURL(url)
+	if err != nil {
+		return url
 	}
-	if index == -1 {
-		return URL
+	if u.Path != "" {
+		u.Path = filepath.Join("v2", u.Path)
 	}
-	return URL[:index] + "/v2" + URL[index:]
+	return strings.TrimPrefix(u.String(), "//")
+}
+
+func parseURL(in string) (*url.URL, error) {
+	urlIn := in
+	if !strings.Contains(in, "//") {
+		urlIn = "//" + in
+	}
+	return url.Parse(urlIn)
 }
 
 // ToAPIEndpoints utilizes ToAPIEndpoint to turn all URLs from a

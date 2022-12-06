@@ -5,13 +5,13 @@ kubeadmConfigPatches:
     kind: ClusterConfiguration
     dns:
       type: CoreDNS
-      imageRepository: registry-mirror.test:443/eks-distro/coredns
+      imageRepository: public.ecr.aws/eks-distro/coredns
       imageTag: v1.8.0-eks-1-19-2
     etcd:
       local:
-        imageRepository: registry-mirror.test:443/eks-distro/etcd-io
+        imageRepository: public.ecr.aws/eks-distro/etcd-io
         imageTag: v3.4.14-eks-1-19-2
-    imageRepository: registry-mirror.test:443/eks-distro/kubernetes
+    imageRepository: public.ecr.aws/eks-distro/kubernetes
     kubernetesVersion: v1.19.6-eks-1-19-2
 containerdConfigPatches:
   - |

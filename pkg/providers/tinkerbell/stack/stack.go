@@ -4,16 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"path/filepath"
 	"strings"
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -54,7 +53,7 @@ type Installer struct {
 	filewriter      filewriter.FileWriter
 	helm            Helm
 	podCidrRange    string
-	registryMirror  *v1alpha1.RegistryMirrorConfiguration
+	registryMirror  *registrymirror.RegistryMirror
 	namespace       string
 	createNamespace bool
 	bootsOnDocker   bool
@@ -113,7 +112,7 @@ func WithLoadBalancerEnabled(enabled bool) InstallOption {
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack.
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *v1alpha1.RegistryMirrorConfiguration) StackInstaller {
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *registrymirror.RegistryMirror) StackInstaller {
 	return &Installer{
 		docker:         docker,
 		filewriter:     filewriter,
@@ -212,12 +211,12 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
 	}
 
-	if s.registryMirror != nil && s.registryMirror.Authenticate {
+	if s.registryMirror != nil && s.registryMirror.Auth {
 		username, password, err := config.ReadCredentials()
 		if err != nil {
 			return err
 		}
-		endpoint := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		endpoint := s.registryMirror.BaseRegistry
 		if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
 			return err
 		}
@@ -289,9 +288,9 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
 	if s.registryMirror != nil {
-		localRegistry := s.registryMirror.RegistryMirror().BaseRegistry
+		localRegistry := s.registryMirror.BaseRegistry
 		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
-		if s.registryMirror.Authenticate {
+		if s.registryMirror.Auth {
 			username, password, _ := config.ReadCredentials()
 			bootsEnv["REGISTRY_USERNAME"] = username
 			bootsEnv["REGISTRY_PASSWORD"] = password
@@ -348,8 +347,5 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 }
 
 func (s *Installer) localRegistryURL(originalURL string) string {
-	if s.registryMirror != nil {
-		return s.registryMirror.RegistryMirror().ReplaceRegistry(originalURL)
-	}
-	return originalURL
+	return s.registryMirror.ReplaceRegistry(originalURL)
 }

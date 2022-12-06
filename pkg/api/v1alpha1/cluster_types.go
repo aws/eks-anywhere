@@ -1,9 +1,6 @@
 package v1alpha1
 
 import (
-	"net"
-	"path/filepath"
-	"regexp"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
@@ -11,7 +8,6 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -181,36 +177,7 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 		OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
 }
 
-// RegistryMirror returns a struct storing registry mirror mappings of all upstream registries.
-func (n *RegistryMirrorConfiguration) RegistryMirror() *registrymirror.RegistryMirror {
-	if n == nil {
-		return nil
-	}
-	registryMap := make(map[string]string)
-	base := net.JoinHostPort(n.Endpoint, n.Port)
-	// add registry mirror base address
-	re := regexp.MustCompile(registrymirror.DefaultPackageRegistryRegex)
-	// for each namespace, add corresponding endpoint
-	for _, ociNamespace := range n.OCINamespaces {
-		registry := filepath.Join(base, ociNamespace.Namespace)
-		if re.MatchString(ociNamespace.Registry) {
-			// handle curated packages in all regions
-			registryMap[registrymirror.DefaultPackageRegistryRegex] = registry
-		} else {
-			registryMap[ociNamespace.Registry] = registry
-		}
-	}
-	if len(registryMap) == 0 {
-		registryMap[registrymirror.DefaultRegistry] = base
-	}
-	return &registrymirror.RegistryMirror{
-		BaseRegistry:          base,
-		NamespacedRegistryMap: registryMap,
-		Auth:                  n.Authenticate,
-	}
-}
-
-// OCINamespacesSliceEqual is used to check equality of the OCINamespaces fields of two RegistryMirrorConfgiuration.
+// OCINamespacesSliceEqual is used to check equality of the OCINamespaces fields of two RegistryMirrorConfiguration.
 func OCINamespacesSliceEqual(a, b []OCINamespace) bool {
 	if len(a) != len(b) {
 		return false

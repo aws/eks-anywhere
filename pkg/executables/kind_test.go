@@ -232,7 +232,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 			)
 			spec = tt.clusterSpec
 			registry := registryMirrorWithPort
-			if r, ok := spec.Cluster.Spec.RegistryMirrorConfiguration.RegistryMirror().NamespacedRegistryMap[registrymirror.DefaultRegistry]; ok {
+			if r, ok := registrymirror.FromCluster(spec.Cluster).NamespacedRegistryMap[constants.DefaultCoreEKSARegistry]; ok {
 				registry = r
 			}
 			image = fmt.Sprintf("%s/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registry)

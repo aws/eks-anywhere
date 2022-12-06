@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -519,10 +520,10 @@ func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
 }
 
 func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) map[string]interface{} {
-	registryMirror := clusterSpec.Cluster.RegistryMirror()
+	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
-	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.RegistryMirrorWithOCINamespace())
+	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 	if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 		values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 	}

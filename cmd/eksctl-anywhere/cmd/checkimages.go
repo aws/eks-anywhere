@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -62,22 +59,9 @@ func checkImages(context context.Context, spec string) error {
 		return err
 	}
 
-	myRegistry := registrymirror.DefaultRegistry
-
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
-		if len(host) > 0 {
-			port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
-			if port == "" {
-				port = constants.DefaultHttpsPort
-			}
-			myRegistry = net.JoinHostPort(host, port)
-		}
-	}
-
 	checkImageExistence := artifacts.CheckImageExistence{}
 	for _, image := range images {
-		myImageURI := strings.ReplaceAll(image.URI, registrymirror.DefaultRegistry, myRegistry)
+		myImageURI := registrymirror.FromCluster(clusterSpec.Cluster).ReplaceRegistry(image.URI)
 		checkImageExistence.ImageUri = myImageURI
 		if err = checkImageExistence.Run(context); err != nil {
 			fmt.Println(err.Error())

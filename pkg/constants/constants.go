@@ -48,6 +48,11 @@ const (
 	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder.
 	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
 
+	// DefaultCoreEKSARegistry is the default registry for eks-a core artifacts.
+	DefaultCoreEKSARegistry = "public.ecr.aws"
+	// DefaultCuratedPackagesRegistryRegex matches the default registry for curated packages in all regions.
+	DefaultCuratedPackagesRegistryRegex = "783794618700.dkr.ecr.*.amazonaws.com"
+
 	// Provider specific env vars.
 	VSphereUsernameKey = "VSPHERE_USERNAME"
 	VSpherePasswordKey = "VSPHERE_PASSWORD"

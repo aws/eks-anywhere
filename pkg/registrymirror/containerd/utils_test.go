@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 )
 
@@ -53,12 +53,12 @@ func TestToAPIEndpoints(t *testing.T) {
 		{
 			name: "mix",
 			URLs: map[string]string{
-				registrymirror.DefaultRegistry:             "1.2.3.4:443",
-				registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443/curated-packages",
+				constants.DefaultCoreEKSARegistry:             "1.2.3.4:443",
+				constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/curated-packages",
 			},
 			want: map[string]string{
-				registrymirror.DefaultRegistry:             "1.2.3.4:443",
-				registrymirror.DefaultPackageRegistryRegex: "1.2.3.4:443/v2/curated-packages",
+				constants.DefaultCoreEKSARegistry:             "1.2.3.4:443",
+				constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/v2/curated-packages",
 			},
 		},
 	}
