@@ -108,7 +108,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/p
    Example command output
    ```
    NAME   PACKAGE   AGE   STATE       CURRENTVERSION                                                            TARGETVERSION                                                                   DETAIL
-   my-adot   adot   19h   installed   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef (latest)
+   my-adot   adot   19h   installed   0.23.0-d7b717277af33d3c2f37b15eeed5ae0f7feb306e   0.23.0-d7b717277af33d3c2f37b15eeed5ae0f7feb306e (latest)
    ```
 
 ## Update
