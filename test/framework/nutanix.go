@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -24,13 +23,13 @@ const (
 	nutanixMachineVCPUsPerSocket = "T_NUTANIX_MACHINE_VCPU_PER_SOCKET"
 	nutanixMachineVCPUSocket     = "T_NUTANIX_MACHINE_VCPU_SOCKET"
 
-	nutanixPrismElementClusterIDType = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_ID_TYPE"
-	nutanixPrismElementClusterName   = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
-	nutanixPrismElementClusterUUID   = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_UUID"
-	nutanixSSHAuthorizedKey          = "T_NUTANIX_SSH_AUTHORIZED_KEY"
-	nutanixSubnetIDType              = "T_NUTANIX_SUBNET_ID_TYPE"
-	nutanixSubnetName                = "T_NUTANIX_SUBNET_NAME"
-	nutanixSubnetUUID                = "T_NUTANIX_SUBNET_UUID"
+	nutanixPrismElementClusterIDTypeVar = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_ID_TYPE"
+	nutanixPrismElementClusterName      = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
+	nutanixPrismElementClusterUUID      = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_UUID"
+	nutanixSSHAuthorizedKey             = "T_NUTANIX_SSH_AUTHORIZED_KEY"
+	nutanixSubnetIDTypeVar              = "T_NUTANIX_SUBNET_ID_TYPE"
+	nutanixSubnetName                   = "T_NUTANIX_SUBNET_NAME"
+	nutanixSubnetUUID                   = "T_NUTANIX_SUBNET_UUID"
 
 	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
 	nutanixControlPlaneCidrVar    = "T_NUTANIX_CONTROL_PLANE_CIDR"
@@ -62,11 +61,11 @@ var requiredNutanixEnvVars = []string{
 	nutanixSystemDiskSize,
 	nutanixMachineVCPUsPerSocket,
 	nutanixMachineVCPUSocket,
-	nutanixPrismElementClusterIDType,
+	nutanixPrismElementClusterIDTypeVar,
 	nutanixPrismElementClusterName,
 	nutanixPrismElementClusterUUID,
 	nutanixSSHAuthorizedKey,
-	nutanixSubnetIDType,
+	nutanixSubnetIDTypeVar,
 	nutanixSubnetName,
 	nutanixSubnetUUID,
 	nutanixPodCidrVar,
@@ -108,12 +107,13 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 			api.WithNutanixStringFromEnvVar(nutanixSystemDiskSize, api.WithNutanixMachineSystemDiskSize),
 			api.WithNutanixInt32FromEnvVar(nutanixMachineVCPUsPerSocket, api.WithNutanixMachineVCPUsPerSocket),
 			api.WithNutanixInt32FromEnvVar(nutanixMachineVCPUSocket, api.WithNutanixMachineVCPUSocket),
-			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterName, api.WithNutanixPrismElementClusterName),
 			api.WithNutanixStringFromEnvVar(nutanixSSHAuthorizedKey, api.WithNutanixSSHAuthorizedKey),
-			api.WithNutanixStringFromEnvVar(nutanixSubnetName, api.WithNutanixSubnetName),
 			api.WithNutanixBoolFromEnvVar(nutanixInsecure, api.WithNutanixInsecure),
 		},
 	}
+
+	nutanixProvider.fillers = append(nutanixProvider.fillers, GetPrismElementClusterNutanixFillers()...)
+	nutanixProvider.fillers = append(nutanixProvider.fillers, GetSubnetNutanixFillers()...)
 
 	nutanixProvider.controlPlaneEndpointIP = os.Getenv(nutanixControlPlaneEndpointIP)
 	nutanixProvider.cpCidr = os.Getenv(nutanixControlPlaneCidrVar)
@@ -214,8 +214,44 @@ func WithUbuntu124Nutanix() NutanixOpt {
 	}
 }
 
+// GetPrismElementClusterNutanixFillers returns NutanixFiller by reading the env var setting machine config's
+// PE cluster name/uuid parameter in the spec.
+func GetPrismElementClusterNutanixFillers() []api.NutanixFiller {
+	var fillers []api.NutanixFiller
+	nutanixPrismElementClusterIDType := strings.Trim(os.Getenv(nutanixPrismElementClusterIDTypeVar), "\"")
+	nutanixPrismElementClusterIDType = strings.Trim(nutanixPrismElementClusterIDType, "'")
+	if nutanixPrismElementClusterIDType == string(anywherev1.NutanixIdentifierName) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterName, api.WithNutanixPrismElementClusterName),
+		)
+	} else if nutanixPrismElementClusterIDType == string(anywherev1.NutanixIdentifierUUID) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterUUID, api.WithNutanixPrismElementClusterUUID),
+		)
+	}
+	return fillers
+}
+
+// GetSubnetNutanixFillers returns NutanixFiller by reading the env var setting machine config's
+// subnet name/uuid parameter in the spec.
+func GetSubnetNutanixFillers() []api.NutanixFiller {
+	var fillers []api.NutanixFiller
+	nutanixSubnetIDType := strings.Trim(os.Getenv(nutanixSubnetIDTypeVar), "\"")
+	nutanixSubnetIDType = strings.Trim(nutanixSubnetIDType, "'")
+	if nutanixSubnetIDType == string(anywherev1.NutanixIdentifierName) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixSubnetName, api.WithNutanixSubnetName),
+		)
+	} else if nutanixSubnetIDType == string(anywherev1.NutanixIdentifierUUID) {
+		fillers = append(fillers,
+			api.WithNutanixStringFromEnvVar(nutanixSubnetUUID, api.WithNutanixSubnetUUID),
+		)
+	}
+	return fillers
+}
+
 // GetUbuntu121NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
-// image name parameter in the spec.
+// image name/uuid parameter in the spec.
 func GetUbuntu121NutanixFillers() []api.NutanixFiller {
 	var fillers []api.NutanixFiller
 	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
@@ -235,7 +271,7 @@ func GetUbuntu121NutanixFillers() []api.NutanixFiller {
 }
 
 // GetUbuntu122NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
-// image name parameter in the spec.
+// image name/uuid parameter in the spec.
 func GetUbuntu122NutanixFillers() []api.NutanixFiller {
 	var fillers []api.NutanixFiller
 	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
@@ -255,7 +291,7 @@ func GetUbuntu122NutanixFillers() []api.NutanixFiller {
 }
 
 // GetUbuntu123NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
-// image name parameter in the spec.
+// image name/uuid parameter in the spec.
 func GetUbuntu123NutanixFillers() []api.NutanixFiller {
 	var fillers []api.NutanixFiller
 	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
@@ -275,21 +311,17 @@ func GetUbuntu123NutanixFillers() []api.NutanixFiller {
 }
 
 // GetUbuntu124NutanixFillers returns NutanixFiller by reading the env var and setting machine config's
-// image name parameter in the spec.
+// image name/uuid parameter in the spec.
 func GetUbuntu124NutanixFillers() []api.NutanixFiller {
-	fmt.Println("here 1")
 	var fillers []api.NutanixFiller
 	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
 	nutanixMachineTemplateIDType = strings.Trim(nutanixMachineTemplateIDType, "'")
-	fmt.Printf("nutanixMachineTemplateIDType %s\n", nutanixMachineTemplateIDType)
 	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
-		fmt.Println("here name")
 		fillers = append(fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName),
 			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
 		)
 	} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
-		fmt.Println("here uuid")
 		fillers = append(fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu124Var, api.WithNutanixMachineTemplateImageUUID),
 			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),

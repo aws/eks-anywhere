@@ -185,18 +185,18 @@ spec:
         name: "{{.imageUUID}}"
 {{ end }}
       cluster:
-{{- if (eq .imageIDType "name") }}
+{{- if (eq .nutanixPEClusterIDType "name") }}
         type: name
         name: "{{.nutanixPEClusterName}}"
-{{- else if (eq .imageIDType "uuid") }}
+{{- else if (eq .nutanixPEClusterIDType "uuid") }}
         type: uuid
         name: "{{.nutanixPEClusterUUID}}"
 {{ end }}
       subnet:
-{{- if (eq .imageIDType "name") }}
+{{- if (eq .subnetIDType "name") }}
         - type: name
           name: "{{.subnetName}}"
-{{- else if (eq .imageIDType "uuid") }}
+{{- else if (eq .subnetIDType "uuid") }}
         - type: uuid
           name: "{{.subnetUUID}}"
 {{ end }}
