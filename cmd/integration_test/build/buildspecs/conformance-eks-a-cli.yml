@@ -27,9 +27,6 @@ env:
     T_NUTANIX_MACHINE_MEMORY_SIZE: "4Gi"
     T_NUTANIX_SYSTEMDISK_SIZE: "40Gi"
     T_NUTANIX_INSECURE: true
-    T_NUTANIX_MACHINE_TEMPLATE_ID_TYPE: "name"
-    T_NUTANIX_PRISM_ELEMENT_CLUSTER_ID_TYPE: "name"
-    T_NUTANIX_SUBNET_ID_TYPE: "name"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
