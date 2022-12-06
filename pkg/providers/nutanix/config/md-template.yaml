@@ -46,7 +46,7 @@ spec:
         name: "{{.imageName}}"
 {{ else if (eq .imageIDType "uuid") }}
         type: uuid
-        name: "{{.imageUUID}}"
+        uuid: "{{.imageUUID}}"
 {{ end }}
       cluster:
 {{- if (eq .nutanixPEClusterIDType "name") }}
@@ -54,7 +54,7 @@ spec:
         name: "{{.nutanixPEClusterName}}"
 {{- else if (eq .nutanixPEClusterIDType "uuid") }}
         type: uuid
-        name: "{{.nutanixPEClusterUUID}}"
+        uuid: "{{.nutanixPEClusterUUID}}"
 {{ end }}
       subnet:
 {{- if (eq .subnetIDType "name") }}
@@ -62,7 +62,7 @@ spec:
           name: "{{.subnetName}}"
 {{- else if (eq .subnetIDType "uuid") }}
         - type: uuid
-          name: "{{.subnetUUID}}"
+          uuid: "{{.subnetUUID}}"
 {{ end }}
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
