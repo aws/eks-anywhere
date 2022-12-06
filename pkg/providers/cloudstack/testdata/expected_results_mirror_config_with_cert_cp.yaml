@@ -335,13 +335,13 @@ spec:
         9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
         -----END CERTIFICATE-----
       owner: root:root
-      path: "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+      path: "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
     - content: |
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://1.2.3.4"]
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4".tls]
-            ca_file = "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+            endpoint = ["https://1.2.3.4:443"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+            ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
       owner: root:root
       path: "/etc/containerd/config_append.toml"
     initConfiguration:
@@ -414,7 +414,7 @@ spec:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
     registryMirror:
-      endpoint: 1.2.3.4
+      endpoint: 1.2.3.4:443
       caCert: |
         -----BEGIN CERTIFICATE-----
         MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV

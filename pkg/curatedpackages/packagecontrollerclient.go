@@ -11,7 +11,9 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 //go:embed config/awssecret.yaml
@@ -30,19 +32,18 @@ type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
 	kubeConfig            string
-	uri                   string
-	chartName             string
-	chartVersion          string
+	chart                 *v1alpha1.Image
 	chartInstaller        ChartInstaller
 	clusterName           string
 	managementClusterName string
 	kubectl               KubectlRunner
-	eksaAccessKeyId       string
+	eksaAccessKeyID       string
 	eksaSecretAccessKey   string
 	eksaRegion            string
 	httpProxy             string
 	httpsProxy            string
 	noProxy               []string
+	registryMirror        *registrymirror.RegistryMirror
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
 }
@@ -51,15 +52,15 @@ type ChartInstaller interface {
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
+// NewPackageControllerClient instantiates a new instance of PackageControllerClient.
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig string, chart *v1alpha1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		clusterName:    clusterName,
-		uri:            uri,
-		chartName:      chartName,
-		chartVersion:   chartVersion,
+		chart:          chart,
 		chartInstaller: chartInstaller,
 		kubectl:        kubectl,
+		registryMirror: registryMirror,
 	}
 
 	for _, o := range options {
@@ -84,12 +85,29 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	if pc.managementClusterName != pc.clusterName {
 		return pc.InstallPBCResources(ctx)
 	}
-	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
-	registry := GetRegistry(pc.uri)
-
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	ociURI := fmt.Sprintf("%s%s", "oci://", pc.registryMirror.ReplaceRegistry(pc.chart.Image()))
+	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	values := []string{sourceRegistry, clusterName}
+	if pc.registryMirror != nil {
+		// account is added as part of registry name in package controller helm chart
+		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
+		accountName := "eks-anywhere"
+		if strings.Contains(ociURI, "l0g8r8j6") {
+			accountName = "l0g8r8j6"
+		}
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
+		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
+		if gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
+			// no registry mirror for curated packages
+			values = []string{sourceRegistry, defaultRegistry, clusterName}
+		} else {
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
+			values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+		}
+	} else {
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.chart.Image()))
+		values = []string{sourceRegistry, clusterName}
+	}
 
 	// Provide proxy details for curated packages helm chart when proxy details provided
 	if pc.httpProxy != "" {
@@ -100,11 +118,11 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
-	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyId == "" {
+	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyID == "" {
 		values = append(values, "cronjob.suspend=true")
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, "", values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", values)
 	if err != nil {
 		return err
 	}
@@ -218,7 +236,7 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     pc.eksaAccessKeyId,
+		"eksaAccessKeyId":     pc.eksaAccessKeyID,
 		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
 		"eksaRegion":          pc.eksaRegion,
 	}
@@ -240,7 +258,7 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
-		config.eksaAccessKeyId = eksaAccessKeyId
+		config.eksaAccessKeyID = eksaAccessKeyId
 	}
 }
 

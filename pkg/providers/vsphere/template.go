@@ -2,7 +2,6 @@ package vsphere
 
 import (
 	"fmt"
-	"net"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -12,6 +11,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -209,7 +210,10 @@ func buildTemplateMapCP(
 	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
+		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
@@ -328,7 +332,10 @@ func buildTemplateMapMD(
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
+		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}

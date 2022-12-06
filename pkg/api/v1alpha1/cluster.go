@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -27,6 +28,8 @@ const (
 	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
 	podSubnetNodeMaskMaxDiff = 16
 )
+
+var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
 
 // +kubebuilder:object:generate=false
 type ClusterGenerateOpt func(config *ClusterGenerate)
@@ -300,14 +303,6 @@ func (c *Cluster) ClearPauseAnnotation() {
 	if c.Annotations != nil {
 		delete(c.Annotations, pausedAnnotation)
 	}
-}
-
-func (c *Cluster) RegistryMirror() string {
-	if c.Spec.RegistryMirrorConfiguration == nil {
-		return ""
-	}
-
-	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
 // RegistryAuth returns whether registry requires authentication or not.
@@ -697,6 +692,28 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
+
+	mirrorCount := 0
+	ociNamespaces := clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces
+	for _, ociNamespace := range ociNamespaces {
+		if ociNamespace.Registry == "" {
+			return errors.New("registry can't be set to empty in OCINamespaces")
+		}
+		if re.MatchString(ociNamespace.Registry) {
+			mirrorCount++
+			// More than one mirror for curated package would introduce ambiguity in the package controller
+			if mirrorCount > 1 {
+				return errors.New("only one registry mirror for curated packages is suppported")
+			}
+		}
+	}
+	if mirrorCount == 1 {
+		// BottleRocket accepts only one registry mirror and that is hardcoded for public.ecr.aws at this moment.
+		// Such a validation will be removed once CAPI is patched to support more than one endpoints for BottleRocket.
+		if ociNamespaces[0].Registry != constants.DefaultCoreEKSARegistry {
+			return errors.New("registry must be public.ecr.aws when only one mapping is specified")
+		}
 	}
 	return nil
 }

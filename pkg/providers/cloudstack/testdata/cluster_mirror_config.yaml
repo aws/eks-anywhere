@@ -35,6 +35,9 @@ spec:
         name: test
   registryMirrorConfiguration:
     endpoint: 1.2.3.4
+    ociNamespaces:
+      - registry: "public.ecr.aws"
+        namespace: "eks-anywhere"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

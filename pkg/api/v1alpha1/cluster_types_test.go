@@ -1106,15 +1106,27 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			want: true,
 		},
 		{
-			testName: "both exist, diff",
+			testName: "both exist, endpoint diff",
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
@@ -1122,6 +1134,61 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.5",
 				CACertContent: "ca",
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (one nil, one exists)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (registry)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "1.2.3.4",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (namespace)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "",
+					},
+				},
 			},
 			want: false,
 		},
@@ -1454,10 +1521,22 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			want: true,
 		},
@@ -1479,6 +1558,61 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				CACertContent: "ca2",
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (one nil, one exists)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (registry)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (namespace)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "",
+					},
+				},
 			},
 			want: false,
 		},

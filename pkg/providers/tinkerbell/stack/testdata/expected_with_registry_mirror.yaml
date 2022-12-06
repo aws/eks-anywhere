@@ -11,7 +11,7 @@ boots:
     - name: TINKERBELL_GRPC_AUTHORITY
       value: 1.2.3.4:42113
     - name: BOOTS_EXTRA_KERNEL_ARGS
-      value: tink_worker_image=1.2.3.4:443/eks-anywhere/tink-worker:latest
+      value: tink_worker_image=1.2.3.4:443/custom/eks-anywhere/tink-worker:latest
     - name: REGISTRY_USERNAME
       value: "username"
     - password: REGISTRY_PASSWORD

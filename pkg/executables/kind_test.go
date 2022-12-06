@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -147,7 +148,6 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 	kubeConfigFile := "test_cluster.kind.kubeconfig"
 	registryMirror := "registry-mirror.test"
 	registryMirrorWithPort := net.JoinHostPort(registryMirror, constants.DefaultHttpsPort)
-	kindImage := fmt.Sprintf("%s/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registryMirrorWithPort)
 
 	// Initialize gomock
 	mockCtrl := gomock.NewController(t)
@@ -169,6 +169,12 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint: registryMirror,
 					Port:     constants.DefaultHttpsPort,
+					OCINamespaces: []v1alpha1.OCINamespace{
+						{
+							Registry:  "public.ecr.aws",
+							Namespace: "eks-anywhere",
+						},
+					},
 				}
 			}),
 			env:            map[string]string{},
@@ -196,8 +202,18 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.Cluster.Name = clusterName
 				s.VersionsBundle = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
-					Endpoint:     registryMirror,
-					Port:         constants.DefaultHttpsPort,
+					Endpoint: registryMirror,
+					Port:     constants.DefaultHttpsPort,
+					OCINamespaces: []v1alpha1.OCINamespace{
+						{
+							Registry:  "public.ecr.aws",
+							Namespace: "eks-anywhere",
+						},
+						{
+							Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+							Namespace: "curated-packages",
+						},
+					},
 					Authenticate: true,
 				}
 			}),
@@ -215,7 +231,11 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				image string
 			)
 			spec = tt.clusterSpec
-			image = kindImage
+			registry := registryMirrorWithPort
+			if r, ok := registrymirror.FromCluster(spec.Cluster).NamespacedRegistryMap[constants.DefaultCoreEKSARegistry]; ok {
+				registry = r
+			}
+			image = fmt.Sprintf("%s/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registry)
 
 			if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
 				t.Setenv("REGISTRY_USERNAME", "username")

@@ -274,6 +274,26 @@ spec:
                       in a tightly controlled, air-gapped environment. Currently only
                       supported for snow provider
                     type: boolean
+                  ociNamespaces:
+                    description: OCINamespaces defines the mapping from an upstream
+                      registry to a local namespace where upstream artifacts are placed
+                      into
+                    items:
+                      description: OCINamespace represents an entity in a local reigstry
+                        to group related images.
+                      properties:
+                        namespace:
+                          description: Namespace refers to the name of a namespace
+                            in the local registry
+                          type: string
+                        registry:
+                          description: Name refers to the name of the upstream registry
+                          type: string
+                      required:
+                      - namespace
+                      - registry
+                      type: object
+                    type: array
                   port:
                     description: Port defines the port exposed for registry mirror
                       endpoint

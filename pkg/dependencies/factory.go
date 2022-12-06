@@ -49,8 +49,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflow/task/workload"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
@@ -116,15 +116,16 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
-		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror(), clusterSpec.Cluster.RegistryAuth()).
+		WithRegistryMirror(registrymirror.FromCluster(clusterSpec.Cluster)).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
 
+// Factory helps initialization.
 type Factory struct {
 	executablesConfig        *executablesConfig
-	registryMirror           *registryMirror
+	registryMirror           *registrymirror.RegistryMirror
 	proxyConfiguration       map[string]string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -138,11 +139,6 @@ type executablesConfig struct {
 	useDockerContainer bool
 	dockerClient       executables.DockerClient
 	mountDirs          []string
-}
-
-type registryMirror struct {
-	endpoint string
-	auth     bool
 }
 
 type buildStep func(ctx context.Context) error
@@ -179,8 +175,8 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 }
 
 // WithRegistryMirror configures the factory to use registry mirror wherever applicable.
-func (f *Factory) WithRegistryMirror(endpoint string, auth bool) *Factory {
-	f.registryMirror = &registryMirror{endpoint: endpoint, auth: auth}
+func (f *Factory) WithRegistryMirror(registryMirror *registrymirror.RegistryMirror) *Factory {
+	f.registryMirror = registryMirror
 
 	return f
 }
@@ -260,10 +256,12 @@ func (f *Factory) WithDockerLogin() *Factory {
 	f.WithDocker()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		username, password, _ := config.ReadCredentials()
-		err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.endpoint, username, password)
-		if err != nil {
-			return err
+		if f.registryMirror != nil {
+			username, password, _ := config.ReadCredentials()
+			err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.BaseRegistry, username, password)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
@@ -280,14 +278,14 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			return nil
 		}
 
-		if f.registryMirror != nil && f.registryMirror.auth {
+		if f.registryMirror != nil && f.registryMirror.Auth {
 			f.WithDockerLogin()
 		}
 
 		if f.executablesConfig.useDockerContainer {
 			image := f.executablesConfig.image
 			if f.registryMirror != nil {
-				image = urls.ReplaceHost(f.executablesConfig.image, f.registryMirror.endpoint)
+				image = f.registryMirror.ReplaceRegistry(image)
 			}
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
@@ -600,7 +598,7 @@ func (f *Factory) WithWriter() *Factory {
 func (f *Factory) WithKind() *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
-	if f.registryMirror != nil && f.registryMirror.auth {
+	if f.registryMirror != nil && f.registryMirror.Auth {
 		f.WithDockerLogin()
 	}
 
@@ -666,7 +664,7 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.registryMirror != nil {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror.endpoint))
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
 
 		if f.proxyConfiguration != nil {
@@ -974,20 +972,16 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		managementClusterName := getManagementClusterName(spec)
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
-		chart := spec.VersionsBundle.PackageController.HelmChart
-		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
-
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
-		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
 			mgmtKubeConfig,
-			imageUrl,
-			chart.Name,
-			chart.Tag(),
-			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
+			&spec.VersionsBundle.PackageController.HelmChart,
+			f.registryMirror,
+			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithHTTPProxy(httpProxy),

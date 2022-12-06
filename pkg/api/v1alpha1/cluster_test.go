@@ -886,6 +886,12 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantCluster: nil,
 			wantErr:     true,
 		},
+		{
+			testName:    "Invalid registry",
+			fileName:    "testdata/invalid_registry.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -2267,6 +2273,64 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
+			name:    "multiple mappings for curated packages",
+			wantErr: "only one registry mirror for curated packages is suppported",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Namespace: "",
+							},
+							{
+								Registry:  "783794618700.dkr.ecr.us-east-1.amazonaws.com",
+								Namespace: "",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "one registry in OCINamespace but not public.ecr.aws",
+			wantErr: "registry must be public.ecr.aws when only one mapping is specified",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Namespace: "curated-packages",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "empty registry in OCINamespace",
+			wantErr: "registry can't be set to empty in OCINamespaces",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "",
+								Namespace: "",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "insecureSkipVerify on non snow provider",
 			wantErr: "insecureSkipVerify is only supported for snow provider",
 			cluster: &Cluster{
@@ -2401,38 +2465,6 @@ func TestValidateAutoscalingConfig(t *testing.T) {
 			} else {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
-		})
-	}
-}
-
-func TestClusterRegistryMirror(t *testing.T) {
-	tests := []struct {
-		name    string
-		cluster *Cluster
-		want    string
-	}{
-		{
-			name: "with registry mirror",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint: "1.2.3.4",
-						Port:     "443",
-					},
-				},
-			},
-			want: "1.2.3.4:443",
-		},
-		{
-			name:    "without registry mirror",
-			cluster: &Cluster{},
-			want:    "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
 		})
 	}
 }

@@ -9,12 +9,14 @@ import (
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 // imagesCmd represents the images command.
@@ -111,7 +113,14 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 	deps, err = factory.
 		WithExecutableMountDirs(dirsToMount...).
-		WithRegistryMirror(c.RegistryEndpoint, false).
+		WithRegistryMirror(&registrymirror.RegistryMirror{
+			BaseRegistry: c.RegistryEndpoint,
+			NamespacedRegistryMap: map[string]string{
+				constants.DefaultCoreEKSARegistry:             c.RegistryEndpoint,
+				constants.DefaultCuratedPackagesRegistryRegex: c.RegistryEndpoint,
+			},
+			Auth: false,
+		}).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
 		WithHelm(helmOpts...).
 		Build(ctx)

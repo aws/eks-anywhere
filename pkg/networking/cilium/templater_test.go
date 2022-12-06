@@ -391,6 +391,16 @@ func TestTemplaterGenerateManifestForRegistryAuth(t *testing.T) {
 		Endpoint:     "1.2.3.4",
 		Port:         "443",
 		Authenticate: true,
+		OCINamespaces: []v1alpha1.OCINamespace{
+			{
+				Registry:  "public.ecr.aws",
+				Namespace: "eks-anywhere",
+			},
+			{
+				Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+				Namespace: "curated-packages",
+			},
+		},
 	}
 
 	os.Unsetenv("REGISTRY_USERNAME")

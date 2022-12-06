@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -96,7 +97,7 @@ func importImages(ctx context.Context, spec string) error {
 		}
 	}
 
-	endpoint := clusterSpec.Cluster.RegistryMirror()
+	endpoint := registrymirror.FromCluster(clusterSpec.Cluster).BaseRegistry
 	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
 }
 

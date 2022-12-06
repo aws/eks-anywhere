@@ -141,6 +141,10 @@ type RegistryMirrorConfiguration struct {
 	// Port defines the port exposed for registry mirror endpoint
 	Port string `json:"port,omitempty"`
 
+	// OCINamespaces defines the mapping from an upstream registry to a local namespace where upstream
+	// artifacts are placed into
+	OCINamespaces []OCINamespace `json:"ociNamespaces,omitempty"`
+
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
 
@@ -153,6 +157,14 @@ type RegistryMirrorConfiguration struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
+// OCINamespace represents an entity in a local reigstry to group related images.
+type OCINamespace struct {
+	// Name refers to the name of the upstream registry
+	Registry string `json:"registry"`
+	// Namespace refers to the name of a namespace in the local registry
+	Namespace string `json:"namespace"`
+}
+
 func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
 	if n == o {
 		return true
@@ -160,7 +172,35 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent &&
+		n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate &&
+		OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
+}
+
+// OCINamespacesSliceEqual is used to check equality of the OCINamespaces fields of two RegistryMirrorConfiguration.
+func OCINamespacesSliceEqual(a, b []OCINamespace) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string]int, len(a))
+	for _, v := range a {
+		m[generateOCINamespaceKey(v)]++
+	}
+	for _, v := range b {
+		k := generateOCINamespaceKey(v)
+		if _, ok := m[k]; !ok {
+			return false
+		}
+		m[k]--
+		if m[k] == 0 {
+			delete(m, k)
+		}
+	}
+	return len(m) == 0
+}
+
+func generateOCINamespaceKey(n OCINamespace) (key string) {
+	return n.Registry + n.Namespace
 }
 
 type ControlPlaneConfiguration struct {

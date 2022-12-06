@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -127,7 +128,7 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 			if err != nil {
 				return nil, err
 			}
-			endpoint := spec.Cluster.RegistryMirror()
+			endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
 			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
 				return nil, err
 			}
