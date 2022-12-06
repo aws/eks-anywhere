@@ -13,6 +13,10 @@ import (
 // NutanixIdentifierType is an enumeration of different resource identifier types.
 type NutanixIdentifierType string
 
+func (c NutanixIdentifierType) String() string {
+	return string(c)
+}
+
 const (
 	// NutanixMachineConfigKind is the kind for a NutanixMachineConfig.
 	NutanixMachineConfigKind = "NutanixMachineConfig"

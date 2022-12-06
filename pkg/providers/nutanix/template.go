@@ -154,9 +154,15 @@ func buildTemplateMapCP(
 		"vcpuSockets":                  controlPlaneMachineSpec.VCPUSockets,
 		"memorySize":                   controlPlaneMachineSpec.MemorySize.String(),
 		"systemDiskSize":               controlPlaneMachineSpec.SystemDiskSize.String(),
-		"imageName":                    controlPlaneMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
-		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
-		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
+		"imageIDType":                  controlPlaneMachineSpec.Image.Type,
+		"imageName":                    controlPlaneMachineSpec.Image.Name,
+		"imageUUID":                    controlPlaneMachineSpec.Image.UUID,
+		"nutanixPEClusterIDType":       controlPlaneMachineSpec.Cluster.Type,
+		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name,
+		"nutanixPEClusterUUID":         controlPlaneMachineSpec.Cluster.UUID,
+		"subnetIDType":                 controlPlaneMachineSpec.Subnet.Type,
+		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,
+		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -185,9 +191,15 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"vcpuSockets":            workerNodeGroupMachineSpec.VCPUSockets,
 		"memorySize":             workerNodeGroupMachineSpec.MemorySize.String(),
 		"systemDiskSize":         workerNodeGroupMachineSpec.SystemDiskSize.String(),
-		"imageName":              workerNodeGroupMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
-		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
-		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
+		"imageIDType":            workerNodeGroupMachineSpec.Image.Type,
+		"imageName":              workerNodeGroupMachineSpec.Image.Name,
+		"imageUUID":              workerNodeGroupMachineSpec.Image.UUID,
+		"nutanixPEClusterIDType": workerNodeGroupMachineSpec.Cluster.Type,
+		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name,
+		"nutanixPEClusterUUID":   workerNodeGroupMachineSpec.Cluster.UUID,
+		"subnetIDType":           workerNodeGroupMachineSpec.Subnet.Type,
+		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,
+		"subnetUUID":             workerNodeGroupMachineSpec.Subnet.UUID,
 		"workerNodeGroupName":    fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 	}
 	return values
