@@ -120,6 +120,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
 
+// Factory helps initialization.
 type Factory struct {
 	executablesConfig        *executablesConfig
 	registryMirror           *registrymirror.RegistryMirror
@@ -968,7 +969,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
-		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
@@ -976,7 +977,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			mgmtKubeConfig,
 			&spec.VersionsBundle.PackageController.HelmChart,
 			f.registryMirror,
-			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
+			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithHTTPProxy(httpProxy),
