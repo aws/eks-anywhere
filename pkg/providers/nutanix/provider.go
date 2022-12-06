@@ -37,7 +37,7 @@ var mhcTemplate []byte
 var (
 	eksaNutanixDatacenterResourceType = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixMachineResourceType    = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                      = []string{nutanixEndpointKey, constants.NutanixUsernameKey, constants.NutanixPasswordKey}
+	requiredEnvs                      = []string{nutanixEndpointKey, constants.EksaNutanixUsernameKey, constants.EksaNutanixPasswordKey}
 )
 
 // Provider implements the Nutanix Provider.
