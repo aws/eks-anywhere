@@ -170,6 +170,19 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		if err := p.getHardwareFromManagementCluster(ctx, clusterSpec.ManagementCluster); err != nil {
 			return err
 		}
+
+		// for workload cluster use tinkerbell IP of the management cluster
+		managementClusterSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name)
+		if err != nil {
+			return err
+		}
+
+		managementDatacenterConfig, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx, managementClusterSpec.Spec.DatacenterRef.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		if err != nil {
+			return fmt.Errorf("getting TinkerbellIP of management cluster: %s", err)
+		}
+
+		p.datacenterConfig.Spec.TinkerbellIP = managementDatacenterConfig.Spec.TinkerbellIP
 	}
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.

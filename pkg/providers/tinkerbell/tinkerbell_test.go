@@ -968,6 +968,8 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 
 	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
 	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
 	kubectl.EXPECT().WaitForBaseboardManagements(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
 
@@ -1290,4 +1292,87 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	assertError(t, "waiting for baseboard management to be contactable: error", err)
+}
+
+func TestSetupAndValidateCreateWorkloadClusterErrorManagementCluster(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, fmt.Errorf("error getting management cluster data"))
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assertError(t, "error getting management cluster data", err)
+}
+
+func TestSetupAndValidateCreateWorkloadClusterErrorManagementClusterTinkerbellIP(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, fmt.Errorf("error"))
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assertError(t, "getting TinkerbellIP of management cluster: error", err)
 }
