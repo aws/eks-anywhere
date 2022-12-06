@@ -22,19 +22,30 @@ const (
 	nutanixMachineVCPUsPerSocket = "T_NUTANIX_MACHINE_VCPU_PER_SOCKET"
 	nutanixMachineVCPUSocket     = "T_NUTANIX_MACHINE_VCPU_SOCKET"
 
-	nutanixPrismElementClusterName = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
-	nutanixSSHAuthorizedKey        = "T_NUTANIX_SSH_AUTHORIZED_KEY"
-	nutanixSubnetName              = "T_NUTANIX_SUBNET_NAME"
+	nutanixPrismElementClusterIDType = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_ID_TYPE"
+	nutanixPrismElementClusterName   = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
+	nutanixPrismElementClusterUUID   = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_UUID"
+	nutanixSSHAuthorizedKey          = "T_NUTANIX_SSH_AUTHORIZED_KEY"
+	nutanixSubnetIDType              = "T_NUTANIX_SUBNET_ID_TYPE"
+	nutanixSubnetName                = "T_NUTANIX_SUBNET_NAME"
+	nutanixSubnetUUID                = "T_NUTANIX_SUBNET_UUID"
 
 	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
 	nutanixControlPlaneCidrVar    = "T_NUTANIX_CONTROL_PLANE_CIDR"
 	nutanixPodCidrVar             = "T_NUTANIX_POD_CIDR"
 	nutanixServiceCidrVar         = "T_NUTANIX_SERVICE_CIDR"
 
-	nutanixTemplateUbuntu121Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_21"
-	nutanixTemplateUbuntu122Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_22"
-	nutanixTemplateUbuntu123Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_23"
-	nutanixTemplateUbuntu124Var = "T_NUTANIX_TEMPLATE_UBUNTU_1_24"
+	nutanixMachineTemplateIDTypeVar = "T_NUTANIX_TEMPLATE_ID_TYPE"
+
+	nutanixTemplateNameUbuntu121Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_21"
+	nutanixTemplateNameUbuntu122Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_22"
+	nutanixTemplateNameUbuntu123Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23"
+	nutanixTemplateNameUbuntu124Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24"
+
+	nutanixTemplateUUIDUbuntu121Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_21"
+	nutanixTemplateUUIDUbuntu122Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_22"
+	nutanixTemplateUUIDUbuntu123Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_23"
+	nutanixTemplateUUIDUbuntu124Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_24"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -49,15 +60,24 @@ var requiredNutanixEnvVars = []string{
 	nutanixSystemDiskSize,
 	nutanixMachineVCPUsPerSocket,
 	nutanixMachineVCPUSocket,
+	nutanixPrismElementClusterIDType,
 	nutanixPrismElementClusterName,
+	nutanixPrismElementClusterUUID,
 	nutanixSSHAuthorizedKey,
+	nutanixSubnetIDType,
 	nutanixSubnetName,
+	nutanixSubnetUUID,
 	nutanixPodCidrVar,
 	nutanixServiceCidrVar,
-	nutanixTemplateUbuntu121Var,
-	nutanixTemplateUbuntu122Var,
-	nutanixTemplateUbuntu123Var,
-	nutanixTemplateUbuntu124Var,
+	nutanixMachineTemplateIDTypeVar,
+	nutanixTemplateNameUbuntu121Var,
+	nutanixTemplateNameUbuntu122Var,
+	nutanixTemplateNameUbuntu123Var,
+	nutanixTemplateNameUbuntu124Var,
+	nutanixTemplateUUIDUbuntu121Var,
+	nutanixTemplateUUIDUbuntu122Var,
+	nutanixTemplateUUIDUbuntu123Var,
+	nutanixTemplateUUIDUbuntu124Var,
 	nutanixInsecure,
 }
 
@@ -164,10 +184,18 @@ func (s *Nutanix) WithProviderUpgrade(fillers ...api.NutanixFiller) ClusterE2ETe
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu121Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu121Var, api.WithNutanixMachineTemplateImageName),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu121Var, api.WithNutanixMachineTemplateImageName),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu121Var, api.WithNutanixMachineTemplateImageUUID),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		}
 	}
 }
 
@@ -175,10 +203,18 @@ func WithUbuntu121Nutanix() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu122Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu122Var, api.WithNutanixMachineTemplateImageName),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu122Var, api.WithNutanixMachineTemplateImageName),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu122Var, api.WithNutanixMachineTemplateImageUUID),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		}
 	}
 }
 
@@ -186,10 +222,18 @@ func WithUbuntu122Nutanix() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu123Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu123Var, api.WithNutanixMachineTemplateImageName),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu123Var, api.WithNutanixMachineTemplateImageName),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu123Var, api.WithNutanixMachineTemplateImageUUID),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		}
 	}
 }
 
@@ -197,10 +241,18 @@ func WithUbuntu123Nutanix() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu124Nutanix() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUbuntu124Var, api.WithNutanixMachineTemplateImageName),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+		if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		} else if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierUUID) {
+			v.fillers = append(v.fillers,
+				api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu124Var, api.WithNutanixMachineTemplateImageUUID),
+				api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+			)
+		}
 	}
 }
 
