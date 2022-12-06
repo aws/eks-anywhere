@@ -218,7 +218,8 @@ func WithUbuntu124Nutanix() NutanixOpt {
 // image name parameter in the spec.
 func GetUbuntu121NutanixFillers() []api.NutanixFiller {
 	var fillers []api.NutanixFiller
-	nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
+	nutanixMachineTemplateIDType = strings.Trim(nutanixMachineTemplateIDType, "'")
 	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
 		fillers = append(fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu121Var, api.WithNutanixMachineTemplateImageName),
@@ -237,7 +238,8 @@ func GetUbuntu121NutanixFillers() []api.NutanixFiller {
 // image name parameter in the spec.
 func GetUbuntu122NutanixFillers() []api.NutanixFiller {
 	var fillers []api.NutanixFiller
-	nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
+	nutanixMachineTemplateIDType = strings.Trim(nutanixMachineTemplateIDType, "'")
 	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
 		fillers = append(fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu122Var, api.WithNutanixMachineTemplateImageName),
@@ -256,7 +258,8 @@ func GetUbuntu122NutanixFillers() []api.NutanixFiller {
 // image name parameter in the spec.
 func GetUbuntu123NutanixFillers() []api.NutanixFiller {
 	var fillers []api.NutanixFiller
-	nutanixMachineTemplateIDType := os.Getenv(nutanixMachineTemplateIDTypeVar)
+	nutanixMachineTemplateIDType := strings.Trim(os.Getenv(nutanixMachineTemplateIDTypeVar), "\"")
+	nutanixMachineTemplateIDType = strings.Trim(nutanixMachineTemplateIDType, "'")
 	if nutanixMachineTemplateIDType == string(anywherev1.NutanixIdentifierName) {
 		fillers = append(fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu123Var, api.WithNutanixMachineTemplateImageName),

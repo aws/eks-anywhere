@@ -177,26 +177,26 @@ spec:
       memorySize: {{.memorySize}}
       systemDiskSize: {{.systemDiskSize}}
       image:
-{{- if and .imageIDType (eq .format "name") }}
+{{- if (eq .imageIDType "name") }}
         type: name
         name: "{{.imageName}}"
-{{ else if and .imageIDType (eq .format "uuid") }}
+{{ else if (eq .imageIDType "uuid") }}
         type: uuid
         name: "{{.imageUUID}}"
 {{ end }}
       cluster:
-{{- if and .nutanixPEClusterIDType (eq .format "name") }}
+{{- if (eq .imageIDType "name") }}
         type: name
         name: "{{.nutanixPEClusterName}}"
-{{- else if and .nutanixPEClusterIDType (eq .format "uuid") }}
+{{- else if (eq .imageIDType "uuid") }}
         type: uuid
         name: "{{.nutanixPEClusterUUID}}"
 {{ end }}
       subnet:
-{{- if and .subnetIDType (eq .format "name") }}
+{{- if (eq .imageIDType "name") }}
         - type: name
           name: "{{.subnetName}}"
-{{- else if and .subnetIDType (eq .format "uuid") }}
+{{- else if (eq .imageIDType "uuid") }}
         - type: uuid
           name: "{{.subnetUUID}}"
 {{ end }}
