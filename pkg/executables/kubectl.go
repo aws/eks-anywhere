@@ -379,8 +379,8 @@ func (k *Kubectl) WaitForJobCompleted(ctx context.Context, kubeconfig, timeout s
 }
 
 // WaitForPackagesInstalled waits for a package resource to reach installed state before returning.
-func (k *Kubectl) WaitForPackagesInstalled(ctx context.Context, cluster *types.Cluster, name string, timeout string, namespace string) error {
-	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, "status.state", "installed", fmt.Sprintf("%s/%s", eksaPackagesType, name), namespace)
+func (k *Kubectl) WaitForPackagesInstalled(ctx context.Context, kubeconfig, name string, timeout string, namespace string) error {
+	return k.WaitJSONPathLoop(ctx, kubeconfig, timeout, "status.state", "installed", fmt.Sprintf("%s/%s", eksaPackagesType, name), namespace)
 }
 
 // WaitForPodCompleted waits for a pod to be terminated with a Completed state before returning.

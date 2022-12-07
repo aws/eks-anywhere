@@ -2881,7 +2881,7 @@ func TestWaitForPackagesInstalled(t *testing.T) {
 	tt := newKubectlTest(t)
 	expectedParam := []string{"get", "packages.packages.eks.amazonaws.com/testpackage", "-o", fmt.Sprintf("%s=%s", "jsonpath", "'{.status.state}'"), "--kubeconfig", "c.kubeconfig", "-n", "eksa-system"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	err := tt.k.WaitForPackagesInstalled(tt.ctx, tt.cluster, "testpackage", "2m", "eksa-system")
+	err := tt.k.WaitForPackagesInstalled(tt.ctx, tt.cluster.KubeconfigFile, "testpackage", "2m", "eksa-system")
 	tt.Expect(err).ToNot(HaveOccurred())
 }
 

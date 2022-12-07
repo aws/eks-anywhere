@@ -1098,7 +1098,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *t
 
 	e.T.Log("Waiting for Package", name, "To be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+		mgmtCluster.KubeconfigFile, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere package timed out: %s", err)
 	}
@@ -1206,7 +1206,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(name string, mgmtCluster
 
 	e.T.Log("Waiting for Package", name, "To be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+		mgmtCluster.KubeconfigFile, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
 	if err != nil {
 		e.T.Fatalf("waiting for emissary package timed out: %s", err)
 	}
@@ -1254,7 +1254,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *ty
 	}
 	e.T.Log("Waiting for Package", name, "To be upgraded")
 	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, name, "10m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+		mgmtCluster.KubeconfigFile, name, "10m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
 	if err != nil {
 		e.T.Fatalf("waiting for emissary package upgrade timed out: %s", err)
 	}
