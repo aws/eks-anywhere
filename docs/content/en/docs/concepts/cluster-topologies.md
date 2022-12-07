@@ -65,7 +65,7 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 | Create/update/delete a workload cluster on... ||
 | <ul><li>VMware via CLI</li>  | Y |
 | <ul><li>CloudStack via CLI</li> | Y |
-| <ul><li>Bare Metal via CLI</li> | N |
+| <ul><li>Bare Metal via CLI</li> | Y |
 | Update a workload cluster on... ||
 | <ul><li>VMware via GitOps/Terraform</li> | Y |
 | <ul><li>CloudStack via GitOps/Terraform</li> | Y |
