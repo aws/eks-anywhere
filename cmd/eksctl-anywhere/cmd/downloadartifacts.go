@@ -89,7 +89,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 					continue
 				}
 				if opts.dryRun {
-					logger.Info(fmt.Sprintf("Found artifact: %s\n", *manifest))
+					logger.Info("Artifact found", "name", *manifest)
 					continue
 				}
 
