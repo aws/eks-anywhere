@@ -1,3 +1,11 @@
+apiVersion: v1
+binaryData:
+  ca.crt: {{.nutanixAdditionalTrustBundle}}
+kind: ConfigMap
+metadata:
+  name: user-ca-bundle
+  namespace: "{{.eksaSystemNamespace}}"
+---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixCluster
 metadata:
@@ -5,6 +13,9 @@ metadata:
   namespace: "{{.eksaSystemNamespace}}"
 spec:
   prismCentral:
+    additionalTrustBundle:
+      kind: ConfigMap
+      name: user-ca-bundle
     address: "{{.nutanixEndpoint}}"
     port: {{.nutanixPort}}
     insecure: {{.nutanixInsecure}}
