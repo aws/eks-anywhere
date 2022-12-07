@@ -224,6 +224,30 @@ func TestVSphereKubernetes123To124GitFluxUpgrade(t *testing.T) {
 	)
 }
 
+func TestCloudStackKubernetes123GitopsOptionsFluxLegacy(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithFluxLegacy(),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+	)
+
+	test.RunClusterFlowWithGitOps(
+		framework.WithClusterUpgradeGit(
+			api.WithWorkerNodeCount(3),
+		),
+		// Needed in order to replace the CloudStackDatacenterConfig namespace field with the value specified
+		// compared to when it was initially created without it.
+		provider.WithProviderUpgradeGit(),
+	)
+}
+
 func TestDockerInstallGitFluxDuringUpgrade(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),

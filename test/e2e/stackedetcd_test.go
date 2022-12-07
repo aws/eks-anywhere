@@ -77,3 +77,12 @@ func TestCloudStackKubernetes121StackedEtcdRedhat(t *testing.T) {
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()))
 	runStackedEtcdFlow(test)
 }
+
+func TestCloudStackKubernetes123StackedEtcdRedhat(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat123()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()))
+	runStackedEtcdFlow(test)
+}

@@ -2,6 +2,18 @@ skipped_tests:
 # CloudStack
 - TestCloudStackKubernetes121RedhatProxyConfig
 - TestCloudStackKubernetes121RedhatRegistryMirrorAndCert
+- TestCloudStackKubernetes122ThreeWorkersConformanceFlow
+- TestCloudStackKubernetes123ThreeWorkersConformanceFlow
+# Unskip these after 1.22 and 1.23 CloudStack images are available in CI env
+- TestCloudStackKubernetes123GitopsOptionsFluxLegacy
+- TestCloudStackKubernetes123SimpleFlow
+- TestCloudStackKubernetes123StackedEtcdRedhat
+- TestCloudStackKubernetes123UpgradeFromLatestMinorRelease
+- TestCloudStackKubernetes122RedhatTo123Upgrade
+- TestCloudStackKubernetesUnstacked122RedhatTo123Upgrade
+- TestCloudStackKubernetes122RedhatTo123MultipleFieldsUpgrade
+- TestCloudStackKubernetes123RedhatWorkerNodeUpgrade
+- TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy
 # Nutanix
 - TestNutanixKubernetes121UbuntuControlPlaneNodeScaleDown3To1
 - TestNutanixKubernetes121UbuntuControlPlaneNodeScaleDown5To3

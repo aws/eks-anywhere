@@ -398,6 +398,75 @@ func TestVSphereKubernetes123BottlerocketTo124StackedEtcdUpgrade(t *testing.T) {
 		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
 	)
 }
+func TestCloudStackKubernetes122RedhatTo123Upgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube123,
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		provider.WithProviderUpgrade(framework.UpdateRedhatTemplate123Var()),
+	)
+}
+
+func TestCloudStackKubernetesUnstacked122RedhatTo123Upgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube123,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		provider.WithProviderUpgrade(framework.UpdateRedhatTemplate123Var()),
+	)
+}
+
+func TestCloudStackKubernetes122RedhatTo123MultipleFieldsUpgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube123,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		provider.WithProviderUpgrade(
+			framework.UpdateRedhatTemplate123Var(),
+			framework.UpdateLargerCloudStackComputeOffering(),
+		),
+	)
+}
+
+func TestCloudStackKubernetes123RedhatWorkerNodeUpgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube123,
+		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
+	)
+}
 
 func TestCloudStackKubernetes121AddRemoveAz(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())

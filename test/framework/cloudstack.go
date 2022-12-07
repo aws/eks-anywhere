@@ -23,6 +23,8 @@ const (
 	cloudstackManagementServer2Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
 	cloudstackTemplateRedhat121Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_21"
+	cloudstackTemplateRedhat122Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_22"
+	cloudstackTemplateRedhat123Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_23"
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
 	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
@@ -69,6 +71,16 @@ type CloudStackOpt func(*CloudStack)
 
 func UpdateRedhatTemplate121Var() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// UpdateRedhatTemplate122Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.22.
+func UpdateRedhatTemplate122Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat122Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// UpdateRedhatTemplate123Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.23.
+func UpdateRedhatTemplate123Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines)
 }
 
 func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
@@ -126,6 +138,24 @@ func WithCloudStackRedhat121() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
+		)
+	}
+}
+
+// WithCloudStackRedhat122 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.22.
+func WithCloudStackRedhat122() CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat122Var, api.WithCloudStackTemplateForAllMachines),
+		)
+	}
+}
+
+// WithCloudStackRedhat123 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.23.
+func WithCloudStackRedhat123() CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines),
 		)
 	}
 }
