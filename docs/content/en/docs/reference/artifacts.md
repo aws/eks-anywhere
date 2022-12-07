@@ -117,7 +117,7 @@ export KUBEVERSION="1.23"
 
 ## Building node images
 
-The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs & Nutanix qcow2 images, RHEL-based qcow2 images, or Bare Metal gzip images to use in EKS Anywhere clusters.
+The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs, Nutanix qcow2 images, RHEL-based qcow2 images, or Bare Metal gzip images to use in EKS Anywhere clusters.
 When you run `image-builder` it will pull in all components needed to create images to use for nodes in an EKS Anywhere cluster, including the lastest operating system, Kubernetes, and EKS Distro security updates, bug fixes, and patches.
 With this tool, when you build an image you get to choose:
 
