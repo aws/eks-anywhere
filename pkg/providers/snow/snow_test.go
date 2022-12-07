@@ -75,120 +75,265 @@ func newSnowTest(t *testing.T) snowTest {
 
 func givenClusterSpec() *cluster.Spec {
 	return test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster = &v1alpha1.Cluster{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "snow-test",
-				Namespace: "test-namespace",
-			},
-			Spec: v1alpha1.ClusterSpec{
-				ClusterNetwork: v1alpha1.ClusterNetwork{
-					CNI: v1alpha1.Cilium,
-					Pods: v1alpha1.Pods{
-						CidrBlocks: []string{
-							"10.1.0.0/16",
-						},
-					},
-					Services: v1alpha1.Services{
-						CidrBlocks: []string{
-							"10.96.0.0/12",
-						},
-					},
-				},
-				ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
-					Count: 3,
-					Endpoint: &v1alpha1.Endpoint{
-						Host: "1.2.3.4",
-					},
-					MachineGroupRef: &v1alpha1.Ref{
-						Kind: "SnowMachineConfig",
-						Name: "test-cp",
-					},
-				},
-				KubernetesVersion: "1.21",
-				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
-					{
-						Name:  "md-0",
-						Count: ptr.Int(3),
-						MachineGroupRef: &v1alpha1.Ref{
-							Kind: "SnowMachineConfig",
-							Name: "test-wn",
-						},
-					},
-				},
-				DatacenterRef: v1alpha1.Ref{
-					Kind: "SnowDatacenterConfig",
-					Name: "test",
-				},
-			},
-		}
+		s.Cluster = givenClusterConfig()
 		s.SnowDatacenter = givenDatacenterConfig()
 		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
 		s.SnowMachineConfigs = givenMachineConfigs()
-		s.VersionsBundle = &cluster.VersionsBundle{
-			KubeDistro: &cluster.KubeDistro{
-				Kubernetes: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/kubernetes",
-					Tag:        "v1.21.5-eks-1-21-9",
-				},
-				CoreDNS: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/coredns",
-					Tag:        "v1.8.4-eks-1-21-9",
-				},
-				Etcd: cluster.VersionedRepository{
-					Repository: "public.ecr.aws/eks-distro/etcd-io",
-					Tag:        "v3.4.16-eks-1-21-9",
-				},
-				Pause: releasev1alpha1.Image{
-					URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
-				},
-			},
-			VersionsBundle: &releasev1alpha1.VersionsBundle{
-				KubeVersion: "1.21",
-				Snow: releasev1alpha1.SnowBundle{
-					Version: "v1.0.2",
-					KubeVip: releasev1alpha1.Image{
-						Name:        "kube-vip",
-						OS:          "linux",
-						URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
-						ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
-						Description: "Container image for kube-vip image",
-						Arch:        []string{"amd64"},
-					},
-					Manager: releasev1alpha1.Image{
-						Name:        "cluster-api-snow-controller",
-						OS:          "linux",
-						URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
-						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
-						Description: "Container image for cluster-api-snow-controller image",
-						Arch:        []string{"amd64"},
-					},
-					BottlerocketBootstrapSnow: releasev1alpha1.Image{
-						Name:        "bottlerocket-bootstrap-snow",
-						OS:          "linux",
-						URI:         "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
-						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
-						Description: "Container image for bottlerocket-bootstrap-snow image",
-						Arch:        []string{"amd64"},
-					},
-				},
-				BottleRocketHostContainers: releasev1alpha1.BottlerocketHostContainersBundle{
-					Admin: releasev1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
-					},
-					Control: releasev1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
-					},
-					KubeadmBootstrap: releasev1alpha1.Image{
-						URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
-					},
-				},
-			},
-		}
-		s.ManagementCluster = &types.Cluster{
-			Name:           "test-snow",
-			KubeconfigFile: "management.kubeconfig",
-		}
+		s.VersionsBundle = givenVersionsBundle()
+		s.ManagementCluster = givenManagementCluster()
 	})
+}
+
+func givenClusterSpecWithCPUpgradeStrategy() *cluster.Spec {
+	return test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = givenClusterConfigWithCPUpgradeStrategy()
+		s.SnowDatacenter = givenDatacenterConfig()
+		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
+		s.SnowMachineConfigs = givenMachineConfigs()
+		s.VersionsBundle = givenVersionsBundle()
+		s.ManagementCluster = givenManagementCluster()
+	})
+}
+
+func givenClusterSpecWithMDUpgradeStrategy() *cluster.Spec {
+	return test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = givenClusterConfigWithMDUpgradeStrategy()
+		s.SnowDatacenter = givenDatacenterConfig()
+		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
+		s.SnowMachineConfigs = givenMachineConfigs()
+		s.VersionsBundle = givenVersionsBundle()
+		s.ManagementCluster = givenManagementCluster()
+	})
+}
+
+func givenVersionsBundle() *cluster.VersionsBundle {
+	return &cluster.VersionsBundle{
+		KubeDistro: &cluster.KubeDistro{
+			Kubernetes: cluster.VersionedRepository{
+				Repository: "public.ecr.aws/eks-distro/kubernetes",
+				Tag:        "v1.21.5-eks-1-21-9",
+			},
+			CoreDNS: cluster.VersionedRepository{
+				Repository: "public.ecr.aws/eks-distro/coredns",
+				Tag:        "v1.8.4-eks-1-21-9",
+			},
+			Etcd: cluster.VersionedRepository{
+				Repository: "public.ecr.aws/eks-distro/etcd-io",
+				Tag:        "v3.4.16-eks-1-21-9",
+			},
+			Pause: releasev1alpha1.Image{
+				URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+			},
+		},
+		VersionsBundle: &releasev1alpha1.VersionsBundle{
+			KubeVersion: "1.21",
+			Snow: releasev1alpha1.SnowBundle{
+				Version: "v1.0.2",
+				KubeVip: releasev1alpha1.Image{
+					Name:        "kube-vip",
+					OS:          "linux",
+					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
+					Description: "Container image for kube-vip image",
+					Arch:        []string{"amd64"},
+				},
+				Manager: releasev1alpha1.Image{
+					Name:        "cluster-api-snow-controller",
+					OS:          "linux",
+					URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
+					ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+					Description: "Container image for cluster-api-snow-controller image",
+					Arch:        []string{"amd64"},
+				},
+				BottlerocketBootstrapSnow: releasev1alpha1.Image{
+					Name:        "bottlerocket-bootstrap-snow",
+					OS:          "linux",
+					URI:         "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
+					ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+					Description: "Container image for bottlerocket-bootstrap-snow image",
+					Arch:        []string{"amd64"},
+				},
+			},
+			BottleRocketHostContainers: releasev1alpha1.BottlerocketHostContainersBundle{
+				Admin: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+				},
+				Control: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+				},
+				KubeadmBootstrap: releasev1alpha1.Image{
+					URI: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+				},
+			},
+		},
+	}
+}
+
+func givenManagementCluster() *types.Cluster {
+	return &types.Cluster{
+		Name:           "test-snow",
+		KubeconfigFile: "management.kubeconfig",
+	}
+}
+
+func givenClusterConfigWithCPUpgradeStrategy() *v1alpha1.Cluster {
+	return &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "snow-test",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.ClusterSpec{
+			ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNI: v1alpha1.Cilium,
+				Pods: v1alpha1.Pods{
+					CidrBlocks: []string{
+						"10.1.0.0/16",
+					},
+				},
+				Services: v1alpha1.Services{
+					CidrBlocks: []string{
+						"10.96.0.0/12",
+					},
+				},
+			},
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3,
+				Endpoint: &v1alpha1.Endpoint{
+					Host: "1.2.3.4",
+				},
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: "SnowMachineConfig",
+					Name: "test-cp",
+				},
+				UpgradeRolloutStrategy: &v1alpha1.ControlPlaneUpgradeRolloutStrategy{
+					Type: "RollingUpdate",
+					RollingUpdate: v1alpha1.ControlPlaneRollingUpdateParams{
+						MaxSurge: 1,
+					},
+				},
+			},
+			KubernetesVersion: "1.21",
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Name:  "md-0",
+					Count: ptr.Int(3),
+					MachineGroupRef: &v1alpha1.Ref{
+						Kind: "SnowMachineConfig",
+						Name: "test-wn",
+					},
+				},
+			},
+			DatacenterRef: v1alpha1.Ref{
+				Kind: "SnowDatacenterConfig",
+				Name: "test",
+			},
+		},
+	}
+}
+
+func givenClusterConfigWithMDUpgradeStrategy() *v1alpha1.Cluster {
+	return &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "snow-test",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.ClusterSpec{
+			ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNI: v1alpha1.Cilium,
+				Pods: v1alpha1.Pods{
+					CidrBlocks: []string{
+						"10.1.0.0/16",
+					},
+				},
+				Services: v1alpha1.Services{
+					CidrBlocks: []string{
+						"10.96.0.0/12",
+					},
+				},
+			},
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3,
+				Endpoint: &v1alpha1.Endpoint{
+					Host: "1.2.3.4",
+				},
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: "SnowMachineConfig",
+					Name: "test-cp",
+				},
+			},
+			KubernetesVersion: "1.21",
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Name:  "md-0",
+					Count: ptr.Int(3),
+					MachineGroupRef: &v1alpha1.Ref{
+						Kind: "SnowMachineConfig",
+						Name: "test-wn",
+					},
+					UpgradeRolloutStrategy: &v1alpha1.WorkerNodesUpgradeRolloutStrategy{
+						Type: "RollingUpdate",
+						RollingUpdate: v1alpha1.WorkerNodesRollingUpdateParams{
+							MaxSurge:       1,
+							MaxUnavailable: 0,
+						},
+					},
+				},
+			},
+			DatacenterRef: v1alpha1.Ref{
+				Kind: "SnowDatacenterConfig",
+				Name: "test",
+			},
+		},
+	}
+}
+
+func givenClusterConfig() *v1alpha1.Cluster {
+	return &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "snow-test",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.ClusterSpec{
+			ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNI: v1alpha1.Cilium,
+				Pods: v1alpha1.Pods{
+					CidrBlocks: []string{
+						"10.1.0.0/16",
+					},
+				},
+				Services: v1alpha1.Services{
+					CidrBlocks: []string{
+						"10.96.0.0/12",
+					},
+				},
+			},
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3,
+				Endpoint: &v1alpha1.Endpoint{
+					Host: "1.2.3.4",
+				},
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: "SnowMachineConfig",
+					Name: "test-cp",
+				},
+			},
+			KubernetesVersion: "1.21",
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Name:  "md-0",
+					Count: ptr.Int(3),
+					MachineGroupRef: &v1alpha1.Ref{
+						Kind: "SnowMachineConfig",
+						Name: "test-wn",
+					},
+				},
+			},
+			DatacenterRef: v1alpha1.Ref{
+				Kind: "SnowDatacenterConfig",
+				Name: "test",
+			},
+		},
+	}
 }
 
 func givenDatacenterConfig() *v1alpha1.SnowDatacenterConfig {
@@ -327,6 +472,20 @@ func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
+func TestSetupAndValidateCreateClusterCPUpgradeStrategy(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, givenClusterSpecWithCPUpgradeStrategy())
+	tt.Expect(err).To(MatchError(ContainSubstring("failed setup and validations: Upgrade rollout strategy customization is not supported for snow provider")))
+}
+
+func TestSetupAndValidateCreateClusterMDUpgradeStrategy(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, givenClusterSpecWithMDUpgradeStrategy())
+	tt.Expect(err).To(MatchError(ContainSubstring("failed setup and validations: Upgrade rollout strategy customization is not supported for snow provider")))
+}
+
 func TestSetupAndValidateUpgradeClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
@@ -355,6 +514,20 @@ func TestSetupAndValidateUpgradeClusterNoCertsEnv(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
+func TestSetupAndValidateUpgradeClusterCPUpgradeStrategy(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, givenClusterSpecWithCPUpgradeStrategy(), givenClusterSpecWithCPUpgradeStrategy())
+	tt.Expect(err).To(MatchError(ContainSubstring("failed setup and validations: Upgrade rollout strategy customization is not supported for snow provider")))
+}
+
+func TestSetupAndValidateUpgradeClusterMDUpgradeStrategy(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, givenClusterSpecWithMDUpgradeStrategy(), givenClusterSpecWithMDUpgradeStrategy())
+	tt.Expect(err).To(MatchError(ContainSubstring("failed setup and validations: Upgrade rollout strategy customization is not supported for snow provider")))
+}
+
 func TestSetupAndValidateDeleteClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
@@ -377,6 +550,20 @@ func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 	os.Unsetenv(certsFileEnvVar)
 	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster, tt.clusterSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
+}
+
+func TestSetupAndValidateDeleteClusterCPUpgradeStrategy(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster, givenClusterSpecWithCPUpgradeStrategy())
+	tt.Expect(err).To(MatchError(ContainSubstring("failed setup and validations: Upgrade rollout strategy customization is not supported for snow provider")))
+}
+
+func TestSetupAndValidateDeleteClusterMDUpgradeStrategy(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster, givenClusterSpecWithMDUpgradeStrategy())
+	tt.Expect(err).To(MatchError(ContainSubstring("failed setup and validations: Upgrade rollout strategy customization is not supported for snow provider")))
 }
 
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
