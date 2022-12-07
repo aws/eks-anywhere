@@ -37,7 +37,8 @@ var mhcTemplate []byte
 var (
 	eksaNutanixDatacenterResourceType = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixMachineResourceType    = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                      = []string{nutanixEndpointKey, constants.EksaNutanixUsernameKey, constants.EksaNutanixPasswordKey}
+	// list of env variables required by CAPX to be present and defined beforehand
+	requiredEnvs = []string{nutanixEndpointKey, constants.NutanixUsernameKey, constants.NutanixPasswordKey}
 )
 
 // Provider implements the Nutanix Provider.
