@@ -256,7 +256,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				ManifestFiles: []string{"infrastructure-components.yaml", "cluster-template.yaml", "metadata.yaml"},
 			},
 		},
-		OnlyForDevRelease: true,
 		UsesKubeRbacProxy: true,
 	},
 	// Cluster-api-provider-tinkerbell artifacts
