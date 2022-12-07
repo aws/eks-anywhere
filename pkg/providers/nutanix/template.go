@@ -73,6 +73,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 		values := buildTemplateMapMD(clusterSpec, ntb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
+		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
