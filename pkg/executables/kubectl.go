@@ -364,6 +364,16 @@ func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster,
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
 }
 
+// WaitForDaemonsetRolledout waits for a daemonset to be successfully rolled out before returning.
+func (k *Kubectl) WaitForDaemonsetRolledout(ctx context.Context, cluster *types.Cluster, timeout string, target string, namespace string) error {
+	params := []string{"rollout", "status", "daemonset", target, "--kubeconfig", cluster.KubeconfigFile, "--namespace", namespace, "--timeout", timeout}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("unable to finish daemonset roll out: %w", err)
+	}
+	return nil
+}
+
 // WaitForPod waits for a pod resource to reach desired condition before returning.
 func (k *Kubectl) WaitForPod(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "pod/"+target, namespace)

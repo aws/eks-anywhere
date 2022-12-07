@@ -1,0 +1,66 @@
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: generated-adot
+spec:
+  packageName: adot
+  targetNamespace: observability
+  config: |-
+    mode: deployment
+    clusterRole:
+      create: true
+      rules:
+        - apiGroups:
+            - ""
+          resources:
+            - nodes
+            - nodes/proxy
+            - services
+            - endpoints
+            - pods
+          verbs:
+            - get
+            - list
+            - watch
+        - nonResourceURLs:
+            - /metrics
+          verbs:
+            - get
+    config:
+      receivers:
+        prometheus:
+          config:
+            global:
+              scrape_interval: 15s
+              scrape_timeout: 10s
+            scrape_configs:
+              - job_name: kubernetes-apiservers
+                bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                kubernetes_sd_configs:
+                - role: endpoints
+                relabel_configs:
+                - action: keep
+                  regex: default;kubernetes;https
+                  source_labels:
+                  - __meta_kubernetes_namespace
+                  - __meta_kubernetes_service_name
+                  - __meta_kubernetes_endpoint_port_name
+                scheme: https
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+      processors:
+        batch: {}
+        memory_limiter: null
+      exporters:
+        logging:
+          loglevel: info
+      service:
+        pipelines:
+          metrics:
+            receivers: [prometheus]
+            processors: [batch]
+            exporters: [logging]
+        telemetry:
+          metrics:
+            address: 0.0.0.0:8888
