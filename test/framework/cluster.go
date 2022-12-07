@@ -1205,8 +1205,8 @@ var adotPackageDeployment []byte
 //go:embed testdata/adot_package_daemonset.yaml
 var adotPackageDaemonset []byte
 
-// TestAdotPackageConfigmapChange is checking if config changes trigger resource reloads correctly.
-func (e *ClusterE2ETest) VerifyAdotPackageUpdated(packageName string, targetNamespace string) {
+// VerifyAdotPackageDeploymentUpdated is checking if deployment config changes trigger resource reloads correctly.
+func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 
@@ -1249,11 +1249,17 @@ func (e *ClusterE2ETest) VerifyAdotPackageUpdated(packageName string, targetName
 	if !ok {
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}
+}
+
+// VerifyAdotPackageDaemonSetUpdated is checking if daemonset config changes trigger resource reloads correctly.
+func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, targetNamespace string) {
+	ctx := context.Background()
+	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 
 	// Deploy ADOT as a daemonset and scrape the node
 	e.T.Log("Apply changes to package", packageName)
 	e.T.Log("This will update ", packageName, " to be a daemonset, and scrape the node")
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDaemonset, packageMetadatNamespace)
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDaemonset, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
@@ -1275,17 +1281,17 @@ func (e *ClusterE2ETest) VerifyAdotPackageUpdated(packageName string, targetName
 	}
 
 	e.T.Log("Reading", packageName, "pod logs")
-	adotPodName, err = e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
+	adotPodName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
-	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	expectedLogs = "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 95}"
-	ok = strings.Contains(logs, expectedLogs)
+	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 95}"
+	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}

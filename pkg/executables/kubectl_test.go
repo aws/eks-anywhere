@@ -2841,8 +2841,9 @@ func TestWaitForDaemonsetRolledout(t *testing.T) {
 	tt := newKubectlTest(t)
 	timeout := "2m"
 	target := "testdaemonset"
+	var b bytes.Buffer
 	expectedParam := []string{"rollout", "status", "daemonset", target, "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-system", "--timeout", timeout}
-	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(nil).AnyTimes()
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
 	tt.Expect(tt.k.WaitForDaemonsetRolledout(tt.ctx, tt.cluster, timeout, target, "eksa-system")).To(Succeed())
 }
 

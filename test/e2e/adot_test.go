@@ -70,6 +70,7 @@ func runCuratedPackagesAdotInstallUpdateFlow(test *framework.ClusterE2ETest) {
 			kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
 			"--set mode=deployment")
 		test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
-		test.VerifyAdotPackageUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+		test.VerifyAdotPackageDeploymentUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+		test.VerifyAdotPackageDaemonSetUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 	})
 }
