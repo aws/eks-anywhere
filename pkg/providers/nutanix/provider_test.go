@@ -85,8 +85,8 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 		"eksa-unit-test": machineConf,
 	}
 
-	t.Setenv(constants.NutanixUsernameKey, "admin")
-	t.Setenv(constants.NutanixPasswordKey, "password")
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
 
 	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, certValidator, httpClient, time.Now)
 	require.NotNil(t, provider)
@@ -783,8 +783,8 @@ func TestNutanixProviderEnvMap(t *testing.T) {
 	})
 
 	t.Run("required envs set", func(t *testing.T) {
-		t.Setenv(constants.EksaNutanixUsernameKey, "nutanix")
-		t.Setenv(constants.EksaNutanixPasswordKey, "nutanix")
+		t.Setenv(constants.NutanixUsernameKey, "nutanix")
+		t.Setenv(constants.NutanixPasswordKey, "nutanix")
 		t.Setenv(nutanixEndpointKey, "prism.nutanix.com")
 
 		envMap, err := provider.EnvMap(clusterSpec)
