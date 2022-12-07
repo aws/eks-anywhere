@@ -1384,6 +1384,74 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *ty
 	}
 }
 
+// VerifyPrometheusPackageInstalled is checking if the Prometheus package gets installed correctly.
+func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, targetNamespace string) {
+	ctx := context.Background()
+	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
+
+	e.T.Log("Waiting for package", packageName, "to be installed")
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		e.cluster(), packageName, "10m", packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for package", packageName, "deployment prometheus-server to be available")
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", fmt.Sprintf("%s-server", packageName), targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for prometheus deployment timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for package", packageName, "daemonset node-exporter to be rolled out")
+	err = e.KubectlClient.WaitForDaemonsetRolledout(ctx,
+		e.cluster(), "5m", fmt.Sprintf("%s-node-exporter", packageName), targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for prometheus daemonset timed out: %s", err)
+	}
+
+	e.T.Log("Reading package", packageName, "pod prometheus-server logs")
+	podName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app=prometheus,component=server", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("unable to get name of the prometheus-server pod: %s", err)
+	}
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, podName, "prometheus-server", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	expectedLogs := "Server is ready to receive web requests"
+	fmt.Printf("Logs from pod %s \n %s\n", podName, logs)
+	ok := strings.Contains(logs, expectedLogs)
+	if !ok {
+		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
+	}
+
+	e.T.Log("Launching Busybox pod to test Package", packageName, "service node-exporter")
+	svcAddress := packageName + "-node-exporter." + targetNamespace + ".svc.cluster.local" + ":9100/metrics"
+	busyBoxName := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), targetNamespace, busyBoxName, e.kubeconfigFilePath(), []string{"curl", svcAddress})
+	if err != nil {
+		e.T.Fatalf("error launching busybox pod: %s", err)
+	}
+	e.T.Log("Waiting Busybox pod", clientPod, "to be ready")
+	err = e.KubectlClient.WaitForPodCompleted(ctx,
+		e.cluster(), clientPod, "5m", targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
+	}
+	e.T.Log("Checking Busybox pod logs", clientPod)
+	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	fmt.Printf("Logs from curl node-exporter service\n %s\n", logs)
+	expectedLogs = "HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles"
+	ok = strings.Contains(logs, expectedLogs)
+	if !ok {
+		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
+	}
+}
+
 // VerifyPackageControllerNotInstalled is verifying that package controller is not installed.
 func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
 	ctx := context.Background()
