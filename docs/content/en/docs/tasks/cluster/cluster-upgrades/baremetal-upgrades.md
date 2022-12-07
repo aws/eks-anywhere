@@ -203,6 +203,108 @@ kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTE
 `Cluster`:
 - `kubernetesVersion`
 
+### Advanced configuration for rolling upgrade
+
+EKS Anywhere allows an optional configuration to customize the behavior of upgrades. 
+
+It allows the specification of 
+* Type of upgrade strategy (only 'RollingUpdate' is currently supported)
+* Two parameters that control the desired behavior of rolling upgrades: 
+  * maxSurge - The maximum number of machines that can be scheduled above the desired number of machines. When not specified, the current CAPI default of 1 is used.
+  * maxUnavailable - The maximum number of machines that can be unavailable during the update. When not specified, the current CAPI default of 0 is used.
+
+Example configuration:
+
+```bash
+upgradeRolloutStrategy:
+  rollingUpgradeParams:
+    maxSurge: 1
+    maxUnavailable: 0 (only configurable for worker nodes)
+```
+
+'upgradeRolloutStrategy' configuration can be specified separately for control plane and for each worker node group. This template contains an example for control plane under the 'controlPlaneConfiguration' section and for worker node group under 'workerNodeGroupConfigurations':
+
+```bash
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster-name
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "10.61.248.209"
+    machineGroupRef:
+      kind: TinkerbellMachineConfig
+      name: my-cluster-name-cp
+  upgradeRolloutStrategy:
+      rollingUpgradeParams:
+        maxSurge: 1
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: my-cluster-name
+  kubernetesVersion: "1.23"
+  managementCluster:
+    name: my-cluster-name 
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: TinkerbellMachineConfig
+      name: my-cluster-name 
+    name: md-0
+  upgradeRolloutStrategy:
+      rollingUpgradeParams:
+        maxSurge: 1
+        maxUnavailable: 0
+
+---
+...
+...
+...
+...
+```
+
+#### upgradeRolloutStrategy
+Configuration parameters for upgrade strategy.
+
+#### rollingUpgradeParams
+This field accepts configuration parameters for customizing rolling upgrade behavior.
+
+#### maxSurge
+Default: 1
+
+This can not be 0 if maxUnavailable is 0.
+
+The maximum number of machines that can be scheduled above the desired number of machines. 
+
+Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling update starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
+
+#### maxUnavailable
+Default: 0
+
+This can not be 0 if MaxSurge is 0.
+
+The maximum number of machines that can be unavailable during the update.
+
+Example: When this is set to n, the old worker node group can be scaled down by n machines immediately when the rolling update starts. Once new machines are ready, old worker node group can be scaled down further, followed by scaling up the new worker node group, ensuring that the total number of machines unavailable at all times during the update never falls below n.
+
+### Rolling upgrades with no additional hardware
+
+When maxSurge is set to 0 and maxUnavailable is set to 1, it allows for a rolling upgrade without need for additional hardware. Use this configuration if your workloads can tolerate node unavailability.
+
+>**_NOTE:_** This could ONLY be used if unavailability of a maximum of 1 node is acceptable.
+
+With this kind of configuration, the rolling upgrade will proceed node by node, deprovision and delete a node fully before re-provisioning it with upgraded version and re-joining it to the cluster. This means that any point during the course of the rolling upgrade, there could be one unavailable node.
+
 
 ### Troubleshooting
 
