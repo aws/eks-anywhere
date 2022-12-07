@@ -514,7 +514,7 @@ func TestSnowKubernetes123SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes121SimpleFlow(t *testing.T) {
+func TestNutanixKubernetes121SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu121Nutanix()),
@@ -523,7 +523,7 @@ func TestNutanixKubernetes121SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes122SimpleFlow(t *testing.T) {
+func TestNutanixKubernetes122SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
@@ -532,7 +532,7 @@ func TestNutanixKubernetes122SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes123SimpleFlow(t *testing.T) {
+func TestNutanixKubernetes123SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
@@ -541,7 +541,7 @@ func TestNutanixKubernetes123SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes124SimpleFlow(t *testing.T) {
+func TestNutanixKubernetes124SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
@@ -550,7 +550,7 @@ func TestNutanixKubernetes124SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes121SimpleFlowUUID(t *testing.T) {
+func TestNutanixKubernetes121SimpleFlowWithUUID(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu121NutanixUUID(),
@@ -561,7 +561,7 @@ func TestNutanixKubernetes121SimpleFlowUUID(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes122SimpleFlowUUID(t *testing.T) {
+func TestNutanixKubernetes122SimpleFlowWithUUID(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu122NutanixUUID(),
@@ -572,7 +572,7 @@ func TestNutanixKubernetes122SimpleFlowUUID(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes123SimpleFlowUUID(t *testing.T) {
+func TestNutanixKubernetes123SimpleFlowWithUUID(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu123NutanixUUID(),
@@ -583,7 +583,7 @@ func TestNutanixKubernetes123SimpleFlowUUID(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes124SimpleFlowUUID(t *testing.T) {
+func TestNutanixKubernetes124SimpleFlowWithUUID(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu124NutanixUUID(),

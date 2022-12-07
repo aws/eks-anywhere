@@ -271,7 +271,7 @@ func WithUbuntu124NutanixUUID() NutanixOpt {
 func WithPrismElementClusterUUID() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterUUID, api.WithNutanixMachineTemplateImageUUID),
+			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterUUID, api.WithNutanixPrismElementClusterUUID),
 		)
 	}
 }
