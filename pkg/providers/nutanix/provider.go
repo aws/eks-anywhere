@@ -633,6 +633,9 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if err := setupEnvVars(clusterSpec.NutanixDatacenter); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	return nil
 }
 
