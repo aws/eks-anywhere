@@ -31,7 +31,7 @@ func TestEnsureCASecret_SecretFound(t *testing.T) {
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
-			Namespace: "my-namespace",
+			Namespace: "eksa-system",
 		},
 	}
 	sec := &corev1.Secret{
@@ -55,11 +55,14 @@ func TestEnsureCASecret_SecretNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	cb := fake.NewClientBuilder()
-	cl := cb.Build()
+	scheme := runtime.NewScheme()
+	_ = anywherev1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+	cl := cb.WithScheme(scheme).Build()
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
-			Namespace: "my-namespace",
+			Namespace: "eksa-system",
 		},
 	}
 	r := newReconciler(t, cl)
