@@ -39,8 +39,8 @@ func setupEnvVars(datacenterConfig *anywherev1.NutanixDatacenterConfig) error {
 
 // GetCredsFromEnv returns nutanix credentials based on the environment.
 func GetCredsFromEnv() credentials.BasicAuthCredential {
-	username := os.Getenv(constants.NutanixUsernameKey)
-	password := os.Getenv(constants.NutanixPasswordKey)
+	username := os.Getenv(constants.EksaNutanixUsernameKey)
+	password := os.Getenv(constants.EksaNutanixPasswordKey)
 	return credentials.BasicAuthCredential{
 		PrismCentral: credentials.PrismCentralBasicAuth{
 			BasicAuth: credentials.BasicAuth{
