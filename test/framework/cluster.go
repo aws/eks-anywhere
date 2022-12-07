@@ -1139,10 +1139,17 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *t
 // VerifyAdotPackageInstalled is checking if the ADOT package gets installed correctly.
 func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNamespace string) {
 	ctx := context.Background()
+	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 
-	e.T.Log("Waiting for Package", packageName, "deployment to be healthy")
-	time.Sleep(3 * time.Minute) // Add sleep to allow deployment to be created
-	err := e.KubectlClient.WaitForDeployment(ctx,
+	e.T.Log("Waiting for package", packageName, "to be installed")
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		e.cluster(), packageName, "10m", packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for adot package install timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for package", packageName, "deployment to be available")
+	err = e.KubectlClient.WaitForDeployment(ctx,
 		e.cluster(), "5m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
@@ -1174,7 +1181,6 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 	if err != nil {
 		e.T.Fatalf("error launching busybox pod: %s", err)
 	}
-
 	e.T.Log("Waiting Busybox pod", clientPod, "to be ready")
 	err = e.KubectlClient.WaitForPodCompleted(ctx,
 		e.cluster(), clientPod, "5m", targetNamespace)
@@ -1190,6 +1196,98 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 	ok = strings.Contains(logs, "otelcol_exporter")
 	if !ok {
 		e.T.Fatalf("expected to find otelcol_exporter in the log, got %s", logs)
+	}
+}
+
+//go:embed testdata/adot_package_deployment.yaml
+var adotPackageDeployment []byte
+
+//go:embed testdata/adot_package_daemonset.yaml
+var adotPackageDaemonset []byte
+
+// TestAdotPackageConfigmapChange is checking if config changes trigger resource reloads correctly.
+func (e *ClusterE2ETest) VerifyAdotPackageUpdated(packageName string, targetNamespace string) {
+	ctx := context.Background()
+	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
+
+	// Deploy ADOT as a deployment and scrape the apiservers
+	e.T.Log("Apply changes to package", packageName)
+	e.T.Log("This will update ", packageName, " to be a deployment, and scrape the apiservers")
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDeployment, packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("Error upgrading adot package: %s", err)
+		return
+	}
+	time.Sleep(30 * time.Second) // Add sleep to allow package to change state
+
+	e.T.Log("Waiting for package", packageName, "to be updated")
+	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
+		e.cluster(), packageName, "10m", packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for adot package update timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for package", packageName, "deployment to be available")
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
+	}
+
+	e.T.Log("Reading", packageName, "pod logs")
+	adotPodName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
+	}
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
+	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 146}"
+	ok := strings.Contains(logs, expectedLogs)
+	if !ok {
+		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
+	}
+
+	// Deploy ADOT as a daemonset and scrape the node
+	e.T.Log("Apply changes to package", packageName)
+	e.T.Log("This will update ", packageName, " to be a daemonset, and scrape the node")
+	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDaemonset, packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("Error upgrading adot package: %s", err)
+		return
+	}
+	time.Sleep(30 * time.Second) // Add sleep to allow package to change state
+
+	e.T.Log("Waiting for package", packageName, "to be updated")
+	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
+		e.cluster(), packageName, "10m", packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for adot package update timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for package", packageName, "daemonset to be rolled out")
+	err = e.KubectlClient.WaitForDaemonsetRolledout(ctx,
+		e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for adot daemonset timed out: %s", err)
+	}
+
+	e.T.Log("Reading", packageName, "pod logs")
+	adotPodName, err = e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
+	}
+	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("failure getting pod logs %s", err)
+	}
+	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
+	expectedLogs = "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 95}"
+	ok = strings.Contains(logs, expectedLogs)
+	if !ok {
+		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}
 }
 

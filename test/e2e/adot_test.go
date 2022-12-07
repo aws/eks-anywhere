@@ -12,6 +12,12 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
+const (
+	adotPackageName     = "adot"
+	adotPackagePrefix   = "generated"
+	adotTargetNamespace = "observability"
+)
+
 func TestCPackagesAdotDockerUbuntuKubernetes121SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -20,17 +26,50 @@ func TestCPackagesAdotDockerUbuntuKubernetes121SimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runAdotInstallSimpleFlow(test) // other args as necessary
+	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
 
-func runAdotInstallSimpleFlow(test *framework.ClusterE2ETest) {
+func TestCPackagesAdotVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewVSphere(t, framework.WithBottleRocket122()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackagesAdotInstallSimpleFlow(test)
+}
+
+func TestCPackagesAdotVSphereKubernetes123UbuntuUpdateFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewVSphere(t, framework.WithUbuntu123()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackagesAdotInstallUpdateFlow(test)
+}
+
+func runCuratedPackagesAdotInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(func(test *framework.ClusterE2ETest) {
-		packageName := "generated-adot"
-		targetNamespace := "observability"
-		test.CreateNamespace(targetNamespace)
-		test.InstallCuratedPackage("adot", packageName, kubeconfig.FromClusterName(test.ClusterName), targetNamespace,
-			"--set mode=deployment",
-		)
-		test.VerifyAdotPackageInstalled(packageName, targetNamespace)
+		test.CreateNamespace(adotTargetNamespace)
+		test.InstallCuratedPackage("adot", adotPackagePrefix+"-"+adotPackageName,
+			kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
+			"--set mode=deployment")
+		test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+	})
+}
+
+func runCuratedPackagesAdotInstallUpdateFlow(test *framework.ClusterE2ETest) {
+	test.WithCluster(func(test *framework.ClusterE2ETest) {
+		test.CreateNamespace(adotTargetNamespace)
+		test.InstallCuratedPackage("adot", adotPackagePrefix+"-"+adotPackageName,
+			kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
+			"--set mode=deployment")
+		test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+		test.VerifyAdotPackageUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 	})
 }
