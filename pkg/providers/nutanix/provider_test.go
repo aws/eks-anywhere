@@ -783,8 +783,8 @@ func TestNutanixProviderEnvMap(t *testing.T) {
 	})
 
 	t.Run("required envs set", func(t *testing.T) {
-		t.Setenv(constants.NutanixUsernameKey, "nutanix")
-		t.Setenv(constants.NutanixPasswordKey, "nutanix")
+		t.Setenv(constants.EksaNutanixUsernameKey, "nutanix")
+		t.Setenv(constants.EksaNutanixPasswordKey, "nutanix")
 		t.Setenv(nutanixEndpointKey, "prism.nutanix.com")
 
 		envMap, err := provider.EnvMap(clusterSpec)

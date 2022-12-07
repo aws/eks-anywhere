@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	nutanixFeatureGateEnvVar     = "NUTANIX_PROVIDER"
 	nutanixEndpoint              = "T_NUTANIX_ENDPOINT"
 	nutanixPort                  = "T_NUTANIX_PORT"
 	nutanixAdditionalTrustBundle = "T_NUTANIX_ADDITIONAL_TRUST_BUNDLE"
@@ -46,9 +45,8 @@ const (
 )
 
 var requiredNutanixEnvVars = []string{
-	constants.NutanixUsernameKey,
-	constants.NutanixPasswordKey,
-	nutanixFeatureGateEnvVar,
+	constants.EksaNutanixUsernameKey,
+	constants.EksaNutanixPasswordKey,
 	nutanixEndpoint,
 	nutanixPort,
 	nutanixAdditionalTrustBundle,
