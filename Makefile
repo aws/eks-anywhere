@@ -29,7 +29,7 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
-ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
+ifneq ($(PULL_BASE_REF),)
 	BRANCH_NAME=$(PULL_BASE_REF)
 endif
 ifeq (,$(findstring $(BRANCH_NAME),main))
@@ -55,7 +55,6 @@ AWS_REGION=us-west-2
 
 BIN_DIR := bin
 TOOLS_BIN_DIR := hack/tools/bin
-TOOLS_BIN_DIR_ABS := $(shell pwd)/$(TOOLS_BIN_DIR)
 
 OUTPUT_DIR := _output
 OUTPUT_BIN_DIR := ${OUTPUT_DIR}/bin
@@ -67,9 +66,6 @@ KUSTOMIZE_OUTPUT_BIN_DIR="${OUTPUT_DIR}/kustomize-bin/"
 
 KUBEBUILDER := $(TOOLS_BIN_DIR)/kubebuilder
 KUBEBUILDER_VERSION := v3.1.0
-
-GOLANGCI_LINT_CONFIG ?= .github/workflows/golangci-lint.yml
-GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 
 BUILD_LIB := build/lib
 BUILDKIT := $(BUILD_LIB)/buildkit.sh
@@ -91,7 +87,7 @@ else
 endif
 
 BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
-CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base-nonroot
+CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
 CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat manager/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
 CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
 DOCKERFILE_FOLDER = ./manager/docker/linux/eks-anywhere-cluster-controller
@@ -128,7 +124,7 @@ GO_OS:=$(shell go env GOOS)
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
 CREATE_CLUSTER_CONTROLLER_BINARIES := $(foreach platform,$(CLUSTER_CONTROLLER_PLATFORMS),create-cluster-controller-binary-$(platform))
-FETCH_BINARIES_TARGETS = eksa/vmware/govmomi eksa/helm/helm eksa/apache/cloudstack-cloudmonkey
+FETCH_BINARIES_TARGETS = eksa/vmware/govmomi eksa/helm/helm
 ORGANIZE_BINARIES_TARGETS = $(addsuffix /eks-a-tools,$(addprefix $(BINARY_DEPS_DIR)/linux-,amd64 arm64))
 
 EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
@@ -252,25 +248,27 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1
-
-$(GO_VULNCHECK): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) go install golang.org/x/vuln/cmd/govulncheck@latest
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
 
 .PHONY: lint
-lint: $(GOLANGCI_LINT) ## Run golangci-lint
-	$(GOLANGCI_LINT) run --new-from-rev main
+lint: bin/golangci-lint ## Run golangci-lint
+	bin/golangci-lint run
 
-$(GOLANGCI_LINT): $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_CONFIG)
-	$(eval GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -))
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_VERSION)
+bin/golangci-lint: ## Download golangci-lint
+bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -)
+bin/golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
 .PHONY: vulncheck
-vulncheck: $(GO_VULNCHECK)
-	$(GO_VULNCHECK) ./...
+vulncheck: govulncheck
+	$(TOOLS_BIN_DIR)/govulncheck ./...
+
+govulncheck: ## Download and install govulncheck
+govulncheck:
+	$(call go-get-tool,$(GO_VULNCHECK),golang.org/x/vuln/cmd/govulncheck@latest)
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
@@ -291,7 +289,7 @@ copy-license-cluster-controller:
 	source scripts/attribution_helpers.sh && build::fix_licenses
 
 .PHONY: build-cluster-controller-binaries
-build-cluster-controller-binaries: eks-a-cluster-controller
+build-cluster-controller-binaries: eks-a-cluster-controller copy-license-cluster-controller
 
 .PHONY: build-cluster-controller
 build-cluster-controller: cluster-controller-local-images cluster-controller-tarballs
@@ -306,10 +304,6 @@ release-upload-cluster-controller: release-cluster-controller upload-artifacts
 upload-artifacts:
 	manager/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
 
-.PHONY: create-cluster-controller-binaries-local
-create-cluster-controller-binaries-local:
-	$(MAKE) create-cluster-controller-binary-$(GO_OS)-$(GO_ARCH)
-
 .PHONY: create-cluster-controller-binaries
 create-cluster-controller-binaries: $(CREATE_CLUSTER_CONTROLLER_BINARIES)
 
@@ -323,7 +317,6 @@ cluster-controller-binaries: $(OUTPUT_BIN_DIR)
 	mkdir -p $(OUTPUT_BIN_DIR)/$(BINARY_NAME)
 	$(GO) mod vendor
 	$(MAKE) create-cluster-controller-binaries
-	$(MAKE) copy-license-cluster-controller
 	$(MAKE) update-kustomization-yaml
 	$(MAKE) release-manifests RELEASE_DIR=.
 	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./manager"
@@ -368,7 +361,6 @@ clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
 	rm -rf ./pkg/executables/cluster-name/
 	rm -rf ./pkg/providers/vsphere/test/
-	rm -rf ./pkg/providers/tinkerbell/stack/TestTinkerbellStackInstall*
 ifeq ($(UNAME), Darwin)
 	  find -E . -depth -type d -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
 else
@@ -393,62 +385,14 @@ test: unit-test capd-test  ## Run unit and capd tests
 .PHONY: unit-test
 unit-test: ## Run unit tests
 unit-test: $(SETUP_ENVTEST) 
-unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch amd64 $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
 
-
-# unit-test-patch is a convenience target that restricts test runs to modified
-# packages' tests. This is not a replacement for running the unit-test target,
-# but can be useful for red-green development or targeted refactoring.
-# BE WARNED: a passing unit-test-patch does not imply that unit-test will
-# pass. Unmodified packages that depend on changed behaviors will not have
-# their tests run by this target.
-.PHONY: unit-test-patch
-unit-test-patch: ## Run unit tests for packages modified locally
-unit-test-patch: $(SETUP_ENVTEST)
-unit-test-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
-unit-test-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
-unit-test-patch:
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(GO_PKGS) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
-	@echo Reminder: $@ is not a substitute for make unit-test
-
-COVER_PROFILE ?= coverage.out
-
 .PHONY: coverage-unit-test
+coverage-unit-test: COVER_PROFILE?=coverage.html 
 coverage-unit-test:
 	$(MAKE) unit-test GO_TEST_FLAGS="-coverprofile=$(COVER_PROFILE) -covermode=atomic"
-
-# coverage is just an easier-to-remember alias for coverage-unit-test.
-.PHONY: coverage
-coverage: coverage-unit-test
-
-# coverage-html generates an HTML file with coverage info. Share it or view it
-# in your browser.
-.PHONY: coverage-html
-coverage-html: COVER_HTML?=coverage.html
-coverage-html: coverage-unit-test
-	$(GO) tool cover -html=$(COVER_PROFILE) -o $(COVER_HTML)
-
-# coverage-view generates an HTML file and opens it in your browser.
-.PHONY: coverage-view
-coverage-view: coverage-unit-test
-	$(GO) tool cover -html=$(COVER_PROFILE)
-
-# coverage-view-patch opens a Go HTML coverage report limited to modified
-# packages. It builds on the unit-test-patch target. Because it covers only
-# modified packages, the list of files in the report is more manageable.
-# BE WARNED: a passing coverage-view-patch does not imply that unit-test will
-# pass. Unmodified packages that depend on changed behaviors will not have
-# their tests run by this target.
-.PHONY: coverage-view-patch
-coverage-view-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh)
-coverage-view-patch: $(SETUP_ENVTEST)
-coverage-view-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
-coverage-view-patch:
-	-$(MAKE) unit-test-patch GO_TEST_FLAGS="-coverprofile=$(COVER_PROFILE) -covermode=atomic"
-	$(GO) tool cover -html=$(COVER_PROFILE)
-	@echo Reminder: $@ is not a substitute for make unit-test
 
 .PHONY: local-e2e
 local-e2e: e2e ## Run e2e test's locally
@@ -474,7 +418,7 @@ capd-test-%: e2e ## Run CAPD tests
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
 
-PACKAGES_E2E_TESTS ?= TestCPackagesDockerUbuntuKubernetes121SimpleFlow
+PACKAGES_E2E_TESTS ?= TestVSphereKubernetes121PackagesInstallSimpleFlow
 ifeq ($(PACKAGES_E2E_TESTS),all)
 PACKAGES_E2E_TESTS='TestCPackages.*'
 endif
@@ -491,15 +435,14 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,SSHAuthKeyGenerator
 	${GOPATH}/bin/mockgen -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient,ProviderKubectlClient
-	${GOPATH}/bin/mockgen -destination=pkg/providers/cloudstack/validator_mocks.go -package=cloudstack "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderValidator
-	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,IPValidator
-	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/setupuser/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser" GovcClient
+	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,ClusterResourceSetManager
 	${GOPATH}/bin/mockgen -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${GOPATH}/bin/mockgen -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
-	${GOPATH}/bin/mockgen -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth,EKSAComponents,KubernetesClient
+	${GOPATH}/bin/mockgen -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth
 	${GOPATH}/bin/mockgen -destination=pkg/gitops/flux/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/gitops/flux" FluxClient,KubeClient,GitOpsFluxClient,GitClient,Templater
 	${GOPATH}/bin/mockgen -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${GOPATH}/bin/mockgen -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
+	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/cluster" ClusterClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GithubClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Client,ProviderClient
 	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,GitOpsManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller
@@ -514,14 +457,14 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/tls.go -package=mocks -source "pkg/validations/tls.go" TlsValidator
 	${GOPATH}/bin/mockgen -destination=pkg/diagnostics/interfaces/mocks/diagnostics.go -package=mocks -source "pkg/diagnostics/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory,BundleClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
+	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/fetch.go -package=mocks -source "pkg/clusterapi/fetch.go"
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
-	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/validator.go -package=mocks -source "pkg/crypto/validator.go" TlsValidator
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
-	${GOPATH}/bin/mockgen -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/kindnetd.go"
-	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/installer.go -package=mocks -source "pkg/networking/cilium/installer.go"
+	${GOPATH}/bin/mockgen -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/upgrader.go"
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/cilium.go -package=mocks -source "pkg/networking/cilium/cilium.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networkutils/mocks/client.go -package=mocks -source "pkg/networkutils/netclient.go" NetClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/translate.go -package=mocks -source "pkg/providers/tinkerbell/hardware/translate.go" MachineReader,MachineWriter,MachineValidator
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/stack/mocks/stack.go -package=mocks -source "pkg/providers/tinkerbell/stack/stack.go" Docker,Helm,StackInstaller
@@ -533,8 +476,6 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/snowballdevice.go -package=mocks -source "pkg/aws/snowballdevice.go"
-	${GOPATH}/bin/mockgen -destination=pkg/providers/nutanix/mocks/client.go -package=mocks -source "pkg/providers/nutanix/client.go"
-	${GOPATH}/bin/mockgen -destination=pkg/providers/nutanix/mocks/roundtripper.go -package=mocks net/http RoundTripper
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/client.go -package=mocks -source "pkg/providers/snow/snow.go"
@@ -553,13 +494,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/reconciler/mocks/templater.go -package=mocks -source "pkg/networking/cilium/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/reconciler/mocks/reconcilers.go -package=mocks -source "pkg/networking/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/snow/reconciler/reconciler.go"
-	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/vsphere/reconciler/reconciler.go"
-	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/docker/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/workflow/task_mock_test.go -package=workflow_test -source "pkg/workflow/task.go"
-	${GOPATH}/bin/mockgen -destination=pkg/validations/createcluster/mocks/createcluster.go -package=mocks -source "pkg/validations/createcluster/createcluster.go"
-	${GOPATH}/bin/mockgen -destination=pkg/awsiamauth/mock_test.go -package=awsiamauth_test -source "pkg/awsiamauth/installer.go"
-	${GOPATH}/bin/mockgen -destination=controllers/mocks/provider.go -package=mocks -source "pkg/controller/clusters/registry.go"
-	${GOPATH}/bin/mockgen -destination=pkg/controller/clusters/mocks/validations.go -package=mocks -source "pkg/controller/clusters/validations.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -621,10 +556,6 @@ conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance te
 eksa-components-override:
 	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL) $(CLUSTER_CONTROLLER_IMAGE)
 
-.PHONY: bundles-override-local-e2e-tests
-bundles-override-local-e2e-tests: docker-build docker-push eksa-components-override
-	echo "Don't forget to export T_BUNDLES_OVERRIDE=true before running the tests"
-
 .PHONY: help
 help:  ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[%\/0-9A-Za-z_-]+:.*?##/ { printf "  \033[36m%-45s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -650,24 +581,34 @@ generate-core-manifests: $(CONTROLLER_GEN) ## Generate manifests for the core pr
 		output:webhook:dir=./config/webhook \
 		webhook
 
+REGISTRY ?= public.ecr.aws/a2k4d8v8
+IMAGE_NAME ?= eksa-cluster-controller
+CONTROLLER_IMG ?= $(REGISTRY)/$(IMAGE_NAME)
+
+TAG ?= dev
+ARCH ?= amd64
+
+CONTROLLER_IMG_TAGGED ?= $(CONTROLLER_IMG)-$(ARCH):$(TAG)
+
 LDFLAGS := $(shell hack/version.sh)
 
 .PHONY: docker-build
-docker-build: GO_OS := linux
-docker-build: GO_ARCH := amd64
-docker-build: fake-controller-image-deps $(ORGANIZE_BINARIES_TARGETS) create-cluster-controller-binaries-local docker-build-core
+docker-build:
+	$(MAKE) ARCH=$(ARCH) docker-build-core
 
 .PHONY: docker-build-core
-docker-build-core: ## Build the docker image for controller-manager
-	DOCKER_BUILDKIT=1 docker build \
-	--build-arg TARGETARCH=$(GO_ARCH) \
-	--build-arg TARGETOS=$(GO_OS) \
-	--build-arg BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
-    . -t $(CLUSTER_CONTROLLER_IMAGE) -f $(DOCKERFILE_FOLDER)/Dockerfile
+docker-build-core: docker-pull-prerequisites ## Build the docker image for controller-manager
+	DOCKER_BUILDKIT=1 docker build --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAGGED) -f build/Dockerfile
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
-	docker push $(CLUSTER_CONTROLLER_IMAGE)
+	docker push $(CONTROLLER_IMG_TAGGED)
+
+.PHONY: docker-pull-prerequisites
+docker-pull-prerequisites:
+	docker pull docker.io/docker/dockerfile:1.1-experimental
+	docker pull docker.io/library/golang:$(GOLANG_VERSION)
+	docker pull gcr.io/distroless/static:latest
 
 ## TODO update release folder
 RELEASE_DIR := config/manifest
@@ -682,15 +623,24 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_M
 	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
 	cp $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 
-.PHONY: fake-controller-image-deps
-fake-controller-image-deps:
-	@mkdir -p $(OUTPUT_DIR)/LICENSES
-	touch $(OUTPUT_DIR)/LICENSES
-	touch ATTRIBUTION.txt
-
 .PHONY: run-controller # Run eksa controller from local repo with tilt
-run-controller: $(KUSTOMIZE) $(ORGANIZE_BINARIES_TARGETS) fake-controller-image-deps
+run-controller: $(KUSTOMIZE)
 	tilt up --file manager/Tiltfile
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+# originally copied from kubebuilder
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+BIN_PATH=$$(realpath $$(dirname $(1))) ;\
+PKG_BIN_NAME=$$(echo "$(2)" | sed 's,^.*/\(.*\)@v.*$$,\1,') ;\
+BIN_NAME=$$(basename $(1)) ;\
+echo "Install dir $$BIN_PATH" ;\
+echo "Downloading $(2)" ;\
+GOBIN=$$BIN_PATH go install $(2) ;\
+[[ $$PKG_BIN_NAME == $$BIN_NAME ]] || mv -f $$BIN_PATH/$$PKG_BIN_NAME $$BIN_PATH/$$BIN_NAME ;\
+}
+endef
 
 define BUILDCTL
 	$(BUILDKIT) \
