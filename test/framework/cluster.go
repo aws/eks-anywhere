@@ -57,6 +57,9 @@ const (
 //go:embed testdata/oidc-roles.yaml
 var oidcRoles []byte
 
+//go:embed testdata/hpa_busybox.yaml
+var hpaBusybox string
+
 type ClusterE2ETest struct {
 	T                      *testing.T
 	ClusterConfigLocation  string
@@ -1404,5 +1407,80 @@ func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
 
 	if !apierrors.IsNotFound(err) {
 		e.T.Fatalf("found deployment for package controller in workload cluster %s : %s", e.ClusterName, err)
+	}
+}
+
+func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(name string, mgmtCluster *types.Cluster) {
+	ctx := context.Background()
+	ns := constants.EksaPackagesName
+	deploymentName := "cluster-autoscaler-clusterapi-cluster-autoscaler"
+
+	e.T.Log("Waiting for Package", name, "To be installed")
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		mgmtCluster, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+	if err != nil {
+		e.T.Fatalf("waiting for Autoscaler Package to be avaliable")
+	}
+
+	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", deploymentName, ns)
+	if err != nil {
+		e.T.Fatalf("waiting for cluster-autoscaler deployment timed out: %s", err)
+	}
+}
+
+func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(name string, mgmtCluster *types.Cluster) {
+	ctx := context.Background()
+	ns := constants.EksaPackagesName
+	deploymentName := "metrics-server"
+
+	e.T.Log("Waiting for Package", name, "To be installed")
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		mgmtCluster, name, "5m", fmt.Sprintf("%s-%s", ns, e.ClusterName))
+	if err != nil {
+		e.T.Fatalf("waiting for Metric Server Package to be avaliable")
+	}
+
+	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", deploymentName, ns)
+	if err != nil {
+		e.T.Fatalf("waiting for Metric Server deployment timed out: %s", err)
+	}
+}
+
+func (e *ClusterE2ETest) CombinedAutoscalerMetricServerTest(autoscalerName string, metricServerName string, mgmtCluster *types.Cluster) {
+	ctx := context.Background()
+	ns := "default"
+	name := "hpa-busybox-test"
+	machineDeploymentName := e.ClusterName + "-" + e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].Name
+	e.VerifyMetricServerPackageInstalled(metricServerName, mgmtCluster)
+	e.VerifyAutoScalerPackageInstalled(autoscalerName, mgmtCluster)
+
+	err := e.KubectlClient.ApplyKubeSpec(ctx, mgmtCluster, hpaBusybox)
+	if err != nil {
+		e.T.Fatalf("Failed to apply hpa busybox load %s", err)
+	}
+
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", name, ns)
+
+	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=20"}
+	_, err = e.KubectlClient.Execute(ctx, params...)
+	if err != nil {
+		e.T.Fatalf("Failed to autoscale deployent %s", err)
+	}
+
+	//TODO instead of waiting get current number of nodes to compare with later
+	err = e.KubectlClient.Wait(ctx, mgmtCluster.KubeconfigFile, "5m",
+		"ScalingUp=true", machineDeploymentName, constants.EksaSystemNamespace)
+	if err != nil {
+		e.T.Fatalf("Failed to scaleup machine deployments %s", err)
+	}
+	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "10m",
+		e.ClusterName+"-"+machineDeploymentName)
+	if err != nil {
+		e.T.Fatalf("Machine deployment stuck in scaling up %s", err)
 	}
 }
