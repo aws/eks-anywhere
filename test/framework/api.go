@@ -2,6 +2,7 @@ package framework
 
 import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 )
 
 var incompatiblePathsForVersion = map[string][]string{
@@ -11,6 +12,6 @@ var incompatiblePathsForVersion = map[string][]string{
 	},
 }
 
-func cleanUpClusterForVersion(clusterYaml []byte, version string) ([]byte, error) {
-	return api.CleanupPathsFromYaml(clusterYaml, incompatiblePathsForVersion[version])
+func cleanUpClusterForVersion(config *cluster.Config, version string) error {
+	return api.CleanupPathsInObject(config.Cluster, incompatiblePathsForVersion[version])
 }

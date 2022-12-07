@@ -25,10 +25,7 @@ func (e *ClusterE2ETest) ValidateWorkerNodes(workerNodeValidations ...WorkerNode
 		e.T.Fatal(err)
 	}
 
-	c, err := v1alpha1.GetClusterConfigFromContent(e.ClusterConfigB)
-	if err != nil {
-		e.T.Fatal(err)
-	}
+	c := e.ClusterConfig.Cluster
 	wn := c.Spec.WorkerNodeGroupConfigurations
 	// deduce the worker node group configuration to node mapping via the machine deployment and machine set
 	for _, w := range wn {

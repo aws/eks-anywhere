@@ -142,31 +142,36 @@ func (c *CloudStack) Name() string {
 
 func (c *CloudStack) Setup() {}
 
-func (c *CloudStack) CustomizeProviderConfig(file string) []byte {
-	return c.customizeProviderConfig(file, c.fillers...)
+// ClusterConfigUpdates satisfies the test framework Provider.
+func (c *CloudStack) ClusterConfigUpdates() []api.ClusterConfigFiller {
+	controlPlaneIP, err := c.getControlPlaneIP()
+	if err != nil {
+		c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+	}
+
+	f := make([]api.ClusterFiller, 0, len(c.clusterFillers)+3)
+	copy(f, c.clusterFillers)
+	f = append(f,
+		api.WithPodCidr(os.Getenv(podCidrVar)),
+		api.WithServiceCidr(os.Getenv(serviceCidrVar)),
+		api.WithControlPlaneEndpointIP(controlPlaneIP))
+
+	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.CloudStackToConfigFiller(c.fillers...)}
 }
 
 func (c *CloudStack) CleanupVMs(clusterName string) error {
 	return cleanup.CleanUpCloudstackTestResources(context.Background(), clusterName, false)
 }
 
-func (c *CloudStack) customizeProviderConfig(file string, fillers ...api.CloudStackFiller) []byte {
-	providerOutput, err := api.AutoFillCloudStackProvider(file, fillers...)
-	if err != nil {
-		c.t.Fatalf("customizing provider config from file: %v", err)
-	}
-	return providerOutput
-}
-
 func (c *CloudStack) WithProviderUpgrade(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = c.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+		e.UpdateClusterConfig(api.CloudStackToConfigFiller(fillers...))
 	}
 }
 
 func (c *CloudStack) WithProviderUpgradeGit(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = c.customizeProviderConfig(e.clusterConfigGitPath(), fillers...)
+		e.UpdateClusterConfig(api.CloudStackToConfigFiller(fillers...))
 	}
 }
 
@@ -188,31 +193,16 @@ func (c *CloudStack) getControlPlaneIP() (string, error) {
 	return clusterIP, nil
 }
 
-func (c *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
-	controlPlaneIP, err := c.getControlPlaneIP()
-	if err != nil {
-		c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
-	}
-	c.clusterFillers = append(c.clusterFillers,
-		api.WithPodCidr(os.Getenv(podCidrVar)),
-		api.WithServiceCidr(os.Getenv(serviceCidrVar)),
-		api.WithControlPlaneEndpointIP(controlPlaneIP))
-	return c.clusterFillers
-}
-
 func RequiredCloudstackEnvVars() []string {
 	return requiredCloudStackEnvVars
 }
 
 func (c *CloudStack) WithNewCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.CloudStackMachineConfigFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = c.customizeProviderConfig(e.ClusterConfigLocation, cloudStackMachineConfig(name, fillers...))
-		var err error
-		// Using the ClusterConfigB instead of file in disk since it might have already been updated but not written to disk
-		e.ClusterConfigB, err = api.AutoFillClusterFromYaml(e.ClusterConfigB, buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup))
-		if err != nil {
-			e.T.Fatalf("filling cluster config: %v", err)
-		}
+		e.UpdateClusterConfig(
+			api.CloudStackToConfigFiller(cloudStackMachineConfig(name, fillers...)),
+			api.ClusterToConfigFiller(buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+		)
 	}
 }
 

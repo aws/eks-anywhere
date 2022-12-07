@@ -1,96 +1,56 @@
 package api
 
 import (
-	"fmt"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 type TinkerbellConfig struct {
-	clusterConfig    *anywherev1.Cluster
+	clusterName      string
 	datacenterConfig *anywherev1.TinkerbellDatacenterConfig
 	machineConfigs   map[string]*anywherev1.TinkerbellMachineConfig
 	templateConfigs  map[string]*anywherev1.TinkerbellTemplateConfig
 }
 
-type TinkerbellFiller func(config TinkerbellConfig) error
+// TinkerbellFiller updates a TinkerbellConfig.
+type TinkerbellFiller func(config TinkerbellConfig)
 
-func AutoFillTinkerbellProvider(filename string, fillers ...TinkerbellFiller) ([]byte, error) {
-	tinkerbellDatacenterConfig, err := anywherev1.GetTinkerbellDatacenterConfig(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get tinkerbell datacenter config from file: %v", err)
+// TinkerbellToConfigFiller transforms a set of TinkerbellFiller's in a single ClusterConfigFiller.
+func TinkerbellToConfigFiller(fillers ...TinkerbellFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		updateTinkerbell(c, fillers...)
 	}
+}
 
-	tinkerbellMachineConfigs, err := anywherev1.GetTinkerbellMachineConfigs(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get tinkerbell machine config from file: %v", err)
-	}
-
-	tinkerbellTemplateConfigs, err := anywherev1.GetTinkerbellTemplateConfig(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get tinkerbell template configs from file: %v", err)
-	}
-
-	clusterConfig, err := anywherev1.GetClusterConfig(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get tinkerbell cluster config from file: %v", err)
-	}
-
-	config := TinkerbellConfig{
-		clusterConfig:    clusterConfig,
-		datacenterConfig: tinkerbellDatacenterConfig,
-		machineConfigs:   tinkerbellMachineConfigs,
-		templateConfigs:  tinkerbellTemplateConfigs,
+// updateTinkerbell updates the Tinkerbell datacenter, machine configs and
+// template configs in the cluster.Config by applying all the fillers.
+func updateTinkerbell(config *cluster.Config, fillers ...TinkerbellFiller) {
+	tc := TinkerbellConfig{
+		clusterName:      config.Cluster.Name,
+		datacenterConfig: config.TinkerbellDatacenter,
+		machineConfigs:   config.TinkerbellMachineConfigs,
+		templateConfigs:  config.TinkerbellTemplateConfigs,
 	}
 
 	for _, f := range fillers {
-		err := f(config)
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply tinkerbell config filler: %v", err)
-		}
+		f(tc)
 	}
-
-	resources := make([]interface{}, 0, len(config.machineConfigs)+len(config.templateConfigs)+1)
-	resources = append(resources, config.datacenterConfig)
-
-	for _, m := range config.machineConfigs {
-		resources = append(resources, m)
-	}
-
-	for _, m := range config.templateConfigs {
-		resources = append(resources, m)
-	}
-
-	yamlResources := make([][]byte, 0, len(resources))
-	for _, r := range resources {
-		yamlContent, err := yaml.Marshal(r)
-		if err != nil {
-			return nil, fmt.Errorf("marshalling tinkerbell resource: %v", err)
-		}
-
-		yamlResources = append(yamlResources, yamlContent)
-	}
-
-	return templater.AppendYamlResources(yamlResources...), nil
 }
 
 func WithTinkerbellServer(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
+	return func(config TinkerbellConfig) {
 		config.datacenterConfig.Spec.TinkerbellIP = value
-		return nil
 	}
 }
 
 func WithTinkerbellOSImageURL(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
+	return func(config TinkerbellConfig) {
 		config.datacenterConfig.Spec.OSImageURL = value
-		return nil
 	}
 }
 
@@ -99,16 +59,15 @@ func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFi
 }
 
 func WithOsFamilyForAllTinkerbellMachines(value anywherev1.OSFamily) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
+	return func(config TinkerbellConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.OSFamily = value
 		}
-		return nil
 	}
 }
 
 func WithImageUrlForAllTinkerbellMachines(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
+	return func(config TinkerbellConfig) {
 		for _, t := range config.templateConfigs {
 			for _, task := range t.Spec.Template.Tasks {
 				for _, action := range task.Actions {
@@ -118,12 +77,11 @@ func WithImageUrlForAllTinkerbellMachines(value string) TinkerbellFiller {
 				}
 			}
 		}
-		return nil
 	}
 }
 
 func WithSSHAuthorizedKeyForAllTinkerbellMachines(key string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
+	return func(config TinkerbellConfig) {
 		for _, m := range config.machineConfigs {
 			if len(m.Spec.Users) == 0 {
 				m.Spec.Users = []anywherev1.UserConfiguration{{}}
@@ -132,13 +90,12 @@ func WithSSHAuthorizedKeyForAllTinkerbellMachines(key string) TinkerbellFiller {
 			m.Spec.Users[0].Name = "ec2-user"
 			m.Spec.Users[0].SshAuthorizedKeys = []string{key}
 		}
-		return nil
 	}
 }
 
 func WithHardwareSelectorLabels() TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		clusterName := config.clusterConfig.Name
+	return func(config TinkerbellConfig) {
+		clusterName := config.clusterName
 		cpName := providers.GetControlPlaneNodeName(clusterName)
 		workerName := clusterName
 
@@ -149,14 +106,12 @@ func WithHardwareSelectorLabels() TinkerbellFiller {
 		workerMachineConfig := config.machineConfigs[workerName]
 		workerMachineConfig.Spec.HardwareSelector = map[string]string{HardwareLabelTypeKeyName: Worker}
 		config.machineConfigs[workerName] = workerMachineConfig
-
-		return nil
 	}
 }
 
 func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		clusterName := config.clusterConfig.Name
+	return func(config TinkerbellConfig) {
+		clusterName := config.clusterName
 		name := providers.GetEtcdNodeName(clusterName)
 
 		_, ok := config.machineConfigs[name]
@@ -179,12 +134,11 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 			}
 			config.machineConfigs[name] = m
 		}
-		return nil
 	}
 }
 
 func WithCustomTinkerbellMachineConfig(selector string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
+	return func(config TinkerbellConfig) {
 		if _, ok := config.machineConfigs[selector]; !ok {
 			m := &anywherev1.TinkerbellMachineConfig{
 				TypeMeta: metav1.TypeMeta{
@@ -200,6 +154,5 @@ func WithCustomTinkerbellMachineConfig(selector string) TinkerbellFiller {
 			}
 			config.machineConfigs[selector] = m
 		}
-		return nil
 	}
 }

@@ -6,11 +6,9 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 type CloudStackConfig struct {
@@ -20,38 +18,22 @@ type CloudStackConfig struct {
 
 type CloudStackFiller func(config CloudStackConfig)
 
-func AutoFillCloudStackProvider(filename string, fillers ...CloudStackFiller) ([]byte, error) {
-	config, err := cluster.ParseConfigFromFile(filename)
-	if err != nil {
-		return nil, err
+// CloudStackToConfigFiller transforms a set of CloudStackFiller's in a single ClusterConfigFiller.
+func CloudStackToConfigFiller(fillers ...CloudStackFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		updateCloudStack(c, fillers...)
 	}
+}
 
-	cloudStackConfig := CloudStackConfig{
+func updateCloudStack(config *cluster.Config, fillers ...CloudStackFiller) {
+	cc := CloudStackConfig{
 		datacenterConfig: config.CloudStackDatacenter,
 		machineConfigs:   config.CloudStackMachineConfigs,
 	}
 
 	for _, f := range fillers {
-		f(cloudStackConfig)
+		f(cc)
 	}
-
-	resources := make([]interface{}, 0, len(cloudStackConfig.machineConfigs)+1)
-	resources = append(resources, cloudStackConfig.datacenterConfig)
-	for _, m := range cloudStackConfig.machineConfigs {
-		resources = append(resources, m)
-	}
-
-	yamlResources := make([][]byte, 0, len(resources))
-	for _, r := range resources {
-		yamlContent, err := yaml.Marshal(r)
-		if err != nil {
-			return nil, fmt.Errorf("marshalling cloudstack resource: %v", err)
-		}
-
-		yamlResources = append(yamlResources, yamlContent)
-	}
-
-	return templater.AppendYamlResources(yamlResources...), nil
 }
 
 func WithCloudStackComputeOfferingForAllMachines(value string) CloudStackFiller {
