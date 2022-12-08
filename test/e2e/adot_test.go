@@ -78,6 +78,7 @@ func TestCPackagesAdotNutanixKubernetes122SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesAdotTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube122),
@@ -90,6 +91,7 @@ func TestCPackagesAdotTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) 
 }
 
 func TestCPackagesAdotTinkerbellBottleRocketKubernetes123SingleNodeFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube123),
