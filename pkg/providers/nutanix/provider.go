@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -50,6 +51,7 @@ type Provider struct {
 	kubectlClient    ProviderKubectlClient
 	nutanixClient    Client
 	validator        *Validator
+	writer           filewriter.FileWriter
 }
 
 var _ providers.Provider = &Provider{}
@@ -60,6 +62,7 @@ func NewProvider(
 	machineConfigs map[string]*v1alpha1.NutanixMachineConfig,
 	clusterConfig *v1alpha1.Cluster,
 	providerKubectlClient ProviderKubectlClient,
+	writer filewriter.FileWriter,
 	nutanixClient Client,
 	certValidator crypto.TlsValidator,
 	httpClient *http.Client,
@@ -89,6 +92,7 @@ func NewProvider(
 		kubectlClient:    providerKubectlClient,
 		nutanixClient:    nutanixClient,
 		validator:        nutanixValidator,
+		writer:           writer,
 	}
 }
 
@@ -134,6 +138,28 @@ func (p *Provider) MachineResourceType() string {
 	return eksaNutanixMachineResourceType
 }
 
+func (p *Provider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1alpha1.NutanixMachineConfig) error {
+	var generatedKey string
+	for _, machineConfig := range machineConfigs {
+		user := machineConfig.Spec.Users[0]
+		if user.SshAuthorizedKeys[0] == "" {
+			if generatedKey != "" { // use the same key
+				user.SshAuthorizedKeys[0] = generatedKey
+			} else {
+				logger.Info("Provided sshAuthorizedKey is not set or is empty, auto-generating new key pair...", "NutanixMachineConfig", machineConfig.Name)
+				var err error
+				generatedKey, err = common.GenerateSSHAuthKey(p.writer)
+				if err != nil {
+					return err
+				}
+				user.SshAuthorizedKeys[0] = generatedKey
+			}
+		}
+	}
+
+	return nil
+}
+
 func (p *Provider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
 	for _, mc := range p.machineConfigs {
 		if err := p.kubectlClient.DeleteEksaNutanixMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
@@ -164,6 +190,10 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		if err := p.validator.ValidateMachineConfig(ctx, conf); err != nil {
 			return fmt.Errorf("failed to validate machine config: %v", err)
 		}
+	}
+
+	if err := p.generateSSHKeysIfNotSet(clusterSpec.NutanixMachineConfigs); err != nil {
+		return fmt.Errorf("failed to generate ssh key: %v", err)
 	}
 
 	return nil

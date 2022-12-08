@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -26,6 +27,8 @@ import (
 	mockCrypto "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
+	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	mocknutanix "github.com/aws/eks-anywhere/pkg/providers/nutanix/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -64,11 +67,13 @@ func testDefaultNutanixProvider(t *testing.T) *Provider {
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
 
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 	return provider
 }
 
-func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator, httpClient *http.Client) *Provider {
+func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl, certValidator crypto.TlsValidator, httpClient *http.Client, writer filewriter.FileWriter) *Provider {
 	clusterConf := &anywherev1.Cluster{}
 	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
 	require.NoError(t, err)
@@ -88,7 +93,7 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
 	t.Setenv(constants.EksaNutanixPasswordKey, "password")
 
-	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, certValidator, httpClient, time.Now)
+	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, writer, nutanixClient, certValidator, httpClient, time.Now)
 	require.NotNil(t, provider)
 	return provider
 }
@@ -162,7 +167,9 @@ func TestNutanixProviderDeleteResources(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
+
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	clusterSpec.ManagementCluster = &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	err := provider.DeleteResources(context.Background(), clusterSpec)
@@ -327,7 +334,8 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 	assert.NotNil(t, provider)
 
 	for _, tt := range tests {
@@ -339,6 +347,128 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 		} else {
 			assert.NoError(t, err, tt.name)
 		}
+	}
+
+	sshKeyTests := []struct {
+		name            string
+		clusterConfFile string
+		expectErr       bool
+		performTest     func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error
+	}{
+		{
+			name:            "validate is ssh key gets generated for cp",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
+			expectErr:       false,
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+		{
+			name:            "generate error in writing the ssh key by mocking the writer for cp",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
+			expectErr:       true,
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				writer := filewritermocks.NewMockFileWriter(ctrl)
+				provider.writer = writer
+				writer.EXPECT().Write(
+					test.OfType("string"), gomock.Any(), gomock.Not(gomock.Nil()),
+				).Return("", errors.New("writing file"))
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+		{
+			name:            "validate is ssh key gets generated for md",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
+			expectErr:       false,
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+		{
+			name:            "generate error in writing the ssh key by mocking the writer for md",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
+			expectErr:       true,
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				writer := filewritermocks.NewMockFileWriter(ctrl)
+				provider.writer = writer
+				writer.EXPECT().Write(
+					test.OfType("string"), gomock.Any(), gomock.Not(gomock.Nil()),
+				).Return("", errors.New("writing file"))
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+	}
+
+	for _, tc := range sshKeyTests {
+		t.Run(tc.name, func(t *testing.T) {
+			clusterSpec := test.NewFullClusterSpec(t, tc.clusterConfFile)
+			// to avoid "because: there are no expected calls of the method "Write" for that receiver"
+			// using test.NewWriter(t) instead of filewritermocks.NewMockFileWriter(ctrl)
+			_, mockWriter := test.NewWriter(t)
+			provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
+			assert.NotNil(t, provider)
+
+			err := tc.performTest(t, provider, clusterSpec)
+			if tc.expectErr {
+				if err == nil {
+					t.Fatalf("Test failed. %s", err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("Test failed. %s", err)
+				}
+			}
+		})
 	}
 }
 
@@ -430,7 +560,8 @@ func TestNutanixProviderUpdateSecrets(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -448,7 +579,8 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -468,7 +600,8 @@ func TestNutanixProviderGenerateCAPISpecForCreate_Error(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -498,7 +631,8 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -518,7 +652,8 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade_Error(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
@@ -874,7 +1009,8 @@ func TestNutanixProviderUpgradeNeeded(t *testing.T) {
 	mockTransport := mocknutanix.NewMockRoundTripper(ctrl)
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient)
+	mockWriter := filewritermocks.NewMockFileWriter(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}

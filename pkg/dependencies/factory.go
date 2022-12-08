@@ -456,6 +456,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				machineConfigs,
 				clusterConfig,
 				f.dependencies.Kubectl,
+				f.dependencies.Writer,
 				f.dependencies.NutanixPrismClient.V3,
 				crypto.NewTlsValidator(),
 				httpClient,

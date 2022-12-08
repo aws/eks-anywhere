@@ -26,12 +26,14 @@ const (
 	// NutanixIdentifierName is a resource identifier identifying the object by Name.
 	NutanixIdentifierName NutanixIdentifierType = "name"
 
-	defaultNutanixOSFamily          = Ubuntu
-	defaultNutanixSystemDiskSizeGi  = "40Gi"
-	defaultNutanixMemorySizeGi      = "4Gi"
-	defaultNutanixVCPUsPerSocket    = 1
-	defaultNutanixVCPUSockets       = 2
-	defaultNutanixMachineConfigUser = "nutanix-user"
+	defaultNutanixOSFamily         = Ubuntu
+	defaultNutanixSystemDiskSizeGi = "40Gi"
+	defaultNutanixMemorySizeGi     = "4Gi"
+	defaultNutanixVCPUsPerSocket   = 1
+	defaultNutanixVCPUSockets      = 2
+
+	// DefaultNutanixMachineConfigUser is the default username we set in machine config.
+	DefaultNutanixMachineConfigUser = "eksa"
 )
 
 // NutanixResourceIdentifier holds the identity of a Nutanix Prism resource (cluster, image, subnet, etc.)
@@ -74,7 +76,7 @@ func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGe
 			OSFamily: defaultNutanixOSFamily,
 			Users: []UserConfiguration{
 				{
-					Name:              defaultNutanixMachineConfigUser,
+					Name:              DefaultNutanixMachineConfigUser,
 					SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
 				},
 			},
@@ -135,4 +137,22 @@ func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig
 		return nil, fmt.Errorf("unable to find kind %v in file", NutanixMachineConfigKind)
 	}
 	return configs, nil
+}
+
+func setNutanixMachineConfigDefaults(machineConfig *NutanixMachineConfig) {
+	if len(machineConfig.Spec.Users) <= 0 {
+		machineConfig.Spec.Users = []UserConfiguration{{}}
+	}
+
+	if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+		machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+	}
+
+	if machineConfig.Spec.OSFamily == "" {
+		machineConfig.Spec.OSFamily = defaultNutanixOSFamily
+	}
+
+	if len(machineConfig.Spec.Users) == 0 || machineConfig.Spec.Users[0].Name == "" {
+		machineConfig.Spec.Users[0].Name = DefaultNutanixMachineConfigUser
+	}
 }

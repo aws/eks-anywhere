@@ -225,7 +225,7 @@ func WithNutanixSSHAuthorizedKey(value string) NutanixFiller {
 		for _, m := range config.machineConfigs {
 			m.Spec.Users = []anywherev1.UserConfiguration{
 				{
-					Name:              "nutanix-user",
+					Name:              anywherev1.DefaultNutanixMachineConfigUser,
 					SshAuthorizedKeys: []string{value},
 				},
 			}
