@@ -6,7 +6,32 @@ weight: 35
 
 ## Unreleased
 
+## [v0.13.0](https://github.com/aws/eks-anywhere/releases/tag/v0.13.0)
+### Added
+- Workload clusters full lifecycle API support for vSphere and Docker ([#1090](https://github.com/aws/eks-anywhere/issues/1090))
+- Single node cluster support for Bare Metal provider
+- Cilium updated to version `v1.11.10`
+- CLI high verbosity log output is automatically included in the support bundle after a CLI `cluster` command error ([#1703](https://github.com/aws/eks-anywhere/issues/1703) implemented by [#4289](https://github.com/aws/eks-anywhere/issues/1703))
+- Allow to configure machine health checks timeout through a new flag `--unhealthy-machine-timeout` ([#3918](https://github.com/aws/eks-anywhere/issues/3918) implemented by [#4123](https://github.com/aws/eks-anywhere/pull/4123))
+- Ability to configure rolling upgrade for Bare Metal and Cloudstack via `maxSurge` and `maxUnavailable` parameters
+- New Nutanix Provider
+- Support for private registry authentication
+- Workload clusters support for Bare Metal
+- VM Tagging support for vSphere VM's created in the cluster
+- Static IP support for Bottlerocket OS in Bare Metal
+- Support for new curated packages:
+  - Prometheus `v2.39.1`
+- Updated curated packages' versions:
+  - ADOT `v0.23.0` upgraded from `v0.21.1`
+  - Emissary `v3.3.0` upgraded from `v3.0.0`
+- Support for packages controller to create target namespaces [#601](https://github.com/aws/eks-anywhere-packages/issues/601)
+- Multi-region support for all supported curated packages
 
+### Fixed
+- Kubernetes version upgrades from 1.23 to 1.24 for Docker clusters ([#4266](https://github.com/aws/eks-anywhere/pull/4266))
+
+### Breaking changes
+- Removed support for Kubernetes 1.20
 
 ## [v0.12.2](https://github.com/aws/eks-anywhere/releases/tag/v0.12.2)
 
