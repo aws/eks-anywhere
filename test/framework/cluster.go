@@ -1450,6 +1450,29 @@ func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(name string, mgmtClu
 	}
 }
 
+//go:embed testdata/autoscaler_package.yaml
+var autoscalerPackageDeployment []byte
+
+//go:embed testdata/metrics_server_package.yaml
+var metricsServerPackageDeployment []byte
+
+func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer() {
+	ctx := context.Background()
+	packageInstallNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
+
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), metricsServerPackageDeployment,
+		packageInstallNamespace)
+	if err != nil {
+		e.T.Fatalf("Error installing metrics server pacakge: %s", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), autoscalerPackageDeployment,
+		packageInstallNamespace)
+	if err != nil {
+		e.T.Fatalf("Error installing cluster autoscaler pacakge: %s", err)
+	}
+}
+
 func (e *ClusterE2ETest) CombinedAutoscalerMetricServerTest(autoscalerName string, metricServerName string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	ns := "default"

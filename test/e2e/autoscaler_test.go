@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -30,13 +29,7 @@ func runAutoscalerCloudStackSimpleFlow(test *framework.ClusterE2ETest) {
 		autoscalerName := "cluster-autoscaler"
 		metricServerName := "metrics-server"
 		installNs := "eksa-packages"
-		test.InstallCuratedPackage(autoscalerName, "", kubeconfig.FromClusterName(test.ClusterName),
-			installNs,
-			"--set cloudProvider=clusterapi",
-			"--set autoDiscovery.clusterName="+test.ClusterName,
-		)
-		test.InstallCuratedPackage(metricServerName, "", kubeconfig.FromClusterName(test.ClusterName), installNs,
-			"--set args={--kubelet-insecure-tls}")
+		test.InstallAutoScalerWithMetricServer()
 		test.CombinedAutoscalerMetricServerTest(autoscalerName, metricServerName, withMgmtCluster(test))
 	})
 
