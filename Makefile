@@ -162,6 +162,7 @@ eks-a-binary:
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
+	yq -i e ".spec.releases[0].version = \"$(DEV_GIT_VERSION)\"" pkg/cluster/config/releases.yaml
 	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
 
 .PHONY: eks-a-cross-platform-embed-latest-config
@@ -588,8 +589,8 @@ eks-a-e2e:
 	if [ "$(CODEBUILD_CI)" = "true" ]; then \
 		if [[ "$(CODEBUILD_BUILD_ID)" =~ "aws-staging-eks-a-build" ]]; then \
 			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
-			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
 			scripts/get_bundle.sh; \
+			make eks-a-embed-config GIT_VERSION=$(DEV_GIT_VERSION) LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'; \
 		else \
 			make eks-a-cross-platform; \
 			make eks-a; \
