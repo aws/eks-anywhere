@@ -2,6 +2,7 @@ package diagnostics_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -13,7 +14,29 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 )
+
+func TestFileCollectors(t *testing.T) {
+	g := NewGomegaWithT(t)
+	factory := diagnostics.NewDefaultCollectorFactory()
+
+	w, err := filewriter.NewWriter(t.TempDir())
+	g.Expect(err).To(BeNil())
+
+	logOut, err := w.Write("test.log", []byte("test content"))
+	g.Expect(err).To(BeNil())
+	g.Expect(logOut).To(BeAnExistingFile())
+
+	collectors := factory.FileCollectors([]string{logOut})
+	g.Expect(collectors).To(HaveLen(1), "DefaultCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors[0].Data.Data).To(Equal("test content"))
+	g.Expect(collectors[0].Data.Name).To(Equal(filepath.Base(logOut)))
+
+	collectors = factory.FileCollectors([]string{"does-not-exist.log"})
+	g.Expect(collectors).To(HaveLen(1), "DefaultCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors[0].Data.Data).To(ContainSubstring("Failed to retrieve file does-not-exist.log for collection"))
+}
 
 func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 	g := NewGomegaWithT(t)

@@ -2,6 +2,7 @@ package diagnostics
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -9,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
@@ -168,6 +170,27 @@ func (c *collectorFactory) PackagesCollectors() []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.packagesCrdCollectors()...)
 	collectors = append(collectors, c.packagesLogCollectors()...)
+	return collectors
+}
+
+func (c *collectorFactory) FileCollectors(paths []string) []*Collect {
+	collectors := []*Collect{}
+
+	for _, path := range paths {
+		r := files.NewReader()
+		content, err := r.ReadFile(path)
+		if err != nil {
+			content = []byte(fmt.Sprintf("Failed to retrieve file %s for collection: %s", path, err))
+		}
+
+		collectors = append(collectors, &Collect{
+			Data: &data{
+				Data: string(content),
+				Name: filepath.Base(path),
+			},
+		})
+	}
+
 	return collectors
 }
 
