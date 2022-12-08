@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -182,25 +183,35 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 		validate func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error
 	}{
 		{
-			name:     "non-existent-file",
+			name:     "machineconfig-with-no-users",
 			fileName: "testdata/nutanix/machineconfig-with-no-users.yaml",
 			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
-				if nutanixMachineConfig.Spec.Users && len(nutanixMachineConfig.Spec.Users) > 0 {
-
+				if len(nutanixMachineConfig.Spec.Users) <= 0 {
+					return fmt.Errorf("default user was not added")
 				}
-			},
-		},
-		{
-			name:     "non-existent-file",
-			fileName: "testdata/nutanix/machineconfig-with-no-osfamily.yaml",
-			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
 				return nil
 			},
 		},
 		{
-			name:     "non-existent-file",
+			name:     "machineconfig-with-no-osfamily",
+			fileName: "testdata/nutanix/machineconfig-with-no-osfamily.yaml",
+			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+				if nutanixMachineConfig.Spec.OSFamily != defaultNutanixOSFamily {
+					return fmt.Errorf("ubuntu OS family was not set")
+				}
+				return nil
+			},
+		},
+		{
+			name:     "machineconfig-with-no-ssh-key",
 			fileName: "testdata/nutanix/machineconfig-with-no-ssh-key.yaml",
 			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+				if len(nutanixMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+					return fmt.Errorf("default ssh key was not added")
+				}
+				if nutanixMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("default ssh key was found empty")
+				}
 				return nil
 			},
 		},
@@ -215,8 +226,9 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 			if conf == nil {
 				t.Errorf("GetNutanixMachineConfigs returned conf without defaults")
 			}
-			err = test.validate(t, conf["NutanixMachineConfig"]) {
-				t.Errorf("")
+			err = test.validate(t, conf["NutanixMachineConfig"])
+			if err != nil {
+				t.Errorf("validate failed with error :%s", err)
 			}
 		})
 	}

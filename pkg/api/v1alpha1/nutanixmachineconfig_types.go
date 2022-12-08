@@ -49,6 +49,7 @@ type NutanixMachineConfigSpec struct {
 	SystemDiskSize resource.Quantity `json:"systemDiskSize"`
 }
 
+// SetDefaults sets defaults to NutanixMachineConfig if user has not provided.
 func (c *NutanixMachineConfig) SetDefaults() {
 	setNutanixMachineConfigDefaults(c)
 }
