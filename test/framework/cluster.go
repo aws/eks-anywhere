@@ -1244,11 +1244,10 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	expectedLogs1 := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 145}"
-	expectedLogs2 := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 146}"
-	ok := strings.Contains(logs, expectedLogs1) || strings.Contains(logs, expectedLogs2)
+	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
+	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
-		e.T.Fatalf("expected to find %s or %s in the log, got %s", expectedLogs1, expectedLogs2, logs)
+		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}
 }
 
@@ -1291,11 +1290,10 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	expectedLogs1 := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 94}"
-	expectedLogs2 := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 95}"
-	ok := strings.Contains(logs, expectedLogs1) || strings.Contains(logs, expectedLogs2)
+	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
+	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
-		e.T.Fatalf("expected to find %s or %s in the log, got %s", expectedLogs1, expectedLogs2, logs)
+		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}
 }
 
