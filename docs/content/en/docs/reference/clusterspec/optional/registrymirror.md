@@ -80,7 +80,7 @@ export REGISTRY_PASSWORD=<password>
 ```
 
 ```bash
-eksctl anywhere download images -o images.tar
+eksctl anywhere download images -o eks-anywhere-images.tar
 docker login https://<private registry endpoint>
 ...
 eksctl anywhere import images -i images.tar
