@@ -20,3 +20,4 @@ set -o pipefail
 bundle_number=$(cat "${CODEBUILD_SRC_DIR}/release/triggers/bundle-release/development/BUNDLE_NUMBER")
 bundle_url="https://beta-assets.eks-anywhere.model-rocket.aws.dev/releases/bundles/${bundle_number}/manifest.yaml"
 wget -O "${CODEBUILD_SRC_DIR}/bin/local-bundle-release.yaml" "${bundle_url}"
+cp "${CODEBUILD_SRC_DIR}/bin/local-bundle-release.yaml" "${CODEBUILD_SRC_DIR}/pkg/cluster/config/bundle-release.yaml"

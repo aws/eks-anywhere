@@ -19,18 +19,4 @@ spec:
       gitTag: ""
       number: 0
       version: v0.0.0-custom
-    - bundleManifestUrl: "https://eks-anywhere-beta.s3.amazonaws.com/0.3.0/bundle-release.yaml"
-      date: ""
-      eksABinary: {}
-      gitCommit: ""
-      gitTag: ""
-      number: 0
-      version: v0.3.0
-    - bundleManifestUrl: "https://eks-anywhere-beta.s3.amazonaws.com/0.4.0/bundle-release.yaml"
-      date: ""
-      eksABinary: { }
-      gitCommit: ""
-      gitTag: ""
-      number: 0
-      version: v0.4.0
 status: {}
