@@ -28,7 +28,6 @@ func runAutoscalerCloudStackSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(func(e *framework.ClusterE2ETest) {
 		autoscalerName := "cluster-autoscaler"
 		metricServerName := "metrics-server"
-		installNs := "eksa-packages"
 		test.InstallAutoScalerWithMetricServer()
 		test.CombinedAutoscalerMetricServerTest(autoscalerName, metricServerName, withMgmtCluster(test))
 	})

@@ -58,7 +58,7 @@ const (
 var oidcRoles []byte
 
 //go:embed testdata/hpa_busybox.yaml
-var hpaBusybox string
+var hpaBusybox []byte
 
 type ClusterE2ETest struct {
 	T                      *testing.T
@@ -1477,33 +1477,56 @@ func (e *ClusterE2ETest) CombinedAutoscalerMetricServerTest(autoscalerName strin
 	ctx := context.Background()
 	ns := "default"
 	name := "hpa-busybox-test"
-	machineDeploymentName := e.ClusterName + "-" + e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].Name
+	machineDeploymentName := e.ClusterName + "-" + "md-0"
 	e.VerifyMetricServerPackageInstalled(metricServerName, mgmtCluster)
 	e.VerifyAutoScalerPackageInstalled(autoscalerName, mgmtCluster)
 
-	err := e.KubectlClient.ApplyKubeSpec(ctx, mgmtCluster, hpaBusybox)
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, mgmtCluster, hpaBusybox)
 	if err != nil {
 		e.T.Fatalf("Failed to apply hpa busybox load %s", err)
 	}
 
 	err = e.KubectlClient.WaitForDeployment(ctx,
 		e.cluster(), "5m", "Available", name, ns)
+	if err != nil {
+		e.T.Fatalf("Failed waiting for test workload deployent %s", err)
+	}
 
-	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=20"}
-	_, err = e.KubectlClient.Execute(ctx, params...)
+	fmt.Println("Metrics Server Ready")
+
+	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=20", "--kubeconfig", e.kubeconfigFilePath()}
+	_, err = e.KubectlClient.ExecuteCommand(ctx, params...)
 	if err != nil {
 		e.T.Fatalf("Failed to autoscale deployent %s", err)
 	}
 
 	//TODO instead of waiting get current number of nodes to compare with later
-	err = e.KubectlClient.Wait(ctx, mgmtCluster.KubeconfigFile, "5m",
-		"ScalingUp=true", machineDeploymentName, constants.EksaSystemNamespace)
+	/*
+		err = e.KubectlClient.Wait(ctx, mgmtCluster.KubeconfigFile, "5m",
+			"Ready=false", fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
+		if err != nil {
+			e.T.Fatalf("Failed to scaleup machine deployments waiting for scale up %s", err)
+		}*/
+
+	fmt.Println("Waiting for machinedeployment to begin scaling up")
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "5m", "status.phase", "ScalingUp",
+		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
-		e.T.Fatalf("Failed to scaleup machine deployments %s", err)
+		e.T.Fatalf("Failed to scaleup machine deployments waiting for scale up %s", err)
 	}
-	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "10m",
-		e.ClusterName+"-"+machineDeploymentName)
+
+	fmt.Println("Waiting for machine deployment to finish scaling up")
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.phase", "Running",
+		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
+	if err != nil {
+		e.T.Fatalf("Failed to scaleup machine deployments waiting for scale up %s", err)
+	}
+
+	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "2m",
+		machineDeploymentName)
 	if err != nil {
 		e.T.Fatalf("Machine deployment stuck in scaling up %s", err)
 	}
+
+	fmt.Println("Finished scaling up machines")
 }
