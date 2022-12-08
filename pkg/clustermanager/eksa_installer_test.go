@@ -216,18 +216,6 @@ func TestSetManagerFlags(t *testing.T) {
 				}
 			}),
 		},
-		// {
-		// 	name:       "full lifecycle, snow",
-		// 	deployment: deployment(),
-		// 	spec: test.NewClusterSpec(func(s *cluster.Spec) {
-		// 		s.Cluster.Spec.DatacenterRef.Kind = anywherev1.SnowDatacenterKind
-		// 	}),
-		// 	want: deployment(func(d *appsv1.Deployment) {
-		// 		d.Spec.Template.Spec.Containers[0].Args = []string{
-		// 			"--feature-gates=FullLifecycleAPI=true",
-		// 		}
-		// 	}),
-		// },
 		{
 			name:       "full lifecycle, snow",
 			deployment: deployment(),

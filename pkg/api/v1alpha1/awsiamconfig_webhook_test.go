@@ -16,7 +16,7 @@ func TestValidateUpdateAWSIamConfigFail(t *testing.T) {
 
 	aiNew.Spec.BackendMode = []string{"mode1"}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(&aiOld)).NotTo(Succeed())
+	g.Expect(aiNew.ValidateUpdate(&aiOld)).To(MatchError(ContainSubstring("config is immutable")))
 }
 
 func TestValidateUpdateAWSIamConfigSuccess(t *testing.T) {
