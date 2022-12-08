@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -12,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -31,7 +29,7 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-func TestEnsureCASecret_SecretFound(t *testing.T) {
+func TestEnsureCASecretSecretFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	cluster := &anywherev1.Cluster{
@@ -57,7 +55,7 @@ func TestEnsureCASecret_SecretFound(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestEnsureCASecret_SecretNotFound(t *testing.T) {
+func TestEnsureCASecretSecretNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	cb := fake.NewClientBuilder()
@@ -74,7 +72,7 @@ func TestEnsureCASecret_SecretNotFound(t *testing.T) {
 	r := newReconciler(t, cl)
 
 	result, err := r.EnsureCASecret(ctx, nullLog(), cluster)
-	g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
+	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -93,7 +91,7 @@ func nullLog() logr.Logger {
 	return logr.New(logf.NullLogSink{})
 }
 
-func TestReconcile_BuildSpecError(t *testing.T) {
+func TestReconcileBuildClusterSpecError(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -116,7 +114,7 @@ func TestReconcile_BuildSpecError(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestReconcile_CPReadyRequeue(t *testing.T) {
+func TestReconcileCAPIClusterNotFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -151,11 +149,11 @@ func TestReconcile_CPReadyRequeue(t *testing.T) {
 
 	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
 	result, err := r.Reconcile(ctx, nullLog(), cluster)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(result).To(Equal(controller.ResultWithRequeue(5 * time.Second)))
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestReconcile_ensureCASecretOwnerRef_NoSecret(t *testing.T) {
+func TestReconcileEnsureCASecretOwnerRefNoSecretFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -198,7 +196,7 @@ func TestReconcile_ensureCASecretOwnerRef_NoSecret(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestReconcile_RemoteGetClient_Error(t *testing.T) {
+func TestReconcileRemoteGetClientError(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -248,7 +246,7 @@ func TestReconcile_RemoteGetClient_Error(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
-func TestReconcile_ConfigMap_NotFound_ApplyError(t *testing.T) {
+func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
