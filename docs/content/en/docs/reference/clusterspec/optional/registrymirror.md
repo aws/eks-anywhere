@@ -83,7 +83,7 @@ export REGISTRY_PASSWORD=<password>
 eksctl anywhere download images -o eks-anywhere-images.tar
 docker login https://<private registry endpoint>
 ...
-eksctl anywhere import images -i images.tar
+eksctl anywhere import images -i eks-anywhere-images.tar
 ```
 ## Docker configurations
 It is necessary to add the private registry's CA Certificate
