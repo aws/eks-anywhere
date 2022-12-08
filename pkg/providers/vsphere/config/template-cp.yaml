@@ -68,6 +68,9 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
+{{- if .controlPlaneTagIDs }}
+      tagIDs: {{.controlPlaneTagIDs}}
+{{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -552,6 +555,9 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
+{{- if .etcdTagIDs }}
+      tagIDs: {{.etcdTagIDs}}
+{{- end }}
 ---
 {{- end }}
 apiVersion: v1

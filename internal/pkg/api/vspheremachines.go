@@ -33,6 +33,13 @@ func WithFolder(value string) VSphereMachineConfigFiller {
 	}
 }
 
+// WithTags add provided tags to all machines.
+func WithTags(value []string) VSphereMachineConfigFiller {
+	return func(m *anywherev1.VSphereMachineConfig) {
+		m.Spec.TagIDs = value
+	}
+}
+
 func WithResourcePool(value string) VSphereMachineConfigFiller {
 	return func(m *anywherev1.VSphereMachineConfig) {
 		m.Spec.ResourcePool = value

@@ -16,6 +16,7 @@ type VSphereMachineConfigSpec struct {
 	StoragePolicyName string              `json:"storagePolicyName,omitempty"`
 	Template          string              `json:"template,omitempty"`
 	Users             []UserConfiguration `json:"users,omitempty"`
+	TagIDs            []string            `json:"tags,omitempty"`
 }
 
 func (c *VSphereMachineConfig) PauseReconcile() {
@@ -132,7 +133,7 @@ func (c *VSphereMachineConfig) ValidateHasTemplate() error {
 
 // +kubebuilder:object:generate=false
 
-// Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
+// VSphereMachineConfigGenerate Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
 type VSphereMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`

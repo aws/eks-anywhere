@@ -502,7 +502,7 @@ func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 
 func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	e.T.Logf("Creating cluster %s", e.ClusterName)
-	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
+	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}

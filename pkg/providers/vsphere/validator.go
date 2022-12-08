@@ -89,7 +89,31 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 	return nil
 }
 
-// TODO: dry out machine configs validations.
+func (v *Validator) validateMachineConfigTagsExist(ctx context.Context, machineConfigs []*anywherev1.VSphereMachineConfig) error {
+	tags, err := v.govc.ListTags(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check if tags exists in vSphere: %v", err)
+	}
+
+	tagIDs := make([]string, 0, len(tags))
+	for _, t := range tags {
+		tagIDs = append(tagIDs, t.Id)
+	}
+
+	idLookup := types.SliceToLookup(tagIDs)
+	for _, machineConfig := range machineConfigs {
+		for _, tagID := range machineConfig.Spec.TagIDs {
+			if !idLookup.IsPresent(tagID) {
+				return fmt.Errorf("tag (%s) does not exist in vSphere. please provide a valid tag id in the urn format (example: urn:vmomi:InventoryServiceTag:8e0ce079-0677-48d6-8865-19ada4e6dabd:GLOBAL)", tagID)
+			}
+		}
+	}
+	logger.MarkPass("Machine config tags validated")
+
+	return nil
+}
+
+// ValidateClusterMachineConfigs validates all the attributes of etcd, control plane, and worker node VSphereMachineConfigs.
 func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
@@ -134,6 +158,11 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		logger.V(1).Info("Control plane template validation failed.")
 		return err
 	}
+
+	if err := v.validateMachineConfigTagsExist(ctx, vsphereClusterSpec.machineConfigs()); err != nil {
+		return err
+	}
+
 	logger.MarkPass("Control plane and Workload templates validated")
 
 	return v.validateDatastoreUsage(ctx, vsphereClusterSpec, controlPlaneMachineConfig, etcdMachineConfig)

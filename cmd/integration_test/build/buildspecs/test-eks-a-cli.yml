@@ -55,6 +55,7 @@ env:
     T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
     T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
+    T_VSPHERE_TAG: "vsphere_ci_beta_connection:vm_test_tag"
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"

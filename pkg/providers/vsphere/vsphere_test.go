@@ -41,22 +41,22 @@ import (
 )
 
 const (
-	testClusterConfigMainFilename    = "cluster_main.yaml"
-	testClusterConfigMain121Filename = "cluster_main_121.yaml"
+	testClusterConfigMainFilename          = "cluster_main.yaml"
+	testClusterConfigMain121Filename       = "cluster_main_121.yaml"
 	testClusterConfigWithCPUpgradeStrategy = "cluster_main_121_cp_upgrade_strategy.yaml"
 	testClusterConfigWithMDUpgradeStrategy = "cluster_main_121_md_upgrade_strategy.yaml"
-	testDataDir                      = "testdata"
-	expectedVSphereName              = "vsphere"
-	expectedVSphereUsername          = "vsphere_username"
-	expectedVSpherePassword          = "vsphere_password"
-	expectedVSphereServer            = "vsphere_server"
-	expectedExpClusterResourceSet    = "expClusterResourceSetKey"
-	eksd119Release                   = "kubernetes-1-19-eks-4"
-	eksd119ReleaseTag                = "eksdRelease:kubernetes-1-19-eks-4"
-	eksd121ReleaseTag                = "eksdRelease:kubernetes-1-21-eks-4"
-	ubuntuOSTag                      = "os:ubuntu"
-	bottlerocketOSTag                = "os:bottlerocket"
-	testTemplate                     = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+	testDataDir                            = "testdata"
+	expectedVSphereName                    = "vsphere"
+	expectedVSphereUsername                = "vsphere_username"
+	expectedVSpherePassword                = "vsphere_password"
+	expectedVSphereServer                  = "vsphere_server"
+	expectedExpClusterResourceSet          = "expClusterResourceSetKey"
+	eksd119Release                         = "kubernetes-1-19-eks-4"
+	eksd119ReleaseTag                      = "eksdRelease:kubernetes-1-19-eks-4"
+	eksd121ReleaseTag                      = "eksdRelease:kubernetes-1-21-eks-4"
+	ubuntuOSTag                            = "os:ubuntu"
+	bottlerocketOSTag                      = "os:bottlerocket"
+	testTemplate                           = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
 )
 
 type DummyProviderGovcClient struct {
@@ -147,7 +147,7 @@ func (pc *DummyProviderGovcClient) GetTags(ctx context.Context, path string) (ta
 	return []string{eksd119ReleaseTag, eksd121ReleaseTag, pc.osTag}, nil
 }
 
-func (pc *DummyProviderGovcClient) ListTags(ctx context.Context) ([]string, error) {
+func (pc *DummyProviderGovcClient) ListTags(ctx context.Context) ([]executables.Tag, error) {
 	return nil, nil
 }
 
@@ -886,6 +886,37 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(nil)
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl, ipValidator)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateWithControlPlaneTags(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(nil)
+
+	datacenterConfig := clusterSpec.VSphereDatacenter
 	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl, ipValidator)
 	if provider == nil {
 		t.Fatalf("provider object is nil")

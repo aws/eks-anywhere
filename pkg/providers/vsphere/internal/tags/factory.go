@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -13,7 +14,7 @@ type Factory struct {
 }
 
 type GovcClient interface {
-	ListTags(ctx context.Context) ([]string, error)
+	ListTags(ctx context.Context) ([]executables.Tag, error)
 	CreateTag(ctx context.Context, tag, category string) error
 	AddTag(ctx context.Context, path, tag string) error
 	ListCategories(ctx context.Context) ([]string, error)
@@ -36,8 +37,13 @@ func (f *Factory) TagTemplate(ctx context.Context, templatePath string, tagsByCa
 		return fmt.Errorf("failed listing vsphere tags: %v", err)
 	}
 
+	tagNames := make([]string, 0, len(tags))
+	for _, t := range tags {
+		tagNames = append(tagNames, t.Name)
+	}
+
 	categoriesLookup := types.SliceToLookup(categories)
-	tagsLookup := types.SliceToLookup(tags)
+	tagsLookup := types.SliceToLookup(tagNames)
 	for category, tags := range tagsByCategory {
 		if !categoriesLookup.IsPresent(category) {
 			logger.V(3).Info("Creating category", "category", category)

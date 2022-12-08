@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/tags"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/tags/mocks"
 )
@@ -114,8 +115,14 @@ func TestFactoryTagTemplateErrorAddTag(t *testing.T) {
 func TestFactoryTagTemplateSuccess(t *testing.T) {
 	tt := newTagTest(t)
 	tt.govc.EXPECT().ListCategories(tt.ctx).Return([]string{"kubernetesChannel"}, nil)
-	tt.govc.EXPECT().ListTags(tt.ctx).Return([]string{"eksd:1.19"}, nil)
-
+	tags := []executables.Tag{
+		{
+			Name:       "eksd:1.19",
+			Id:         "urn:vmomi:InventoryServiceTag:5555:GLOBAL",
+			CategoryId: "eksd",
+		},
+	}
+	tt.govc.EXPECT().ListTags(tt.ctx).Return(tags, nil)
 	tt.govc.EXPECT().CreateTag(tt.ctx, "kubernetesChannel:1.19", "kubernetesChannel").Return(nil)
 	tt.govc.EXPECT().AddTag(tt.ctx, tt.templatePath, "kubernetesChannel:1.19").Return(nil)
 
