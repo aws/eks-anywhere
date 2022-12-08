@@ -35,7 +35,6 @@ func TestSetupEnvVarsErrorDatacenter(t *testing.T) {
 	if err := setupEnvVars(config); err == nil {
 		t.Fatalf("setupEnvVars() err = nil, want err not nil: %#v", err)
 	}
-
 }
 
 func TestSetupEnvVarsErrorDatacenterSetenvFailures(t *testing.T) {
