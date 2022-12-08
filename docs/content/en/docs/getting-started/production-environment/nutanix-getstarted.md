@@ -114,23 +114,22 @@ Make sure you use single quotes around the values so that your shell does not in
    ```
 1. Check the cluster nodes:
 
-   To check that the cluster completed, list the machines to see the control plane, etcd, and worker nodes:
+   To check that the cluster completed, list the machines to see the control plane, and worker nodes:
 
    ```bash
    kubectl get machines -n eksa-system
    ```
 
    Example command output
-NAME              CLUSTER  NODENAME                                 PROVIDERID       PHASE     AGE   VERSION
-mgmt-4gtt2        mgmt     mgmt-control-plane-1670343878900-2m4ln   nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
-mgmt-d42xn        mgmt     mgmt-control-plane-1670343878900-jbfxt   nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
-mgmt-md-0-9868m   mgmt     mgmt-md-0-1670343878901-lkmxw            nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
-mgmt-md-0-njpk2   mgmt     mgmt-md-0-1670343878901-9clbz            nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
-mgmt-md-0-p4gp2   mgmt     mgmt-md-0-1670343878901-mbktx            nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
-mgmt-zkwrr        mgmt     mgmt-control-plane-1670343878900-jrdkk   nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
    ```
-
-   The etcd machine doesn't show the Kubernetes version because it doesn't run the kubelet service.
+      NAME              CLUSTER  NODENAME                                 PROVIDERID       PHASE     AGE   VERSION
+      mgmt-4gtt2        mgmt     mgmt-control-plane-1670343878900-2m4ln   nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
+      mgmt-d42xn        mgmt     mgmt-control-plane-1670343878900-jbfxt   nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
+      mgmt-md-0-9868m   mgmt     mgmt-md-0-1670343878901-lkmxw            nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
+      mgmt-md-0-njpk2   mgmt     mgmt-md-0-1670343878901-9clbz            nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
+      mgmt-md-0-p4gp2   mgmt     mgmt-md-0-1670343878901-mbktx            nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
+      mgmt-zkwrr        mgmt     mgmt-control-plane-1670343878900-jrdkk   nutanix://xxxx   Running   11m   v1.24.7-eks-1-24-4
+   ```
 
 1. Check the initial cluster's CRD:
 
