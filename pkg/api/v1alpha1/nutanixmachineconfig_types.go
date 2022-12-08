@@ -49,6 +49,10 @@ type NutanixMachineConfigSpec struct {
 	SystemDiskSize resource.Quantity `json:"systemDiskSize"`
 }
 
+func (c *NutanixMachineConfig) SetDefaults() {
+	setNutanixMachineConfigDefaults(c)
+}
+
 func (in *NutanixMachineConfig) PauseReconcile() {
 	in.Annotations[pausedAnnotation] = "true"
 }

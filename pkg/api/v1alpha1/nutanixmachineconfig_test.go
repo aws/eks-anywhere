@@ -174,3 +174,50 @@ func TestNewNutanixMachineConfigGenerate(t *testing.T) {
 	assert.Equal(t, SchemeBuilder.GroupVersion.String(), machineConf.APIVersion())
 	assert.Equal(t, resource.MustParse("16Gi"), machineConf.Spec.MemorySize)
 }
+
+func TestNutanixMachineConfigDefaults(t *testing.T) {
+	tests := []struct {
+		name     string
+		fileName string
+		validate func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error
+	}{
+		{
+			name:     "non-existent-file",
+			fileName: "testdata/nutanix/machineconfig-with-no-users.yaml",
+			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+				if nutanixMachineConfig.Spec.Users && len(nutanixMachineConfig.Spec.Users) > 0 {
+
+				}
+			},
+		},
+		{
+			name:     "non-existent-file",
+			fileName: "testdata/nutanix/machineconfig-with-no-osfamily.yaml",
+			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+				return nil
+			},
+		},
+		{
+			name:     "non-existent-file",
+			fileName: "testdata/nutanix/machineconfig-with-no-ssh-key.yaml",
+			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+				return nil
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			conf, err := GetNutanixMachineConfigs(test.fileName)
+			if err != nil {
+				t.Errorf("GetNutanixMachineConfigs returned error")
+			}
+			if conf == nil {
+				t.Errorf("GetNutanixMachineConfigs returned conf without defaults")
+			}
+			err = test.validate(t, conf["NutanixMachineConfig"]) {
+				t.Errorf("")
+			}
+		})
+	}
+}

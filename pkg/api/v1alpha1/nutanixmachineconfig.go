@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -135,4 +136,23 @@ func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig
 		return nil, fmt.Errorf("unable to find kind %v in file", NutanixMachineConfigKind)
 	}
 	return configs, nil
+}
+
+func setNutanixMachineConfigDefaults(machineConfig *NutanixMachineConfig) {
+	if len(machineConfig.Spec.Users) <= 0 {
+		machineConfig.Spec.Users = []UserConfiguration{{}}
+	}
+
+	if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+		machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+	}
+
+	if machineConfig.Spec.OSFamily == "" {
+		machineConfig.Spec.OSFamily = defaultNutanixOSFamily
+	}
+
+	if len(machineConfig.Spec.Users) == 0 || machineConfig.Spec.Users[0].Name == "" {
+		machineConfig.Spec.Users[0].Name = defaultNutanixMachineConfigUser
+		logger.V(1).Info("SSHUsername is not set or is empty for NutanixMachineConfig, using default", "machineConfig", machineConfig.Name, "user", machineConfig.Spec.Users[0].Name)
+	}
 }
