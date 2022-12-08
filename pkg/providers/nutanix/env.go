@@ -14,8 +14,26 @@ const (
 	nutanixEndpointKey = "NUTANIX_ENDPOINT"
 )
 
+var osSetenv = os.Setenv
+
 func setupEnvVars(datacenterConfig *anywherev1.NutanixDatacenterConfig) error {
-	if err := os.Setenv(nutanixEndpointKey, datacenterConfig.Spec.Endpoint); err != nil {
+	if nutanixUsername, ok := os.LookupEnv(constants.EksaNutanixUsernameKey); ok && len(nutanixUsername) > 0 {
+		if err := osSetenv(constants.NutanixUsernameKey, nutanixUsername); err != nil {
+			return fmt.Errorf("unable to set %s: %v", constants.EksaNutanixUsernameKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", constants.EksaNutanixUsernameKey)
+	}
+
+	if nutanixPassword, ok := os.LookupEnv(constants.EksaNutanixPasswordKey); ok && len(nutanixPassword) > 0 {
+		if err := osSetenv(constants.NutanixPasswordKey, nutanixPassword); err != nil {
+			return fmt.Errorf("unable to set %s: %v", constants.EksaNutanixPasswordKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", constants.EksaNutanixPasswordKey)
+	}
+
+	if err := osSetenv(nutanixEndpointKey, datacenterConfig.Spec.Endpoint); err != nil {
 		return fmt.Errorf("unable to set %s: %v", nutanixEndpointKey, err)
 	}
 	return nil
@@ -23,8 +41,8 @@ func setupEnvVars(datacenterConfig *anywherev1.NutanixDatacenterConfig) error {
 
 // GetCredsFromEnv returns nutanix credentials based on the environment.
 func GetCredsFromEnv() credentials.BasicAuthCredential {
-	username := os.Getenv(constants.NutanixUsernameKey)
-	password := os.Getenv(constants.NutanixPasswordKey)
+	username := os.Getenv(constants.EksaNutanixUsernameKey)
+	password := os.Getenv(constants.EksaNutanixPasswordKey)
 	return credentials.BasicAuthCredential{
 		PrismCentral: credentials.PrismCentralBasicAuth{
 			BasicAuth: credentials.BasicAuth{

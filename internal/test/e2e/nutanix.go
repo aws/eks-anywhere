@@ -8,9 +8,8 @@ import (
 )
 
 const (
-	nutanixFeatureGateEnvVar = "NUTANIX_PROVIDER"
-	nutanixCidrVar           = "T_NUTANIX_CONTROL_PLANE_CIDR"
-	nutanixRegex             = `^.*Nutanix.*$`
+	nutanixCidrVar = "T_NUTANIX_CONTROL_PLANE_CIDR"
+	nutanixRegex   = `^.*Nutanix.*$`
 )
 
 func (e *E2ESession) setupNutanixEnv(testRegex string) error {
@@ -26,7 +25,5 @@ func (e *E2ESession) setupNutanixEnv(testRegex string) error {
 		}
 	}
 
-	// Since Nutanix Provider is feature gated, manually enable the feature gate for all Nutanix tests.
-	e.testEnvVars[nutanixFeatureGateEnvVar] = "true"
 	return nil
 }
