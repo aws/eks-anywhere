@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -74,6 +75,48 @@ func TestEnsureCASecretSecretNotFound(t *testing.T) {
 	result, err := r.EnsureCASecret(ctx, nullLog(), cluster)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcileDeleteSuccess(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+	}
+	sec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      awsiamauth.CASecretName(cluster.Name),
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	objs := []runtime.Object{sec}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+	r := newReconciler(t, cl)
+
+	err := r.ReconcileDelete(ctx, nullLog(), cluster)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestReconcileDeleteNoSecretError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+	}
+	cb := fake.NewClientBuilder()
+	cl := cb.Build()
+	r := newReconciler(t, cl)
+
+	err := r.ReconcileDelete(ctx, nullLog(), cluster)
+	g.Expect(err).To(HaveOccurred())
 }
 
 func newReconciler(t *testing.T, client client.WithWatch) *reconciler.Reconciler {
@@ -149,51 +192,8 @@ func TestReconcileCAPIClusterNotFound(t *testing.T) {
 
 	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
 	result, err := r.Reconcile(ctx, nullLog(), cluster)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(result).To(Equal(controller.Result{}))
-}
-
-func TestReconcileEnsureCASecretOwnerRefNoSecretFound(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	ctrl := gomock.NewController(t)
-	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
-	generateUUID := uuid.New
-	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
-
-	bundle := test.Bundle()
-	eksdRelease := test.EksdRelease()
-	cluster := &anywherev1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "eksa-system",
-		},
-		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.20",
-			BundlesRef: &anywherev1.BundlesRef{
-				Name:       bundle.Name,
-				Namespace:  bundle.Namespace,
-				APIVersion: bundle.APIVersion,
-			},
-		},
-	}
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = cluster.Name
-	})
-
-	objs := []runtime.Object{bundle, eksdRelease, capiCluster}
-	cb := fake.NewClientBuilder()
-	scheme := runtime.NewScheme()
-	_ = releasev1.AddToScheme(scheme)
-	_ = eksdv1.AddToScheme(scheme)
-	_ = clusterv1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
-
-	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
-	result, err := r.Reconcile(ctx, nullLog(), cluster)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(result).To(Equal(controller.Result{}))
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(result).To(Equal(controller.ResultWithRequeue(5 * time.Second)))
 }
 
 func TestReconcileRemoteGetClientError(t *testing.T) {

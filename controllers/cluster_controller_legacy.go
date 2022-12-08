@@ -57,6 +57,7 @@ func NewClusterReconcilerLegacy(client client.Client, log logr.Logger, scheme *r
 //+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=*,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=clusterctl.cluster.x-k8s.io,resources=providers,verbs=get;list;watch
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=delete;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

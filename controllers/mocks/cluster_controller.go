@@ -66,3 +66,17 @@ func (mr *MockAWSIamConfigReconcilerMockRecorder) Reconcile(arg0, arg1, arg2 int
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).Reconcile), arg0, arg1, arg2)
 }
+
+// ReconcileDelete mocks base method.
+func (m *MockAWSIamConfigReconciler) ReconcileDelete(arg0 context.Context, arg1 logr.Logger, arg2 *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReconcileDelete", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReconcileDelete indicates an expected call of ReconcileDelete.
+func (mr *MockAWSIamConfigReconcilerMockRecorder) ReconcileDelete(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileDelete", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).ReconcileDelete), arg0, arg1, arg2)
+}

@@ -51,6 +51,7 @@ type ProviderClusterReconcilerRegistry interface {
 type AWSIamConfigReconciler interface {
 	EnsureCASecret(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
 	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
+	ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
 }
 
 // NewClusterReconciler constructs a new ClusterReconciler.
@@ -114,6 +115,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=test,resources=test,verbs=get;list;watch;create;update;patch;delete;kill
 // +kubebuilder:rbac:groups=distro.eks.amazonaws.com,resources=releases,verbs=get;list;watch
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=delete;
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
 	// Fetch the Cluster object
@@ -264,6 +266,13 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 		return ctrl.Result{}, err
 
 	}
+
+	if cluster.HasAWSIamConfig() {
+		if err := r.awsIamAuth.ReconcileDelete(ctx, log, cluster); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 

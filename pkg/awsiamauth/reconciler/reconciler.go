@@ -8,19 +8,17 @@ import (
 	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 )
@@ -63,7 +61,7 @@ func (r *Reconciler) EnsureCASecret(ctx context.Context, logger logr.Logger, clu
 	err := r.client.Get(ctx, types.NamespacedName{Name: secretName, Namespace: constants.EksaSystemNamespace}, s)
 	if apierrors.IsNotFound(err) {
 		logger.Info("Creating aws-iam-authenticator CA secret")
-		return r.createCASecret(ctx, cluster)
+		return controller.Result{}, r.createCASecret(ctx, cluster)
 	}
 	if err != nil {
 		return controller.Result{}, fmt.Errorf("fetching secret %s: %v", secretName, err)
@@ -73,24 +71,24 @@ func (r *Reconciler) EnsureCASecret(ctx context.Context, logger logr.Logger, clu
 	return controller.Result{}, nil
 }
 
-func (r *Reconciler) createCASecret(ctx context.Context, cluster *anywherev1.Cluster) (controller.Result, error) {
+func (r *Reconciler) createCASecret(ctx context.Context, cluster *anywherev1.Cluster) error {
 	yaml, err := r.templateBuilder.GenerateCertKeyPairSecret(r.certgen, cluster.Name)
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
+		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
 	}
 
 	objs, err := clientutil.YamlToClientObjects(yaml)
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("converting aws-iam-authenticator ca secret yaml to objects: %v", err)
+		return fmt.Errorf("converting aws-iam-authenticator ca secret yaml to objects: %v", err)
 	}
 
 	for _, o := range objs {
 		if err := r.client.Create(ctx, o); err != nil {
-			return controller.Result{}, fmt.Errorf("creating aws-iam-authenticator ca secret: %v", err)
+			return fmt.Errorf("creating aws-iam-authenticator ca secret: %v", err)
 		}
 	}
 
-	return controller.Result{}, nil
+	return nil
 }
 
 // Reconcile takes the AWS IAM Authenticator installation to the desired state defined in AWSIAMConfig.
@@ -102,18 +100,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 		return controller.Result{}, err
 	}
 
-	capiCluster := &clusterv1.Cluster{}
-	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
-	if err := r.client.Get(ctx, capiClusterName, capiCluster); err != nil {
-		return controller.Result{}, fmt.Errorf("fetching capi cluster %s: %v", capiClusterName, err)
+	// CheckControlPlaneReady was not meant to be used here.
+	// It was intended as a phase in cluster reconciliation.
+	// TODO (pokearu): Break down the function to better reuse it.
+	result, err := clusters.CheckControlPlaneReady(ctx, r.client, logger, cluster)
+	if err != nil {
+		return controller.Result{}, fmt.Errorf("checking controlplane ready: %v", err)
 	}
-
-	if !conditions.IsTrue(capiCluster, clusterapi.ControlPlaneReadyCondition) {
-		return controller.Result{}, fmt.Errorf("CAPI cluster %s controlplane not ready", capiCluster.Name)
-	}
-
-	if err := r.ensureCASecretOwnerRef(ctx, logger, cluster, capiCluster); err != nil {
-		return controller.Result{}, err
+	if result.Return() {
+		return result, nil
 	}
 
 	rClient, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(cluster))
@@ -133,40 +128,35 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 	}
 
 	logger.Info("Applying aws-iam-authenticator manifest")
-	return r.applyIAMAuthManifest(ctx, rClient, clusterSpec, clusterID)
+	if err := r.applyIAMAuthManifest(ctx, rClient, clusterSpec, clusterID); err != nil {
+		return controller.Result{}, fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
+	}
+
+	return controller.Result{}, nil
 }
 
-func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Client, clusterSpec *anywhereCluster.Spec, clusterID uuid.UUID) (controller.Result, error) {
+func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Client, clusterSpec *anywhereCluster.Spec, clusterID uuid.UUID) error {
 	yaml, err := r.templateBuilder.GenerateManifest(clusterSpec, clusterID)
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
+		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
 	}
 
-	return controller.Result{}, serverside.ReconcileYaml(ctx, client, yaml)
+	return serverside.ReconcileYaml(ctx, client, yaml)
 }
 
-// ensureCASecretOwnerRef ensures that the CAPI Cluster object is set as an ownerReference.
-// The ownerReference ensures the CA Secret is deleted when the cluster is deleted.
-func (r *Reconciler) ensureCASecretOwnerRef(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster) error {
+// ReconcileDelete deletes any AWS Iam authenticator specific resources leftover on the eks-a cluster.
+func (r *Reconciler) ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error {
 	secretName := awsiamauth.CASecretName(cluster.Name)
-
-	secret := &corev1.Secret{}
-	if err := r.client.Get(ctx, types.NamespacedName{Name: secretName, Namespace: constants.EksaSystemNamespace}, secret); err != nil {
-		return fmt.Errorf("fetching secret %s: %v", secretName, err)
+	secret := &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      secretName,
+			Namespace: constants.EksaSystemNamespace,
+		},
 	}
 
-	numberOfOwnerReferences := len(secret.GetOwnerReferences())
-	if err := controllerutil.SetOwnerReference(capiCluster, secret, r.client.Scheme()); err != nil {
-		return fmt.Errorf("setting capi cluster owner reference for Secret %s: %v", secret.Name, err)
-	}
-
-	if numberOfOwnerReferences == len(secret.GetOwnerReferences()) {
-		return nil
-	}
-
-	logger.Info("Updating owner reference for aws-iam-authenticator CA secret")
-	if err := r.client.Update(ctx, secret); err != nil {
-		return fmt.Errorf("updating Secret %s with capi cluster owner reference: %v", secret.Name, err)
+	logger.Info("Deleting aws-iam-authenticator ca secret", "name", secretName, "namespace", constants.EksaSystemNamespace)
+	if err := r.client.Delete(ctx, secret); err != nil {
+		return fmt.Errorf("deleting aws-iam-authenticator ca secret: %v", err)
 	}
 
 	return nil
