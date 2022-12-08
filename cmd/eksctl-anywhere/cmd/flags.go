@@ -14,6 +14,7 @@ const (
 	TinkerbellHardwareCSVFlagName        = "hardware-csv"
 	TinkerbellHardwareCSVFlagAlias       = "z"
 	TinkerbellHardwareCSVFlagDescription = "Path to a CSV file containing hardware data."
+	KubeconfigFile                       = "kubeconfig"
 )
 
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {
@@ -53,7 +54,7 @@ func checkTinkerbellFlags(flagSet *pflag.FlagSet, hardwareCSVPath string, operat
 	}
 
 	if !viper.IsSet(TinkerbellHardwareCSVFlagName) || viper.GetString(TinkerbellHardwareCSVFlagName) == "" {
-		if operationType == Create { // For upgrade, hardware-csv is an optional flag
+		if operationType == Create && !viper.IsSet(KubeconfigFile) { // For upgrade and workload cluster create, hardware-csv is an optional flag
 			return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
 		}
 		return nil
