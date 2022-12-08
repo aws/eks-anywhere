@@ -353,13 +353,13 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 		name            string
 		clusterConfFile string
 		expectErr       bool
-		validate        func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error
+		performTest     func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error
 	}{
 		{
 			name:            "validate is ssh key gets generated for cp",
-			clusterConfFile: "testdata/eksa-cluster.yaml",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
 			expectErr:       false,
-			validate: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
 				// Set the SSH Authorized Key to empty string
 				controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 				clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
@@ -370,6 +370,78 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 				}
 				// Expect the SSH Authorized Key to be not empty
 				if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+		{
+			name:            "generate error in writing the ssh key by mocking the writer for cp",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
+			expectErr:       true,
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				writer := filewritermocks.NewMockFileWriter(ctrl)
+				provider.writer = writer
+				writer.EXPECT().Write(
+					test.OfType("string"), gomock.Any(), gomock.Not(gomock.Nil()),
+				).Return("", errors.New("writing file"))
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+		{
+			name:            "validate is ssh key gets generated for md",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
+			expectErr:       false,
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+		{
+			name:            "generate error in writing the ssh key by mocking the writer for md",
+			clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
+			expectErr:       true,
+			performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				writer := filewritermocks.NewMockFileWriter(ctrl)
+				provider.writer = writer
+				writer.EXPECT().Write(
+					test.OfType("string"), gomock.Any(), gomock.Not(gomock.Nil()),
+				).Return("", errors.New("writing file"))
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
 					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
 				}
 				return nil
@@ -386,7 +458,7 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
 			assert.NotNil(t, provider)
 
-			err := tc.validate(t, provider, clusterSpec)
+			err := tc.performTest(t, provider, clusterSpec)
 			if tc.expectErr {
 				if err == nil {
 					t.Fatalf("Test failed. %s", err)
