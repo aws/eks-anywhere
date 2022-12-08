@@ -95,12 +95,12 @@ func (v *Validator) validateMachineConfigTagsExist(ctx context.Context, machineC
 		return fmt.Errorf("failed to check if tags exists in vSphere: %v", err)
 	}
 
-	tagIds := make([]string, 0, len(tags))
+	tagIDs := make([]string, 0, len(tags))
 	for _, t := range tags {
-		tagIds = append(tagIds, t.Id)
+		tagIDs = append(tagIDs, t.Id)
 	}
 
-	idLookup := types.SliceToLookup(tagIds)
+	idLookup := types.SliceToLookup(tagIDs)
 	for _, machineConfig := range machineConfigs {
 		for _, tagID := range machineConfig.Spec.TagIDs {
 			if !idLookup.IsPresent(tagID) {
@@ -108,12 +108,12 @@ func (v *Validator) validateMachineConfigTagsExist(ctx context.Context, machineC
 			}
 		}
 	}
-
 	logger.MarkPass("Machine config tags validated")
+
 	return nil
 }
 
-// ValidateClusterMachineConfigs TODO: dry out machine configs validations.
+// ValidateClusterMachineConfigs validates all the attributes of etcd, control plane, and worker node VSphereMachineConfigs
 func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
