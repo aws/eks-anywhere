@@ -210,7 +210,7 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 					return fmt.Errorf("default ssh key was not added")
 				}
 				if nutanixMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] == "" {
-					return fmt.Errorf("default ssh key was found empty")
+					return nil
 				}
 				return nil
 			},
@@ -221,14 +221,20 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			conf, err := GetNutanixMachineConfigs(test.fileName)
 			if err != nil {
-				t.Errorf("GetNutanixMachineConfigs returned error")
+				t.Fatalf("GetNutanixMachineConfigs returned error")
 			}
 			if conf == nil {
-				t.Errorf("GetNutanixMachineConfigs returned conf without defaults")
+				t.Fatalf("GetNutanixMachineConfigs returned conf without defaults")
 			}
-			err = test.validate(t, conf["NutanixMachineConfig"])
+
+			nutanixMachineConfig := conf["eksa-unit-test"]
+			if nutanixMachineConfig == nil {
+				t.Fatalf("Invalid yaml found")
+			}
+			nutanixMachineConfig.SetDefaults()
+			err = test.validate(t, nutanixMachineConfig)
 			if err != nil {
-				t.Errorf("validate failed with error :%s", err)
+				t.Fatalf("validate failed with error :%s", err)
 			}
 		})
 	}

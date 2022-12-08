@@ -1,7 +1,7 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-  name: Cluster
+  name: eksa-unit-test
   namespace: default
 spec:
   controlPlaneConfiguration:
@@ -32,7 +32,7 @@ spec:
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
 metadata:
-  name: NutanixMachineConfig
+  name: eksa-unit-test
   namespace: default
 spec:
   vcpusPerSocket: 1
@@ -52,11 +52,12 @@ spec:
   users:
     - name: "mySshUsername"
       sshAuthorizedKeys:
+        - ""
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixDatacenterConfig
 metadata:
-  name: NutanixDatacenterConfig
+  name: eksa-unit-test
   namespace: default
 spec:
   endpoint: "prism.nutanix.com"
