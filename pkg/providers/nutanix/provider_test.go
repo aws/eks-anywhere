@@ -915,11 +915,6 @@ func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	err := provider.PreCAPIInstallOnBootstrap(context.Background(), cluster, clusterSpec)
 	assert.NoError(t, err)
-
-	os.Unsetenv(constants.EksaNutanixUsernameKey)
-	os.Unsetenv(constants.EksaNutanixPasswordKey)
-	err = provider.PreCAPIInstallOnBootstrap(context.Background(), cluster, clusterSpec)
-	assert.Error(t, err)
 }
 
 func TestNutanixProviderPostMoveManagementToBootstrap(t *testing.T) {

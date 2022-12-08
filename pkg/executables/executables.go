@@ -35,8 +35,6 @@ var redactedEnvKeys = []string{
 	constants.SnowCertsKey,
 	constants.NutanixUsernameKey,
 	constants.NutanixPasswordKey,
-	constants.EksaNutanixUsernameKey,
-	constants.EksaNutanixPasswordKey,
 }
 
 type executable struct {
