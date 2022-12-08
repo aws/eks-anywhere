@@ -5,6 +5,12 @@ metadata:
   namespace: "{{.eksaSystemNamespace}}"
 spec:
   prismCentral:
+{{- if .nutanixAdditionalTrustBundle }}
+    additionalTrustBundle:
+      kind: String
+      data: |
+{{ .nutanixAdditionalTrustBundle | indent 8 }}
+{{- end }}
     address: "{{.nutanixEndpoint}}"
     port: {{.nutanixPort}}
     insecure: {{.nutanixInsecure}}
