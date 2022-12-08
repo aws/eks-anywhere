@@ -2,8 +2,15 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
+	"time"
+
+	v1 "k8s.io/api/storage/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 const (
@@ -14,23 +21,33 @@ const (
 	kubeSystemNameSpace        = "kube-system"
 )
 
+const defaultMaxRetries = 5
+
 // ValidateVSphereCSI checks whether vsphere csi exists as expected or not.
 func (e *ClusterE2ETest) ValidateVSphereCSI(installed bool) {
 	ctx := context.Background()
-	_, err := e.KubectlClient.GetDeployment(ctx, csiDeployment, kubeSystemNameSpace, e.cluster().KubeconfigFile)
+	maxRetries := defaultMaxRetries
+	if !installed {
+		maxRetries = 1
+	}
+	err := e.getDeployment(ctx, maxRetries)
 	if err != nil {
 		handleError(e.T, installed, err)
 	}
-	_, err = e.KubectlClient.GetDaemonSet(ctx, csiDaemonSet, kubeSystemNameSpace, e.cluster().KubeconfigFile)
+	err = e.getDaemonSet(ctx, maxRetries)
 	if err != nil {
 		handleError(e.T, installed, err)
 	}
-	storageclass, err := e.KubectlClient.GetStorageClass(ctx, csiStorageClassName, e.cluster().KubeconfigFile)
+	storageclass, err := e.getStorageClass(ctx, maxRetries)
 	if err != nil {
 		handleError(e.T, installed, err)
 	}
 	if installed && storageclass.Provisioner != csiStorageClassProvisioner {
 		e.T.Fatalf("provisioners don't match. got: %v, want: %v", storageclass.Provisioner, csiStorageClassProvisioner)
+	}
+	err = e.getClusterResourceSet(ctx, maxRetries)
+	if err != nil {
+		handleError(e.T, installed, err)
 	}
 }
 
@@ -55,4 +72,53 @@ func (e *ClusterE2ETest) DeleteVSphereCSI() {
 	if err != nil {
 		e.T.Fatal(err)
 	}
+	csiClusterResourceSetName := fmt.Sprintf("%s-csi", e.ClusterName)
+	err = e.KubectlClient.Delete(ctx, "clusterresourceset", csiClusterResourceSetName, constants.EksaSystemNamespace, e.cluster().KubeconfigFile)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+}
+
+func (e *ClusterE2ETest) getDeployment(ctx context.Context, retries int) error {
+	return retrier.Retry(retries, time.Second*5, func() error {
+		_, err := e.KubectlClient.GetDeployment(ctx, csiDeployment, kubeSystemNameSpace, e.cluster().KubeconfigFile)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (e *ClusterE2ETest) getDaemonSet(ctx context.Context, retries int) error {
+	return retrier.Retry(retries, time.Second*5, func() error {
+		_, err := e.KubectlClient.GetDaemonSet(ctx, csiDaemonSet, kubeSystemNameSpace, e.cluster().KubeconfigFile)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (e *ClusterE2ETest) getStorageClass(ctx context.Context, retries int) (*v1.StorageClass, error) {
+	var storageclass *v1.StorageClass
+	err := retrier.Retry(retries, time.Second*5, func() error {
+		s, err := e.KubectlClient.GetStorageClass(ctx, csiStorageClassName, e.cluster().KubeconfigFile)
+		if err != nil {
+			return err
+		}
+		storageclass = s
+		return nil
+	})
+	return storageclass, err
+}
+
+func (e *ClusterE2ETest) getClusterResourceSet(ctx context.Context, retries int) error {
+	return retrier.Retry(retries, time.Second*5, func() error {
+		csiClusterResourceSetName := fmt.Sprintf("%s-csi", e.ClusterName)
+		_, err := e.KubectlClient.GetClusterResourceSet(ctx, e.cluster().KubeconfigFile, csiClusterResourceSetName, constants.EksaSystemNamespace)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }

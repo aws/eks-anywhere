@@ -1814,18 +1814,12 @@ func (k *Kubectl) GetBundles(ctx context.Context, kubeconfigFile, name, namespac
 }
 
 func (k *Kubectl) GetClusterResourceSet(ctx context.Context, kubeconfigFile, name, namespace string) (*addons.ClusterResourceSet, error) {
-	params := []string{"get", clusterResourceSetResourceType, name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("getting ClusterResourceSet with kubectl: %v", err)
+	obj := &addons.ClusterResourceSet{}
+	if err := k.GetObject(ctx, clusterResourceSetResourceType, name, namespace, kubeconfigFile, obj); err != nil {
+		return nil, err
 	}
 
-	response := &addons.ClusterResourceSet{}
-	if err = json.Unmarshal(stdOut.Bytes(), response); err != nil {
-		return nil, fmt.Errorf("parsing ClusterResourceSet response: %v", err)
-	}
-
-	return response, nil
+	return obj, nil
 }
 
 func (k *Kubectl) GetConfigMap(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.ConfigMap, error) {
