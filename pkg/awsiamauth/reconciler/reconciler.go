@@ -56,17 +56,19 @@ func New(certgen crypto.CertificateGenerator, generateUUID UUIDGenerator, client
 // It uses a controller.Result to indicate when requeues are needed.
 func (r *Reconciler) EnsureCASecret(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	clusterName := cluster.Name
+	secretName := awsiamauth.CASecretName(clusterName)
+
 	s := &corev1.Secret{}
-	err := r.client.Get(ctx, types.NamespacedName{Name: awsiamauth.CASecretName(clusterName), Namespace: constants.EksaSystemNamespace}, s)
+	err := r.client.Get(ctx, types.NamespacedName{Name: secretName, Namespace: constants.EksaSystemNamespace}, s)
 	if apierrors.IsNotFound(err) {
 		logger.Info("Creating aws-iam-authenticator CA secret")
 		return r.createCASecret(ctx, cluster)
 	}
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("fetching secret %s: %v", awsiamauth.CASecretName(clusterName), err)
+		return controller.Result{}, fmt.Errorf("fetching secret %s: %v", secretName, err)
 	}
 
-	logger.Info("aws-iam-authenticator CA secret found. Skipping secret create.", "Name", awsiamauth.CASecretName(clusterName))
+	logger.Info("aws-iam-authenticator CA secret found. Skipping secret create.", "name", secretName)
 	return controller.Result{}, nil
 }
 
@@ -133,9 +135,11 @@ func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Cli
 // ensureCASecretOwnerRef ensures that the CAPI Cluster object is set as an ownerReference.
 // The ownerReference ensures the CA Secret is deleted when the cluster is deleted.
 func (r *Reconciler) ensureCASecretOwnerRef(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error {
+	secretName := awsiamauth.CASecretName(cluster.Name)
+
 	secret := &corev1.Secret{}
-	if err := r.client.Get(ctx, types.NamespacedName{Name: awsiamauth.CASecretName(cluster.Name), Namespace: constants.EksaSystemNamespace}, secret); err != nil {
-		return fmt.Errorf("fetching secret %s: %v", awsiamauth.CASecretName(cluster.Name), err)
+	if err := r.client.Get(ctx, types.NamespacedName{Name: secretName, Namespace: constants.EksaSystemNamespace}, secret); err != nil {
+		return fmt.Errorf("fetching secret %s: %v", secretName, err)
 	}
 
 	if len(secret.GetOwnerReferences()) != 0 {

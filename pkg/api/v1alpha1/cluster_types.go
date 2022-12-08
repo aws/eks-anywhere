@@ -61,8 +61,7 @@ type ClusterSpec struct {
 // HasAWSIamConfig checks if AWSIamConfig is configured for the cluster.
 func (c *Cluster) HasAWSIamConfig() bool {
 	for _, identityProvider := range c.Spec.IdentityProviderRefs {
-		switch identityProvider.Kind {
-		case AWSIamConfigKind:
+		if identityProvider.Kind == AWSIamConfigKind {
 			return true
 		}
 	}
