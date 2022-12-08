@@ -287,6 +287,20 @@ func (mr *MockDiagnosticBundleMockRecorder) WithExternalEtcd(config interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithExternalEtcd", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithExternalEtcd), config)
 }
 
+// WithFileCollectors mocks base method.
+func (m *MockDiagnosticBundle) WithFileCollectors(paths []string) *diagnostics.EksaDiagnosticBundle {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithFileCollectors", paths)
+	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
+	return ret0
+}
+
+// WithFileCollectors indicates an expected call of WithFileCollectors.
+func (mr *MockDiagnosticBundleMockRecorder) WithFileCollectors(paths interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithFileCollectors", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithFileCollectors), paths)
+}
+
 // WithGitOpsConfig mocks base method.
 func (m *MockDiagnosticBundle) WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *diagnostics.EksaDiagnosticBundle {
 	m.ctrl.T.Helper()
@@ -570,6 +584,20 @@ func (m *MockCollectorFactory) EksaHostCollectors(configs []providers.MachineCon
 func (mr *MockCollectorFactoryMockRecorder) EksaHostCollectors(configs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaHostCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).EksaHostCollectors), configs)
+}
+
+// FileCollectors mocks base method.
+func (m *MockCollectorFactory) FileCollectors(paths []string) []*diagnostics.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FileCollectors", paths)
+	ret0, _ := ret[0].([]*diagnostics.Collect)
+	return ret0
+}
+
+// FileCollectors indicates an expected call of FileCollectors.
+func (mr *MockCollectorFactoryMockRecorder) FileCollectors(paths interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).FileCollectors), paths)
 }
 
 // ManagementClusterCollectors mocks base method.

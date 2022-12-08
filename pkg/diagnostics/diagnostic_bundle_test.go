@@ -129,6 +129,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().FileCollectors(gomock.Any()).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -191,6 +192,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().FileCollectors(gomock.Any()).Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -250,6 +252,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().FileCollectors(gomock.Any()).Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -333,6 +336,7 @@ func TestBundleFromSpecComplete(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().FileCollectors(gomock.Any()).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)
@@ -475,6 +479,7 @@ func TestGenerateManagementClusterBundleVsphereProvider(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
+		c.EXPECT().FileCollectors(gomock.Any()).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)
@@ -522,6 +527,7 @@ func TestGenerateManagementClusterBundleDockerProvider(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
+		c.EXPECT().FileCollectors(gomock.Any()).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)

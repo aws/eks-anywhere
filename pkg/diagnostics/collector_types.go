@@ -10,6 +10,7 @@ type Collect struct {
 	ClusterResources *clusterResources `json:"clusterResources,omitempty"`
 	Secret           *secret           `json:"secret,omitempty"`
 	Logs             *logs             `json:"logs,omitempty"`
+	Data             *data             `json:"data,omitempty"`
 	CopyFromHost     *copyFromHost     `json:"copyFromHost,omitempty"`
 	Exec             *exec             `json:"exec,omitempty"`
 	RunPod           *runPod           `json:"runPod,omitempty"`
@@ -44,6 +45,11 @@ type logs struct {
 	Namespace      string     `json:"namespace,omitempty"`
 	ContainerNames []string   `json:"containerNames,omitempty"`
 	Limits         *logLimits `json:"limits,omitempty"`
+}
+
+type data struct {
+	Name string `json:"name,omitempty"`
+	Data string `json:"data,omitempty"`
 }
 
 type copyFromHost struct {

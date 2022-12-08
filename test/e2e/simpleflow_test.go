@@ -16,7 +16,11 @@ import (
 )
 
 func init() {
-	if err := logger.InitZap(4, logger.WithName("e2e")); err != nil {
+	args := logger.ZapOpts{
+		Level:     4,
+		WithNames: []string{"e2e"},
+	}
+	if err := logger.InitZap(args); err != nil {
 		log.Fatal(fmt.Errorf("failed init zap logger for e2e tests: %v", err))
 	}
 }

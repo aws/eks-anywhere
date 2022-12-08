@@ -70,6 +70,7 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 	}
 
 	b.WithDefaultCollectors().
+		WithFileCollectors([]string{logger.GetOutputFilePath()}).
 		WithDefaultAnalyzers().
 		WithManagementCluster(true).
 		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef, spec).
@@ -116,6 +117,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
+		WithFileCollectors([]string{logger.GetOutputFilePath()}).
 		WithPackagesCollectors().
 		WithLogTextAnalyzers()
 
@@ -142,7 +144,9 @@ func newDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 		analyzerFactory:  af,
 		collectorFactory: cf,
 	}
-	return b.WithDefaultAnalyzers().WithDefaultCollectors().WithManagementCluster(true)
+	return b.WithDefaultAnalyzers().
+		WithDefaultCollectors().
+		WithManagementCluster(true)
 }
 
 func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string, writer filewriter.FileWriter) *EksaDiagnosticBundle {
@@ -257,6 +261,12 @@ func (e *EksaDiagnosticBundle) WithManagementCluster(isSelfManaged bool) *EksaDi
 		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.ManagementClusterAnalyzers()...)
 		e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.ManagementClusterCollectors()...)
 	}
+	return e
+}
+
+// WithFileCollectors appends collectors that collect static data from the specified paths to the bundle.
+func (e *EksaDiagnosticBundle) WithFileCollectors(paths []string) *EksaDiagnosticBundle {
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.FileCollectors(paths)...)
 	return e
 }
 
