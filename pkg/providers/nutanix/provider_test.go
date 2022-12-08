@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -346,6 +347,56 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 		} else {
 			assert.NoError(t, err, tt.name)
 		}
+	}
+
+	sshKeyTests := []struct {
+		name            string
+		clusterConfFile string
+		expectErr       bool
+		validate        func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error
+	}{
+		{
+			name:            "validate is ssh key gets generated for cp",
+			clusterConfFile: "testdata/eksa-cluster.yaml",
+			expectErr:       false,
+			validate: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
+				// Set the SSH Authorized Key to empty string
+				controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+				clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
+
+				err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+				if err != nil {
+					return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+				}
+				// Expect the SSH Authorized Key to be not empty
+				if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
+					return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
+				}
+				return nil
+			},
+		},
+	}
+
+	for _, tc := range sshKeyTests {
+		t.Run(tc.name, func(t *testing.T) {
+			clusterSpec := test.NewFullClusterSpec(t, tc.clusterConfFile)
+			// to avoid "because: there are no expected calls of the method "Write" for that receiver"
+			// using test.NewWriter(t) instead of filewritermocks.NewMockFileWriter(ctrl)
+			_, mockWriter := test.NewWriter(t)
+			provider := testNutanixProvider(t, mockClient, kubectl, mockCertValidator, mockHTTPClient, mockWriter)
+			assert.NotNil(t, provider)
+
+			err := tc.validate(t, provider, clusterSpec)
+			if tc.expectErr {
+				if err == nil {
+					t.Fatalf("Test failed. %s", err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("Test failed. %s", err)
+				}
+			}
+		})
 	}
 }
 
