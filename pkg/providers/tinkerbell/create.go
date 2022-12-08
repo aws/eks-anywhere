@@ -129,9 +129,10 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	if err := p.configureSshKeys(); err != nil {
 		return err
 	}
-
-	if err := p.readCSVToCatalogue(); err != nil {
-		return err
+	if p.hardwareCSVIsProvided() {
+		if err := p.readCSVToCatalogue(); err != nil {
+			return err
+		}
 	}
 
 	if p.datacenterConfig.Spec.OSImageURL != "" {
