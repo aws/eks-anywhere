@@ -3,15 +3,19 @@ package vsphere
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/govmomi/mocks"
+	govcmocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 )
 
 func TestValidatorValidatePrivs(t *testing.T) {
@@ -130,4 +134,97 @@ func TestValidatorValidatePrivsBadJson(t *testing.T) {
 
 	_, err := v.validatePrivs(ctx, objects, vsc)
 	g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
+}
+
+func TestValidatorValidateMachineConfigTagsExistErrorListingTag(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	v := Validator{
+		govc: govc,
+	}
+
+	machineConfigs := []*v1alpha1.VSphereMachineConfig{
+		{
+			Spec: v1alpha1.VSphereMachineConfigSpec{
+				TagIDs: []string{"tag-1", "tag-2"},
+			},
+		},
+	}
+
+	govc.EXPECT().ListTags(ctx).Return(nil, errors.New("error listing tags"))
+
+	err := v.validateMachineConfigTagsExist(ctx, machineConfigs)
+	g.Expect(err).To(Not(BeNil()))
+}
+
+func TestValidatorValidateMachineConfigTagsExistSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	v := Validator{
+		govc: govc,
+	}
+
+	machineConfigs := []*v1alpha1.VSphereMachineConfig{
+		{
+			Spec: v1alpha1.VSphereMachineConfigSpec{
+				TagIDs: []string{"tag-1", "tag-2"},
+			},
+		},
+	}
+
+	tagIDs := []executables.Tag{
+		{
+			Id: "tag-1",
+		},
+		{
+			Id: "tag-2",
+		},
+		{
+			Id: "tag-3",
+		},
+	}
+
+	govc.EXPECT().ListTags(ctx).Return(tagIDs, nil)
+
+	err := v.validateMachineConfigTagsExist(ctx, machineConfigs)
+	g.Expect(err).To(BeNil())
+}
+
+func TestValidatorValidateMachineConfigTagsExistTagDoesNotExist(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	v := Validator{
+		govc: govc,
+	}
+
+	machineConfigs := []*v1alpha1.VSphereMachineConfig{
+		{
+			Spec: v1alpha1.VSphereMachineConfigSpec{
+				TagIDs: []string{"tag-1", "tag-2"},
+			},
+		},
+	}
+
+	tagIDs := []executables.Tag{
+		{
+			Id: "tag-1",
+		},
+		{
+			Id: "tag-3",
+		},
+	}
+
+	govc.EXPECT().ListTags(ctx).Return(tagIDs, nil)
+
+	err := v.validateMachineConfigTagsExist(ctx, machineConfigs)
+	g.Expect(err).To(Not(BeNil()))
 }
