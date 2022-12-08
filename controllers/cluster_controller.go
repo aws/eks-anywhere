@@ -204,7 +204,11 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 
 func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	if cluster.HasAWSIamConfig() {
-		return r.awsIamAuth.EnsureCASecret(ctx, log, cluster)
+		if result, err := r.awsIamAuth.EnsureCASecret(ctx, log, cluster); err != nil {
+			return controller.Result{}, err
+		} else if result.Return() {
+			return result, nil
+		}
 	}
 
 	return controller.Result{}, nil
@@ -212,7 +216,11 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 
 func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	if cluster.HasAWSIamConfig() {
-		return r.awsIamAuth.Reconcile(ctx, log, cluster)
+		if result, err := r.awsIamAuth.Reconcile(ctx, log, cluster); err != nil {
+			return controller.Result{}, err
+		} else if result.Return() {
+			return result, nil
+		}
 	}
 
 	return controller.Result{}, nil
