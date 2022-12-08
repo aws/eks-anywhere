@@ -54,10 +54,13 @@ func TestCPackagesPrometheusVSphereKubernetes122UbuntuSimpleFlow(t *testing.T) {
 }
 
 func runCuratedPackagesPrometheusInstallSimpleFlow(test *framework.ClusterE2ETest) {
+	packageFullName := packagePrefix + "-" + packageName
 	test.WithCluster(func(test *framework.ClusterE2ETest) {
 		test.CreateNamespace(packageTargetNamespace)
-		test.InstallCuratedPackage(packageName, packagePrefix+"-"+packageName,
+		test.InstallCuratedPackage(packageName, packageFullName,
 			kubeconfig.FromClusterName(test.ClusterName), packageTargetNamespace)
-		test.VerifyPrometheusPackageInstalled(packagePrefix+"-"+packageName, packageTargetNamespace)
+		test.VerifyPrometheusPackageInstalled(packageFullName, packageTargetNamespace)
+		test.VerifyPrometheusNodeExporterStates(packageFullName, packageTargetNamespace)
+		test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace)
 	})
 }
