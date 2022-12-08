@@ -1395,19 +1395,18 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
 	}
+}
+
+// VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.
+func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string,
+	targetNamespace string) {
+	ctx := context.Background()
 
 	e.T.Log("Waiting for package", packageName, "deployment prometheus-server to be available")
-	err = e.KubectlClient.WaitForDeployment(ctx,
+	err := e.KubectlClient.WaitForDeployment(ctx,
 		e.cluster(), "5m", "Available", fmt.Sprintf("%s-server", packageName), targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus deployment timed out: %s", err)
-	}
-
-	e.T.Log("Waiting for package", packageName, "daemonset node-exporter to be rolled out")
-	err = e.KubectlClient.WaitForDaemonsetRolledout(ctx,
-		e.cluster(), "5m", fmt.Sprintf("%s-node-exporter", packageName), targetNamespace)
-	if err != nil {
-		e.T.Fatalf("waiting for prometheus daemonset timed out: %s", err)
 	}
 
 	e.T.Log("Reading package", packageName, "pod prometheus-server logs")
@@ -1425,6 +1424,19 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 	if !ok {
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}
+}
+
+// VerifyPrometheusNodeExporterStates is checking if the Prometheus package node-exporter component is functioning properly.
+func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName string,
+	targetNamespace string) {
+	ctx := context.Background()
+
+	e.T.Log("Waiting for package", packageName, "daemonset node-exporter to be rolled out")
+	err := e.KubectlClient.WaitForDaemonsetRolledout(ctx,
+		e.cluster(), "5m", fmt.Sprintf("%s-node-exporter", packageName), targetNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for prometheus daemonset timed out: %s", err)
+	}
 
 	e.T.Log("Launching Busybox pod to test Package", packageName, "service node-exporter")
 	svcAddress := packageName + "-node-exporter." + targetNamespace + ".svc.cluster.local" + ":9100/metrics"
@@ -1440,13 +1452,13 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
 	}
 	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from curl node-exporter service\n %s\n", logs)
-	expectedLogs = "HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles"
-	ok = strings.Contains(logs, expectedLogs)
+	expectedLogs := "HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles"
+	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}
