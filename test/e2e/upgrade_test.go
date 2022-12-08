@@ -422,7 +422,7 @@ func TestCloudStackKubernetesUnstacked122RedhatTo123Upgrade(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 	)
 	runSimpleUpgradeFlow(

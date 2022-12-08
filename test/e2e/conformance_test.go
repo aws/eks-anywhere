@@ -164,7 +164,7 @@ func TestCloudStackKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 func TestCloudStackKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
@@ -174,7 +174,7 @@ func TestCloudStackKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
 func TestCloudStackKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat123()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
