@@ -1212,7 +1212,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 
 	// Deploy ADOT as a deployment and scrape the apiservers
 	e.T.Log("Apply changes to package", packageName)
-	e.T.Log("This will update ", packageName, " to be a deployment, and scrape the apiservers")
+	e.T.Log("This will update", packageName, "to be a deployment, and scrape the apiservers")
 	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDeployment, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
@@ -1244,7 +1244,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 146}"
+	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
 	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
@@ -1258,7 +1258,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 
 	// Deploy ADOT as a daemonset and scrape the node
 	e.T.Log("Apply changes to package", packageName)
-	e.T.Log("This will update ", packageName, " to be a daemonset, and scrape the node")
+	e.T.Log("This will update", packageName, "to be a daemonset, and scrape the node")
 	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDaemonset, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
@@ -1290,7 +1290,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\": 95}"
+	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
 	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
