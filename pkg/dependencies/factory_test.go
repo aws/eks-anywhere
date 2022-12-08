@@ -122,8 +122,8 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 		},
 	}
 
-	t.Setenv(constants.NutanixUsernameKey, "test")
-	t.Setenv(constants.NutanixPasswordKey, "test")
+	t.Setenv(constants.EksaNutanixUsernameKey, "test")
+	t.Setenv(constants.EksaNutanixPasswordKey, "test")
 	for _, tc := range tests {
 		tt := newTest(t, nutanix)
 		tt.clusterConfigFile = tc.clusterConfigFile

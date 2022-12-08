@@ -62,6 +62,8 @@ const (
 	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
 	NutanixUsernameKey = "NUTANIX_USER"
 	NutanixPasswordKey = "NUTANIX_PASSWORD"
+	EksaNutanixUsernameKey = "EKSA_NUTANIX_USERNAME"
+	EksaNutanixPasswordKey = "EKSA_NUTANIX_PASSWORD"
 
 	SecretKind             = "Secret"
 	ConfigMapKind          = "ConfigMap"

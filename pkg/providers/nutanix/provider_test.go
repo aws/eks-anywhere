@@ -85,8 +85,8 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 		"eksa-unit-test": machineConf,
 	}
 
-	t.Setenv(constants.NutanixUsernameKey, "admin")
-	t.Setenv(constants.NutanixPasswordKey, "password")
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
 
 	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, certValidator, httpClient, time.Now)
 	require.NotNil(t, provider)
