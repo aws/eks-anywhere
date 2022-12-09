@@ -162,7 +162,7 @@ func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *an
 
 	clusterTLSCrt, ok := clusterCaSecret.Data["tls.crt"]
 	if !ok {
-		return fmt.Errorf("tls.crt key not found in cluster CA secret: %s", clusterCaSecret.Name)
+		return fmt.Errorf("tls.crt key not found in cluster CA secret %s", clusterCaSecret.Name)
 	}
 
 	yaml, err := r.templateBuilder.GenerateKubeconfig(clusterSpec, clusterID, apiServerEndpoint, base64.StdEncoding.EncodeToString(clusterTLSCrt))
