@@ -217,19 +217,19 @@ You can use a proxy server to route outbound requests to the internet. To config
 6. Create a vsphere configuration file (for example, `vsphere-connection.json`):
    ```json
    {
-     "cluster":"<vsphere cluster used for image building>",
-     "convert_to_template":"false",
-     "create_snapshot":"<creates a snapshot on base OVA after building if set to true>",
-     "datacenter":"<vsphere datacenter used for image building>",
-     "datastore":"<datastore used to store template/for image building>",
-     "folder":"<folder on vsphere to create temporary vm>",
-     "insecure_connection":"true",
-     "linked_clone":"false",
-     "network":"<vsphere network used for image building>",
-     "password":"<vcenter username>",
-     "resource_pool":"<resource pool used for image building vm>",
-     "username":"<vcenter username>",
-     "vcenter_server":"<vcenter fqdn>",
+     "cluster": "<vsphere cluster used for image building>",
+     "convert_to_template": "false",
+     "create_snapshot": "<creates a snapshot on base OVA after building if set to true>",
+     "datacenter": "<vsphere datacenter used for image building>",
+     "datastore": "<datastore used to store template/for image building>",
+     "folder": "<folder on vsphere to create temporary vm>",
+     "insecure_connection": "true",
+     "linked_clone": "false",
+     "network": "<vsphere network used for image building>",
+     "password": "<vcenter password>",
+     "resource_pool": "<resource pool used for image building vm>",
+     "username": "<vcenter username>",
+     "vcenter_server": "<vcenter fqdn>",
      "vsphere_library_name": "<vsphere content library name>"
    }
    ```
