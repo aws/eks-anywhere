@@ -1408,8 +1408,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 }
 
 // VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.
-func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string,
-	targetNamespace string) {
+func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string, targetNamespace string) {
 	ctx := context.Background()
 
 	e.T.Log("Waiting for package", packageName, "deployment prometheus-server to be available")
@@ -1437,8 +1436,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName stri
 }
 
 // VerifyPrometheusNodeExporterStates is checking if the Prometheus package node-exporter component is functioning properly.
-func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName string,
-	targetNamespace string) {
+func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName string, targetNamespace string) {
 	ctx := context.Background()
 
 	e.T.Log("Waiting for package", packageName, "daemonset node-exporter to be rolled out")
