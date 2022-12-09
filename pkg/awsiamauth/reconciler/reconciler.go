@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -15,6 +16,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	anywhereCluster "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -122,7 +124,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 	if apierrors.IsNotFound(err) {
 		// If configmap is not found, this is a first time install of aws-iam-authenticator on the cluster.
 		// We use a newly generated UUID.
+		// The configmap clusterID and kubeconfig token need to match. Hence the kubeconfig secret is created for first install.
 		clusterID = r.generateUUID()
+		logger.Info("Creating aws-iam-authenticator kubeconfig secret")
+		if err := r.createKubeconfigSecret(ctx, clusterSpec, cluster, clusterID); err != nil {
+			return controller.Result{}, err
+		}
 	} else if err != nil {
 		return controller.Result{}, fmt.Errorf("fetching configmap %s: %v", awsiamauth.AwsIamAuthConfigMapName, err)
 	}
@@ -144,6 +151,42 @@ func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Cli
 	return serverside.ReconcileYaml(ctx, client, yaml)
 }
 
+func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *anywhereCluster.Spec, cluster *anywherev1.Cluster, clusterID uuid.UUID) error {
+	apiServerEndpoint := fmt.Sprintf("https://%s:6443", cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+
+	clusterCaSecretName := clusterapi.ClusterCASecretName(cluster.Name)
+	clusterCaSecret := &corev1.Secret{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: clusterCaSecretName, Namespace: constants.EksaSystemNamespace}, clusterCaSecret); err != nil {
+		return fmt.Errorf("fetching cluster ca secret: %v", err)
+	}
+
+	clusterTLSCrt, ok := clusterCaSecret.Data["tls.crt"]
+	if !ok {
+		return fmt.Errorf("tls.crt key not found in cluster CA secret: %s", clusterCaSecret.Name)
+	}
+
+	yaml, err := r.templateBuilder.GenerateKubeconfig(clusterSpec, clusterID, apiServerEndpoint, base64.StdEncoding.EncodeToString(clusterTLSCrt))
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+
+	kubeconfigSecret := &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      awsiamauth.KubeconfigSecretName(cluster.Name),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		StringData: map[string]string{
+			"value": string(yaml),
+		},
+	}
+
+	if err := r.client.Create(ctx, kubeconfigSecret); err != nil {
+		return fmt.Errorf("creating aws-iam-authenticator kubeconfig secret: %v", err)
+	}
+
+	return nil
+}
+
 // ReconcileDelete deletes any AWS Iam authenticator specific resources leftover on the eks-a cluster.
 func (r *Reconciler) ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error {
 	secretName := awsiamauth.CASecretName(cluster.Name)
@@ -155,8 +198,34 @@ func (r *Reconciler) ReconcileDelete(ctx context.Context, logger logr.Logger, cl
 	}
 
 	logger.Info("Deleting aws-iam-authenticator ca secret", "name", secretName, "namespace", constants.EksaSystemNamespace)
-	if err := r.client.Delete(ctx, secret); err != nil {
-		return fmt.Errorf("deleting aws-iam-authenticator ca secret: %v", err)
+	if err := r.deleteObject(ctx, secret); err != nil {
+		return err
+	}
+
+	kubeconfigSecName := awsiamauth.KubeconfigSecretName(cluster.Name)
+	kubeConfigSecret := &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      kubeconfigSecName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	logger.Info("Deleting aws-iam-authenticator kubeconfig secret", "name", kubeconfigSecName, "namespace", constants.EksaSystemNamespace)
+	if err := r.deleteObject(ctx, kubeConfigSecret); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Reconciler) deleteObject(ctx context.Context, obj client.Object) error {
+	err := r.client.Delete(ctx, obj)
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("deleting aws-iam-authenticator %s %s: %v", obj.GetObjectKind(), obj.GetName(), err)
 	}
 
 	return nil

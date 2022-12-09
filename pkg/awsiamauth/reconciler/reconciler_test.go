@@ -24,6 +24,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
 	reconcilermocks "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler/mocks"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	cryptomocks "github.com/aws/eks-anywhere/pkg/crypto/mocks"
@@ -93,7 +94,13 @@ func TestReconcileDeleteSuccess(t *testing.T) {
 		},
 	}
 
-	objs := []runtime.Object{sec}
+	kubeSec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      awsiamauth.KubeconfigSecretName(cluster.Name),
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+	objs := []runtime.Object{sec, kubeSec}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 	r := newReconciler(t, cl)
@@ -116,7 +123,7 @@ func TestReconcileDeleteNoSecretError(t *testing.T) {
 	r := newReconciler(t, cl)
 
 	err := r.ReconcileDelete(ctx, nullLog(), cluster)
-	g.Expect(err).To(HaveOccurred())
+	g.Expect(err).ToNot(HaveOccurred())
 }
 
 func newReconciler(t *testing.T, client client.WithWatch) *reconciler.Reconciler {
@@ -263,6 +270,11 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 		},
 		Spec: anywherev1.ClusterSpec{
 			KubernetesVersion: "1.20",
+			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+				Endpoint: &anywherev1.Endpoint{
+					Host: "1.2.3.4",
+				},
+			},
 			BundlesRef: &anywherev1.BundlesRef{
 				Name:       bundle.Name,
 				Namespace:  bundle.Namespace,
@@ -285,13 +297,22 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
+	caSec := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterapi.ClusterCASecretName(cluster.Name),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string][]byte{
+			"tls.crt": []byte("LS0tLS1CRUdJTiBDRVJUSUZJQ0FUR"),
+		},
+	}
 	awsiamconfig := &anywherev1.AWSIamConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "aws-config",
 			Namespace: "eksa-system",
 		},
 	}
-	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec, awsiamconfig}
+	objs := []runtime.Object{bundle, eksdRelease, capiCluster, sec, awsiamconfig, caSec}
 	cb := fake.NewClientBuilder()
 	scheme := runtime.NewScheme()
 	_ = anywherev1.AddToScheme(scheme)
