@@ -19,7 +19,7 @@ func TestClusterValidateUpdateFluxRepoImmutable(t *testing.T) {
 
 	c.Spec.Github.Repository = "fancyNewRepo"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
+	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxRepoUrlImmutable(t *testing.T) {
@@ -31,7 +31,7 @@ func TestClusterValidateUpdateFluxRepoUrlImmutable(t *testing.T) {
 
 	c.Spec.Git.RepositoryUrl = "https://test.git/test2"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
+	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxSshKeyAlgoImmutable(t *testing.T) {
@@ -44,7 +44,7 @@ func TestClusterValidateUpdateFluxSshKeyAlgoImmutable(t *testing.T) {
 
 	c.Spec.Git.SshKeyAlgorithm = "rsa2"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
+	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxBranchImmutable(t *testing.T) {
@@ -54,7 +54,7 @@ func TestClusterValidateUpdateFluxBranchImmutable(t *testing.T) {
 
 	c.Spec.Branch = "newMain"
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
+	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateFluxSubtractionImmutable(t *testing.T) {
@@ -66,7 +66,7 @@ func TestClusterValidateUpdateFluxSubtractionImmutable(t *testing.T) {
 
 	c.Spec = v1alpha1.FluxConfigSpec{}
 	f := NewWithT(t)
-	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
+	f.Expect(c.ValidateUpdate(&fOld)).To(MatchError(ContainSubstring("Forbidden: config is immutable")))
 }
 
 func TestValidateCreateHasValidatedSpec(t *testing.T) {
