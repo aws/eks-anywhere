@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,7 +67,7 @@ func (r *Reconciler) EnsureCASecret(ctx context.Context, logger logr.Logger, clu
 		return controller.Result{}, r.createCASecret(ctx, cluster)
 	}
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("fetching secret %s: %v", secretName, err)
+		return controller.Result{}, errors.Wrapf(err, "fetching secret %s", secretName)
 	}
 
 	logger.Info("aws-iam-authenticator CA secret found. Skipping secret create.", "name", secretName)
@@ -76,17 +77,17 @@ func (r *Reconciler) EnsureCASecret(ctx context.Context, logger logr.Logger, clu
 func (r *Reconciler) createCASecret(ctx context.Context, cluster *anywherev1.Cluster) error {
 	yaml, err := r.templateBuilder.GenerateCertKeyPairSecret(r.certgen, cluster.Name)
 	if err != nil {
-		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
+		return errors.Wrap(err, "generating aws-iam-authenticator ca secret")
 	}
 
 	objs, err := clientutil.YamlToClientObjects(yaml)
 	if err != nil {
-		return fmt.Errorf("converting aws-iam-authenticator ca secret yaml to objects: %v", err)
+		return errors.Wrap(err, "converting aws-iam-authenticator ca secret yaml to objects")
 	}
 
 	for _, o := range objs {
 		if err := r.client.Create(ctx, o); err != nil {
-			return fmt.Errorf("creating aws-iam-authenticator ca secret: %v", err)
+			return errors.Wrap(err, "creating aws-iam-authenticator ca secret")
 		}
 	}
 
@@ -107,7 +108,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 	// TODO (pokearu): Break down the function to better reuse it.
 	result, err := clusters.CheckControlPlaneReady(ctx, r.client, logger, cluster)
 	if err != nil {
-		return controller.Result{}, fmt.Errorf("checking controlplane ready: %v", err)
+		return controller.Result{}, errors.Wrap(err, "checking controlplane ready")
 	}
 	if result.Return() {
 		return result, nil
@@ -131,12 +132,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 			return controller.Result{}, err
 		}
 	} else if err != nil {
-		return controller.Result{}, fmt.Errorf("fetching configmap %s: %v", awsiamauth.AwsIamAuthConfigMapName, err)
+		return controller.Result{}, errors.Wrapf(err, "fetching configmap %s", awsiamauth.AwsIamAuthConfigMapName)
 	}
 
 	logger.Info("Applying aws-iam-authenticator manifest")
 	if err := r.applyIAMAuthManifest(ctx, rClient, clusterSpec, clusterID); err != nil {
-		return controller.Result{}, fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
+		return controller.Result{}, errors.Wrap(err, "applying aws-iam-authenticator manifest")
 	}
 
 	return controller.Result{}, nil
@@ -145,7 +146,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 func (r *Reconciler) applyIAMAuthManifest(ctx context.Context, client client.Client, clusterSpec *anywhereCluster.Spec, clusterID uuid.UUID) error {
 	yaml, err := r.templateBuilder.GenerateManifest(clusterSpec, clusterID)
 	if err != nil {
-		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
+		return errors.Wrap(err, "generating aws-iam-authenticator manifest")
 	}
 
 	return serverside.ReconcileYaml(ctx, client, yaml)
@@ -157,17 +158,17 @@ func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *an
 	clusterCaSecretName := clusterapi.ClusterCASecretName(cluster.Name)
 	clusterCaSecret := &corev1.Secret{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: clusterCaSecretName, Namespace: constants.EksaSystemNamespace}, clusterCaSecret); err != nil {
-		return fmt.Errorf("fetching cluster ca secret: %v", err)
+		return errors.Wrap(err, "fetching cluster ca secret")
 	}
 
 	clusterTLSCrt, ok := clusterCaSecret.Data["tls.crt"]
 	if !ok {
-		return fmt.Errorf("tls.crt key not found in cluster CA secret %s", clusterCaSecret.Name)
+		return errors.Errorf("tls.crt key not found in cluster CA secret %s", clusterCaSecret.Name)
 	}
 
 	yaml, err := r.templateBuilder.GenerateKubeconfig(clusterSpec, clusterID, apiServerEndpoint, base64.StdEncoding.EncodeToString(clusterTLSCrt))
 	if err != nil {
-		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+		return errors.Wrap(err, "generating aws-iam-authenticator kubeconfig")
 	}
 
 	kubeconfigSecret := &corev1.Secret{
@@ -181,7 +182,7 @@ func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *an
 	}
 
 	if err := r.client.Create(ctx, kubeconfigSecret); err != nil {
-		return fmt.Errorf("creating aws-iam-authenticator kubeconfig secret: %v", err)
+		return errors.Wrap(err, "creating aws-iam-authenticator kubeconfig secret")
 	}
 
 	return nil
@@ -227,7 +228,7 @@ func (r *Reconciler) deleteObject(ctx context.Context, obj client.Object) error 
 	}
 
 	if err != nil {
-		return fmt.Errorf("deleting aws-iam-authenticator %s %s: %v", obj.GetObjectKind(), obj.GetName(), err)
+		return errors.Wrapf(err, "deleting aws-iam-authenticator %s %s", obj.GetObjectKind(), obj.GetName())
 	}
 
 	return nil
