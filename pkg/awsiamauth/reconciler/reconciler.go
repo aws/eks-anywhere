@@ -218,6 +218,8 @@ func (r *Reconciler) ReconcileDelete(ctx context.Context, logger logr.Logger, cl
 	return nil
 }
 
+// deleteObject deletes a kubernetes object. It's idempotent, if the object doesn't exist,
+// it doesn't return an error.
 func (r *Reconciler) deleteObject(ctx context.Context, obj client.Object) error {
 	err := r.client.Delete(ctx, obj)
 	if apierrors.IsNotFound(err) {
