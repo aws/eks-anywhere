@@ -236,7 +236,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "insecure_connection": "true",
      "linked_clone": "false",
      "network": "<vsphere network used for image building>",
-     "password": "<vcenter username>",
+     "password": "<vcenter password>",
      "resource_pool": "<resource pool used for image building vm>",
      "username": "<vcenter username>",
      "vcenter_server": "<vcenter fqdn>",
