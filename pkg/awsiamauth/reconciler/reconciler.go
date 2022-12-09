@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -56,21 +57,21 @@ func New(certgen crypto.CertificateGenerator, generateUUID UUIDGenerator, client
 
 // EnsureCASecret ensures the AWS IAM Authenticator secret is present.
 // It uses a controller.Result to indicate when requeues are needed.
-func (r *Reconciler) EnsureCASecret(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+func (r *Reconciler) EnsureCASecret(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	clusterName := cluster.Name
 	secretName := awsiamauth.CASecretName(clusterName)
 
 	s := &corev1.Secret{}
 	err := r.client.Get(ctx, types.NamespacedName{Name: secretName, Namespace: constants.EksaSystemNamespace}, s)
 	if apierrors.IsNotFound(err) {
-		logger.Info("Creating aws-iam-authenticator CA secret")
+		log.Info("Creating aws-iam-authenticator CA secret")
 		return controller.Result{}, r.createCASecret(ctx, cluster)
 	}
 	if err != nil {
 		return controller.Result{}, errors.Wrapf(err, "fetching secret %s", secretName)
 	}
 
-	logger.Info("aws-iam-authenticator CA secret found. Skipping secret create.", "name", secretName)
+	log.Info("aws-iam-authenticator CA secret found. Skipping secret create.", "name", secretName)
 	return controller.Result{}, nil
 }
 
@@ -97,7 +98,7 @@ func (r *Reconciler) createCASecret(ctx context.Context, cluster *anywherev1.Clu
 // Reconcile takes the AWS IAM Authenticator installation to the desired state defined in AWSIAMConfig.
 // It uses a controller.Result to indicate when requeues are needed.
 // Intended to be used in a kubernetes controller.
-func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	clusterSpec, err := anywhereCluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
 	if err != nil {
 		return controller.Result{}, err
@@ -106,7 +107,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 	// CheckControlPlaneReady was not meant to be used here.
 	// It was intended as a phase in cluster reconciliation.
 	// TODO (pokearu): Break down the function to better reuse it.
-	result, err := clusters.CheckControlPlaneReady(ctx, r.client, logger, cluster)
+	result, err := clusters.CheckControlPlaneReady(ctx, r.client, log, cluster)
 	if err != nil {
 		return controller.Result{}, errors.Wrap(err, "checking controlplane ready")
 	}
@@ -127,7 +128,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 		// We use a newly generated UUID.
 		// The configmap clusterID and kubeconfig token need to match. Hence the kubeconfig secret is created for first install.
 		clusterID = r.generateUUID()
-		logger.Info("Creating aws-iam-authenticator kubeconfig secret")
+		log.Info("Creating aws-iam-authenticator kubeconfig secret")
 		if err := r.createKubeconfigSecret(ctx, clusterSpec, cluster, clusterID); err != nil {
 			return controller.Result{}, err
 		}
@@ -135,7 +136,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 		return controller.Result{}, errors.Wrapf(err, "fetching configmap %s", awsiamauth.AwsIamAuthConfigMapName)
 	}
 
-	logger.Info("Applying aws-iam-authenticator manifest")
+	log.Info("Applying aws-iam-authenticator manifest")
 	if err := r.applyIAMAuthManifest(ctx, rClient, clusterSpec, clusterID); err != nil {
 		return controller.Result{}, errors.Wrap(err, "applying aws-iam-authenticator manifest")
 	}
@@ -189,7 +190,7 @@ func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *an
 }
 
 // ReconcileDelete deletes any AWS Iam authenticator specific resources leftover on the eks-a cluster.
-func (r *Reconciler) ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error {
+func (r *Reconciler) ReconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
 	secretName := awsiamauth.CASecretName(cluster.Name)
 	secret := &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
@@ -198,7 +199,7 @@ func (r *Reconciler) ReconcileDelete(ctx context.Context, logger logr.Logger, cl
 		},
 	}
 
-	logger.Info("Deleting aws-iam-authenticator ca secret", "name", secretName, "namespace", constants.EksaSystemNamespace)
+	log.Info("Deleting aws-iam-authenticator ca secret", "secret", klog.KObj(secret))
 	if err := r.deleteObject(ctx, secret); err != nil {
 		return err
 	}
@@ -211,7 +212,7 @@ func (r *Reconciler) ReconcileDelete(ctx context.Context, logger logr.Logger, cl
 		},
 	}
 
-	logger.Info("Deleting aws-iam-authenticator kubeconfig secret", "name", kubeconfigSecName, "namespace", constants.EksaSystemNamespace)
+	log.Info("Deleting aws-iam-authenticator kubeconfig secret", "secret", klog.KObj(kubeConfigSecret))
 	if err := r.deleteObject(ctx, kubeConfigSecret); err != nil {
 		return err
 	}
