@@ -10,21 +10,24 @@ import (
 )
 
 type Config struct {
-	Cluster                  *anywherev1.Cluster
-	CloudStackDatacenter     *anywherev1.CloudStackDatacenterConfig
-	VSphereDatacenter        *anywherev1.VSphereDatacenterConfig
-	DockerDatacenter         *anywherev1.DockerDatacenterConfig
-	SnowDatacenter           *anywherev1.SnowDatacenterConfig
-	NutanixDatacenter        *anywherev1.NutanixDatacenterConfig
-	VSphereMachineConfigs    map[string]*anywherev1.VSphereMachineConfig
-	CloudStackMachineConfigs map[string]*anywherev1.CloudStackMachineConfig
-	SnowMachineConfigs       map[string]*anywherev1.SnowMachineConfig
-	NutanixMachineConfigs    map[string]*anywherev1.NutanixMachineConfig
-	OIDCConfigs              map[string]*anywherev1.OIDCConfig
-	AWSIAMConfigs            map[string]*anywherev1.AWSIamConfig
-	GitOpsConfig             *anywherev1.GitOpsConfig
-	FluxConfig               *anywherev1.FluxConfig
-	SnowCredentialsSecret    *v1.Secret
+	Cluster                   *anywherev1.Cluster
+	CloudStackDatacenter      *anywherev1.CloudStackDatacenterConfig
+	VSphereDatacenter         *anywherev1.VSphereDatacenterConfig
+	DockerDatacenter          *anywherev1.DockerDatacenterConfig
+	SnowDatacenter            *anywherev1.SnowDatacenterConfig
+	NutanixDatacenter         *anywherev1.NutanixDatacenterConfig
+	TinkerbellDatacenter      *anywherev1.TinkerbellDatacenterConfig
+	VSphereMachineConfigs     map[string]*anywherev1.VSphereMachineConfig
+	CloudStackMachineConfigs  map[string]*anywherev1.CloudStackMachineConfig
+	SnowMachineConfigs        map[string]*anywherev1.SnowMachineConfig
+	NutanixMachineConfigs     map[string]*anywherev1.NutanixMachineConfig
+	TinkerbellMachineConfigs  map[string]*anywherev1.TinkerbellMachineConfig
+	TinkerbellTemplateConfigs map[string]*anywherev1.TinkerbellTemplateConfig
+	OIDCConfigs               map[string]*anywherev1.OIDCConfig
+	AWSIAMConfigs             map[string]*anywherev1.AWSIamConfig
+	GitOpsConfig              *anywherev1.GitOpsConfig
+	FluxConfig                *anywherev1.FluxConfig
+	SnowCredentialsSecret     *v1.Secret
 }
 
 func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineConfig {
@@ -59,6 +62,7 @@ func (c *Config) DeepCopy() *Config {
 		NutanixDatacenter:    c.NutanixDatacenter.DeepCopy(),
 		DockerDatacenter:     c.DockerDatacenter.DeepCopy(),
 		SnowDatacenter:       c.SnowDatacenter.DeepCopy(),
+		TinkerbellDatacenter: c.TinkerbellDatacenter.DeepCopy(),
 		GitOpsConfig:         c.GitOpsConfig.DeepCopy(),
 		FluxConfig:           c.FluxConfig.DeepCopy(),
 	}
@@ -106,6 +110,20 @@ func (c *Config) DeepCopy() *Config {
 		c2.SnowMachineConfigs[k] = v.DeepCopy()
 	}
 
+	if c.TinkerbellMachineConfigs != nil {
+		c2.TinkerbellMachineConfigs = make(map[string]*anywherev1.TinkerbellMachineConfig, len(c.TinkerbellMachineConfigs))
+	}
+	for k, v := range c.TinkerbellMachineConfigs {
+		c2.TinkerbellMachineConfigs[k] = v.DeepCopy()
+	}
+
+	if c.TinkerbellTemplateConfigs != nil {
+		c2.TinkerbellTemplateConfigs = make(map[string]*anywherev1.TinkerbellTemplateConfig, len(c.TinkerbellTemplateConfigs))
+	}
+	for k, v := range c.TinkerbellTemplateConfigs {
+		c2.TinkerbellTemplateConfigs[k] = v.DeepCopy()
+	}
+
 	return c2
 }
 
@@ -124,6 +142,7 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 		c.NutanixDatacenter,
 		c.DockerDatacenter,
 		c.SnowDatacenter,
+		c.TinkerbellDatacenter,
 		c.GitOpsConfig,
 		c.FluxConfig,
 	)
@@ -141,6 +160,14 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 	}
 
 	for _, e := range c.NutanixMachineConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.TinkerbellMachineConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.TinkerbellTemplateConfigs {
 		objs = appendIfNotNil(objs, e)
 	}
 

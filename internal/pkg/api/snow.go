@@ -1,16 +1,13 @@
 package api
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 type SnowConfig struct {
@@ -20,39 +17,22 @@ type SnowConfig struct {
 
 type SnowFiller func(config SnowConfig)
 
-func AutoFillSnowProvider(filename string, fillers ...SnowFiller) ([]byte, error) {
-	config, err := cluster.ParseConfigFromFile(filename)
-	if err != nil {
-		return nil, err
+// SnowToConfigFiller transforms a set of SnowFiller's in a single ClusterConfigFiller.
+func SnowToConfigFiller(fillers ...SnowFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		updateSnow(c, fillers...)
 	}
+}
 
-	snowConfig := SnowConfig{
+func updateSnow(config *cluster.Config, fillers ...SnowFiller) {
+	sc := SnowConfig{
 		datacenterConfig: config.SnowDatacenter,
 		machineConfigs:   config.SnowMachineConfigs,
 	}
 
 	for _, f := range fillers {
-		f(snowConfig)
+		f(sc)
 	}
-
-	resources := make([]interface{}, 0, len(snowConfig.machineConfigs)+1)
-	resources = append(resources, snowConfig.datacenterConfig)
-
-	for _, m := range snowConfig.machineConfigs {
-		resources = append(resources, m)
-	}
-
-	yamlResources := make([][]byte, 0, len(resources))
-	for _, r := range resources {
-		yamlContent, err := yaml.Marshal(r)
-		if err != nil {
-			return nil, fmt.Errorf("marshalling snow resource: %v", err)
-		}
-
-		yamlResources = append(yamlResources, yamlContent)
-	}
-
-	return templater.AppendYamlResources(yamlResources...), nil
 }
 
 func WithSnowStringFromEnvVar(envVar string, opt func(string) SnowFiller) SnowFiller {

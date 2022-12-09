@@ -2,17 +2,14 @@ package api
 
 import (
 	"encoding/base64"
-	"fmt"
 	"os"
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/api/resource"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 // NutanixConfig is a wrapper for the Nutanix provider spec.
@@ -23,46 +20,22 @@ type NutanixConfig struct {
 
 type NutanixFiller func(config *NutanixConfig)
 
-func newNutanixConfig(filename string) (*NutanixConfig, error) {
-	config, err := cluster.ParseConfigFromFile(filename)
-	if err != nil {
-		return nil, err
+// NutanixToConfigFiller transforms a set of NutanixFiller's in a single ClusterConfigFiller.
+func NutanixToConfigFiller(fillers ...NutanixFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		updateNutanix(c, fillers...)
 	}
+}
 
-	nutanixConfig := &NutanixConfig{
+func updateNutanix(config *cluster.Config, fillers ...NutanixFiller) {
+	nc := &NutanixConfig{
 		datacenterConfig: config.NutanixDatacenter,
 		machineConfigs:   config.NutanixMachineConfigs,
 	}
-	return nutanixConfig, nil
-}
-
-// AutoFillNutanixProvider fills in the fields for the Nutanix provider spec.
-func AutoFillNutanixProvider(filename string, fillers ...NutanixFiller) ([]byte, error) {
-	nutanixConfig, err := newNutanixConfig(filename)
-	if err != nil {
-		return nil, err
-	}
 
 	for _, f := range fillers {
-		f(nutanixConfig)
+		f(nc)
 	}
-
-	resources := []interface{}{nutanixConfig.datacenterConfig}
-	for _, m := range nutanixConfig.machineConfigs {
-		resources = append(resources, m)
-	}
-
-	yamlResources := make([][]byte, 0, len(resources))
-	for _, r := range resources {
-		yamlContent, err := yaml.Marshal(r)
-		if err != nil {
-			return nil, fmt.Errorf("marshalling nutanix resource: %v", err)
-		}
-
-		yamlResources = append(yamlResources, yamlContent)
-	}
-
-	return templater.AppendYamlResources(yamlResources...), nil
 }
 
 // WithNutanixStringFromEnvVar returns a NutanixFiller that sets the given string value to the given environment variable.

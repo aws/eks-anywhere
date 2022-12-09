@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/awsiam"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -32,7 +33,10 @@ func RequiredAWSIamEnvVars() []string {
 func WithAWSIam() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, awsIamRequiredEnvVars)
-		e.AWSIamConfig = api.NewAWSIamConfig(defaultClusterName,
+		if e.ClusterConfig.AWSIAMConfigs == nil {
+			e.ClusterConfig.AWSIAMConfigs = make(map[string]*anywherev1.AWSIamConfig, 1)
+		}
+		e.ClusterConfig.AWSIAMConfigs[defaultClusterName] = api.NewAWSIamConfig(defaultClusterName,
 			api.WithAWSIamAWSRegion("us-west-1"),
 			api.WithAWSIamPartition("aws"),
 			api.WithAWSIamBackendMode("EKSConfigMap"),
@@ -104,7 +108,7 @@ func (e *ClusterE2ETest) setIamAuthClientPATH() error {
 }
 
 func (e *ClusterE2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error) {
-	c := e.clusterConfig()
+	c := e.ClusterConfig.Cluster
 	r := manifests.NewReader(files.NewReader())
 	eksdRelease, err := r.ReadEKSD(version.Get().GitVersion, string(c.Spec.KubernetesVersion))
 	if err != nil {

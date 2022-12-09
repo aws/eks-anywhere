@@ -264,55 +264,58 @@ func WithVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, f
 	}
 }
 
+// WithVSphereFillers adds VSphereFiller to the provider default fillers.
 func WithVSphereFillers(fillers ...api.VSphereFiller) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers, fillers...)
 	}
 }
 
+// Name returns the provider name. It satisfies the test framework Provider.
 func (v *VSphere) Name() string {
 	return "vsphere"
 }
 
+// Setup does nothing. It satisfies the test framework Provider.
 func (v *VSphere) Setup() {}
 
-func (v *VSphere) CustomizeProviderConfig(file string) []byte {
-	return v.customizeProviderConfig(file, v.fillers...)
+// ClusterConfigUpdates satisfies the test framework Provider.
+func (v *VSphere) ClusterConfigUpdates() []api.ClusterConfigFiller {
+	clusterIP, err := GetIP(v.cidr, ClusterIPPoolEnvVar)
+	if err != nil {
+		v.t.Fatalf("failed to get cluster ip for test environment: %v", err)
+	}
+
+	f := make([]api.ClusterFiller, 0, len(v.clusterFillers)+1)
+	copy(f, v.clusterFillers)
+	f = append(f, api.WithControlPlaneEndpointIP(clusterIP))
+
+	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.VSphereToConfigFiller(v.fillers...)}
 }
 
+// CleanupVMs deletes all the VMs owned by the test EKS-A cluster. It satisfies the test framework Provider.
 func (v *VSphere) CleanupVMs(clusterName string) error {
 	return cleanup.CleanUpVsphereTestResources(context.Background(), clusterName)
 }
 
-func (v *VSphere) customizeProviderConfig(file string, fillers ...api.VSphereFiller) []byte {
-	providerOutput, err := api.AutoFillVSphereProvider(file, fillers...)
-	if err != nil {
-		v.t.Fatalf("Error customizing provider config from file: %v", err)
-	}
-	return providerOutput
-}
-
 func (v *VSphere) WithProviderUpgrade(fillers ...api.VSphereFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = v.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+		e.UpdateClusterConfig(api.VSphereToConfigFiller(fillers...))
 	}
 }
 
 func (v *VSphere) WithProviderUpgradeGit(fillers ...api.VSphereFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = v.customizeProviderConfig(e.clusterConfigGitPath(), fillers...)
+		e.UpdateClusterConfig(api.VSphereToConfigFiller(fillers...))
 	}
 }
 
 func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.VSphereMachineConfigFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = v.customizeProviderConfig(e.ClusterConfigLocation, vSphereMachineConfig(name, fillers...))
-		var err error
-		// Using the ClusterConfigB instead of file in disk since it might have already been updated but not written to disk
-		e.ClusterConfigB, err = api.AutoFillClusterFromYaml(e.ClusterConfigB, buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup))
-		if err != nil {
-			e.T.Fatalf("Error filling cluster config: %v", err)
-		}
+		e.UpdateClusterConfig(
+			api.VSphereToConfigFiller(vSphereMachineConfig(name, fillers...)),
+			api.ClusterToConfigFiller(buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+		)
 	}
 }
 
@@ -441,15 +444,6 @@ func (v *VSphere) templateForRelease(osFamily anywherev1.OSFamily, release *rele
 
 	v.templatesCache[cacheKey] = template
 	return template
-}
-
-func (v *VSphere) ClusterConfigFillers() []api.ClusterFiller {
-	clusterIP, err := GetIP(v.cidr, ClusterIPPoolEnvVar)
-	if err != nil {
-		v.t.Fatalf("failed to get cluster ip for test environment: %v", err)
-	}
-	v.clusterFillers = append(v.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
-	return v.clusterFillers
 }
 
 func RequiredVsphereEnvVars() []string {

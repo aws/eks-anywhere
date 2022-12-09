@@ -133,47 +133,39 @@ func (s *Nutanix) Name() string {
 
 func (s *Nutanix) Setup() {}
 
+// CleanupVMs satisfies the test framework Provider.
 func (s *Nutanix) CleanupVMs(_ string) error {
 	return nil
 }
 
-func (s *Nutanix) CustomizeProviderConfig(file string) []byte {
-	return s.customizeProviderConfig(file, s.fillers...)
-}
-
-func (s *Nutanix) ClusterConfigFillers() []api.ClusterFiller {
+// ClusterConfigUpdates satisfies the test framework Provider.
+func (s *Nutanix) ClusterConfigUpdates() []api.ClusterConfigFiller {
+	f := make([]api.ClusterFiller, 0, len(s.clusterFillers)+3)
+	copy(f, s.clusterFillers)
 	if s.controlPlaneEndpointIP != "" {
-		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
+		f = append(f, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
 	} else {
 		clusterIP, err := GetIP(s.cpCidr, ClusterIPPoolEnvVar)
 		if err != nil {
 			s.t.Fatalf("failed to get cluster ip for test environment: %v", err)
 		}
-		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
+		f = append(f, api.WithControlPlaneEndpointIP(clusterIP))
 	}
 
 	if s.podCidr != "" {
-		s.clusterFillers = append(s.clusterFillers, api.WithPodCidr(s.podCidr))
+		f = append(f, api.WithPodCidr(s.podCidr))
 	}
 
 	if s.serviceCidr != "" {
-		s.clusterFillers = append(s.clusterFillers, api.WithServiceCidr(s.serviceCidr))
+		f = append(f, api.WithServiceCidr(s.serviceCidr))
 	}
 
-	return s.clusterFillers
-}
-
-func (s *Nutanix) customizeProviderConfig(file string, fillers ...api.NutanixFiller) []byte {
-	providerOutput, err := api.AutoFillNutanixProvider(file, fillers...)
-	if err != nil {
-		s.t.Fatalf("failed to customize provider config from file: %v", err)
-	}
-	return providerOutput
+	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.NutanixToConfigFiller(s.fillers...)}
 }
 
 func (s *Nutanix) WithProviderUpgrade(fillers ...api.NutanixFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = s.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+		e.UpdateClusterConfig(api.NutanixToConfigFiller(fillers...))
 	}
 }
 
