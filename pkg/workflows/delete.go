@@ -239,7 +239,7 @@ func (s *deletePackageResources) Run(ctx context.Context, commandContext *task.C
 	}
 	err := commandContext.ClusterManager.DeletePackageResources(ctx, cluster, commandContext.WorkloadCluster.Name)
 	if err != nil {
-		logger.Info("Problem delete package resources: %v", err)
+		logger.Info("Problem delete package resources", "error", err)
 	}
 
 	// A bit odd to traverse to this state here, but it is the terminal state
