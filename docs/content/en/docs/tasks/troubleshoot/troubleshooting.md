@@ -148,11 +148,16 @@ Failed to create cluster {"error": "error initializing capi resources in cluster
 This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
 You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
 
-### NTP Time sync issues between control plane nodes and worker nodes
+### NTP Time sync issues
 ```
 level=error msg=k8sError error="github.com/cilium/cilium/pkg/k8s/watchers/endpoint_slice.go:91: Failed to watch *v1beta1.EndpointSlice: failed to list *v1beta1.EndpointSlice: Unauthorized" subsys=k8s
 ```
 You might notice authorization errors if the timestamps on your EKS Anywhere control plane nodes and worker nodes are out-of-sync. Please ensure that all the nodes are configured with same healthy NTP servers to avoid out-of-sync issues.
+
+```
+Error running bootstrapper cmd: error joining as worker: Error waiting for worker join files: Kubeadm join kubelet-start killed after timeout
+```
+You might also notice that the joining of nodes will fail if your admin machine differs in time compared to your nodes. Make sure to check the server time matches between the two as well.
 
 ### The connection to the server localhost:8080 was refused 
 ```
