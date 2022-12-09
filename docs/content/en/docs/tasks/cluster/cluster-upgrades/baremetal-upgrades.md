@@ -208,10 +208,9 @@ kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTE
 EKS Anywhere allows an optional configuration to customize the behavior of upgrades. 
 
 It allows the specification of 
-* Type of upgrade strategy (only 'RollingUpdate' is currently supported)
-* Two parameters that control the desired behavior of rolling upgrades: 
-  * maxSurge - The maximum number of machines that can be scheduled above the desired number of machines. When not specified, the current CAPI default of 1 is used.
-  * maxUnavailable - The maximum number of machines that can be unavailable during the update. When not specified, the current CAPI default of 0 is used.
+Two parameters that control the desired behavior of rolling upgrades: 
+* maxSurge - The maximum number of machines that can be scheduled above the desired number of machines. When not specified, the current CAPI default of 1 is used.
+* maxUnavailable - The maximum number of machines that can be unavailable during the upgrade. When not specified, the current CAPI default of 0 is used.
 
 Example configuration:
 
@@ -268,9 +267,6 @@ spec:
 
 ---
 ...
-...
-...
-...
 ```
 
 #### upgradeRolloutStrategy
@@ -286,16 +282,16 @@ This can not be 0 if maxUnavailable is 0.
 
 The maximum number of machines that can be scheduled above the desired number of machines. 
 
-Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling update starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
+Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling upgrade starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
 
 #### maxUnavailable
 Default: 0
 
 This can not be 0 if MaxSurge is 0.
 
-The maximum number of machines that can be unavailable during the update.
+The maximum number of machines that can be unavailable during the upgrade.
 
-Example: When this is set to n, the old worker node group can be scaled down by n machines immediately when the rolling update starts. Once new machines are ready, old worker node group can be scaled down further, followed by scaling up the new worker node group, ensuring that the total number of machines unavailable at all times during the update never falls below n.
+Example: When this is set to n, the old worker node group can be scaled down by n machines immediately when the rolling upgrade starts. Once new machines are ready, old worker node group can be scaled down further, followed by scaling up the new worker node group, ensuring that the total number of machines unavailable at all times during the upgrade never falls below n.
 
 ### Rolling upgrades with no additional hardware
 
