@@ -341,6 +341,46 @@ func TestCloudStackKubernetes121WorkloadCluster(t *testing.T) {
 	runWorkloadClusterFlow(test)
 }
 
+func TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxLegacy(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube122),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxLegacy(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube122),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+	runWorkloadClusterFlowWithGitOps(
+		test,
+		framework.WithClusterUpgradeGit(
+			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeCount(3),
+		),
+		provider.WithProviderUpgradeGit(
+			framework.UpdateRedhatTemplate123Var(),
+		),
+	)
+}
+
 func TestCloudStackKubernetes121ManagementClusterUpgradeFromLatest(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
 	test := framework.NewMulticlusterE2ETest(
