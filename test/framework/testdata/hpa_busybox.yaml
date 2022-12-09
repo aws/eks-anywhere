@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hpa-busybox-test
+spec:
+  selector:
+    matchLabels:
+      run: hpa-busybox-test
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: hpa-busybox-test
+    spec:
+      containers:
+        - name: busybox
+          image: busybox
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 20m
+              memory: 500Mi
+          command: ["sh", "-c"]
+          args:
+            - while [ 1 ]; do
+              echo "Test";
+              sleep 0.01;
+              done
