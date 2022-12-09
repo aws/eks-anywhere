@@ -147,3 +147,8 @@ func EnsureNewNameIfChanged[M Object[M]](ctx context.Context,
 
 	return nil
 }
+
+// ClusterCASecretName returns the name of the cluster CA secret for the cluster.
+func ClusterCASecretName(clusterName string) string {
+	return fmt.Sprintf("%s-ca", clusterName)
+}
