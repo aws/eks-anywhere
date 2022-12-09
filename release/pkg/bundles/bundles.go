@@ -131,12 +131,9 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
 	}
 
-	var nutanixBundle anywherev1alpha1.NutanixBundle
-	if r.DevRelease && r.BuildRepoBranchName == "main" {
-		nutanixBundle, err = GetNutanixBundle(r, imageDigests)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for Nutanix infrastructure provider")
-		}
+	nutanixBundle, err := GetNutanixBundle(r, imageDigests)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for Nutanix infrastructure provider")
 	}
 
 	eksDReleaseMap, err := filereader.ReadEksDReleases(r)
