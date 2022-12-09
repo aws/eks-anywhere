@@ -1498,14 +1498,14 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 	e.VerifyMetricServerPackageInstalled(metricServerName, targetNamespace, mgmtCluster)
 	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
 
-	fmt.Printf("Metrics Server and Cluster Autoscaler ready\n")
+	e.T.Log("Metrics Server and Cluster Autoscaler ready")
 
 	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, mgmtCluster, hpaBusybox)
 	if err != nil {
 		e.T.Fatalf("Failed to apply hpa busybox load %s", err)
 	}
 
-	fmt.Printf("Deploying test workload\n")
+	e.T.Log("Deploying test workload")
 
 	err = e.KubectlClient.WaitForDeployment(ctx,
 		e.cluster(), "5m", "Available", name, ns)
@@ -1519,14 +1519,14 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 		e.T.Fatalf("Failed to autoscale deployent: %s", err)
 	}
 
-	fmt.Printf("Waiting for machinedeployment to begin scaling up\n")
+	e.T.Log("Waiting for machinedeployment to begin scaling up")
 	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "5m", "status.phase", "ScalingUp",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
 		e.T.Fatalf("Failed to get ScalingUp phase for machinedeployment: %s", err)
 	}
 
-	fmt.Printf("Waiting for machinedeployment to finish scaling up\n")
+	e.T.Log("Waiting for machinedeployment to finish scaling up")
 	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.phase", "Running",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
@@ -1539,5 +1539,5 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 		e.T.Fatalf("Machine deployment stuck in scaling up: %s", err)
 	}
 
-	fmt.Printf("Finished scaling up machines\n")
+	e.T.Log("Finished scaling up machines")
 }
