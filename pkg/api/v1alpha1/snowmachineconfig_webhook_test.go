@@ -36,7 +36,7 @@ func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
 	sOld := snowMachineConfig()
 	sOld.Spec.InstanceType = "invalid-instance-type"
 
-	g.Expect(sOld.ValidateCreate()).NotTo(Succeed())
+	g.Expect(sOld.ValidateCreate()).To(MatchError(ContainSubstring("SnowMachineConfig InstanceType invalid-instance-type is not supported")))
 }
 
 func TestSnowMachineConfigValidateCreate(t *testing.T) {
@@ -73,7 +73,7 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
-	g.Expect(sNew.ValidateUpdate(&sOld)).NotTo(Succeed())
+	g.Expect(sNew.ValidateUpdate(&sOld)).To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
 }
 
 // Unit test to pass the code coverage job.
