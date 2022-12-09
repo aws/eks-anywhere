@@ -111,16 +111,16 @@ func WithWorkerNodeCount(r int) ClusterFiller {
 	}
 }
 
+// WithWorkerNodeAutoScalingConfig adds an autoscaling configuration with a given min and max count.
 func WithWorkerNodeAutoScalingConfig(min int, max int) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
 			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: ptr.Int(min)}}
 		}
-		c.Spec.WorkerNodeGroupConfigurations[0].AutoScalingConfiguration =
-			&anywherev1.AutoScalingConfiguration{
-				MinCount: min,
-				MaxCount: max,
-			}
+		c.Spec.WorkerNodeGroupConfigurations[0].AutoScalingConfiguration = &anywherev1.AutoScalingConfiguration{
+			MinCount: min,
+			MaxCount: max,
+		}
 	}
 }
 

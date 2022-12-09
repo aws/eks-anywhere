@@ -1410,6 +1410,7 @@ func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
 	}
 }
 
+// VerifyAutoScalerPackageInstalled is verifying that the autoscaler package is installed and deployed.
 func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(name string, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	deploymentName := "cluster-autoscaler-clusterapi-cluster-autoscaler"
@@ -1429,6 +1430,7 @@ func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(name string, targetNam
 	}
 }
 
+// VerifyMetricServerPackageInstalled is verifying that metrics-server is installed and deployed.
 func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(name string, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	deploymentName := "metrics-server"
@@ -1454,6 +1456,7 @@ var autoscalerPackageDeploymentTemplate string
 //go:embed testdata/metrics_server_package.yaml
 var metricsServerPackageDeploymentTemplate string
 
+// InstallAutoScalerWithMetricServer installs autoscaler and metrics-server with a given target namespace.
 func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace string) {
 	ctx := context.Background()
 	packageInstallNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
@@ -1485,7 +1488,8 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 	}
 }
 
-func (e *ClusterE2ETest) CombinedAutoscalerMetricServerTest(autoscalerName string, metricServerName string, targetNamespace string, mgmtCluster *types.Cluster) {
+// CombinedAutoScalerMetricServerTest verifies that new nodes are spun up after using a HPA to scale a deployment.
+func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName string, metricServerName string, targetNamespace string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	ns := "default"
 	name := "hpa-busybox-test"
@@ -1494,10 +1498,14 @@ func (e *ClusterE2ETest) CombinedAutoscalerMetricServerTest(autoscalerName strin
 	e.VerifyMetricServerPackageInstalled(metricServerName, targetNamespace, mgmtCluster)
 	e.VerifyAutoScalerPackageInstalled(autoscalerName, targetNamespace, mgmtCluster)
 
+	fmt.Printf("Metrics Server and Cluster Autoscaler ready\n")
+
 	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, mgmtCluster, hpaBusybox)
 	if err != nil {
 		e.T.Fatalf("Failed to apply hpa busybox load %s", err)
 	}
+
+	fmt.Printf("Deploying test workload\n")
 
 	err = e.KubectlClient.WaitForDeployment(ctx,
 		e.cluster(), "5m", "Available", name, ns)
@@ -1505,33 +1513,31 @@ func (e *ClusterE2ETest) CombinedAutoscalerMetricServerTest(autoscalerName strin
 		e.T.Fatalf("Failed waiting for test workload deployent %s", err)
 	}
 
-	fmt.Println("Metrics Server Ready, checking autoscaler")
-
 	params := []string{"autoscale", "deployment", name, "--cpu-percent=50", "--min=1", "--max=20", "--kubeconfig", e.kubeconfigFilePath()}
 	_, err = e.KubectlClient.ExecuteCommand(ctx, params...)
 	if err != nil {
-		e.T.Fatalf("Failed to autoscale deployent %s", err)
+		e.T.Fatalf("Failed to autoscale deployent: %s", err)
 	}
 
-	fmt.Println("Waiting for machinedeployment to begin scaling up")
+	fmt.Printf("Waiting for machinedeployment to begin scaling up\n")
 	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "5m", "status.phase", "ScalingUp",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
-		e.T.Fatalf("Failed to scaleup machine deployments waiting for scale up %s", err)
+		e.T.Fatalf("Failed to get ScalingUp phase for machinedeployment: %s", err)
 	}
 
-	fmt.Println("Waiting for machine deployment to finish scaling up")
+	fmt.Printf("Waiting for machinedeployment to finish scaling up\n")
 	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.phase", "Running",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
-		e.T.Fatalf("Failed to scaleup machine deployments waiting for scale up %s", err)
+		e.T.Fatalf("Failed to get Running phase for machinedeployment: %s", err)
 	}
 
 	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "2m",
 		machineDeploymentName)
 	if err != nil {
-		e.T.Fatalf("Machine deployment stuck in scaling up %s", err)
+		e.T.Fatalf("Machine deployment stuck in scaling up: %s", err)
 	}
 
-	fmt.Println("Finished scaling up machines")
+	fmt.Printf("Finished scaling up machines\n")
 }
