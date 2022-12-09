@@ -172,7 +172,7 @@ require (
 	github.com/vmware/govmomi v0.29.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.8.0
+	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
@@ -209,5 +209,5 @@ replace (
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
 	// need the modifications eksa made to the capi api structs
-	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc3
+	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc5
 )
