@@ -219,7 +219,7 @@ Example configuration:
 upgradeRolloutStrategy:
   rollingUpgradeParams:
     maxSurge: 1
-    maxUnavailable: 0 (only configurable for worker nodes)
+    maxUnavailable: 0    # only configurable for worker nodes
 ```
 
 'upgradeRolloutStrategy' configuration can be specified separately for control plane and for each worker node group. This template contains an example for control plane under the 'controlPlaneConfiguration' section and for worker node group under 'workerNodeGroupConfigurations':
@@ -303,7 +303,7 @@ When maxSurge is set to 0 and maxUnavailable is set to 1, it allows for a rollin
 
 >**_NOTE:_** This could ONLY be used if unavailability of a maximum of 1 node is acceptable.
 
-With this kind of configuration, the rolling upgrade will proceed node by node, deprovision and delete a node fully before re-provisioning it with upgraded version and re-joining it to the cluster. This means that any point during the course of the rolling upgrade, there could be one unavailable node.
+With this kind of configuration, the rolling upgrade will proceed node by node, deprovision and delete a node fully before re-provisioning it with upgraded version, and re-join it to the cluster. This means that any point during the course of the rolling upgrade, there could be one unavailable node.
 
 
 ### Troubleshooting
