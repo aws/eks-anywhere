@@ -116,7 +116,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, cluster 
 
 	rClient, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(cluster))
 	if err != nil {
-		return controller.Result{}, err
+		return controller.Result{}, errors.Wrap(err, "getting workload cluster's client to reconcile AWS IAM auth")
 	}
 
 	var clusterID uuid.UUID
