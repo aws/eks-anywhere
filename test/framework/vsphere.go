@@ -287,7 +287,7 @@ func (v *VSphere) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	}
 
 	f := make([]api.ClusterFiller, 0, len(v.clusterFillers)+1)
-	copy(f, v.clusterFillers)
+	f = append(f, v.clusterFillers...)
 	f = append(f, api.WithControlPlaneEndpointIP(clusterIP))
 
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.VSphereToConfigFiller(v.fillers...)}

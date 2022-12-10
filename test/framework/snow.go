@@ -70,7 +70,7 @@ func (s *Snow) ClusterConfigUpdates() []api.ClusterConfigFiller {
 		s.t.Fatalf("failed to generate control plane ip for snow [cidr=%s]: %v", s.cpCidr, err)
 	}
 	f := make([]api.ClusterFiller, 0, len(s.clusterFillers)+2)
-	copy(f, s.clusterFillers)
+	f = append(f, s.clusterFillers...)
 	f = append(f, api.WithControlPlaneEndpointIP(ip))
 
 	if s.podCidr != "" {
