@@ -29,7 +29,7 @@ func TestCPackagesAdotDockerUbuntuKubernetes124SimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
 
-func TestCPackagesAdotVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
+func TestCPackagesAdotVSphereKubernetes122BottleRocketUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
@@ -65,7 +65,7 @@ func TestCPackagesAdotCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
 
-func TestCPackagesAdotNutanixKubernetes122SimpleFlow(t *testing.T) {
+func TestCPackagesAdotNutanixKubernetes122UpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
@@ -77,7 +77,7 @@ func TestCPackagesAdotNutanixKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestCPackagesAdotTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
+func TestCPackagesAdotTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
@@ -87,10 +87,10 @@ func TestCPackagesAdotTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) 
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runCuratedPackagesAdotInstallTinkerbellSingleNodeFlow(test)
+	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
 
-func TestCPackagesAdotTinkerbellBottleRocketKubernetes123SingleNodeFlow(t *testing.T) {
+func TestCPackagesAdotTinkerbellBottleRocketKubernetes123SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
@@ -100,38 +100,42 @@ func TestCPackagesAdotTinkerbellBottleRocketKubernetes123SingleNodeFlow(t *testi
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runCuratedPackagesAdotInstallTinkerbellSingleNodeFlow(test)
+	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
+}
+
+func runCuratedPackagesAdotInstall(test *framework.ClusterE2ETest) {
+	test.CreateNamespace(adotTargetNamespace)
+	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
+		kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
+		"--set mode=deployment")
+	test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+}
+
+func runCuratedPackagesAdotInstallWithUpdate(test *framework.ClusterE2ETest) {
+	test.CreateNamespace(adotTargetNamespace)
+	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
+		kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
+		"--set mode=deployment")
+	test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+	test.VerifyAdotPackageDeploymentUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
+	test.VerifyAdotPackageDaemonSetUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 }
 
 func runCuratedPackagesAdotInstallSimpleFlow(test *framework.ClusterE2ETest) {
-	test.WithCluster(func(test *framework.ClusterE2ETest) {
-		test.CreateNamespace(adotTargetNamespace)
-		test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
-			kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
-			"--set mode=deployment")
-		test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
-	})
+	test.WithCluster(runCuratedPackagesAdotInstall)
 }
 
 func runCuratedPackagesAdotInstallUpdateFlow(test *framework.ClusterE2ETest) {
-	test.WithCluster(func(test *framework.ClusterE2ETest) {
-		test.CreateNamespace(adotTargetNamespace)
-		test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
-			kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
-			"--set mode=deployment")
-		test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
-		test.VerifyAdotPackageDeploymentUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
-		test.VerifyAdotPackageDaemonSetUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
-	})
+	test.WithCluster(runCuratedPackagesAdotInstallWithUpdate)
 }
 
-func runCuratedPackagesAdotInstallTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
+func runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOnHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
-	runCuratedPackagesAdotInstallSimpleFlow(test)
+	runCuratedPackagesAdotInstall(test)
 	test.DeleteCluster()
 	test.PowerOffHardware()
 	test.ValidateHardwareDecommissioned()
