@@ -180,7 +180,7 @@ func (c *CloudStack) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	}
 
 	f := make([]api.ClusterFiller, 0, len(c.clusterFillers)+3)
-	copy(f, c.clusterFillers)
+	f = append(f, c.clusterFillers...)
 	f = append(f,
 		api.WithPodCidr(os.Getenv(podCidrVar)),
 		api.WithServiceCidr(os.Getenv(serviceCidrVar)),

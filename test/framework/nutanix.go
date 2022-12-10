@@ -141,7 +141,7 @@ func (s *Nutanix) CleanupVMs(_ string) error {
 // ClusterConfigUpdates satisfies the test framework Provider.
 func (s *Nutanix) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	f := make([]api.ClusterFiller, 0, len(s.clusterFillers)+3)
-	copy(f, s.clusterFillers)
+	f = append(f, s.clusterFillers...)
 	if s.controlPlaneEndpointIP != "" {
 		f = append(f, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
 	} else {

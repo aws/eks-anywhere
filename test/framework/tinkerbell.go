@@ -115,7 +115,7 @@ func (t *Tinkerbell) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	}
 
 	f := make([]api.ClusterFiller, 0, len(t.clusterFillers)+1)
-	copy(f, t.clusterFillers)
+	f = append(f, t.clusterFillers...)
 	f = append(f, api.WithControlPlaneEndpointIP(clusterIP))
 
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.TinkerbellToConfigFiller(t.fillers...)}
