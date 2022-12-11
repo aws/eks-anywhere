@@ -44,7 +44,7 @@ func TestCPackagesPrometheusVSphereKubernetes123BottleRocketSimpleFlow(t *testin
 func TestCPackagesPrometheusVSphereKubernetes122UbuntuSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu123()),
+		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -53,14 +53,79 @@ func TestCPackagesPrometheusVSphereKubernetes122UbuntuSimpleFlow(t *testing.T) {
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func runCuratedPackagesPrometheusInstallSimpleFlow(test *framework.ClusterE2ETest) {
+func TestCPackagesPrometheusCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
+			"my-packages-test", EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+}
+
+func TestCPackagesPrometheusNutanixKubernetes122SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+}
+
+func TestCPackagesPrometheusTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube122),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
+}
+
+func TestCPackagesPrometheusTinkerbellBottleRocketKubernetes123SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube123),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
+}
+
+func runCuratedPackagesPrometheusInstall(test *framework.ClusterE2ETest) {
 	packageFullName := packagePrefix + "-" + packageName
-	test.WithCluster(func(test *framework.ClusterE2ETest) {
-		test.CreateNamespace(packageTargetNamespace)
-		test.InstallCuratedPackage(packageName, packageFullName,
-			kubeconfig.FromClusterName(test.ClusterName), packageTargetNamespace)
-		test.VerifyPrometheusPackageInstalled(packageFullName, packageTargetNamespace)
-		test.VerifyPrometheusNodeExporterStates(packageFullName, packageTargetNamespace)
-		test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace)
-	})
+	test.CreateNamespace(packageTargetNamespace)
+	test.SetPackageBundleActive()
+	test.InstallCuratedPackage(packageName, packageFullName,
+		kubeconfig.FromClusterName(test.ClusterName), packageTargetNamespace)
+	test.VerifyPrometheusPackageInstalled(packageFullName, packageTargetNamespace)
+	test.VerifyPrometheusNodeExporterStates(packageFullName, packageTargetNamespace)
+	test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace)
+}
+
+func runCuratedPackagesPrometheusInstallSimpleFlow(test *framework.ClusterE2ETest) {
+	test.WithCluster(runCuratedPackagesPrometheusInstall)
+}
+
+func runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
+	runCuratedPackagesPrometheusInstall(test)
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
 }
