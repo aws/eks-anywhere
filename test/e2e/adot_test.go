@@ -104,6 +104,7 @@ func TestCPackagesAdotTinkerbellBottleRocketKubernetes123SimpleFlow(t *testing.T
 }
 
 func runCuratedPackagesAdotInstall(test *framework.ClusterE2ETest) {
+	test.SetPackageBundleActive()
 	test.CreateNamespace(adotTargetNamespace)
 	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
 		kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
@@ -112,6 +113,7 @@ func runCuratedPackagesAdotInstall(test *framework.ClusterE2ETest) {
 }
 
 func runCuratedPackagesAdotInstallWithUpdate(test *framework.ClusterE2ETest) {
+	test.SetPackageBundleActive()
 	test.CreateNamespace(adotTargetNamespace)
 	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
 		kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
