@@ -207,3 +207,27 @@ func TestWithWorkerNodeAutoScalingConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestWithPodCidr(t *testing.T) {
+	cluster := &anywherev1.Cluster{
+		Spec: anywherev1.ClusterSpec{
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				Pods: anywherev1.Pods{
+					CidrBlocks: []string{"192.168.0.0/16"},
+				},
+			},
+		},
+	}
+
+	t.Run("with a single CIDR block", func(t *testing.T) {
+		api.WithPodCidr("10.0.0.0/20")(cluster)
+		g := NewWithT(t)
+		g.Expect(cluster.Spec.ClusterNetwork.Pods.CidrBlocks).To(Equal([]string{"10.0.0.0/20"}))
+	})
+
+	t.Run("with a multiple CIDR blocks", func(t *testing.T) {
+		api.WithPodCidr("10.0.0.0/16,172.16.42.0/20")(cluster)
+		g := NewWithT(t)
+		g.Expect(cluster.Spec.ClusterNetwork.Pods.CidrBlocks).To(Equal([]string{"10.0.0.0/16", "172.16.42.0/20"}))
+	})
+}
