@@ -44,6 +44,8 @@ func TestLocalExecutablesBuilderAllExecutables(t *testing.T) {
 	g.Expect(trouble).NotTo(BeNil())
 	helm := b.BuildHelmExecutable()
 	g.Expect(helm).NotTo(BeNil())
+	docker := b.BuildDockerExecutable()
+	g.Expect(docker).NotTo(BeNil())
 
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(closer(ctx)).To(Succeed())
