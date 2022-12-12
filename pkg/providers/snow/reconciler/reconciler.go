@@ -10,7 +10,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -107,9 +106,12 @@ func (s *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
 
-	return s.Apply(ctx, func() ([]kubernetes.Object, error) {
-		return snow.ControlPlaneObjects(ctx, log, clusterSpec, clientutil.NewKubeClient(s.client))
-	})
+	cp, err := snow.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(s.client), clusterSpec)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return clusters.ReconcileControlPlane(ctx, s.client, toClientControlPlane(cp))
 }
 
 func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
@@ -138,4 +140,19 @@ func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 	}
 
 	return clusters.ReconcileWorkersForEKSA(ctx, log, s.client, clusterSpec.Cluster, clusters.ToWorkers(w))
+}
+
+func toClientControlPlane(cp *snow.ControlPlane) *clusters.ControlPlane {
+	other := make([]client.Object, 0, 2)
+	other = append(other, cp.Secret)
+
+	return &clusters.ControlPlane{
+		Cluster:                     cp.Cluster,
+		ProviderCluster:             cp.ProviderCluster,
+		KubeadmControlPlane:         cp.KubeadmControlPlane,
+		ControlPlaneMachineTemplate: cp.ControlPlaneMachineTemplate,
+		EtcdCluster:                 cp.EtcdCluster,
+		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
+		Other:                       other,
+	}
 }
