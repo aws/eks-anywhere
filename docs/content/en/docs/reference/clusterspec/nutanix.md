@@ -38,7 +38,7 @@ spec:
  datacenterRef:
    kind: NutanixDatacenterConfig
    name: nutanix-cluster
- kubernetesVersion: "1.23"
+ kubernetesVersion: "1.24"
  workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
@@ -66,17 +66,14 @@ spec:
  cluster:
    name: nx-cluster-01
    type: name
-   uuid: null
  image:
    name: eksa-ubuntu-2004-kube-v1.23
    type: name
-   uuid: null
  memorySize: 4Gi
  osFamily: ubuntu
  subnet:
    name: vm-network
    type: name
-   uuid: null
  systemDiskSize: 40Gi
  users:
    - name: nutanix-user
@@ -94,17 +91,14 @@ spec:
  cluster:
    name: nx-cluster-01
    type: name
-   uuid: null
  image:
    name: eksa-ubuntu-2004-kube-v1.23
    type: name
-   uuid: null
  memorySize: 4Gi
  osFamily: ubuntu
  subnet:
    name: vm-network
    type: name
-   uuid: null
  systemDiskSize: 40Gi
  users:
    - name: nutanix-user
@@ -200,7 +194,7 @@ Modifying the labels associated with a worker node group configuration will caus
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.23`, `1.22`, `1.21`, `1.20`
+The Kubernetes version you want to use for your cluster. Supported values: `1.24`, `1.23`, `1.22`, `1.21`
 
 ## NutanixDatacenterConfig Fields
 
@@ -208,10 +202,10 @@ The Kubernetes version you want to use for your cluster. Supported values: `1.23
 The Prism Central server fully qualified domain name or IP address. If the server IP is used, the PC SSL certificate must have an IP SAN configured.
 
 ### port (required) 
-The Prism Central server port. (Default: `9443`) 
+The Prism Central server port. (Default: `9440`) 
 
 ### insecure (optional)
-Set insecure to `true` if the Prism Central server does not have a valid certificate. (Default: `false`)
+Set insecure to `true` if the Prism Central server does not have a valid certificate. This is not recommended for production use cases. (Default: `false`)
 
 ### additionalTrustBundle (optional; required if using a self-signed PC SSL certificate)
 The PEM encoded CA trust bundle.
@@ -227,7 +221,10 @@ Reference to the Prism Element cluster.
 Type to identify the Prism Element cluster. (Permitted values: `name` or `uuid`)
  
 ### cluster.name	
-Name or UUID of the Prism Element cluster.
+Name of the Prism Element cluster.
+
+### cluster.uuid
+UUID of the Prism Element cluster.
  
 ### image	
 Reference to the OS image used for the system disk.
@@ -269,12 +266,12 @@ Amount of vCPU sockets. (Default: `2`)
 Amount of vCPUs per socket. (Default: `1`)
  
 ### users (optional)
-The users you want to configure to access your virtual machines. Only one is permitted at this time
+The users you want to configure to access your virtual machines. Only one is permitted at this time.
 
 ### users[0].name (optional)
 The name of the user you want to configure to access your virtual machines through ssh.
 
-The default is `nutanix-user` if `osFamily=ubuntu`
+The default is `eksa` if `osFamily=ubuntu`
 
 ### users[0].sshAuthorizedKeys (optional)
 The SSH public keys you want to configure to access your virtual machines through ssh (as described below). Only 1 is supported at this time.

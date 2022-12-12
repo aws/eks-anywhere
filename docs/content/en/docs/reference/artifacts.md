@@ -542,12 +542,12 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, and 1-24.
       * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
 
       ```bash
       cd /home/$USER
-      image-builder build --os ubuntu --hypervisor nutanix --nutanix-config nutanix-connection.json --release-channel 1-23
+      image-builder build --os ubuntu --hypervisor nutanix --nutanix-config nutanix-connection.json --release-channel 1-24
       ```
 
 ## Images
