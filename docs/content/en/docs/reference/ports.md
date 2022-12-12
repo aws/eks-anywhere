@@ -84,7 +84,7 @@ The following table displays ports that need to be accessible from the Nutanix p
 
 | Protocol | Direction | Port Range  | Purpose                 | Used By                    |
 |----------|-----------|-------------|-------------------------|----------------------------|
-| TCP      | Inbound   | 9443        | Prism Central Server    | Prism Central API endpoint |
+| TCP      | Inbound   | 9440        | Prism Central Server    | Prism Central API endpoint |
 | TCP      | Inbound   | 6443        | Kubernetes API server   | Kubernetes API endpoint    |
 | TCP      | Inbound   | 2379        | Manager                 | Etcd API endpoint          |
 | TCP      | Inbound   | 2380        | Manager                 | Etcd API endpoint          |

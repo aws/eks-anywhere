@@ -67,7 +67,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.23
+   name: eksa-ubuntu-2004-kube-v1.24
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -76,7 +76,7 @@ spec:
    type: name
  systemDiskSize: 40Gi
  users:
-   - name: nutanix-user
+   - name: eksa
      sshAuthorizedKeys:
        - ssh-rsa AAAA…
  vcpuSockets: 2
@@ -92,7 +92,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.23
+   name: eksa-ubuntu-2004-kube-v1.24
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -101,7 +101,7 @@ spec:
    type: name
  systemDiskSize: 40Gi
  users:
-   - name: nutanix-user
+   - name: eksa
      sshAuthorizedKeys:
        - ssh-rsa AAAA…
  vcpuSockets: 2
