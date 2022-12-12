@@ -139,7 +139,8 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
@@ -183,7 +184,8 @@ func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName, "cronjob.suspend=true"}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName, "cronjob.suspend=true"}
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
 		any := gomock.Any()
@@ -263,7 +265,8 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName, httpProxy, httpsProxy, noProxy}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
@@ -308,7 +311,8 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
@@ -342,7 +346,8 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(errors.New("login failed"))
 		any := gomock.Any()
@@ -374,7 +379,8 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
@@ -408,7 +414,8 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, errors.New("failed applying secrets"))
@@ -463,7 +470,8 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
@@ -521,7 +529,8 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", "us-west-2"))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretDefaultRegion, params).Return(bytes.Buffer{}, nil)
@@ -572,7 +581,8 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
@@ -606,7 +616,8 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
@@ -665,7 +676,8 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			values = []string{sourceRegistry, clusterName}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
