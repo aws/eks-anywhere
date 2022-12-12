@@ -30,15 +30,6 @@ func TestVSphereDatacenterValidateUpdateDataCenterImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.datacenter: Forbidden: field is immutable")))
 }
 
-func TestVSphereDatacenterValidateUpdateDisableCSIImmutable(t *testing.T) {
-	vOld := vsphereDatacenterConfig()
-	c := vOld.DeepCopy()
-
-	c.Spec.DisableCSI = true
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.disableCSI: Forbidden: field is immutable")))
-}
-
 func TestVSphereDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := vsphereDatacenterConfig()
 	vOld.Spec.Network = "OldNet"

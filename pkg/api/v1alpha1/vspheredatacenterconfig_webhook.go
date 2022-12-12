@@ -150,13 +150,6 @@ func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) fi
 		)
 	}
 
-	if old.Spec.DisableCSI != new.Spec.DisableCSI {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("disableCSI"), "field is immutable"),
-		)
-	}
-
 	return allErrs
 }
 
