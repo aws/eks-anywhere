@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 
+	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -56,6 +58,19 @@ func SetProxyConfigInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmConf
 	}
 
 	return addProxyConfigInKubeadmConfigSpecFiles(&kct.Spec.Template.Spec, cluster)
+}
+
+// setProxyConfigInEtcdCluster sets up proxy configuration in etcdadmCluster.
+func setProxyConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, cluster *v1alpha1.Cluster) {
+	if cluster.Spec.ProxyConfiguration == nil {
+		return
+	}
+
+	etcd.Spec.EtcdadmConfigSpec.Proxy = &etcdbootstrapv1.ProxyConfiguration{
+		HTTPProxy:  cluster.Spec.ProxyConfiguration.HttpProxy,
+		HTTPSProxy: cluster.Spec.ProxyConfiguration.HttpsProxy,
+		NoProxy:    noProxyList(cluster),
+	}
 }
 
 func NoProxyDefaults() []string {

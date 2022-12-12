@@ -3,9 +3,10 @@ package snow_test
 import (
 	"testing"
 
+	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/format"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -27,7 +28,6 @@ type apiBuilerTest struct {
 }
 
 func newApiBuilerTest(t *testing.T) apiBuilerTest {
-	format.MaxLength = 0
 	return apiBuilerTest{
 		WithT:          NewWithT(t),
 		clusterSpec:    givenClusterSpec(),
@@ -78,6 +78,17 @@ func wantCAPICluster() *clusterv1.Cluster {
 	}
 }
 
+func wantCAPIClusterUnstackedEtcd() *clusterv1.Cluster {
+	cluster := wantCAPICluster()
+	cluster.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
+		Kind:       "EtcdadmCluster",
+		APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+		Namespace:  "eksa-system",
+		Name:       "snow-test-etcd",
+	}
+	return cluster
+}
+
 func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := snow.SnowCluster(tt.clusterSpec, wantSnowCredentialsSecret())
@@ -85,7 +96,7 @@ func TestCAPICluster(t *testing.T) {
 	kubeadmControlPlane, err := snow.KubeadmControlPlane(tt.logger, tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
-	got := snow.CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane)
+	got := snow.CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane, nil)
 	tt.Expect(got).To(Equal(wantCAPICluster()))
 }
 
@@ -124,6 +135,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 								ImageTag:        "v3.4.16-eks-1-21-9",
 							},
 							ExtraArgs: map[string]string{
+								"cipher-suites":      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"listen-peer-urls":   "https://0.0.0.0:2380",
 								"listen-client-urls": "https://0.0.0.0:2379",
 							},
@@ -173,6 +185,19 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 			Version:  "v1.21.5-eks-1-21-9",
 		},
 	}
+}
+
+func wantKubeadmControlPlaneUnstackedEtcd() *controlplanev1.KubeadmControlPlane {
+	kcp := wantKubeadmControlPlane()
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd = bootstrapv1.Etcd{
+		External: &bootstrapv1.ExternalEtcd{
+			Endpoints: []string{},
+			CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
+			CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
+			KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",
+		},
+	}
+	return kcp
 }
 
 func wantRegistryMirrorCommands() []string {
@@ -236,8 +261,8 @@ var registryMirrorTests = []struct {
 	{
 		name: "with ca cert",
 		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
-			Endpoint:      "1.2.3.4",
-			Port:          "443",
+			Endpoint: "1.2.3.4",
+			Port:     "443",
 			OCINamespaces: []v1alpha1.OCINamespace{
 				{
 					Registry:  "public.ecr.aws",
@@ -798,4 +823,132 @@ func TestSnowMachineTemplateWithNetwork(t *testing.T) {
 
 func tlsCipherSuitesArgs() map[string]string {
 	return map[string]string{"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"}
+}
+
+func wantEtcdCluster() *etcdv1.EtcdadmCluster {
+	replicas := int32(3)
+	return &etcdv1.EtcdadmCluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+			Kind:       "EtcdadmCluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "snow-test-etcd",
+			Namespace: "eksa-system",
+		},
+		Spec: etcdv1.EtcdadmClusterSpec{
+			Replicas: &replicas,
+			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
+				EtcdadmBuiltin: true,
+				Format:         etcdbootstrapv1.Format("cloud-config"),
+				CipherSuites:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+			},
+			InfrastructureTemplate: v1.ObjectReference{
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				Kind:       "AWSSnowMachineTemplate",
+				Name:       "test-etcd",
+			},
+		},
+	}
+}
+
+func wantEtcdClusterUbuntu() *etcdv1.EtcdadmCluster {
+	etcd := wantEtcdCluster()
+	etcd.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
+		Version:    "3.4.16",
+		InstallDir: "/usr/bin",
+	}
+	etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = []string{
+		"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
+		"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
+		"echo \"127.0.0.1   localhost\" >>/etc/hosts",
+		"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
+		"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
+	}
+	return etcd
+}
+
+func wantEtcdClusterBottlerocket() *etcdv1.EtcdadmCluster {
+	etcd := wantEtcdCluster()
+	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
+		EtcdImage:      "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
+		BootstrapImage: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+		PauseImage:     "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+	}
+	return etcd
+}
+
+func TestEtcdadmClusterUbuntu(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+		MachineGroupRef: &v1alpha1.Ref{
+			Kind: v1alpha1.SnowMachineConfigKind,
+			Name: "test-etcd",
+		},
+	}
+	tt.clusterSpec.SnowMachineConfigs["test-etcd"] = &v1alpha1.SnowMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-etcd",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.SnowMachineConfigSpec{
+			OSFamily: "ubuntu",
+		},
+	}
+	tt.machineConfigs["test-etcd"] = tt.clusterSpec.SnowMachineConfigs["test-etcd"]
+	etcdMachineTemplates := snow.SnowMachineTemplate("test-etcd", tt.machineConfigs["test-etcd"])
+	got := snow.EtcdadmCluster(tt.logger, tt.clusterSpec, etcdMachineTemplates)
+	want := wantEtcdClusterUbuntu()
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestEtcdadmClusterBottlerocket(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+		MachineGroupRef: &v1alpha1.Ref{
+			Kind: v1alpha1.SnowMachineConfigKind,
+			Name: "test-etcd",
+		},
+	}
+	tt.clusterSpec.SnowMachineConfigs["test-etcd"] = &v1alpha1.SnowMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-etcd",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.SnowMachineConfigSpec{
+			OSFamily: "bottlerocket",
+		},
+	}
+	tt.machineConfigs["test-etcd"] = tt.clusterSpec.SnowMachineConfigs["test-etcd"]
+	etcdMachineTemplates := snow.SnowMachineTemplate("test-etcd", tt.machineConfigs["test-etcd"])
+	got := snow.EtcdadmCluster(tt.logger, tt.clusterSpec, etcdMachineTemplates)
+	want := wantEtcdClusterBottlerocket()
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestEtcdadmClusterUnsupportedOS(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+		MachineGroupRef: &v1alpha1.Ref{
+			Kind: v1alpha1.SnowMachineConfigKind,
+			Name: "test-etcd",
+		},
+	}
+	tt.clusterSpec.SnowMachineConfigs["test-etcd"] = &v1alpha1.SnowMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-etcd",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.SnowMachineConfigSpec{
+			OSFamily: "unsupported",
+		},
+	}
+	tt.machineConfigs["test-etcd"] = tt.clusterSpec.SnowMachineConfigs["test-etcd"]
+	etcdMachineTemplates := snow.SnowMachineTemplate("test-etcd", tt.machineConfigs["test-etcd"])
+	got := snow.EtcdadmCluster(tt.logger, tt.clusterSpec, etcdMachineTemplates)
+	want := wantEtcdCluster()
+	tt.Expect(got).To(Equal(want))
 }

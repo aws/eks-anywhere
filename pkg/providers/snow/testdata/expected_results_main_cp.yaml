@@ -34,24 +34,6 @@ status:
   managedExternalEtcdReady: false
 
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: AWSSnowCluster
-metadata:
-  creationTimestamp: null
-  name: snow-test
-  namespace: eksa-system
-spec:
-  controlPlaneEndpoint:
-    host: 1.2.3.4
-    port: 6443
-  identityRef:
-    kind: Secret
-    name: snow-test-snow-credentials
-  region: snow
-status:
-  ready: false
-
----
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
@@ -74,6 +56,7 @@ spec:
       etcd:
         local:
           extraArgs:
+            cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
             listen-client-urls: https://0.0.0.0:2379
             listen-peer-urls: https://0.0.0.0:2380
           imageRepository: public.ecr.aws/eks-distro/etcd-io
@@ -178,6 +161,24 @@ status:
   replicas: 0
   unavailableReplicas: 0
   updatedReplicas: 0
+
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AWSSnowCluster
+metadata:
+  creationTimestamp: null
+  name: snow-test
+  namespace: eksa-system
+spec:
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
+  identityRef:
+    kind: Secret
+    name: snow-test-snow-credentials
+  region: snow
+status:
+  ready: false
 
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

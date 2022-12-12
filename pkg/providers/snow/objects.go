@@ -19,29 +19,12 @@ import (
 
 // ControlPlaneObjects generates the control plane objects for snow provider from clusterSpec.
 func ControlPlaneObjects(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
-	capasCredentialsSecret, err := capasCredentialsSecret(clusterSpec)
+	cp, err := ControlPlaneSpec(ctx, log, kubeClient, clusterSpec)
 	if err != nil {
 		return nil, err
 	}
 
-	snowCluster := SnowCluster(clusterSpec, capasCredentialsSecret)
-
-	new := SnowMachineTemplate(clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster), clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-
-	old, err := oldControlPlaneMachineTemplate(ctx, kubeClient, clusterSpec)
-	if err != nil {
-		return nil, err
-	}
-
-	new.SetName(NewMachineTemplateName(new, old))
-
-	kubeadmControlPlane, err := KubeadmControlPlane(log, clusterSpec, new)
-	if err != nil {
-		return nil, err
-	}
-	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
-
-	return []kubernetes.Object{capiCluster, snowCluster, kubeadmControlPlane, new, capasCredentialsSecret}, nil
+	return cp.Objects(), nil
 }
 
 type (

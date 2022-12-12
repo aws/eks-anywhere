@@ -3,6 +3,7 @@ package clusterapi_test
 import (
 	"testing"
 
+	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
@@ -102,5 +103,18 @@ func TestSetBottlerocketControlContainerImageInKubeadmConfigTemplate(t *testing.
 	want.Spec.Template.Spec.JoinConfiguration.BottlerocketControl = controlContainer
 
 	clusterapi.SetBottlerocketControlContainerImageInKubeadmConfigTemplate(got, g.clusterSpec.VersionsBundle)
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketInEtcdCluster(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantEtcdCluster()
+	want := got.DeepCopy()
+	want.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
+		EtcdImage:      "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
+		BootstrapImage: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+		PauseImage:     "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+	}
+	clusterapi.SetBottlerocketInEtcdCluster(got, g.clusterSpec.VersionsBundle)
 	g.Expect(got).To(Equal(want))
 }

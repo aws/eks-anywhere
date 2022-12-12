@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,6 +15,8 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
@@ -56,7 +59,103 @@ func TestControlPlaneObjects(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt, wantSnowCredentialsSecret()}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
+}
+
+func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
+	g := newSnowTest(t)
+	g.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
+		Count: 3,
+		MachineGroupRef: &anywherev1.Ref{
+			Kind: "SnowMachineConfig",
+			Name: "test-etcd",
+		},
+	}
+	g.clusterSpec.SnowMachineConfigs["test-etcd"] = &anywherev1.SnowMachineConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "SnowMachineConfig",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-etcd",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.SnowMachineConfigSpec{
+			AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+			InstanceType:             "sbe-c.xlarge",
+			SshKeyName:               "default",
+			PhysicalNetworkConnector: "SFP_PLUS",
+			Devices: []string{
+				"1.2.3.4",
+				"1.2.3.5",
+			},
+			OSFamily: v1alpha1.Ubuntu,
+		},
+	}
+	mtCp := wantSnowMachineTemplate()
+	mtEtcd := wantSnowMachineTemplate()
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"snow-test",
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			return nil
+		})
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"test-cp-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			mtCp.DeepCopyInto(obj)
+			obj.SetName("test-cp-1")
+			obj.Spec.Template.Spec.InstanceType = "updated-instance-type"
+			return nil
+		})
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"snow-test-etcd",
+			constants.EksaSystemNamespace,
+			&v1beta1.EtcdadmCluster{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1beta1.EtcdadmCluster) error {
+			obj.Spec.InfrastructureTemplate.Name = "test-etcd-1"
+			return nil
+		})
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"test-etcd-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			mtCp.DeepCopyInto(obj)
+			obj.SetName("test-etcd-1")
+			obj.Spec.Template.Spec.InstanceType = "updated-instance-type"
+			return nil
+		})
+
+	mtCpName := "test-cp-2"
+	mtCp.SetName(mtCpName)
+	mtCp.Spec.Template.Spec.InstanceType = "sbe-c.large"
+	kcp := wantKubeadmControlPlaneUnstackedEtcd()
+	kcp.Spec.MachineTemplate.InfrastructureRef.Name = mtCpName
+
+	mtEtcdName := "test-etcd-2"
+	mtEtcd.SetName(mtEtcdName)
+	etcdCluster := wantEtcdClusterUbuntu()
+	etcdCluster.Spec.InfrastructureTemplate.Name = mtEtcdName
+
+	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
+	g.Expect(err).To(Succeed())
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPIClusterUnstackedEtcd(), kcp, wantSnowCluster(), mtCp, etcdCluster, mtEtcd, wantSnowCredentialsSecret()}))
 }
 
 func TestControlPlaneObjectsCredentialsNil(t *testing.T) {
@@ -86,45 +185,6 @@ func TestControlPlaneObjectsSecretMissCertificatesKey(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("unable to retrieve ca-bundle from secret")))
 }
 
-func TestControlPlaneObjectsUpgradeFromBetaMachineTemplateName(t *testing.T) {
-	g := newSnowTest(t)
-	mt := wantSnowMachineTemplate()
-	g.kubeconfigClient.EXPECT().
-		Get(
-			g.ctx,
-			"snow-test",
-			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
-		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp"
-			return nil
-		})
-	g.kubeconfigClient.EXPECT().
-		Get(
-			g.ctx,
-			"test-cp",
-			constants.EksaSystemNamespace,
-			&snowv1.AWSSnowMachineTemplate{},
-		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
-			mt.DeepCopyInto(obj)
-			obj.SetName("test-cp")
-			obj.Spec.Template.Spec.InstanceType = "updated-instance-type"
-			return nil
-		})
-
-	wantMachineTemplateName := "snow-test-control-plane-1"
-	mt.SetName(wantMachineTemplateName)
-	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
-	kcp := wantKubeadmControlPlane()
-	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
-
-	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
-	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt, wantSnowCredentialsSecret()}))
-}
-
 func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
 	g := newSnowTest(t)
 	mt := wantSnowMachineTemplate()
@@ -142,7 +202,7 @@ func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt, wantSnowCredentialsSecret()}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantKubeadmControlPlane(), wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
 }
 
 func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
@@ -173,7 +233,7 @@ func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt, wantSnowCredentialsSecret()}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantKubeadmControlPlane(), wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
 }
 
 func TestControlPlaneObjectsGetOldControlPlaneError(t *testing.T) {

@@ -1,6 +1,8 @@
 package clusterapi
 
 import (
+	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -84,4 +86,13 @@ func SetBottlerocketAdminContainerImageInKubeadmConfigTemplate(kct *bootstrapv1.
 // SetBottlerocketControlContainerImageInKubeadmConfigTemplate overrides the default bottlerocket control container image metadata in kubeadmConfigTemplate.
 func SetBottlerocketControlContainerImageInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, versionsBundle *cluster.VersionsBundle) {
 	kct.Spec.Template.Spec.JoinConfiguration.BottlerocketControl = bottlerocketControl(versionsBundle.BottleRocketHostContainers.Control)
+}
+
+// SetBottlerocketInEtcdCluster adds bottlerocket config in etcdadmCluster.
+func SetBottlerocketInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *cluster.VersionsBundle) {
+	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
+		EtcdImage:      versionsBundle.KubeDistro.EtcdImage.VersionedImage(),
+		BootstrapImage: versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.VersionedImage(),
+		PauseImage:     versionsBundle.KubeDistro.Pause.VersionedImage(),
+	}
 }
