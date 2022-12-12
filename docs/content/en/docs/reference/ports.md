@@ -78,6 +78,17 @@ The following table displays ports that need to be accessible from the VMware pr
 | TCP      | Inbound   | 2379        | Manager                 | Etcd API endpoint       |
 | TCP      | Inbound   | 2380        | Manager                 | Etcd API endpoint       |
 
+## Nutanix provider
+
+The following table displays ports that need to be accessible from the Nutanix provider running EKS Anywhere:
+
+| Protocol | Direction | Port Range  | Purpose                 | Used By                    |
+|----------|-----------|-------------|-------------------------|----------------------------|
+| TCP      | Inbound   | 9443        | Prism Central Server    | Prism Central API endpoint |
+| TCP      | Inbound   | 6443        | Kubernetes API server   | Kubernetes API endpoint    |
+| TCP      | Inbound   | 2379        | Manager                 | Etcd API endpoint          |
+| TCP      | Inbound   | 2380        | Manager                 | Etcd API endpoint          |
+
 ## Control plane management tools
 
 A variety of control plane management tools are available to use with EKS Anywhere.
