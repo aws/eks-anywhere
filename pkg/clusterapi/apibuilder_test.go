@@ -3,6 +3,8 @@ package clusterapi_test
 import (
 	"testing"
 
+	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +29,7 @@ type apiBuilerTest struct {
 	providerCluster         clusterapi.APIObject
 	controlPlane            clusterapi.APIObject
 	providerMachineTemplate clusterapi.APIObject
+	unstackedEtcdCluster    clusterapi.APIObject
 }
 
 type providerCluster struct {
@@ -44,6 +47,15 @@ type providerMachineTemplate struct {
 }
 
 func (c *providerMachineTemplate) DeepCopyObject() runtime.Object {
+	return nil
+}
+
+type unstackedEtcdCluster struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+}
+
+func (c *unstackedEtcdCluster) DeepCopyObject() runtime.Object {
 	return nil
 }
 
@@ -102,6 +114,9 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 				Etcd: cluster.VersionedRepository{
 					Repository: "public.ecr.aws/eks-distro/etcd-io",
 					Tag:        "v3.4.16-eks-1-21-9",
+				},
+				EtcdImage: v1alpha1.Image{
+					URI: "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
 				},
 				Pause: v1alpha1.Image{
 					URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
@@ -179,6 +194,16 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 		},
 	}
 
+	unstackedEtcdCluster := &unstackedEtcdCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "unstacked-etcd-cluster",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "UnstackedEtcdCluster",
+			APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+		},
+	}
+
 	return apiBuilerTest{
 		WithT:                   NewWithT(t),
 		clusterSpec:             clusterSpec,
@@ -187,14 +212,12 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 		providerCluster:         providerCluster,
 		controlPlane:            controlPlane,
 		providerMachineTemplate: providerMachineTemplate,
+		unstackedEtcdCluster:    unstackedEtcdCluster,
 	}
 }
 
-// TODO: add unstacked etcd test.
-func TestCluster(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got := clusterapi.Cluster(tt.clusterSpec, tt.providerCluster, tt.controlPlane)
-	want := &clusterv1.Cluster{
+func wantCluster() *clusterv1.Cluster {
+	return &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
 			Kind:       "Cluster",
@@ -233,6 +256,12 @@ func TestCluster(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestCluster(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	got := clusterapi.Cluster(tt.clusterSpec, tt.providerCluster, tt.controlPlane, nil)
+	want := wantCluster()
 	tt.Expect(got).To(Equal(want))
 }
 
@@ -270,7 +299,9 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 								ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
 								ImageTag:        "v3.4.16-eks-1-21-9",
 							},
-							ExtraArgs: map[string]string{},
+							ExtraArgs: map[string]string{
+								"cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							},
 						},
 					},
 					APIServer: bootstrapv1.APIServer{
@@ -325,7 +356,6 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	}
 }
 
-// TODO: add unstacked etcd test.
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got, err := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)
@@ -474,4 +504,41 @@ func TestClusterName(t *testing.T) {
 			g.Expect(clusterapi.ClusterName(tt.cluster)).To(Equal(tt.want))
 		})
 	}
+}
+
+func wantEtcdCluster() *etcdv1.EtcdadmCluster {
+	replicas := int32(3)
+	return &etcdv1.EtcdadmCluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+			Kind:       "EtcdadmCluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster-etcd",
+			Namespace: "eksa-system",
+		},
+		Spec: etcdv1.EtcdadmClusterSpec{
+			Replicas: &replicas,
+			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
+				EtcdadmBuiltin: true,
+				Format:         etcdbootstrapv1.Format("cloud-config"),
+				CipherSuites:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+			},
+			InfrastructureTemplate: v1.ObjectReference{
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				Kind:       "ProviderMachineTemplate",
+				Name:       "provider-template",
+			},
+		},
+	}
+}
+
+func TestEtcdadmCluster(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
+		Count: 3,
+	}
+	got := clusterapi.EtcdadmCluster(tt.clusterSpec, tt.providerMachineTemplate)
+	want := wantEtcdCluster()
+	tt.Expect(got).To(Equal(want))
 }

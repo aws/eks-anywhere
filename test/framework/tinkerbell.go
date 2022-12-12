@@ -107,37 +107,28 @@ func (t *Tinkerbell) Name() string {
 
 func (t *Tinkerbell) Setup() {}
 
-func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
-	return t.customizeProviderConfig(file, t.fillers...)
-}
-
-func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) ClusterE2ETestOpt {
-	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = t.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
-	}
-}
-
-func (t *Tinkerbell) CleanupVMs(_ string) error {
-	return nil
-}
-
-func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.TinkerbellFiller) []byte {
-	providerOutput, err := api.AutoFillTinkerbellProvider(file, fillers...)
-	if err != nil {
-		t.t.Fatalf("failed to customize provider config from file: %v", err)
-	}
-	return providerOutput
-}
-
-func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
+// ClusterConfigUpdates satisfies the test framework Provider.
+func (t *Tinkerbell) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	clusterIP, err := GetIP(t.cidr, ClusterIPPoolEnvVar)
 	if err != nil {
 		t.t.Fatalf("failed to get cluster ip for test environment: %v", err)
 	}
 
-	t.clusterFillers = append(t.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
+	f := make([]api.ClusterFiller, 0, len(t.clusterFillers)+1)
+	f = append(f, t.clusterFillers...)
+	f = append(f, api.WithControlPlaneEndpointIP(clusterIP))
 
-	return t.clusterFillers
+	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.TinkerbellToConfigFiller(t.fillers...)}
+}
+
+func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.UpdateClusterConfig(api.TinkerbellToConfigFiller(fillers...))
+	}
+}
+
+func (t *Tinkerbell) CleanupVMs(_ string) error {
+	return nil
 }
 
 func WithUbuntu121Tinkerbell() TinkerbellOpt {

@@ -121,9 +121,13 @@ func givenVersionsBundle() *cluster.VersionsBundle {
 				Repository: "public.ecr.aws/eks-distro/etcd-io",
 				Tag:        "v3.4.16-eks-1-21-9",
 			},
+			EtcdImage: releasev1alpha1.Image{
+				URI: "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
+			},
 			Pause: releasev1alpha1.Image{
 				URI: "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
 			},
+			EtcdVersion: "3.4.16",
 		},
 		VersionsBundle: &releasev1alpha1.VersionsBundle{
 			KubeVersion: "1.21",

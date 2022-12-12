@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/oidc"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 )
 
@@ -28,7 +29,10 @@ var oidcRequiredEnvVars = []string{
 func WithOIDC() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, oidcRequiredEnvVars)
-		e.OIDCConfig = api.NewOIDCConfig(defaultClusterName,
+		if e.ClusterConfig.OIDCConfigs == nil {
+			e.ClusterConfig.OIDCConfigs = make(map[string]*anywherev1.OIDCConfig, 1)
+		}
+		e.ClusterConfig.OIDCConfigs[defaultClusterName] = api.NewOIDCConfig(defaultClusterName,
 			api.WithOIDCRequiredClaims("kubernetesAccess", "true"),
 			api.WithOIDCGroupsPrefix("s3-oidc:"),
 			api.WithOIDCGroupsClaim("groups"),

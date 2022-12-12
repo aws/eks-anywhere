@@ -18,6 +18,7 @@ func TestConfigChildObjects(t *testing.T) {
 		CloudStackDatacenter: &anywherev1.CloudStackDatacenterConfig{},
 		VSphereDatacenter:    &anywherev1.VSphereDatacenterConfig{},
 		NutanixDatacenter:    &anywherev1.NutanixDatacenterConfig{},
+		TinkerbellDatacenter: &anywherev1.TinkerbellDatacenterConfig{},
 		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
 			"machine1": {}, "machine2": {},
 		},
@@ -30,6 +31,12 @@ func TestConfigChildObjects(t *testing.T) {
 		NutanixMachineConfigs: map[string]*anywherev1.NutanixMachineConfig{
 			"machine1": {}, "machine2": {},
 		},
+		TinkerbellMachineConfigs: map[string]*anywherev1.TinkerbellMachineConfig{
+			"machine1": {}, "machine2": {},
+		},
+		TinkerbellTemplateConfigs: map[string]*anywherev1.TinkerbellTemplateConfig{
+			"template1": {}, "tenplate2": {},
+		},
 		OIDCConfigs: map[string]*anywherev1.OIDCConfig{
 			"machine1": {},
 		},
@@ -40,7 +47,7 @@ func TestConfigChildObjects(t *testing.T) {
 	}
 
 	objs := config.ChildObjects()
-	g.Expect(objs).To(HaveLen(15))
+	g.Expect(objs).To(HaveLen(20))
 	for _, o := range objs {
 		g.Expect(reflect.ValueOf(o).IsNil()).To(BeFalse())
 	}
@@ -55,6 +62,7 @@ func TestConfigDeepCopy(t *testing.T) {
 		DockerDatacenter:     &anywherev1.DockerDatacenterConfig{},
 		SnowDatacenter:       &anywherev1.SnowDatacenterConfig{},
 		NutanixDatacenter:    &anywherev1.NutanixDatacenterConfig{},
+		TinkerbellDatacenter: &anywherev1.TinkerbellDatacenterConfig{},
 		GitOpsConfig:         &anywherev1.GitOpsConfig{},
 		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
 			"machine1": {}, "machine2": {},
@@ -67,6 +75,12 @@ func TestConfigDeepCopy(t *testing.T) {
 		},
 		NutanixMachineConfigs: map[string]*anywherev1.NutanixMachineConfig{
 			"machine1": {}, "machine2": {},
+		},
+		TinkerbellMachineConfigs: map[string]*anywherev1.TinkerbellMachineConfig{
+			"machine1": {}, "machine2": {},
+		},
+		TinkerbellTemplateConfigs: map[string]*anywherev1.TinkerbellTemplateConfig{
+			"template1": {}, "tenplate2": {},
 		},
 		OIDCConfigs: map[string]*anywherev1.OIDCConfig{
 			"machine1": {},

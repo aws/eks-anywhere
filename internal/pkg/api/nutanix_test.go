@@ -1,11 +1,9 @@
 package api
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -13,10 +11,7 @@ import (
 
 func TestNutanixDatacenterConfigFillers(t *testing.T) {
 	g := NewWithT(t)
-	configFile := "testdata/nutanix/cluster-config.yaml"
-	conf, err := newNutanixConfig(configFile)
-	assert.NoError(t, err)
-	assert.NotNil(t, conf)
+	conf := nutanixConfig()
 
 	WithNutanixAdditionalTrustBundle("dGVzdEJ1bmRsZQ==")(conf) // "dGVzdEJ1bmRsZQ==" is "testBundle" in base64
 	g.Expect(conf.datacenterConfig.Spec.AdditionalTrustBundle).To(Equal("testBundle"))
@@ -33,10 +28,7 @@ func TestNutanixDatacenterConfigFillers(t *testing.T) {
 
 func TestNutanixMachineConfigFillers(t *testing.T) {
 	g := NewWithT(t)
-	configFile := "testdata/nutanix/cluster-config.yaml"
-	conf, err := newNutanixConfig(configFile)
-	assert.NoError(t, err)
-	assert.NotNil(t, conf)
+	conf := nutanixConfig()
 
 	WithNutanixMachineMemorySize("4Gi")(conf)
 	WithNutanixMachineVCPUSocket(2)(conf)
@@ -76,17 +68,9 @@ func TestNutanixMachineConfigFillers(t *testing.T) {
 	}
 }
 
-func TestAutoFillNutanixProvider(t *testing.T) {
-	g := NewWithT(t)
-	configFile := "testdata/nutanix/cluster-config.yaml"
-	resources, err := AutoFillNutanixProvider(
-		configFile,
-		WithNutanixEndpoint("prism-test.nutanix.com"),
-		WithNutanixSubnetName("testSubnet"),
-	)
-	g.Expect(err).To(BeNil())
-	g.Expect(resources).To(Not(BeNil()))
-	expectedResources, err := os.ReadFile("testdata/nutanix/templated-resources.yaml")
-	g.Expect(err).To(BeNil())
-	g.Expect(resources).To(MatchYAML(expectedResources))
+func nutanixConfig() *NutanixConfig {
+	return &NutanixConfig{
+		datacenterConfig: &anywherev1.NutanixDatacenterConfig{},
+		machineConfigs:   map[string]*anywherev1.NutanixMachineConfig{},
+	}
 }

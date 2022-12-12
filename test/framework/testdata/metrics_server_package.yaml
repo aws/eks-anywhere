@@ -1,0 +1,11 @@
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: metrics-server
+spec:
+  packageName: metrics-server
+  targetNamespace: {{.targetNamespace}}
+  config: |-
+    args:
+      - "--kubelet-insecure-tls"
+---

@@ -63,39 +63,31 @@ func (s *Snow) Name() string {
 
 func (s *Snow) Setup() {}
 
-func (s *Snow) CustomizeProviderConfig(file string) []byte {
-	return s.customizeProviderConfig(file, s.fillers...)
-}
-
-func (s *Snow) CleanupVMs(_ string) error {
-	return nil
-}
-
-func (s *Snow) ClusterConfigFillers() []api.ClusterFiller {
+// ClusterConfigUpdates satisfies the test framework Provider.
+func (s *Snow) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	ip, err := GenerateUniqueIp(s.cpCidr)
 	if err != nil {
 		s.t.Fatalf("failed to generate control plane ip for snow [cidr=%s]: %v", s.cpCidr, err)
 	}
-	s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(ip))
+	f := make([]api.ClusterFiller, 0, len(s.clusterFillers)+2)
+	f = append(f, s.clusterFillers...)
+	f = append(f, api.WithControlPlaneEndpointIP(ip))
 
 	if s.podCidr != "" {
-		s.clusterFillers = append(s.clusterFillers, api.WithPodCidr(s.podCidr))
+		f = append(f, api.WithPodCidr(s.podCidr))
 	}
 
-	return s.clusterFillers
+	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.SnowToConfigFiller(s.fillers...)}
 }
 
-func (s *Snow) customizeProviderConfig(file string, fillers ...api.SnowFiller) []byte {
-	providerOutput, err := api.AutoFillSnowProvider(file, fillers...)
-	if err != nil {
-		s.t.Fatalf("failed to customize provider config from file: %v", err)
-	}
-	return providerOutput
+// CleanupVMs  satisfies the test framework Provider.
+func (s *Snow) CleanupVMs(_ string) error {
+	return nil
 }
 
 func (s *Snow) WithProviderUpgrade(fillers ...api.SnowFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = s.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+		e.UpdateClusterConfig(api.SnowToConfigFiller(fillers...))
 	}
 }
 
@@ -137,14 +129,14 @@ func WithSnowWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fill
 	}
 }
 
+// WithNewSnowWorkerNodeGroup updates the test cluster Config with the fillers for an specific snow worker node group.
+// It applies the fillers in WorkerNodeGroup to the named worker node group and the ones for the corresponding SnowMachineConfig.
 func (s *Snow) WithNewSnowWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.SnowMachineConfigFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = s.customizeProviderConfig(e.ClusterConfigLocation, snowMachineConfig(name, fillers...))
-		var err error
-		e.ClusterConfigB, err = api.AutoFillClusterFromYaml(e.ClusterConfigB, buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup))
-		if err != nil {
-			e.T.Fatalf("Error filling cluster config: %v", err)
-		}
+		e.UpdateClusterConfig(
+			api.SnowToConfigFiller(snowMachineConfig(name, fillers...)),
+			api.ClusterToConfigFiller(buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+		)
 	}
 }
 

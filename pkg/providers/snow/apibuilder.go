@@ -3,6 +3,7 @@ package snow
 import (
 	"fmt"
 
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,8 +24,9 @@ const (
 	SnowMachineTemplateKind = "AWSSnowMachineTemplate"
 )
 
-func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, kubeadmControlPlane *controlplanev1.KubeadmControlPlane) *clusterv1.Cluster {
-	return clusterapi.Cluster(clusterSpec, snowCluster, kubeadmControlPlane)
+// CAPICluster generates the CAPICluster object for snow provider.
+func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, kubeadmControlPlane *controlplanev1.KubeadmControlPlane, etcdCluster *etcdv1.EtcdadmCluster) *clusterv1.Cluster {
+	return clusterapi.Cluster(clusterSpec, snowCluster, kubeadmControlPlane, etcdCluster)
 }
 
 // KubeadmControlPlane generates the kubeadmControlPlane object for snow provider from clusterSpec and snowMachineTemplate.
@@ -37,11 +39,6 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 	if err := clusterapi.SetKubeVipInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage()); err != nil {
 		return nil, fmt.Errorf("setting kube-vip: %v", err)
 	}
-
-	// TODO: support unstacked etcd
-	stackedEtcdExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs
-	stackedEtcdExtraArgs["listen-peer-urls"] = "https://0.0.0.0:2380"
-	stackedEtcdExtraArgs["listen-client-urls"] = "https://0.0.0.0:2379"
 
 	initConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs
 	initConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
@@ -63,6 +60,8 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	)
 
+	addStackedEtcdExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
+
 	osFamily := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name).OSFamily()
 	switch osFamily {
 	case v1alpha1.Bottlerocket:
@@ -71,6 +70,7 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		clusterapi.SetBottlerocketInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
 		clusterapi.SetBottlerocketAdminContainerImageInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
 		clusterapi.SetBottlerocketControlContainerImageInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
+		clusterapi.SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
 		addBottlerocketBootstrapSnowInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
 	case v1alpha1.Ubuntu:
@@ -82,6 +82,7 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		}
 		clusterapi.CreateContainerdConfigFileInKubeadmControlPlane(kcp, clusterSpec.Cluster)
 		clusterapi.RestartContainerdInKubeadmControlPlane(kcp, clusterSpec.Cluster)
+		clusterapi.SetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
 
 	default:
 		log.Info("Warning: unsupported OS family when setting up KubeadmControlPlane", "OS family", osFamily)
@@ -152,6 +153,25 @@ func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[st
 		m[workerNodeGroupConfig.Name] = &deployment
 	}
 	return m
+}
+
+// EtcdadmCluster builds an etcdadmCluster based on an eks-a cluster spec and snowMachineTemplate.
+func EtcdadmCluster(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *etcdv1.EtcdadmCluster {
+	etcd := clusterapi.EtcdadmCluster(clusterSpec, snowMachineTemplate)
+
+	osFamily := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name).OSFamily()
+	switch osFamily {
+	case v1alpha1.Bottlerocket:
+		clusterapi.SetBottlerocketInEtcdCluster(etcd, clusterSpec.VersionsBundle)
+
+	case v1alpha1.Ubuntu:
+		clusterapi.SetUbuntuConfigInEtcdCluster(etcd, clusterSpec.VersionsBundle.KubeDistro.EtcdVersion)
+
+	default:
+		log.Info("Warning: unsupported OS family when setting up EtcdadmCluster", "OS family", osFamily)
+	}
+
+	return etcd
 }
 
 func SnowCluster(clusterSpec *cluster.Spec, credentialsSecret *v1.Secret) *snowv1.AWSSnowCluster {

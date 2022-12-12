@@ -112,7 +112,8 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		}
 	} else {
 		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.chart.Image()))
-		values = []string{sourceRegistry, clusterName}
+		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", pc.eksaRegion))
+		values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 	}
 
 	// Provide proxy details for curated packages helm chart when proxy details provided
