@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -69,9 +71,10 @@ func WithControlPlaneLabel(key string, val string) ClusterFiller {
 	}
 }
 
+// WithPodCidr sets an explicit pod CIDR, overriding the provider's default.
 func WithPodCidr(podCidr string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
-		c.Spec.ClusterNetwork.Pods.CidrBlocks = []string{podCidr}
+		c.Spec.ClusterNetwork.Pods.CidrBlocks = strings.Split(podCidr, ",")
 	}
 }
 
