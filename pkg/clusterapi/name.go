@@ -76,6 +76,11 @@ func KubeadmControlPlaneName(clusterSpec *cluster.Spec) string {
 	return clusterSpec.Cluster.GetName()
 }
 
+// EtcdClusterName sets the default EtcdCluster object name.
+func EtcdClusterName(clusterName string) string {
+	return fmt.Sprintf("%s-etcd", clusterName)
+}
+
 func MachineDeploymentName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
 	// Adding cluster name prefix guarantees the machine deployment name uniqueness
 	// among clusters under the same management cluster setting.

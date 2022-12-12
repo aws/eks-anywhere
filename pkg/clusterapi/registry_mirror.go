@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 
+	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -51,6 +53,18 @@ func SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmC
 	}
 
 	return addRegistryMirrorInKubeadmConfigSpecFiles(&kct.Spec.Template.Spec, mirrorConfig)
+}
+
+// setRegistryMirrorInEtcdCluster sets up registry mirror configuration in etcdadmCluster.
+func setRegistryMirrorInEtcdCluster(etcd *etcdv1.EtcdadmCluster, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
+	if mirrorConfig == nil {
+		return
+	}
+
+	etcd.Spec.EtcdadmConfigSpec.RegistryMirror = &etcdbootstrapv1.RegistryMirrorConfiguration{
+		Endpoint: containerd.ToAPIEndpoint(registrymirror.FromClusterRegistryMirrorConfiguration(mirrorConfig).CoreEKSAMirror()),
+		CACert:   mirrorConfig.CACertContent,
+	}
 }
 
 func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstrapv1.RegistryMirrorConfiguration {

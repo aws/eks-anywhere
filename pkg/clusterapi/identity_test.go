@@ -80,7 +80,9 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 										ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
 										ImageTag:        "v3.4.16-eks-1-21-9",
 									},
-									ExtraArgs: map[string]string{},
+									ExtraArgs: map[string]string{
+										"cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									},
 								},
 							},
 							APIServer: bootstrapv1.APIServer{
@@ -277,7 +279,9 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 										ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
 										ImageTag:        "v3.4.16-eks-1-21-9",
 									},
-									ExtraArgs: map[string]string{},
+									ExtraArgs: map[string]string{
+										"cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									},
 								},
 							},
 							APIServer: bootstrapv1.APIServer{
@@ -400,7 +404,9 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 										ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
 										ImageTag:        "v3.4.16-eks-1-21-9",
 									},
-									ExtraArgs: map[string]string{},
+									ExtraArgs: map[string]string{
+										"cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									},
 								},
 							},
 							APIServer: bootstrapv1.APIServer{
