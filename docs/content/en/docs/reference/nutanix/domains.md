@@ -1,7 +1,7 @@
 
 * Prism Central endpoint (must be accessible to EKS Anywhere clusters)
 * Prism Element Data Services IP and CVM endpoints (for CSI storage connections)
-* public.ecr.aws
+* public.ecr.aws (for pulling EKS Anywhere container images)
 * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries and manifests)
 * distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
 * d2glxqk2uabbnd.cloudfront.net (for EKS Anywhere and EKS Distro ECR container images)

@@ -107,14 +107,14 @@ Make sure you use single quotes around the values so that your shell does not in
       -f eksa-mgmt-cluster.yaml
    ```
 
-1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
+1. Once the cluster is created, you can access it with the generated `KUBECONFIG` file in your local directory:
 
    ```bash
    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
    ```
 1. Check the cluster nodes:
 
-   To check that the cluster completed, list the machines to see the control plane, and worker nodes:
+   To check that the cluster is ready, list the machines to see the control plane, and worker nodes:
 
    ```bash
    kubectl get machines -n eksa-system
@@ -196,10 +196,10 @@ Follow these steps if you want to use your initial cluster to create and manage 
 1. Check the workload cluster:
 
    You can now use the workload cluster as you would any Kubernetes cluster.
-   Change your credentials to point to the new workload cluster (for example, `mgmt-w01`), then run the test application with:
+   Change your credentials to point to the new workload cluster (for example, `w01`), then run the test application with:
 
    ```bash
-   export CLUSTER_NAME=mgmt-w01
+   export CLUSTER_NAME=w01
    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
    ```
