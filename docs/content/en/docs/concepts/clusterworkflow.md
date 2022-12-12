@@ -68,7 +68,7 @@ With your Administrative machine in place, you need to prepare your [Bare Metal]
 The following sections describe how to create a Bare Metal or vSphere cluster.
 
 ## Creating a Bare Metal cluster
-The following diagram illustrates what happens when you start the cluster creation process for a Bare Metal provider, as described in the [Bare Metal Getting started]({{< relref "../getting-started/production-environment/baremetal-getstarted#create-the-cluster" >}}) guide.
+The following diagram illustrates what happens when you start the cluster creation process for a Bare Metal provider, as described in the [Bare Metal Getting started]({{< relref "../getting-started/production-environment/baremetal-getstarted#create-an-initial-cluster" >}}) guide.
 
 ### Start creating a Bare Metal cluster
 
