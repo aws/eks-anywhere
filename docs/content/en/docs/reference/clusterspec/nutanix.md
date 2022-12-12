@@ -145,21 +145,6 @@ A unique IP you want to use for the control plane VM in your EKS Anywhere cluste
 the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
 creation process are [here]({{< relref "../nutanix/nutanix-prereq/#prepare-a-nutanix-environment" >}}).
 
-### controlPlaneConfiguration.taints
-A list of taints to apply to the control plane nodes of the cluster.
-Replaces the default control plane taint, `node-role.kubernetes.io/master`. The default control plane components will tolerate the provided taints.
- 
-Modifying the taints associated with the control plane configuration will cause new nodes to be rolled-out, replacing the existing nodes.
- 
->**_NOTE:_** The taints provided will be used instead of the default control plane taint `node-role.kubernetes.io/master`.
-Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
-> 
-
-### controlPlaneConfiguration.labels
-A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that EKS Anywhere will add by default.
- 
-Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing the existing nodes.
-
 ### workerNodeGroupConfigurations (required)
 This takes in a list of node groups that you can define for your workers. You may define one or more worker node groups.
 
@@ -285,25 +270,3 @@ ssh -i <private-key-file> <user>@<VM-IP>
 ```
 
 The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value
-
-## Upgradeable Cluster Attributes 
-EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, allowing you to upgrade a number of fields simultaneously with the same procedure.
-
-### Upgradeable Attributes
- 
-* `Cluster`
-   * `kubernetesVersion`
-   * `controlPlaneConfig.count`
-   * `controlPlaneConfigurations.machineGroupRef.name`
-   * `workerNodeGroupConfigurations.count`
-   * `workerNodeGroupConfigurations.machineGroupRef.name`
-* `NutanixMachineConfig`
-   * `OSFamily`
-   * `VCPUsPerSocket`
-   * `VCPUSockets`
-   * `MemorySize`
-   * `Image`
-   * `Cluster`
-   * `Subnet`
-   * `SystemDiskSize`
- 
