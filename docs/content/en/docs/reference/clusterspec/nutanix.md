@@ -163,18 +163,6 @@ Minimum number of nodes for this node group’s autoscaling configuration.
 ### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
 Maximum number of nodes for this node group’s autoscaling configuration.
 
-### workerNodeGroupConfigurations.taints
-A list of taints to apply to the nodes in the worker node group.
- 
-Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
- 
-At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
-
-### workerNodeGroupConfigurations.labels
-A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that EKS Anywhere will add by default.
- 
-Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing the existing nodes associated with the configuration.
-
 ### datacenterRef
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
 
