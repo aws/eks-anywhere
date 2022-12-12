@@ -65,7 +65,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
 1. Set Credential Environment Variables
 
-   Before you create the initial cluster, you will need to set and export these environment variables for your Nutanix user name and password.
+   Before you create the initial cluster, you will need to set and export these environment variables for your Nutanix Prism Central user name and password.
 Make sure you use single quotes around the values so that your shell does not interpret the values:
    
    ```bash
@@ -133,7 +133,7 @@ Make sure you use single quotes around the values so that your shell does not in
 
 1. Check the initial cluster's CRD:
 
-   To ensure you are looking at the initial cluster, list the CRD to see that the name of its management cluster is itself:
+   To ensure you are looking at the initial cluster, list the cluster CRD to see that the name of its management cluster is itself:
 
    ```bash
    kubectl get clusters mgmt -o yaml
@@ -182,7 +182,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    To create a new workload cluster from your management cluster run this command, identifying:
 
    * The workload cluster YAML file
-   * The initial cluster's credentials (this causes the workload cluster to be managed from the management cluster)
+   * The initial cluster's kubeconfig (this causes the workload cluster to be managed from the management cluster)
 
    ```bash
    eksctl anywhere create cluster \
@@ -196,7 +196,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 1. Check the workload cluster:
 
    You can now use the workload cluster as you would any Kubernetes cluster.
-   Change your credentials to point to the new workload cluster (for example, `w01`), then run the test application with:
+   Change your kubeconfig to point to the new workload cluster (for example, `w01`), then run the test application with:
 
    ```bash
    export CLUSTER_NAME=w01
