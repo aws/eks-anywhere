@@ -221,7 +221,7 @@ https://github.com/kubernetes/utils
 ** oras.land/oras-go/pkg; version v1.2.0 --
 https://github.com/oras-project/oras-go
 
-** github.com/abhay-krishna/cluster-api; version v1.2.0-custom.rc3 --
+** github.com/abhay-krishna/cluster-api; version v1.2.0-custom.rc5 --
 https://github.com/abhay-krishna/cluster-api
 
 ** sigs.k8s.io/cluster-api-provider-cloudstack; version v0.4.8-rc1 --
