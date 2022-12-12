@@ -69,6 +69,11 @@ func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...HelmOpt) *Helm {
 	return NewHelm(b.executableBuilder.Build(helmPath), opts...)
 }
 
+// BuildDockerExecutable initializes a docker executable and returns it.
+func (b *ExecutablesBuilder) BuildDockerExecutable() *Docker {
+	return NewDocker(b.executableBuilder.Build(dockerPath))
+}
+
 // Init initializes the executable builder and returns a Closer
 // that needs to be called once the executables are not in used anymore
 // The closer will cleanup and free all internal resources.
