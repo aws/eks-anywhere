@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -19,6 +20,12 @@ type RegistryMirror struct {
 	NamespacedRegistryMap map[string]string
 	// Auth should be marked as true if authentication is required for the registry mirror
 	Auth bool
+	// CACertContent defines the contents registry mirror CA certificate
+	CACertContent string
+	// InsecureSkipVerify skips the registry certificate verification.
+	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
+	// Currently only supported for snow provider
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
@@ -56,6 +63,8 @@ func FromClusterRegistryMirrorConfiguration(config *v1alpha1.RegistryMirrorConfi
 		BaseRegistry:          base,
 		NamespacedRegistryMap: registryMap,
 		Auth:                  config.Authenticate,
+		CACertContent:         config.CACertContent,
+		InsecureSkipVerify:    config.InsecureSkipVerify,
 	}
 }
 
@@ -67,6 +76,15 @@ func (r *RegistryMirror) CoreEKSAMirror() string {
 // CuratedPackagesMirror returns the mirror for curated packages.
 func (r *RegistryMirror) CuratedPackagesMirror() string {
 	return r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistryRegex]
+}
+
+// Credentials returns the credential for the registry mirror.
+func (r *RegistryMirror) Credentials() (string, string, error) {
+	username, password, err := config.ReadCredentials()
+	if err != nil {
+		return "", "", err
+	}
+	return username, password, nil
 }
 
 // ReplaceRegistry replaces the host in a url with corresponding registry mirror

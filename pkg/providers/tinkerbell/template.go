@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -524,13 +523,13 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
 	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
-	if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
-		values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
+	if len(registryMirror.CACertContent) > 0 {
+		values["registryCACert"] = registryMirror.CACertContent
 	}
 
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-		values["registryAuth"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
-		username, password, _ := config.ReadCredentials()
+	if registryMirror.Auth {
+		values["registryAuth"] = registryMirror.Auth
+		username, password, _ := registryMirror.Credentials()
 		values["registryUsername"] = username
 		values["registryPassword"] = password
 	}

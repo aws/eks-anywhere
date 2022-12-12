@@ -19,6 +19,9 @@ import (
 //go:embed config/awssecret.yaml
 var awsSecretYaml string
 
+//go:embed config/registrymirrorsecret.yaml
+var registrySecretYaml string
+
 //go:embed config/packagebundlecontroller.yaml
 var packageBundleControllerYaml string
 
@@ -89,6 +92,9 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
 	if pc.registryMirror != nil {
+		if err := pc.CreateRegistryMirrorCredentials(ctx); err != nil {
+			logger.MarkWarning("  Unable to create registry mirror credentials for curated packages: ", "warning", err)
+		}
 		// account is added as part of registry name in package controller helm chart
 		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
 		accountName := "eks-anywhere"
@@ -122,26 +128,48 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		values = append(values, "cronjob.suspend=true")
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", values)
-	if err != nil {
+	if err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", values); err != nil {
 		return err
 	}
 
 	// Customers are currently requesting to show a warning in case
 	// credentials are not provided for curated packages
-	if err = pc.CreateCredentials(ctx); err != nil {
+	if err := pc.CreateAWSCredentials(ctx); err != nil {
 		logger.MarkWarning("  Unable to create credentials for curated packages: ", "warning", err)
 	}
 
 	return pc.waitForActiveBundle(ctx)
 }
 
-// CreateCredentials creates necessary credentials to enable the installation of curated packages.
+// CreateRegistryMirrorCredentials creates necessary credentials to enable the installation of curated packages.
+func (pc *PackageControllerClient) CreateRegistryMirrorCredentials(ctx context.Context) error {
+	username, password, err := pc.registryMirror.Credentials()
+	if err != nil {
+		return err
+	}
+	templateValues := map[string]string{
+		"mirrorUsername":      username,
+		"mirrorPassword":      password,
+		"mirrorCACertContent": pc.registryMirror.CACertContent,
+	}
+	if err := pc.ApplySecret(ctx, registrySecretYaml, templateValues); err != nil {
+		return errors.New("unable to detect registry mirror credentials for curated packages. Artifacts pull may fail due to unauthorized access to the registry mirror")
+	}
+
+	return nil
+}
+
+// CreateAWSCredentials creates necessary credentials to enable the installation of curated packages.
 // In order to create the credentials, there are two necessary steps:
 //   - Creating a kubernetes secret
 //   - Creating a single run of the cron job to ensure the secret is consumed
-func (pc *PackageControllerClient) CreateCredentials(ctx context.Context) error {
-	if err := pc.ApplySecret(ctx); err != nil {
+func (pc *PackageControllerClient) CreateAWSCredentials(ctx context.Context) error {
+	templateValues := map[string]string{
+		"eksaAccessKeyId":     pc.eksaAccessKeyID,
+		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
+		"eksaRegion":          pc.eksaRegion,
+	}
+	if err := pc.ApplySecret(ctx, awsSecretYaml, templateValues); err != nil {
 		return errors.New("unable to detect AWS authentication credentials for curated packages. Skipping package installation. Follow documentation to set credentials after cluster creation completes")
 	}
 
@@ -234,14 +262,9 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 	return bool && err == nil
 }
 
-func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
-	templateValues := map[string]string{
-		"eksaAccessKeyId":     pc.eksaAccessKeyID,
-		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
-		"eksaRegion":          pc.eksaRegion,
-	}
-
-	result, err := templater.Execute(awsSecretYaml, templateValues)
+// ApplySecret installs the scret template yaml with provided values.
+func (pc *PackageControllerClient) ApplySecret(ctx context.Context, yaml string, templateValues map[string]string) error {
+	result, err := templater.Execute(yaml, templateValues)
 	if err != nil {
 		return fmt.Errorf("replacing template values %v", err)
 	}

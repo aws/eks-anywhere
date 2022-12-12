@@ -62,12 +62,12 @@ func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstra
 
 type values map[string]interface{}
 
-func registryMirrorConfigContent(registryMirror *registrymirror.RegistryMirror, registryCert string, insecureSkip bool) (string, error) {
+func registryMirrorConfigContent(registryMirror *registrymirror.RegistryMirror) (string, error) {
 	val := values{
 		"registryMirrorMap": containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap),
 		"mirrorBase":        registryMirror.BaseRegistry,
-		"registryCACert":    registryCert,
-		"insecureSkip":      insecureSkip,
+		"registryCACert":    registryMirror.CACertContent,
+		"insecureSkip":      registryMirror.InsecureSkipVerify,
 	}
 
 	config, err := templater.Execute(containerdConfig, val)
@@ -79,7 +79,7 @@ func registryMirrorConfigContent(registryMirror *registrymirror.RegistryMirror, 
 
 func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
 	registryMirror := registrymirror.FromClusterRegistryMirrorConfiguration(registryMirrorConfig)
-	registryConfig, err := registryMirrorConfigContent(registryMirror, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
+	registryConfig, err := registryMirrorConfigContent(registryMirror)
 	if err != nil {
 		return nil, err
 	}

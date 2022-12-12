@@ -257,7 +257,7 @@ func (f *Factory) WithDockerLogin() *Factory {
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.registryMirror != nil {
-			username, password, _ := config.ReadCredentials()
+			username, password, _ := f.registryMirror.Credentials()
 			err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.BaseRegistry, username, password)
 			if err != nil {
 				return err
