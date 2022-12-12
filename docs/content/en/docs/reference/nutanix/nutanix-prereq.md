@@ -30,7 +30,7 @@ To prepare a Nutanix environment to run EKS Anywhere, you need the following:
    *  Alter DHCP ranges to leave out an IP address(s) at the top and/or the bottom of the range OR
    *  Create an IP reservation for this IP on your DHCP server. This is usually accomplished by adding 
 a dummy mapping of this IP address to a non-existent mac address.
-   *  Add an IP to the IPAM blacklist
+   *  Block an IP address from the Nutanix IPAM managed network using aCLI
 
 
 Each VM will require:
@@ -54,7 +54,7 @@ You will need one IP address for the management cluster control plane endpoint, 
 For those, you would need three IP addresses, one for each.
 All of those addresses will be configured the same way in the configuration file you will generate for each cluster.
 
-  A static IP address will be used for each control plane VM in your EKS Anywhere cluster.
+  A static IP address will be used for control plane API server HA in each of your EKS Anywhere clusters.
 Choose IP addresses in your network range that do not conflict with other VMs and make sure they are excluded from your DHCP offering.
 
   An IP address will be the value of the property `controlPlaneConfiguration.endpoint.host` in the config file of the management cluster.
