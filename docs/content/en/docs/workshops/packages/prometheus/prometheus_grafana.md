@@ -181,7 +181,7 @@ A user can install Grafana in the cluster to visualize the Prometheus metrics. W
     - Name: `Prometheus` as an example.
     - URL: `http://<prometheus-server-end-point-name>.<namespace>:9090`. If the package default values are used, this will be `http://generated-prometheus-server.observability:9090`.
     - Scrape interval: `1m` or the value specified by user in the package config.
-    - Select the `Save and test`, and a notification `data source is working` should be displayed.
+    - Select `Save and test`. A notification `data source is working` should be displayed.
 
     ![Prometheus Grafana Config Data Source](/images/prometheus_grafana_config_data_source.png)
 
