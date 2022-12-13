@@ -98,12 +98,24 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
-	e.ClusterConfigFolder = e.ClusterName
-	e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
-	e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
-
 	for _, opt := range opts {
 		opt(e)
+	}
+
+	if e.ClusterConfigFolder == "" {
+		e.ClusterConfigFolder = e.ClusterName
+	}
+	if e.HardwareConfigLocation == "" {
+		e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
+	}
+	if e.HardwareCsvLocation == "" {
+		e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
+	}
+
+	e.ClusterConfigLocation = filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a.yaml")
+
+	if err := os.MkdirAll(e.ClusterConfigFolder, os.ModePerm); err != nil {
+		t.Fatalf("Failed creating cluster config folder for test: %s", err)
 	}
 
 	provider.Setup()
@@ -173,6 +185,14 @@ func WithCustomLabelHardware(requiredCount int, label string) ClusterE2ETestOpt 
 
 func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
 	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
+}
+
+// WithClusterName sets the name that will be used for the cluster. This will drive both the name of the eks-a
+// cluster config objects as well as the cluster config file name.
+func WithClusterName(name string) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ClusterName = name
+	}
 }
 
 func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
@@ -456,14 +476,10 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 	}
 
 	e.buildClusterConfigFile()
-	e.cleanup(func() {
-		os.Remove(e.ClusterConfigLocation)
-	})
 }
 
 func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
-	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
-	e.RunEKSA(generateClusterConfigArgs, opts...)
+	e.generateClusterConfigWithCLI()
 
 	config, err := cluster.ParseConfigFromFile(e.ClusterConfigLocation)
 	if err != nil {
@@ -487,19 +503,7 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	e.ClusterConfig.TinkerbellMachineConfigs = config.TinkerbellMachineConfigs
 	e.ClusterConfig.TinkerbellTemplateConfigs = config.TinkerbellTemplateConfigs
 
-	clusterFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+3)
-	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
-	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
-	// (@g-gaston) This is a temporary fix to avoid overloading the CI system and we should remove it once we
-	// stabilize the test runs
-	clusterFillers = append(clusterFillers,
-		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
-	)
-	clusterFillers = append(clusterFillers, e.clusterFillers...)
-	configFillers := []api.ClusterConfigFiller{api.ClusterToConfigFiller(clusterFillers...)}
-	configFillers = append(configFillers, e.Provider.ClusterConfigUpdates()...)
-
-	e.UpdateClusterConfig(configFillers...)
+	e.UpdateClusterConfig(e.baseClusterConfigUpdates()...)
 }
 
 // UpdateClusterConfig applies the cluster Config provided updates to e.ClusterConfig, marshalls its content
@@ -508,6 +512,48 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 func (e *ClusterE2ETest) UpdateClusterConfig(fillers ...api.ClusterConfigFiller) {
 	api.UpdateClusterConfig(e.ClusterConfig, fillers...)
 	e.buildClusterConfigFile()
+}
+
+func (e *ClusterE2ETest) baseClusterConfigUpdates(opts ...CommandOpt) []api.ClusterConfigFiller {
+	clusterFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+3)
+	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
+	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
+	clusterFillers = append(clusterFillers,
+		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
+	)
+	clusterFillers = append(clusterFillers, e.clusterFillers...)
+	configFillers := []api.ClusterConfigFiller{api.ClusterToConfigFiller(clusterFillers...)}
+	configFillers = append(configFillers, e.Provider.ClusterConfigUpdates()...)
+
+	return configFillers
+}
+
+func (e *ClusterE2ETest) generateClusterConfigWithCLI(opts ...CommandOpt) {
+	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
+	e.RunEKSA(generateClusterConfigArgs, opts...)
+}
+
+func (e *ClusterE2ETest) parseClusterConfigFromDisk() {
+	config, err := cluster.ParseConfigFromFile(e.ClusterConfigLocation)
+	if err != nil {
+		e.T.Fatalf("Failed parsing generated cluster config: %s", err)
+	}
+	e.ClusterConfig = config
+}
+
+// WithClusterConfig generates a base cluster config using the CLI `generate clusterconfig` command
+// and udpates them with the provided fillers. Helpful for defining the initial Cluster config
+// before running a create operation.
+func (e *ClusterE2ETest) WithClusterConfig(fillers ...api.ClusterConfigFiller) *ClusterE2ETest {
+	e.T.Logf("Generating base config for cluster %s", e.ClusterName)
+	e.generateClusterConfigWithCLI()
+	e.parseClusterConfigFromDisk()
+	base := e.baseClusterConfigUpdates()
+	allUpdates := make([]api.ClusterConfigFiller, 0, len(base)+len(fillers))
+	allUpdates = append(allUpdates, base...)
+	allUpdates = append(allUpdates, fillers...)
+	e.UpdateClusterConfig(allUpdates...)
+	return e
 }
 
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
@@ -549,9 +595,6 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	e.RunEKSA(createClusterArgs, opts...)
-	e.cleanup(func() {
-		os.RemoveAll(e.ClusterName)
-	})
 }
 
 func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
