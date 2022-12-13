@@ -193,6 +193,16 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 			},
 		},
 		{
+			name:     "machineconfig-with-no-user-name",
+			fileName: "testdata/nutanix/machineconfig-with-no-user-name.yaml",
+			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
+				if len(nutanixMachineConfig.Spec.Users[0].Name) <= 0 {
+					return fmt.Errorf("default user name was not added")
+				}
+				return nil
+			},
+		},
+		{
 			name:     "machineconfig-with-no-osfamily",
 			fileName: "testdata/nutanix/machineconfig-with-no-osfamily.yaml",
 			validate: func(t *testing.T, nutanixMachineConfig *NutanixMachineConfig) error {
