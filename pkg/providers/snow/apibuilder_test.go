@@ -168,10 +168,10 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 					},
 				},
 				PreKubeadmCommands: []string{
-					"/etc/eks/bootstrap.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
+					"/etc/eks/bootstrap.sh",
 				},
 				PostKubeadmCommands: []string{
-					"/etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
+					"/etc/eks/bootstrap.sh",
 				},
 				Files: []bootstrapv1.File{
 					{
@@ -874,6 +874,16 @@ func wantEtcdClusterBottlerocket() *etcdv1.EtcdadmCluster {
 		EtcdImage:      "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
 		BootstrapImage: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
 		PauseImage:     "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+		AdminImage:     "public.ecr.aws/eks-anywhere/bottlerocket-admin:0.0.1",
+		ControlImage:   "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1",
+		CustomBootstrapContainers: []etcdbootstrapv1.BottlerocketBootstrapContainer{
+			{
+				Name:      "bottlerocket-bootstrap-snow",
+				Image:     "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow:v1-20-22-eks-a-v0.0.0-dev-build.4984",
+				Essential: false,
+				Mode:      "always",
+			},
+		},
 	}
 	return etcd
 }

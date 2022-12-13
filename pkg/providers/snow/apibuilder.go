@@ -47,7 +47,7 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
-		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
+		"/etc/eks/bootstrap.sh",
 	)
 
 	if snowMachineTemplate.Spec.Template.Spec.ContainersVolume != nil {
@@ -57,7 +57,7 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 	}
 
 	kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands,
-		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
+		"/etc/eks/bootstrap.sh",
 	)
 
 	addStackedEtcdExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
@@ -163,6 +163,9 @@ func EtcdadmCluster(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTempl
 	switch osFamily {
 	case v1alpha1.Bottlerocket:
 		clusterapi.SetBottlerocketInEtcdCluster(etcd, clusterSpec.VersionsBundle)
+		clusterapi.SetBottlerocketAdminContainerImageInEtcdCluster(etcd, clusterSpec.VersionsBundle.BottleRocketHostContainers.Admin)
+		clusterapi.SetBottlerocketControlContainerImageInEtcdCluster(etcd, clusterSpec.VersionsBundle.BottleRocketHostContainers.Control)
+		addBottlerocketBootstrapSnowInEtcdCluster(etcd, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
 	case v1alpha1.Ubuntu:
 		clusterapi.SetUbuntuConfigInEtcdCluster(etcd, clusterSpec.VersionsBundle.KubeDistro.EtcdVersion)
