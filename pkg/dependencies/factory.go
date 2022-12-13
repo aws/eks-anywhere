@@ -251,14 +251,23 @@ func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *F
 	return f
 }
 
-// WithDockerLogin performs a docker login with the ENV VARS.
+// dockerLogin performs a docker login with the ENV VARS.
+func dockerLogin(ctx context.Context, registry string, docker executables.DockerClient) error {
+	username, password, _ := config.ReadCredentials()
+	err := docker.Login(ctx, registry, username, password)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// WithDockerLogin adds a docker login to the build steps.
 func (f *Factory) WithDockerLogin() *Factory {
 	f.WithDocker()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.registryMirror != nil {
-			username, password, _ := config.ReadCredentials()
-			err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.BaseRegistry, username, password)
+			err := dockerLogin(ctx, f.registryMirror.BaseRegistry, f.executablesConfig.dockerClient)
 			if err != nil {
 				return err
 			}
@@ -271,15 +280,14 @@ func (f *Factory) WithDockerLogin() *Factory {
 func (f *Factory) WithExecutableBuilder() *Factory {
 	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
+		if f.registryMirror != nil && f.registryMirror.Auth {
+			f.WithDockerLogin()
+		}
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.executablesConfig.builder != nil {
 			return nil
-		}
-
-		if f.registryMirror != nil && f.registryMirror.Auth {
-			f.WithDockerLogin()
 		}
 
 		if f.executablesConfig.useDockerContainer {
@@ -295,7 +303,6 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			if err != nil {
 				return err
 			}
-
 			f.executablesConfig.builder = b
 		} else {
 			f.executablesConfig.builder = executables.NewLocalExecutablesBuilder()
@@ -304,6 +311,13 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		closer, err := f.executablesConfig.builder.Init(ctx)
 		if err != nil {
 			return err
+		}
+		if f.registryMirror != nil && f.registryMirror.Auth {
+			docker := f.executablesConfig.builder.BuildDockerExecutable()
+			err := dockerLogin(ctx, f.registryMirror.BaseRegistry, docker)
+			if err != nil {
+				return err
+			}
 		}
 		f.dependencies.closers = append(f.dependencies.closers, closer)
 
@@ -598,10 +612,6 @@ func (f *Factory) WithWriter() *Factory {
 
 func (f *Factory) WithKind() *Factory {
 	f.WithExecutableBuilder().WithWriter()
-
-	if f.registryMirror != nil && f.registryMirror.Auth {
-		f.WithDockerLogin()
-	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Kind != nil {
