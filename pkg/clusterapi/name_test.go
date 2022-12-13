@@ -327,6 +327,11 @@ func TestEnsureNewNameIfChangedObjectHasNotChanged(t *testing.T) {
 	g.Expect(mt.Name).To(Equal(originalName))
 }
 
+func TestClusterCASecretName(t *testing.T) {
+	g := NewWithT(t)
+	g.Expect(clusterapi.ClusterCASecretName("my-cluster")).To(Equal("my-cluster-ca"))
+}
+
 func dummyRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
 	return dockerMachineTemplate(), nil
 }
