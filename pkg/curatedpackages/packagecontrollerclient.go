@@ -92,9 +92,6 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
 	if pc.registryMirror != nil {
-		if err := pc.CreateRegistryMirrorCredentials(ctx); err != nil {
-			logger.MarkWarning("  Unable to create registry mirror credentials for curated packages: ", "warning", err)
-		}
 		// account is added as part of registry name in package controller helm chart
 		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
 		accountName := "eks-anywhere"
@@ -139,6 +136,10 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		logger.MarkWarning("  Unable to create credentials for curated packages: ", "warning", err)
 	}
 
+	if err := pc.CreateRegistryMirrorCredentials(ctx); err != nil {
+		logger.MarkWarning("  Unable to create registry mirror credentials for curated packages: ", "warning", err)
+	}
+
 	return pc.waitForActiveBundle(ctx)
 }
 
@@ -148,10 +149,10 @@ func (pc *PackageControllerClient) CreateRegistryMirrorCredentials(ctx context.C
 	if err != nil {
 		return err
 	}
-	templateValues := map[string]string{
+	templateValues := map[string]interface{}{
 		"mirrorUsername":      username,
 		"mirrorPassword":      password,
-		"mirrorCACertContent": pc.registryMirror.CACertContent,
+		"mirrorCACertContent": strings.Split(pc.registryMirror.CACertContent, "\n"),
 	}
 	if err := pc.ApplySecret(ctx, registrySecretYaml, templateValues); err != nil {
 		return errors.New("unable to detect registry mirror credentials for curated packages. Artifacts pull may fail due to unauthorized access to the registry mirror")
@@ -264,7 +265,7 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 }
 
 // ApplySecret installs the scret template yaml with provided values.
-func (pc *PackageControllerClient) ApplySecret(ctx context.Context, yaml string, templateValues map[string]string) error {
+func (pc *PackageControllerClient) ApplySecret(ctx context.Context, yaml string, templateValues interface{}) error {
 	result, err := templater.Execute(yaml, templateValues)
 	if err != nil {
 		return fmt.Errorf("replacing template values %v", err)
