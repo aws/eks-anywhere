@@ -141,6 +141,7 @@ func (p *Provider) MachineResourceType() string {
 func (p *Provider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1alpha1.NutanixMachineConfig) error {
 	var generatedKey string
 	for _, machineConfig := range machineConfigs {
+		machineConfig.SetDefaults()
 		user := machineConfig.Spec.Users[0]
 		if user.SshAuthorizedKeys[0] == "" {
 			if generatedKey != "" { // use the same key

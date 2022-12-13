@@ -33,7 +33,7 @@ const (
 	defaultNutanixVCPUSockets      = 2
 
 	// DefaultNutanixMachineConfigUser is the default username we set in machine config.
-	DefaultNutanixMachineConfigUser = "eksa"
+	DefaultNutanixMachineConfigUser string = "eksa"
 )
 
 // NutanixResourceIdentifier holds the identity of a Nutanix Prism resource (cluster, image, subnet, etc.)
@@ -140,19 +140,25 @@ func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig
 }
 
 func setNutanixMachineConfigDefaults(machineConfig *NutanixMachineConfig) {
-	if len(machineConfig.Spec.Users) <= 0 {
-		machineConfig.Spec.Users = []UserConfiguration{{}}
+	var initUser UserConfiguration
+	initUser = UserConfiguration{
+		Name:              DefaultNutanixMachineConfigUser,
+		SshAuthorizedKeys: []string{""},
+	}
+	if machineConfig.Spec.Users == nil || len(machineConfig.Spec.Users) <= 0 {
+		machineConfig.Spec.Users = []UserConfiguration{initUser}
 	}
 
-	if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+	user := machineConfig.Spec.Users[0]
+	if user.Name == "" {
+		machineConfig.Spec.Users[0].Name = DefaultNutanixMachineConfigUser
+	}
+
+	if user.SshAuthorizedKeys == nil || len(user.SshAuthorizedKeys) <= 0 {
 		machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 	}
 
 	if machineConfig.Spec.OSFamily == "" {
 		machineConfig.Spec.OSFamily = defaultNutanixOSFamily
-	}
-
-	if len(machineConfig.Spec.Users) == 0 || machineConfig.Spec.Users[0].Name == "" {
-		machineConfig.Spec.Users[0].Name = DefaultNutanixMachineConfigUser
 	}
 }
