@@ -1286,12 +1286,12 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 		fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
 		ok := strings.Contains(logs, expectedLogs)
 		if !ok {
-			fmt.Errorf("expected to find %s in the log, got %s", expectedLogs, logs)
+			return fmt.Errorf("expected to find %s in the log, got %s", expectedLogs, logs)
 		}
 		return nil
 	})
 	if err != nil {
-		e.T.Fatalf("unable to match logs", err)
+		e.T.Fatalf("unable to finish log comparison: %s", err)
 	}
 }
 
