@@ -54,8 +54,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Sp
 		etcdMachineSpec = *ntb.etcdMachineSpec
 	}
 
-	cpMachineSpec := clusterSpec.NutanixMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	values := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, cpMachineSpec, etcdMachineSpec)
+	values := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -71,8 +70,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Sp
 func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		workerMachineSpec := clusterSpec.NutanixMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
-		values := buildTemplateMapMD(clusterSpec, workerMachineSpec, workerNodeGroupConfiguration)
+		values := buildTemplateMapMD(clusterSpec, ntb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
