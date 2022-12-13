@@ -26,7 +26,7 @@ The `prometheus-server` is pre-configured to scrape the following targets at `1m
 - Kuberenetes nodes cadvisor
 - Kuberenetes service endpoints
 - Kubernetes services
-- kubernetes pods
+- Kubernetes pods
 - prometheus-server itself
 
 If no config modification is needed, a user can proceed to the [Prometheus installation guide]({{< relref "../../../tasks/packages/prometheus" >}}).
