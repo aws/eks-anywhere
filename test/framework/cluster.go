@@ -1273,7 +1273,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
 
-	time.Sleep(15 * time.Second) // Add sleep to allow daemonset to be created
+	time.Sleep(30 * time.Second) // Add sleep to allow daemonset to be created
 	e.T.Log("Waiting for package", packageName, "daemonset to be rolled out")
 	err = e.KubectlClient.WaitForDaemonsetRolledout(ctx,
 		e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace)
