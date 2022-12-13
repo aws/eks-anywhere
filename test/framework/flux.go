@@ -197,15 +197,24 @@ func (e *ClusterE2ETest) upgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
 		e.T.Errorf("Error validating initial state of cluster gitops system: %v", err)
 	}
 
-	for _, opt := range clusterOpts {
-		opt(e)
-	}
-
 	err := e.pullRemoteConfig(ctx)
 	if err != nil {
 		e.T.Errorf("pulling remote configuration: %v", err)
 	}
 
+	e.T.Log("Parsing pulled config from repo into test ClusterConfig")
+	// Read the cluster config we just pulled into e.ClusterConfig
+	e.parseClusterConfigFromLocalGitRepo()
+
+	// Apply the options, these are most of the times fillers, so they will update the
+	// cluster config we just read from the repo. This has to happen after we parse the cluster
+	// config from the repo or we might be updating a different version of the config.
+	for _, opt := range clusterOpts {
+		opt(e)
+	}
+
+	e.T.Log("Updating local cluster config file in git repo for upgrade")
+	// Marshall e.ClusterConfig and write it to the repo path
 	e.buildClusterConfigFileForGit()
 
 	if err := e.pushConfigChanges(ctx); err != nil {
@@ -236,6 +245,15 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
 	e.GitClient = g.Client
+}
+
+func (e *ClusterE2ETest) parseClusterConfigFromLocalGitRepo() {
+	c, err := cluster.ParseConfigFromFile(e.clusterConfigGitPath())
+	if err != nil {
+		e.T.Fatalf("Failed parsing cluster config from git repo: %s", err)
+	}
+
+	e.ClusterConfig = c
 }
 
 func (e *ClusterE2ETest) buildClusterConfigFileForGit() {
