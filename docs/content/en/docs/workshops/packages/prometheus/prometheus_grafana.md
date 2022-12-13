@@ -117,7 +117,7 @@ To ensure the Prometheus package is installed correctly in the cluster, a user c
 
 #### Access prometheus-server web UI
 
-Port forward Grafana to local host `9090`:
+Port forward Prometheus to local host `9090`:
 ```bash
 export PROM_SERVER_POD_NAME=$(kubectl get pods --namespace <namespace> -l "app=prometheus,component=server" -o jsonpath="{.items[0].metadata.name")
 kubectl port-forward $PROM_SERVER_POD_NAME -n <namespace> 9090
