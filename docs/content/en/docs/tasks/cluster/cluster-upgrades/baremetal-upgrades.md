@@ -297,7 +297,7 @@ Example: When this is set to n, the old worker node group can be scaled down by 
 
 When maxSurge is set to 0 and maxUnavailable is set to 1, it allows for a rolling upgrade without need for additional hardware. Use this configuration if your workloads can tolerate node unavailability.
 
->**_NOTE:_** This could ONLY be used if unavailability of a maximum of 1 node is acceptable.
+>**_NOTE:_** This could ONLY be used if unavailability of a maximum of 1 node is acceptable. For single node clusters, an additional temporary machine is a must. Alternatively, you may recreate the single node cluster for upgrading and handle data recovery manually.
 
 With this kind of configuration, the rolling upgrade will proceed node by node, deprovision and delete a node fully before re-provisioning it with upgraded version, and re-join it to the cluster. This means that any point during the course of the rolling upgrade, there could be one unavailable node.
 
