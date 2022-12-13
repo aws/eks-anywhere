@@ -25,7 +25,7 @@ The `prometheus-server` is pre-configured to scrape the following targets at `1m
 - Kuberenetes nodes
 - Kuberenetes nodes cadvisor
 - Kuberenetes service endpoints
-- kubernetes services
+- Kubernetes services
 - kubernetes pods
 - prometheus-server itself
 
