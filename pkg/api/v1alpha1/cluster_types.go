@@ -58,6 +58,17 @@ type ClusterSpec struct {
 	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
 }
 
+// HasAWSIamConfig checks if AWSIamConfig is configured for the cluster.
+func (c *Cluster) HasAWSIamConfig() bool {
+	for _, identityProvider := range c.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == AWSIamConfigKind {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (n *Cluster) Equal(o *Cluster) bool {
 	if n == o {
 		return true

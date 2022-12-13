@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -174,6 +175,31 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "workload-cluster",
+				Namespace: "eksa-system",
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&snowv1.AWSSnowMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "workload-cluster-control-plane-1",
+				Namespace: "eksa-system",
+			},
+		},
+	)
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = "workload-cluster"
+	})
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "workload-cluster-snow-credentials", Namespace: "eksa-system"}})
 }
 
 func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {

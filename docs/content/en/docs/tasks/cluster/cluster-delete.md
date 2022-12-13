@@ -77,6 +77,6 @@ GitOps field not specified, clean up git repo skipped
 🎉 Cluster deleted!
 ```
 
-For vSphere and CloudStack, this will delete all of the VMs that were created in your provider.
+For vSphere, CloudStack, and Nutanix, this will delete all of the VMs that were created in your provider.
 For Bare Metal, the servers will be powered off if BMC information has been provided.
 If your workloads created external resources such as external DNS entries or load balancer endpoints you may need to delete those resources manually.

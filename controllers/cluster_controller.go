@@ -40,17 +40,26 @@ const (
 type ClusterReconciler struct {
 	client                     client.Client
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
+	awsIamAuth                 AWSIamConfigReconciler
 }
 
 type ProviderClusterReconcilerRegistry interface {
 	Get(datacenterKind string) clusters.ProviderClusterReconciler
 }
 
+// AWSIamConfigReconciler manages aws-iam-authenticator installation and configuration for an eks-a cluster.
+type AWSIamConfigReconciler interface {
+	EnsureCASecret(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
+	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
+	ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
+}
+
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler) *ClusterReconciler {
 	return &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
+		awsIamAuth:                 awsIamAuth,
 	}
 }
 
@@ -106,6 +115,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=test,resources=test,verbs=get;list;watch;create;update;patch;delete;kill
 // +kubebuilder:rbac:groups=distro.eks.amazonaws.com,resources=releases,verbs=get;list;watch
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=delete;
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
 	// Fetch the Cluster object
@@ -162,6 +172,16 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 
 	var reconcileResult controller.Result
 	var err error
+
+	reconcileResult, err = r.preClusterProviderReconcile(ctx, log, cluster)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if reconcileResult.Return() {
+		return reconcileResult.ToCtrlResult(), nil
+	}
+
 	if cluster.IsSelfManaged() {
 		// self-managed clusters should only reconcile worker nodes to avoid control plane instability
 		reconcileResult, err = clusterProviderReconciler.ReconcileWorkerNodes(ctx, log, cluster)
@@ -172,7 +192,40 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	if reconcileResult.Return() {
+		return reconcileResult.ToCtrlResult(), nil
+	}
+
+	if reconcileResult, err = r.postClusterProviderReconcile(ctx, log, cluster); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return reconcileResult.ToCtrlResult(), nil
+}
+
+func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	if cluster.HasAWSIamConfig() {
+		if result, err := r.awsIamAuth.EnsureCASecret(ctx, log, cluster); err != nil {
+			return controller.Result{}, err
+		} else if result.Return() {
+			return result, nil
+		}
+	}
+
+	return controller.Result{}, nil
+}
+
+func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	if cluster.HasAWSIamConfig() {
+		if result, err := r.awsIamAuth.Reconcile(ctx, log, cluster); err != nil {
+			return controller.Result{}, err
+		} else if result.Return() {
+			return result, nil
+		}
+	}
+
+	return controller.Result{}, nil
 }
 
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
@@ -213,6 +266,13 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 		return ctrl.Result{}, err
 
 	}
+
+	if cluster.HasAWSIamConfig() {
+		if err := r.awsIamAuth.ReconcileDelete(ctx, log, cluster); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 

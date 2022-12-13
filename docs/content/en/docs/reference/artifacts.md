@@ -9,7 +9,7 @@ description: >
 EKS Anywhere supports three different node operating systems:
 
 * Bottlerocket: For vSphere and Bare Metal providers
-* Ubuntu: For vSphere and Bare Metal providers
+* Ubuntu: For vSphere, Bare Metal, and Nutanix providers
 * Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, and Bare Metal providers
 
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
@@ -117,19 +117,20 @@ export KUBEVERSION="1.23"
 
 ## Building node images
 
-The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs, RHEL-based qcow2 images, or Bare Metal gzip images to use in EKS Anywhere clusters.
+The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs, Nutanix qcow2 images, RHEL-based qcow2 images, or Bare Metal gzip images to use in EKS Anywhere clusters.
 When you run `image-builder` it will pull in all components needed to create images to use for nodes in an EKS Anywhere cluster, including the lastest operating system, Kubernetes, and EKS Distro security updates, bug fixes, and patches.
 With this tool, when you build an image you get to choose:
 
 * Operating system type (for example, ubuntu)
-* Provider (vsphere, cloudstack, baremetal, ami)
+* Provider (vsphere, cloudstack, baremetal, ami, nutanix)
 * Release channel for EKS Distro (generally aligning with Kubernetes releases)
 * vSphere only: configuration file providing information needed to access your vSphere setup
 * CloudStack only: configuration file providing information needed to access your Cloudstack setup
 * AMI only: configuration file providing information needed to customize your AMI build parameters
+* Nutanix only: configuration file providing information needed to access Prism Central
 
 Because `image-builder` creates images in the same way that the EKS Anywhere project does for their own testing, images built with that tool are supported.
-The following procedure describes how to use `image-builder` to build images for EKS Anywhere on a vSphere or Bare Metal provider.
+The following procedure describes how to use `image-builder` to build images for EKS Anywhere on a vSphere, Bare Metal, or Nutanix provider.
 
 ### Prerequisites
 
@@ -145,6 +146,7 @@ To use `image-builder` you must meet the following prerequisites:
 * Network access to:
   * vCenter endpoint (vSphere only)
   * CloudStack endpoint (CloudStack only)
+  * Prism Central endpoint (Nutanix only)
   * public.ecr.aws (to download container images from EKS Anywhere)
   * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)
   * distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
@@ -182,6 +184,7 @@ To use `image-builder` you must meet the following prerequisites:
       * Assign network to vm
 * CloudStack only: See [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) for required CloudStack user permissions.
 * AMI only: Packer will require prior authentication with your AWS account to launch EC2 instances for the AMI build. See [Authentication guide for Amazon EBS Packer builder](https://developer.hashicorp.com/packer/plugins/builders/amazon#authentication) for possible modes of authentication. We recommend that you run `image-builder` on a pre-existing Ubuntu EC2 instance and use an [IAM instance role with the required permissions](https://developer.hashicorp.com/packer/plugins/builders/amazon#iam-task-or-instance-role).
+* Nutanix only: Prism Admin permissions
 
 ### Optional Proxy configuration
 You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
@@ -219,6 +222,10 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
+   ```
+1. Get the latest version of `govc`:
+   ```
+   curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
    ```
 1. Create a content library on vSphere:
    ```
@@ -488,6 +495,64 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    EXPORT_TASK_ID=$(echo $EXPORT_RESPONSE | jq -r '.ExportImageTaskId')
    ```
    The exported image will be available at the location `s3://$AMI_EXPORT_BUCKET_NAME/$AMI_EXPORT_PREFIX/$EXPORT_IMAGE_TASK_ID.raw`.
+
+### Build Nutanix node images
+
+These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV and import it into the AOS Image Service.
+
+1. Download an [Ubuntu cloud image](https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img) for the build and upload it to the AOS Image Service using Prism. You will need to specify this image name as the `source_image_name` in the `nutanix-connection.json` config file specified below.
+
+1. Create a linux user for running image-builder.
+   ```bash
+   sudo adduser image-builder
+   ```
+   Follow the prompt to provide a password for the image-builder user.
+1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
+   ```bash
+   sudo usermod -aG sudo image-builder
+   su image-builder
+   ```
+1. Install packages and prepare environment:
+   ```bash
+   sudo apt update -y
+   sudo apt install jq unzip make ansible -y
+   sudo snap install yq
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   ```
+1. Get `image-builder`:
+    ```bash
+    cd /home/$USER
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    sudo tar xvf image-builder*.tar.gz
+    sudo cp image-builder /usr/local/bin
+    ```
+1. Create a `nutanix-connection.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
+   ```json
+   {
+     "nutanix_cluster_name": "Name of PE Cluster",
+     "source_image_name": "Name of Source Image",
+     "image_name": "Name of Destination Image",
+     "nutanix_subnet_name": "Name of Subnet",
+     "nutanix_endpoint": "Prism Central IP / FQDN",
+     "nutanix_insecure": "false",
+     "nutanix_port": "9440",
+     "nutanix_username": "PrismCentral_Username",
+     "nutanix_password": "PrismCentral_Password"
+   }
+   ```
+
+1. Run `image-builder` with the following options:
+
+      * `--os`: `ubuntu`
+      * `--hypervisor`: For Nutanix use `nutanix`
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, and 1-24.
+      * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
+
+      ```bash
+      cd /home/$USER
+      image-builder build --os ubuntu --hypervisor nutanix --nutanix-config nutanix-connection.json --release-channel 1-24
+      ```
 
 ## Images
 

@@ -96,3 +96,13 @@ func SetBottlerocketInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *c
 		PauseImage:     versionsBundle.KubeDistro.Pause.VersionedImage(),
 	}
 }
+
+// SetBottlerocketAdminContainerImageInEtcdCluster overrides the default bottlerocket admin container image metadata in etcdadmCluster.
+func SetBottlerocketAdminContainerImageInEtcdCluster(etcd *etcdv1.EtcdadmCluster, adminImage v1alpha1.Image) {
+	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig.AdminImage = adminImage.VersionedImage()
+}
+
+// SetBottlerocketControlContainerImageInEtcdCluster overrides the default bottlerocket control container image metadata in etcdadmCluster.
+func SetBottlerocketControlContainerImageInEtcdCluster(etcd *etcdv1.EtcdadmCluster, controlImage v1alpha1.Image) {
+	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig.ControlImage = controlImage.VersionedImage()
+}

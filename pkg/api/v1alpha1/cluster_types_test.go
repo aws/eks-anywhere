@@ -1852,3 +1852,46 @@ func TestNodes_Equal(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterHasAWSIamConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *v1alpha1.Cluster
+		want    bool
+	}{
+		{
+			name: "has AWSIamConfig",
+			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-cluster",
+					Namespace: "eksa-system",
+				},
+				Spec: v1alpha1.ClusterSpec{
+					IdentityProviderRefs: []v1alpha1.Ref{
+						{
+							Name: "aws-config",
+							Kind: "AWSIamConfig",
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "no AWSIamConfig",
+			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-cluster",
+					Namespace: "eksa-system",
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.HasAWSIamConfig()).To(Equal(tt.want))
+		})
+	}
+}
