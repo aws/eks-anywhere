@@ -97,7 +97,7 @@ The following config allows the user to do such customization:
 
 A user may disable the node-exporter when:
 - they would like to deploy multiple prometheus-server packages for a cluster, while
-- deploy only one or none node-exporter instance per node.
+- deploying only one or none node-exporter instance per node.
 
 The following config allows the user to do such customization:
 ```yaml
