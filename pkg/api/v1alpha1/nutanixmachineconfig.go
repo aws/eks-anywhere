@@ -140,8 +140,7 @@ func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig
 }
 
 func setNutanixMachineConfigDefaults(machineConfig *NutanixMachineConfig) {
-	var initUser UserConfiguration
-	initUser = UserConfiguration{
+	initUser := UserConfiguration{
 		Name:              DefaultNutanixMachineConfigUser,
 		SshAuthorizedKeys: []string{""},
 	}
