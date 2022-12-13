@@ -68,6 +68,10 @@ func NewProvider(
 	httpClient *http.Client,
 	now types.NowFunc,
 ) *Provider {
+	for _, machineConfig := range machineConfigs {
+		machineConfig.SetDefaults()
+	}
+
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -138,9 +142,9 @@ func (p *Provider) MachineResourceType() string {
 	return eksaNutanixMachineResourceType
 }
 
-func (p *Provider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1alpha1.NutanixMachineConfig) error {
+func (p *Provider) generateSSHKeysIfNotSet() error {
 	var generatedKey string
-	for _, machineConfig := range machineConfigs {
+	for _, machineConfig := range p.machineConfigs {
 		user := machineConfig.Spec.Users[0]
 		if user.SshAuthorizedKeys[0] == "" {
 			if generatedKey != "" { // use the same key
@@ -192,7 +196,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		}
 	}
 
-	if err := p.generateSSHKeysIfNotSet(clusterSpec.NutanixMachineConfigs); err != nil {
+	if err := p.generateSSHKeysIfNotSet(); err != nil {
 		return fmt.Errorf("failed to generate ssh key: %v", err)
 	}
 
