@@ -270,6 +270,15 @@ govulncheck: ## Download and install govulncheck
 govulncheck:
 	$(call go-get-tool,$(GO_VULNCHECK),golang.org/x/vuln/cmd/govulncheck@latest)
 
+LS_FILES_CMD = git ls-files --exclude-standard | grep '\.go$$' | grep -v '/mocks/\|zz_generated\.'
+
+$(TOOLS_BIN_DIR)/gci:
+	GOBIN=$(TOOLS_BIN_DIR) $(GO) install github.com/daixiang0/gci@v0.8.0
+
+.PHONY: run-gci
+run-gci: $(TOOLS_BIN_DIR)/gci ## Run gci against code.
+	$(LS_FILES_CMD) | xargs $(TOOLS_BIN_DIR)/gci write --skip-generated -s standard,default -s "prefix($(shell go list -m))"
+
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
 
