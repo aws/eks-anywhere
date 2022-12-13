@@ -1,10 +1,10 @@
 ---
-title: "Upgrade vSphere or CloudStack cluster"
-linkTitle: "Upgrade vSphere or CloudStack cluster"
+title: "Upgrade vSphere, CloudStack, or Nutanix cluster"
+linkTitle: "Upgrade vSphere, CloudStack, or Nutanix cluster"
 weight: 20
 date: 2017-01-05
 description: >
-  How to perform a cluster upgrade for vSphere or CloudStack cluster
+  How to perform a cluster upgrade for vSphere, CloudStack, or Nutanix cluster
 ---
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
@@ -182,7 +182,6 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
 - `gitOpsRef` (Once set, you can't change or delete the field's content later)
 
-
 `VSphereMachineConfig`:
 - `datastore`
 - `diskGiB`
@@ -192,6 +191,15 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `resourcePool`
 - `template`
 - `users`
+
+`NutanixMachineConfig`:
+- `VCPUsPerSocket`
+- `VCPUSockets`
+- `MemorySize`
+- `Image`
+- `Cluster`
+- `Subnet`
+- `SystemDiskSize`
 
 `OIDCConfig`:
 - `clientID`
