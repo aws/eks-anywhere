@@ -168,7 +168,7 @@ A user can install Grafana in the cluster to visualize the Prometheus metrics. W
     ```
 
 1. Go to [http://localhost:3000](http://localhost:3000) to access the web UI.
-    Log in with username `admin`, and password obtained from the Obtain Grafana login password step 1 above.
+    Log in with username `admin`, and password obtained from the Obtain Grafana login password in step 1 above.
 
 ### Add Prometheus data source
 
