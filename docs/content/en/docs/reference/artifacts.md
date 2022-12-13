@@ -223,6 +223,10 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
+1. Get the latest version of `govc`:
+   ```
+   curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
+   ```
 1. Create a content library on vSphere:
    ```
    govc library.create "<library name>"
