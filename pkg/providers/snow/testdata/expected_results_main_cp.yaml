@@ -141,11 +141,9 @@ spec:
       proxy: {}
       registryMirror: {}
     postKubeadmCommands:
-    - /etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433
-      1.2.3.4
+    - /etc/eks/bootstrap.sh
     preKubeadmCommands:
-    - /etc/eks/bootstrap.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433
-      1.2.3.4
+    - /etc/eks/bootstrap.sh
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
