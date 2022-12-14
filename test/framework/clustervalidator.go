@@ -20,7 +20,7 @@ type validationOpt struct {
 	validate clusterValidation
 }
 
-// ClusterValidator is responsible for validating a cluster.
+// ClusterValidator is responsible for checking if a cluster is valid against the cluster config that is provided.
 type ClusterValidator struct {
 	clusterConfig *cluster.Config
 	client        client.Client
