@@ -37,7 +37,7 @@ func (c *ClusterValidator) withValidation(validate clusterValidation, timeout ti
 // ValidateCluster runs through the set clusterValidations returns an error if any of them fail after a number of retries.
 func (c *ClusterValidator) ValidateCluster() error {
 	for _, validation := range c.validations {
-		err := retrier.Retry(10, validation.timeout, func() error {
+		err := retrier.New(validation.timeout).Retry(func() error {
 			return validation.validate(c.client, c.clusterConfig)
 		})
 
