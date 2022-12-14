@@ -180,7 +180,11 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
 1. Create a workload cluster in one of the following ways:
    
-   * **GitOps**: Recommended for more permanent cluster configurations. See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for details.
+   * **GitOps**: Recommended for more permanent cluster configurations. Be sure to:
+      * Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
+      * Add a `kustomization.yaml` file to the management cluster directory (under the namespace directory).
+
+      See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for details.
    * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, run:
       ```bash
       eksctl anywhere create cluster \
@@ -190,7 +194,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
       ```
       As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
-1. To check the workload cluster, get the workload cluster credentials and run a [test workload]({{< relref "../../tasks/workload/test-app" >}}):
+1. To check the workload cluster, get the workload cluster credentials and run a [test workload:]({{< relref "../../tasks/workload/test-app" >}})
 
    * If your workload cluster was created with `eksctl`, 
       change your credentials to point to the new workload cluster (for example, `mgmt-w01`), then run the test application with:
