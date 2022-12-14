@@ -27,6 +27,29 @@ type ClusterValidator struct {
 	validations   []validationOpt
 }
 
+func (c *ClusterValidator) withValidation(validate clusterValidation, timeout time.Duration) {
+	c.validations = append(c.validations, validationOpt{
+		timeout:  timeout,
+		validate: validate,
+	})
+}
+
+// ValidateCluster runs through the set clusterValidations returns an error if any of them fail after a number of retries.
+func (c *ClusterValidator) ValidateCluster() error {
+	for _, validation := range c.validations {
+		err := retrier.Retry(10, validation.timeout, func() error {
+			return validation.validate(c.client, c.clusterConfig)
+		})
+
+		if err != nil {
+			return fmt.Errorf("validation faild %v", err)
+		}
+
+	}
+
+	return nil
+}
+
 // NewDefaultClusterValidator returns a cluster validator pre-loaded with validations by default.
 func NewDefaultClusterValidator(client client.Client, config *cluster.Config) ClusterValidator {
 	cv := ClusterValidator{
@@ -65,28 +88,5 @@ func validateControlPlaneNodes(c client.Client, clusterConfig *cluster.Config) e
 	}
 
 	// TODO: Validate contents of each node.
-	return nil
-}
-
-func (c *ClusterValidator) withValidation(validate clusterValidation, timeout time.Duration) {
-	c.validations = append(c.validations, validationOpt{
-		timeout:  timeout,
-		validate: validate,
-	})
-}
-
-// ValidateCluster runs through the set clusterValidations returns an error if any of them fail after a number of retries.
-func (c *ClusterValidator) ValidateCluster() error {
-	for _, validation := range c.validations {
-		err := retrier.Retry(10, validation.timeout, func() error {
-			return validation.validate(c.client, c.clusterConfig)
-		})
-
-		if err != nil {
-			return fmt.Errorf("validation faild %v", err)
-		}
-
-	}
-
 	return nil
 }
