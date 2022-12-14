@@ -1,0 +1,35 @@
+package registry
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCredentialStore_Init(t *testing.T) {
+	credentialStore := NewCredentialStore("testdata")
+
+	err := credentialStore.Init()
+	assert.NoError(t, err)
+
+	result, err := credentialStore.Credential("localhost")
+	assert.NoError(t, err)
+	assert.Equal(t, "user", result.Username)
+	assert.Equal(t, "pass", result.Password)
+	assert.Equal(t, "", result.AccessToken)
+	assert.Equal(t, "", result.RefreshToken)
+
+	result, err = credentialStore.Credential("harbor.eksa.demo:30003")
+	assert.NoError(t, err)
+	assert.Equal(t, "captain", result.Username)
+	assert.Equal(t, "haddock", result.Password)
+	assert.Equal(t, "", result.AccessToken)
+	assert.Equal(t, "", result.RefreshToken)
+
+	result, err = credentialStore.Credential("bogus")
+	assert.NoError(t, err)
+	assert.Equal(t, "", result.Username)
+	assert.Equal(t, "", result.Password)
+	assert.Equal(t, "", result.AccessToken)
+	assert.Equal(t, "", result.RefreshToken)
+}

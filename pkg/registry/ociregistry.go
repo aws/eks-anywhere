@@ -25,6 +25,7 @@ type OCIRegistryClient struct {
 	Project     string
 	CertFile    string
 	Insecure    bool
+	DryRun      bool
 	initialized bool
 	registry    *remote.Registry
 }
@@ -77,7 +78,7 @@ func (or *OCIRegistryClient) Init() error {
 	}
 	authClient.SetUserAgent("eksa")
 	authClient.Credential = func(ctx context.Context, s string) (auth.Credential, error) {
-		return credentialStore.Credential(ctx, s)
+		return credentialStore.Credential(s)
 	}
 	or.registry.Client = authClient
 	return nil
@@ -149,6 +150,9 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image releasev1.Image, ds
 	}
 
 	fmt.Println(dstClient.Destination(image))
+	if or.DryRun {
+		return
+	}
 	err = oras.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
 	if err != nil {
 		return fmt.Errorf("copyGraph: %v", err)

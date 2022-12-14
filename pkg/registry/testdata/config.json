@@ -1,0 +1,10 @@
+{
+    "auths": {
+        "localhost": {
+            "auth": "dXNlcjpwYXNz"
+        },
+        "harbor.eksa.demo:30003": {
+            "auth": "Y2FwdGFpbjpoYWRkb2Nr"
+        }
+    }
+}

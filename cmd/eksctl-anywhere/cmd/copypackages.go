@@ -81,11 +81,10 @@ func (c CopyPackagesCommand) call(ctx context.Context) error {
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 
 	c.registryCache = registry.NewCache()
-	dstRegistry, err := c.registryCache.Get(c.destination, c.dstCert, c.insecure)
+	c.dstRegistry, err = c.registryCache.Get(c.destination, c.dstCert, c.insecure)
 	if err != nil {
 		return fmt.Errorf("error with repository %s: %v", c.destination, err)
 	}
-	c.dstRegistry = *dstRegistry
 
 	err = c.copyImages(ctx, imageList)
 	if err != nil {
@@ -112,7 +111,7 @@ func (c CopyPackagesCommand) copyImages(ctx context.Context, imageList []release
 			continue
 		}
 
-		err = (*srcRegistry).Copy(ctx, image, c.dstRegistry)
+		err = srcRegistry.Copy(ctx, image, c.dstRegistry)
 		if err != nil {
 			return err
 		}

@@ -15,7 +15,7 @@ func NewCache() *Cache {
 }
 
 // Get cached registry client or make it.
-func (cache *Cache) Get(host string, certFile string, insecure bool) (*StorageClient, error) {
+func (cache *Cache) Get(host string, certFile string, insecure bool) (StorageClient, error) {
 	aClient, found := cache.registries[host]
 	if !found {
 		aClient = NewOCIRegistry(host, certFile, insecure)
@@ -25,5 +25,5 @@ func (cache *Cache) Get(host string, certFile string, insecure bool) (*StorageCl
 		}
 		cache.registries[host] = aClient
 	}
-	return &aClient, nil
+	return aClient, nil
 }

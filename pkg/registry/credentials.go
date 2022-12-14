@@ -1,8 +1,6 @@
 package registry
 
 import (
-	"context"
-
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/credentials"
@@ -16,9 +14,13 @@ type CredentialStore struct {
 }
 
 // NewCredentialStore create a create store.
-func NewCredentialStore() CredentialStore {
+func NewCredentialStore(args ...string) CredentialStore {
+	directory := config.Dir()
+	if len(args) > 0 {
+		directory = args[0]
+	}
 	return CredentialStore{
-		directory: config.Dir(),
+		directory: directory,
 	}
 }
 
@@ -35,7 +37,7 @@ func (cs *CredentialStore) Init() (err error) {
 }
 
 // Credential get an authentication credential for a given registry.
-func (cs *CredentialStore) Credential(_ context.Context, registry string) (auth.Credential, error) {
+func (cs *CredentialStore) Credential(registry string) (auth.Credential, error) {
 	authConf, err := cs.configFile.GetCredentialsStore(registry).Get(registry)
 	if err != nil {
 		return auth.EmptyCredential, err
