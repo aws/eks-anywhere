@@ -182,7 +182,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    
    * **GitOps**: Recommended for more permanent cluster configurations. Be sure to:
       * Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
-      * Add a `kustomization.yaml` file to the management cluster directory (under the namespace directory).
+      * Make sure this is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating the management cluster with `eksctl` should create the `kustomication.yaml` file automatically.
 
       See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for details.
    * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, run:
