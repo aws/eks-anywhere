@@ -39,6 +39,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
   name: my-cluster-name
+  namespace: default
 spec:
   ...
   #GitOps Support
@@ -50,6 +51,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: FluxConfig
 metadata:
   name: my-github-flux-provider
+  namespace: default
 spec:
   systemNamespace: "my-alternative-flux-system-namespace"
   clusterConfigPath: "path-to-my-clusters-config"
@@ -118,6 +120,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
   name: my-cluster-name
+  namespace: default
 spec:
   ...
   #GitOps Support
@@ -129,6 +132,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: FluxConfig
 metadata:
   name: my-git-flux-provider
+  namespace: default
 spec:
   systemNamespace: "my-alternative-flux-system-namespace"
   clusterConfigPath: "path-to-my-clusters-config"
@@ -166,6 +170,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
   name: my-cluster-name
+  namespace: default
 spec:
   ...
   #GitOps Support
@@ -177,6 +182,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: GitOpsConfig
 metadata:
   name: my-gitops
+  namespace: default
 spec:
   flux:
     github:
