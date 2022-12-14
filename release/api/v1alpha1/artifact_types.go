@@ -73,6 +73,38 @@ func (i Image) ChartName() string {
 	return chart
 }
 
+func (i *Image) Registry() string {
+	result := strings.Split(i.URI, "/")
+	if len(result) < 1 {
+		return ""
+	}
+	return result[0]
+}
+
+func (i *Image) Repository() string {
+	result := strings.Split(i.URI, "@")
+	if len(result) < 2 {
+		result = strings.Split(i.URI, ":")
+		if len(result) < 2 {
+			return ""
+		}
+		return strings.TrimPrefix(result[0], i.Registry()+"/")
+	}
+	return strings.TrimPrefix(result[0], i.Registry()+"/")
+}
+
+func (i *Image) Version() string {
+	result := strings.Split(i.URI, "@")
+	if len(result) < 2 {
+		result = strings.Split(i.URI, ":")
+		if len(result) < 2 {
+			return ""
+		}
+		return result[1]
+	}
+	return result[1]
+}
+
 type Archive struct {
 	// +kubebuilder:validation:Required
 	// The asset name

@@ -47,7 +47,9 @@ require (
 	k8s.io/apimachinery v0.25.4
 	k8s.io/apiserver v0.25.2
 	k8s.io/client-go v0.25.4
+	k8s.io/helm v2.17.0+incompatible
 	oras.land/oras-go v1.2.0
+	oras.land/oras-go/v2 v2.0.0-rc.5
 	sigs.k8s.io/cluster-api v1.2.0
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
@@ -153,7 +155,7 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
