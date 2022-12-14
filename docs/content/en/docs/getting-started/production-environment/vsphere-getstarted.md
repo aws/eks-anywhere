@@ -123,9 +123,9 @@ Make sure you use single quotes around the values so that your shell does not in
    Example command output
    ```
    NAMESPACE   NAME                PROVIDERID        PHASE    VERSION
-   eksa-system mgmt-b2xyz          vsphere:/xxxxx    Running  v1.21.2-eks-1-21-5
+   eksa-system mgmt-b2xyz          vsphere:/xxxxx    Running  v1.24.2-eks-1-24-5
    eksa-system mgmt-etcd-r9b42     vsphere:/xxxxx    Running  
-   eksa-system mgmt-md-8-6xr-rnr   vsphere:/xxxxx    Running  v1.21.2-eks-1-21-5
+   eksa-system mgmt-md-8-6xr-rnr   vsphere:/xxxxx    Running  v1.24.2-eks-1-24-5
    ...
    ```
 
@@ -142,7 +142,7 @@ Make sure you use single quotes around the values so that your shell does not in
    Example command output
    ```
    ...
-   kubernetesVersion: "1.21"
+   kubernetesVersion: "1.24"
    managementCluster:
      name: mgmt
    workerNodeGroupConfigurations:
@@ -167,7 +167,8 @@ Follow these steps if you want to use your initial cluster to create and manage 
    ```
 
    Refer to the initial config described earlier for the required and optional settings.
-   Ensure workload cluster object names (`Cluster`, `vSphereDatacenterConfig`, `vSphereMachineConfig`, etc.) are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
+
+   >**NOTE**: Ensure workload cluster object names (`Cluster`, `vSphereDatacenterConfig`, `vSphereMachineConfig`, etc.) are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
 
 1. Set License Environment Variable
 
@@ -177,35 +178,35 @@ Follow these steps if you want to use your initial cluster to create and manage 
    export EKSA_LICENSE='my-license-here'
    ```
 
-1. Create a workload cluster
+1. Create a workload cluster in one of the following ways:
+   
+   * **GitOps**: Recommended for more permanent cluster configurations. See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for details.
+   * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, run:
+      ```bash
+      eksctl anywhere create cluster \
+          -f eksa-w01-cluster.yaml  \
+          # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+          --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+      ```
+      As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
-   To create a new workload cluster from your management cluster run this command, identifying:
+1. To check the workload cluster, get the workload cluster credentials and run a [test workload]({{< relref "../../tasks/workload/test-app" >}}):
 
-   * The workload cluster YAML file
-   * The initial cluster's credentials (this causes the workload cluster to be managed from the management cluster)
+   * If your workload cluster was created with `eksctl`, 
+      change your credentials to point to the new workload cluster (for example, `mgmt-w01`), then run the test application with:
 
-   ```bash
-   eksctl anywhere create cluster \
-       -f eksa-w01-cluster.yaml  \
-       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
-       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
-   ```
+      ```bash
+      export CLUSTER_NAME=mgmt-w01
+      export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+      kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
+      ```
 
-   As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
-
-1. Check the workload cluster:
-
-   You can now use the workload cluster as you would any Kubernetes cluster.
-   Change your credentials to point to the new workload cluster (for example, `mgmt-w01`), then run the test application with:
-
-   ```bash
-   export CLUSTER_NAME=mgmt-w01
-   export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-   kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
-   ```
-
-   Verify the test application in the [deploy test application section.]({{< relref "../../tasks/workload/test-app" >}})
-
+   * If your workload cluster was created with GitOps, you can get credentials and run the test application as follows:
+      ```bash
+      kubectl get secret -n eksa-system mgmt-w01-kubeconfig -o jsonpath=‘{.data.value}' | base64 —decode > mgmt-w01.kubeconfig
+      export KUBECONFIG=mgmt-w01.kubeconfig
+      kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
+      ```
 1. Add more workload clusters:
 
    To add more workload clusters, go through the same steps for creating the initial workload, copying the config file to a new name (such as `eksa-w02-cluster.yaml`), modifying resource names, and running the create cluster command again.
@@ -214,3 +215,17 @@ Follow these steps if you want to use your initial cluster to create and manage 
 * See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
 
 * See the [Package management]({{< relref "../../tasks/packages" >}}) section for more information on post-creation curated packages installation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
