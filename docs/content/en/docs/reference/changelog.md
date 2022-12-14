@@ -18,7 +18,6 @@ weight: 35
 - Support for private registry authentication
 - Workload clusters support for Bare Metal
 - VM Tagging support for vSphere VM's created in the cluster
-- Static IP support for Bottlerocket OS in Bare Metal
 - Support for new curated packages:
   - Prometheus `v2.39.1`
 - Updated curated packages' versions:
