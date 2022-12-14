@@ -170,9 +170,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				PreKubeadmCommands: []string{
 					"/etc/eks/bootstrap.sh",
 				},
-				PostKubeadmCommands: []string{
-					"/etc/eks/bootstrap.sh",
-				},
+				PostKubeadmCommands: []string{},
 				Files: []bootstrapv1.File{
 					{
 						Path:    "/etc/kubernetes/manifests/kube-vip.yaml",
@@ -437,6 +435,7 @@ func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{}
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketAdmin = admin
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketControl = control
@@ -530,6 +529,7 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{}
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketAdmin = admin
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketControl = control
@@ -545,24 +545,6 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 			g.Expect(got).To(Equal(want))
 		})
 	}
-}
-
-func wantContainersVolumeCommands() []string {
-	return []string{
-		"/etc/eks/bootstrap-volume.sh",
-	}
-}
-
-func TestKubeadmControlPlaneWithContainersVolume(t *testing.T) {
-	g := newApiBuilerTest(t)
-	cpMachineConfig := g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	cpMachineConfig.Spec.ContainersVolume = &snowv1.Volume{Size: 8}
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", cpMachineConfig)
-	got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
-	g.Expect(err).To(Succeed())
-	want := wantKubeadmControlPlane()
-	want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantContainersVolumeCommands()...)
-	g.Expect(got).To(Equal(want))
 }
 
 func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
@@ -606,14 +588,13 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 	}
 }
 
-func TestKubeadmConfigTemplateWithContainersVolume(t *testing.T) {
+func TestKubeadmConfigTemplate(t *testing.T) {
 	g := newApiBuilerTest(t)
 	workerNodeGroupConfig := g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
 	g.clusterSpec.SnowMachineConfigs["test-wn"].Spec.ContainersVolume = &snowv1.Volume{Size: 8}
 	got, err := snow.KubeadmConfigTemplate(g.logger, g.clusterSpec, workerNodeGroupConfig)
 	g.Expect(err).To(Succeed())
 	want := wantKubeadmConfigTemplate()
-	want.Spec.Template.Spec.PreKubeadmCommands = append(want.Spec.Template.Spec.PreKubeadmCommands, wantContainersVolumeCommands()...)
 	g.Expect(got).To(Equal(want))
 }
 
@@ -748,6 +729,7 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 	wantAMIID := "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea"
 	wantSSHKey := "default"
 	wantPhysicalNetworkConnector := "SFP_PLUS"
+	osFamily := snowv1.Ubuntu
 	return &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
@@ -774,6 +756,16 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 						"1.2.3.4",
 						"1.2.3.5",
 					},
+					OSFamily: &osFamily,
+					Network: &snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -791,12 +783,12 @@ func TestSnowMachineTemplate(t *testing.T) {
 
 func TestSnowMachineTemplateWithNetwork(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	network := &snowv1.AWSSnowNetwork{
+	network := snowv1.AWSSnowNetwork{
 		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
 			{
 				Index: 1,
 				DHCP:  false,
-				IPPool: snowv1.AWSSnowIPPool{
+				IPPool: &snowv1.AWSSnowIPPool{
 					Spec: snowv1.AWSSnowIPPoolSpec{
 						IPPools: []snowv1.IPPool{
 							{
@@ -817,7 +809,7 @@ func TestSnowMachineTemplateWithNetwork(t *testing.T) {
 	want := wantSnowMachineTemplate()
 	want.SetName("snow-test-control-plane-1")
 	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
-	want.Spec.Template.Spec.Network = network
+	want.Spec.Template.Spec.Network = &network
 	tt.Expect(got).To(Equal(want))
 }
 

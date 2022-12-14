@@ -46,20 +46,6 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 	joinConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
-	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
-		"/etc/eks/bootstrap.sh",
-	)
-
-	if snowMachineTemplate.Spec.Template.Spec.ContainersVolume != nil {
-		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
-			"/etc/eks/bootstrap-volume.sh",
-		)
-	}
-
-	kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands,
-		"/etc/eks/bootstrap.sh",
-	)
-
 	addStackedEtcdExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
 
 	osFamily := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name).OSFamily()
@@ -74,6 +60,10 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		addBottlerocketBootstrapSnowInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
 	case v1alpha1.Ubuntu:
+		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
+			"/etc/eks/bootstrap.sh",
+		)
+
 		if err := clusterapi.SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster); err != nil {
 			return nil, err
 		}
@@ -101,16 +91,6 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
-	kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
-		"/etc/eks/bootstrap.sh",
-	)
-
-	if clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name).Spec.ContainersVolume != nil {
-		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
-			"/etc/eks/bootstrap-volume.sh",
-		)
-	}
-
 	osFamily := clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name).OSFamily()
 	switch osFamily {
 	case v1alpha1.Bottlerocket:
@@ -122,6 +102,10 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 		addBottlerocketBootstrapSnowInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
 
 	case v1alpha1.Ubuntu:
+		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
+			"/etc/eks/bootstrap.sh",
+		)
+
 		if err := clusterapi.SetProxyConfigInKubeadmConfigTemplateForUbuntu(kct, clusterSpec.Cluster); err != nil {
 			return nil, err
 		}
@@ -259,7 +243,8 @@ func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig)
 					PhysicalNetworkConnectorType: &networkConnector,
 					Devices:                      machineConfig.Spec.Devices,
 					ContainersVolume:             machineConfig.Spec.ContainersVolume,
-					Network:                      machineConfig.Spec.Network,
+					Network:                      &machineConfig.Spec.Network,
+					OSFamily:                     (*snowv1.OSFamily)(&machineConfig.Spec.OSFamily),
 				},
 			},
 		},

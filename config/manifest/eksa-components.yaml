@@ -5423,6 +5423,10 @@ spec:
                 type: string
               storagePolicyName:
                 type: string
+              tags:
+                items:
+                  type: string
+                type: array
               template:
                 type: string
               users:

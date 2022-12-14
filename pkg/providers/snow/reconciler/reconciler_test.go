@@ -476,6 +476,7 @@ func snowMachineConfig(opts ...snowMachineOpt) *anywherev1.SnowMachineConfig {
 		},
 		Spec: anywherev1.SnowMachineConfigSpec{
 			PhysicalNetworkConnector: anywherev1.SFPPlus,
+			OSFamily:                 anywherev1.Ubuntu,
 		},
 	}
 
