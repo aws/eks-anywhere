@@ -7,14 +7,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type clusterValidation = func() error
+type clusterValidation = func(client client.Client, config *cluster.Config) error
+
 type validationOpt struct {
 	timeout  time.Duration
 	validate clusterValidation
@@ -34,19 +34,17 @@ func NewDefaultClusterValidator(client client.Client, config *cluster.Config) Cl
 		client:        client,
 	}
 
-	cv.withValidation(cv.validateObjects, 5*time.Minute)
-	cv.withValidation(func() error {
-		return cv.validateControlPlaneNodes()
-	}, 5*time.Minute)
+	cv.withValidation(validateObjects, 5*time.Minute)
+	cv.withValidation(validateControlPlaneNodes, 5*time.Minute)
 	return cv
 }
 
-func (c *ClusterValidator) validateObjects() error {
+func validateObjects(c client.Client, clusterConfig *cluster.Config) error {
 	ctx := context.Background()
 
-	for _, obj := range c.clusterConfig.ChildObjects() {
+	for _, obj := range clusterConfig.ChildObjects() {
 		u := &unstructured.Unstructured{}
-		err := c.client.Get(ctx, client.ObjectKeyFromObject(obj), u)
+		err := c.Get(ctx, client.ObjectKeyFromObject(obj), u)
 
 		if err != nil {
 			return fmt.Errorf("cluster object does not exist %s", err)
@@ -56,43 +54,32 @@ func (c *ClusterValidator) validateObjects() error {
 	return nil
 }
 
-type controlPlaneNodeValidation func(configuration v1alpha1.ControlPlaneConfiguration, node corev1.Node) error
-
-func (c *ClusterValidator) validateControlPlaneNodes(validations ...controlPlaneNodeValidation) error {
+func validateControlPlaneNodes(c client.Client, clusterConfig *cluster.Config) error {
 	ctx := context.Background()
 	cpNodes := &corev1.NodeList{}
-	_ = c.client.List(ctx, cpNodes, client.MatchingLabels{"node-role.kubernetes.io/control-plane": ""})
+	_ = c.List(ctx, cpNodes, client.MatchingLabels{"node-role.kubernetes.io/control-plane": ""})
 
-	cpConfig := c.clusterConfig.Cluster.Spec.ControlPlaneConfiguration
+	cpConfig := clusterConfig.Cluster.Spec.ControlPlaneConfiguration
 	if len(cpNodes.Items) != cpConfig.Count {
 		return fmt.Errorf("control plane node count does not match expected: %v of %v", len(cpNodes.Items), cpConfig.Count)
 	}
 
-	for _, node := range cpNodes.Items {
-		for _, validation := range validations {
-			err := validation(cpConfig, node)
-
-			if err != nil {
-				return fmt.Errorf("control plane node %v is not valid: %v", node.Name, err)
-			}
-		}
-	}
-
+	// TODO: Validate contents of each node.
 	return nil
 }
 
-func (c *ClusterValidator) withValidation(opt clusterValidation, timeout time.Duration) validationOpt {
-	return validationOpt{
+func (c *ClusterValidator) withValidation(validate clusterValidation, timeout time.Duration) {
+	c.validations = append(c.validations, validationOpt{
 		timeout:  timeout,
-		validate: opt,
-	}
+		validate: validate,
+	})
 }
 
 // ValidateCluster runs through the set clusterValidations returns an error if any of them fail after a number of retries.
 func (c *ClusterValidator) ValidateCluster() error {
 	for _, validation := range c.validations {
 		err := retrier.Retry(10, validation.timeout, func() error {
-			return validation.validate()
+			return validation.validate(c.client, c.clusterConfig)
 		})
 
 		if err != nil {
