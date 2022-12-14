@@ -102,13 +102,25 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name: "valid config with amiID, instance type, devices, osFamily",
+			name: "valid config with amiID, instance type, devices, network, container volume, osFamily",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Bottlerocket,
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
 				},
 			},
 			wantErr: "",
@@ -120,6 +132,18 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Ubuntu,
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
 				},
 			},
 			wantErr: "",
@@ -132,6 +156,18 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: "invalid-instance-type",
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Bottlerocket,
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
 				},
 			},
 			wantErr: "InstanceType invalid-instance-type is not supported",
@@ -143,24 +179,90 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
 					OSFamily:     Bottlerocket,
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
 				},
 			},
 			wantErr: "Devices must contain at least one device IP",
 		},
 		{
-			name: "invalid container volume",
+			name: "invalid container volume size for ubuntu",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Ubuntu,
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
 					ContainersVolume: &snowv1.Volume{
 						Size: 7,
 					},
-					OSFamily: Bottlerocket,
 				},
 			},
-			wantErr: "ContainersVolume.Size must be no smaller than 8 Gi",
+			wantErr: "SnowMachineConfig ContainersVolume.Size must be no smaller than 8 Gi",
+		},
+		{
+			name: "invalid container volume size for bottlerocket",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Bottlerocket,
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 24,
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig ContainersVolume.Size must be no smaller than 25 Gi",
+		},
+		{
+			name: "container volume not specified for bottlerocket",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Bottlerocket,
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig ContainersVolume must be specified for Bottlerocket OS",
 		},
 		{
 			name: "invalid os family",
@@ -170,6 +272,18 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     "invalidOS",
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
 				},
 			},
 			wantErr: "SnowMachineConfig OSFamily invalidOS is not supported",
@@ -182,9 +296,60 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     "",
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
 				},
 			},
 			wantErr: "SnowMachineConfig OSFamily must be specified",
+		},
+		{
+			name: "empty network",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Bottlerocket,
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig Network.DirectNetworkInterfaces length must be no smaller than 1",
+		},
+		{
+			name: "invalid network",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					OSFamily:     Bottlerocket,
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: false,
+							},
+						},
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig Network.DirectNetworkInterfaces list must contain one and only one primary DNI",
 		},
 	}
 	for _, tt := range tests {
@@ -229,6 +394,19 @@ func TestNewSnowMachineConfigGenerate(t *testing.T) {
 			InstanceType:             DefaultSnowInstanceType,
 			SshKeyName:               DefaultSnowSshKeyName,
 			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+			OSFamily:                 DefaultOSFamily,
+			Network: snowv1.AWSSnowNetwork{
+				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					{
+						Index:   1,
+						DHCP:    true,
+						Primary: true,
+					},
+				},
+			},
+			ContainersVolume: &snowv1.Volume{
+				Size: 25,
+			},
 		},
 	}
 	g.Expect(NewSnowMachineConfigGenerate("snow-cluster")).To(Equal(want))

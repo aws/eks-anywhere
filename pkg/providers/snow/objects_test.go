@@ -15,7 +15,6 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -79,7 +78,7 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 			Name:      "test-etcd",
 			Namespace: "test-namespace",
 		},
-		Spec: v1alpha1.SnowMachineConfigSpec{
+		Spec: anywherev1.SnowMachineConfigSpec{
 			AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
 			InstanceType:             "sbe-c.xlarge",
 			SshKeyName:               "default",
@@ -88,7 +87,16 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 				"1.2.3.4",
 				"1.2.3.5",
 			},
-			OSFamily: v1alpha1.Ubuntu,
+			OSFamily: anywherev1.Ubuntu,
+			Network: snowv1.AWSSnowNetwork{
+				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					{
+						Index:   1,
+						DHCP:    true,
+						Primary: true,
+					},
+				},
+			},
 		},
 	}
 	mtCp := wantSnowMachineTemplate()

@@ -379,6 +379,15 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 					"1.2.3.5",
 				},
 				OSFamily: v1alpha1.Ubuntu,
+				Network: snowv1.AWSSnowNetwork{
+					DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+						{
+							Index:   1,
+							DHCP:    true,
+							Primary: true,
+						},
+					},
+				},
 			},
 		},
 		"test-wn": {
@@ -399,6 +408,15 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 					"1.2.3.5",
 				},
 				OSFamily: v1alpha1.Ubuntu,
+				Network: snowv1.AWSSnowNetwork{
+					DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+						{
+							Index:   1,
+							DHCP:    true,
+							Primary: true,
+						},
+					},
+				},
 			},
 		},
 	}

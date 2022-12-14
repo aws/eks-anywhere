@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 const (
@@ -14,7 +15,9 @@ const (
 	DefaultSnowSshKeyName                   = "default"
 	DefaultSnowInstanceType                 = SbeCLarge
 	DefaultSnowPhysicalNetworkConnectorType = SFPPlus
-	MinimumContainerVolumeSize              = 8
+	DefaultOSFamily                         = Bottlerocket
+	MinimumContainerVolumeSizeUbuntu        = 8
+	MinimumContainerVolumeSizeBottlerocket  = 25
 )
 
 // Used for generating yaml for generate clusterconfig command.
@@ -32,6 +35,19 @@ func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 			InstanceType:             DefaultSnowInstanceType,
 			SshKeyName:               DefaultSnowSshKeyName,
 			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+			OSFamily:                 DefaultOSFamily,
+			Network: snowv1.AWSSnowNetwork{
+				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					{
+						Index:   1,
+						DHCP:    true,
+						Primary: true,
+					},
+				},
+			},
+			ContainersVolume: &snowv1.Volume{
+				Size: 25,
+			},
 		},
 	}
 }
@@ -53,10 +69,6 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
 	}
 
-	if config.Spec.ContainersVolume != nil && config.Spec.ContainersVolume.Size < MinimumContainerVolumeSize {
-		return fmt.Errorf("SnowMachineConfig ContainersVolume.Size must be no smaller than %d Gi", MinimumContainerVolumeSize)
-	}
-
 	if len(config.Spec.Devices) == 0 {
 		return errors.New("SnowMachineConfig Devices must contain at least one device IP")
 	}
@@ -67,6 +79,47 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 
 	if config.Spec.OSFamily != Bottlerocket && config.Spec.OSFamily != Ubuntu {
 		return fmt.Errorf("SnowMachineConfig OSFamily %s is not supported, please use one of the following: %s, %s", config.Spec.OSFamily, Bottlerocket, Ubuntu)
+	}
+
+	if err := validateSnowMachineConfigNetwork(config.Spec.Network); err != nil {
+		return err
+	}
+
+	return validateSnowMachineConfigContainerVolume(config)
+}
+
+func validateSnowMachineConfigContainerVolume(config *SnowMachineConfig) error {
+	// The Bottlerocket AWS Variant AMI only has 2 Gi of data volume, which is insufficient to store EKS-A and user container volumes.
+	// Thus the ContainersVolume is required and its size must be no smaller than 25 Gi.
+	if config.Spec.OSFamily == Bottlerocket {
+		if config.Spec.ContainersVolume == nil {
+			return errors.New("SnowMachineConfig ContainersVolume must be specified for Bottlerocket OS")
+		}
+		if config.Spec.ContainersVolume.Size < MinimumContainerVolumeSizeBottlerocket {
+			return fmt.Errorf("SnowMachineConfig ContainersVolume.Size must be no smaller than %d Gi for Bottlerocket OS", MinimumContainerVolumeSizeBottlerocket)
+		}
+	}
+
+	if config.Spec.OSFamily == Ubuntu && config.Spec.ContainersVolume != nil && config.Spec.ContainersVolume.Size < MinimumContainerVolumeSizeUbuntu {
+		return fmt.Errorf("SnowMachineConfig ContainersVolume.Size must be no smaller than %d Gi for Ubuntu OS", MinimumContainerVolumeSizeUbuntu)
+	}
+
+	return nil
+}
+
+func validateSnowMachineConfigNetwork(network snowv1.AWSSnowNetwork) error {
+	if len(network.DirectNetworkInterfaces) <= 0 {
+		return errors.New("SnowMachineConfig Network.DirectNetworkInterfaces length must be no smaller than 1")
+	}
+
+	primaryDNICount := 0
+	for _, dni := range network.DirectNetworkInterfaces {
+		if dni.Primary {
+			primaryDNICount++
+		}
+	}
+	if primaryDNICount != 1 {
+		return errors.New("SnowMachineConfig Network.DirectNetworkInterfaces list must contain one and only one primary DNI")
 	}
 
 	return nil

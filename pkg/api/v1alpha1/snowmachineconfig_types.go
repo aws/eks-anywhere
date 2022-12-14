@@ -52,7 +52,7 @@ type SnowMachineConfigSpec struct {
 	OSFamily OSFamily `json:"osFamily,omitempty"`
 
 	// Network provides the custom network setting for the machine.
-	Network *snowv1.AWSSnowNetwork `json:"network,omitempty"`
+	Network snowv1.AWSSnowNetwork `json:"network,omitempty"`
 }
 
 func (s *SnowMachineConfig) SetManagedBy(clusterName string) {

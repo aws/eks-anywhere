@@ -205,7 +205,7 @@ type AWSSnowDirectNetworkInterface struct {
 	DHCP bool `json:"dhcp,omitempty"`
 	// IPPool is the ip pool for this DNI if customers want to specify
 	// +optional
-	IPPool AWSSnowIPPool `json:"ipPool,omitempty"`
+	IPPool *AWSSnowIPPool `json:"ipPool,omitempty"`
 	// Primary indicates whether the DNI is primary or not
 	// +optional
 	Primary bool `json:"primary,omitempty"`
