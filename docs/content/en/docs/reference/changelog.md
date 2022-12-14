@@ -15,7 +15,6 @@ weight: 35
 - Allow to configure machine health checks timeout through a new flag `--unhealthy-machine-timeout` ([#3918](https://github.com/aws/eks-anywhere/issues/3918) implemented by [#4123](https://github.com/aws/eks-anywhere/pull/4123))
 - Ability to configure rolling upgrade for Bare Metal and Cloudstack via `maxSurge` and `maxUnavailable` parameters
 - New Nutanix Provider
-- Support for private registry authentication
 - Workload clusters support for Bare Metal
 - VM Tagging support for vSphere VM's created in the cluster
 - Static IP support for Bottlerocket OS in Bare Metal
