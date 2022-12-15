@@ -3,7 +3,6 @@ package framework
 import (
 	"strings"
 
-	"github.com/aws/eks-anywhere/pkg/semver"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -36,33 +35,9 @@ func WithPerMachineWaitTimeout(timeout string) CommandOpt {
 	return appendOpt("--per-machine-wait-timeout", timeout)
 }
 
-func ExecuteWithEksaVersion(version *semver.Version) CommandOpt {
-	return executeWithBinaryCommandOpt(func() (string, error) {
-		return GetReleaseBinaryFromVersion(version)
-	})
-}
-
 func ExecuteWithEksaRelease(release *releasev1alpha1.EksARelease) CommandOpt {
 	return executeWithBinaryCommandOpt(func() (string, error) {
 		return getBinary(release)
-	})
-}
-
-func ExecuteWithLatestMinorReleaseFromVersion(version *semver.Version) CommandOpt {
-	return executeWithBinaryCommandOpt(func() (string, error) {
-		return GetLatestMinorReleaseBinaryFromVersion(version)
-	})
-}
-
-func ExecuteWithLatestMinorReleaseFromMain() CommandOpt {
-	return executeWithBinaryCommandOpt(func() (string, error) {
-		return GetLatestMinorReleaseBinaryFromMain()
-	})
-}
-
-func ExecuteWithLatestReleaseFromTestBranch() CommandOpt {
-	return executeWithBinaryCommandOpt(func() (string, error) {
-		return GetLatestMinorReleaseBinaryFromTestBranch()
 	})
 }
 
