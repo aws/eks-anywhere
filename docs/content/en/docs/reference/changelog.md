@@ -29,6 +29,7 @@ weight: 35
 
 ### Fixed
 - Kubernetes version upgrades from 1.23 to 1.24 for Docker clusters ([#4266](https://github.com/aws/eks-anywhere/pull/4266))
+- Added missing docker login when doing authenticated registry pulls
 
 ### Breaking changes
 - Removed support for Kubernetes 1.20
