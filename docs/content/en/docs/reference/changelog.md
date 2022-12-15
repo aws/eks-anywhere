@@ -16,7 +16,7 @@ weight: 35
 - Ability to configure rolling upgrade for Bare Metal and Cloudstack via `maxSurge` and `maxUnavailable` parameters
 - New Nutanix Provider
 - Workload clusters support for Bare Metal
-- VM Tagging support for vSphere VM's created in the cluster
+- VM Tagging support for vSphere VM's created in the cluster ([#4228](https://github.com/aws/eks-anywhere/pull/4228))
 - Support for new curated packages:
   - Prometheus `v2.39.1`
 - Updated curated packages' versions:
