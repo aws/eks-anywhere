@@ -111,6 +111,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
+		r.ReconcileStorageCLass,
 	).Run(ctx, log, clusterSpec)
 }
 
@@ -211,6 +212,20 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec
 	}
 
 	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, spec.Cluster, clusters.ToWorkers(w))
+}
+
+func (r *Reconciler) ReconcileStorageCLass(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileStorageClass")
+	client, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
+	if err != nil {
+		return controller.Result{}, err
+	}
+	log.Info("Applying Storage Class")
+	if err := serverside.ReconcileYaml(ctx, client, vsphere.DefaultStorageClass); err != nil {
+		return controller.Result{}, err
+	}
+
+	return controller.Result{}, nil
 }
 
 func toClientControlPlane(cp *vsphere.ControlPlane) *clusters.ControlPlane {

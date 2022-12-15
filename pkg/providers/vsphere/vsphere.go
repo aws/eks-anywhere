@@ -57,7 +57,7 @@ var defaultClusterConfigMD string
 var defaultSecretObject string
 
 //go:embed config/defaultStorageClass.yaml
-var defaultStorageClass []byte
+var DefaultStorageClass []byte
 
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -707,7 +707,7 @@ func (p *vsphereProvider) InstallStorageClass(ctx context.Context, cluster *type
 		return nil
 	}
 
-	return p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, defaultStorageClass)
+	return p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, DefaultStorageClass)
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {

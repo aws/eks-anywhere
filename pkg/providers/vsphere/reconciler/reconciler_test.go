@@ -334,6 +334,25 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	tt.Expect(err).To(HaveOccurred())
 }
 
+func TestReconciler_ReconcileStorageCLass(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	remoteClient := fake.NewClientBuilder().Build()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+
+	result, err := tt.reconciler().ReconcileStorageCLass(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
