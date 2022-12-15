@@ -1,7 +1,7 @@
 ---
 title: "Packages configuration"
 linkTitle: "Packages configuration"
-weight: 40
+weight: 10
 description: >
   Full EKS Anywhere configuration reference for curated packages.
 ---
@@ -54,8 +54,33 @@ spec:
 
 ```
 
-## PackageBundleController Fields
-### PackageBundleController
+# API Reference
+
+Packages:
+
+- [packages.eks.amazonaws.com/v1alpha1](#packageseksamazonawscomv1alpha1)
+
+# packages.eks.amazonaws.com/v1alpha1
+
+Resource Types:
+
+- [PackageBundleController](#packagebundlecontroller)
+
+- [PackageBundle](#packagebundle)
+
+- [Package](#package)
+
+
+
+
+## PackageBundleController
+<sup><sup>[↩ Parent](#packageseksamazonawscomv1alpha1 )</sup></sup>
+
+
+
+
+
+
 PackageBundleController is the Schema for the packagebundlecontroller API.
 
 <table>
@@ -102,7 +127,7 @@ PackageBundleController is the Schema for the packagebundlecontroller API.
 </table>
 
 
-#### PackageBundleController.spec
+### PackageBundleController.spec
 <sup><sup>[↩ Parent](#packagebundlecontroller)</sup></sup>
 
 
@@ -126,17 +151,39 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>bundleRepository</b></td>
+        <td>string</td>
+        <td>
+          Repository portion of an OCI address to the bundle<br/>
+          <br/>
+            <i>Default</i>: eks-anywhere-packages-bundles<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>createNamespace</b></td>
+        <td>boolean</td>
+        <td>
+          Allow target namespace creation by the controller<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>defaultImageRegistry</b></td>
         <td>string</td>
         <td>
-          Registry used for package container images.<br/>
+          DefaultImageRegistry for pulling images<br/>
+          <br/>
+            <i>Default</i>: 783794618700.dkr.ecr.us-west-2.amazonaws.com<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>defaultRegistry</b></td>
         <td>string</td>
         <td>
-          Registry used for package helm charts and bundles.<br/>
+          DefaultRegistry for pulling helm charts and the bundle<br/>
+          <br/>
+            <i>Default</i>: public.ecr.aws/eks-anywhere<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -152,7 +199,7 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
         <td><b>privateRegistry</b></td>
         <td>string</td>
         <td>
-          PrivateRegistry is the registry being used for all images, charts and bundles. Overrides the defaults.<br/>
+          PrivateRegistry is the registry being used for all images, charts and bundles<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -162,7 +209,7 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
           UpgradeCheckInterval is the time between upgrade checks. 
  The format is that of time's ParseDuration.<br/>
           <br/>
-            <i>Default</i>: 1d<br/>
+            <i>Default</i>: 24h<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -179,7 +226,7 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
 </table>
 
 
-#### PackageBundleController.status
+### PackageBundleController.status
 <sup><sup>[↩ Parent](#packagebundlecontroller)</sup></sup>
 
 
@@ -203,6 +250,13 @@ PackageBundleControllerStatus defines the observed state of PackageBundleControl
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#packagebundlecontrollerstatusspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          Spec previous settings<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>state</b></td>
         <td>enum</td>
         <td>
@@ -215,8 +269,112 @@ PackageBundleControllerStatus defines the observed state of PackageBundleControl
 </table>
 
 
-## PackageBundle Fields
-### PackageBundle
+### PackageBundleController.status.spec
+<sup><sup>[↩ Parent](#packagebundlecontrollerstatus)</sup></sup>
+
+
+
+Spec previous settings
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>activeBundle</b></td>
+        <td>string</td>
+        <td>
+          ActiveBundle is name of the bundle from which packages should be sourced.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>bundleRepository</b></td>
+        <td>string</td>
+        <td>
+          Repository portion of an OCI address to the bundle<br/>
+          <br/>
+            <i>Default</i>: eks-anywhere-packages-bundles<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>createNamespace</b></td>
+        <td>boolean</td>
+        <td>
+          Allow target namespace creation by the controller<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>defaultImageRegistry</b></td>
+        <td>string</td>
+        <td>
+          DefaultImageRegistry for pulling images<br/>
+          <br/>
+            <i>Default</i>: 783794618700.dkr.ecr.us-west-2.amazonaws.com<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>defaultRegistry</b></td>
+        <td>string</td>
+        <td>
+          DefaultRegistry for pulling helm charts and the bundle<br/>
+          <br/>
+            <i>Default</i>: public.ecr.aws/eks-anywhere<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>logLevel</b></td>
+        <td>integer</td>
+        <td>
+          LogLevel controls the verbosity of logging in the controller.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>privateRegistry</b></td>
+        <td>string</td>
+        <td>
+          PrivateRegistry is the registry being used for all images, charts and bundles<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>upgradeCheckInterval</b></td>
+        <td>string</td>
+        <td>
+          UpgradeCheckInterval is the time between upgrade checks. 
+ The format is that of time's ParseDuration.<br/>
+          <br/>
+            <i>Default</i>: 24h<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>upgradeCheckShortInterval</b></td>
+        <td>string</td>
+        <td>
+          UpgradeCheckShortInterval time between upgrade checks if there is a problem. 
+ The format is that of time's ParseDuration.<br/>
+          <br/>
+            <i>Default</i>: 1h<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+## PackageBundle
+<sup><sup>[↩ Parent](#packageseksamazonawscomv1alpha1 )</sup></sup>
+
+
+
+
+
+
 PackageBundle is the Schema for the packagebundle API.
 
 <table>
@@ -263,7 +421,7 @@ PackageBundle is the Schema for the packagebundle API.
 </table>
 
 
-#### PackageBundle.spec
+### PackageBundle.spec
 <sup><sup>[↩ Parent](#packagebundle)</sup></sup>
 
 
@@ -286,11 +444,18 @@ PackageBundleSpec defines the desired state of PackageBundle.
           Packages supported by this bundle.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>minControllerVersion</b></td>
+        <td>string</td>
+        <td>
+          Minimum required packages controller version<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
 
-#### PackageBundle.spec.packages[index]
+### PackageBundle.spec.packages[index]
 <sup><sup>[↩ Parent](#packagebundlespec)</sup></sup>
 
 
@@ -320,11 +485,18 @@ BundlePackage specifies a package within a bundle.
           Name of the package.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>workloadonly</b></td>
+        <td>boolean</td>
+        <td>
+          WorkloadOnly specifies if the package should be installed only on the workload cluster<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
 
-#### PackageBundle.spec.packages[index].source
+### PackageBundle.spec.packages[index].source
 <sup><sup>[↩ Parent](#packagebundlespecpackagesindex)</sup></sup>
 
 
@@ -365,7 +537,7 @@ Source location for the package (probably a helm chart).
 </table>
 
 
-#### PackageBundle.spec.packages[index].source.versions[index]
+### PackageBundle.spec.packages[index].source.versions[index]
 <sup><sup>[↩ Parent](#packagebundlespecpackagesindexsource)</sup></sup>
 
 
@@ -396,6 +568,13 @@ SourceVersion describes a version of a package within a repository.
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>dependencies</b></td>
+        <td>[]string</td>
+        <td>
+          Dependencies to be installed before the package<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#packagebundlespecpackagesindexsourceversionsindeximagesindex">images</a></b></td>
         <td>[]object</td>
         <td>
@@ -413,7 +592,7 @@ SourceVersion describes a version of a package within a repository.
 </table>
 
 
-#### PackageBundle.spec.packages[index].source.versions[index].images[index]
+### PackageBundle.spec.packages[index].source.versions[index].images[index]
 <sup><sup>[↩ Parent](#packagebundlespecpackagesindexsourceversionsindex)</sup></sup>
 
 
@@ -447,7 +626,7 @@ VersionImages is an image used by a version of a package.
 </table>
 
 
-#### PackageBundle.status
+### PackageBundle.status
 <sup><sup>[↩ Parent](#packagebundle)</sup></sup>
 
 
@@ -469,7 +648,7 @@ PackageBundleStatus defines the observed state of PackageBundle.
         <td>
           PackageBundleStateEnum defines the observed state of PackageBundle.<br/>
           <br/>
-            <i>Enum</i>: available, ignored, invalid<br/>
+            <i>Enum</i>: available, ignored, invalid, controller upgrade required<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -483,7 +662,7 @@ PackageBundleStatus defines the observed state of PackageBundle.
 </table>
 
 
-#### PackageBundle.status.spec
+### PackageBundle.status.spec
 <sup><sup>[↩ Parent](#packagebundlestatus)</sup></sup>
 
 
@@ -506,11 +685,18 @@ PackageBundleSpec defines the desired state of PackageBundle.
           Packages supported by this bundle.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>minControllerVersion</b></td>
+        <td>string</td>
+        <td>
+          Minimum required packages controller version<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
 
-#### PackageBundle.status.spec.packages[index]
+### PackageBundle.status.spec.packages[index]
 <sup><sup>[↩ Parent](#packagebundlestatusspec)</sup></sup>
 
 
@@ -540,11 +726,18 @@ BundlePackage specifies a package within a bundle.
           Name of the package.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>workloadonly</b></td>
+        <td>boolean</td>
+        <td>
+          WorkloadOnly specifies if the package should be installed only on the workload cluster<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
 
-#### PackageBundle.status.spec.packages[index].source
+### PackageBundle.status.spec.packages[index].source
 <sup><sup>[↩ Parent](#packagebundlestatusspecpackagesindex)</sup></sup>
 
 
@@ -585,7 +778,7 @@ Source location for the package (probably a helm chart).
 </table>
 
 
-#### PackageBundle.status.spec.packages[index].source.versions[index]
+### PackageBundle.status.spec.packages[index].source.versions[index]
 <sup><sup>[↩ Parent](#packagebundlestatusspecpackagesindexsource)</sup></sup>
 
 
@@ -616,6 +809,13 @@ SourceVersion describes a version of a package within a repository.
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b>dependencies</b></td>
+        <td>[]string</td>
+        <td>
+          Dependencies to be installed before the package<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#packagebundlestatusspecpackagesindexsourceversionsindeximagesindex">images</a></b></td>
         <td>[]object</td>
         <td>
@@ -633,7 +833,7 @@ SourceVersion describes a version of a package within a repository.
 </table>
 
 
-#### PackageBundle.status.spec.packages[index].source.versions[index].images[index]
+### PackageBundle.status.spec.packages[index].source.versions[index].images[index]
 <sup><sup>[↩ Parent](#packagebundlestatusspecpackagesindexsourceversionsindex)</sup></sup>
 
 
@@ -666,9 +866,14 @@ VersionImages is an image used by a version of a package.
       </tr></tbody>
 </table>
 
+## Package
+<sup><sup>[↩ Parent](#packageseksamazonawscomv1alpha1 )</sup></sup>
 
-## Package Fields
-### Package
+
+
+
+
+
 Package is the Schema for the package API.
 
 <table>
@@ -715,7 +920,7 @@ Package is the Schema for the package API.
 </table>
 
 
-#### Package.spec
+### Package.spec
 <sup><sup>[↩ Parent](#package)</sup></sup>
 
 
@@ -763,7 +968,7 @@ PackageSpec defines the desired state of an package.
 </table>
 
 
-#### Package.status
+### Package.status
 <sup><sup>[↩ Parent](#package)</sup></sup>
 
 
@@ -801,12 +1006,19 @@ PackageStatus defines the observed state of Package.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#packagestatusspec">spec</a></b></td>
+        <td>object</td>
+        <td>
+          Spec previous settings<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>state</b></td>
         <td>enum</td>
         <td>
           State of the installation.<br/>
           <br/>
-            <i>Enum</i>: initializing, installing, installed, updating, uninstalling, unknown<br/>
+            <i>Enum</i>: initializing, installing, installing dependencies, installed, updating, uninstalling, unknown<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -827,7 +1039,7 @@ PackageStatus defines the observed state of Package.
 </table>
 
 
-#### Package.status.source
+### Package.status.source
 <sup><sup>[↩ Parent](#packagestatus)</sup></sup>
 
 
@@ -875,7 +1087,55 @@ Source associated with the installation.
 </table>
 
 
-#### Package.status.upgradesAvailable[index]
+### Package.status.spec
+<sup><sup>[↩ Parent](#packagestatus)</sup></sup>
+
+
+
+Spec previous settings
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>packageName</b></td>
+        <td>string</td>
+        <td>
+          PackageName is the name of the package as specified in the bundle.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>config</b></td>
+        <td>string</td>
+        <td>
+          Config for the package.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>packageVersion</b></td>
+        <td>string</td>
+        <td>
+          PackageVersion is a human-friendly version name or sha256 checksum for the package, as specified in the bundle.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>targetNamespace</b></td>
+        <td>string</td>
+        <td>
+          TargetNamespace defines where package resources will be deployed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### Package.status.upgradesAvailable[index]
 <sup><sup>[↩ Parent](#packagestatus)</sup></sup>
 
 
