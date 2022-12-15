@@ -76,10 +76,10 @@ metadata:
    name: my-cluster-datacenter
 spec:
   datacenter: ""
-  disableCSI:
+  disableCSI: false
   server: ""
   network: ""
-  insecure:
+  insecure: false
   thumbprint: ""
 
 ---
@@ -101,6 +101,8 @@ spec:
   - name: ""
     sshAuthorizedKeys:
     - ""
+  tags:
+  - ""
 ```
 
 ## Cluster Fields
@@ -330,6 +332,15 @@ for your VMs in the EKS Anywhere cluster. Examples of resource pool values inclu
 
 ### storagePolicyName (optional)
 The storage policy name associated with your VMs.
+
+### tags (optional)
+Optional list of tags to attach to your cluster VMs in the URN format.
+
+Example:
+```
+  tags:
+  - urn:vmomi:InventoryServiceTag:8e0ce079-0675-47d6-8665-16ada4e6dabd:GLOBAL
+```
 
 ## Optional VSphere Credentials 
 Use the following environment variables to configure Cloud Provider and CSI Driver with different credentials.
