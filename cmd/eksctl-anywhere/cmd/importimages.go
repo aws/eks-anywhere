@@ -41,10 +41,11 @@ func init() {
 
 var importImagesCmdDeprecated = &cobra.Command{
 	Use:          "import-images",
-	Short:        "Push EKS Anywhere images to a private registry",
+	Short:        "Push EKS Anywhere images to a private registry (Deprecated)",
 	Long:         "This command is used to import images from an EKS Anywhere release bundle into a private registry",
 	PreRunE:      preRunImportImagesCmd,
 	SilenceUsage: true,
+	Deprecated:   "use `eksctl anywhere import images` instead",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := importImages(cmd.Context(), opts.fileName); err != nil {
 			return err
