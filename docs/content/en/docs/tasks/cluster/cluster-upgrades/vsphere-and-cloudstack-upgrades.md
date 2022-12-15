@@ -21,7 +21,7 @@ Cluster upgrades are not handled automatically and require administrator action 
 You are advised to upgrade your clusters in development environments first and verify your workloads and controllers are compatible with the new version.
 
 Cluster upgrades are performed in place using a rolling process (similar to Kubernetes Deployments).
-Upgrades can only happen one minor version at a time (e.g. `1.20` -> `1.21`).
+Upgrades can only happen one minor version at a time (e.g. `1.23` -> `1.24`).
 Control plane components will be upgraded before worker nodes.
 
 A new VM is created with the new version and then an old VM is removed.
@@ -84,7 +84,7 @@ To the format output in json, add `-o json` to the end of the command line.
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.20 to 1.21 you would change your spec
+As an example, to upgrade a cluster with version 1.23 to 1.24 you would change your spec
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -100,7 +100,7 @@ spec:
       kind: VSphereMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.21"
+  kubernetesVersion: "1.24"
       ...
 ```
 
