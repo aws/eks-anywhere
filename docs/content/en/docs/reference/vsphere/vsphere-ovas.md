@@ -86,11 +86,11 @@ environment variables to run `govc` GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
     ```
     govc library.deploy -pool <resource pool> -folder <folder location to deploy template> /<library name>/<template name> <name of new VM>
     ```
-   2a. If using Bottlerocket template for newer Kubernetes version than 1.20 and 1.21, resize disk 1 to 22G
+   2a. If using Bottlerocket template for newer Kubernetes version than 1.21, resize disk 1 to 22G
    ```
    govc vm.disk.change -vm <template name> -disk.label "Hard disk 1" -size 22G
    ```
-   2b. If using Bottlerocket template for Kubernetes version 1.20 or 1.21, resize disk 2 to 20G
+   2b. If using Bottlerocket template for Kubernetes version 1.21, resize disk 2 to 20G
       ```
       govc vm.disk.change -vm <template name> -disk.label "Hard disk 2" -size 20G
       ```
