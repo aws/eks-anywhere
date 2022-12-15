@@ -53,42 +53,50 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes,
 1. Assign an IAM role to this OIDC provider. 
 
 	1. To do so from the AWS console, select and click on the OIDC provider, and click on **Assign role** at the top right.
-	2. Select **Create a new role**.
-	3. In the **Select type of trusted entity** section, choose Web identity.
-	4. In the Choose a web identity provider section:
+	
+	1. Select **Create a new role**.
+	
+	1. In the **Select type of trusted entity** section, choose Web identity.
+	
+	1. In the Choose a web identity provider section:
 		* For Identity provider, choose the auto selected Identity Provider URL for your cluster.
 		* For Audience, choose sts.amazonaws.com.
-	5. Choose Next: Permissions.
-	6. In the **Attach Policy** section, select the IAM policy that has the permissions that you want your applications running in the pods to use.
-	7. Continue with the next sections of adding tags if desired and a suitable name for this role and create the role.
-	8. Below is a sample trust policy of IAM role for your pods. Remember to replace `Account ID` and `ISSUER_HOSTPATH` with required values.
-
-    ```json
-    {
-     "Version": "2012-10-17",
-     "Statement": [
-      {
-       "Effect": "Allow",
-       "Principal": {
-        "Federated": "arn:aws:iam::111122223333:oidc-provider/ISSUER_HOSTPATH"
-       },
-       "Action": "sts:AssumeRoleWithWebIdentity",
-       "Condition": {
-        "__doc_comment": "scope the role to the service account (optional)",
-        "StringEquals": {
-         "ISSUER_HOSTPATH:sub": "system:serviceaccount:default:my-serviceaccount"
-        },
-        "__doc_comment": "OR scope the role to a namespace (optional)",
-        "StringLike": {
-         "ISSUER_HOSTPATH/CLUSTER_ID:sub": ["system:serviceaccount:default:*","system:serviceaccount:observability:*"]
-        }
+	
+	1. Choose Next: Permissions.
+	
+	1. In the **Attach Policy** section, select the IAM policy that has the permissions that you want your applications running in the pods to use.
+	
+	1. Continue with the next sections of adding tags if desired and a suitable name for this role and create the role.
+	
+	1. Below is a sample trust policy of IAM role for your pods. Remember to replace `Account ID` and `ISSUER_HOSTPATH` with required values.
+       ```json
+       {
+        "Version": "2012-10-17",
+        "Statement": [
+         {
+          "Effect": "Allow",
+          "Principal": {
+           "Federated": "arn:aws:iam::111122223333:oidc-provider/ISSUER_HOSTPATH"
+          },
+          "Action": "sts:AssumeRoleWithWebIdentity",
+          "Condition": {
+           "__doc_comment": "scope the role to the service account (optional)",
+           "StringEquals": {
+            "ISSUER_HOSTPATH:sub": "system:serviceaccount:default:my-serviceaccount"
+           },
+           "__doc_comment": "OR scope the role to a namespace (optional)",
+           "StringLike": {
+            "ISSUER_HOSTPATH/CLUSTER_ID:sub": ["system:serviceaccount:default:*","system:serviceaccount:observability:*"]
+           }
+          }
+         }
+        ]
        }
-      }
-     ]
-    }
-    ```	    
-	9. After the role is created, note down the name of this IAM Role as `OIDC_IAM_ROLE`. 
-	10. Once the cluster is created, you can create service accounts and grant them this role by editing the trust relationship of this role. You can use `StringLike` condition to add required service accounts, as mentioned in the above sample. Please also refer to section [Configure the trust relationship for the OIDC provider's IAM Role](#configure-the-trust-relationship-for-the-oidc-providers-iam-role).
+       ```
+       
+	1. After the role is created, note down the name of this IAM Role as `OIDC_IAM_ROLE`. 
+
+	1. Once the cluster is created, you can create service accounts and grant them this role by editing the trust relationship of this role. You can use `StringLike` condition to add required service accounts, as mentioned in the above sample. Please also refer to section [Configure the trust relationship for the OIDC provider's IAM Role](#configure-the-trust-relationship-for-the-oidc-providers-iam-role).
 
 ### Create the EKS Anywhere cluster
 
@@ -115,7 +123,7 @@ Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as requ
     kubectl get secret ${CLUSTER_NAME}-sa -n eksa-system -o jsonpath={.data.tls\\.crt} | base64 --decode > ${CLUSTER_NAME}-sa.pub    
     go run ./hack/self-hosted/main.go -key ${CLUSTER_NAME}-sa.pub | jq '.keys += [.keys[0]] | .keys[1].kid = ""' > keys.json
     ```
-2. Upload the keys.json document to the s3 bucket.
+1. Upload the keys.json document to the s3 bucket.
     ```bash
     aws s3 cp --acl public-read ./keys.json s3://$S3_BUCKET/keys.json
     ```
@@ -126,9 +134,9 @@ Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as requ
 
 1. Clone [amazon-eks-pod-identity-webhook](https://github.com/aws/amazon-eks-pod-identity-webhook) if not done already.
 
-2. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster.
+1. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster.
 
-3. Update `amazon-eks-pod-identity-webhook/deploy/auth.yaml` with `OIDC_IAM_ROLE` and other annotations as mentioned in sample below.
+1. Update `amazon-eks-pod-identity-webhook/deploy/auth.yaml` with `OIDC_IAM_ROLE` and other annotations as mentioned in sample below.
     ```yaml
     apiVersion: v1
     kind: ServiceAccount
@@ -149,26 +157,31 @@ Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as requ
         eks.amazonaws.com/token-expiration: "86400"
     ```
 
-4. Run the following command:
+1. Run the following command:
 
     ```bash
     make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:latest
     ```
-5. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount pod-identity-webhook.
+1. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount pod-identity-webhook.
 
 
 ### Configure the trust relationship for the OIDC provider's IAM Role
 
 In order to grant certain service accounts access to the desired AWS resources, edit the trust relationship for the OIDC provider's IAM Role (`OIDC_IAM_ROLE`) created in the first section, and add in the desired service accounts.
 1. Choose the role in the console to open it for editing.
-2. Choose the **Trust relationships** tab, and then choose **Edit trust relationship**.
-3. Find the line that looks similar to the following:
+
+1. Choose the **Trust relationships** tab, and then choose **Edit trust relationship**.
+
+1. Find the line that looks similar to the following:
     ```
     "$ISSUER_HOSTPATH:aud": "sts.amazonaws.com"
     ```
-4. Change the line to look like the following line. Replace `aud` with `sub` and replace `KUBERNETES_SERVICE_ACCOUNT_NAMESPACE` and `KUBERNETES_SERVICE_ACCOUNT_NAME` with the name of your Kubernetes service account and the Kubernetes namespace that the account exists in.
+
+1. Change the line to look like the following line. Replace `aud` with `sub` and replace `KUBERNETES_SERVICE_ACCOUNT_NAMESPACE` and `KUBERNETES_SERVICE_ACCOUNT_NAME` with the name of your Kubernetes service account and the Kubernetes namespace that the account exists in.
     ```
     "$ISSUER_HOSTPATH:sub": "system:serviceaccount:KUBERNETES_SERVICE_ACCOUNT_NAMESPACE:KUBERNETES_SERVICE_ACCOUNT_NAME"
     ```
-5. Refer [this](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html) doc for different ways of configuring one or multiple service accounts through the condition operators in the trust relationship.
-6. Choose Update Trust Policy to finish.
+
+1. Refer [this](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html) doc for different ways of configuring one or multiple service accounts through the condition operators in the trust relationship.
+
+1. Choose Update Trust Policy to finish.
