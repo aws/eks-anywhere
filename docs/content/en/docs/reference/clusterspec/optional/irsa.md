@@ -62,30 +62,31 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes,
 	6. In the **Attach Policy** section, select the IAM policy that has the permissions that you want your applications running in the pods to use.
 	7. Continue with the next sections of adding tags if desired and a suitable name for this role and create the role.
 	8. Below is a sample trust policy of IAM role for your pods. Remember to replace `Account ID` and `ISSUER_HOSTPATH` with required values.
-	    ```json
-	    {
-	     "Version": "2012-10-17",
-	     "Statement": [
-	      {
-	       "Effect": "Allow",
-	       "Principal": {
-		"Federated": "arn:aws:iam::111122223333:oidc-provider/ISSUER_HOSTPATH"
-	       },
-	       "Action": "sts:AssumeRoleWithWebIdentity",
-	       "Condition": {
-		"__doc_comment": "scope the role to the service account (optional)",
-		"StringEquals": {
-		 "ISSUER_HOSTPATH:sub": "system:serviceaccount:default:my-serviceaccount"
-		},
-		"__doc_comment": "OR scope the role to multiple values (optional)",
-		"StringLike": {
-		 "ISSUER_HOSTPATH:sub": ["system:serviceaccount:default:*","system:serviceaccount:observability:*"]
-		}
-	       }
-	      }
-	     ]
-	    }
-	    ```
+
+    ```json
+    {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Effect": "Allow",
+       "Principal": {
+        "Federated": "arn:aws:iam::111122223333:oidc-provider/ISSUER_HOSTPATH"
+       },
+       "Action": "sts:AssumeRoleWithWebIdentity",
+       "Condition": {
+        "__doc_comment": "scope the role to the service account (optional)",
+        "StringEquals": {
+         "ISSUER_HOSTPATH:sub": "system:serviceaccount:default:my-serviceaccount"
+        },
+        "__doc_comment": "OR scope the role to a namespace (optional)",
+        "StringLike": {
+         "ISSUER_HOSTPATH/CLUSTER_ID:sub": ["system:serviceaccount:default:*","system:serviceaccount:observability:*"]
+        }
+       }
+      }
+     ]
+    }
+    ```	    
 	9. After the role is created, note down the name of this IAM Role as `OIDC_IAM_ROLE`. After the cluster is created, you can create service accounts and grant them this role by editing the trust relationship of this role. The last section shows how to do this. 
 
 #### Create the EKS Anywhere cluster
