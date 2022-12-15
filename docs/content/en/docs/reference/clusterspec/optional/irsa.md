@@ -61,7 +61,32 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes,
 	5. Choose Next: Permissions.
 	6. In the **Attach Policy** section, select the IAM policy that has the permissions that you want your applications running in the pods to use.
 	7. Continue with the next sections of adding tags if desired and a suitable name for this role and create the role.
-	8. After the role is created, note down the name of this IAM Role as `OIDC_IAM_ROLE`. After the cluster is created, you can create service accounts and grant them this role by editing the trust relationship of this role. The last section shows how to do this. 
+	8. Below is a sample trust policy of IAM role for your pods. Remember to replace `Account ID` and `ISSUER_HOSTPATH` with required values.
+	    ```json
+	    {
+	     "Version": "2012-10-17",
+	     "Statement": [
+	      {
+	       "Effect": "Allow",
+	       "Principal": {
+		"Federated": "arn:aws:iam::111122223333:oidc-provider/ISSUER_HOSTPATH"
+	       },
+	       "Action": "sts:AssumeRoleWithWebIdentity",
+	       "Condition": {
+		"__doc_comment": "scope the role to the service account (optional)",
+		"StringEquals": {
+		 "ISSUER_HOSTPATH:sub": "system:serviceaccount:default:my-serviceaccount"
+		},
+		"__doc_comment": "OR scope the role to multiple values (optional)",
+		"StringLike": {
+		 "ISSUER_HOSTPATH:sub": ["system:serviceaccount:default:*","system:serviceaccount:observability:*"]
+		}
+	       }
+	      }
+	     ]
+	    }
+	    ```
+	9. After the role is created, note down the name of this IAM Role as `OIDC_IAM_ROLE`. After the cluster is created, you can create service accounts and grant them this role by editing the trust relationship of this role. The last section shows how to do this. 
 
 #### Create the EKS Anywhere cluster
 
@@ -83,11 +108,12 @@ Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as requ
 1. The cluster provisioning workflow generates a pair of service account signing keys. Retrieve the public signing key generated and used by the cluster, and create a keys.json document containing the public signing key. 
 
     ```bash
-    kubectl get secret ${CLUSTER_NAME}-sa -n eksa-system -o jsonpath={.data.tls\\.crt} | base64 --decode > ${CLUSTER_NAME}-sa.pub
-    wget https://raw.githubusercontent.com/aws/amazon-eks-pod-identity-webhook/master/hack/self-hosted/main.go -O keygenerator.go
-    go run keygenerator.go -key ${CLUSTER_NAME}-sa.pub | jq '.keys += [.keys[0]] | .keys[1].kid = ""' > keys.json
+    git clone https://github.com/aws/amazon-eks-pod-identity-webhook
+    cd amazon-eks-pod-identity-webhook
+    kubectl get secret ${CLUSTER_NAME}-sa -n eksa-system -o jsonpath={.data.tls\\.crt} | base64 --decode > ${CLUSTER_NAME}-sa.pub    
+    go run ./hack/self-hosted/main.go -key ${CLUSTER_NAME}-sa.pub | jq '.keys += [.keys[0]] | .keys[1].kid = ""' > keys.json
     ```
-1. Upload the keys.json document to the s3 bucket.
+2. Upload the keys.json document to the s3 bucket.
     ```bash
     aws s3 cp --acl public-read ./keys.json s3://$S3_BUCKET/keys.json
     ```
@@ -96,14 +122,37 @@ Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as requ
 
 1. After hosting the service account public signing key and OIDC discovery documents, the applications running in pods can start accessing the desired AWS resources, as long as the pod is mounted with the right service account tokens. This part of configuring the pods with the right service account tokens and env vars is automated by the [amazon pod identity webhook](https://github.com/aws/amazon-eks-pod-identity-webhook). Once the webhook is deployed, it mutates any pods launched using service accounts annotated with `eks.amazonaws.com/role-arn`
 
-1. Check out [this commit](https://github.com/aws/amazon-eks-pod-identity-webhook/commit/a65cc3d9c61cf6fc43f0f985818c474e0867d786) of the amazon-eks-pod-identity-webhook.
+1. Clone [amazon-eks-pod-identity-webhook](https://github.com/aws/amazon-eks-pod-identity-webhook) if not done already.
 
-1. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster.
-1. Run the following command:
+2. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster.
+
+3. Update `amazon-eks-pod-identity-webhook/deploy/auth.yaml` with `OIDC_IAM_ROLE` and other annotations as mentioned in sample below.
+    ```yaml
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: my-serviceaccount
+      namespace: default
+      annotations:
+        # set this with value of OIDC_IAM_ROLE      
+        eks.amazonaws.com/role-arn: "arn:aws:iam::111122223333:role/s3-reader"
+        # optional: Defaults to "sts.amazonaws.com" if not set
+        eks.amazonaws.com/audience: "sts.amazonaws.com"
+        # optional: When set to "true", adds AWS_STS_REGIONAL_ENDPOINTS env var
+        #   to containers
+        eks.amazonaws.com/sts-regional-endpoints: "true"
+        # optional: Defaults to 86400 for expirationSeconds if not set
+        #   Note: This value can be overwritten if specified in the pod 
+        #         annotation as shown in the next step.
+        eks.amazonaws.com/token-expiration: "86400"
+    ```
+
+4. Run the following command:
 
     ```bash
-    make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:a65cc3d
+    make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:latest
     ```
+5. You can validate IRSA by using test steps mentioned here (https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount pod-identity-webhook.
 
 
 #### Configure the trust relationship for the OIDC provider's IAM Role
