@@ -170,7 +170,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    ```bash
    CLUSTER_NAME=mgmt
    eksctl anywhere generate clusterconfig $CLUSTER_NAME \
-      --provider vsphere > eksa-mgmt-cluster.yaml
+      --provider docker > eksa-mgmt-cluster.yaml
    ```
 
 1. Modify the management cluster config (`eksa-mgmt-cluster.yaml`) you could use the same one described earlier or modify it to use GitOps, as shown below:
@@ -288,7 +288,7 @@ Follow these steps to have your management cluster create and manage separate wo
    ```bash
    CLUSTER_NAME=w01
    eksctl anywhere generate clusterconfig $CLUSTER_NAME \
-      --provider vsphere > eksa-w01-cluster.yaml
+      --provider docker > eksa-w01-cluster.yaml
    ```
    Refer to the initial config described earlier for the required and optional settings.
 
