@@ -96,7 +96,7 @@ func PullLatestBundle(ctx context.Context, art string) ([]byte, error) {
 }
 
 func PushBundle(ctx context.Context, ref, fileName string, fileContent []byte) error {
-	registry, err := content.NewRegistry(content.RegistryOptions{})
+	registry, err := content.NewRegistry(content.RegistryOptions{Insecure: true})
 	if err != nil {
 		return fmt.Errorf("creating registry: %w", err)
 	}
