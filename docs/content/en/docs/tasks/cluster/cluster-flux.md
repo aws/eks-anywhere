@@ -123,6 +123,7 @@ clusters
     ├── management-cluster
     │   └── eksa-system
     │       └── eksa-cluster.yaml
+    │       └── kustomization.yaml
     ├── workload-cluster-1
     │   └── eksa-system
     │       └── eksa-cluster.yaml
