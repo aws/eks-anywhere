@@ -59,10 +59,11 @@ func NewClusterValidator(client client.Client, spec *cluster.Spec) ClusterValida
 }
 
 // NewFullClusterValidator returns a cluster with a complete validation set pre-loaded.
-func NewFullClusterValidator(client client.Client, spec *cluster.Spec) {
+func NewFullClusterValidator(client client.Client, spec *cluster.Spec) ClusterValidator {
 	cv := NewClusterValidator(client, spec)
 	cv.WithValidation(validateObjects, 5*time.Second, 60)
 	cv.WithValidation(validateControlPlaneNodes, 5*time.Second, 60)
+	return cv
 }
 
 func validateObjects(ctx context.Context, c client.Client, clusterSpec *cluster.Spec) error {
