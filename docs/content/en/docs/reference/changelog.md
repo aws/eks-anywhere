@@ -4,8 +4,6 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
-## Unreleased
-
 ## [v0.13.0](https://github.com/aws/eks-anywhere/releases/tag/v0.13.0)
 ### Added
 - Workload clusters full lifecycle API support for vSphere and Docker ([#1090](https://github.com/aws/eks-anywhere/issues/1090))
