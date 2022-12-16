@@ -108,55 +108,15 @@ spec:
                           description: IPPool is the ip pool for this DNI if customers
                             want to specify
                           properties:
-                            apiVersion:
-                              description: 'APIVersion defines the versioned schema
-                                of this representation of an object. Servers should
-                                convert recognized schemas to the latest internal
-                                value, and may reject unrecognized values. More info:
-                                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                              type: string
                             kind:
-                              description: 'Kind is a string value representing the
-                                REST resource this object represents. Servers may
-                                infer this from the endpoint the client submits requests
-                                to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                              description: Kind is the type of resource being referenced
                               type: string
-                            metadata:
-                              type: object
-                            spec:
-                              description: AWSSnowIPPoolSpec defines the desired state
-                                of AWSSnowIPPool
-                              properties:
-                                pools:
-                                  description: IPPools is the configuration of static
-                                    ips used for machine's ip.
-                                  items:
-                                    description: IPPool is the configuration of static
-                                      ips used for machine's ip.
-                                    properties:
-                                      gateway:
-                                        description: Gateway is the gateway of this
-                                          subnet. Used for routing purpose
-                                        type: string
-                                      ipEnd:
-                                        description: IPEnd is the end of an ip range
-                                        type: string
-                                      ipStart:
-                                        description: IPStart is the start of an ip
-                                          range
-                                        type: string
-                                      subnet:
-                                        description: Subnet is customers' network
-                                          subnet, we can use it to determine if two
-                                          ip addresses are in the same subnet.
-                                        type: string
-                                    type: object
-                                  type: array
-                              type: object
-                            status:
-                              description: AWSSnowIPPoolStatus defines the observed
-                                state of AWSSnowIPPool
-                              type: object
+                            name:
+                              description: Name is the name of resource being referenced
+                              type: string
+                          required:
+                          - kind
+                          - name
                           type: object
                         primary:
                           description: Primary indicates whether the DNI is primary
@@ -164,7 +124,7 @@ spec:
                           type: boolean
                         vlanID:
                           description: VlanID is the vlan ID assigned by the user
-                          format: int64
+                          format: int32
                           maximum: 4095
                           minimum: 0
                           type: integer
