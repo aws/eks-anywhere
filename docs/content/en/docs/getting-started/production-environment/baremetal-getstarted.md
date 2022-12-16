@@ -9,8 +9,7 @@ description: >
 EKS Anywhere supports a Bare Metal provider for production grade EKS Anywhere deployments.
 EKS Anywhere allows you to provision and manage Kubernetes clusters based on Amazon EKS software on your own infrastructure.
 
-This document walks you through setting up EKS Anywhere as a self-managed cluster.
-It does not yet support the concept of a separate management cluster for managing one or more workload clusters.
+This document walks you through setting up EKS Anywhere as a standalone, self-managed cluster or combined set of management/workload clusters.
 See [Cluster topologies]({{< relref "../../concepts/cluster-topologies" >}}) for details.
 
 ## Prerequisite checklist
