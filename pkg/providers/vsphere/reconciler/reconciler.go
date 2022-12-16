@@ -216,13 +216,18 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec
 
 // InstallStorageClass install default storage class in workload cluster.
 func (r *Reconciler) InstallStorageClass(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	if clusterSpec.VSphereDatacenter.Spec.DisableCSI {
+		log.V(3).Info("VSphere CSI disabled, skipping storage class installation")
+		return controller.Result{}, nil
+	}
+
 	log = log.WithValues("phase", "reconcileStorageClass")
 	remoteClient, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
 	if err != nil {
 		return controller.Result{}, err
 	}
 	log.Info("Applying Storage Class")
-	if err := serverside.ReconcileYaml(ctx, remoteClient, vsphere.DefaultStorageClass); err != nil {
+	if err := serverside.ReconcileYaml(ctx, remoteClient, vsphere.GetDefaultStorageClass()); err != nil {
 		return controller.Result{}, err
 	}
 
