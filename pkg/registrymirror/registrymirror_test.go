@@ -1,7 +1,6 @@
 package registrymirror_test
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -428,8 +427,9 @@ func TestCredentials(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanup := envSetter(tt.envs)
-			t.Cleanup(cleanup)
+			for name, value := range tt.envs {
+				t.Setenv(name, value)
+			}
 
 			g := NewWithT(t)
 			_, _, err := tt.registryMirror.Credentials()
@@ -439,17 +439,5 @@ func TestCredentials(t *testing.T) {
 				g.Expect(err).To(BeNil())
 			}
 		})
-	}
-}
-
-func envSetter(envs map[string]string) (cleanup func()) {
-	for name, value := range envs {
-		os.Setenv(name, value)
-	}
-
-	return func() {
-		for name := range envs {
-			os.Unsetenv(name)
-		}
 	}
 }

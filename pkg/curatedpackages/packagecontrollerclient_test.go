@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -405,10 +404,8 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 }
 
 func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
-	os.Setenv("REGISTRY_USERNAME", "admin")
-	os.Setenv("REGISTRY_PASSWORD", "Harbor12345")
-	defer os.Unsetenv("REGISTRY_USERNAME")
-	defer os.Unsetenv("REGISTRY_PASSWORD")
+	t.Setenv("REGISTRY_USERNAME", "admin")
+	t.Setenv("REGISTRY_PASSWORD", "Harbor12345")
 	for _, tt := range newPackageControllerTests(t) {
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
