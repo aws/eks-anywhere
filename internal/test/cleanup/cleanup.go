@@ -8,12 +8,16 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
+	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -124,6 +128,42 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 
 	if len(errorsMap) > 0 {
 		return fmt.Errorf("cleaning up VMs: %+v", errorsMap)
+	}
+	return nil
+}
+
+// NutanixTestResourcesCleanup cleans up any leftover VMs in Nutanix after a test run.
+func NutanixTestResourcesCleanup(ctx context.Context, clusterName, endpoint, port string, insecure, ignoreErrors bool) error {
+	creds := nutanix.GetCredsFromEnv()
+	nutanixCreds := prismgoclient.Credentials{
+		URL:      fmt.Sprintf("%s:%s", endpoint, port),
+		Username: creds.PrismCentral.Username,
+		Password: creds.PrismCentral.Password,
+		Endpoint: endpoint,
+		Port:     port,
+		Insecure: insecure,
+	}
+
+	client, err := v3.NewV3Client(nutanixCreds)
+	if err != nil {
+		return fmt.Errorf("initailizing prism client: %v", err)
+	}
+
+	response, err := client.V3.ListAllVM(context.Background(), fmt.Sprintf("vm_name==%s.*", clusterName))
+	if err != nil {
+		return fmt.Errorf("getting ListVM response: %v", err)
+	}
+
+	for _, vm := range response.Entities {
+		logger.V(4).Info("Deleting Nutanix VM", "Name", *vm.Spec.Name, "UUID:", *vm.Metadata.UUID)
+
+		_, err = client.V3.DeleteVM(context.Background(), *vm.Metadata.UUID)
+		if err != nil {
+			if !ignoreErrors {
+				return fmt.Errorf("deleting Nutanix VM %s: %v", *vm.Spec.Name, err)
+			}
+			logger.Info("Warning: Failed to delete Nutanix VM, skipping...", "Name", *vm.Spec.Name, "UUID:", *vm.Metadata.UUID)
+		}
 	}
 	return nil
 }
