@@ -199,16 +199,26 @@ type AWSSnowDirectNetworkInterface struct {
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=4095
 	// +optional
-	VlanID *int64 `json:"vlanID,omitempty"`
+	VlanID *int32 `json:"vlanID,omitempty"`
 	// DHCP is whether we assign ip using DHCP for this DNI
 	// +optional
 	DHCP bool `json:"dhcp,omitempty"`
 	// IPPool is the ip pool for this DNI if customers want to specify
 	// +optional
-	IPPool *AWSSnowIPPool `json:"ipPool,omitempty"`
+	IPPool *AWSSnowIPPoolReference `json:"ipPool,omitempty"`
 	// Primary indicates whether the DNI is primary or not
 	// +optional
 	Primary bool `json:"primary,omitempty"`
+}
+
+// AWSSnowIPPoolReference contains enough information to let you locate the
+// typed referenced object inside the same namespace.
+// +structType=atomic
+type AWSSnowIPPoolReference struct {
+	// Kind is the type of resource being referenced
+	Kind string `json:"kind"`
+	// Name is the name of resource being referenced
+	Name string `json:"name"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
