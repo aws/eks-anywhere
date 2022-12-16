@@ -46,7 +46,6 @@ Create credentials for this user and set and export the following environment va
 ```bash
 export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
 export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
-export EKSA_AWS_REGION="us-west-2"
 ```
 Make sure you are authenticated with the AWS CLI
 
