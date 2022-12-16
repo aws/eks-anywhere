@@ -136,8 +136,10 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		logger.MarkWarning("  Unable to create credentials for curated packages: ", "warning", err)
 	}
 
-	if err := pc.CreateRegistryMirrorCredentials(ctx); err != nil {
-		logger.MarkWarning("  Unable to create registry mirror credentials for curated packages: ", "warning", err)
+	if pc.registryMirror != nil {
+		if err := pc.CreateRegistryMirrorCredentials(ctx); err != nil {
+			logger.MarkWarning("  Unable to create registry mirror credentials for curated packages: ", "warning", err)
+		}
 	}
 
 	return pc.waitForActiveBundle(ctx)

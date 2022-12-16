@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -32,6 +33,9 @@ var awsSecretTestEmpty []byte
 
 //go:embed testdata/awssecret_defaultregion.yaml
 var awsSecretDefaultRegion []byte
+
+//go:embed testdata/mirrorsecret_test.yaml
+var mirrorSecretTest []byte
 
 type packageControllerTest struct {
 	*WithT
@@ -70,6 +74,8 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
 			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
 		},
+		Auth:          true,
+		CACertContent: "-----BEGIN CERTIFICATE-----\nMIIEhzCCAu+gAwIBAgIQDmA/OXzQak1+JqxqH/TZGTANBgkqhkiG9w0BAQsFADCB\njzEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMTIwMAYDVQQLDClrYW5n\n-----END CERTIFICATE-----",
 	}
 	return []*packageControllerTest{
 		{
@@ -399,6 +405,10 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 }
 
 func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
+	os.Setenv("REGISTRY_USERNAME", "admin")
+	os.Setenv("REGISTRY_PASSWORD", "Harbor12345")
+	defer os.Unsetenv("REGISTRY_USERNAME")
+	defer os.Unsetenv("REGISTRY_PASSWORD")
 	for _, tt := range newPackageControllerTests(t) {
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
@@ -419,6 +429,7 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 		}
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, errors.New("failed applying secrets"))
+		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, mirrorSecretTest, params).Return(bytes.Buffer{}, errors.New("failed applying secrets")).AnyTimes()
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
