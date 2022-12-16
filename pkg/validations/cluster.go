@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsValidator) error {
@@ -46,7 +46,7 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 func ValidateAuthenticationForRegistryMirror(clusterSpec *cluster.Spec) error {
 	cluster := clusterSpec.Cluster
 	if cluster.Spec.RegistryMirrorConfiguration != nil && cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-		_, _, err := config.ReadCredentials()
+		_, _, err := registrymirror.Credentials()
 		if err != nil {
 			return err
 		}

@@ -147,7 +147,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 
 // CreateRegistryMirrorCredentials creates necessary credentials to enable the installation of curated packages.
 func (pc *PackageControllerClient) CreateRegistryMirrorCredentials(ctx context.Context) error {
-	username, password, err := pc.registryMirror.Credentials()
+	username, password, err := registrymirror.Credentials()
 	if err != nil {
 		return err
 	}

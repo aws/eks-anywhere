@@ -1,14 +1,15 @@
 package registrymirror
 
 import (
+	"errors"
 	"net"
 	urllib "net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -79,10 +80,15 @@ func (r *RegistryMirror) CuratedPackagesMirror() string {
 }
 
 // Credentials returns the credential for the registry mirror.
-func (r *RegistryMirror) Credentials() (string, string, error) {
-	username, password, err := config.ReadCredentials()
-	if err != nil {
-		return "", "", err
+func Credentials() (string, string, error) {
+	username, ok := os.LookupEnv("REGISTRY_USERNAME")
+	if !ok {
+		return "", "", errors.New("please set REGISTRY_USERNAME env var")
+	}
+
+	password, ok := os.LookupEnv("REGISTRY_PASSWORD")
+	if !ok {
+		return "", "", errors.New("please set REGISTRY_PASSWORD env var")
 	}
 	return username, password, nil
 }

@@ -432,7 +432,7 @@ func TestCredentials(t *testing.T) {
 			}
 
 			g := NewWithT(t)
-			_, _, err := tt.registryMirror.Credentials()
+			_, _, err := registrymirror.Credentials()
 			if tt.wantErr {
 				g.Expect(err).Error()
 			} else {

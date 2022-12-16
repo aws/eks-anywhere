@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
@@ -62,7 +61,7 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
-	username, password, err := config.ReadCredentials()
+	username, password, err := registrymirror.Credentials()
 	if err != nil {
 		return err
 	}
