@@ -182,11 +182,27 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
 1. Create a workload cluster in one of the following ways:
    
-   * **GitOps**: Recommended for more permanent cluster configurations. Be sure to:
-      * Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
-      * Make sure there is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating the management cluster with `eksctl` should create the `kustomization.yaml` file automatically.
+   * **GitOps**: Recommended for more permanent cluster configurations.
+     1. Clone your git repo and add the new cluster specification. Be sure to follow the directory structure defined on [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}):
 
-      See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for details.
+      ```
+      clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
+      ```
+
+      2. Commit the file to your git repository
+         ```bash
+         git add clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
+         git commit -m 'Creating new workload cluster'
+         git push origin main
+         ```
+         
+      3. The flux controller will automatically make the required changes.
+     > **NOTE**: Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
+     >
+     > Make sure there is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating a Gitops enabled management cluster with `eksctl` should create the `kustomization.yaml` file automatically.
+     
+   See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for more details.
+   
    * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, run:
       ```bash
       eksctl anywhere create cluster \
