@@ -355,6 +355,22 @@ func TestReconciler_ReconcileStorageCLass(t *testing.T) {
 	tt.ShouldEventuallyExist(tt.ctx, &storagev1.StorageClass{ObjectMeta: metav1.ObjectMeta{Name: "standard", Namespace: "eksa-system"}})
 }
 
+func TestReconciler_SkipReconcileStorageCLass(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	spec := tt.buildSpec()
+	spec.VSphereDatacenter.Spec.DisableCSI = true
+
+	result, err := tt.reconciler().InstallStorageClass(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.ShouldEventuallyNotExist(tt.ctx, &storagev1.StorageClass{ObjectMeta: metav1.ObjectMeta{Name: "standard", Namespace: "eksa-system"}})
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
