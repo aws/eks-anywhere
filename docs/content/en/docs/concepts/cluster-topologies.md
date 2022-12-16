@@ -17,7 +17,7 @@ An EKS Anywhere management cluster is a long-lived, on-premises Kubernetes clust
 The workload clusters are where you run your applications.
 The management cluster can only be created and managed by the Amazon CLI `eksctl`.
 
-The management cluster runs on you hardware on-premises and it does not require any connectivity back to AWS to function.
+The management cluster runs on your on-premises hardware and it does not require any connectivity back to AWS to function.
 Customers are responsible for operating the management cluster including (but not limited to) patching, upgrading, scaling, and monitoring the cluster control plane and data plane.
  
 ## What’s the difference between a management cluster and a standalone cluster?
@@ -37,8 +37,8 @@ This shows examples of a management cluster that deploys and manages multiple wo
 
 A management cluster is a long-lived entity you have to actively operate.
 The _bootstrap_ cluster is a temporary, short-lived kind cluster that is created on a separate [Administrative machine]({{< relref "clusterworkflow/#administrative-machine" >}}) to facilitate the creation of an initial standalone or management cluster.
-You do not need to interact or operate the `kind` cluster.
-The `kind` cluster will be automatically deleted by the end of the initial cluster creation.
+
+The `kind` cluster is automatically deleted by the end of the initial cluster creation.
 
 ## When should I deploy a management cluster?
 If you want to run three or more EKS Anywhere clusters, we recommend that you choose a management/workload cluster deployment topology because of the advantages listed in the table below.
@@ -66,14 +66,17 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 | <ul><li>VMware via CLI</li>  | Y |
 | <ul><li>CloudStack via CLI</li> | Y |
 | <ul><li>Bare Metal via CLI</li> | Y |
+| <ul><li>Docker via CLI (non-production only)</li> | Y |
 | Update a workload cluster on... ||
 | <ul><li>VMware via GitOps/Terraform</li> | Y |
 | <ul><li>CloudStack via GitOps/Terraform</li> | Y |
 | <ul><li>Bare Metal via GitOps/Terraform</li> | N |
+| <ul><li>Docker via CLI (non-production only)</li> | Y |
 | Create/delete a workload cluster on...
 | <ul><li>VMware via GitOps/Terraform</li> | Y |
 | <ul><li>CloudStack via GitOps/Terraform</li> | N |
 | <ul><li>Bare Metal via GitOps/Terraform</li> | N |
+| <ul><li>Docker via GitOps/Terraform (non-production only)</li> | Y |
 | Install a curated package on the management cluster | Y ||
 | Install a curated package on the workload cluster from the management cluster | Y |
 | Install a curated package on the management cluster during a workload cluster creation | N |
