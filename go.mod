@@ -13,8 +13,8 @@ require (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
-	github.com/aws/etcdadm-bootstrap-provider v1.0.5-rc1
-	github.com/aws/etcdadm-controller v1.0.4-rc1
+	github.com/aws/etcdadm-bootstrap-provider v1.0.5-rc2
+	github.com/aws/etcdadm-controller v1.0.4-rc2
 	github.com/aws/smithy-go v1.13.2
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3

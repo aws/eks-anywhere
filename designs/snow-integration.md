@@ -167,8 +167,6 @@ spec:
   kubeadmConfigSpec:
     preKubeadmCommands:
       - /etc/eks/bootstrap.sh
-    postKubeadmCommands:
-      - /etc/eks/bootstrap.sh
 ...
 ```
 

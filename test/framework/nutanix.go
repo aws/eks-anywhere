@@ -1,10 +1,12 @@
 package framework
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -134,8 +136,8 @@ func (s *Nutanix) Name() string {
 func (s *Nutanix) Setup() {}
 
 // CleanupVMs satisfies the test framework Provider.
-func (s *Nutanix) CleanupVMs(_ string) error {
-	return nil
+func (s *Nutanix) CleanupVMs(clustername string) error {
+	return cleanup.NutanixTestResourcesCleanup(context.Background(), clustername, os.Getenv(nutanixEndpoint), os.Getenv(nutanixPort), true, true)
 }
 
 // ClusterConfigUpdates satisfies the test framework Provider.

@@ -24,7 +24,7 @@ Cluster upgrades are not handled automatically and require administrator action 
 You are advised to upgrade your clusters in development environments first and verify your workloads and controllers are compatible with the new version.
 
 Cluster upgrades are performed using a rolling upgrade process (similar to Kubernetes Deployments).
-Upgrades can only happen one minor version at a time (e.g. `1.20` -> `1.21`).
+Upgrades can only happen one minor version at a time (e.g. `1.23` -> `1.24`).
 Control plane components will be upgraded before worker nodes.
 
 ### Prerequisites
@@ -109,7 +109,7 @@ If you don't have any available hardware that match this requirement in the clus
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.20 to 1.21 you would change your spec as follows:
+As an example, to upgrade a cluster with version 1.23 to 1.24 you would change your spec as follows:
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -125,7 +125,7 @@ spec:
       kind: TinkerbellMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.21"
+  kubernetesVersion: "1.24"
       ...
 ```
 

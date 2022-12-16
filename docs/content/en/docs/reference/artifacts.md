@@ -34,12 +34,12 @@ Bottlerocket vends its Baremetal variant Images using a secure distribution tool
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
 ## vSphere artifacts
@@ -54,15 +54,13 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.24 - `eksdRelease:kubernetes-1-24-eks-3`
+1.24 - `eksdRelease:kubernetes-1-24-eks-4`
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-8`
+1.23 - `eksdRelease:kubernetes-1-23-eks-9`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-13`
+1.22 - `eksdRelease:kubernetes-1-22-eks-14`
 
 1.21 - `eksdRelease:kubernetes-1-21-eks-21`
-
-1.20 - `eksdRelease:kubernetes-1-20-eks-22`
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
@@ -219,7 +217,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
@@ -309,12 +307,31 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```
 1. Get `image-builder`:
     ```bash
-    cd /tmp
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/21/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-    sudo tar xvf image-builder*.tar.gz
-    sudo cp image-builder /usr/local/bin
+    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
+      sudo tar -xzC /usr/local/bin ./image-builder
     ```
-1. Create a Bare Metal configuration file (for example, `baremetal.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
+
+1. Create an Ubuntu or Red Hat image.
+
+   **Ubuntu**
+
+   Run `image-builder` with the following options:
+
+      * `--os`: `ubuntu`
+      * `--hypervisor`: `baremetal`
+      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
+      formatted as "[major]-[minor]"; for example "1-24"
+
+      ```bash
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-24
+      ```
+
+   **Red Hat Enterprise Linux (RHEL)**
+
+   RHEL images require a configuration file to identify the location of the RHEL 8 ISO image and
+   Red Hat subscription information. The `image-builder` command will temporarily consume a Red
+   Hat subscription that is returned once the image is built.
+
    ```json
    {
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
@@ -322,47 +339,27 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "iso_checksum_type": "<for example: sha256>",
      "rhel_username": "<rhsm username>",
      "rhel_password": "<rhsm password>",
-     "extra_rpms": "<Space-separated list of RPM packages. Useful for adding required drivers or other packages>"
+     "extra_rpms": "<space-separated list of RPM packages; useful for adding required drivers or other packages>"
    }
    ```
-   >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
 
-1. Create an ubuntu or redhat image:
-
-   * To create an Ubuntu-based image, run `image-builder` with the following options:
-
-      * `--os`: `ubuntu`
-      * `--hypervisor`: For Bare Metal use `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, 1-23, and 1-24.
-      * `--baremetal-config`: Bare Metal configuration file (`baremetal.json` in this example)
-
-      ```bash
-      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-24 --baremetal-config baremetal.json
-      ```
-   * To create a RHEL-based image, run `image-builder` with the following options:
+   Run the `image-builder` with the following options:
 
       * `--os`: `redhat`
-      * `--hypervisor`: For Bare Metal use `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, 1-23, and 1-24.
-      * `--baremetal-config`: Bare Metal configuration file (`baremetal.json` in this example)
+      * `--hypervisor`: `baremetal`
+      * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
+      formatted as "[major]-[minor]"; for example "1-24"
+      * `--baremetal-config`: Bare metal config file
 
       ```bash
       image-builder build --os redhat --hypervisor baremetal --release-channel 1-24 --baremetal-config baremetal.json
       ```
 
-1. To consume the resulting Ubuntu-based or RHEL-based image, serve the image from an accessible Web server. For example, add the image to a server called `my-web-server`:
-   ```
-   my-web-server
-   ├── hook
-   │   ├── initramfs-x86_64
-   │   └── vmlinuz-x86_64
-   └── my-ubuntu-v1.23.9-eks-a-17-amd64.gz
-   ```
-
-1. Then create the [Bare metal configuration]({{< relref "./clusterspec/baremetal/" >}}) file, setting the `osImageURL` field to the location of the image. For example:
+1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "./clusterspec/baremetal/" >}}) 
+   configuring the `osImageURL` field URL of the image. For example:
 
    ```
-   osImageURL: "http://my-web-server/my-ubuntu-v1.23.9-eks-a-17-amd64.gz"
+   osImageURL: "http://<artifact host address>/my-ubuntu-v1.23.9-eks-a-17-amd64.gz"
    ```
 
    See descriptions of [osImageURL]({{< relref "./clusterspec/baremetal/#osimageurl" >}}) for further information.
@@ -395,7 +392,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
@@ -523,7 +520,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 1. Get `image-builder`:
     ```bash
     cd /home/$USER
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/19/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```

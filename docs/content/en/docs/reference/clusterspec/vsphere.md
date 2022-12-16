@@ -55,7 +55,7 @@ spec:
      machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: "1.23"
+   kubernetesVersion: "1.24"
    workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
@@ -76,10 +76,10 @@ metadata:
    name: my-cluster-datacenter
 spec:
   datacenter: ""
-  disableCSI:
+  disableCSI: false
   server: ""
   network: ""
-  insecure:
+  insecure: false
   thumbprint: ""
 
 ---
@@ -101,6 +101,8 @@ spec:
   - name: ""
     sshAuthorizedKeys:
     - ""
+  tags:
+  - ""
 ```
 
 ## Cluster Fields
@@ -206,7 +208,7 @@ Refers to the Kubernetes object with vsphere specific configuration for your etc
 Refers to the Kubernetes object with vsphere environment specific configuration. See `VSphereDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.23`, `1.22`, `1.21`, `1.20`
+The Kubernetes version you want to use for your cluster. Supported values: `1.24`, `1.23`, `1.22`, `1.21`
 
 ## VSphereDatacenterConfig Fields
 
@@ -330,6 +332,15 @@ for your VMs in the EKS Anywhere cluster. Examples of resource pool values inclu
 
 ### storagePolicyName (optional)
 The storage policy name associated with your VMs.
+
+### tags (optional)
+Optional list of tags to attach to your cluster VMs in the URN format.
+
+Example:
+```
+  tags:
+  - urn:vmomi:InventoryServiceTag:8e0ce079-0675-47d6-8665-16ada4e6dabd:GLOBAL
+```
 
 ## Optional VSphere Credentials 
 Use the following environment variables to configure Cloud Provider and CSI Driver with different credentials.

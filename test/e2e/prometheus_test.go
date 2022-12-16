@@ -105,10 +105,12 @@ func TestCPackagesPrometheusTinkerbellBottleRocketKubernetes123SimpleFlow(t *tes
 
 func runCuratedPackagesPrometheusInstall(test *framework.ClusterE2ETest) {
 	packageFullName := packagePrefix + "-" + packageName
+	test.InstallLocalStorageProvisioner()
 	test.CreateNamespace(packageTargetNamespace)
 	test.SetPackageBundleActive()
 	test.InstallCuratedPackage(packageName, packageFullName,
-		kubeconfig.FromClusterName(test.ClusterName), packageTargetNamespace)
+		kubeconfig.FromClusterName(test.ClusterName), packageTargetNamespace,
+		"--set server.persistentVolume.storageClass=local-path")
 	test.VerifyPrometheusPackageInstalled(packageFullName, packageTargetNamespace)
 	test.VerifyPrometheusNodeExporterStates(packageFullName, packageTargetNamespace)
 	test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace)

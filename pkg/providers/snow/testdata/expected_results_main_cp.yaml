@@ -140,8 +140,6 @@ spec:
       pause: {}
       proxy: {}
       registryMirror: {}
-    postKubeadmCommands:
-    - /etc/eks/bootstrap.sh
     preKubeadmCommands:
     - /etc/eks/bootstrap.sh
   machineTemplate:
@@ -197,6 +195,12 @@ spec:
       - 1.2.3.5
       iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io
       instanceType: sbe-c.large
+      network:
+        directNetworkInterfaces:
+        - dhcp: true
+          index: 1
+          primary: true
+      osFamily: ubuntu
       physicalNetworkConnectorType: SFP_PLUS
       sshKeyName: default
 

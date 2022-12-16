@@ -15,10 +15,8 @@ weight: 35
 - Allow to configure machine health checks timeout through a new flag `--unhealthy-machine-timeout` ([#3918](https://github.com/aws/eks-anywhere/issues/3918) implemented by [#4123](https://github.com/aws/eks-anywhere/pull/4123))
 - Ability to configure rolling upgrade for Bare Metal and Cloudstack via `maxSurge` and `maxUnavailable` parameters
 - New Nutanix Provider
-- Support for private registry authentication
 - Workload clusters support for Bare Metal
-- VM Tagging support for vSphere VM's created in the cluster
-- Static IP support for Bottlerocket OS in Bare Metal
+- VM Tagging support for vSphere VM's created in the cluster ([#4228](https://github.com/aws/eks-anywhere/pull/4228))
 - Support for new curated packages:
   - Prometheus `v2.39.1`
 - Updated curated packages' versions:
@@ -29,6 +27,7 @@ weight: 35
 
 ### Fixed
 - Kubernetes version upgrades from 1.23 to 1.24 for Docker clusters ([#4266](https://github.com/aws/eks-anywhere/pull/4266))
+- Added missing docker login when doing authenticated registry pulls
 
 ### Breaking changes
 - Removed support for Kubernetes 1.20

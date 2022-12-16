@@ -23,10 +23,6 @@ const (
 	defaultTestBranch    = "main"
 )
 
-func GetLatestMinorReleaseBinaryFromTestBranch() (binaryPath string, err error) {
-	return getBinaryFromRelease(GetLatestMinorReleaseFromTestBranch())
-}
-
 func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error) {
 	testBranch := testBranch()
 	if testBranch == "main" {

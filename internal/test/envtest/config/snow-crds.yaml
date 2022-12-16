@@ -9,13 +9,24 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
     controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws-snow
     cluster.x-k8s.io/v1beta1: v1beta1
   name: awssnowclusters.infrastructure.cluster.x-k8s.io
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        caBundle: Cg==
+        service:
+          name: capas-webhook-service
+          namespace: capas-system
+          path: /convert
+      conversionReviewVersions:
+      - v1beta1
   group: infrastructure.cluster.x-k8s.io
   names:
     kind: AWSSnowCluster
@@ -215,8 +226,97 @@ metadata:
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws-snow
     cluster.x-k8s.io/v1beta1: v1beta1
+  name: awssnowippools.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    kind: AWSSnowIPPool
+    listKind: AWSSnowIPPoolList
+    plural: awssnowippools
+    singular: awssnowippool
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: AWSSnowIPPool is the Schema for the awssnowippools API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AWSSnowIPPoolSpec defines the desired state of AWSSnowIPPool
+            properties:
+              pools:
+                description: IPPools is the configuration of static ips used for machine's
+                  ip.
+                items:
+                  description: IPPool is the configuration of static ips used for
+                    machine's ip.
+                  properties:
+                    gateway:
+                      description: Gateway is the gateway of this subnet. Used for
+                        routing purpose
+                      type: string
+                    ipEnd:
+                      description: IPEnd is the end of an ip range
+                      type: string
+                    ipStart:
+                      description: IPStart is the start of an ip range
+                      type: string
+                    subnet:
+                      description: Subnet is customers' network subnet, we can use
+                        it to determine if two ip addresses are in the same subnet.
+                      type: string
+                  type: object
+                type: array
+            type: object
+          status:
+            description: AWSSnowIPPoolStatus defines the observed state of AWSSnowIPPool
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
+    controller-gen.kubebuilder.io/version: v0.4.1
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws-snow
+    cluster.x-k8s.io/v1beta1: v1beta1
   name: awssnowmachines.infrastructure.cluster.x-k8s.io
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        caBundle: Cg==
+        service:
+          name: capas-webhook-service
+          namespace: capas-system
+          path: /convert
+      conversionReviewVersions:
+      - v1beta1
   group: infrastructure.cluster.x-k8s.io
   names:
     kind: AWSSnowMachine
@@ -235,7 +335,7 @@ spec:
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
-          deviceIp:
+          deviceIP:
             type: string
           kind:
             description: 'Kind is a string value representing the REST resource this
@@ -427,6 +527,98 @@ spec:
                 description: 'InstanceType is the type of instance to create. Example:
                   m4.xlarge'
                 type: string
+              network:
+                description: Network is the DNI and ip address settings for this machine
+                properties:
+                  directNetworkInterfaces:
+                    description: DirectNetworkInterfaces is the configuration requirements
+                      for DNIs
+                    items:
+                      description: AWSSnowDirectNetworkInterface is configuration
+                        of DNIs specified by customers.
+                      properties:
+                        dhcp:
+                          description: DHCP is whether we assign ip using DHCP for
+                            this DNI
+                          type: boolean
+                        index:
+                          description: Index is the index number of DNI
+                          maximum: 7
+                          minimum: 1
+                          type: integer
+                        ipPool:
+                          description: IPPool is the ip pool for this DNI if customers
+                            want to specify
+                          properties:
+                            apiVersion:
+                              description: 'APIVersion defines the versioned schema
+                                of this representation of an object. Servers should
+                                convert recognized schemas to the latest internal
+                                value, and may reject unrecognized values. More info:
+                                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                              type: string
+                            kind:
+                              description: 'Kind is a string value representing the
+                                REST resource this object represents. Servers may
+                                infer this from the endpoint the client submits requests
+                                to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                              type: string
+                            metadata:
+                              type: object
+                            spec:
+                              description: AWSSnowIPPoolSpec defines the desired state
+                                of AWSSnowIPPool
+                              properties:
+                                pools:
+                                  description: IPPools is the configuration of static
+                                    ips used for machine's ip.
+                                  items:
+                                    description: IPPool is the configuration of static
+                                      ips used for machine's ip.
+                                    properties:
+                                      gateway:
+                                        description: Gateway is the gateway of this
+                                          subnet. Used for routing purpose
+                                        type: string
+                                      ipEnd:
+                                        description: IPEnd is the end of an ip range
+                                        type: string
+                                      ipStart:
+                                        description: IPStart is the start of an ip
+                                          range
+                                        type: string
+                                      subnet:
+                                        description: Subnet is customers' network
+                                          subnet, we can use it to determine if two
+                                          ip addresses are in the same subnet.
+                                        type: string
+                                    type: object
+                                  type: array
+                              type: object
+                            status:
+                              description: AWSSnowIPPoolStatus defines the observed
+                                state of AWSSnowIPPool
+                              type: object
+                          type: object
+                        primary:
+                          description: Primary indicates whether the DNI is primary
+                            or not
+                          type: boolean
+                        vlanID:
+                          description: VlanID is the vlan ID assigned by the user
+                          format: int64
+                          maximum: 4095
+                          minimum: 0
+                          type: integer
+                      type: object
+                    minItems: 1
+                    type: array
+                  dns:
+                    description: DNS is just for bottlerocket static ip config
+                    items:
+                      type: string
+                    type: array
+                type: object
               networkInterfaces:
                 description: NetworkInterfaces is a list of ENIs to associate with
                   the instance. A maximum of 2 may be specified.
@@ -475,6 +667,13 @@ spec:
                   - size
                   type: object
                 type: array
+              osFamily:
+                description: OSFamily is the OS flavor which is used as the node instance
+                  OS, currently support ubuntu and bottlerocket
+                enum:
+                - ubuntu
+                - bottlerocket
+                type: string
               physicalNetworkConnectorType:
                 description: PhysicalNetworkConnectorType is the physical network
                   connector type to use for creating direct network interfaces. Valid
@@ -693,13 +892,24 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
     controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws-snow
     cluster.x-k8s.io/v1beta1: v1beta1
   name: awssnowmachinetemplates.infrastructure.cluster.x-k8s.io
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        caBundle: Cg==
+        service:
+          name: capas-webhook-service
+          namespace: capas-system
+          path: /convert
+      conversionReviewVersions:
+      - v1beta1
   group: infrastructure.cluster.x-k8s.io
   names:
     categories:
@@ -927,6 +1137,104 @@ spec:
                         description: 'InstanceType is the type of instance to create.
                           Example: m4.xlarge'
                         type: string
+                      network:
+                        description: Network is the DNI and ip address settings for
+                          this machine
+                        properties:
+                          directNetworkInterfaces:
+                            description: DirectNetworkInterfaces is the configuration
+                              requirements for DNIs
+                            items:
+                              description: AWSSnowDirectNetworkInterface is configuration
+                                of DNIs specified by customers.
+                              properties:
+                                dhcp:
+                                  description: DHCP is whether we assign ip using
+                                    DHCP for this DNI
+                                  type: boolean
+                                index:
+                                  description: Index is the index number of DNI
+                                  maximum: 7
+                                  minimum: 1
+                                  type: integer
+                                ipPool:
+                                  description: IPPool is the ip pool for this DNI
+                                    if customers want to specify
+                                  properties:
+                                    apiVersion:
+                                      description: 'APIVersion defines the versioned
+                                        schema of this representation of an object.
+                                        Servers should convert recognized schemas
+                                        to the latest internal value, and may reject
+                                        unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                                      type: string
+                                    kind:
+                                      description: 'Kind is a string value representing
+                                        the REST resource this object represents.
+                                        Servers may infer this from the endpoint the
+                                        client submits requests to. Cannot be updated.
+                                        In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                                      type: string
+                                    metadata:
+                                      type: object
+                                    spec:
+                                      description: AWSSnowIPPoolSpec defines the desired
+                                        state of AWSSnowIPPool
+                                      properties:
+                                        pools:
+                                          description: IPPools is the configuration
+                                            of static ips used for machine's ip.
+                                          items:
+                                            description: IPPool is the configuration
+                                              of static ips used for machine's ip.
+                                            properties:
+                                              gateway:
+                                                description: Gateway is the gateway
+                                                  of this subnet. Used for routing
+                                                  purpose
+                                                type: string
+                                              ipEnd:
+                                                description: IPEnd is the end of an
+                                                  ip range
+                                                type: string
+                                              ipStart:
+                                                description: IPStart is the start
+                                                  of an ip range
+                                                type: string
+                                              subnet:
+                                                description: Subnet is customers'
+                                                  network subnet, we can use it to
+                                                  determine if two ip addresses are
+                                                  in the same subnet.
+                                                type: string
+                                            type: object
+                                          type: array
+                                      type: object
+                                    status:
+                                      description: AWSSnowIPPoolStatus defines the
+                                        observed state of AWSSnowIPPool
+                                      type: object
+                                  type: object
+                                primary:
+                                  description: Primary indicates whether the DNI is
+                                    primary or not
+                                  type: boolean
+                                vlanID:
+                                  description: VlanID is the vlan ID assigned by the
+                                    user
+                                  format: int64
+                                  maximum: 4095
+                                  minimum: 0
+                                  type: integer
+                              type: object
+                            minItems: 1
+                            type: array
+                          dns:
+                            description: DNS is just for bottlerocket static ip config
+                            items:
+                              type: string
+                            type: array
+                        type: object
                       networkInterfaces:
                         description: NetworkInterfaces is a list of ENIs to associate
                           with the instance. A maximum of 2 may be specified.
@@ -976,6 +1284,13 @@ spec:
                           - size
                           type: object
                         type: array
+                      osFamily:
+                        description: OSFamily is the OS flavor which is used as the
+                          node instance OS, currently support ubuntu and bottlerocket
+                        enum:
+                        - ubuntu
+                        - bottlerocket
+                        type: string
                       physicalNetworkConnectorType:
                         description: PhysicalNetworkConnectorType is the physical
                           network connector type to use for creating direct network
@@ -1309,6 +1624,20 @@ metadata:
   namespace: capas-system
 type: Opaque
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws-snow
+  name: capas-webhook-service
+  namespace: capas-system
+spec:
+  ports:
+  - port: 443
+    targetPort: webhook-server
+  selector:
+    cluster.x-k8s.io/provider: infrastructure-aws-snow
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1348,6 +1677,10 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 20
         name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
         readinessProbe:
           httpGet:
             path: /readyz
@@ -1364,14 +1697,171 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
         volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
         - mountPath: /home/.aws
           name: ca-bundle
       serviceAccountName: capas-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: capas-webhook-service-cert
       - name: credentials
         secret:
           secretName: capas-manager-bootstrap-credentials
       - name: ca-bundle
         secret:
           secretName: capas-manager-bootstrap-credentials
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws-snow
+  name: capas-serving-cert
+  namespace: capas-system
+spec:
+  dnsNames:
+  - capas-webhook-service.capas-system.svc
+  - capas-webhook-service.capas-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: capas-selfsigned-issuer
+  secretName: capas-webhook-service-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws-snow
+  name: capas-selfsigned-issuer
+  namespace: capas-system
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws-snow
+  name: capas-mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: capas-webhook-service
+      namespace: capas-system
+      path: /mutate-infrastructure-cluster-x-k8s-io-v1beta1-awssnowcluster
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.awssnowcluster.infrastructure.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - awssnowclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: capas-webhook-service
+      namespace: capas-system
+      path: /mutate-infrastructure-cluster-x-k8s-io-v1beta1-awssnowmachine
+  failurePolicy: Fail
+  name: mutation.awssnowmachine.infrastructure.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - awssnowmachines
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws-snow
+  name: capas-validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: capas-webhook-service
+      namespace: capas-system
+      path: /validate-infrastructure-cluster-x-k8s-io-v1beta1-awssnowcluster
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.awssnowcluster.infrastructure.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - awssnowclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: capas-webhook-service
+      namespace: capas-system
+      path: /validate-infrastructure-cluster-x-k8s-io-v1beta1-awssnowmachine
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.awssnowmachine.infrastructure.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - awssnowmachines
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: capas-webhook-service
+      namespace: capas-system
+      path: /validate-infrastructure-cluster-x-k8s-io-v1beta1-awssnowmachinetemplate
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.awssnowmachinetemplate.infrastructure.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - awssnowmachinetemplates
+  sideEffects: None

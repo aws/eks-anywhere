@@ -71,7 +71,7 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 | <ul><li>CloudStack via GitOps/Terraform</li> | Y |
 | <ul><li>Bare Metal via GitOps/Terraform</li> | N |
 | Create/delete a workload cluster on...
-| <ul><li>VMware via GitOps/Terraform</li> | N |
+| <ul><li>VMware via GitOps/Terraform</li> | Y |
 | <ul><li>CloudStack via GitOps/Terraform</li> | N |
 | <ul><li>Bare Metal via GitOps/Terraform</li> | N |
 | Install a curated package on the management cluster | Y ||

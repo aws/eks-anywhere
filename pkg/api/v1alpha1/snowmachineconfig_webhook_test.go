@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 func TestSnowMachineConfigSetDefaults(t *testing.T) {
@@ -26,6 +27,18 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
+	sOld.Spec.ContainersVolume = &snowv1.Volume{
+		Size: 25,
+	}
+	sOld.Spec.Network = snowv1.AWSSnowNetwork{
+		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			{
+				Index:   1,
+				DHCP:    true,
+				Primary: true,
+			},
+		},
+	}
 
 	g.Expect(sOld.ValidateCreate()).To(Succeed())
 }
@@ -47,6 +60,18 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
+	sOld.Spec.ContainersVolume = &snowv1.Volume{
+		Size: 25,
+	}
+	sOld.Spec.Network = snowv1.AWSSnowNetwork{
+		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			{
+				Index:   1,
+				DHCP:    true,
+				Primary: true,
+			},
+		},
+	}
 
 	g.Expect(sOld.ValidateCreate()).To(Succeed())
 }
@@ -60,6 +85,18 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
 	sNew.Spec.Devices = []string{"1.2.3.4"}
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
+	sNew.Spec.ContainersVolume = &snowv1.Volume{
+		Size: 25,
+	}
+	sNew.Spec.Network = snowv1.AWSSnowNetwork{
+		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			{
+				Index:   1,
+				DHCP:    true,
+				Primary: true,
+			},
+		},
+	}
 
 	g.Expect(sNew.ValidateUpdate(&sOld)).To(Succeed())
 }

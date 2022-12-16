@@ -91,6 +91,12 @@ spec:
       - 1.2.3.5
       iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io
       instanceType: sbe-c.xlarge
+      network:
+        directNetworkInterfaces:
+        - dhcp: true
+          index: 1
+          primary: true
+      osFamily: ubuntu
       physicalNetworkConnectorType: SFP_PLUS
       sshKeyName: default
 
