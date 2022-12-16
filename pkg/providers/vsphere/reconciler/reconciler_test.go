@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -348,19 +347,12 @@ func TestReconciler_ReconcileStorageCLass(t *testing.T) {
 		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
 	).Return(remoteClient, nil)
 
-	result, err := tt.reconciler().InstallStorageCLass(tt.ctx, logger, spec)
+	result, err := tt.reconciler().InstallStorageClass(tt.ctx, logger, spec)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
-
-	namespacedName := types.NamespacedName{
-		Name:      "standard",
-		Namespace: "eksa-system",
-	}
-	obj := &storagev1.StorageClass{}
-	err = remoteClient.Get(tt.ctx, namespacedName, obj)
-	tt.Expect(err).To(BeNil())
+	tt.ShouldEventuallyExist(tt.ctx, &storagev1.StorageClass{ObjectMeta: metav1.ObjectMeta{Name: "standard", Namespace: "eksa-system"}})
 }
 
 type reconcilerTest struct {

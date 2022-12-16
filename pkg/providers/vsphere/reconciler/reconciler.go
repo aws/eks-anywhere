@@ -111,7 +111,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
-		r.InstallStorageCLass,
+		r.InstallStorageClass,
 	).Run(ctx, log, clusterSpec)
 }
 
@@ -214,8 +214,8 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec
 	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, spec.Cluster, clusters.ToWorkers(w))
 }
 
-// InstallStorageCLass install default storage class in workload cluster.
-func (r *Reconciler) InstallStorageCLass(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+// InstallStorageClass install default storage class in workload cluster.
+func (r *Reconciler) InstallStorageClass(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileStorageClass")
 	remoteClient, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
 	if err != nil {
