@@ -75,7 +75,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
 		},
 		Auth:          true,
-		CACertContent: "-----BEGIN CERTIFICATE-----\nMIIEhzCCAu+gAwIBAgIQDmA/OXzQak1+JqxqH/TZGTANBgkqhkiG9w0BAQsFADCB\njzEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMTIwMAYDVQQLDClrYW5n\n-----END CERTIFICATE-----",
+		CACertContent: "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----",
 	}
 	return []*packageControllerTest{
 		{

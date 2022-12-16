@@ -1,6 +1,7 @@
 package registrymirror_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -82,6 +83,27 @@ func TestFromCluster(t *testing.T) {
 				NamespacedRegistryMap: map[string]string{
 					constants.DefaultCoreEKSARegistry: "1.2.3.4:443/eks-anywhere",
 				},
+			},
+		},
+		{
+			name: "with registry mirror ca and auth",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					RegistryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
+						Endpoint:      "1.2.3.4",
+						Port:          "443",
+						Authenticate:  true,
+						CACertContent: "xyz",
+					},
+				},
+			},
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443",
+				},
+				Auth:          true,
+				CACertContent: "xyz",
 			},
 		},
 		{
@@ -362,5 +384,72 @@ func TestReplaceRegistry(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.registryMirror.ReplaceRegistry(tt.URL)).To(Equal(tt.want))
 		})
+	}
+}
+
+func TestCredentials(t *testing.T) {
+	tests := []struct {
+		name           string
+		envs           map[string]string
+		registryMirror *registrymirror.RegistryMirror
+		wantErr        bool
+	}{
+		{
+			name:           "no REGISTRY_USERNAME no REGISTRY_PASSWORD",
+			envs:           make(map[string]string),
+			registryMirror: nil,
+			wantErr:        true,
+		},
+		{
+			name: "no REGISTRY_PASSWORD",
+			envs: map[string]string{
+				"REGISTRY_USERNAME": "admin",
+			},
+			registryMirror: nil,
+			wantErr:        true,
+		},
+		{
+			name: "no REGISTRY_USERNAME",
+			envs: map[string]string{
+				"REGISTRY_PASSWORD": "Harbor12345",
+			},
+			registryMirror: nil,
+			wantErr:        true,
+		},
+		{
+			name: "no error",
+			envs: map[string]string{
+				"REGISTRY_USERNAME": "admin",
+				"REGISTRY_PASSWORD": "Harbor12345",
+			},
+			registryMirror: nil,
+			wantErr:        false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := envSetter(tt.envs)
+			t.Cleanup(cleanup)
+
+			g := NewWithT(t)
+			_, _, err := tt.registryMirror.Credentials()
+			if tt.wantErr {
+				g.Expect(err).Error()
+			} else {
+				g.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
+func envSetter(envs map[string]string) (cleanup func()) {
+	for name, value := range envs {
+		os.Setenv(name, value)
+	}
+
+	return func() {
+		for name := range envs {
+			os.Unsetenv(name)
+		}
 	}
 }
