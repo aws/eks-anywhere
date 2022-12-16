@@ -36,13 +36,13 @@ type AWSSnowIPPoolSpec struct {
 // IPPool is the configuration of static ips used for machine's ip.
 type IPPool struct {
 	// IPStart is the start of an ip range
-	IPStart string `json:"ipStart,omitempty"`
+	IPStart *string `json:"ipStart,omitempty"`
 	// IPEnd is the end of an ip range
-	IPEnd string `json:"ipEnd,omitempty"`
+	IPEnd *string `json:"ipEnd,omitempty"`
 	// Subnet is customers' network subnet, we can use it to determine if two ip addresses are in the same subnet.
-	Subnet string `json:"subnet,omitempty"`
+	Subnet *string `json:"subnet,omitempty"`
 	// Gateway is the gateway of this subnet. Used for routing purpose
-	Gateway string `json:"gateway,omitempty"`
+	Gateway *string `json:"gateway,omitempty"`
 }
 
 // AWSSnowIPPoolStatus defines the observed state of AWSSnowIPPool

@@ -788,17 +788,9 @@ func TestSnowMachineTemplateWithNetwork(t *testing.T) {
 			{
 				Index: 1,
 				DHCP:  false,
-				IPPool: &snowv1.AWSSnowIPPool{
-					Spec: snowv1.AWSSnowIPPoolSpec{
-						IPPools: []snowv1.IPPool{
-							{
-								IPStart: "start",
-								IPEnd:   "end",
-								Subnet:  "subnet",
-								Gateway: "gateway",
-							},
-						},
-					},
+				IPPool: &snowv1.AWSSnowIPPoolReference{
+					Kind: "AWSSnowIPPool",
+					Name: "ip-pool",
 				},
 				Primary: true,
 			},
