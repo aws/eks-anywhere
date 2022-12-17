@@ -53,7 +53,9 @@ func TestCredentialStore_InitNoPermissions(t *testing.T) {
 	dir, err := ioutil.TempDir("testdata", "noperms")
 	defer os.Remove(dir)
 	assert.NoError(t, err)
-	err = os.WriteFile(dir+"/config.json", []byte("{}"), 0000)
+	fileName := dir + "/config.json"
+	err = os.WriteFile(fileName, []byte("{}"), 0000)
+	defer os.Remove(fileName)
 	assert.NoError(t, err)
 
 	credentialStore := NewCredentialStore(dir)

@@ -27,6 +27,7 @@ type OCIRegistryClient struct {
 	Insecure    bool
 	DryRun      bool
 	initialized bool
+	OI          OrasInterface
 	registry    *remote.Registry
 }
 
@@ -38,6 +39,7 @@ func NewOCIRegistry(host string, certFile string, insecure bool) *OCIRegistryCli
 		Host:     host,
 		CertFile: certFile,
 		Insecure: insecure,
+		OI:       &OrasImplementation{},
 	}
 }
 
@@ -139,7 +141,7 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image releasev1.Image, ds
 
 	var desc ocispec.Descriptor
 	or.registry.Reference.Reference = image.Version()
-	desc, err = srcStorage.Resolve(ctx, or.registry.Reference.Reference)
+	desc, err = or.OI.Resolve(ctx, srcStorage, or.registry.Reference.Reference)
 	if err != nil {
 		return err
 	}
@@ -151,9 +153,9 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image releasev1.Image, ds
 
 	fmt.Println(dstClient.Destination(image))
 	if or.DryRun {
-		return
+		return nil
 	}
-	err = oras.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
+	err = or.OI.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
 	if err != nil {
 		return fmt.Errorf("copyGraph: %v", err)
 	}

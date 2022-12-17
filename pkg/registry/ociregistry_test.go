@@ -2,6 +2,9 @@ package registry
 
 import (
 	"context"
+	"github.com/aws/eks-anywhere/pkg/registry/mocks"
+	"github.com/golang/mock/gomock"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,63 +13,75 @@ import (
 )
 
 func TestNewOCIRegistry(t *testing.T) {
-	registry := NewOCIRegistry("localhost", "testdata/harbor.eksa.demo.crt", false)
-	assert.Equal(t, "localhost", registry.Host)
-	assert.Equal(t, "testdata/harbor.eksa.demo.crt", registry.CertFile)
-	assert.False(t, registry.Insecure)
+	sut := NewOCIRegistry("localhost", "testdata/harbor.eksa.demo.crt", false)
+	assert.Equal(t, "localhost", sut.Host)
+	assert.Equal(t, "testdata/harbor.eksa.demo.crt", sut.CertFile)
+	assert.False(t, sut.Insecure)
 
-	err := registry.Init()
+	err := sut.Init()
 	assert.NoError(t, err)
 
-	err = registry.Init()
+	// Does not reinitialize
+	err = sut.Init()
 	assert.NoError(t, err)
 
 	image := releasev1.Image{
 		URI: "localhost/owner/name:latest",
 	}
-	destination := registry.Destination(image)
+	destination := sut.Destination(image)
 	assert.Equal(t, "localhost/owner/name:latest", destination)
-	registry.SetProject("project/")
-	assert.Equal(t, "project/", registry.Project)
-	destination = registry.Destination(image)
+	sut.SetProject("project/")
+	assert.Equal(t, "project/", sut.Project)
+	destination = sut.Destination(image)
 	assert.Equal(t, "localhost/project/owner/name:latest", destination)
 
-	_, err = registry.GetStorage(context.Background(), image)
+	_, err = sut.GetStorage(context.Background(), image)
 	assert.NoError(t, err)
 }
 
 func TestNewOCIRegistryNoCertFile(t *testing.T) {
-	registry := NewOCIRegistry("localhost", "", true)
-	assert.Equal(t, "localhost", registry.Host)
-	assert.Equal(t, "", registry.CertFile)
-	assert.True(t, registry.Insecure)
+	sut := NewOCIRegistry("localhost", "", true)
+	assert.Equal(t, "localhost", sut.Host)
+	assert.Equal(t, "", sut.CertFile)
+	assert.True(t, sut.Insecure)
 
-	err := registry.Init()
+	err := sut.Init()
 	assert.NoError(t, err)
 }
 
-func TestNewOCIRegistry_InitErrro(t *testing.T) {
-	registry := NewOCIRegistry("localhost", "bogus.crt", false)
-	assert.Equal(t, "localhost", registry.Host)
-	assert.Equal(t, "bogus.crt", registry.CertFile)
-	assert.False(t, registry.Insecure)
+func TestNewOCIRegistry_InitError(t *testing.T) {
+	sut := NewOCIRegistry("localhost", "bogus.crt", false)
+	assert.Equal(t, "localhost", sut.Host)
+	assert.Equal(t, "bogus.crt", sut.CertFile)
+	assert.False(t, sut.Insecure)
 
-	err := registry.Init()
+	err := sut.Init()
 	assert.EqualError(t, err, "error reading certificate file <bogus.crt>: open bogus.crt: no such file or directory")
 }
 
-func TestNewOCIRegistrCopy(t *testing.T) {
+func TestNewOCIRegistryCopy(t *testing.T) {
+	ctx := context.Background()
+	desc := ocispec.Descriptor{}
 	image := releasev1.Image{
 		URI: "public.ecr.aws/eks-anywhere/eks-anywhere-packages:0.2.22-eks-a-24",
 	}
-	srcRegistry := NewOCIRegistry("public.ecr.aws", "", true)
-	err := srcRegistry.Init()
+	sut := NewOCIRegistry("public.ecr.aws", "", true)
+	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
+	mockOI.EXPECT().Resolve(ctx, gomock.Any(), gomock.Any()).Return(desc, nil)
+	mockOI.EXPECT().CopyGraph(ctx, gomock.Any(), gomock.Any(), desc, gomock.Any()).Return(nil)
+	sut.OI = mockOI
+
+	err := sut.Init()
 	assert.NoError(t, err)
 	dstRegistry := NewOCIRegistry("localhost", "", false)
 	err = dstRegistry.Init()
 	assert.NoError(t, err)
-	srcRegistry.DryRun = true
 
-	err = srcRegistry.Copy(context.Background(), image, dstRegistry)
+	err = sut.Copy(ctx, image, dstRegistry)
+	assert.NoError(t, err)
+
+	sut.DryRun = true
+	mockOI.EXPECT().Resolve(ctx, gomock.Any(), gomock.Any()).Return(desc, nil)
+	err = sut.Copy(ctx, image, dstRegistry)
 	assert.NoError(t, err)
 }
