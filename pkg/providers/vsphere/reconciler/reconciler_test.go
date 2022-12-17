@@ -507,6 +507,7 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &vspherev1.VSphereMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAndWait(tt.ctx, &storagev1.StorageClass{ObjectMeta: metav1.ObjectMeta{Name: "standard", Namespace: "eksa-system"}})
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {
