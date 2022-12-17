@@ -2,13 +2,13 @@ package registry
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/registry/mocks"
-	"github.com/golang/mock/gomock"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/aws/eks-anywhere/pkg/registry/mocks"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 

@@ -54,7 +54,7 @@ func TestCredentialStore_InitNoPermissions(t *testing.T) {
 	defer os.Remove(dir)
 	assert.NoError(t, err)
 	fileName := dir + "/config.json"
-	err = os.WriteFile(fileName, []byte("{}"), 0000)
+	err = os.WriteFile(fileName, []byte("{}"), 0)
 	defer os.Remove(fileName)
 	assert.NoError(t, err)
 
