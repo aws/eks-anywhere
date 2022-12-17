@@ -22,8 +22,9 @@ weight: 35
 - Updated curated packages' versions:
   - ADOT `v0.23.0` upgraded from `v0.21.1`
   - Emissary `v3.3.0` upgraded from `v3.0.0`
+  - Metallb `v0.13.7` upgraded from `v0.13.5`
 - Support for packages controller to create target namespaces [#601](https://github.com/aws/eks-anywhere-packages/issues/601)
-- Multi-region support for all supported curated packages
+- (For more EKS Anywhere packages info: [v0.13.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.2.22))
 
 ### Fixed
 - Kubernetes version upgrades from 1.23 to 1.24 for Docker clusters ([#4266](https://github.com/aws/eks-anywhere/pull/4266))
