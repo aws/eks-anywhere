@@ -210,14 +210,10 @@ func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObj
 	return nil
 }
 
-func (k *Kubectl) ApplyKubeSpec(ctx context.Context, cluster *types.Cluster, spec string) error {
-	params := []string{"apply", "-f", spec}
-	if cluster.KubeconfigFile != "" {
-		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
-	}
-	_, err := k.Execute(ctx, params...)
-	if err != nil {
-		return fmt.Errorf("executing apply: %v", err)
+// ApplyManifest uses client-side logic to create/update objects defined in a yaml manifest.
+func (k *Kubectl) ApplyManifest(ctx context.Context, kubeconfigPath, manifestPath string) error {
+	if _, err := k.Execute(ctx, "apply", "-f", manifestPath, "--kubeconfig", kubeconfigPath); err != nil {
+		return fmt.Errorf("executing apply manifest: %v", err)
 	}
 	return nil
 }

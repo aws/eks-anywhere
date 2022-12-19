@@ -30,7 +30,7 @@ func runCuratedPackageEmissaryInstall(test *framework.ClusterE2ETest) {
 }
 
 func runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
-	test.CreateManagementCluster()
+	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
 		e.GenerateClusterConfig()
 		e.CreateCluster()

@@ -23,6 +23,15 @@ func ClusterToConfigFiller(fillers ...ClusterFiller) ClusterConfigFiller {
 	}
 }
 
+// JoinClusterConfigFillers creates one single ClusterConfigFiller from a collection of fillers.
+func JoinClusterConfigFillers(fillers ...ClusterConfigFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		for _, f := range fillers {
+			f(c)
+		}
+	}
+}
+
 func WithKubernetesVersion(v anywherev1.KubernetesVersion) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Spec.KubernetesVersion = v

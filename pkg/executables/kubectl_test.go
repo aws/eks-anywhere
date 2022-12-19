@@ -96,25 +96,25 @@ func newKubectlTest(t *testing.T) *kubectlTest {
 	}
 }
 
-func TestKubectlApplyKubeSpecSuccess(t *testing.T) {
+func TestKubectlApplyManifestSuccess(t *testing.T) {
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
 	expectedParam := []string{"apply", "-f", spec, "--kubeconfig", cluster.KubeconfigFile}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
-	if err := k.ApplyKubeSpec(ctx, cluster, spec); err != nil {
-		t.Errorf("Kubectl.ApplyKubeSpec() error = %v, want nil", err)
+	if err := k.ApplyManifest(ctx, cluster.KubeconfigFile, spec); err != nil {
+		t.Errorf("Kubectl.ApplyManifest() error = %v, want nil", err)
 	}
 }
 
-func TestKubectlApplyKubeSpecError(t *testing.T) {
+func TestKubectlApplyManifestError(t *testing.T) {
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
 	expectedParam := []string{"apply", "-f", spec, "--kubeconfig", cluster.KubeconfigFile}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
-	if err := k.ApplyKubeSpec(ctx, cluster, spec); err == nil {
-		t.Errorf("Kubectl.ApplyKubeSpec() error = nil, want not nil")
+	if err := k.ApplyManifest(ctx, cluster.KubeconfigFile, spec); err == nil {
+		t.Errorf("Kubectl.ApplyManifest() error = nil, want not nil")
 	}
 }
 
