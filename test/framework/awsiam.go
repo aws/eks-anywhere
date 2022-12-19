@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/awsiam"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -64,8 +65,18 @@ func (e *ClusterE2ETest) ValidateAWSIamAuth() {
 	if err != nil {
 		e.T.Fatalf("Error updating PATH: %v", err)
 	}
-	e.T.Log("Getting pods with aws-iam-authenticator kubeconfig")
 	kubectlClient := buildLocalKubectl()
+	e.T.Log("Waiting for aws-iam-authenticator daemonset rollout status")
+	err = kubectlClient.WaitForDaemonsetRolledout(ctx,
+		e.cluster(),
+		"2m",
+		"aws-iam-authenticator",
+		constants.KubeSystemNamespace,
+	)
+	if err != nil {
+		e.T.Fatalf("Error waiting aws-iam-authenticator daemonset rollout: %v", err)
+	}
+	e.T.Log("Getting pods with aws-iam-authenticator kubeconfig")
 	pods, err := kubectlClient.GetPods(ctx,
 		executables.WithAllNamespaces(),
 		executables.WithKubeconfig(e.iamAuthKubeconfigFilePath()),
