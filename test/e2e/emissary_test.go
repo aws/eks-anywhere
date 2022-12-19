@@ -61,7 +61,7 @@ func runCuratedPackageEmissaryInstallSimpleFlow(test *framework.ClusterE2ETest) 
 	test.WithCluster(runCuratedPackageEmissaryInstall)
 }
 
-func TestCPackagesEmissaryDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
+func TestCPackagesEmissaryDockerKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),

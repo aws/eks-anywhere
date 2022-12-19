@@ -18,7 +18,7 @@ const (
 	packageTargetNamespace = "observability"
 )
 
-func TestCPackagesPrometheusDockerUbuntuKubernetes124SimpleFlow(t *testing.T) {
+func TestCPackagesPrometheusDockerKubernetes124SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
