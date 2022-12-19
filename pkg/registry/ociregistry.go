@@ -114,7 +114,7 @@ func (or *OCIRegistryClient) getCertificates() (certificates *x509.CertPool, err
 // GetStorage object based on repository.
 func (or *OCIRegistryClient) GetStorage(ctx context.Context, image releasev1.Image) (repo orasregistry.Repository, err error) {
 	dstRepo := or.Project + image.Repository()
-	repo, err = or.registry.Repository(ctx, dstRepo)
+	repo, err = or.OI.Repository(ctx, or.registry, dstRepo)
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository %s: %v", dstRepo, err)
 	}
@@ -136,19 +136,19 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image releasev1.Image, ds
 
 	srcStorage, err := or.GetStorage(ctx, image)
 	if err != nil {
-		return err
+		return fmt.Errorf("registry copy source: %v", err)
 	}
 
 	var desc ocispec.Descriptor
 	or.registry.Reference.Reference = image.Version()
 	desc, err = or.OI.Resolve(ctx, srcStorage, or.registry.Reference.Reference)
 	if err != nil {
-		return err
+		return fmt.Errorf("registry copy destination: %v", err)
 	}
 
 	dstStorage, err := dstClient.GetStorage(ctx, image)
 	if err != nil {
-		return err
+		return fmt.Errorf("registry copy destination: %v", err)
 	}
 
 	fmt.Println(dstClient.Destination(image))
@@ -157,7 +157,7 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image releasev1.Image, ds
 	}
 	err = or.OI.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
 	if err != nil {
-		return fmt.Errorf("copyGraph: %v", err)
+		return fmt.Errorf("registry copy: %v", err)
 	}
 
 	return nil

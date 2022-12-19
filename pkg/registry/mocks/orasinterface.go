@@ -13,6 +13,7 @@ import (
 	oras "oras.land/oras-go/v2"
 	content "oras.land/oras-go/v2/content"
 	registry "oras.land/oras-go/v2/registry"
+	remote "oras.land/oras-go/v2/registry/remote"
 )
 
 // MockOrasInterface is a mock of OrasInterface interface.
@@ -50,6 +51,21 @@ func (m *MockOrasInterface) CopyGraph(ctx context.Context, src content.ReadOnlyS
 func (mr *MockOrasInterfaceMockRecorder) CopyGraph(ctx, src, dst, root, opts interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyGraph", reflect.TypeOf((*MockOrasInterface)(nil).CopyGraph), ctx, src, dst, root, opts)
+}
+
+// Repository mocks base method.
+func (m *MockOrasInterface) Repository(ctx context.Context, reg *remote.Registry, name string) (registry.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Repository", ctx, reg, name)
+	ret0, _ := ret[0].(registry.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Repository indicates an expected call of Repository.
+func (mr *MockOrasInterfaceMockRecorder) Repository(ctx, reg, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Repository", reflect.TypeOf((*MockOrasInterface)(nil).Repository), ctx, reg, name)
 }
 
 // Resolve mocks base method.
