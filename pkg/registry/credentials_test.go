@@ -1,8 +1,6 @@
 package registry
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,18 +45,4 @@ func TestCredentialStore_InitEmpty(t *testing.T) {
 	credentialStore := NewCredentialStore("testdata/empty")
 	err := credentialStore.Init()
 	assert.NoError(t, err)
-}
-
-func TestCredentialStore_InitNoPermissions(t *testing.T) {
-	dir, err := ioutil.TempDir("testdata", "noperms")
-	defer os.Remove(dir)
-	assert.NoError(t, err)
-	fileName := dir + "/config.json"
-	err = os.WriteFile(fileName, []byte("{}"), 0)
-	defer os.Remove(fileName)
-	assert.NoError(t, err)
-
-	credentialStore := NewCredentialStore(dir)
-	err = credentialStore.Init()
-	assert.EqualError(t, err, dir+"/config.json: open "+dir+"/config.json: permission denied")
 }
