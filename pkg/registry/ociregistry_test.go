@@ -13,11 +13,13 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-var ctx = context.Background()
-var desc = ocispec.Descriptor{}
-var image = releasev1.Image{
-	URI: "public.ecr.aws/eks-anywhere/eks-anywhere-packages:0.2.22-eks-a-24",
-}
+var (
+	ctx   = context.Background()
+	desc  = ocispec.Descriptor{}
+	image = releasev1.Image{
+		URI: "public.ecr.aws/eks-anywhere/eks-anywhere-packages:0.2.22-eks-a-24",
+	}
+)
 
 func TestNewOCIRegistry(t *testing.T) {
 	sut := NewOCIRegistry("localhost", "testdata/harbor.eksa.demo.crt", false)

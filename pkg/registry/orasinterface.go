@@ -2,12 +2,12 @@ package registry
 
 import (
 	"context"
-	"oras.land/oras-go/v2/registry/remote"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content"
 	orasregistry "oras.land/oras-go/v2/registry"
+	"oras.land/oras-go/v2/registry/remote"
 )
 
 // OrasInterface thin layer for oras.
