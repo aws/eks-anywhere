@@ -18,7 +18,7 @@ const (
 	adotTargetNamespace = "observability"
 )
 
-func TestCPackagesAdotDockerUbuntuKubernetes124SimpleFlow(t *testing.T) {
+func TestCPackagesAdotDockerKubernetes124SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),

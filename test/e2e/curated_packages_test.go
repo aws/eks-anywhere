@@ -257,7 +257,7 @@ func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 // but this is a simple solution for now, without having to make any major
 // decisions about test packages or methodologies, right now.
 
-func TestCPackagesDockerUbuntuKubernetes121SimpleFlow(t *testing.T) {
+func TestCPackagesDockerKubernetes121SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -269,7 +269,7 @@ func TestCPackagesDockerUbuntuKubernetes121SimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
+func TestCPackagesDockerKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -281,7 +281,7 @@ func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestCPackagesDockerUbuntuKubernetes123SimpleFlow(t *testing.T) {
+func TestCPackagesDockerKubernetes123SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -293,7 +293,7 @@ func TestCPackagesDockerUbuntuKubernetes123SimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestCPackagesDockerUbuntuKubernetes124SimpleFlow(t *testing.T) {
+func TestCPackagesDockerKubernetes124SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
