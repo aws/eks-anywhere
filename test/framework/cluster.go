@@ -1273,10 +1273,11 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
 
-	time.Sleep(15 * time.Second) // Add sleep to allow daemonset to be created
 	e.T.Log("Waiting for package", packageName, "daemonset to be rolled out")
-	err = e.KubectlClient.WaitForDaemonsetRolledout(ctx,
-		e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace)
+	err = retrier.New(6 * time.Minute).Retry(func() error {
+		return e.KubectlClient.WaitForDaemonsetRolledout(ctx,
+			e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace)
+	})
 	if err != nil {
 		e.T.Fatalf("waiting for adot daemonset timed out: %s", err)
 	}
@@ -1286,15 +1287,21 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 	if err != nil {
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
 	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
-	ok := strings.Contains(logs, expectedLogs)
-	if !ok {
-		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
+	err = retrier.New(5 * time.Minute).Retry(func() error {
+		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+		if err != nil {
+			e.T.Fatalf("failure getting pod logs %s", err)
+		}
+		fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
+		ok := strings.Contains(logs, expectedLogs)
+		if !ok {
+			return fmt.Errorf("expected to find %s in the log, got %s", expectedLogs, logs)
+		}
+		return nil
+	})
+	if err != nil {
+		e.T.Fatalf("unable to finish log comparison: %s", err)
 	}
 }
 
