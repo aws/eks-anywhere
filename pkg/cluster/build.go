@@ -8,7 +8,7 @@ func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 		getVSphereDatacenter,
 		getVSphereMachineConfigs,
 		getSnowDatacenter,
-		getSnowMachineConfigs,
+		getSnowMachineConfigsAndIPPools,
 		getSnowIdentitySecret,
 		getOIDC,
 		getAWSIam,

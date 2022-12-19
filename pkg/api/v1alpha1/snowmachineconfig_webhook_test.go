@@ -30,8 +30,8 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 	sOld.Spec.ContainersVolume = &snowv1.Volume{
 		Size: 25,
 	}
-	sOld.Spec.Network = snowv1.AWSSnowNetwork{
-		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+	sOld.Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
 			{
 				Index:   1,
 				DHCP:    true,
@@ -63,8 +63,8 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 	sOld.Spec.ContainersVolume = &snowv1.Volume{
 		Size: 25,
 	}
-	sOld.Spec.Network = snowv1.AWSSnowNetwork{
-		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+	sOld.Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
 			{
 				Index:   1,
 				DHCP:    true,
@@ -88,8 +88,8 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	sNew.Spec.ContainersVolume = &snowv1.Volume{
 		Size: 25,
 	}
-	sNew.Spec.Network = snowv1.AWSSnowNetwork{
-		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+	sNew.Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
 			{
 				Index:   1,
 				DHCP:    true,

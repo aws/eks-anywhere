@@ -20,13 +20,17 @@ type BaseControlPlane = clusterapi.ControlPlane[*snowv1.AWSSnowCluster, *snowv1.
 // ControlPlane holds the Snow specific objects for a CAPI snow control plane.
 type ControlPlane struct {
 	BaseControlPlane
-	Secret *corev1.Secret
+	Secret       *corev1.Secret
+	CAPASIPPools CAPASIPPools
 }
 
 // Objects returns the control plane objects associated with the snow cluster.
 func (c ControlPlane) Objects() []kubernetes.Object {
 	o := c.BaseControlPlane.Objects()
 	o = append(o, c.Secret)
+	for _, p := range c.CAPASIPPools {
+		o = append(o, p)
+	}
 	return o
 }
 
@@ -39,7 +43,12 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 
 	snowCluster := SnowCluster(clusterSpec, capasCredentialsSecret)
 
-	cpMachineTemplate := SnowMachineTemplate(clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster), clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	cpMachineConfig := clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+
+	capasPools := CAPASIPPools{}
+	capasPools.addPools(cpMachineConfig.Spec.Network.DirectNetworkInterfaces, clusterSpec.SnowIPPools)
+
+	cpMachineTemplate := MachineTemplate(clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster), cpMachineConfig, capasPools)
 
 	kubeadmControlPlane, err := KubeadmControlPlane(logger, clusterSpec, cpMachineTemplate)
 	if err != nil {
@@ -50,7 +59,9 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 	var etcdCluster *v1beta1.EtcdadmCluster
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineTemplate = SnowMachineTemplate(clusterapi.EtcdMachineTemplateName(clusterSpec.Cluster), clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name])
+		etcdMachineConfig := clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		capasPools.addPools(etcdMachineConfig.Spec.Network.DirectNetworkInterfaces, clusterSpec.SnowIPPools)
+		etcdMachineTemplate = MachineTemplate(clusterapi.EtcdMachineTemplateName(clusterSpec.Cluster), etcdMachineConfig, capasPools)
 		etcdCluster = EtcdadmCluster(logger, clusterSpec, etcdMachineTemplate)
 	}
 
@@ -65,7 +76,8 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 			EtcdCluster:                 etcdCluster,
 			EtcdMachineTemplate:         etcdMachineTemplate,
 		},
-		Secret: capasCredentialsSecret,
+		Secret:       capasCredentialsSecret,
+		CAPASIPPools: capasPools,
 	}
 
 	if err := cp.UpdateImmutableObjectNames(ctx, client, getMachineTemplate, MachineTemplateDeepDerivative); err != nil {

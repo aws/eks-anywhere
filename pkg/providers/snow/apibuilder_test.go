@@ -16,8 +16,11 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 type apiBuilerTest struct {
@@ -92,7 +95,7 @@ func wantCAPIClusterUnstackedEtcd() *clusterv1.Cluster {
 func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := snow.SnowCluster(tt.clusterSpec, wantSnowCredentialsSecret())
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
 	kubeadmControlPlane, err := snow.KubeadmControlPlane(tt.logger, tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
@@ -208,7 +211,7 @@ func wantRegistryMirrorCommands() []string {
 
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
 	got, err := snow.KubeadmControlPlane(tt.logger, tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
@@ -374,7 +377,7 @@ func TestKubeadmControlPlaneWithRegistryMirrorUbuntu(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
@@ -430,7 +433,7 @@ func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
 			g.clusterSpec.SnowMachineConfig("test-cp").Spec.OSFamily = v1alpha1.Bottlerocket
-			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"])
+			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
@@ -507,7 +510,7 @@ func TestKubeadmControlPlaneWithProxyConfigUbuntu(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
-			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
@@ -524,7 +527,7 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
 			g.clusterSpec.SnowMachineConfig("test-cp").Spec.OSFamily = v1alpha1.Bottlerocket
-			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"])
+			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
@@ -772,9 +775,32 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 	}
 }
 
+func wantSnowIPPool() *snowv1.AWSSnowIPPool {
+	return &snowv1.AWSSnowIPPool{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: clusterapi.InfrastructureAPIVersion(),
+			Kind:       snow.SnowIPPoolKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ip-pool-1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: snowv1.AWSSnowIPPoolSpec{
+			IPPools: []snowv1.IPPool{
+				{
+					IPStart: ptr.String("start"),
+					IPEnd:   ptr.String("end"),
+					Gateway: ptr.String("gateway"),
+					Subnet:  ptr.String("subnet"),
+				},
+			},
+		},
+	}
+}
+
 func TestSnowMachineTemplate(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"])
+	got := snow.MachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"], nil)
 	want := wantSnowMachineTemplate()
 	want.SetName("snow-test-control-plane-1")
 	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
@@ -796,13 +822,35 @@ func TestSnowMachineTemplateWithNetwork(t *testing.T) {
 			},
 		},
 	}
-	tt.machineConfigs["test-cp"].Spec.Network = network
-	got := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"])
+	tt.machineConfigs["test-cp"].Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+			{
+				Index: 1,
+				DHCP:  false,
+				IPPoolRef: &v1alpha1.Ref{
+					Kind: "SnowIPPool",
+					Name: "ip-pool",
+				},
+				Primary: true,
+			},
+		},
+	}
+	capasPools := snow.CAPASIPPools{
+		"ip-pool": &snowv1.AWSSnowIPPool{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "AWSSnowIPPool",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "ip-pool",
+			},
+		},
+	}
+	got := snow.MachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"], capasPools)
 	want := wantSnowMachineTemplate()
 	want.SetName("snow-test-control-plane-1")
 	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	want.Spec.Template.Spec.Network = &network
-	tt.Expect(got).To(Equal(want))
+	tt.Expect(got).To(BeComparableTo(want))
 }
 
 func tlsCipherSuitesArgs() map[string]string {
@@ -891,7 +939,7 @@ func TestEtcdadmClusterUbuntu(t *testing.T) {
 		},
 	}
 	tt.machineConfigs["test-etcd"] = tt.clusterSpec.SnowMachineConfigs["test-etcd"]
-	etcdMachineTemplates := snow.SnowMachineTemplate("test-etcd", tt.machineConfigs["test-etcd"])
+	etcdMachineTemplates := snow.MachineTemplate("test-etcd", tt.machineConfigs["test-etcd"], nil)
 	got := snow.EtcdadmCluster(tt.logger, tt.clusterSpec, etcdMachineTemplates)
 	want := wantEtcdClusterUbuntu()
 	tt.Expect(got).To(Equal(want))
@@ -916,7 +964,7 @@ func TestEtcdadmClusterBottlerocket(t *testing.T) {
 		},
 	}
 	tt.machineConfigs["test-etcd"] = tt.clusterSpec.SnowMachineConfigs["test-etcd"]
-	etcdMachineTemplates := snow.SnowMachineTemplate("test-etcd", tt.machineConfigs["test-etcd"])
+	etcdMachineTemplates := snow.MachineTemplate("test-etcd", tt.machineConfigs["test-etcd"], nil)
 	got := snow.EtcdadmCluster(tt.logger, tt.clusterSpec, etcdMachineTemplates)
 	want := wantEtcdClusterBottlerocket()
 	tt.Expect(got).To(Equal(want))
@@ -941,7 +989,7 @@ func TestEtcdadmClusterUnsupportedOS(t *testing.T) {
 		},
 	}
 	tt.machineConfigs["test-etcd"] = tt.clusterSpec.SnowMachineConfigs["test-etcd"]
-	etcdMachineTemplates := snow.SnowMachineTemplate("test-etcd", tt.machineConfigs["test-etcd"])
+	etcdMachineTemplates := snow.MachineTemplate("test-etcd", tt.machineConfigs["test-etcd"], nil)
 	got := snow.EtcdadmCluster(tt.logger, tt.clusterSpec, etcdMachineTemplates)
 	want := wantEtcdCluster()
 	tt.Expect(got).To(Equal(want))

@@ -19,10 +19,14 @@ func snowEntry() *ConfigManagerEntry {
 			anywherev1.SnowMachineConfigKind: func() APIObject {
 				return &anywherev1.SnowMachineConfig{}
 			},
+			anywherev1.SnowIPPoolKind: func() APIObject {
+				return &anywherev1.SnowIPPool{}
+			},
 		},
 		Processors: []ParsedProcessor{
 			processSnowDatacenter,
 			machineConfigsProcessor(processSnowMachineConfig),
+			snowIPPoolsProcessor,
 		},
 		Defaulters: []Defaulter{
 			func(c *Config) error {
@@ -86,6 +90,35 @@ func processSnowDatacenter(c *Config, objects ObjectLookup) {
 	}
 }
 
+func snowIPPoolsProcessor(c *Config, o ObjectLookup) {
+	for _, m := range c.SnowMachineConfigs {
+		for _, pool := range m.IPPoolRefs() {
+			processSnowIPPool(c, o, &pool)
+		}
+	}
+}
+
+func processSnowIPPool(c *Config, objects ObjectLookup, ipPoolRef *anywherev1.Ref) {
+	if ipPoolRef == nil {
+		return
+	}
+
+	if ipPoolRef.Kind != anywherev1.SnowIPPoolKind {
+		return
+	}
+
+	if c.SnowIPPools == nil {
+		c.SnowIPPools = map[string]*anywherev1.SnowIPPool{}
+	}
+
+	p := objects.GetFromRef(c.Cluster.APIVersion, *ipPoolRef)
+	if p == nil {
+		return
+	}
+
+	c.SnowIPPools[p.GetName()] = p.(*anywherev1.SnowIPPool)
+}
+
 func processSnowMachineConfig(c *Config, objects ObjectLookup, machineRef *anywherev1.Ref) {
 	if machineRef == nil {
 		return
@@ -140,7 +173,7 @@ func getSnowDatacenter(ctx context.Context, client Client, c *Config) error {
 	return nil
 }
 
-func getSnowMachineConfigs(ctx context.Context, client Client, c *Config) error {
+func getSnowMachineConfigsAndIPPools(ctx context.Context, client Client, c *Config) error {
 	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.SnowDatacenterKind {
 		return nil
 	}
@@ -160,6 +193,35 @@ func getSnowMachineConfigs(ctx context.Context, client Client, c *Config) error 
 		}
 
 		c.SnowMachineConfigs[machine.Name] = machine
+
+		if err := getSnowIPPools(ctx, client, c, machine); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func getSnowIPPools(ctx context.Context, client Client, c *Config, machine *anywherev1.SnowMachineConfig) error {
+	if c.SnowIPPools == nil {
+		c.SnowIPPools = map[string]*anywherev1.SnowIPPool{}
+	}
+
+	for _, dni := range machine.Spec.Network.DirectNetworkInterfaces {
+		if dni.IPPoolRef == nil {
+			continue
+		}
+
+		if _, ok := c.SnowIPPools[dni.IPPoolRef.Name]; ok {
+			continue
+		}
+
+		pool := &anywherev1.SnowIPPool{}
+		if err := client.Get(ctx, dni.IPPoolRef.Name, c.Cluster.Namespace, pool); err != nil {
+			return err
+		}
+
+		c.SnowIPPools[pool.Name] = pool
 	}
 
 	return nil

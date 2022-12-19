@@ -15,6 +15,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -61,6 +62,69 @@ func TestControlPlaneObjects(t *testing.T) {
 	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
 }
 
+func TestControlPlaneObjectsWithIPPools(t *testing.T) {
+	g := newSnowTest(t)
+	g.clusterSpec.SnowMachineConfig("test-cp").Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+			{
+				Index: 1,
+				IPPoolRef: &anywherev1.Ref{
+					Kind: v1alpha1.SnowIPPoolKind,
+					Name: "ip-pool-1",
+				},
+				Primary: true,
+			},
+		},
+	}
+	mt := wantSnowMachineTemplate()
+	mt.Spec.Template.Spec.Network = &snowv1.AWSSnowNetwork{
+		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			{
+				Index: 1,
+				IPPool: &snowv1.AWSSnowIPPoolReference{
+					Kind: snow.SnowIPPoolKind,
+					Name: "ip-pool-1",
+				},
+				Primary: true,
+			},
+		},
+	}
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"snow-test",
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			return nil
+		})
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"test-cp-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			mt.DeepCopyInto(obj)
+			obj.SetName("test-cp-1")
+			obj.Spec.Template.Spec.InstanceType = "updated-instance-type"
+			return nil
+		})
+
+	wantMachineTemplateName := "test-cp-2"
+	mt.SetName(wantMachineTemplateName)
+	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
+	kcp := wantKubeadmControlPlane()
+	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
+
+	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
+	g.Expect(err).To(Succeed())
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret(), wantSnowIPPool()}))
+}
+
 func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 	g := newSnowTest(t)
 	g.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
@@ -88,8 +152,8 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 				"1.2.3.5",
 			},
 			OSFamily: anywherev1.Ubuntu,
-			Network: snowv1.AWSSnowNetwork{
-				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			Network: anywherev1.SnowNetwork{
+				DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
 					{
 						Index:   1,
 						DHCP:    true,

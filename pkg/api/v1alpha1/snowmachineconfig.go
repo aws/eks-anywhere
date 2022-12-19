@@ -36,8 +36,8 @@ func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 			SshKeyName:               DefaultSnowSshKeyName,
 			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 			OSFamily:                 DefaultOSFamily,
-			Network: snowv1.AWSSnowNetwork{
-				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			Network: SnowNetwork{
+				DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 					{
 						Index:   1,
 						DHCP:    true,
@@ -107,7 +107,7 @@ func validateSnowMachineConfigContainerVolume(config *SnowMachineConfig) error {
 	return nil
 }
 
-func validateSnowMachineConfigNetwork(network snowv1.AWSSnowNetwork) error {
+func validateSnowMachineConfigNetwork(network SnowNetwork) error {
 	if len(network.DirectNetworkInterfaces) <= 0 {
 		return errors.New("SnowMachineConfig Network.DirectNetworkInterfaces length must be no smaller than 1")
 	}

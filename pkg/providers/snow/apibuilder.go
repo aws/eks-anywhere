@@ -22,6 +22,7 @@ import (
 const (
 	SnowClusterKind         = "AWSSnowCluster"
 	SnowMachineTemplateKind = "AWSSnowMachineTemplate"
+	SnowIPPoolKind          = "AWSSnowIPPool"
 )
 
 // CAPICluster generates the CAPICluster object for snow provider.
@@ -217,8 +218,60 @@ func EksaCredentialsSecret(datacenter *v1alpha1.SnowDatacenterConfig, credsB64, 
 	return CredentialsSecret(datacenter.Spec.IdentityRef.Name, datacenter.GetNamespace(), credsB64, certsB64)
 }
 
-func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {
+// CAPASIPPools defines a set of CAPAS AWSSnowPool objects.
+type CAPASIPPools map[string]*snowv1.AWSSnowIPPool
+
+func (p CAPASIPPools) addPools(dnis []v1alpha1.SnowDirectNetworkInterface, m map[string]*v1alpha1.SnowIPPool) {
+	for _, dni := range dnis {
+		if dni.IPPoolRef != nil {
+			p[dni.IPPoolRef.Name] = toAWSSnowIPPool(m[dni.IPPoolRef.Name])
+		}
+	}
+}
+
+func toAWSSnowIPPool(pool *v1alpha1.SnowIPPool) *snowv1.AWSSnowIPPool {
+	return &snowv1.AWSSnowIPPool{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: clusterapi.InfrastructureAPIVersion(),
+			Kind:       SnowIPPoolKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pool.GetName(),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: snowv1.AWSSnowIPPoolSpec{
+			IPPools: pool.Spec.Pools,
+		},
+	}
+}
+
+func buildDNI(dni v1alpha1.SnowDirectNetworkInterface, capasPools CAPASIPPools) snowv1.AWSSnowDirectNetworkInterface {
+	var ipPoolRef *snowv1.AWSSnowIPPoolReference
+	if dni.IPPoolRef != nil {
+		ipPool := capasPools[dni.IPPoolRef.Name]
+		ipPoolRef = &snowv1.AWSSnowIPPoolReference{
+			Kind: ipPool.Kind,
+			Name: ipPool.Name,
+		}
+	}
+	return snowv1.AWSSnowDirectNetworkInterface{
+		Index:   dni.Index,
+		VlanID:  dni.VlanID,
+		DHCP:    dni.DHCP,
+		Primary: dni.Primary,
+		IPPool:  ipPoolRef,
+	}
+}
+
+// MachineTemplate builds a snowMachineTemplate based on an eks-a snowMachineConfig and a capasIPPool.
+func MachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig, capasPools CAPASIPPools) *snowv1.AWSSnowMachineTemplate {
+	dnis := make([]snowv1.AWSSnowDirectNetworkInterface, 0, len(machineConfig.Spec.Network.DirectNetworkInterfaces))
+	for _, dni := range machineConfig.Spec.Network.DirectNetworkInterfaces {
+		dnis = append(dnis, buildDNI(dni, capasPools))
+	}
+
 	networkConnector := string(machineConfig.Spec.PhysicalNetworkConnector)
+
 	return &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterapi.InfrastructureAPIVersion(),
@@ -243,8 +296,11 @@ func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig)
 					PhysicalNetworkConnectorType: &networkConnector,
 					Devices:                      machineConfig.Spec.Devices,
 					ContainersVolume:             machineConfig.Spec.ContainersVolume,
-					Network:                      &machineConfig.Spec.Network,
-					OSFamily:                     (*snowv1.OSFamily)(&machineConfig.Spec.OSFamily),
+					Network: &snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: dnis,
+						DNS:                     machineConfig.Spec.Network.DNS,
+					},
+					OSFamily: (*snowv1.OSFamily)(&machineConfig.Spec.OSFamily),
 				},
 			},
 		},
