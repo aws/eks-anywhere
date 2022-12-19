@@ -66,13 +66,16 @@ func (e *ClusterE2ETest) ValidateAWSIamAuth() {
 		e.T.Fatalf("Error updating PATH: %v", err)
 	}
 	kubectlClient := buildLocalKubectl()
-	e.T.Log("Waiting for aws-iam-authenticator daemonset ready")
-	kubectlClient.WaitForDaemonsetRolledout(ctx,
+	e.T.Log("Waiting for aws-iam-authenticator daemonset rollout status")
+	err = kubectlClient.WaitForDaemonsetRolledout(ctx,
 		e.cluster(),
 		"2m",
 		"aws-iam-authenticator",
 		constants.KubeSystemNamespace,
 	)
+	if err != nil {
+		e.T.Fatalf("Error waiting aws-iam-authenticator daemonset rollout: %v", err)
+	}
 	e.T.Log("Getting pods with aws-iam-authenticator kubeconfig")
 	pods, err := kubectlClient.GetPods(ctx,
 		executables.WithAllNamespaces(),
