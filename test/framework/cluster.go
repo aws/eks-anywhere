@@ -557,10 +557,7 @@ func (e *ClusterE2ETest) WithClusterConfig(fillers ...api.ClusterConfigFiller) *
 }
 
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
-	fileName := "anywhere.tar"
-	downloadImagesArgs := []string{"download images", "-o", fileName}
-	e.RunEKSA(downloadImagesArgs, opts...)
-	importImagesArgs := []string{"import images", "-i", fileName}
+	importImagesArgs := []string{"import-images", "-f", e.ClusterConfigLocation}
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
