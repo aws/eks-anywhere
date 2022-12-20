@@ -69,6 +69,18 @@ curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}
 sudo mv ./eksctl-anywhere /usr/local/bin/
 ```
 
+Install the `kubectl` Kubernetes command line tool.
+This can be done by following the instructions [here](https://kubernetes.io/docs/tasks/tools/).
+
+Or you can install the latest kubectl directly with the following.
+
+```bash
+export OS="$(uname -s | tr A-Z a-z)" ARCH=$(test "$(uname -m)" = 'x86_64' && echo 'amd64' || echo 'arm64')
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${OS}/${ARCH}/kubectl"
+sudo mv ./kubectl /usr/local/bin
+sudo chmod +x /usr/local/bin/kubectl
+```
+
 ### Upgrade eksctl-anywhere
 
 If you installed `eksctl-anywhere` via homebrew you can upgrade the binary with
