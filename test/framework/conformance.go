@@ -17,7 +17,7 @@ const kubeConformanceImage = "k8s.gcr.io/conformance"
 
 func (e *ClusterE2ETest) RunConformanceTests() {
 	ctx := context.Background()
-	cluster := e.cluster()
+	cluster := e.Cluster()
 	setKubeconfigEnvVar(e.T, e.ClusterName)
 	contextName, err := e.KubectlClient.GetCurrentClusterContext(ctx, cluster)
 	if err != nil {

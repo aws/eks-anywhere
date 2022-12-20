@@ -273,7 +273,7 @@ func (e *ClusterE2ETest) upgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
 
 func (e *ClusterE2ETest) initGit(ctx context.Context) {
 	c := e.ClusterConfig.Cluster
-	writer, err := filewriter.NewWriter(e.cluster().Name)
+	writer, err := filewriter.NewWriter(e.Cluster().Name)
 	if err != nil {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
@@ -428,7 +428,7 @@ func (e *ClusterE2ETest) buildClusterConfigFileForGit() {
 func (e *ClusterE2ETest) ValidateFlux() {
 	c := e.ClusterConfig.Cluster
 
-	writer, err := filewriter.NewWriter(e.cluster().Name)
+	writer, err := filewriter.NewWriter(e.Cluster().Name)
 	if err != nil {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
@@ -469,7 +469,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 
 func (e *ClusterE2ETest) CleanUpGitRepo() {
 	c := e.ClusterConfig.Cluster
-	writer, err := filewriter.NewWriter(e.cluster().Name)
+	writer, err := filewriter.NewWriter(e.Cluster().Name)
 	if err != nil {
 		e.T.Errorf("configuring filewriter for e2e test: %v", err)
 	}
@@ -517,7 +517,7 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 
 func (e *ClusterE2ETest) CleanUpGithubRepo() {
 	c := e.ClusterConfig.Cluster
-	writer, err := filewriter.NewWriter(e.cluster().Name)
+	writer, err := filewriter.NewWriter(e.Cluster().Name)
 	if err != nil {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
@@ -717,7 +717,7 @@ func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context, opts ...
 }
 
 func (e *ClusterE2ETest) machineTemplateName(ctx context.Context) (string, error) {
-	machineTemplateName, err := e.KubectlClient.MachineTemplateName(ctx, e.ClusterConfig.Cluster.Name, e.cluster().KubeconfigFile, executables.WithNamespace(constants.EksaSystemNamespace))
+	machineTemplateName, err := e.KubectlClient.MachineTemplateName(ctx, e.ClusterConfig.Cluster.Name, e.Cluster().KubeconfigFile, executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return "", err
 	}

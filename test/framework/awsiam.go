@@ -68,7 +68,7 @@ func (e *ClusterE2ETest) ValidateAWSIamAuth() {
 	kubectlClient := buildLocalKubectl()
 	e.T.Log("Waiting for aws-iam-authenticator daemonset rollout status")
 	err = kubectlClient.WaitForResourceRolledout(ctx,
-		e.cluster(),
+		e.Cluster(),
 		"2m",
 		"aws-iam-authenticator",
 		constants.KubeSystemNamespace,

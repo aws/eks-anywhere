@@ -19,7 +19,7 @@ func (e *ClusterE2ETest) ValidateControlPlaneNodes(validations ...ControlPlaneNo
 	ctx := context.Background()
 	c := e.ClusterConfig.Cluster
 
-	cpNodes, err := e.KubectlClient.GetControlPlaneNodes(ctx, e.cluster().KubeconfigFile)
+	cpNodes, err := e.KubectlClient.GetControlPlaneNodes(ctx, e.Cluster().KubeconfigFile)
 	if err != nil {
 		e.T.Fatal(err)
 	}
