@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -53,7 +54,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
-	remoteClient := fake.NewClientBuilder().Build()
+	remoteClient := env.Client()
 
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
@@ -65,7 +66,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
-	).Return(remoteClient, nil)
+	).Return(remoteClient, nil).Times(2)
 	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
@@ -334,6 +335,42 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	tt.Expect(err).To(HaveOccurred())
 }
 
+func TestReconcilerInstallStorageClassInstall(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	remoteClient := env.Client()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+
+	result, err := tt.reconciler().InstallStorageClass(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.ShouldEventuallyExist(tt.ctx, &storagev1.StorageClass{ObjectMeta: metav1.ObjectMeta{Name: "standard", Namespace: "eksa-system"}})
+}
+
+func TestReconcilerInstallStorageClassSkip(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	spec := tt.buildSpec()
+	spec.VSphereDatacenter.Spec.DisableCSI = true
+
+	result, err := tt.reconciler().InstallStorageClass(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.ShouldEventuallyNotExist(tt.ctx, &storagev1.StorageClass{ObjectMeta: metav1.ObjectMeta{Name: "standard", Namespace: "eksa-system"}})
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
@@ -470,6 +507,12 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &vspherev1.VSphereMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAndWait(tt.ctx, &storagev1.StorageClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "standard",
+			Namespace: "eksa-system",
+		},
+	})
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {

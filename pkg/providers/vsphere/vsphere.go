@@ -1029,3 +1029,10 @@ func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, k
 func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 	return nil
 }
+
+// GetDefaultStorageClass returns a copy of default storage class.
+func GetDefaultStorageClass() []byte {
+	exportedStorageClass := make([]byte, len(defaultStorageClass))
+	copy(exportedStorageClass, defaultStorageClass)
+	return exportedStorageClass
+}
