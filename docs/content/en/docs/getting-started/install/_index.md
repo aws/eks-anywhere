@@ -72,11 +72,11 @@ sudo mv ./eksctl-anywhere /usr/local/bin/
 Install the `kubectl` Kubernetes command line tool.
 This can be done by following the instructions [here](https://kubernetes.io/docs/tasks/tools/).
 
-On __Linux__ you can install the latest kubectl with the following.
+Or you can install the latest kubectl directly with the following.
 
 ```bash
-ARCH=$(test "$(uname -m)" = 'x86_64' && echo 'amd64' || echo 'arm64')
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl"
+export OS="$(uname -s | tr A-Z a-z)" ARCH=$(test "$(uname -m)" = 'x86_64' && echo 'amd64' || echo 'arm64')
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${OS}/${ARCH}/kubectl"
 sudo mv ./kubectl /usr/local/bin
 sudo chmod +x /usr/local/bin/kubectl
 ```
