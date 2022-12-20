@@ -22,13 +22,16 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
@@ -72,6 +75,7 @@ type ClusterE2ETest struct {
 	WithNoPowerActions     bool
 	ClusterName            string
 	ClusterConfig          *cluster.Config
+	clusterValidator       *ClusterValidator
 	Provider               Provider
 	clusterFillers         []api.ClusterFiller
 	KubectlClient          *executables.Kubectl
@@ -541,6 +545,21 @@ func (e *ClusterE2ETest) parseClusterConfigFromDisk() {
 	e.ClusterConfig = config
 }
 
+func (e *ClusterE2ETest) parseClusterConfigWithDefaultsFromDisk() (*v1alpha1.Cluster, error) {
+	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
+	content, err := os.ReadFile(fullClusterConfigLocation)
+	if err != nil {
+		return nil, fmt.Errorf("reading cluster config file: %v", err)
+	}
+
+	parsedCluster := &v1alpha1.Cluster{}
+	if err := yaml.Unmarshal(content, parsedCluster); err != nil {
+		return nil, fmt.Errorf("unable to marshal cluster config file contents %v", err)
+	}
+
+	return parsedCluster, err
+}
+
 // WithClusterConfig generates a base cluster config using the CLI `generate clusterconfig` command
 // and udpates them with the provided fillers. Helpful for defining the initial Cluster config
 // before running a create operation.
@@ -812,6 +831,13 @@ func (e *ClusterE2ETest) cluster() *types.Cluster {
 	return &types.Cluster{
 		Name:           e.ClusterName,
 		KubeconfigFile: e.kubeconfigFilePath(),
+	}
+}
+
+func (e *ClusterE2ETest) managementCluster() *types.Cluster {
+	return &types.Cluster{
+		Name:           e.ClusterConfig.Cluster.ManagedBy(),
+		KubeconfigFile: e.managementKubeconfigFilePath(),
 	}
 }
 
@@ -1657,4 +1683,95 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 	}
 
 	e.T.Log("Finished scaling up machines")
+}
+
+// ValidateClusterState runs a set of validations against the cluster to identify an invalid cluster state.
+func (e *ClusterE2ETest) ValidateClusterState() {
+	e.T.Logf("Validating cluster %s", e.ClusterName)
+	ctx := context.Background()
+	err := retrier.Retry(12, 5*time.Second, func() error {
+		return e.buildClusterValidator(ctx)
+	})
+	if err != nil {
+		e.T.Fatalf("failed to build cluster validator %v", err)
+	}
+
+	if e.ClusterConfig.Cluster.IsManaged() {
+		e.clusterValidator.WithWorkloadClusterValidations()
+	}
+	if err := e.clusterValidator.Validate(ctx); err != nil {
+		e.T.Fatalf("failed to validate cluster %v", err)
+	}
+}
+
+// ValidateClusterDelete verifies the cluster has been deleted.
+func (e *ClusterE2ETest) ValidateClusterDelete() {
+	ctx := context.Background()
+	e.T.Logf("Validating cluster deletion %s", e.ClusterName)
+	if e.clusterValidator == nil {
+		return
+	}
+
+	e.clusterValidator.Reset()
+	if e.ClusterConfig.Cluster.IsManaged() {
+		e.clusterValidator.WithClusterDoesNotExist()
+	}
+	if err := e.clusterValidator.Validate(ctx); err != nil {
+		e.T.Fatalf("failed to validate cluster deletion %v", err)
+	}
+	e.clusterValidator = nil
+}
+
+func (e *ClusterE2ETest) buildClusterValidator(ctx context.Context) error {
+	mc, err := kubernetes.NewRuntimeClientFromFileName(e.managementKubeconfigFilePath())
+	if err != nil {
+		return fmt.Errorf("failed to create management cluster client: %s", err)
+	}
+	if e.ClusterConfig.Cluster.IsSelfManaged() {
+		mc = nil
+	}
+
+	c, err := kubernetes.NewRuntimeClientFromFileName(e.kubeconfigFilePath())
+	if err != nil {
+		return fmt.Errorf("failed to create cluster client: %s", err)
+	}
+
+	spec, err := e.buildClusterSpec(ctx, c, e.ClusterConfig)
+	if err != nil {
+		return fmt.Errorf("failed to build cluster spec %s", err)
+	}
+
+	e.clusterValidator = NewClusterValidator(func(cv *ClusterValidator) {
+		cv.ClusterOpts.ClusterClient = c
+		cv.ClusterOpts.ManagmentClusterClient = mc
+		cv.ClusterOpts.ClusterSpec = spec
+	})
+
+	return nil
+}
+
+func (e *ClusterE2ETest) buildClusterSpec(ctx context.Context, client client.Client, config *cluster.Config) (*cluster.Spec, error) {
+	if config.Cluster.IsManaged() {
+		spec := cluster.NewSpec(func(spec *cluster.Spec) {
+			spec.Config = config
+		})
+
+		return spec, nil
+	}
+
+	parsedCluster, err := e.parseClusterConfigWithDefaultsFromDisk()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse cluster config with defaults from disk: %v", err)
+	}
+
+	config.Cluster.Spec.BundlesRef = parsedCluster.Spec.BundlesRef
+	if config.Cluster.Namespace == "" {
+		config.Cluster.Namespace = "default"
+	}
+	spec, err := cluster.BuildSpecFromConfig(ctx, clientutil.NewKubeClient(client), config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build cluster spec from config: %s", err)
+	}
+
+	return spec, err
 }

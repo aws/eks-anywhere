@@ -23,3 +23,4 @@ coverage.out
 docs/.hugo_build.lock
 *-logs
 *-artifacts
+*.log
