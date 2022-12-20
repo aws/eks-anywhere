@@ -27,27 +27,56 @@ func ControlPlaneObjects(ctx context.Context, log logr.Logger, clusterSpec *clus
 	return cp.Objects(), nil
 }
 
+// WorkersObjects generates all the objects that compose a Snow specific CAPI spec for the worker nodes of an eks-a cluster.
+func WorkersObjects(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
+	w, err := WorkersSpec(ctx, log, clusterSpec, kubeClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.Objects(), nil
+}
+
 type (
 	// Workers represents the Snow specific CAPI spec for worker nodes.
-	Workers     = clusterapi.Workers[*snowv1.AWSSnowMachineTemplate]
-	workerGroup = clusterapi.WorkerGroup[*snowv1.AWSSnowMachineTemplate]
+	BaseWorkers     = clusterapi.Workers[*snowv1.AWSSnowMachineTemplate]
+	baseWorkerGroup = clusterapi.WorkerGroup[*snowv1.AWSSnowMachineTemplate]
 )
+
+// Workers holds the Snow specific objects for CAPI snow worker groups.
+type Workers struct {
+	BaseWorkers
+	CAPASIPPools CAPASIPPools
+}
+
+// Objects returns the worker nodes objects associated with the snow cluster.
+func (w Workers) Objects() []kubernetes.Object {
+	o := w.BaseWorkers.WorkerObjects()
+	for _, p := range w.CAPASIPPools {
+		o = append(o, p)
+	}
+	return o
+}
 
 // WorkersSpec generates a Snow specific CAPI spec for an eks-a cluster worker nodes.
 // It talks to the cluster with a client to detect changes in immutable objects and generates new
 // names for them.
 func WorkersSpec(ctx context.Context, log logr.Logger, spec *cluster.Spec, kubeClient kubernetes.Client) (*Workers, error) {
-	workerMachineTemplates, kubeadmConfigTemplates, err := WorkersMachineAndConfigTemplate(ctx, log, kubeClient, spec)
+	capasPools := workersIPPools(spec)
+	workerMachineTemplates, kubeadmConfigTemplates, err := WorkersMachineAndConfigTemplate(ctx, log, kubeClient, spec, capasPools)
 	if err != nil {
 		return nil, err
 	}
 
 	machineDeployments := MachineDeployments(spec, kubeadmConfigTemplates, workerMachineTemplates)
 	w := &Workers{
-		Groups: make([]workerGroup, 0, len(spec.Cluster.Spec.WorkerNodeGroupConfigurations)),
+		BaseWorkers: BaseWorkers{
+			Groups: make([]baseWorkerGroup, 0, len(spec.Cluster.Spec.WorkerNodeGroupConfigurations)),
+		},
+		CAPASIPPools: capasPools,
 	}
 	for _, wc := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		w.Groups = append(w.Groups, workerGroup{
+		w.Groups = append(w.Groups, baseWorkerGroup{
 			MachineDeployment:       machineDeployments[wc.Name],
 			KubeadmConfigTemplate:   kubeadmConfigTemplates[wc.Name],
 			ProviderMachineTemplate: workerMachineTemplates[wc.Name],
@@ -57,18 +86,17 @@ func WorkersSpec(ctx context.Context, log logr.Logger, spec *cluster.Spec, kubeC
 	return w, nil
 }
 
-// WorkersObjects generates all the objects that compose a Snow specific CAPI spec for the worker nodes of an eks-a cluster.
-func WorkersObjects(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
-	w, err := WorkersSpec(ctx, log, clusterSpec, kubeClient)
-	if err != nil {
-		return nil, err
+func workersIPPools(clusterSpec *cluster.Spec) CAPASIPPools {
+	capasPools := CAPASIPPools{}
+	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		m := clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name)
+		capasPools.addPools(m.Spec.Network.DirectNetworkInterfaces, clusterSpec.SnowIPPools)
 	}
-
-	return w.WorkerObjects(), nil
+	return capasPools
 }
 
 // WorkersMachineAndConfigTemplate generates the snowMachineTemplates and kubeadmConfigTemplates from clusterSpec.
-func WorkersMachineAndConfigTemplate(ctx context.Context, log logr.Logger, kubeClient kubernetes.Client, clusterSpec *cluster.Spec) (map[string]*snowv1.AWSSnowMachineTemplate, map[string]*bootstrapv1.KubeadmConfigTemplate, error) {
+func WorkersMachineAndConfigTemplate(ctx context.Context, log logr.Logger, kubeClient kubernetes.Client, clusterSpec *cluster.Spec, capasPools CAPASIPPools) (map[string]*snowv1.AWSSnowMachineTemplate, map[string]*bootstrapv1.KubeadmConfigTemplate, error) {
 	machines := make(map[string]*snowv1.AWSSnowMachineTemplate, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	configs := make(map[string]*bootstrapv1.KubeadmConfigTemplate, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 
@@ -79,7 +107,7 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, log logr.Logger, kubeC
 		}
 
 		// build worker machineTemplate with new clusterSpec
-		newMachineTemplate := MachineTemplate(clusterapi.WorkerMachineTemplateName(clusterSpec, workerNodeGroupConfig), clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name], nil)
+		newMachineTemplate := MachineTemplate(clusterapi.WorkerMachineTemplateName(clusterSpec, workerNodeGroupConfig), clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name], capasPools)
 
 		// build worker kubeadmConfigTemplate with new clusterSpec
 		newConfigTemplate, err := KubeadmConfigTemplate(log, clusterSpec, workerNodeGroupConfig)
