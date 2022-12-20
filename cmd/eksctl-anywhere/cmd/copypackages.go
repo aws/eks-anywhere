@@ -77,7 +77,6 @@ func (c CopyPackagesCommand) call(ctx context.Context) error {
 	}
 	bundleReader := curatedpackages.NewPackageReader(deps.ManifestReader)
 
-	bundleReader.AllImages = false
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 
 	c.registryCache = registry.NewCache()
