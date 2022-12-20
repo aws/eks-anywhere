@@ -75,7 +75,8 @@ This can be done by following the instructions [here](https://kubernetes.io/docs
 On __Linux__ you can install the latest kubectl with the following.
 
 ```bash
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+ARCH=$(test "$(uname -m)" = 'x86_64' && echo 'amd64' || echo 'arm64')
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl"
 sudo mv ./kubectl /usr/local/bin
 sudo chmod +x /usr/local/bin/kubectl
 ```
