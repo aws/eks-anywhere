@@ -14,6 +14,11 @@ spec:
       - 10.96.0.0/12
   controlPlaneConfiguration:
     count: 1
+    upgradeRolloutStrategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
     endpoint:
       host: 1.2.3.4
     machineGroupRef:
@@ -30,6 +35,11 @@ spec:
     machineGroupRef:
       name: test-md
       kind: TinkerbellMachineConfig
+    upgradeRolloutStrategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -38,11 +48,8 @@ metadata:
   name: test
   namespace: test-namespace
 spec:
-  tinkerbellCertURL: "http://1.2.3.4:42114/cert"
-  tinkerbellGRPCAuth: "1.2.3.4:99"
-  tinkerbellHegelURL: "http://1.2.3.4:50051"
-  tinkerbellIP: "1.2.3.4"
-  tinkerbellPBnJGRPCAuth: "1.2.3.4:99"
+  tinkerbellIP: "5.6.7.8"
+  osImageURL: "https://ubuntu.gz"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -51,6 +58,8 @@ metadata:
   name: test-cp
   namespace: test-namespace
 spec:
+  hardwareSelector:
+    type: "cp"
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig
@@ -66,6 +75,8 @@ metadata:
   name: test-md
   namespace: test-namespace
 spec:
+  hardwareSelector:
+    type: "worker"
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig

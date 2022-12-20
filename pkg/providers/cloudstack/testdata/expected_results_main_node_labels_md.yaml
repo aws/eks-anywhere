@@ -16,14 +16,31 @@ spec:
             anonymous-auth: "false"
             node-labels: label1=foo,label2=bar
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          name: '{{ ds.meta_data.local_hostname }}'
+          name: "{{ ds.meta_data.hostname }}"
       preKubeadmCommands:
       - swapoff -a
-      - hostname "{{ ds.meta_data.local_hostname }}"
+      - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+      diskSetup:
+        filesystems:
+          - device: /dev/vdb1
+            overwrite: false
+            extraOpts:
+              - -E
+              - lazy_itable_init=1,lazy_journal_init=1
+            filesystem: ext4
+            label: data_disk
+        partitions:
+          - device: /dev/vdb
+            layout: true
+            overwrite: false
+            tableType: gpt
+      mounts:
+        - - LABEL=data_disk
+          - /data-small
       users:
       - name: mySshUsername
         sshAuthorizedKeys:
@@ -55,26 +72,45 @@ spec:
           name: test-md-0-template-1234567890000
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: CloudStackMachineTemplate
         name: test-md-0-1234567890000
       version: v1.21.2-eks-1-21-4
+
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
+  annotations:
+    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
+    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
+    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
+  creationTimestamp: null
   name: test-md-0-1234567890000
   namespace: eksa-system
 spec:
   template:
+    metadata:
+      creationTimestamp: null
     spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
+      affinityGroupIDs:
+      - worker-affinity
       details:
         foo: bar
-      affinitygroupids:
-      - worker-affinity
+      diskOffering:
+        customSizeInGB: 0
+        device: /dev/vdb
+        filesystem: ext4
+        label: data_disk
+        mountPath: /data-small
+        name: Small
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---
 
 ---

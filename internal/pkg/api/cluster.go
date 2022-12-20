@@ -1,44 +1,35 @@
 package api
 
 import (
-	"fmt"
-	"io/ioutil"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 type ClusterFiller func(c *anywherev1.Cluster)
 
-func AutoFillClusterFromFile(filename string, fillers ...ClusterFiller) ([]byte, error) {
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read file due to: %v", err)
+// ClusterToConfigFiller updates the Cluster in the cluster.Config by applying all the fillers.
+func ClusterToConfigFiller(fillers ...ClusterFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		for _, f := range fillers {
+			f(c.Cluster)
+		}
 	}
-
-	return AutoFillClusterFromYaml(content, fillers...)
 }
 
-func AutoFillClusterFromYaml(yamlContent []byte, fillers ...ClusterFiller) ([]byte, error) {
-	clusterConfig, err := anywherev1.GetClusterConfigFromContent(yamlContent)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get cluster config from content: %v", err)
+// JoinClusterConfigFillers creates one single ClusterConfigFiller from a collection of fillers.
+func JoinClusterConfigFillers(fillers ...ClusterConfigFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		for _, f := range fillers {
+			f(c)
+		}
 	}
-
-	for _, f := range fillers {
-		f(clusterConfig)
-	}
-
-	clusterOutput, err := yaml.Marshal(clusterConfig)
-	if err != nil {
-		return nil, fmt.Errorf("marshalling cluster config: %v", err)
-	}
-
-	return clusterOutput, nil
 }
 
 func WithKubernetesVersion(v anywherev1.KubernetesVersion) ClusterFiller {
@@ -89,9 +80,10 @@ func WithControlPlaneLabel(key string, val string) ClusterFiller {
 	}
 }
 
+// WithPodCidr sets an explicit pod CIDR, overriding the provider's default.
 func WithPodCidr(podCidr string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
-		c.Spec.ClusterNetwork.Pods.CidrBlocks = []string{podCidr}
+		c.Spec.ClusterNetwork.Pods.CidrBlocks = strings.Split(podCidr, ",")
 	}
 }
 
@@ -104,9 +96,22 @@ func WithServiceCidr(svcCidr string) ClusterFiller {
 func WithWorkerNodeCount(r int) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
-			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: 0}}
+			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: ptr.Int(0)}}
 		}
-		c.Spec.WorkerNodeGroupConfigurations[0].Count = r
+		c.Spec.WorkerNodeGroupConfigurations[0].Count = &r
+	}
+}
+
+// WithWorkerNodeAutoScalingConfig adds an autoscaling configuration with a given min and max count.
+func WithWorkerNodeAutoScalingConfig(min int, max int) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
+			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: ptr.Int(min)}}
+		}
+		c.Spec.WorkerNodeGroupConfigurations[0].AutoScalingConfiguration = &anywherev1.AutoScalingConfiguration{
+			MinCount: min,
+			MaxCount: max,
+		}
 	}
 }
 
@@ -117,9 +122,9 @@ func WithOIDCIdentityProviderRef(name string) ClusterFiller {
 	}
 }
 
-func WithGitOpsRef(name string) ClusterFiller {
+func WithGitOpsRef(name, kind string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
-		c.Spec.GitOpsRef = &anywherev1.Ref{Name: name, Kind: anywherev1.GitOpsConfigKind}
+		c.Spec.GitOpsRef = &anywherev1.Ref{Name: name, Kind: kind}
 	}
 }
 
@@ -129,6 +134,14 @@ func WithExternalEtcdTopology(count int) ClusterFiller {
 			c.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{}
 		}
 		c.Spec.ExternalEtcdConfiguration.Count = count
+	}
+}
+
+func WithEtcdCountIfExternal(count int) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ExternalEtcdConfiguration != nil {
+			c.Spec.ExternalEtcdConfiguration.Count = count
+		}
 	}
 }
 
@@ -164,12 +177,13 @@ func WithProxyConfig(httpProxy, httpsProxy string, noProxy []string) ClusterFill
 	}
 }
 
-func WithRegistryMirror(endpoint, caCert string) ClusterFiller {
+func WithRegistryMirror(endpoint, port string, caCert string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.RegistryMirrorConfiguration == nil {
 			c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{}
 		}
 		c.Spec.RegistryMirrorConfiguration.Endpoint = endpoint
+		c.Spec.RegistryMirrorConfiguration.Port = port
 		c.Spec.RegistryMirrorConfiguration.CACertContent = caCert
 	}
 }

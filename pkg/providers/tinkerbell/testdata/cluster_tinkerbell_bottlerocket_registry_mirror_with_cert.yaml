@@ -1,0 +1,209 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    upgradeRolloutStrategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    count: 1
+    endpoint:
+      host: 1.2.3.4
+    machineGroupRef:
+      name: test-cp
+      kind: TinkerbellMachineConfig
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: test
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: test
+  workerNodeGroupConfigurations:
+  - count: 1
+    upgradeRolloutStrategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    machineGroupRef:
+      name: test-md
+      kind: TinkerbellMachineConfig
+  registryMirrorConfiguration:
+    endpoint: 1.2.3.4
+    port: 1234
+    caCertContent: |
+      -----BEGIN CERTIFICATE-----
+      MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+      BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+      MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+      CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+      EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+      lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+      2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+      o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+      cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+      LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+      ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+      hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+      iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+      zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+      9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+      -----END CERTIFICATE-----
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  tinkerbellIP: "5.6.7.8"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-cp
+  namespace: test-namespace
+spec:
+  hardwareSelector:
+    type: "cp"
+  osFamily: bottlerocket
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: tink-user
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-md
+  namespace: test-namespace
+spec:
+  hardwareSelector:
+    type: "worker"
+  osFamily: bottlerocket
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: tink-user
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-etcd
+  namespace: test-namespace
+spec:
+  hardwareSelector:
+    type: "etcd"
+  osFamily: bottlerocket
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: tink-user
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: tink-test
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: tink-test
+    tasks:
+      - actions:
+          - environment:
+              COMPRESSED: "true"
+              DEST_DISK: /dev/sda
+              IMG_URL: ""
+            image: image2disk:v1.0.0
+            name: stream-image
+            timeout: 600
+          - environment:
+              CONTENTS: |
+                # Version is required, it will change as we support
+                # additional settings
+                version = 1
+                # "eno1" is the interface name
+                # Users may turn on dhcp4 and dhcp6 via boolean
+                [eno1]
+                dhcp4 = true
+                # Define this interface as the "primary" interface
+                # for the system.  This IP is what kubelet will use
+                # as the node IP.  If none of the interfaces has
+                # "primary" set, we choose the first interface in
+                # the file
+                primary = true
+              DEST_DISK: /dev/sda12
+              DEST_PATH: /etc/netplan/config.yaml
+              DIRMODE: "0755"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-netplan
+            timeout: 90
+          - environment:
+              BOOTCONFIG_CONTENTS: |
+                kernel {
+                  console = "tty0", "ttyS0,115200n8"
+                }
+              DEST_DISK: /dev/sda12
+              DEST_PATH: /bootconfig.data
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-bootconfig
+            timeout: 90
+          - environment:
+              DEST_DISK: /dev/sda12
+              DEST_PATH: /user-data.toml
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+              HEGEL_URLS: http://1.2.3.4:50061
+            image: writefile:v1.0.0
+            name: write-user-data
+            timeout: 90
+          - environment:
+            image: reboot:v1.0.0
+            name: reboot-image
+            pid: host
+            timeout: 90
+            volumes:
+              - /worker:/worker
+        name: tink-test
+        volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+        worker: "{{.device_1}}"
+    version: "0.1"
+---

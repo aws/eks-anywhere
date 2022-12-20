@@ -17,14 +17,14 @@ const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 // +kubebuilder:object:generate=false
 type ActionOpt func(action *[]tinkerbell.Action)
 
-// NewDefaultTinkerbellTemplateConfigGenerate returns a default TinkerbellTemplateConfig with the required Tasks and Actions
-func NewDefaultTinkerbellTemplateConfigGenerate(name string, versionBundle v1alpha1.VersionsBundle) *TinkerbellTemplateConfigGenerate {
-	config := &TinkerbellTemplateConfigGenerate{
+// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the required Tasks and Actions.
+func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, disk string, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp string, osFamily OSFamily) *TinkerbellTemplateConfig {
+	config := &TinkerbellTemplateConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellTemplateConfigKind,
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
-		ObjectMeta: ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 		Spec: TinkerbellTemplateConfigSpec{
@@ -45,7 +45,7 @@ func NewDefaultTinkerbellTemplateConfigGenerate(name string, versionBundle v1alp
 		},
 	}
 
-	defaultActions := GetDefaultActionsFromBundle(versionBundle)
+	defaultActions := GetDefaultActionsFromBundle(versionBundle, disk, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp, osFamily)
 	for _, action := range defaultActions {
 		action(&config.Spec.Template.Tasks[0].Actions)
 	}
@@ -78,14 +78,11 @@ func GetTinkerbellTemplateConfig(fileName string) (map[string]*TinkerbellTemplat
 		}
 
 		if template.Kind() == template.ExpectedKind() {
-			if err = yaml.UnmarshalStrict([]byte(c), &template); err == nil {
-				templates[template.Name] = &template
-				continue
+			if err = yaml.UnmarshalStrict([]byte(c), &template); err != nil {
+				return nil, fmt.Errorf("invalid template config content: %v", err)
 			}
+			templates[template.Name] = &template
 		}
-	}
-	if len(templates) == 0 {
-		return nil, fmt.Errorf("unable to find kind %v in file", TinkerbellTemplateConfigKind)
 	}
 	return templates, nil
 }

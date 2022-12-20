@@ -25,14 +25,20 @@ func (r *OIDCConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Validator = &OIDCConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *OIDCConfig) ValidateCreate() error {
 	oidcconfiglog.Info("validate create", "name", r.Name)
 
-	return nil
+	allErrs := r.Validate()
+
+	if len(allErrs) == 0 {
+		return nil
+	}
+
+	return apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *OIDCConfig) ValidateUpdate(old runtime.Object) error {
 	oidcconfiglog.Info("validate update", "name", r.Name)
 
@@ -59,7 +65,7 @@ func (r *OIDCConfig) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *OIDCConfig) ValidateDelete() error {
 	oidcconfiglog.Info("validate delete", "name", r.Name)
 
@@ -72,7 +78,7 @@ func validateImmutableOIDCFields(new, old *OIDCConfig) field.ErrorList {
 	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "OIDCConfig"), new, "config is immutable"),
+			field.Forbidden(field.NewPath(OIDCConfigKind), "config is immutable"),
 		)
 	}
 

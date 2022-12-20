@@ -12,8 +12,8 @@ import (
 
 type Reader interface {
 	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
-	ReadImagesFromBundles(bundles *releasev1.Bundles) ([]releasev1.Image, error)
-	ReadChartsFromBundles(bundles *releasev1.Bundles) []releasev1.Image
+	ReadImagesFromBundles(ctx context.Context, bundles *releasev1.Bundles) ([]releasev1.Image, error)
+	ReadChartsFromBundles(ctx context.Context, bundles *releasev1.Bundles) []releasev1.Image
 }
 
 type ImageMover interface {
@@ -22,6 +22,10 @@ type ImageMover interface {
 
 type ChartDownloader interface {
 	Download(ctx context.Context, artifacts ...string) error
+}
+
+type ManifestDownloader interface {
+	Download(ctx context.Context, bundles *releasev1.Bundles)
 }
 
 type Packager interface {
@@ -37,6 +41,7 @@ type Download struct {
 	Packager                 Packager
 	TmpDowloadFolder         string
 	DstFile                  string
+	ManifestDownloader       ManifestDownloader
 }
 
 func (d Download) Run(ctx context.Context) error {
@@ -53,7 +58,7 @@ func (d Download) Run(ctx context.Context) error {
 		return fmt.Errorf("downloading eksa tools image: %v", err)
 	}
 
-	images, err := d.Reader.ReadImagesFromBundles(b)
+	images, err := d.Reader.ReadImagesFromBundles(ctx, b)
 	if err != nil {
 		return fmt.Errorf("downloading images: %v", err)
 	}
@@ -62,7 +67,9 @@ func (d Download) Run(ctx context.Context) error {
 		return err
 	}
 
-	charts := d.Reader.ReadChartsFromBundles(b)
+	charts := d.Reader.ReadChartsFromBundles(ctx, b)
+
+	d.ManifestDownloader.Download(ctx, b)
 
 	if err := d.ChartDownloader.Download(ctx, artifactNames(charts)...); err != nil {
 		return err

@@ -5,13 +5,13 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"net"
 	"os"
 	"reflect"
 	"text/template"
 	"time"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	"github.com/Masterminds/sprig"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -19,44 +19,32 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/retrier"
-	"github.com/aws/eks-anywhere/pkg/semver"
-	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
-	CredentialsObjectName  = "vsphere-credentials"
-	EksavSphereUsernameKey = "EKSA_VSPHERE_USERNAME"
-	EksavSpherePasswordKey = "EKSA_VSPHERE_PASSWORD"
-	// Username and password for cloud provider
-	EksavSphereCPUsernameKey = "EKSA_VSPHERE_CP_USERNAME"
-	EksavSphereCPPasswordKey = "EKSA_VSPHERE_CP_PASSWORD"
-	// Username and password for the CSI driver
-	EksavSphereCSIUsernameKey = "EKSA_VSPHERE_CSI_USERNAME"
-	EksavSphereCSIPasswordKey = "EKSA_VSPHERE_CSI_PASSWORD"
-	eksaLicense               = "EKSA_LICENSE"
-	vSphereUsernameKey        = "VSPHERE_USERNAME"
-	vSpherePasswordKey        = "VSPHERE_PASSWORD"
-	vSphereServerKey          = "VSPHERE_SERVER"
-	govcInsecure              = "GOVC_INSECURE"
-	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
-	defaultTemplateLibrary    = "eks-a-templates"
-	defaultTemplatesFolder    = "vm/Templates"
-	bottlerocketDefaultUser   = "ec2-user"
-	ubuntuDefaultUser         = "capv"
-	maxRetries                = 30
-	backOffPeriod             = 5 * time.Second
+	CredentialsObjectName    = "vsphere-credentials"
+	eksaLicense              = "EKSA_LICENSE"
+	vSphereUsernameKey       = "VSPHERE_USERNAME"
+	vSpherePasswordKey       = "VSPHERE_PASSWORD"
+	vSphereServerKey         = "VSPHERE_SERVER"
+	govcDatacenterKey        = "GOVC_DATACENTER"
+	govcInsecure             = "GOVC_INSECURE"
+	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
+	defaultTemplateLibrary   = "eks-a-templates"
+	defaultTemplatesFolder   = "vm/Templates"
+	maxRetries               = 30
+	backOffPeriod            = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -71,9 +59,6 @@ var defaultSecretObject string
 //go:embed config/defaultStorageClass.yaml
 var defaultStorageClass []byte
 
-//go:embed config/machine-health-check-template.yaml
-var mhcTemplate []byte
-
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -82,25 +67,21 @@ var (
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
 
 type vsphereProvider struct {
-	datacenterConfig       *v1alpha1.VSphereDatacenterConfig
-	machineConfigs         map[string]*v1alpha1.VSphereMachineConfig
-	clusterConfig          *v1alpha1.Cluster
-	providerGovcClient     ProviderGovcClient
-	providerKubectlClient  ProviderKubectlClient
-	writer                 filewriter.FileWriter
-	controlPlaneSshAuthKey string
-	workerSshAuthKey       string
-	etcdSshAuthKey         string
-	templateBuilder        *VsphereTemplateBuilder
-	skipIpCheck            bool
-	resourceSetManager     ClusterResourceSetManager
-	Retrier                *retrier.Retrier
-	validator              *Validator
-	defaulter              *Defaulter
+	clusterConfig         *v1alpha1.Cluster
+	providerGovcClient    ProviderGovcClient
+	providerKubectlClient ProviderKubectlClient
+	writer                filewriter.FileWriter
+	templateBuilder       *VsphereTemplateBuilder
+	skipIPCheck           bool
+	csiEnabled            bool
+	Retrier               *retrier.Retrier
+	validator             *Validator
+	defaulter             *Defaulter
+	ipValidator           IPValidator
 }
 
 type ProviderGovcClient interface {
-	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
+	SearchTemplate(ctx context.Context, datacenter, template string) (string, error)
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
 	GetLibraryElementContentVersion(ctx context.Context, element string) (string, error)
 	DeleteLibraryElement(ctx context.Context, element string) error
@@ -115,20 +96,27 @@ type ProviderGovcClient interface {
 	DatacenterExists(ctx context.Context, datacenter string) (bool, error)
 	NetworkExists(ctx context.Context, network string) (bool, error)
 	CreateLibrary(ctx context.Context, datastore, library string) error
-	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error
+	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	GetTags(ctx context.Context, path string) (tags []string, err error)
-	ListTags(ctx context.Context) ([]string, error)
+	ListTags(ctx context.Context) ([]executables.Tag, error)
 	CreateTag(ctx context.Context, tag, category string) error
 	AddTag(ctx context.Context, path, tag string) error
 	ListCategories(ctx context.Context) ([]string, error)
 	CreateCategoryForVM(ctx context.Context, name string) error
+	CreateUser(ctx context.Context, username string, password string) error
+	UserExists(ctx context.Context, username string) (bool, error)
+	CreateGroup(ctx context.Context, name string) error
+	GroupExists(ctx context.Context, name string) (bool, error)
+	AddUserToGroup(ctx context.Context, name string, username string) error
+	RoleExists(ctx context.Context, name string) (bool, error)
+	CreateRole(ctx context.Context, name string, privileges []string) error
+	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
 }
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
@@ -136,8 +124,9 @@ type ProviderKubectlClient interface {
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
-	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
+	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
+	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
 	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
 	SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error
@@ -146,58 +135,51 @@ type ProviderKubectlClient interface {
 	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error
 }
 
-type ClusterResourceSetManager interface {
-	ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error
+// IPValidator is an interface that defines methods to validate the control plane IP.
+type IPValidator interface {
+	ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
+func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool) *vsphereProvider { //nolint:revive
+	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
+	// We should make it exported, but that would involve a bunch of changes, so will do it separately
+	vcb := govmomi.NewVMOMIClientBuilder()
+	v := NewValidator(
+		providerGovcClient,
+		vcb,
+	)
+
 	return NewProviderCustomNet(
 		datacenterConfig,
-		machineConfigs,
 		clusterConfig,
 		providerGovcClient,
 		providerKubectlClient,
 		writer,
-		&networkutils.DefaultNetClient{},
+		ipValidator,
 		now,
 		skipIpCheck,
-		resourceSetManager,
+		v,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
-	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec
-	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.VSphereMachineConfigSpec, len(machineConfigs))
-
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-		}
-	}
+func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, ipValidator IPValidator, now types.NowFunc, skipIpCheck bool, v *Validator) *vsphereProvider { //nolint:revive
+	// TODO(g-gaston): ignoring linter error for exported function returning unexported member
+	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &vsphereProvider{
-		datacenterConfig:      datacenterConfig,
-		machineConfigs:        machineConfigs,
 		clusterConfig:         clusterConfig,
 		providerGovcClient:    providerGovcClient,
 		providerKubectlClient: providerKubectlClient,
 		writer:                writer,
-		templateBuilder: &VsphereTemplateBuilder{
-			datacenterSpec:              &datacenterConfig.Spec,
-			controlPlaneMachineSpec:     controlPlaneMachineSpec,
-			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-			etcdMachineSpec:             etcdMachineSpec,
-			now:                         now,
-		},
-		skipIpCheck:        skipIpCheck,
-		resourceSetManager: resourceSetManager,
-		Retrier:            retrier,
-		validator:          NewValidator(providerGovcClient, netClient),
-		defaulter:          NewDefaulter(providerGovcClient),
+		templateBuilder: NewVsphereTemplateBuilder(
+			now,
+		),
+		skipIPCheck: skipIpCheck,
+		csiEnabled:  !datacenterConfig.Spec.DisableCSI,
+		Retrier:     retrier,
+		validator:   v,
+		defaulter:   NewDefaulter(providerGovcClient),
+		ipValidator: ipValidator,
 	}
 }
 
@@ -207,18 +189,12 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 }
 
 func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
-	machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
-	for _, config := range p.MachineConfigs(nil) {
-		mc := config.(*v1alpha1.VSphereMachineConfig)
-		machineConfigMap[mc.Name] = mc
-	}
-
 	for _, oldMcRef := range cc.MachineConfigRefs() {
 		existingVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return false, err
 		}
-		csmc, ok := machineConfigMap[oldMcRef.Name]
+		csmc, ok := newClusterSpec.VSphereMachineConfigs[oldMcRef.Name]
 		if !ok {
 			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
 			return true, nil
@@ -232,8 +208,8 @@ func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1a
 	return false, nil
 }
 
-func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.Server, p.clusterConfig)
+func (p *vsphereProvider) BootstrapClusterOpts(spec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	return common.BootstrapClusterOpts(p.clusterConfig, spec.VSphereDatacenter.Spec.Server)
 }
 
 func (p *vsphereProvider) Name() string {
@@ -248,119 +224,40 @@ func (p *vsphereProvider) MachineResourceType() string {
 	return eksaVSphereMachineResourceType
 }
 
-func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
-	var useKeyGeneratedForControlplane, useKeyGeneratedForWorker bool
-	var err error
-	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
-	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
-	if len(p.controlPlaneSshAuthKey) > 0 {
-		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
-		if err != nil {
-			return err
-		}
-	} else {
-		logger.Info("Provided control plane sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-		generatedKey, err := common.GenerateSSHAuthKey(p.writer)
-		if err != nil {
-			return err
-		}
-		p.controlPlaneSshAuthKey = generatedKey
-		useKeyGeneratedForControlplane = true
-	}
-	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
-	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-		if len(p.workerSshAuthKey) > 0 {
-			p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
-			if err != nil {
-				return err
-			}
-		} else {
-			if useKeyGeneratedForControlplane { // use the same key
-				p.workerSshAuthKey = p.controlPlaneSshAuthKey
+func (p *vsphereProvider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1alpha1.VSphereMachineConfig) error {
+	var generatedKey string
+	for _, machineConfig := range machineConfigs {
+		user := machineConfig.Spec.Users[0]
+		if user.SshAuthorizedKeys[0] == "" {
+			if generatedKey != "" { // use the same key
+				user.SshAuthorizedKeys[0] = generatedKey
 			} else {
-				logger.Info("Provided worker sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-				generatedKey, err := common.GenerateSSHAuthKey(p.writer)
+				logger.Info("Provided sshAuthorizedKey is not set or is empty, auto-generating new key pair...", "vSphereMachineConfig", machineConfig.Name)
+				var err error
+				generatedKey, err = common.GenerateSSHAuthKey(p.writer)
 				if err != nil {
 					return err
 				}
-				p.workerSshAuthKey = generatedKey
-				useKeyGeneratedForWorker = true
+				user.SshAuthorizedKeys[0] = generatedKey
 			}
 		}
-		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	}
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
-		if len(p.etcdSshAuthKey) > 0 {
-			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
-			if err != nil {
-				return err
-			}
-		} else {
-			if useKeyGeneratedForControlplane { // use the same key as for controlplane
-				p.etcdSshAuthKey = p.controlPlaneSshAuthKey
-			} else if useKeyGeneratedForWorker {
-				p.etcdSshAuthKey = p.workerSshAuthKey // if cp key was provided by user, check if worker key was generated by cli and use that
-			} else {
-				logger.Info("Provided etcd sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-				generatedKey, err := common.GenerateSSHAuthKey(p.writer)
-				if err != nil {
-					return err
-				}
-				p.etcdSshAuthKey = generatedKey
-			}
-		}
-		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
-	}
-	return nil
-}
 
-func (p *vsphereProvider) setupSSHAuthKeysForUpgrade() error {
-	var err error
-	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
-	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
-	if len(p.controlPlaneSshAuthKey) > 0 {
-		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
-		if err != nil {
-			return err
-		}
-	}
-	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
-	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-		if len(p.workerSshAuthKey) > 0 {
-			p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
-			if err != nil {
-				return err
-			}
-		}
-		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
-	}
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
-		if len(p.etcdSshAuthKey) > 0 {
-			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
-			if err != nil {
-				return err
-			}
-		}
-		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
-	}
 	return nil
 }
 
 func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	for _, mc := range p.machineConfigs {
+	for _, mc := range clusterSpec.VSphereMachineConfigs {
 		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, eksaVSphereMachineResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
 			return err
 		}
 	}
-	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaVSphereDatacenterResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx,
+		eksaVSphereDatacenterResourceType,
+		clusterSpec.VSphereDatacenter.Name,
+		clusterSpec.ManagementCluster.KubeconfigFile,
+		clusterSpec.VSphereDatacenter.Namespace,
+	)
 }
 
 func (p *vsphereProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
@@ -368,22 +265,30 @@ func (p *vsphereProvider) PostClusterDeleteValidate(_ context.Context, _ *types.
 	return nil
 }
 
+func (p *vsphereProvider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Cluster) error {
+	// NOOP
+	return nil
+}
+
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	vSphereClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	vSphereClusterSpec := NewSpec(clusterSpec)
 
-	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 
-	if err := vSphereClusterSpec.datacenterConfig.ValidateFields(); err != nil {
+	if err := vSphereClusterSpec.VSphereDatacenter.Validate(); err != nil {
 		return err
 	}
 
-	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return err
 	}
 
@@ -395,13 +300,13 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
-	if err := p.setupSSHAuthKeysForCreate(); err != nil {
+	if err := p.generateSSHKeysIfNotSet(clusterSpec.VSphereMachineConfigs); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
 	// TODO: move this to validator
 	if clusterSpec.Cluster.IsManaged() {
-		for _, mc := range p.MachineConfigs(clusterSpec) {
+		for _, mc := range clusterSpec.VSphereMachineConfigs {
 			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
 			if err != nil {
 				return err
@@ -410,12 +315,12 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 				return fmt.Errorf("VSphereMachineConfig %s already exists", mc.GetName())
 			}
 		}
-		existingDatacenter, err := p.providerKubectlClient.SearchVsphereDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		existingDatacenter, err := p.providerKubectlClient.SearchVsphereDatacenterConfig(ctx, clusterSpec.VSphereDatacenter.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
 		if err != nil {
 			return err
 		}
 		if len(existingDatacenter) > 0 {
-			return fmt.Errorf("VSphereDatacenter %s already exists", p.datacenterConfig.Name)
+			return fmt.Errorf("VSphereDatacenter %s already exists", clusterSpec.VSphereDatacenter.Name)
 		}
 		for _, identityProviderRef := range clusterSpec.Cluster.Spec.IdentityProviderRefs {
 			if identityProviderRef.Kind == v1alpha1.OIDCConfigKind {
@@ -424,33 +329,65 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		}
 	}
 
-	if !p.skipIpCheck {
-		if err := p.validator.validateControlPlaneIpUniqueness(vSphereClusterSpec); err != nil {
+	if !p.skipIPCheck {
+		if err := p.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
 			return err
 		}
 	} else {
 		logger.Info("Skipping check for whether control plane ip is in use")
 	}
 
+	var passed bool
+	var err error
+	vuc := config.NewVsphereUserConfig()
+
+	if passed, err = p.validator.validateUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+		return err
+	} else if passed {
+		s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereUsername)
+		logger.MarkPass(s)
+	}
+
+	if len(vuc.EksaVsphereCPUsername) > 0 && vuc.EksaVsphereCPUsername != vuc.EksaVsphereUsername {
+		if passed, err = p.validator.validateCPUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+			return err
+		} else if passed {
+			s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereCPUsername)
+			logger.MarkPass(s)
+		}
+	}
+
+	if len(vuc.EksaVsphereCSIUsername) > 0 && vuc.EksaVsphereCSIUsername != vuc.EksaVsphereUsername {
+		if passed, err = p.validator.validateCSIUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+			return err
+		} else if passed {
+			s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereCSIUsername)
+			logger.MarkPass(s)
+		}
+	}
+
 	return nil
 }
 
-func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	if err := SetupEnvVars(clusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	vSphereClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	vSphereClusterSpec := NewSpec(clusterSpec)
 
-	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 
-	if err := vSphereClusterSpec.datacenterConfig.ValidateFields(); err != nil {
+	if err := vSphereClusterSpec.VSphereDatacenter.Validate(); err != nil {
 		return err
 	}
 
-	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
 		return err
 	}
 
@@ -462,11 +399,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return err
 	}
 
-	err := p.setupSSHAuthKeysForUpgrade()
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-	err = p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
 	}
@@ -506,7 +439,7 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 	return nil
 }
 
-func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	var contents bytes.Buffer
 	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {
@@ -520,8 +453,11 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 	return nil
 }
 
-func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
-	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, spec *cluster.Spec) error {
+	if err := p.validator.validateUpgradeRolloutStrategy(spec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	if err := SetupEnvVars(spec.VSphereDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	return nil
@@ -558,7 +494,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1
 }
 
 func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeVmc *v1alpha1.VSphereMachineConfig, newWorkerNodeVmc *v1alpha1.VSphereMachineConfig) bool {
-	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels) ||
+	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels) ||
 		!v1alpha1.UsersSliceEqual(oldWorkerNodeVmc.Spec.Users, newWorkerNodeVmc.Spec.Users)
 }
 
@@ -603,303 +539,6 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, 
 	return false
 }
 
-func NewVsphereTemplateBuilder(datacenterSpec *v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec, now types.NowFunc, fromController bool) *VsphereTemplateBuilder {
-	return &VsphereTemplateBuilder{
-		datacenterSpec:              datacenterSpec,
-		controlPlaneMachineSpec:     controlPlaneMachineSpec,
-		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-		etcdMachineSpec:             etcdMachineSpec,
-		now:                         now,
-		fromController:              fromController,
-	}
-}
-
-type VsphereTemplateBuilder struct {
-	datacenterSpec              *v1alpha1.VSphereDatacenterConfigSpec
-	controlPlaneMachineSpec     *v1alpha1.VSphereMachineConfigSpec
-	WorkerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec
-	etcdMachineSpec             *v1alpha1.VSphereMachineConfigSpec
-	now                         types.NowFunc
-	fromController              bool
-}
-
-func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	var etcdMachineSpec v1alpha1.VSphereMachineConfigSpec
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineSpec = *vs.etcdMachineSpec
-	}
-	values := buildTemplateMapCP(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec)
-
-	for _, buildOption := range buildOptions {
-		buildOption(values)
-	}
-
-	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
-}
-
-func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spec) (bool, error) {
-	bundle := clusterSpec.VersionsBundle
-	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
-	if err != nil {
-		return false, fmt.Errorf("parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
-	}
-	if vs.fromController && k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
-		return true, nil
-	}
-	return false, nil
-}
-
-func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
-	// pin cgroupDriver to systemd for k8s >= 1.21 when generating template in controller
-	// remove this check once the controller supports order upgrade.
-	// i.e. control plane, etcd upgrade before worker nodes.
-	cgroupDriverSystemd, err := vs.isCgroupDriverSystemd(clusterSpec)
-	if err != nil {
-		return nil, err
-	}
-
-	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
-		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
-
-		values["cgroupDriverSystemd"] = cgroupDriverSystemd
-
-		bytes, err := templater.Execute(defaultClusterConfigMD, values)
-		if err != nil {
-			return nil, err
-		}
-		workerSpecs = append(workerSpecs, bytes)
-	}
-
-	return templater.AppendYamlResources(workerSpecs...), nil
-}
-
-func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
-	bundle := clusterSpec.VersionsBundle
-	format := "cloud-config"
-	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
-	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
-		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
-	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
-		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
-		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
-		Append(sharedExtraArgs)
-
-	eksaVsphereUsername := os.Getenv(EksavSphereUsernameKey)
-	eksaVspherePassword := os.Getenv(EksavSpherePasswordKey)
-
-	// Cloud provider credentials
-	eksaCPUsername := os.Getenv(EksavSphereCPUsernameKey)
-	eksaCPassword := os.Getenv(EksavSphereCPPasswordKey)
-
-	if eksaCPUsername == "" {
-		eksaCPUsername = eksaVsphereUsername
-		eksaCPassword = eksaVspherePassword
-	}
-	// CSI driver credentials
-	eksaCSIUsername := os.Getenv(EksavSphereCSIUsernameKey)
-	eksaCSIPassword := os.Getenv(EksavSphereCSIPasswordKey)
-	if eksaCSIUsername == "" {
-		eksaCSIUsername = eksaVsphereUsername
-		eksaCSIPassword = eksaVspherePassword
-	}
-
-	values := map[string]interface{}{
-		"clusterName":                          clusterSpec.Cluster.Name,
-		"controlPlaneEndpointIp":               clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		"controlPlaneReplicas":                 clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":                 bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":                    bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":                       bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                         bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":                    bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":                       bundle.KubeDistro.CoreDNS.Tag,
-		"nodeDriverRegistrarImage":             bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
-		"livenessProbeImage":                   bundle.KubeDistro.LivenessProbe.VersionedImage(),
-		"externalAttacherImage":                bundle.KubeDistro.ExternalAttacher.VersionedImage(),
-		"externalProvisionerImage":             bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
-		"thumbprint":                           datacenterSpec.Thumbprint,
-		"vsphereDatacenter":                    datacenterSpec.Datacenter,
-		"controlPlaneVsphereDatastore":         controlPlaneMachineSpec.Datastore,
-		"controlPlaneVsphereFolder":            controlPlaneMachineSpec.Folder,
-		"managerImage":                         bundle.VSphere.Manager.VersionedImage(),
-		"kubeVipImage":                         bundle.VSphere.KubeVip.VersionedImage(),
-		"driverImage":                          bundle.VSphere.Driver.VersionedImage(),
-		"syncerImage":                          bundle.VSphere.Syncer.VersionedImage(),
-		"insecure":                             datacenterSpec.Insecure,
-		"vsphereNetwork":                       datacenterSpec.Network,
-		"controlPlaneVsphereResourcePool":      controlPlaneMachineSpec.ResourcePool,
-		"vsphereServer":                        datacenterSpec.Server,
-		"controlPlaneVsphereStoragePolicyName": controlPlaneMachineSpec.StoragePolicyName,
-		"vsphereTemplate":                      controlPlaneMachineSpec.Template,
-		"controlPlaneVMsMemoryMiB":             controlPlaneMachineSpec.MemoryMiB,
-		"controlPlaneVMsNumCPUs":               controlPlaneMachineSpec.NumCPUs,
-		"controlPlaneDiskGiB":                  controlPlaneMachineSpec.DiskGiB,
-		"controlPlaneSshUsername":              controlPlaneMachineSpec.Users[0].Name,
-		"podCidrs":                             clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                         clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
-		"etcdCipherSuites":                     crypto.SecureCipherSuitesString(),
-		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
-		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
-		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
-		"kubeletExtraArgs":                     kubeletExtraArgs.ToPartialYaml(),
-		"format":                               format,
-		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
-		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
-		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
-		"auditPolicy":                          common.GetAuditPolicy(),
-		"resourceSetName":                      resourceSetName(clusterSpec),
-		"eksaVsphereUsername":                  eksaVsphereUsername,
-		"eksaVspherePassword":                  eksaVspherePassword,
-		"eksaCloudProviderUsername":            eksaCPUsername,
-		"eksaCloudProviderPassword":            eksaCPassword,
-		"eksaCSIUsername":                      eksaCSIUsername,
-		"eksaCSIPassword":                      eksaCSIPassword,
-	}
-
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
-		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
-			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
-		}
-	}
-
-	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
-		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
-
-		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
-		noProxyList = append(noProxyList,
-			datacenterSpec.Server,
-			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		)
-
-		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = noProxyList
-	}
-
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		values["externalEtcd"] = true
-		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
-		values["etcdVsphereDatastore"] = etcdMachineSpec.Datastore
-		values["etcdVsphereFolder"] = etcdMachineSpec.Folder
-		values["etcdDiskGiB"] = etcdMachineSpec.DiskGiB
-		values["etcdVMsMemoryMiB"] = etcdMachineSpec.MemoryMiB
-		values["etcdVMsNumCPUs"] = etcdMachineSpec.NumCPUs
-		values["etcdVsphereResourcePool"] = etcdMachineSpec.ResourcePool
-		values["etcdVsphereStoragePolicyName"] = etcdMachineSpec.StoragePolicyName
-		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
-	}
-
-	if controlPlaneMachineSpec.OSFamily == v1alpha1.Bottlerocket {
-		values["format"] = string(v1alpha1.Bottlerocket)
-		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
-		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
-	}
-
-	if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
-		values["controlPlaneTaints"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints
-	}
-
-	if clusterSpec.AWSIamConfig != nil {
-		values["awsIamAuth"] = true
-	}
-
-	return values
-}
-
-func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.VSphereMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
-	bundle := clusterSpec.VersionsBundle
-	format := "cloud-config"
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-
-	values := map[string]interface{}{
-		"clusterName":                    clusterSpec.Cluster.Name,
-		"kubernetesVersion":              bundle.KubeDistro.Kubernetes.Tag,
-		"thumbprint":                     datacenterSpec.Thumbprint,
-		"vsphereDatacenter":              datacenterSpec.Datacenter,
-		"workerVsphereDatastore":         workerNodeGroupMachineSpec.Datastore,
-		"workerVsphereFolder":            workerNodeGroupMachineSpec.Folder,
-		"vsphereNetwork":                 datacenterSpec.Network,
-		"workerVsphereResourcePool":      workerNodeGroupMachineSpec.ResourcePool,
-		"vsphereServer":                  datacenterSpec.Server,
-		"workerVsphereStoragePolicyName": workerNodeGroupMachineSpec.StoragePolicyName,
-		"vsphereTemplate":                workerNodeGroupMachineSpec.Template,
-		"workloadVMsMemoryMiB":           workerNodeGroupMachineSpec.MemoryMiB,
-		"workloadVMsNumCPUs":             workerNodeGroupMachineSpec.NumCPUs,
-		"workloadDiskGiB":                workerNodeGroupMachineSpec.DiskGiB,
-		"workerSshUsername":              workerNodeGroupMachineSpec.Users[0].Name,
-		"format":                         format,
-		"eksaSystemNamespace":            constants.EksaSystemNamespace,
-		"kubeletExtraArgs":               kubeletExtraArgs.ToPartialYaml(),
-		"vsphereWorkerSshAuthorizedKey":  workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
-		"workerReplicas":                 workerNodeGroupConfiguration.Count,
-		"workerNodeGroupName":            fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
-		"workerNodeGroupTaints":          workerNodeGroupConfiguration.Taints,
-	}
-
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
-		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
-			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
-		}
-	}
-
-	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
-		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
-
-		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
-		noProxyList = append(noProxyList,
-			datacenterSpec.Server,
-			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		)
-
-		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = noProxyList
-	}
-
-	if workerNodeGroupMachineSpec.OSFamily == v1alpha1.Bottlerocket {
-		values["format"] = string(v1alpha1.Bottlerocket)
-		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
-		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
-	}
-
-	return values
-}
-
 func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := newClusterSpec.Cluster.Name
 	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
@@ -909,16 +548,16 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	if err != nil {
 		return nil, nil, err
 	}
-	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, newClusterSpec.VSphereDatacenter.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	controlPlaneMachineConfig := newClusterSpec.VSphereMachineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	controlPlaneVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -972,16 +611,15 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
-		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 
 	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig := p.machineConfigs[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		etcdMachineConfig := newClusterSpec.VSphereMachineConfigs[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return nil, nil, err
 		}
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, etcdMachineVmc, etcdMachineConfig)
 		if !needsNewEtcdTemplate {
 			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
@@ -1006,8 +644,6 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["vsphereControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
-		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
@@ -1022,13 +658,11 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
-		values["vsphereControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
-		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
 		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
@@ -1036,12 +670,14 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 		return nil, nil, err
 	}
 
+	// TODO(g-gaston): update this to use the new method CAPIWorkersSpecWithInitialNames.
+	// That implies moving to monotonically increasing names instead of based on timestamp.
+	// Upgrades should also be moved to that naming scheme for consistency. That requires bigger changes.
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
@@ -1058,48 +694,40 @@ func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootst
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
+func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) GenerateStorageClass() []byte {
-	return defaultStorageClass
-}
+func (p *vsphereProvider) InstallStorageClass(ctx context.Context, cluster *types.Cluster) error {
+	if !p.csiEnabled {
+		return nil
+	}
 
-func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
-	data := map[string]string{
-		"clusterName":         p.clusterConfig.Name,
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
-	}
-	mhc, err := templater.Execute(string(mhcTemplate), data)
-	if err != nil {
-		return nil, err
-	}
-	return mhc, nil
+	return p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, defaultStorageClass)
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
-	if err := p.providerKubectlClient.GetNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-		if err := p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-			return err
-		}
-	}
-	t, err := template.New("tmpl").Parse(defaultSecretObject)
+	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)
 	}
+	vuc := config.NewVsphereUserConfig()
 
 	values := map[string]string{
-		"vspherePassword":        os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":        os.Getenv(vSphereUsernameKey),
-		"eksaLicense":            os.Getenv(eksaLicense),
-		"eksaSystemNamespace":    constants.EksaSystemNamespace,
-		"vsphereCredentialsName": constants.VSphereCredentialsName,
-		"eksaLicenseName":        constants.EksaLicenseName,
+		"vspherePassword":           os.Getenv(vSpherePasswordKey),
+		"vsphereUsername":           os.Getenv(vSphereUsernameKey),
+		"eksaCloudProviderUsername": vuc.EksaVsphereCPUsername,
+		"eksaCloudProviderPassword": vuc.EksaVsphereCPPassword,
+		"eksaCSIUsername":           vuc.EksaVsphereCSIUsername,
+		"eksaCSIPassword":           vuc.EksaVsphereCSIPassword,
+		"eksaLicense":               os.Getenv(eksaLicense),
+		"eksaSystemNamespace":       constants.EksaSystemNamespace,
+		"vsphereCredentialsName":    constants.VSphereCredentialsName,
+		"eksaLicenseName":           constants.EksaLicenseName,
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
@@ -1113,6 +741,14 @@ func (p *vsphereProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster
 }
 
 func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *vsphereProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 
@@ -1153,40 +789,58 @@ func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 	return &infraBundle
 }
 
-func (p *vsphereProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
-	return p.datacenterConfig
+func (p *vsphereProvider) DatacenterConfig(spec *cluster.Spec) providers.DatacenterConfig {
+	return spec.VSphereDatacenter
 }
 
-func (p *vsphereProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
-	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
-	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
-	if p.clusterConfig.IsManaged() {
-		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-	}
-	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
-
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
-		if etcdMachineName != controlPlaneMachineName {
-			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
-			if p.clusterConfig.IsManaged() {
-				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-			}
-		}
+func (p *vsphereProvider) MachineConfigs(spec *cluster.Spec) []providers.MachineConfig {
+	annotateMachineConfig(
+		spec,
+		spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name,
+		spec.Cluster.ControlPlaneAnnotation(),
+		"true",
+	)
+	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		annotateMachineConfig(
+			spec,
+			spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name,
+			spec.Cluster.EtcdAnnotation(),
+			"true",
+		)
 	}
 
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
-		if _, ok := configs[workerMachineName]; !ok {
-			configs[workerMachineName] = p.machineConfigs[workerMachineName]
-			if p.clusterConfig.IsManaged() {
-				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-			}
-		}
+		setMachineConfigManagedBy(
+			spec,
+			workerNodeGroupConfiguration.MachineGroupRef.Name,
+		)
 	}
-	return providers.ConfigsMapToSlice(configs)
+
+	machineConfigs := make([]providers.MachineConfig, 0, len(spec.VSphereMachineConfigs))
+	for _, m := range spec.VSphereMachineConfigs {
+		machineConfigs = append(machineConfigs, m)
+	}
+
+	return machineConfigs
+}
+
+func annotateMachineConfig(spec *cluster.Spec, machineConfigName, annotationKey, annotationValue string) {
+	machineConfig := spec.VSphereMachineConfigs[machineConfigName]
+	if machineConfig.Annotations == nil {
+		machineConfig.Annotations = make(map[string]string, 1)
+	}
+	machineConfig.Annotations[annotationKey] = annotationValue
+	setMachineConfigManagedBy(spec, machineConfigName)
+}
+
+func setMachineConfigManagedBy(spec *cluster.Spec, machineConfigName string) {
+	machineConfig := spec.VSphereMachineConfigs[machineConfigName]
+	if machineConfig.Annotations == nil {
+		machineConfig.Annotations = make(map[string]string, 1)
+	}
+	if spec.Cluster.IsManaged() {
+		machineConfig.SetManagedBy(spec.Cluster.ManagedBy())
+	}
 }
 
 func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -1200,7 +854,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return err
 	}
 
-	datacenter := p.datacenterConfig
+	datacenter := clusterSpec.VSphereDatacenter
 
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec
@@ -1208,7 +862,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
 	for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
+		machineConfig, ok := clusterSpec.VSphereMachineConfigs[machineConfigRef.Name]
 		if !ok {
 			return fmt.Errorf("cannot find machine config %s in vsphere provider machine configs", machineConfigRef.Name)
 		}
@@ -1245,7 +899,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 
 func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.VSphereMachineConfig, *v1alpha1.VSphereMachineConfig, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		oldWorkerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		oldWorkerMachineConfig := newClusterSpec.VSphereMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		newWorkerMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return oldWorkerMachineConfig, nil, err
@@ -1257,7 +911,7 @@ func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workl
 
 func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.VSphereDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.VSphereMachineConfig, newWorkerMachineConfig *v1alpha1.VSphereMachineConfig) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, oldWorkerMachineConfig, newWorkerMachineConfig)
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -1281,12 +935,16 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 		return fmt.Errorf("spec.storagePolicyName is immutable. Previous value %s, new value %s", prevMachineConfig.Spec.StoragePolicyName, newConfig.Spec.StoragePolicyName)
 	}
 
+	if newConfig.Spec.OSFamily != prevMachineConfig.Spec.OSFamily {
+		return fmt.Errorf("spec.osFamily is immutable. Previous value %v, new value %v", prevMachineConfig.Spec.OSFamily, newConfig.Spec.OSFamily)
+	}
+
 	return nil
 }
 
 func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
 	nPassword := os.Getenv(vSpherePasswordKey)
-	oSecret, err := p.providerKubectlClient.GetSecret(ctx, CredentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+	oSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, workloadCluster.KubeconfigFile, CredentialsObjectName, constants.EksaSystemNamespace)
 	if err != nil {
 		return false, fmt.Errorf("obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
 	}
@@ -1314,26 +972,16 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 	}
 }
 
-func (p *vsphereProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
-	// Use retrier so that cluster upgrade does not fail due to any intermittent failure while connecting to kube-api server
-
-	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
-	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
-	// The long term solution is to add this capability to the cluster-api controller,
-	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
-	err := p.Retrier.Retry(
-		func() error {
-			return p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed updating the vsphere provider resource set post upgrade: %v", err)
-	}
+func (p *vsphereProvider) RunPostControlPlaneUpgrade(_ context.Context, _ *cluster.Spec, _ *cluster.Spec, _ *types.Cluster, _ *types.Cluster) error {
 	return nil
 }
 
-func resourceSetName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-crs-0", clusterSpec.Cluster.Name)
+func cpiResourceSetName(clusterSpec *cluster.Spec) string {
+	return fmt.Sprintf("%s-cpi", clusterSpec.Cluster.Name)
+}
+
+func csiResourceSetName(clusterSpec *cluster.Spec) string {
+	return fmt.Sprintf("%s-csi", clusterSpec.Cluster.Name)
 }
 
 func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
@@ -1350,7 +998,7 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 	if err != nil {
 		return false, err
 	}
-	if !reflect.DeepEqual(existingVdc.Spec, p.datacenterConfig.Spec) {
+	if !reflect.DeepEqual(existingVdc.Spec, newSpec.VSphereDatacenter.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")
 		return true, nil
 	}
@@ -1374,16 +1022,10 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func (p *vsphereProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
-	for _, group := range nodeGroupsToDelete {
-		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
-		machineDeployments = append(machineDeployments, mdName)
-	}
-	return machineDeployments
+func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
 }
 
-func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 	return nil
 }

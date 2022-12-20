@@ -35,6 +35,20 @@ func (m *MockTask) EXPECT() *MockTaskMockRecorder {
 	return m.recorder
 }
 
+// Checkpoint mocks base method.
+func (m *MockTask) Checkpoint() *task.CompletedTask {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Checkpoint")
+	ret0, _ := ret[0].(*task.CompletedTask)
+	return ret0
+}
+
+// Checkpoint indicates an expected call of Checkpoint.
+func (mr *MockTaskMockRecorder) Checkpoint() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Checkpoint", reflect.TypeOf((*MockTask)(nil).Checkpoint))
+}
+
 // Name mocks base method.
 func (m *MockTask) Name() string {
 	m.ctrl.T.Helper()
@@ -47,6 +61,21 @@ func (m *MockTask) Name() string {
 func (mr *MockTaskMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockTask)(nil).Name))
+}
+
+// Restore mocks base method.
+func (m *MockTask) Restore(arg0 context.Context, arg1 *task.CommandContext, arg2 *task.CompletedTask) (task.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Restore", arg0, arg1, arg2)
+	ret0, _ := ret[0].(task.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Restore indicates an expected call of Restore.
+func (mr *MockTaskMockRecorder) Restore(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockTask)(nil).Restore), arg0, arg1, arg2)
 }
 
 // Run mocks base method.

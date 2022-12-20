@@ -13,33 +13,35 @@ import (
 
 type moduleWithCRD struct {
 	pkg          string
+	crdPaths     []string
 	requireRegex *regexp.Regexp
 	replaceRegex *regexp.Regexp
 }
 
-func mustBuildModulesWithCRDs(packages ...string) []moduleWithCRD {
-	pkgs, err := buildModulesWithCRD(packages...)
+func mustBuildModuleWithCRDs(p string, opts ...moduleOpt) moduleWithCRD {
+	pkgCRD, err := buildModuleWithCRD(p, opts...)
 	if err != nil {
 		panic(err)
 	}
 
-	return pkgs
+	return *pkgCRD
 }
 
-func buildModulesWithCRD(packages ...string) ([]moduleWithCRD, error) {
-	pkgs := make([]moduleWithCRD, 0, len(packages))
-	for _, p := range packages {
-		pkgCRD, err := buildModuleWithCRD(p)
-		if err != nil {
-			return nil, err
-		}
-		pkgs = append(pkgs, *pkgCRD)
+func withAdditionalCustomCRDPath(customCRDPath string) moduleOpt {
+	return func(m *moduleWithCRD) {
+		m.crdPaths = append(m.crdPaths, customCRDPath)
 	}
-
-	return pkgs, nil
 }
 
-func buildModuleWithCRD(pkg string) (*moduleWithCRD, error) {
+func withMainCustomCRDPath(customCRDPath string) moduleOpt {
+	return func(m *moduleWithCRD) {
+		m.crdPaths[0] = customCRDPath
+	}
+}
+
+type moduleOpt func(*moduleWithCRD)
+
+func buildModuleWithCRD(pkg string, opts ...moduleOpt) (*moduleWithCRD, error) {
 	requireRegex, err := regexp.Compile(fmt.Sprintf("%s%s v(.+)", `^(\W)`, pkg))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed building regex for package with CRD")
@@ -50,11 +52,18 @@ func buildModuleWithCRD(pkg string) (*moduleWithCRD, error) {
 		return nil, errors.Wrapf(err, "failed building regex for package with CRD")
 	}
 
-	return &moduleWithCRD{
+	m := &moduleWithCRD{
 		pkg:          pkg,
 		requireRegex: requireRegex,
 		replaceRegex: replaceRegex,
-	}, nil
+		crdPaths:     []string{"config/crd/bases"},
+	}
+
+	for _, opt := range opts {
+		opt(m)
+	}
+
+	return m, nil
 }
 
 type moduleInDisk struct {
@@ -62,13 +71,17 @@ type moduleInDisk struct {
 	path, name, version string
 }
 
-func (m moduleInDisk) pathToCRDs() string {
-	return pathToCRDs(m.path, m.name, m.version)
+func (m moduleInDisk) pathsToCRDs() []string {
+	paths := make([]string, 0, len(m.crdPaths))
+	for _, crdPath := range m.crdPaths {
+		paths = append(paths, pathToCRDs(m.path, m.name, m.version, crdPath))
+	}
+	return paths
 }
 
-func pathToCRDs(path, name, version string) string {
+func pathToCRDs(path, name, version, crdPath string) string {
 	gopath := envOrDefault("GOPATH", build.Default.GOPATH)
-	return filepath.Join(gopath, "pkg", "mod", path, fmt.Sprintf("%s@v%s", name, version), "config", "crd", "bases")
+	return filepath.Join(gopath, "pkg", "mod", path, fmt.Sprintf("%s@v%s", name, version), crdPath)
 }
 
 func getPathsToPackagesCRDs(rootFolder string, packages ...moduleWithCRD) ([]string, error) {
@@ -123,7 +136,7 @@ func getPathsToPackagesCRDs(rootFolder string, packages ...moduleWithCRD) ([]str
 		if m.version == "" {
 			return nil, fmt.Errorf("couldn't find module in disk for %s", m.pkg)
 		}
-		paths = append(paths, m.pathToCRDs())
+		paths = append(paths, m.pathsToCRDs()...)
 	}
 
 	return paths, nil

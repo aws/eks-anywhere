@@ -162,14 +162,14 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: cert.pem
       permissions: "0640"
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: key.pem
       permissions: "0640"
       owner: root:root
@@ -179,12 +179,14 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if .controlPlaneTaints }}
+{{- if not .workerNodeGroupConfigurations }}
+        taints: []
+{{- end }}
+{{- if and .workerNodeGroupConfigurations .controlPlaneTaints }}
         taints: {{ range .controlPlaneTaints}}
           - key: {{ .Key }}
             value: {{ .Value }}
@@ -193,19 +195,19 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if .controlPlaneTaints }}
+{{- if not .workerNodeGroupConfigurations }}
+        taints: []
+{{- end }}
+{{- if and .workerNodeGroupConfigurations .controlPlaneTaints }}
         taints: {{ range .controlPlaneTaints}}
           - key: {{ .Key }}
             value: {{ .Value }}
@@ -214,8 +216,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
   replicas: {{.control_plane_replicas}}
   version: {{.kubernetesVersion}}

@@ -1,14 +1,10 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
 	"github.com/spf13/cobra"
 )
 
-// importCmd represents the import command
+// importCmd represents the import command.
 var importCmd = &cobra.Command{
 	Use:   "import",
 	Short: "Import resources",

@@ -2,6 +2,7 @@ package validations_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -54,7 +55,7 @@ func TestValidateCertForRegistryMirrorNoRegistryMirror(t *testing.T) {
 func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent = tt.certContent
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(errors.New("invalid cert"))
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
@@ -65,22 +66,22 @@ func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
 func TestValidateCertForRegistryMirrorCertValid(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent = tt.certContent
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
-func TestValidateCertForRegistryMirrorNoCertNoSelfSigned(t *testing.T) {
+func TestValidateCertForRegistryMirrorNoCertIsSignedByKnownAuthority(t *testing.T) {
 	tt := newTlsTest(t)
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
-func TestValidateCertForRegistryMirrorNoCertSelfSigned(t *testing.T) {
+func TestValidateCertForRegistryMirrorIsSignedByUnknownAuthority(t *testing.T) {
 	tt := newTlsTest(t)
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(true, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(true, nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
 		MatchError(ContainSubstring("registry https://host.h is using self-signed certs, please provide the certificate using caCertContent field")),
@@ -92,4 +93,41 @@ func TestValidateCertForRegistryMirrorInsecureSkip(t *testing.T) {
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = true
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
+}
+
+func TestValidateAuthenticationForRegistryMirrorNoRegistryMirror(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = nil
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateAuthenticationForRegistryMirrorNoAuth(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = false
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateAuthenticationForRegistryMirrorAuthInvalid(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = true
+	if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("please set REGISTRY_USERNAME env var")))
+}
+
+func TestValidateAuthenticationForRegistryMirrorAuthValid(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = true
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+
+	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
 }

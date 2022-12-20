@@ -1,0 +1,4 @@
+{
+  "Subject": "Update me on release branch after cutting a release",
+  "Message": "Update me on release branch after cutting a release. Changes made to this file on main branch will not trigger SNS"
+}

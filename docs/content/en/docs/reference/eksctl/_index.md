@@ -1,7 +1,7 @@
 ---
 title: "eksctl anywhere CLI reference"
 linkTitle: "eksctl command"
-weight: 12
+weight: 65
 description: >
   Details on the options and parameters for eksctl anywhere CLI
 ---
@@ -53,7 +53,7 @@ export CLUSTER_NAME=docker01
 eksctl anywhere generate clusterconfig ${CLUSTER_NAME} -p docker > ${CLUSTER_NAME}.yaml
 ```
 Once you have generated the yaml configuration file, edit that file to add configuration information before you use the file to create your cluster.
-See [local](../../getting-started/local-environment) and [production](../../getting-started/production-environment) cluster creation procedures for details.
+See [local](../../getting-started/local-environment/) and [production](../../getting-started/production-environment/) cluster creation procedures for details.
 
 ### `eksctl anywhere generate support-bundle-config`
 
@@ -111,7 +111,7 @@ export CLUSTER_NAME=vsphere01
 eksctl anywhere create cluster -v 9 -f ${CLUSTER_NAME}.yaml
 ```
 
-See [local](../../getting-started/local-environment) and [production](../../getting-started/production-environment) cluster creation procedures for details.
+See [local](../../getting-started/local-environment/) and [production](../../getting-started/production-environment/) cluster creation procedures for details.
 
 ## `eksctl anywhere upgrade cluster`
 
@@ -123,7 +123,7 @@ export CLUSTER_NAME=vsphere01
 eksctl anywhere upgrade cluster -f ${CLUSTER_NAME}.yaml --force-cleanup -v9 \
    -w KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig 
 ```
-For more information on this and other ways to upgrade a cluster, see [Upgrade cluster](../../tasks/cluster/cluster-upgrades).
+For more information on this and other ways to upgrade a cluster, see [Upgrade cluster](../../tasks/cluster/cluster-upgrades/).
 
 ## `eksctl anywhere delete cluster`
 
@@ -136,7 +136,7 @@ eksctl anywhere delete cluster -f ${CLUSTER_NAME}.yaml \
    --force-cleanup \
    -w KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig 
 ```
-For more information on deleting a cluster, see [Delete cluster](../../tasks/cluster/cluster-delete).
+For more information on deleting a cluster, see [Delete cluster](../../tasks/cluster/cluster-delete/).
 
 ## `eksctl anywhere version`
 

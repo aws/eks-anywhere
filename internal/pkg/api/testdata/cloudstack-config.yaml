@@ -1,0 +1,64 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test-cluster
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+        - 172.31.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "192.168.1.71"
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: test-cluster
+  datacenterRef:
+    kind: CloudStackDatacenterConfig
+    name: test-cluster
+  kubernetesVersion: "1.21"
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        kind: CloudStackMachineConfig
+        name: test-cluster
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackDatacenterConfig
+metadata:
+  name: test-cluster
+spec:
+  availabilityZones:
+  - account: admin
+    credentialsRef: global
+    domain: root
+    managementApiEndpoint: http://10.11.0.2:8080/client/api
+    name: az-1
+    zone:
+      name: Zone1
+      network:
+        name: SharedNet1
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  name: test-cluster
+spec:
+  computeOffering:
+    name: "Large Instance"
+  users:
+  template:
+    name: "rhel-8-kube-v1.21.5"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
+    device: "/dev/vdb"
+    filesystem: "ext4"
+    label: "data_disk"
+---

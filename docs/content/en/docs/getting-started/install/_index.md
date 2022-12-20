@@ -4,8 +4,7 @@ weight: 10
 ---
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
-Currently we support creating development clusters locally with Docker and production clusters using VMware vSphere.
-Other deployment targets will be added in the future, including bare metal support in 2022.
+Currently we support creating development clusters locally using Docker and production clusters from providers listed on the [Create production cluster]({{< relref "/docs/getting-started/production-environment" >}}) page.
 
 Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
 From there, you create the cluster for your chosen provider.
@@ -17,16 +16,20 @@ This will let you create a cluster in multiple providers for local development o
 ### Administrative machine prerequisites
 
 - Docker 20.x.x
-- Mac OS (10.15) / Ubuntu (20.04.2 LTS)
+- Mac OS 10.15 / Ubuntu 20.04.2 LTS (See Note on newer Ubuntu versions)
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
+- Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
 
-> **_NOTE:_** If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
+   {{% alert title="Note" color="primary" %}}
+   * If you are using Ubuntu use the Docker CE installation instructions to install Docker and not the Snap installation, as described [here.](https://docs.docker.com/engine/install/ubuntu/)
+   * If you are using Ubuntu 21.10 or 22.04 you will need to switch from _cgroups v2_ to _cgroups v1_. For details, see [Troubleshooting Guide.]({{< relref "../../tasks/troubleshoot/troubleshooting.md#cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
+   * If you are using Docker Desktop, you need to know that:
+       * For EKS Anywhere Bare Metal, Docker Desktop is not supported
+       * For EKS Anywhere vSphere, if you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
+   {{% /alert %}}
 
-> **_NOTE:_** If you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
-
-> **_NOTE:_** Currently newer versions of Ubuntu (21.10) and other linux distributions with cgroup v2 enabled are not supported.
 
 ### Install EKS Anywhere CLI tools
 
@@ -59,7 +62,7 @@ sudo mv /tmp/eksctl /usr/local/bin/
 Install the `eksctl-anywhere` plugin.
 
 ```bash
-export EKSA_RELEASE="0.8.2" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=10
+export EKSA_RELEASE="0.13.0" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=25
 curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
     --silent --location \
     | tar xz ./eksctl-anywhere
@@ -87,5 +90,5 @@ eksctl anywhere version
 
 Once you have the tools installed you can deploy a local cluster or production cluster in the next steps.
 
-* [Create local cluster](../local-environment/)
-* [Create production cluster](../production-environment/)
+* [Create local cluster]({{< relref "/docs/getting-started/local-environment" >}})
+* [Create production cluster]({{< relref "/docs/getting-started/production-environment" >}})

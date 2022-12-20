@@ -42,9 +42,15 @@ spec:
 {{- if .externalEtcd }}
         external:
           endpoints: []
+{{- if (eq .format "bottlerocket") }}
+          caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
+          certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"
+          keyFile: "/var/lib/kubeadm/pki/apiserver-etcd-client.key"
+{{- else }}
           caFile: "/etc/kubernetes/pki/etcd/ca.crt"
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+{{- end }}
 {{- else }}
         local:
           imageRepository: {{.etcdRepository}}
@@ -53,13 +59,70 @@ spec:
       dns:
         imageRepository: {{.corednsRepository}}
         imageTag: {{.corednsVersion}}
+{{- if (eq .format "bottlerocket") }}
+      pause:
+        imageRepository: {{.pauseRepository}}
+        imageTag: {{.pauseVersion}}
+      bottlerocketBootstrap:
+        imageRepository: {{.bottlerocketBootstrapRepository}}
+        imageTag: {{.bottlerocketBootstrapVersion}}
+{{- end }}
+{{- if .apiserverExtraArgs }}
+      apiServer:
+        extraArgs:
+{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if .awsIamAuth}}
+        extraVolumes:
+          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+            mountPath: /etc/kubernetes/aws-iam-authenticator/
+            name: authconfig
+            readOnly: false
+          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+            mountPath: /var/aws-iam-authenticator/
+            name: awsiamcert
+            readOnly: false
+{{- end}}
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if not .workerNodeGroupConfigurations }}
+        taints: []
+{{- end }}
+{{- if and .workerNodeGroupConfigurations .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
     joinConfiguration:
+{{- if (eq .format "bottlerocket") }}
+      pause:
+        imageRepository: {{.pauseRepository}}
+        imageTag: {{.pauseVersion}}
+      bottlerocketBootstrap:
+        imageRepository: {{.bottlerocketBootstrapRepository}}
+        imageTag: {{.bottlerocketBootstrapVersion}}
+{{- end }}
+{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
+      registryMirror:
+        endpoint: {{ .publicMirror }}
+        {{- if .registryCACert }}
+        caCert: |
+{{ .registryCACert | indent 10 }}
+        {{- end }}
+{{- end }}
       nodeRegistration:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
@@ -67,6 +130,23 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if not .workerNodeGroupConfigurations }}
+        taints: []
+{{- end }}
+{{- if and .workerNodeGroupConfigurations .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
     files:
       - content: |
           apiVersion: v1
@@ -102,7 +182,13 @@ spec:
                 value: "2"
               - name: address
                 value: {{.controlPlaneEndpointIp}}
-              image: {{.kubeVipImage}}
+{{- if and (not .workerNodeGroupConfigurations) (not .skipLoadBalancerDeployment) }}
+                # kube-vip daemon in worker node watches for LoadBalancer services.
+                # When there is no worker node, make kube-vip in control-plane nodes watch
+              - name: svc_enable
+                value: "true"
+{{- end }}
+              image: {{ .kubeVipImage }}
               imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
@@ -122,6 +208,76 @@ spec:
           status: {}
         owner: root:root
         path: /etc/kubernetes/manifests/kube-vip.yaml
+{{- if .awsIamAuth}}
+      - content: |
+          # clusters refers to the remote service.
+          clusters:
+            - name: aws-iam-authenticator
+              cluster:
+                certificate-authority: /var/aws-iam-authenticator/cert.pem
+                server: https://localhost:21362/authenticate
+          # users refers to the API Server's webhook configuration
+          # (we don't need to authenticate the API server).
+          users:
+            - name: apiserver
+          # kubeconfig files require a context. Provide one for the API Server.
+          current-context: webhook
+          contexts:
+          - name: webhook
+            context:
+              cluster: aws-iam-authenticator
+              user: apiserver
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
+      - contentFrom:
+          secret:
+            name: {{.clusterName}}-aws-iam-authenticator-ca
+            key: cert.pem
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
+      - contentFrom:
+          secret:
+            name: {{.clusterName}}-aws-iam-authenticator-ca
+            key: key.pem
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
+{{- end}}
+{{- if (ne .format "bottlerocket") }}
+{{- if .registryCACert }}
+      - content: |
+{{ .registryCACert | indent 10 }}
+        owner: root:root
+        path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .registryMirrorMap }}
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            {{- range $orig, $mirror := .registryMirrorMap }}
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+              endpoint = ["https://{{ $mirror }}"]
+            {{- end }}
+            {{- if .registryCACert }}
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+              ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+            {{- end }}
+            {{- if .registryAuth }}
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
+              username = "{{.registryUsername}}"
+              password = "{{.registryPassword}}"
+            {{- end }}
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
+{{- end }}
+{{- end }}
+{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
+    preKubeadmCommands:
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+    - sudo systemctl daemon-reload
+    - sudo systemctl restart containerd
+{{- end }}
     users:
     - name: {{.controlPlaneSshUsername}}
       sshAuthorizedKeys:
@@ -134,6 +290,11 @@ spec:
       kind: TinkerbellMachineTemplate
       name: {{.controlPlaneTemplateName}}
   replicas: {{.controlPlaneReplicas}}
+{{- if .upgradeRolloutStrategy }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}} 
+{{- end }}
   version: {{.kubernetesVersion}}
 ---
 {{- if .externalEtcd }}
@@ -147,6 +308,12 @@ spec:
   etcdadmConfigSpec:
     etcdadmBuiltin: true
     format: {{.format}}
+{{- if (eq .format "bottlerocket") }}
+    bottlerocketConfig:
+      etcdImage: {{.etcdImage}}
+      bootstrapImage: {{.bottlerocketBootstrapRepository}}:{{.bottlerocketBootstrapVersion}}
+      pauseImage: {{.pauseRepository}}:{{.pauseVersion}}
+{{- else}}
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
@@ -156,6 +323,7 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- end }}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
@@ -164,6 +332,14 @@ spec:
         sshAuthorizedKeys:
           - '{{.etcdSshAuthorizedKey}}'
         sudo: ALL=(ALL) NOPASSWD:ALL
+{{- if .registryMirrorMap }}
+    registryMirror:
+      endpoint: {{ .publicMirror }}
+      {{- if .registryCACert }}
+      caCert: |
+{{ .registryCACert | indent 8 }}
+      {{- end }}
+{{- end }}
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: TinkerbellMachineTemplate
@@ -178,6 +354,12 @@ spec:
   template:
     {{- if and .etcdTemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .etcdHardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.etcdTemplateOverride | indent 8}}
     {{- end }}
@@ -195,6 +377,12 @@ spec:
   template:
     {{- if and .controlPlanetemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .hardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.controlPlanetemplateOverride | indent 8}}
     {{- end }}

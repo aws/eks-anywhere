@@ -5,6 +5,8 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestSetClusterDefaults(t *testing.T) {
@@ -36,7 +38,7 @@ func TestSetClusterDefaults(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -81,7 +83,7 @@ func TestSetClusterDefaults(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -150,6 +152,94 @@ func TestSetClusterDefaults(t *testing.T) {
 							CidrBlocks: []string{"10.96.0.0/12"},
 						},
 					},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "worker node group - no count specified with autoscaler",
+			in: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name: "worker-0",
+						AutoScalingConfiguration: &AutoScalingConfiguration{
+							MinCount: 3,
+							MaxCount: 5,
+						},
+					}},
+				},
+			},
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{
+							Cilium: nil,
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "worker-0",
+						Count: ptr.Int(3),
+						AutoScalingConfiguration: &AutoScalingConfiguration{
+							MinCount: 3,
+							MaxCount: 5,
+						},
+					}},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "worker node group - no count specified",
+			in: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name: "worker-0",
+					}},
+				},
+			},
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{
+							Cilium: nil,
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "worker-0",
+						Count: ptr.Int(1),
+					}},
 				},
 			},
 			wantErr: "",

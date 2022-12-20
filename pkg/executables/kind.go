@@ -7,17 +7,18 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 const kindPath = "kind"
@@ -35,22 +36,26 @@ type Kind struct {
 
 // kindExecConfig contains transient information for the execution of kind commands
 // It's used by BootstrapClusterClientOption's to store/change information prior to a command execution
-// It must be cleaned after each execution to prevent side effects from past executions options
+// It must be cleaned after each execution to prevent side effects from past executions options.
 type kindExecConfig struct {
-	env                    map[string]string
-	ConfigFile             string
-	KindImage              string
-	KubernetesRepository   string
-	EtcdRepository         string
-	EtcdVersion            string
-	CorednsRepository      string
-	CorednsVersion         string
-	KubernetesVersion      string
-	RegistryMirrorEndpoint string
-	RegistryCACertPath     string
-	ExtraPortMappings      []int
-	DockerExtraMounts      bool
-	DisableDefaultCNI      bool
+	env                  map[string]string
+	ConfigFile           string
+	KindImage            string
+	KubernetesRepository string
+	EtcdRepository       string
+	EtcdVersion          string
+	CorednsRepository    string
+	CorednsVersion       string
+	KubernetesVersion    string
+	RegistryMirrorMap    map[string]string
+	MirrorBase           string
+	RegistryCACertPath   string
+	RegistryAuth         bool
+	RegistryUsername     string
+	RegistryPassword     string
+	ExtraPortMappings    []int
+	DockerExtraMounts    bool
+	DisableDefaultCNI    bool
 }
 
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
@@ -165,31 +170,6 @@ func (k *Kind) WithEnv(env map[string]string) bootstrapper.BootstrapClusterClien
 	}
 }
 
-func (k *Kind) WithDefaultCNIDisabled() bootstrapper.BootstrapClusterClientOption {
-	return func() error {
-		if k.execConfig == nil {
-			return errors.New("kind exec config is not ready")
-		}
-
-		k.execConfig.DisableDefaultCNI = true
-
-		return nil
-	}
-}
-
-func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapper.BootstrapClusterClientOption {
-	return func() error {
-		if k.execConfig == nil {
-			return errors.New("kind exec config is not ready")
-		}
-
-		k.execConfig.RegistryMirrorEndpoint = endpoint
-		k.execConfig.RegistryCACertPath = caCertFile
-
-		return nil
-	}
-}
-
 func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
 	internalName := getInternalName(cluster.Name)
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
@@ -202,20 +182,22 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
+	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	k.execConfig = &kindExecConfig{
-		KindImage:            urls.ReplaceHost(bundle.EksD.KindNode.VersionedImage(), clusterSpec.Cluster.RegistryMirror()),
-		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
+		KindImage:            registryMirror.ReplaceRegistry(bundle.EksD.KindNode.VersionedImage()),
+		KubernetesRepository: registryMirror.ReplaceRegistry(bundle.KubeDistro.Kubernetes.Repository),
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
-		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
+		EtcdRepository:       registryMirror.ReplaceRegistry(bundle.KubeDistro.Etcd.Repository),
 		EtcdVersion:          bundle.KubeDistro.Etcd.Tag,
-		CorednsRepository:    bundle.KubeDistro.CoreDNS.Repository,
+		CorednsRepository:    registryMirror.ReplaceRegistry(bundle.KubeDistro.CoreDNS.Repository),
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		k.execConfig.RegistryMirrorEndpoint = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		k.execConfig.MirrorBase = registryMirror.BaseRegistry
+		k.execConfig.RegistryMirrorMap = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent != "" {
-			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", k.execConfig.RegistryMirrorEndpoint)
+			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", registryMirror.BaseRegistry)
 			if err := os.MkdirAll(path, os.ModePerm); err != nil {
 				return err
 			}
@@ -223,6 +205,15 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 				return errors.New("error writing the registry certification file")
 			}
 			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
+		}
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			k.execConfig.RegistryAuth = registryMirror.Auth
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return err
+			}
+			k.execConfig.RegistryUsername = username
+			k.execConfig.RegistryPassword = password
 		}
 	}
 	return nil

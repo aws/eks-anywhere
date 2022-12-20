@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,36 +18,61 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
-	capiPackage = "sigs.k8s.io/cluster-api"
-	capvPackage = "sigs.k8s.io/cluster-api-provider-vsphere"
+	capiPackage         = "sigs.k8s.io/cluster-api"
+	capdPackage         = "sigs.k8s.io/cluster-api/test"
+	capvPackage         = "sigs.k8s.io/cluster-api-provider-vsphere"
+	etcdProviderPackage = "github.com/aws/etcdadm-controller"
 )
 
 func init() {
 	// Register CRDs in Scheme in init so fake clients benefit from it
+	utilruntime.Must(corev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(releasev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterctlv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(bootstrapv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(dockerv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(cloudstackv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(snowv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(addonsv1.AddToScheme(scheme.Scheme))
 }
 
-var packages = mustBuildModulesWithCRDs(capiPackage, capvPackage)
+var packages = []moduleWithCRD{
+	mustBuildModuleWithCRDs(capiPackage,
+		withAdditionalCustomCRDPath("bootstrap/kubeadm/config/crd/bases"),
+		withAdditionalCustomCRDPath("controlplane/kubeadm/config/crd/bases"),
+	),
+	mustBuildModuleWithCRDs(capvPackage),
+	mustBuildModuleWithCRDs(capdPackage,
+		withMainCustomCRDPath("infrastructure/docker/config/crd/bases"),
+	),
+	mustBuildModuleWithCRDs(etcdProviderPackage),
+}
 
 type Environment struct {
 	scheme  *runtime.Scheme
@@ -69,7 +94,7 @@ func WithAssignment(envRef **Environment) EnvironmentOpt {
 
 // RunWithEnvironment runs a suite of tests with an envtest that is shared across all tests
 // We use testing.M as the input to avoid having this called directly from a test
-// This ensures the envtest setup is always run from a TestMain
+// This ensures the envtest setup is always run from a TestMain.
 func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 	ctx := ctrl.SetupSignalHandler()
 	env, err := newEnvironment(ctx)
@@ -94,8 +119,13 @@ func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 
 func newEnvironment(ctx context.Context) (*Environment, error) {
 	root := getRootPath()
-	crdDirectoryPaths := make([]string, 0, len(packages)+1)
-	crdDirectoryPaths = append(crdDirectoryPaths, filepath.Join(root, "config", "crd", "bases"))
+	currentDir := currentDir()
+	crdDirectoryPaths := make([]string, 0, len(packages)+2)
+	crdDirectoryPaths = append(crdDirectoryPaths,
+		filepath.Join(root, "config", "crd", "bases"),
+		filepath.Join(currentDir, "config", "eks-d-crds.yaml"),
+		filepath.Join(currentDir, "config", "snow-crds.yaml"),
+	)
 	extraCRDPaths, err := getPathsToPackagesCRDs(root, packages...)
 	if err != nil {
 		return nil, err
@@ -105,9 +135,6 @@ func newEnvironment(ctx context.Context) (*Environment, error) {
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths:     crdDirectoryPaths,
 		ErrorIfCRDPathMissing: true,
-		WebhookInstallOptions: envtest.WebhookInstallOptions{
-			Paths: []string{filepath.Join("..", "..", "..", "config", "webhook")},
-		},
 	}
 
 	scheme := scheme.Scheme
@@ -162,9 +189,14 @@ func (e *Environment) Client() client.Client {
 	return e.client
 }
 
-// APIReader returns a non cached reader client
+// APIReader returns a non cached reader client.
 func (e *Environment) APIReader() client.Reader {
 	return e.apiReader
+}
+
+// Manager returns a Manager for the test environment.
+func (e *Environment) Manager() manager.Manager {
+	return e.manager
 }
 
 func (e *Environment) CreateNamespaceForTest(ctx context.Context, t *testing.T) string {
@@ -192,6 +224,10 @@ func (e *Environment) CreateNamespaceForTest(ctx context.Context, t *testing.T) 
 }
 
 func getRootPath() string {
+	return path.Join(currentDir(), "..", "..", "..")
+}
+
+func currentDir() string {
 	_, currentFilePath, _, _ := goruntime.Caller(0)
-	return path.Join(path.Dir(currentFilePath), "..", "..", "..")
+	return path.Dir(currentFilePath)
 }

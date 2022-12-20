@@ -32,6 +32,8 @@ func (c *ConcurrentImageProcessor) Process(ctx context.Context, images []string,
 			waitGroup:   wg,
 			errorReturn: errors,
 		}
+
+		wg.Add(1)
 		go w.start()
 	}
 
@@ -125,13 +127,10 @@ type worker struct {
 }
 
 func (w *worker) start() {
-	w.waitGroup.Add(1)
-
+	defer w.waitGroup.Done()
 	for j := range w.jobs {
 		if err := w.process(j.ctx, j.image); err != nil {
 			w.errorReturn <- err
 		}
 	}
-
-	w.waitGroup.Done()
 }

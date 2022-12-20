@@ -1,27 +1,25 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
 	"context"
-	"errors"
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
+	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
-// imagesCmd represents the images command
+// imagesCmd represents the images command.
 var importImagesCmd = &cobra.Command{
 	Use:   "images",
 	Short: "Import images and charts to a registry from a tarball",
@@ -49,6 +47,8 @@ func init() {
 	if err := importImagesCmd.MarkFlagRequired("bundles"); err != nil {
 		log.Fatalf("Cannot mark 'bundles' as required: %s", err)
 	}
+	importImagesCmd.Flags().BoolVar(&importImagesCommand.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in imported images")
+	importImagesCmd.Flags().BoolVar(&importImagesCommand.insecure, "insecure", false, "Flag to indicate skipping TLS verification while pushing helm charts")
 }
 
 var importImagesCommand = ImportImagesCommand{}
@@ -57,10 +57,12 @@ type ImportImagesCommand struct {
 	InputFile        string
 	RegistryEndpoint string
 	BundlesFile      string
+	includePackages  bool
+	insecure         bool
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
-	username, password, err := readRegistryCredentials()
+	username, password, err := config.ReadCredentials()
 	if err != nil {
 		return err
 	}
@@ -99,10 +101,28 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 
+	dirsToMount, err := cc.cloudStackDirectoriesToMount()
+	if err != nil {
+		return err
+	}
+
+	helmOpts := []executables.HelmOpt{}
+	if c.insecure {
+		helmOpts = append(helmOpts, executables.WithInsecure())
+	}
+
 	deps, err = factory.
-		WithRegistryMirror(c.RegistryEndpoint).
+		WithExecutableMountDirs(dirsToMount...).
+		WithRegistryMirror(&registrymirror.RegistryMirror{
+			BaseRegistry: c.RegistryEndpoint,
+			NamespacedRegistryMap: map[string]string{
+				constants.DefaultCoreEKSARegistry:             c.RegistryEndpoint,
+				constants.DefaultCuratedPackagesRegistryRegex: c.RegistryEndpoint,
+			},
+			Auth: false,
+		}).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
-		WithHelm().
+		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -111,7 +131,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
 	importArtifacts := artifacts.Import{
-		Reader:  deps.ManifestReader,
+		Reader:  fetchReader(deps.ManifestReader, c.includePackages),
 		Bundles: bundle,
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, imagesFile),
@@ -124,21 +144,8 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 			password,
 		),
 		TmpArtifactsFolder: artifactsFolder,
+		FileImporter:       oras.NewFileRegistryImporter(c.RegistryEndpoint, username, password, artifactsFolder),
 	}
 
 	return importArtifacts.Run(ctx)
-}
-
-func readRegistryCredentials() (username, password string, err error) {
-	username, ok := os.LookupEnv("REGISTRY_USERNAME")
-	if !ok {
-		return "", "", errors.New("please set REGISTRY_USERNAME env var")
-	}
-
-	password, ok = os.LookupEnv("REGISTRY_PASSWORD")
-	if !ok {
-		return "", "", errors.New("please set REGISTRY_PASSWORD env var")
-	}
-
-	return username, password, nil
 }

@@ -1,0 +1,24 @@
+@startuml vspheredatacenterconfig-controller-container-components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component diagram for vSphereDatacenterConfig controller
+
+Person(user, "EKS-A user", "Manages EKS-A clusters")
+Container(kubeApiServer, "Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server and allows to subscribe to events when they change")
+
+Container_Boundary(vSphereDatacenterController, "vSphere Datacenter Controller") {
+    Component(vsphereDatacenterReconciler, "vSphereDatacenterConfig Reconciler", "K8s controller-runtime Reconciler", "Runs validations for VSphereDatacenterConfig that require external API calls (eg. vSphere endpoint)")
+    Component(govc, "vSphere API client", "govc - Go binary")
+
+    Rel(vsphereDatacenterReconciler, govc, "Uses")
+}
+
+Component_Ext(vCenter, "vCenter Server", "VMware", "vSphere Automation API")
+Rel(govc, vCenter, "Makes API calls", "JSON/HTTPS")
+
+Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
+
+Rel(vsphereDatacenterReconciler, kubeApiServer, "Subscribes to API events", "controller-runtime JSON/HTTPS")
+
+SHOW_LEGEND()
+@enduml

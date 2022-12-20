@@ -2,6 +2,7 @@ package upgradevalidations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -34,34 +35,8 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return fmt.Errorf("spec.dataCenterRef.name is immutable")
 	}
 
-	if !nSpec.GitOpsRef.Equal(oSpec.GitOpsRef) {
-		return fmt.Errorf("spec.gitOpsRef is immutable")
-	}
-
-	if nSpec.GitOpsRef != nil {
-		prevGitOps, err := k.GetEksaGitOpsConfig(ctx, nSpec.GitOpsRef.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
-		if err != nil {
-			return err
-		}
-
-		if prevGitOps.Spec.Flux.Github.Owner != spec.GitOpsConfig.Spec.Flux.Github.Owner {
-			return fmt.Errorf("gitOps spec.flux.github.owner is immutable")
-		}
-		if prevGitOps.Spec.Flux.Github.Repository != spec.GitOpsConfig.Spec.Flux.Github.Repository {
-			return fmt.Errorf("gitOps spec.flux.github.repository is immutable")
-		}
-		if prevGitOps.Spec.Flux.Github.Personal != spec.GitOpsConfig.Spec.Flux.Github.Personal {
-			return fmt.Errorf("gitOps spec.flux.github.personal is immutable")
-		}
-		if spec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace != "" && prevGitOps.Spec.Flux.Github.FluxSystemNamespace != spec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace {
-			return fmt.Errorf("gitOps spec.flux.github.fluxSystemNamespace is immutable")
-		}
-		if spec.GitOpsConfig.Spec.Flux.Github.Branch != "" && prevGitOps.Spec.Flux.Github.Branch != spec.GitOpsConfig.Spec.Flux.Github.Branch {
-			return fmt.Errorf("gitOps spec.flux.github.branch is immutable")
-		}
-		if spec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath != "" && prevGitOps.Spec.Flux.Github.ClusterConfigPath != spec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath {
-			return fmt.Errorf("gitOps spec.flux.github.clusterConfigPath is immutable")
-		}
+	if err := ValidateGitOpsImmutableFields(ctx, k, cluster, spec, prevSpec); err != nil {
+		return err
 	}
 
 	if !nSpec.ControlPlaneConfiguration.Endpoint.Equal(oSpec.ControlPlaneConfiguration.Endpoint) {
@@ -90,10 +65,10 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	newETCD := nSpec.ExternalEtcdConfiguration
 	if oldETCD != nil && newETCD != nil {
 		if oldETCD.Count != newETCD.Count {
-			return fmt.Errorf("spec.externalEtcdConfiguration is immutable")
+			return errors.New("spec.externalEtcdConfiguration.count is immutable")
 		}
 	} else if oldETCD != newETCD {
-		return fmt.Errorf("spec.externalEtcdConfiguration is immutable")
+		return errors.New("adding or removing external etcd during upgrade is not supported")
 	}
 
 	oldAWSIamConfigRef := &v1alpha1.Ref{}
@@ -101,6 +76,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	for _, oIdentityProvider := range oSpec.IdentityProviderRefs {
 		switch oIdentityProvider.Kind {
 		case v1alpha1.AWSIamConfigKind:
+			oIdentityProvider := oIdentityProvider // new variable scoped to the for loop Ref: https://github.com/golang/go/wiki/CommonMistakes#using-reference-to-loop-iterator-variable
 			oldAWSIamConfigRef = &oIdentityProvider
 		}
 	}
@@ -123,4 +99,84 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	}
 
 	return provider.ValidateNewSpec(ctx, cluster, spec)
+}
+
+func ValidateGitOpsImmutableFields(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, clusterSpec *cluster.Spec, oldCluster *v1alpha1.Cluster) error {
+	if oldCluster.Spec.GitOpsRef == nil {
+		return nil
+	}
+
+	if !clusterSpec.Cluster.Spec.GitOpsRef.Equal(oldCluster.Spec.GitOpsRef) {
+		return errors.New("once cluster.spec.gitOpsRef is set, it is immutable")
+	}
+
+	switch clusterSpec.Cluster.Spec.GitOpsRef.Kind {
+	case v1alpha1.GitOpsConfigKind:
+		prevGitOps, err := k.GetEksaGitOpsConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		if err != nil {
+			return err
+		}
+
+		if prevGitOps.Spec.Flux.Github.Owner != clusterSpec.GitOpsConfig.Spec.Flux.Github.Owner {
+			return errors.New("gitOps spec.flux.github.owner is immutable")
+		}
+		if prevGitOps.Spec.Flux.Github.Repository != clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository {
+			return errors.New("gitOps spec.flux.github.repository is immutable")
+		}
+		if prevGitOps.Spec.Flux.Github.Personal != clusterSpec.GitOpsConfig.Spec.Flux.Github.Personal {
+			return errors.New("gitOps spec.flux.github.personal is immutable")
+		}
+		if prevGitOps.Spec.Flux.Github.FluxSystemNamespace != clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace {
+			return errors.New("gitOps spec.flux.github.fluxSystemNamespace is immutable")
+		}
+		if prevGitOps.Spec.Flux.Github.Branch != clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch {
+			return errors.New("gitOps spec.flux.github.branch is immutable")
+		}
+		if prevGitOps.Spec.Flux.Github.ClusterConfigPath != clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath {
+			return errors.New("gitOps spec.flux.github.clusterConfigPath is immutable")
+		}
+
+	case v1alpha1.FluxConfigKind:
+		prevGitOps, err := k.GetEksaFluxConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		if err != nil {
+			return err
+		}
+
+		if prevGitOps.Spec.Git != nil {
+			if prevGitOps.Spec.Git.RepositoryUrl != clusterSpec.FluxConfig.Spec.Git.RepositoryUrl {
+				return errors.New("fluxConfig spec.fluxConfig.spec.git.repositoryUrl is immutable")
+			}
+			if prevGitOps.Spec.Git.SshKeyAlgorithm != clusterSpec.FluxConfig.Spec.Git.SshKeyAlgorithm {
+				return errors.New("fluxConfig spec.fluxConfig.spec.git.sshKeyAlgorithm is immutable")
+			}
+		}
+
+		if prevGitOps.Spec.Github != nil {
+			if prevGitOps.Spec.Github.Repository != clusterSpec.FluxConfig.Spec.Github.Repository {
+				return errors.New("fluxConfig spec.github.repository is immutable")
+			}
+
+			if prevGitOps.Spec.Github.Owner != clusterSpec.FluxConfig.Spec.Github.Owner {
+				return errors.New("fluxConfig spec.github.owner is immutable")
+			}
+
+			if prevGitOps.Spec.Github.Personal != clusterSpec.FluxConfig.Spec.Github.Personal {
+				return errors.New("fluxConfig spec.github.personal is immutable")
+			}
+		}
+
+		if prevGitOps.Spec.Branch != clusterSpec.FluxConfig.Spec.Branch {
+			return errors.New("fluxConfig spec.branch is immutable")
+		}
+
+		if prevGitOps.Spec.ClusterConfigPath != clusterSpec.FluxConfig.Spec.ClusterConfigPath {
+			return errors.New("fluxConfig spec.clusterConfigPath is immutable")
+		}
+
+		if prevGitOps.Spec.SystemNamespace != clusterSpec.FluxConfig.Spec.SystemNamespace {
+			return errors.New("fluxConfig spec.systemNamespace is immutable")
+		}
+	}
+
+	return nil
 }

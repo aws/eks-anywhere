@@ -51,11 +51,24 @@ type SnowMachineConfigSpec struct {
 	InstanceType SnowInstanceType `json:"instanceType,omitempty"`
 
 	// PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
-	// Valid values: "SFP_PLUS" (default) and "QSFP"
+	// Valid values: "SFP_PLUS" (default) and "QSFP".
 	PhysicalNetworkConnector PhysicalNetworkConnectorType `json:"physicalNetworkConnector,omitempty"`
 
 	// SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
 	SshKeyName string `json:"sshKeyName,omitempty"`
+
+	// Devices contains a device ip list assigned by the user to provision machines.
+	Devices []string `json:"devices,omitempty"`
+
+	// ContainersVolume provides the configuration options for the containers data storage volume.
+	ContainersVolume *snowv1.Volume `json:"containersVolume,omitempty"`
+
+	// OSFamily is the node instance OS.
+	// Valid values: "bottlerocket" and "ubuntu".
+	OSFamily OSFamily `json:"osFamily,omitempty"`
+
+	// Network provides the custom network setting for the machine.
+	Network *snowv1.AWSSnowNetwork `json:"network,omitempty"`
 
 }
 ```
@@ -143,7 +156,7 @@ azBpMAwGA1UdEwQFMAMBAf8wHQYDVR0OBBYEFL/bRcnBRuSM5+FcYFa8HfIBomdF
 
 ### Control Plane Load Balancing
 
-EKS-A uses [kube-vip](https://kube-vip.chipzoller.dev/docs/) for control plane load balancing, where we create kube-vip as static pod in each control plane node instance. The kube-vip manifest template is built in as part of the EKS-D Node AMI for Snow integration specifically due to the EC2 instance user data limit of 16KB. The user specifies the control plane endpoint in the EKS-A `clusterSpec.controlPlaneConfiguration.endpoint` and EKS-A passes it down to the `kubeadmControlPlane` object as part of the pre/post KubeadmCommands. The control plane endpoint will be used as the vip_address along with the kube-vip container image when EKS-A runs the bootstrap script where it creates kube-vip pods.
+EKS-A uses [kube-vip](https://kube-vip.chipzoller.dev/docs/) for control plane load balancing, where we create kube-vip as static pod in each control plane node instance. As Snow increases the EC2 instance user data limit, the kube-vip manifest template now is passed in as user data in KubeadmControlPlane instead of being built in as part of the EKS-D Node AMI. The control plane endpoint will be used as the vip_address along with the kube-vip container image when EKS-A runs the bootstrap script where it creates kube-vip pods.
 
 ```yaml
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -153,9 +166,7 @@ metadata:
 spec:
   kubeadmConfigSpec:
     preKubeadmCommands:
-      - /etc/eks/bootstrap.sh  {{.kubeVipImage}} {{.controlPlaneEndpoint}}
-    postKubeadmCommands:
-      - /etc/eks/bootstrap-after.sh {{.kubeVipImage}} {{.controlPlaneEndpoint}}
+      - /etc/eks/bootstrap.sh
 ...
 ```
 

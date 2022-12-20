@@ -25,14 +25,14 @@ func (r *GitOpsConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Validator = &GitOpsConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *GitOpsConfig) ValidateCreate() error {
 	gitopsconfiglog.Info("validate create", "name", r.Name)
 
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *GitOpsConfig) ValidateUpdate(old runtime.Object) error {
 	gitopsconfiglog.Info("validate update", "name", r.Name)
 
@@ -52,7 +52,7 @@ func (r *GitOpsConfig) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(GitOpsConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *GitOpsConfig) ValidateDelete() error {
 	gitopsconfiglog.Info("validate delete", "name", r.Name)
 
@@ -66,7 +66,7 @@ func validateImmutableGitOpsFields(new, old *GitOpsConfig) field.ErrorList {
 	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "GitOpsConfig"), new, "config is immutable"),
+			field.Forbidden(field.NewPath(GitOpsConfigKind), "config is immutable"),
 		)
 	}
 

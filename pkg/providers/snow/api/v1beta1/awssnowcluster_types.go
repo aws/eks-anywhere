@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint
 package snow
 
 import (
@@ -64,7 +65,7 @@ type AWSSnowClusterSpec struct {
 	// ImageLookupBaseOS or ubuntu (the default), and the kubernetes version as
 	// defined by the packages produced by kubernetes/release without v as a
 	// prefix: 1.13.0, 1.12.5-mybuild.1, or 1.17.3. For example, the default
-	// image format of capa-ami-{{.BaseOS}}-?{{.K8sVersion}}-* will end up
+	// image format of capas-ami-{{.BaseOS}}-.?{{.K8sVersion}}-* will end up
 	// searching for AMIs that match the pattern capa-ami-ubuntu-?1.18.0-* for a
 	// Machine that is targeting kubernetes v1.18.0 and the ubuntu base OS. See
 	// also: https://golang.org/pkg/text/template/
@@ -87,6 +88,26 @@ type AWSSnowClusterSpec struct {
 	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP
 	// +optional
 	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
+
+	// IdentityRef is a reference to a identity to be used when reconciling this cluster
+	// +optional
+	IdentityRef *AWSSnowIdentityReference `json:"identityRef,omitempty"`
+}
+
+// AWSSnowIdentityKind defines allowed AWSSnow identity types.
+type AWSSnowIdentityKind string
+
+var SecretKind = AWSSnowIdentityKind("Secret")
+
+// AWSSnowIdentityReference specifies a identity.
+type AWSSnowIdentityReference struct {
+	// Name of the identity.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Kind of the identity.
+	// +kubebuilder:validation:Enum=Secret
+	Kind AWSSnowIdentityKind `json:"kind"`
 }
 
 // AWSSnowClusterStatus defines the observed state of AWSSnowCluster

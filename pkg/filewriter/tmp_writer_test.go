@@ -3,9 +3,12 @@ package filewriter_test
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 )
@@ -109,5 +112,48 @@ func TestTmpWriterWithDir(t *testing.T) {
 	wantPathPrefix := filepath.Join(rootFolder, subFolder)
 	if !strings.HasPrefix(gotPath, wantPathPrefix) {
 		t.Errorf("tmpWriter.Write() = %v, want to start with %v", gotPath, wantPathPrefix)
+	}
+}
+
+func TestCreate(t *testing.T) {
+	dir := t.TempDir()
+	const fileName = "test.txt"
+
+	// Hard code the "generated". Its an implementation detail but we can't refactor it right now.
+	expectedPath := path.Join(dir, "generated", fileName)
+	expectedContent := []byte("test content")
+
+	fr, err := filewriter.NewWriter(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fh, path, err := fr.Create(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// We need to validate 2 things: (1) are the paths returned correct; (2) if we write content
+	// to the returned io.WriteCloser, is it written to the path also returened from the function.
+
+	if path != expectedPath {
+		t.Fatalf("Received: %v; Expected: %v", path, expectedPath)
+	}
+
+	if _, err := fh.Write(expectedContent); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := fh.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	content, err := os.ReadFile(expectedPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !cmp.Equal(content, expectedContent) {
+		t.Fatalf("Received: %v; Expected: %v", content, expectedContent)
 	}
 }

@@ -1,0 +1,23 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  creationTimestamp: null
+  name: test-cluster
+spec:
+  computeoffering:
+    name: large
+  template:
+    name: rhel8-1.20
+  diskOffering:
+    name: Small
+    mountPath: /data-small
+    device: /dev/vdb
+    filesystem: ext4
+    label: data_disk
+  userCustomDetails:
+    foo: bar
+  users:
+    - name: capc
+      sshAuthorizedKeys:
+        - "ssh-rsa ssh_key_value"
+status: {}

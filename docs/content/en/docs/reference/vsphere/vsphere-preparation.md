@@ -5,22 +5,18 @@ description: >
   Set up a vSphere cluster to prepare it for EKS Anywhere
 ---
 
-## Create a VM and template folder (Optional):
-For each user that needs to create workload clusters, have the vSphere administrator create a VM and template folder.
+Certain resources must be in place with appropriate user permissions to create an EKS Anywhere cluster using the vSphere provider.
+
+## Configuring Folder Resources
+
+### Create a VM folder:
+For each user that needs to create workload clusters, have the vSphere administrator create a VM folder.
 That folder will host:
 
 * The VMs of the Control plane and Data plane nodes of each cluster.
 * A nested folder for the management cluster and another one for each workload cluster.
 * Each cluster VM in its own nested folder under this folder.
 
-User permissions should be set up to: 
-
-* Only allow the user to see and create EKS Anywhere resources in that folder and its nested folders.
-* Prevent the user from having visibility and control over the whole vSphere cluster domain and its sub-child objects (datacenter, resource pools and other folders).
-
-In your EKS Anywhere configuration file you will reference to a path under this folder associated with the cluster you create.
-
-### Add a vSphere folder
 Follow these steps to create the user's vSphere folder:
 
 1. From vCenter, select the Menus/VM and Template tab.
@@ -29,9 +25,107 @@ Follow these steps to create the user's vSphere folder:
 1. Enter a name for the folder and click OK.
    For more details, see the [vSphere Create a Folder](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vcenterhost.doc/GUID-031BDB12-D3B2-4E2D-80E6-604F304B4D0C.html) documentation.
 
-### Set up vSphere roles and user permission
-You need to get a vSphere username with the right privileges to let you creatie EKS Anywhere clusters on top of your vSphere cluster.
-Then you would need to import the latest release of the EKS Anywhere OVA template to your VSphere cluster to use it to provision your Cluster nodes.
+## Configuring vSphere User, Group, and Roles
+You need a vSphere user with the right privileges to let you create EKS Anywhere clusters on top of your vSphere cluster.
+
+### Configure via EKSA CLI
+
+To configure a new user via CLI, you will need two things:
+- a set of vSphere admin credentials *with the ability to create users and groups*. If you do not have the rights to create new groups and users, you can invoke govc commands directly as outlined here.
+- a `user.yaml` file:
+```yaml
+apiVersion: "eks-anywhere.amazon.com/v1"
+kind: vSphereUser
+spec:
+  username: "eksa"                # optional, default eksa
+  group: "MyExistingGroup"        # optional, default EKSAUsers
+  globalRole: "MyGlobalRole"      # optional, default EKSAGlobalRole
+  userRole: "MyUserRole"          # optional, default EKSAUserRole
+  adminRole: "MyEKSAAdminRole"    # optional, default EKSACloudAdminRole
+  datacenter: "MyDatacenter"
+  vSphereDomain: "vsphere.local"  # this should be the domain used when you login, e.g. YourUsername@vsphere.local
+  connection:
+    server: "https://my-vsphere.internal.acme.com"
+    insecure: false
+  objects:
+    networks:
+      - !!str "/MyDatacenter/network/My Network"
+    datastores:
+      - !!str "/MyDatacenter/datastore/MyDatastore2"
+    resourcePools:
+      - !!str "/MyDatacenter/host/Cluster-03/MyResourcePool" # NOTE: see below if you do not want to use a resource pool
+    folders:
+      - !!str "/MyDatacenter/vm/OrgDirectory/MyVMs"
+    templates:
+      - !!str "/MyDatacenter/vm/Templates/MyTemplates"
+```
+
+*NOTE: if you do not want to create a resource pool, you can instead specify the cluster directly as /MyDatacenter/host/Cluster-03 in user.yaml, where Cluster-03 is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the resourcePool field.*
+
+Set the admin credentials as environment variables:
+```bash
+export EKSA_VSPHERE_USERNAME=<ADMIN_VSPHERE_USERNAME>
+export EKSA_VSPHERE_PASSWORD=<ADMIN_VSPHERE_PASSWORD>
+```
+
+If the user does not already exist, you can create the user and all the specified group and role objects by running:
+```bash
+eksctl anywhere exp vsphere setup user -f user.yaml --password '<NewUserPassword>'
+```
+
+If the user or any of the group or role objects already exist, use the force flag instead to overwrite Group-Role-Object mappings for the group, roles, and objects specified in the `user.yaml` config file:
+```
+eksctl anywhere exp vsphere setup user -f user.yaml --force
+```
+
+Please note that there is one more manual step to configure global permissions [here](#manually-set-global-permissions-role-in-global-permissions-ui).
+
+### Configure via govc
+
+If you do not have the rights to create a new user, you can still configure the necessary roles and permissions using the [govc cli](https://github.com/vmware/govmomi/tree/master/govc#usage).
+
+```bash
+#! /bin/bash
+# govc calls to configure a user with minimal permissions
+set -x
+set -e
+
+EKSA_USER='<Username>@<UserDomain>'
+USER_ROLE='EKSAUserRole'
+GLOBAL_ROLE='EKSAGlobalRole'
+ADMIN_ROLE='EKSACloudAdminRole'
+
+FOLDER_VM='/YourDatacenter/vm/YourVMFolder'
+FOLDER_TEMPLATES='/YourDatacenter/vm/Templates'
+
+NETWORK='/YourDatacenter/network/YourNetwork'
+DATASTORE='/YourDatacenter/datastore/YourDatastore'
+RESOURCE_POOL='/YourDatacenter/host/Cluster-01/Resources/YourResourcePool'
+
+govc role.create "$GLOBAL_ROLE" $(curl https://raw.githubusercontent.com/aws/eks-anywhere/main/pkg/config/static/globalPrivs.json | jq .[] | tr '\n' ' ' | tr -d '"')
+
+govc role.create "$USER_ROLE" $(curl https://raw.githubusercontent.com/aws/eks-anywhere/main/pkg/config/static/eksUserPrivs.json | jq .[] | tr '\n' ' ' | tr -d '"')
+
+govc role.create "$ADMIN_ROLE" $(curl https://raw.githubusercontent.com/aws/eks-anywhere/main/pkg/config/static/adminPrivs.json | jq .[] | tr '\n' ' ' | tr -d '"')
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$GLOBAL_ROLE" /
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$ADMIN_ROLE" "$FOLDER_VM"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$ADMIN_ROLE" "$FOLDER_TEMPLATES"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$NETWORK"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$DATASTORE"
+
+govc permissions.set -group=false -principal "$EKSA_USER"  -role "$USER_ROLE" "$RESOURCE_POOL"
+```
+
+*NOTE: if you do not want to create a resource pool, you can instead specify the cluster directly as /MyDatacenter/host/Cluster-03 in user.yaml, where Cluster-03 is your cluster name. In your cluster spec, you will need to specify `/MyDatacenter/host/Cluster-03/Resources` for the resourcePool field.*
+
+Please note that there is one more manual step to configure global permissions [here](#manually-set-global-permissions-role-in-global-permissions-ui).
+
+### Configure via UI
 
 #### Add a vCenter User
 Ask your VSphere administrator to add a vCenter user that will be used for the provisioning of the EKS Anywhere cluster in VMware vSphere.
@@ -66,6 +160,7 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    * Check in a template
    * Check out a template
    * Create local library
+   * Update files
    > vSphere Tagging
    * Assign or Unassign vSphere Tag
    * Assign or Unassign vSphere Tag on Object
@@ -77,8 +172,10 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    * Edit vSphere Tag Category
    * Modify UsedBy Field For Category
    * Modify UsedBy Field For Tag
+   > Sessions
+   * Validate session
    ```
-1. **Create a user custom role**: The second role is also a custom role that you could call, for example, EKS Anywhere User.
+1. **Create a user custom role**: The second role is also a custom role that you could call, for example, EKSAUserRole.
    Define this role with the following objects and children objects. 
    * The **pool resource level** and its children objects.
      This resource pool that our EKS Anywhere VMs will be part of.
@@ -164,11 +261,19 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
 
    To create a role and define privileges check [Create a vCenter Server Custom Role](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-41E5E52E-A95B-4E81-9724-6AD6800BEF78.html) and [Defined Privileges](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html#GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62) pages.
 
-## Deploy an OVA Template
-If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can. If the user does not have the permissions or network access to create and tag the template, follow this guide. The OVA contains the operating system (Ubuntu or Bottlerocket) for a specific EKS-D Kubernetes release and EKS-A version. The following example uses Ubuntu as the operating system, but a similar workflow would work for Bottlerocket.
 
-### Steps to deploy the Ubuntu OVA
-1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download the OVA template with the newest EKS-D Kubernetes release to your computer.
+### Manually set Global Permissions role in Global Permissions UI
+
+vSphere does not currently support a public API for setting global permissions. Because of this, you will need to manually assign the Global Role you created to your user or group in the Global Permissions UI.
+
+## Deploy an OVA Template
+If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can.
+If the user does not have the permissions or network access to create and tag the template, follow this guide.
+The OVA contains the operating system (Ubuntu, Bottlerocket, or RHEL) for a specific EKS Distro Kubernetes release and EKS Anywhere version.
+The following example uses Ubuntu as the operating system, but a similar workflow would work for Bottlerocket or RHEL.
+
+### Steps to deploy the OVA
+1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download or build the OVA template with the newest EKS Distro Kubernetes release to your computer.
 1. Log in to the vCenter Server.
 1. Right-click the folder you created above and select Deploy OVF Template.
    The Deploy OVF Template wizard opens.

@@ -24,6 +24,7 @@ spec:
     apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
     kind: EtcdadmCluster
     name: {{.clusterName}}-etcd
+    namespace: {{.eksaSystemNamespace}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -50,7 +51,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: {{.vsphereDatacenter}}
+      datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.controlPlaneVsphereDatastore}}
       diskGiB: {{.controlPlaneDiskGiB}}
       folder: '{{.controlPlaneVsphereFolder}}'
@@ -67,6 +68,9 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
+{{- if .controlPlaneTagIDs }}
+      tagIDs: {{.controlPlaneTagIDs}}
+{{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -122,9 +126,9 @@ spec:
           - {{ . }}
         {{- end }}
 {{- end }}
-{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
+{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
       registryMirror:
-        endpoint: {{.registryMirrorConfiguration}}
+        endpoint: {{ .publicMirror }}
         {{- if .registryCACert }}
         caCert: |
 {{ .registryCACert | indent 10 }}
@@ -171,8 +175,8 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
-{{- if .controllermanagerExtraArgs }}
-{{ .controllermanagerExtraArgs.ToYaml | indent 10 }}
+{{- if .controllerManagerExtraArgs }}
+{{ .controllerManagerExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if (eq .format "bottlerocket") }}
         extraVolumes:
@@ -270,16 +274,23 @@ spec:
     - content: |
 {{ .registryCACert | indent 8 }}
       owner: root:root
-      path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
 {{- end }}
-{{- if .registryMirrorConfiguration }}
+{{- if .registryMirrorMap }}
     - content: |
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://{{.registryMirrorConfiguration}}"]
+          {{- range $orig, $mirror := .registryMirrorMap }}
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+            endpoint = ["https://{{ $mirror }}"]
+          {{- end }}
           {{- if .registryCACert }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
-            ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+          {{- end }}
+          {{- if .registryAuth }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
+            username = "{{.registryUsername}}"
+            password = "{{.registryPassword}}"
           {{- end }}
       owner: root:root
       path: "/etc/containerd/config_append.toml"
@@ -309,14 +320,14 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: cert.pem
       permissions: "0640"
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: key.pem
       permissions: "0640"
       owner: root:root
@@ -343,8 +354,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     joinConfiguration:
 {{- if (eq .format "bottlerocket") }}
@@ -362,9 +371,9 @@ spec:
         - {{ . }}
         {{- end }}
 {{- end }}
-{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
+{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
       registryMirror:
-        endpoint: {{.registryMirrorConfiguration}}
+        endpoint: {{ .publicMirror }}
         {{- if .registryCACert }}
         caCert: |
 {{ .registryCACert | indent 10 }}
@@ -390,14 +399,12 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     preKubeadmCommands:
-{{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
+{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
-{{- if and (or .proxyConfig .registryMirrorConfiguration) (ne .format "bottlerocket") }}
+{{- if and (or .proxyConfig .registryMirrorMap) (ne .format "bottlerocket") }}
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
 {{- end }}
@@ -416,38 +423,55 @@ spec:
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
 ---
+{{- if not .disableCSI }}
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: {{.clusterName}}
-  name: {{.resourceSetName}}
+  name: {{.csiResourceSetName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
+  strategy: Reconcile
   clusterSelector:
     matchLabels:
       cluster.x-k8s.io/cluster-name: {{.clusterName}}
   resources:
   - kind: Secret
-    name: vsphere-csi-controller
+    name: {{.clusterName}}-vsphere-csi-controller
   - kind: ConfigMap
-    name: vsphere-csi-controller-role
+    name: {{.clusterName}}-vsphere-csi-controller-role
   - kind: ConfigMap
-    name: vsphere-csi-controller-binding
+    name: {{.clusterName}}-vsphere-csi-controller-binding
   - kind: Secret
-    name: csi-vsphere-config
+    name: {{.clusterName}}-csi-vsphere-config
   - kind: ConfigMap
-    name: csi.vsphere.vmware.com
+    name: {{.clusterName}}-csi.vsphere.vmware.com
   - kind: ConfigMap
-    name: vsphere-csi-node
+    name: {{.clusterName}}-vsphere-csi-node
   - kind: ConfigMap
-    name: vsphere-csi-controller
+    name: {{.clusterName}}-vsphere-csi-controller
+---
+{{- end }}
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: {{.clusterName}}
+  name: {{.cpiResourceSetName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  strategy: Reconcile
+  clusterSelector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: {{.clusterName}}
+  resources:
   - kind: Secret
-    name: cloud-controller-manager
+    name: {{.clusterName}}-cloud-controller-manager
   - kind: Secret
-    name: cloud-provider-vsphere-credentials
+    name: {{.clusterName}}-cloud-provider-vsphere-credentials
   - kind: ConfigMap
-    name: cpi-manifests
+    name: {{.clusterName}}-cpi-manifests
 ---
 {{- if .externalEtcd }}
 kind: EtcdadmCluster
@@ -492,9 +516,9 @@ spec:
         - {{ . }}
       {{- end }}
 {{- end }}
-{{- if .registryMirrorConfiguration }}
+{{- if .registryMirrorMap }}
     registryMirror:
-      endpoint: {{.registryMirrorConfiguration}}
+      endpoint: {{ .publicMirror }}
       {{- if .registryCACert }}
       caCert: |
 {{ .registryCACert | indent 8 }}
@@ -514,7 +538,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: {{.vsphereDatacenter}}
+      datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.etcdVsphereDatastore}}
       diskGiB: {{.etcdDiskGiB}}
       folder: '{{.etcdVsphereFolder}}'
@@ -531,6 +555,9 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
+{{- if .etcdTagIDs }}
+      tagIDs: {{.etcdTagIDs}}
+{{- end }}
 ---
 {{- end }}
 apiVersion: v1
@@ -544,10 +571,11 @@ stringData:
   username: "{{.eksaVsphereUsername}}"
   password: "{{.eksaVspherePassword}}"
 ---
+{{- if not .disableCSI }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: vsphere-csi-controller
+  name: {{.clusterName}}-vsphere-csi-controller
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -561,7 +589,7 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: csi-vsphere-config
+  name: {{.clusterName}}-csi-vsphere-config
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -696,7 +724,7 @@ data:
       - list
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller-role
+  name: {{.clusterName}}-vsphere-csi-controller-role
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -716,7 +744,7 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller-binding
+  name: {{.clusterName}}-vsphere-csi-controller-binding
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -730,7 +758,7 @@ data:
       attachRequired: true
 kind: ConfigMap
 metadata:
-  name: csi.vsphere.vmware.com
+  name: {{.clusterName}}-csi.vsphere.vmware.com
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -863,7 +891,7 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-node
+  name: {{.clusterName}}-vsphere-csi-node
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -998,7 +1026,7 @@ data:
             name: socket-dir
 kind: ConfigMap
 metadata:
-  name: vsphere-csi-controller
+  name: {{.clusterName}}-vsphere-csi-controller
   namespace: {{.eksaSystemNamespace}}
 ---
 apiVersion: v1
@@ -1013,13 +1041,14 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: internal-feature-states.csi.vsphere.vmware.com
+  name: {{.clusterName}}-internal-feature-states.csi.vsphere.vmware.com
   namespace: {{.eksaSystemNamespace}}
 ---
+{{- end }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-controller-manager
+  name: {{.clusterName}}-cloud-controller-manager
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -1033,7 +1062,7 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloud-provider-vsphere-credentials
+  name: {{.clusterName}}-cloud-provider-vsphere-credentials
   namespace: {{.eksaSystemNamespace}}
 stringData:
   data: |
@@ -1261,5 +1290,5 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: cpi-manifests
+  name: {{.clusterName}}-cpi-manifests
   namespace: {{.eksaSystemNamespace}}

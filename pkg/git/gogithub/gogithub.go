@@ -38,6 +38,7 @@ type HTTPClient interface {
 
 type Client interface {
 	CreateRepo(ctx context.Context, org string, repo *goGithub.Repository) (*goGithub.Repository, *goGithub.Response, error)
+	AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error
 	Repo(ctx context.Context, owner, repo string) (*goGithub.Repository, *goGithub.Response, error)
 	User(ctx context.Context, user string) (*goGithub.User, *goGithub.Response, error)
 	Organization(ctx context.Context, org string) (*goGithub.Organization, *goGithub.Response, error)
@@ -81,11 +82,25 @@ func (ggc *githubClient) DeleteRepo(ctx context.Context, owner, repo string) (*g
 	return ggc.client.Repositories.Delete(ctx, owner, repo)
 }
 
+func (ggc *githubClient) AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error {
+	_, resp, err := ggc.client.Repositories.CreateKey(ctx, owner, repo, key)
+	if err != nil {
+		logger.Info("createKey response", "resp", resp)
+		return fmt.Errorf("adding deploy key to repo: %v", err)
+	}
+	return err
+}
+
 // CreateRepo creates an empty Github Repository. The repository must be initialized locally or
 // file must be added to it via the github api before it can be successfully cloned.
 func (g *GoGithub) CreateRepo(ctx context.Context, opts git.CreateRepoOpts) (repository *git.Repository, err error) {
 	logger.V(3).Info("Attempting to create new Github repo", "repo", opts.Name, "owner", opts.Owner)
-	r := &goGithub.Repository{Name: &opts.Name, Private: &opts.Privacy, Description: &opts.Description}
+	r := &goGithub.Repository{
+		Name:        &opts.Name,
+		Private:     &opts.Privacy,
+		Description: &opts.Description,
+		AutoInit:    &opts.AutoInit,
+	}
 
 	org := ""
 	if !opts.Personal {
@@ -179,7 +194,7 @@ func (g *GoGithub) Organization(ctx context.Context, org string) (*goGithub.Orga
 }
 
 // PathExists checks if a path exists in the remote repository. If the owner, repository or branch doesn't exist,
-// it returns false and no error
+// it returns false and no error.
 func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error) {
 	_, _, _, err := g.Client.GetContents(
 		ctx,
@@ -198,6 +213,16 @@ func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path str
 	}
 
 	return true, nil
+}
+
+func (g *GoGithub) AddDeployKeyToRepo(ctx context.Context, opts git.AddDeployKeyOpts) error {
+	logger.V(3).Info("Adding deploy key to repository", "repository", opts.Repository, "owner", opts.Owner)
+	k := &goGithub.Key{
+		Key:      &opts.Key,
+		Title:    &opts.Title,
+		ReadOnly: &opts.ReadOnly,
+	}
+	return g.Client.AddDeployKeyToRepo(ctx, opts.Owner, opts.Repository, k)
 }
 
 // DeleteRepo deletes a Github repository.

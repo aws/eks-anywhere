@@ -6,7 +6,7 @@ import (
 )
 
 // ParseConfig reads yaml file with at least one Cluster object and generates the corresponding Config
-// using the default package config manager
+// using the default package config manager.
 func ParseConfigFromFile(path string) (*Config, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -17,7 +17,7 @@ func ParseConfigFromFile(path string) (*Config, error) {
 }
 
 // ParseConfig reads yaml manifest with at least one Cluster object and generates the corresponding Config
-// using the default package config manager
+// using the default package config manager.
 func ParseConfig(yamlManifest []byte) (*Config, error) {
 	return manager().Parse(yamlManifest)
 }

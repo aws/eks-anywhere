@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -19,8 +18,9 @@ import (
 )
 
 type generateSupportBundleOptions struct {
-	fileName         string
-	hardwareFileName string
+	fileName              string
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var gsbo = &generateSupportBundleOptions{}
@@ -87,13 +87,13 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 		return factory.DiagnosticBundleDefault(), nil
 	}
 
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(f, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(f, version.Get())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
+		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {
@@ -101,5 +101,5 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 	defer close(ctx, deps)
 
-	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name))
+	return deps.DignosticCollectorFactory.DiagnosticBundleWorkloadCluster(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name))
 }

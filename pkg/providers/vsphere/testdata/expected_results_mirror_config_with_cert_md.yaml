@@ -14,6 +14,7 @@ spec:
             cloud-provider: external
             read-only-port: "0"
             anonymous-auth: "false"
+            cgroup-driver: systemd
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       files:
@@ -39,8 +40,10 @@ spec:
         path: "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
       - content: |
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+              endpoint = ["https://1.2.3.4:1234/v2/curated-packages"]
             [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-              endpoint = ["https://1.2.3.4:1234"]
+              endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
             [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".tls]
               ca_file = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
         owner: root:root
@@ -99,7 +102,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'

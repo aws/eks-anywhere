@@ -1,0 +1,49 @@
+{
+  "count": 1,
+  "diskoffering": [
+    {
+      "created": "2022-01-13T20:01:51-0500",
+      "disksize": 5,
+      "displayoffering": true,
+      "displaytext": "Small Disk, 5 GB",
+      "id": "399f1b0d-742f-4474-a138-7932b9a54fed",
+      "iscustomized": false,
+      "name": "Small",
+      "provisioningtype": "thin",
+      "storagetype": "shared"
+    },
+    {
+      "created": "2022-01-13T20:01:51-0500",
+      "disksize": 20,
+      "displayoffering": true,
+      "displaytext": "Medium Disk, 20 GB",
+      "id": "9c4a12f6-4cc5-470a-98b6-cf40306f0e51",
+      "iscustomized": false,
+      "name": "Medium",
+      "provisioningtype": "thin",
+      "storagetype": "shared"
+    },
+    {
+      "created": "2022-01-13T20:01:51-0500",
+      "disksize": 100,
+      "displayoffering": true,
+      "displaytext": "Large Disk, 100 GB",
+      "id": "3a9f4649-67e3-4af8-8a9c-37a582383217",
+      "iscustomized": false,
+      "name": "Large",
+      "provisioningtype": "thin",
+      "storagetype": "shared"
+    },
+    {
+      "created": "2022-01-13T20:01:51-0500",
+      "disksize": 0,
+      "displayoffering": true,
+      "displaytext": "Custom Disk",
+      "id": "df36c956-9f4a-4cc3-84c9-239e0914d0f8",
+      "iscustomized": true,
+      "name": "Custom",
+      "provisioningtype": "thin",
+      "storagetype": "shared"
+    }
+  ]
+}

@@ -56,3 +56,65 @@ func TestGetSnowDatacenterConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestSnowDatacenterConfigValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		obj     *SnowDatacenterConfig
+		wantErr string
+	}{
+		{
+			name: "identity empty",
+			obj: &SnowDatacenterConfig{
+				Spec: SnowDatacenterConfigSpec{},
+			},
+			wantErr: "SnowDatacenterConfig IdentityRef name must not be empty",
+		},
+		{
+			name: "identity kind empty",
+			obj: &SnowDatacenterConfig{
+				Spec: SnowDatacenterConfigSpec{
+					IdentityRef: Ref{
+						Name: "test",
+					},
+				},
+			},
+			wantErr: "SnowDatacenterConfig IdentityRef kind must not be empty",
+		},
+		{
+			name: "valid identity ref",
+			obj: &SnowDatacenterConfig{
+				Spec: SnowDatacenterConfigSpec{
+					IdentityRef: Ref{
+						Name: "creds-1",
+						Kind: "Secret",
+					},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "invalid identity ref kind",
+			obj: &SnowDatacenterConfig{
+				Spec: SnowDatacenterConfigSpec{
+					IdentityRef: Ref{
+						Name: "creds-1",
+						Kind: "UnknownKind",
+					},
+				},
+			},
+			wantErr: "SnowDatacenterConfig IdentityRef kind UnknownKind is invalid",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := tt.obj.Validate()
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}

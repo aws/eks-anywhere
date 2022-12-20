@@ -1,4 +1,4 @@
-package cilium
+package cilium_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -17,9 +18,9 @@ import (
 type upgraderTest struct {
 	*WithT
 	ctx                   context.Context
-	u                     *Upgrader
+	u                     *cilium.Upgrader
 	h                     *mocks.MockHelm
-	client                *mocks.MockupgraderClient
+	client                *mocks.MockKubernetesClient
 	manifestPre, manifest []byte
 	currentSpec, newSpec  *cluster.Spec
 	cluster               *types.Cluster
@@ -29,9 +30,8 @@ type upgraderTest struct {
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	ctrl := gomock.NewController(t)
 	h := mocks.NewMockHelm(ctrl)
-	client := mocks.NewMockupgraderClient(ctrl)
-	u := NewUpgrader(nil, h)
-	u.client = client
+	client := mocks.NewMockKubernetesClient(ctrl)
+	u := cilium.NewUpgrader(client, cilium.NewTemplater(h))
 	return &upgraderTest{
 		WithT:    NewWithT(t),
 		ctx:      context.Background(),
@@ -41,10 +41,12 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 		manifest: []byte("manifestContent"),
 		currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.10-eksa.1"
+			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		newSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.11-eksa.1"
+			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		cluster: &types.Cluster{
@@ -69,7 +71,7 @@ func (tt *upgraderTest) expectTemplateManifest() *gomock.Call {
 func (tt *upgraderTest) expectTemplate(manifest []byte) *gomock.Call {
 	// Using Any because this already tested in the templater tests
 	return tt.h.EXPECT().Template(
-		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}),
+		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}), gomock.AssignableToTypeOf(""),
 	).Return(manifest, nil)
 }
 
@@ -173,4 +175,10 @@ func TestUpgraderUpgradeSuccessValuesChangedUpgradeFromNilCiliumConfigSpec(t *te
 	)
 
 	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec, []string{})).To(BeNil(), "upgrader.Upgrade() should succeed and return nil ChangeDiff")
+}
+
+func TestUpgraderRunPostControlPlaneUpgradeSetup(t *testing.T) {
+	tt := newUpgraderTest(t)
+	tt.client.EXPECT().RolloutRestartCiliumDaemonSet(tt.ctx, tt.cluster)
+	tt.Expect(tt.u.RunPostControlPlaneUpgradeSetup(tt.ctx, tt.cluster)).To(Succeed())
 }

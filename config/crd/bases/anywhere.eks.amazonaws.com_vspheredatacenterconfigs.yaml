@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: VSphereDatacenterConfig is the Schema for the VSphereDatacenterConfigs
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -36,10 +36,12 @@ spec:
             type: object
           spec:
             description: VSphereDatacenterConfigSpec defines the desired state of
-              VSphereDatacenterConfig
+              VSphereDatacenterConfig.
             properties:
               datacenter:
                 type: string
+              disableCSI:
+                type: boolean
               insecure:
                 type: boolean
               network:
@@ -57,7 +59,7 @@ spec:
             type: object
           status:
             description: VSphereDatacenterConfigStatus defines the observed state
-              of VSphereDatacenterConfig
+              of VSphereDatacenterConfig.
             properties:
               failureMessage:
                 description: FailureMessage indicates that there is a fatal problem

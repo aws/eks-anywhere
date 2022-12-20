@@ -17,10 +17,7 @@ type ControlPlaneNodeValidation func(configuration v1alpha1.ControlPlaneConfigur
 // and for each configuration/node pair executes the provided validation functions.
 func (e *ClusterE2ETest) ValidateControlPlaneNodes(validations ...ControlPlaneNodeValidation) {
 	ctx := context.Background()
-	c, err := v1alpha1.GetClusterConfigFromContent(e.ClusterConfigB)
-	if err != nil {
-		e.T.Fatal(err)
-	}
+	c := e.ClusterConfig.Cluster
 
 	cpNodes, err := e.KubectlClient.GetControlPlaneNodes(ctx, e.cluster().KubeconfigFile)
 	if err != nil {

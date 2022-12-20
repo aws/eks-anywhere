@@ -16,11 +16,7 @@ type testsWriter struct {
 }
 
 func newTestsWriter(folderPath string) (*testsWriter, error) {
-	writer, err := filewriter.NewWriter(folderPath)
-	if err != nil {
-		return nil, fmt.Errorf("setting up tests writer: %v", err)
-	}
-
+	writer := filewriter.NewWriter(folderPath)
 	return &testsWriter{FileWriter: writer}, nil
 }
 

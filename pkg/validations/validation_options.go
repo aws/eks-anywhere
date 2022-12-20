@@ -2,6 +2,7 @@ package validations
 
 import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -14,6 +15,7 @@ type Opts struct {
 	ManagementCluster *types.Cluster
 	Provider          providers.Provider
 	TlsValidator      TlsValidator
+	CliConfig         *config.CliConfig
 }
 
 func (o *Opts) SetDefaults() {

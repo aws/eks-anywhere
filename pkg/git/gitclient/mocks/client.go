@@ -186,6 +186,35 @@ func (mr *MockGoGitMockRecorder) ListRemotes(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRemotes", reflect.TypeOf((*MockGoGit)(nil).ListRemotes), arg0, arg1)
 }
 
+// ListWithContext mocks base method.
+func (m *MockGoGit) ListWithContext(arg0 context.Context, arg1 *git.Remote, arg2 transport.AuthMethod) ([]*plumbing.Reference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWithContext", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]*plumbing.Reference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWithContext indicates an expected call of ListWithContext.
+func (mr *MockGoGitMockRecorder) ListWithContext(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWithContext", reflect.TypeOf((*MockGoGit)(nil).ListWithContext), arg0, arg1, arg2)
+}
+
+// NewRemote mocks base method.
+func (m *MockGoGit) NewRemote(arg0, arg1 string) *git.Remote {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewRemote", arg0, arg1)
+	ret0, _ := ret[0].(*git.Remote)
+	return ret0
+}
+
+// NewRemote indicates an expected call of NewRemote.
+func (mr *MockGoGitMockRecorder) NewRemote(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRemote", reflect.TypeOf((*MockGoGit)(nil).NewRemote), arg0, arg1)
+}
+
 // OpenDir mocks base method.
 func (m *MockGoGit) OpenDir(arg0 string) (*git.Repository, error) {
 	m.ctrl.T.Helper()

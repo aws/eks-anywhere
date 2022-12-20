@@ -8,12 +8,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-// Client provides the single API client to make operations call to aws services
+// Client provides the single API client to make operations call to aws services.
 type Client struct {
-	ec2 EC2Client
+	ec2            EC2Client
+	snowballDevice SnowballDeviceClient
 }
 
-// Clients are a map between aws profile and its aws client
+// Clients are a map between aws profile and its aws client.
 type Clients map[string]*Client
 
 type ServiceEndpoint struct {
@@ -54,12 +55,21 @@ func LoadConfig(ctx context.Context, opts ...AwsConfigOpt) (aws.Config, error) {
 
 func NewClient(ctx context.Context, cfg aws.Config) *Client {
 	return &Client{
-		ec2: NewEC2Client(cfg),
+		ec2:            NewEC2Client(cfg),
+		snowballDevice: NewSnowballClient(cfg),
 	}
 }
 
+// NewClientFromEC2 is mainly used for EC2 related unit tests.
 func NewClientFromEC2(ec2 EC2Client) *Client {
 	return &Client{
 		ec2: ec2,
+	}
+}
+
+// NewClientFromSnowball is mainly used for Snowballdevice related unit tests.
+func NewClientFromSnowball(snowballdevice SnowballDeviceClient) *Client {
+	return &Client{
+		snowballDevice: snowballdevice,
 	}
 }

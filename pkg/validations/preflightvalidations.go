@@ -1,6 +1,6 @@
 package validations
 
-func RunPreflightValidations(validations []ValidationResult) error {
+func ProcessValidationResults(validations []ValidationResult) error {
 	var errs []string
 	for _, validation := range validations {
 		if validation.Err != nil {

@@ -11,6 +11,8 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/awsiam"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -32,7 +34,10 @@ func RequiredAWSIamEnvVars() []string {
 func WithAWSIam() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, awsIamRequiredEnvVars)
-		e.AWSIamConfig = api.NewAWSIamConfig(defaultClusterName,
+		if e.ClusterConfig.AWSIAMConfigs == nil {
+			e.ClusterConfig.AWSIAMConfigs = make(map[string]*anywherev1.AWSIamConfig, 1)
+		}
+		e.ClusterConfig.AWSIAMConfigs[defaultClusterName] = api.NewAWSIamConfig(defaultClusterName,
 			api.WithAWSIamAWSRegion("us-west-1"),
 			api.WithAWSIamPartition("aws"),
 			api.WithAWSIamBackendMode("EKSConfigMap"),
@@ -60,8 +65,18 @@ func (e *ClusterE2ETest) ValidateAWSIamAuth() {
 	if err != nil {
 		e.T.Fatalf("Error updating PATH: %v", err)
 	}
-	e.T.Log("Getting pods with aws-iam-authenticator kubeconfig")
 	kubectlClient := buildLocalKubectl()
+	e.T.Log("Waiting for aws-iam-authenticator daemonset rollout status")
+	err = kubectlClient.WaitForDaemonsetRolledout(ctx,
+		e.cluster(),
+		"2m",
+		"aws-iam-authenticator",
+		constants.KubeSystemNamespace,
+	)
+	if err != nil {
+		e.T.Fatalf("Error waiting aws-iam-authenticator daemonset rollout: %v", err)
+	}
+	e.T.Log("Getting pods with aws-iam-authenticator kubeconfig")
 	pods, err := kubectlClient.GetPods(ctx,
 		executables.WithAllNamespaces(),
 		executables.WithKubeconfig(e.iamAuthKubeconfigFilePath()),
@@ -104,7 +119,7 @@ func (e *ClusterE2ETest) setIamAuthClientPATH() error {
 }
 
 func (e *ClusterE2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error) {
-	c := e.clusterConfig()
+	c := e.ClusterConfig.Cluster
 	r := manifests.NewReader(files.NewReader())
 	eksdRelease, err := r.ReadEKSD(version.Get().GitVersion, string(c.Spec.KubernetesVersion))
 	if err != nil {

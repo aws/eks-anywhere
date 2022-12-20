@@ -14,18 +14,23 @@ type writer struct {
 	dir string
 }
 
-func NewWriter(dir string) (FileWriter, error) {
-	newFolder := filepath.Join(dir, DefaultTmpFolder)
-	if _, err := os.Stat(newFolder); errors.Is(err, os.ErrNotExist) {
-		err := os.MkdirAll(newFolder, os.ModePerm)
-		if err != nil {
-			return nil, fmt.Errorf("creating directory [%s]: %v", dir, err)
-		}
-	}
-	return &writer{dir: dir}, nil
+func NewWriter(dir string) FileWriter {
+	return &writer{dir: dir}
 }
 
 func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (string, error) {
+	if strings.Contains(fileName, "|") {
+		count := strings.Count(fileName, "|") - 1
+		fileName = fmt.Sprintf("%s+%dTests", fileName[:strings.Index(fileName, "|")], count)
+	}
+	newFolder := filepath.Join(t.dir, DefaultTmpFolder)
+	if _, err := os.Stat(newFolder); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(newFolder, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	op := defaultFileOptions() // Default file options. -->> temporary file with default permissions
 	for _, optionFunc := range f {
 		optionFunc(op)
@@ -46,14 +51,14 @@ func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (s
 }
 
 func (w *writer) WithDir(dir string) (FileWriter, error) {
-	return NewWriter(filepath.Join(w.dir, dir))
+	return NewWriter(filepath.Join(w.dir, dir)), nil
 }
 
 func (t *writer) Dir() string {
 	return t.dir
 }
 
-// This method writes the e2e test artifacts from S3 to files in a directory named after the e2e test name
+// This method writes the e2e test artifacts from S3 to files in a directory named after the e2e test name.
 func (t *writer) WriteTestArtifactsS3ToFile(key string, data []byte) error {
 	i := strings.LastIndex(key, "/Test")
 	p := path.Join(t.dir, key[i:])

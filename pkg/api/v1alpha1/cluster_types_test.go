@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestClusterMachineConfigRefs(t *testing.T) {
@@ -26,21 +27,21 @@ func TestClusterMachineConfigRefs(t *testing.T) {
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 3,
+					Count: ptr.Int(3),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: v1alpha1.VSphereMachineConfigKind,
 						Name: "eksa-unit-test-1",
 					},
 				},
 				{
-					Count: 3,
+					Count: ptr.Int(3),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: v1alpha1.VSphereMachineConfigKind,
 						Name: "eksa-unit-test-2",
 					},
 				},
 				{
-					Count: 5,
+					Count: ptr.Int(5),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: v1alpha1.VSphereMachineConfigKind,
 						Name: "eksa-unit-test", // This tests duplicates
@@ -319,7 +320,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "one empty, one exists",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 				},
 			},
 			want: false,
@@ -328,7 +329,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "both exist, same",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k",
 						Name: "n",
@@ -337,7 +338,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			},
 			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k",
 						Name: "n",
@@ -350,14 +351,14 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "both exist, order diff",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k1",
 						Name: "n1",
 					},
 				},
 				{
-					Count: 2,
+					Count: ptr.Int(2),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k2",
 						Name: "n2",
@@ -366,14 +367,14 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			},
 			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 2,
+					Count: ptr.Int(2),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k2",
 						Name: "n2",
 					},
 				},
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k1",
 						Name: "n1",
@@ -386,12 +387,69 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "both exist, count diff",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 				},
 			},
 			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 2,
+					Count: ptr.Int(2),
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, autoscaling config diff",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 3,
+					},
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: nil,
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, autoscaling config min diff",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 3,
+					},
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 2,
+						MaxCount: 3,
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, autoscaling config max diff",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 2,
+					},
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 3,
+					},
 				},
 			},
 			want: false,
@@ -832,6 +890,18 @@ func TestClusterEqualClusterNetwork(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			testName: "diff Nodes",
+			cluster1ClusterNetwork: v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{},
+			},
+			cluster2ClusterNetwork: v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{
+					CIDRMaskSize: ptr.Int(3),
+				},
+			},
+			want: false,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -1036,15 +1106,27 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			want: true,
 		},
 		{
-			testName: "both exist, diff",
+			testName: "both exist, endpoint diff",
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
@@ -1052,6 +1134,61 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.5",
 				CACertContent: "ca",
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (one nil, one exists)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (registry)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "1.2.3.4",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (namespace)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "",
+					},
+				},
 			},
 			want: false,
 		},
@@ -1145,6 +1282,27 @@ func TestClusterEqualManagement(t *testing.T) {
 			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestClusterEqualDifferentBundlesRef(t *testing.T) {
+	cluster1 := &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster-1",
+		},
+		Spec: v1alpha1.ClusterSpec{
+			BundlesRef: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+		},
+	}
+
+	cluster2 := cluster1.DeepCopy()
+	cluster2.Spec.BundlesRef.Name = "bundles-2"
+
+	g := NewWithT(t)
+	g.Expect(cluster1.Equal(cluster2)).To(BeFalse())
 }
 
 func TestControlPlaneConfigurationEqual(t *testing.T) {
@@ -1363,10 +1521,22 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
 				CACertContent: "ca",
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
 			},
 			want: true,
 		},
@@ -1388,6 +1558,61 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				CACertContent: "ca2",
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (one nil, one exists)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (registry)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, namespaces diff (namespace)",
+			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "eks-anywhere",
+					},
+				},
+			},
+			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
+				OCINamespaces: []v1alpha1.OCINamespace{
+					{
+						Registry:  "public.ecr.aws",
+						Namespace: "",
+					},
+				},
 			},
 			want: false,
 		},
@@ -1449,10 +1674,224 @@ func TestPodIAMServiceAccountIssuerHasNotChanged(t *testing.T) {
 	}
 }
 
+func TestBundlesRefEqual(t *testing.T) {
+	testCases := []struct {
+		testName                 string
+		bundlesRef1, bundlesRef2 *v1alpha1.BundlesRef
+		want                     bool
+	}{
+		{
+			testName:    "both nil",
+			bundlesRef1: nil,
+			bundlesRef2: nil,
+			want:        true,
+		},
+		{
+			testName:    "1 nil, 2 not nil",
+			bundlesRef1: nil,
+			bundlesRef2: &v1alpha1.BundlesRef{},
+			want:        false,
+		},
+		{
+			testName:    "1 not nil, 2 nil",
+			bundlesRef1: &v1alpha1.BundlesRef{},
+			bundlesRef2: nil,
+			want:        false,
+		},
+		{
+			testName: "diff APIVersion",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v2",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			want: false,
+		},
+		{
+			testName: "diff Name",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-2",
+				Namespace:  "eksa-system",
+			},
+			want: false,
+		},
+		{
+			testName: "diff Namespace",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "default",
+			},
+			want: false,
+		},
+		{
+			testName: "everything different",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v2",
+				Name:       "bundles-2",
+				Namespace:  "default",
+			},
+			want: false,
+		},
+		{
+			testName: "equal",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.bundlesRef1.Equal(tt.bundlesRef2)).To(Equal(tt.want))
+		})
+	}
+}
+
 func setSelfManaged(c *v1alpha1.Cluster, s bool) {
 	if s {
 		c.SetSelfManaged()
 	} else {
 		c.SetManagedBy("management-cluster")
+	}
+}
+
+func TestNodes_Equal(t *testing.T) {
+	tests := []struct {
+		name           string
+		nodes1, nodes2 *v1alpha1.Nodes
+		want           bool
+	}{
+		{
+			name:   "one nil",
+			nodes1: nil,
+			nodes2: &v1alpha1.Nodes{},
+			want:   false,
+		},
+		{
+			name:   "other nil",
+			nodes1: &v1alpha1.Nodes{},
+			nodes2: nil,
+			want:   false,
+		},
+		{
+			name:   "both nil",
+			nodes1: nil,
+			nodes2: nil,
+			want:   true,
+		},
+		{
+			name:   "one nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{},
+			nodes2: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			want: false,
+		},
+		{
+			name:   "both nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{},
+			nodes2: &v1alpha1.Nodes{},
+			want:   true,
+		},
+		{
+			name: "different not nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(3),
+			},
+			nodes2: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			want: false,
+		},
+		{
+			name: "equal not nil CIDRMasK",
+			nodes1: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			nodes2: &v1alpha1.Nodes{
+				CIDRMaskSize: ptr.Int(2),
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.nodes1.Equal(tt.nodes2)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterHasAWSIamConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *v1alpha1.Cluster
+		want    bool
+	}{
+		{
+			name: "has AWSIamConfig",
+			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-cluster",
+					Namespace: "eksa-system",
+				},
+				Spec: v1alpha1.ClusterSpec{
+					IdentityProviderRefs: []v1alpha1.Ref{
+						{
+							Name: "aws-config",
+							Kind: "AWSIamConfig",
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "no AWSIamConfig",
+			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-cluster",
+					Namespace: "eksa-system",
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.HasAWSIamConfig()).To(Equal(tt.want))
+		})
 	}
 }

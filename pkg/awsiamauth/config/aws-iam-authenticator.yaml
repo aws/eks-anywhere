@@ -94,12 +94,20 @@ spec:
 
       # run on each master node
       nodeSelector:
+{{- if .kubeVersion124 }}
+        node-role.kubernetes.io/control-plane: ""
+{{- else }}
         node-role.kubernetes.io/master: ""
+{{- end }}
       tolerations:
       - effect: NoSchedule 
         key: node-role.kubernetes.io/master
       - key: CriticalAddonsOnly
         operator: Exists
+{{- if .kubeVersion124 }}
+      - effect: NoSchedule 
+        key: node-role.kubernetes.io/control-plane
+{{- end }}
 {{- if .controlPlaneTaints }}
 {{- range .controlPlaneTaints }}
       - key: {{ .Key }}
@@ -157,7 +165,7 @@ spec:
       # init container to set permissions for the mount paths
       initContainers:
       - name: chown
-        image: busybox
+        image: {{.initContainerImage}}
         command: ['sh', '-c', 'chown 10000:10000 /var/aws-iam-authenticator/cert.pem; chown 10000:10000 /var/aws-iam-authenticator/key.pem; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
         volumeMounts:
         - name: cert
@@ -180,7 +188,7 @@ spec:
       - name: key
         hostPath:
           path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
-
+{{- if (ne .clusterID "") }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -192,6 +200,7 @@ metadata:
 data:
   config.yaml: |
     clusterID: {{.clusterID}}
+{{- end }}
 
 ---
 # EKS-Style ConfigMap: roles and users can be mapped in the same way as supported on EKS.
@@ -201,11 +210,11 @@ metadata:
   name: aws-auth
   namespace: kube-system
 data:
-{{- if (ne .mapRoles "")}}
+{{- if (ne .mapRoles "") }}
   mapRoles: |
 {{ .mapRoles | indent 4 }}
-{{- end}}
-{{- if (ne .mapUsers "")}}
+{{- end }}
+{{- if (ne .mapUsers "") }}
   mapUsers: |
 {{ .mapUsers | indent 4 }}
-{{- end}}
+{{- end }}

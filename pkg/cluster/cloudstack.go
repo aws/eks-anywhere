@@ -18,6 +18,9 @@ func cloudstackEntry() *ConfigManagerEntry {
 		},
 		Defaulters: []Defaulter{
 			func(c *Config) error {
+				if c.CloudStackDatacenter != nil {
+					c.CloudStackDatacenter.SetDefaults()
+				}
 				return nil
 			},
 		},
@@ -59,7 +62,9 @@ func cloudstackEntry() *ConfigManagerEntry {
 func processCloudStackDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.CloudStackDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		c.CloudStackDatacenter = datacenter.(*anywherev1.CloudStackDatacenterConfig)
+		if datacenter != nil {
+			c.CloudStackDatacenter = datacenter.(*anywherev1.CloudStackDatacenterConfig)
+		}
 	}
 }
 

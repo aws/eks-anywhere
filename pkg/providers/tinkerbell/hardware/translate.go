@@ -45,7 +45,7 @@ func Translate(reader MachineReader, writer MachineWriter, validator MachineVali
 	}
 
 	if err != nil {
-		return fmt.Errorf("read: %v", err)
+		return fmt.Errorf("read: invalid hardware: %v", err)
 	}
 
 	if err := validator.Validate(machine); err != nil {

@@ -15,13 +15,17 @@
 package v1alpha1
 
 import (
+	"regexp"
+	"strings"
+
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CloudStackMachineConfigSpec defines the desired state of CloudStackMachineConfig
+// CloudStackMachineConfigSpec defines the desired state of CloudStackMachineConfig.
 type CloudStackMachineConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -30,6 +34,8 @@ type CloudStackMachineConfigSpec struct {
 	Template CloudStackResourceIdentifier `json:"template"`
 	// ComputeOffering refers to a compute offering which has been previously registered in CloudStack. It represents a VM’s instance size including number of CPU’s, memory, and CPU speed. It can either be specified as a UUID or name
 	ComputeOffering CloudStackResourceIdentifier `json:"computeOffering"`
+	// DiskOffering refers to a disk offering which has been previously registered in CloudStack. It represents a disk offering with pre-defined size or custom specified disk size. It can either be specified as a UUID or name
+	DiskOffering *CloudStackResourceDiskOffering `json:"diskOffering,omitempty"`
 	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
 	// Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity group per machine set of the corresponding type
@@ -38,6 +44,107 @@ type CloudStackMachineConfigSpec struct {
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
 	// UserCustomDetails allows users to pass in non-standard key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
 	UserCustomDetails map[string]string `json:"userCustomDetails,omitempty"`
+	// Symlinks create soft symbolic links folders. One use case is to use data disk to store logs
+	Symlinks SymlinkMaps `json:"symlinks,omitempty"`
+}
+
+type SymlinkMaps map[string]string
+
+type CloudStackResourceDiskOffering struct {
+	CloudStackResourceIdentifier `json:",inline"`
+	// disk size in GB, > 0 for customized disk offering; = 0 for non-customized disk offering
+	// +optional
+	CustomSize int64 `json:"customSizeInGB,omitempty"`
+	// path the filesystem will use to mount in VM
+	MountPath string `json:"mountPath"`
+	// device name of the disk offering in VM, shows up in lsblk command
+	Device string `json:"device"`
+	// filesystem used to mkfs in disk offering partition
+	Filesystem string `json:"filesystem"`
+	// disk label used to label disk partition
+	Label string `json:"label"`
+}
+
+func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering) bool {
+	if r == o {
+		return true
+	}
+	if r.IsEmpty() && o.IsEmpty() {
+		return true
+	}
+	if r.IsEmpty() || o.IsEmpty() {
+		return false
+	}
+	if r.Id != o.Id {
+		return false
+	}
+
+	if r.CustomSize != o.CustomSize ||
+		r.MountPath != o.MountPath ||
+		r.Filesystem != o.Filesystem ||
+		r.Label != o.Label ||
+		r.Device != o.Device {
+		return false
+	}
+	return r.Id == "" && o.Id == "" && r.Name == o.Name
+}
+
+// IsEmpty Introduced for backwards compatibility purposes. When CloudStackResourceDiskOffering
+// was initially added to the CloudStackMachineConfig type, it was added with omitempty at the top level, but
+// the subtypes were *not* optional, so we have old clusters today with "empty" CloudStackResourceDiskOffering objects,
+// like {CustomSize: 0, MountPath: "", Label: "", Device: "", FileSystem: ""}.
+// Since then, we have made DiskOffering an optional pointer, with everything inside it as optional. Functionally, setting DiskOffering=nil
+// is equivalent to having an "empty" DiskOffering as shown above. Introducing this check should help prevent unintended RollingUpgrades
+// when upgrading a cluster which has this "empty" DiskOffering in it.
+func (r *CloudStackResourceDiskOffering) IsEmpty() bool {
+	if r == nil {
+		return true
+	}
+	return r.Id == "" && r.Name == "" && r.Label == "" && r.Device == "" &&
+		r.Filesystem == "" && r.MountPath == "" && r.CustomSize == 0
+}
+
+func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
+	if r != nil && (len(r.Id) > 0 || len(r.Name) > 0) {
+		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
+			return errors.New("must be non-empty and start with /"), "mountPath", r.MountPath
+		}
+		if len(r.Filesystem) < 1 {
+			return errors.New("empty filesystem"), "filesystem", r.Filesystem
+		}
+		if len(r.Device) < 1 {
+			return errors.New("empty device"), "device", r.Device
+		}
+		if len(r.Label) < 1 {
+			return errors.New("empty label"), "label", r.Label
+		}
+	} else {
+		if r != nil && len(r.MountPath)+len(r.Filesystem)+len(r.Device)+len(r.Label) > 0 {
+			return errors.New("empty id/name"), "id or name", r.Id
+		}
+	}
+	return nil, "", ""
+}
+
+func (r SymlinkMaps) Validate() (err error, field string, value string) {
+	isPortableFileNameSet := regexp.MustCompile(`^[a-zA-Z0-9\.\-\_\/]+$`)
+	for key, value := range r {
+		if !strings.HasPrefix(key, "/") || strings.HasSuffix(key, "/") {
+			return errors.New("must start with / and NOT end with /"), "symlinks", key
+		}
+		if !strings.HasPrefix(value, "/") || strings.HasSuffix(value, "/") {
+			return errors.New("must start with / and NOT end with /"), "symlinks", value
+		}
+		match := isPortableFileNameSet.Match([]byte(key))
+		if !match {
+			return errors.New("has char not in portable file name set"), "symlinks", key
+		}
+		match = isPortableFileNameSet.Match([]byte(value))
+		if !match {
+			return errors.New("has char not in portable file name set"), "symlinks", value
+		}
+	}
+	return nil, "", ""
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
@@ -99,15 +206,23 @@ func (c *CloudStackMachineConfig) Validate() error {
 	return nil
 }
 
-// CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig
+// CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig.
 type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// SpecValid is set to true if cloudstackmachineconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs API
+// CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs API.
 type CloudStackMachineConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -129,7 +244,8 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		return false
 	}
 	if !c.Template.Equal(&o.Template) ||
-		!c.ComputeOffering.Equal(&o.ComputeOffering) {
+		!c.ComputeOffering.Equal(&o.ComputeOffering) ||
+		!c.DiskOffering.Equal(o.DiskOffering) {
 		return false
 	}
 	if c.Affinity != o.Affinity {
@@ -146,6 +262,14 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 	}
 	for detail, value := range c.UserCustomDetails {
 		if value != o.UserCustomDetails[detail] {
+			return false
+		}
+	}
+	if len(c.Symlinks) != len(o.Symlinks) {
+		return false
+	}
+	for detail, value := range c.Symlinks {
+		if value != o.Symlinks[detail] {
 			return false
 		}
 	}
@@ -176,7 +300,7 @@ func (c *CloudStackMachineConfig) Marshallable() Marshallable {
 
 // +kubebuilder:object:generate=false
 
-// Same as CloudStackMachineConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as CloudStackMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
 type CloudStackMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -186,7 +310,7 @@ type CloudStackMachineConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// CloudStackMachineConfigList contains a list of CloudStackMachineConfig
+// CloudStackMachineConfigList contains a list of CloudStackMachineConfig.
 type CloudStackMachineConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -21,7 +20,7 @@ var vsphereSessionRmCommand = &cobra.Command{
 	Use:    "sessions",
 	Short:  "vsphere logout sessions command",
 	Long:   "This command logs out all of the provided VSphere user sessions ",
-	PreRun: prerunSessionLogoutCmd,
+	PreRun: prerunCmdBindFlags,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := vsphereLogoutSessions(cmd.Context(), sessions)
 		if err != nil {
@@ -52,15 +51,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-}
-
-func prerunSessionLogoutCmd(cmd *cobra.Command, args []string) {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
 }
 
 func vsphereLogoutSessions(_ context.Context, sessions []string) error {

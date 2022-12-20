@@ -39,12 +39,16 @@ spec:
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
+      apiServer:
+        extraArgs:
+          feature-gates: ServiceLoadBalancerClass=true
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
@@ -53,6 +57,7 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
       - content: |
           apiVersion: v1
@@ -88,7 +93,7 @@ spec:
                 value: "2"
               - name: address
                 value: 1.2.3.4
-              image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+              image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
               imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
@@ -120,6 +125,9 @@ spec:
       kind: TinkerbellMachineTemplate
       name: test-control-plane-template-1234567890000
   replicas: 1
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -130,6 +138,11 @@ metadata:
 spec:
   template:
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: cp
       templateOverride: |
         global_timeout: 6000
         id: ""
@@ -180,21 +193,17 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls:
-                    - http://1.2.3.4:50051
+                    metadata_urls: []
                     strict_id: false
-                manage_etc_hosts: localhost
                 system_info:
                   default_user:
-                    groups:
-                    - wheel
-                    - adm
                     name: tink
+                    groups: [wheel, adm]
+                    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
                     shell: /bin/bash
-                    sudo:
-                    - ALL=(ALL) NOPASSWD:ALL
+                manage_etc_hosts: localhost
                 warnings:
-                  dsid_missing_source: false
+                  dsid_missing_source: off
               DEST_DISK: /dev/sda2
               DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
               DIRMODE: "0700"

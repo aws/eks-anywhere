@@ -9,7 +9,6 @@ import (
 	"github.com/gocarina/gocsv"
 
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 )
 
 const (
@@ -17,19 +16,14 @@ const (
 	HardwareVendorHP          = "hp"
 	HardwareVendorSuperMicro  = "supermicro"
 	HardwareVendorUnspecified = "unspecified"
+	HardwareLabelTypeKeyName  = "type"
+	ControlPlane              = "control-plane"
+	Worker                    = "worker"
+	ExternalEtcd              = "etcd"
 )
 
 // Alias for backwards compatibility.
 type Hardware = hardware.Machine
-
-func NewBmcSecretConfig(h *Hardware) pbnj.BmcSecretConfig {
-	return pbnj.BmcSecretConfig{
-		Host:     h.BmcIpAddress,
-		Username: h.BmcUsername,
-		Password: h.BmcPassword,
-		Vendor:   h.BmcVendor,
-	}
-}
 
 func NewHardwareSlice(r io.Reader) ([]*Hardware, error) {
 	hardware := []*Hardware{}
@@ -57,13 +51,13 @@ func NewHardwareMapFromFile(file string) (map[string]*Hardware, error) {
 	return HardwareSliceToMap(slice), nil
 }
 
-// converts a hardware slice to a map. The first instance of the slice is used in case slice contains duplicates
+// converts a hardware slice to a map. The first instance of the slice is used in case slice contains duplicates.
 func HardwareSliceToMap(slice []*Hardware) map[string]*Hardware {
 	hardwareMap := make(map[string]*Hardware)
 
 	for _, h := range slice {
-		if _, exists := hardwareMap[h.Id]; !exists {
-			hardwareMap[h.Id] = h
+		if _, exists := hardwareMap[h.MACAddress]; !exists {
+			hardwareMap[h.MACAddress] = h
 		}
 	}
 
@@ -102,4 +96,22 @@ func HardwareMapToSlice(hardware map[string]*Hardware) []*Hardware {
 func WriteHardwareMapToCSV(hardware map[string]*Hardware, csvFile string) error {
 	slice := HardwareMapToSlice(hardware)
 	return WriteHardwareSliceToCSV(slice, csvFile)
+}
+
+func SplitHardware(slice []*Hardware, chunkSize int) [][]*Hardware {
+	var chunks [][]*Hardware
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+
+		// check slice capacity
+		if end > len(slice) {
+			end = len(slice)
+			finalChunk := append(chunks[len(chunks)-1], slice[i:end]...)
+			chunks[len(chunks)-1] = finalChunk
+		} else {
+			chunks = append(chunks, slice[i:end])
+		}
+	}
+
+	return chunks
 }

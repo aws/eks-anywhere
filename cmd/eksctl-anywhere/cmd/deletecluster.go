@@ -3,15 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -20,9 +15,10 @@ import (
 
 type deleteClusterOptions struct {
 	clusterOptions
-	wConfig          string
-	forceCleanup     bool
-	hardwareFileName string
+	wConfig               string
+	forceCleanup          bool
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var dc = &deleteClusterOptions{}
@@ -31,7 +27,7 @@ var deleteClusterCmd = &cobra.Command{
 	Use:          "cluster (<cluster-name>|-f <config-file>)",
 	Short:        "Workload cluster",
 	Long:         "This command is used to delete workload clusters created by eksctl anywhere",
-	PreRunE:      preRunDeleteCluster,
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := dc.validate(cmd.Context(), args); err != nil {
@@ -42,16 +38,6 @@ var deleteClusterCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func preRunDeleteCluster(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
 }
 
 func init() {
@@ -81,8 +67,8 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
-	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return kubeconfig.NewMissingFileError(kubeconfigPath)
+	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
+		return err
 	}
 
 	return nil
@@ -94,45 +80,53 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
+	if err := validations.ValidateAuthenticationForRegistryMirror(clusterSpec); err != nil {
+		return err
+	}
+
+	cliConfig := buildCliConfig(clusterSpec)
+	dirs, err := dc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
-		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.FluxConfig).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP).
+		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
-
-	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
-		return fmt.Errorf("Error: provider cloudstack is not supported in this release")
-	}
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
-	}
+	defer close(ctx, deps)
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,
 		deps.Provider,
 		deps.ClusterManager,
-		deps.FluxAddonClient,
+		deps.GitOpsFlux,
+		deps.Writer,
 	)
 
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+			Name:               clusterSpec.Cluster.Name,
+			KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+			ExistingManagement: false,
 		}
 	} else {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
+			Name:               clusterSpec.Cluster.Name,
+			KubeconfigFile:     clusterSpec.ManagementCluster.KubeconfigFile,
+			ExistingManagement: true,
 		}
 	}
 
 	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+	cleanup(deps, &err)
 	return err
 }

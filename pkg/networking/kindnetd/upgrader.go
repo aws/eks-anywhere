@@ -9,20 +9,19 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-type Client interface {
-	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-}
-
+// Upgrader allows to upgrade a kindnetd installation in a EKS-A cluster.
 type Upgrader struct {
 	client Client
 }
 
+// NewUpgrader constructs a new Upgrader.
 func NewUpgrader(client Client) *Upgrader {
 	return &Upgrader{
 		client: client,
 	}
 }
 
+// Upgrade configures a kindnetd installation to match the desired state in the cluster Spec.
 func (u Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error) {
 	diff := kindnetdChangeDiff(currentSpec, newSpec)
 	if diff == nil {
@@ -52,4 +51,10 @@ func kindnetdChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChan
 		OldVersion:    currentSpec.VersionsBundle.Kindnetd.Version,
 		NewVersion:    newSpec.VersionsBundle.Kindnetd.Version,
 	}
+}
+
+// RunPostControlPlaneUpgradeSetup satisfies the clustermanager.Networking interface.
+// It is a noop for kindnetd.
+func (u Upgrader) RunPostControlPlaneUpgradeSetup(_ context.Context, _ *types.Cluster) error {
+	return nil
 }

@@ -7,6 +7,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -55,11 +56,16 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 			Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Cluster.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
 		},
 		{
+			Name:        "validate authentication for git provider",
+			Remediation: fmt.Sprintf("ensure %s, %s env variable are set and valid", config.EksaGitPrivateKeyTokenEnv, config.EksaGitKnownHostsFileEnv),
+			Err:         validations.ValidateAuthenticationForGitProvider(u.Opts.Spec, u.Opts.CliConfig),
+		},
+		{
 			Name:        "validate immutable fields",
 			Remediation: "",
 			Err:         ValidateImmutableFields(ctx, k, targetCluster, u.Opts.Spec, u.Opts.Provider),
 		},
 	}
 
-	return validations.RunPreflightValidations(upgradeValidations)
+	return validations.ProcessValidationResults(upgradeValidations)
 }

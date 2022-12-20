@@ -13,7 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/go-git/go-git/v5/storage/memory"
 
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -28,38 +28,57 @@ const (
 )
 
 type GitClient struct {
-	Opts    Options
-	Client  GoGit
-	Retrier *retrier.Retrier
+	Auth          transport.AuthMethod
+	Client        GoGit
+	RepoUrl       string
+	RepoDirectory string
+	Retrier       *retrier.Retrier
 }
 
-type Options struct {
-	RepositoryDirectory string
-	Auth                transport.AuthMethod
-	GoGitClient         GoGit
-}
+type Opt func(*GitClient)
 
-func New(opts Options) *GitClient {
-	return &GitClient{
-		Opts:    opts,
-		Client:  newClient(opts),
+func New(opts ...Opt) *GitClient {
+	c := &GitClient{
+		Client:  &goGit{},
 		Retrier: retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
+}
+
+func WithAuth(auth transport.AuthMethod) Opt {
+	return func(c *GitClient) {
+		c.Auth = auth
 	}
 }
 
-func (g *GitClient) Clone(ctx context.Context, repourl string) error {
-	_, err := g.Client.Clone(ctx, g.Opts.RepositoryDirectory, repourl, g.Opts.Auth)
+func WithRepositoryUrl(repoUrl string) Opt {
+	return func(c *GitClient) {
+		c.RepoUrl = repoUrl
+	}
+}
+
+func WithRepositoryDirectory(repoDir string) Opt {
+	return func(c *GitClient) {
+		c.RepoDirectory = repoDir
+	}
+}
+
+func (g *GitClient) Clone(ctx context.Context) error {
+	_, err := g.Client.Clone(ctx, g.RepoDirectory, g.RepoUrl, g.Auth)
 	if err != nil && strings.Contains(err.Error(), emptyRepoError) {
 		return &git.RepositoryIsEmptyError{
-			Repository: g.Opts.RepositoryDirectory,
+			Repository: g.RepoDirectory,
 		}
 	}
 	return err
 }
 
 func (g *GitClient) Add(filename string) error {
-	logger.V(3).Info("Opening directory", "directory", g.Opts.RepositoryDirectory)
-	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
+	logger.V(3).Info("Opening directory", "directory", g.RepoDirectory)
+	r, err := g.Client.OpenDir(g.RepoDirectory)
 	if err != nil {
 		return err
 	}
@@ -76,8 +95,8 @@ func (g *GitClient) Add(filename string) error {
 }
 
 func (g *GitClient) Remove(filename string) error {
-	logger.V(3).Info("Opening directory", "directory", g.Opts.RepositoryDirectory)
-	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
+	logger.V(3).Info("Opening directory", "directory", g.RepoDirectory)
+	r, err := g.Client.OpenDir(g.RepoDirectory)
 	if err != nil {
 		return err
 	}
@@ -94,8 +113,8 @@ func (g *GitClient) Remove(filename string) error {
 }
 
 func (g *GitClient) Commit(message string) error {
-	logger.V(3).Info("Opening directory", "directory", g.Opts.RepositoryDirectory)
-	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
+	logger.V(3).Info("Opening directory", "directory", g.RepoDirectory)
+	r, err := g.Client.OpenDir(g.RepoDirectory)
 	if err != nil {
 		logger.Info("Failed while attempting to open repo")
 		return err
@@ -117,20 +136,20 @@ func (g *GitClient) Commit(message string) error {
 		return err
 	}
 
-	logger.V(3).Info("Committing Object to local repo", "repo", g.Opts.RepositoryDirectory)
+	logger.V(3).Info("Committing Object to local repo", "repo", g.RepoDirectory)
 	finalizedCommit, err := g.Client.CommitObject(r, commit)
 	logger.Info("Finalized commit and committed to local repository", "hash", finalizedCommit.Hash)
 	return err
 }
 
 func (g *GitClient) Push(ctx context.Context) error {
-	logger.V(3).Info("Pushing to remote", "repo", g.Opts.RepositoryDirectory)
-	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
+	logger.V(3).Info("Pushing to remote", "repo", g.RepoDirectory)
+	r, err := g.Client.OpenDir(g.RepoDirectory)
 	if err != nil {
 		return fmt.Errorf("err pushing: %v", err)
 	}
 
-	err = g.Client.PushWithContext(ctx, r, g.Opts.Auth)
+	err = g.Client.PushWithContext(ctx, r, g.Auth)
 	if err != nil {
 		return fmt.Errorf("pushing: %v", err)
 	}
@@ -138,8 +157,8 @@ func (g *GitClient) Push(ctx context.Context) error {
 }
 
 func (g *GitClient) Pull(ctx context.Context, branch string) error {
-	logger.V(3).Info("Pulling from remote", "repo", g.Opts.RepositoryDirectory, "remote", gogit.DefaultRemoteName)
-	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
+	logger.V(3).Info("Pulling from remote", "repo", g.RepoDirectory, "remote", gogit.DefaultRemoteName)
+	r, err := g.Client.OpenDir(g.RepoDirectory)
 	if err != nil {
 		return fmt.Errorf("pulling from remote: %v", err)
 	}
@@ -151,11 +170,11 @@ func (g *GitClient) Pull(ctx context.Context, branch string) error {
 
 	branchRef := plumbing.NewBranchReferenceName(branch)
 
-	err = g.Client.PullWithContext(ctx, w, g.Opts.Auth, branchRef)
+	err = g.Client.PullWithContext(ctx, w, g.Auth, branchRef)
 
 	if errors.Is(err, gogit.NoErrAlreadyUpToDate) {
-		logger.V(3).Info("Local repo already up-to-date", "repo", g.Opts.RepositoryDirectory, "remote", gogit.DefaultRemoteName)
-		return &git.RepositoryUpToDateError{Repository: g.Opts.RepositoryDirectory}
+		logger.V(3).Info("Local repo already up-to-date", "repo", g.RepoDirectory, "remote", gogit.DefaultRemoteName)
+		return &git.RepositoryUpToDateError{}
 	}
 
 	if err != nil {
@@ -171,24 +190,24 @@ func (g *GitClient) Pull(ctx context.Context, branch string) error {
 	if err != nil {
 		return fmt.Errorf("accessing latest commit after pulling from remote: %v", err)
 	}
-	logger.V(3).Info("Successfully pulled from remote", "repo", g.Opts.RepositoryDirectory, "remote", gogit.DefaultRemoteName, "latest commit", commit.Hash)
+	logger.V(3).Info("Successfully pulled from remote", "repo", g.RepoDirectory, "remote", gogit.DefaultRemoteName, "latest commit", commit.Hash)
 	return nil
 }
 
-func (g *GitClient) Init(url string) error {
-	r, err := g.Client.Init(g.Opts.RepositoryDirectory)
+func (g *GitClient) Init() error {
+	r, err := g.Client.Init(g.RepoDirectory)
 	if err != nil {
 		return err
 	}
 
-	if _, err = g.Client.Create(r, url); err != nil {
+	if _, err = g.Client.Create(r, g.RepoUrl); err != nil {
 		return fmt.Errorf("initializing repository: %v", err)
 	}
 	return nil
 }
 
 func (g *GitClient) Branch(name string) error {
-	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
+	r, err := g.Client.OpenDir(g.RepoDirectory)
 	if err != nil {
 		return fmt.Errorf("creating branch %s: %v", name, err)
 	}
@@ -199,10 +218,11 @@ func (g *GitClient) Branch(name string) error {
 		Name:   name,
 		Remote: gogit.DefaultRemoteName,
 		Merge:  localBranchRef,
+		Rebase: "true",
 	}
 
 	err = g.Client.CreateBranch(r, branchOpts)
-	branchExistsLocally := errors.As(err, &gogit.ErrBranchExists)
+	branchExistsLocally := errors.Is(err, gogit.ErrBranchExists)
 
 	if err != nil && !branchExistsLocally {
 		return fmt.Errorf("creating branch %s: %v", name, err)
@@ -246,8 +266,15 @@ func (g *GitClient) Branch(name string) error {
 	return nil
 }
 
-func (g *GitClient) SetTokenAuth(token string, username string) {
-	g.Opts.Auth = &http.BasicAuth{Password: token, Username: username}
+func (g *GitClient) ValidateRemoteExists(ctx context.Context) error {
+	logger.V(3).Info("Validating git setup", "repoUrl", g.RepoUrl)
+	remote := g.Client.NewRemote(g.RepoUrl, gogit.DefaultRemoteName)
+	// Check if we are able to make a connection to the remote by attempting to list refs
+	_, err := g.Client.ListWithContext(ctx, remote, g.Auth)
+	if err != nil {
+		return fmt.Errorf("connecting with remote %v for repository: %v", gogit.DefaultRemoteName, err)
+	}
+	return nil
 }
 
 func (g *GitClient) pullIfRemoteExists(r *gogit.Repository, w *gogit.Worktree, branchName string, localBranchRef plumbing.ReferenceName) error {
@@ -258,7 +285,7 @@ func (g *GitClient) pullIfRemoteExists(r *gogit.Repository, w *gogit.Worktree, b
 		}
 
 		if remoteExists {
-			err = g.Client.PullWithContext(context.Background(), w, g.Opts.Auth, localBranchRef)
+			err = g.Client.PullWithContext(context.Background(), w, g.Auth, localBranchRef)
 			if err != nil && !errors.Is(err, gogit.NoErrAlreadyUpToDate) && !errors.Is(err, gogit.ErrRemoteNotFound) {
 				return fmt.Errorf("pulling from remote when checking out existing branch %s: %v", branchName, err)
 			}
@@ -269,7 +296,7 @@ func (g *GitClient) pullIfRemoteExists(r *gogit.Repository, w *gogit.Worktree, b
 }
 
 func (g *GitClient) remoteBranchExists(r *gogit.Repository, localBranchRef plumbing.ReferenceName) (bool, error) {
-	reflist, err := g.Client.ListRemotes(r, g.Opts.Auth)
+	reflist, err := g.Client.ListRemotes(r, g.Auth)
 	if err != nil {
 		if strings.Contains(err.Error(), emptyRepoError) {
 			return false, nil
@@ -285,10 +312,6 @@ func (g *GitClient) remoteBranchExists(r *gogit.Repository, localBranchRef plumb
 	return false, nil
 }
 
-func newClient(opts Options) *goGitClient {
-	return &goGitClient{goGit: opts.GoGitClient}
-}
-
 type GoGit interface {
 	AddGlob(f string, w *gogit.Worktree) error
 	Checkout(w *gogit.Worktree, opts *gogit.CheckoutOptions) error
@@ -298,21 +321,21 @@ type GoGit interface {
 	Create(r *gogit.Repository, url string) (*gogit.Remote, error)
 	CreateBranch(r *gogit.Repository, config *config.Branch) error
 	Head(r *gogit.Repository) (*plumbing.Reference, error)
+	NewRemote(url, remoteName string) *gogit.Remote
 	Init(dir string) (*gogit.Repository, error)
 	OpenDir(dir string) (*gogit.Repository, error)
 	OpenWorktree(r *gogit.Repository) (*gogit.Worktree, error)
 	PushWithContext(ctx context.Context, r *gogit.Repository, auth transport.AuthMethod) error
 	PullWithContext(ctx context.Context, w *gogit.Worktree, auth transport.AuthMethod, ref plumbing.ReferenceName) error
 	ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([]*plumbing.Reference, error)
+	ListWithContext(ctx context.Context, r *gogit.Remote, auth transport.AuthMethod) ([]*plumbing.Reference, error)
 	Remove(f string, w *gogit.Worktree) (plumbing.Hash, error)
 	SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error
 }
 
-type goGitClient struct {
-	goGit GoGit
-}
+type goGit struct{}
 
-func (ggc *goGitClient) Clone(ctx context.Context, dir string, repourl string, auth transport.AuthMethod) (*gogit.Repository, error) {
+func (gg *goGit) Clone(ctx context.Context, dir string, repourl string, auth transport.AuthMethod) (*gogit.Repository, error) {
 	ctx, cancel := context.WithTimeout(ctx, gitTimeout)
 	defer cancel()
 
@@ -323,29 +346,29 @@ func (ggc *goGitClient) Clone(ctx context.Context, dir string, repourl string, a
 	})
 }
 
-func (ggc *goGitClient) OpenDir(dir string) (*gogit.Repository, error) {
+func (gg *goGit) OpenDir(dir string) (*gogit.Repository, error) {
 	return gogit.PlainOpen(dir)
 }
 
-func (ggc *goGitClient) OpenWorktree(r *gogit.Repository) (*gogit.Worktree, error) {
+func (gg *goGit) OpenWorktree(r *gogit.Repository) (*gogit.Worktree, error) {
 	return r.Worktree()
 }
 
-func (ggc *goGitClient) AddGlob(f string, w *gogit.Worktree) error {
+func (gg *goGit) AddGlob(f string, w *gogit.Worktree) error {
 	return w.AddGlob(f)
 }
 
-func (ggc *goGitClient) Commit(m string, sig *object.Signature, w *gogit.Worktree) (plumbing.Hash, error) {
+func (gg *goGit) Commit(m string, sig *object.Signature, w *gogit.Worktree) (plumbing.Hash, error) {
 	return w.Commit(m, &gogit.CommitOptions{
 		Author: sig,
 	})
 }
 
-func (ggc *goGitClient) CommitObject(r *gogit.Repository, h plumbing.Hash) (*object.Commit, error) {
+func (gg *goGit) CommitObject(r *gogit.Repository, h plumbing.Hash) (*object.Commit, error) {
 	return r.CommitObject(h)
 }
 
-func (ggc *goGitClient) PushWithContext(ctx context.Context, r *gogit.Repository, auth transport.AuthMethod) error {
+func (gg *goGit) PushWithContext(ctx context.Context, r *gogit.Repository, auth transport.AuthMethod) error {
 	ctx, cancel := context.WithTimeout(ctx, gitTimeout)
 	defer cancel()
 
@@ -354,40 +377,47 @@ func (ggc *goGitClient) PushWithContext(ctx context.Context, r *gogit.Repository
 	})
 }
 
-func (ggc *goGitClient) PullWithContext(ctx context.Context, w *gogit.Worktree, auth transport.AuthMethod, ref plumbing.ReferenceName) error {
+func (gg *goGit) PullWithContext(ctx context.Context, w *gogit.Worktree, auth transport.AuthMethod, ref plumbing.ReferenceName) error {
 	ctx, cancel := context.WithTimeout(ctx, gitTimeout)
 	defer cancel()
 
 	return w.PullContext(ctx, &gogit.PullOptions{RemoteName: gogit.DefaultRemoteName, Auth: auth, ReferenceName: ref})
 }
 
-func (ggc *goGitClient) Head(r *gogit.Repository) (*plumbing.Reference, error) {
+func (gg *goGit) Head(r *gogit.Repository) (*plumbing.Reference, error) {
 	return r.Head()
 }
 
-func (ggc *goGitClient) Init(dir string) (*gogit.Repository, error) {
+func (gg *goGit) Init(dir string) (*gogit.Repository, error) {
 	return gogit.PlainInit(dir, false)
 }
 
-func (ggc *goGitClient) Checkout(worktree *gogit.Worktree, opts *gogit.CheckoutOptions) error {
+func (ggc *goGit) NewRemote(url, remoteName string) *gogit.Remote {
+	return gogit.NewRemote(memory.NewStorage(), &config.RemoteConfig{
+		Name: remoteName,
+		URLs: []string{url},
+	})
+}
+
+func (gg *goGit) Checkout(worktree *gogit.Worktree, opts *gogit.CheckoutOptions) error {
 	return worktree.Checkout(opts)
 }
 
-func (ggc *goGitClient) Create(r *gogit.Repository, url string) (*gogit.Remote, error) {
+func (gg *goGit) Create(r *gogit.Repository, url string) (*gogit.Remote, error) {
 	return r.CreateRemote(&config.RemoteConfig{
 		Name: gogit.DefaultRemoteName,
 		URLs: []string{url},
 	})
 }
 
-func (ggc *goGitClient) CreateBranch(repo *gogit.Repository, config *config.Branch) error {
+func (gg *goGit) CreateBranch(repo *gogit.Repository, config *config.Branch) error {
 	return repo.CreateBranch(config)
 }
 
-func (ggc *goGitClient) ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([]*plumbing.Reference, error) {
+func (gg *goGit) ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([]*plumbing.Reference, error) {
 	remote, err := r.Remote(gogit.DefaultRemoteName)
 	if err != nil {
-		if errors.As(err, &gogit.ErrRemoteNotFound) {
+		if errors.Is(err, gogit.ErrRemoteNotFound) {
 			return []*plumbing.Reference{}, nil
 		}
 		return nil, err
@@ -399,10 +429,18 @@ func (ggc *goGitClient) ListRemotes(r *gogit.Repository, auth transport.AuthMeth
 	return refList, nil
 }
 
-func (ggc *goGitClient) Remove(f string, w *gogit.Worktree) (plumbing.Hash, error) {
+func (gg *goGit) Remove(f string, w *gogit.Worktree) (plumbing.Hash, error) {
 	return w.Remove(f)
 }
 
-func (ggc *goGitClient) SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error {
+func (ggc *goGit) ListWithContext(ctx context.Context, r *gogit.Remote, auth transport.AuthMethod) ([]*plumbing.Reference, error) {
+	refList, err := r.ListContext(ctx, &gogit.ListOptions{Auth: auth})
+	if err != nil {
+		return nil, err
+	}
+	return refList, nil
+}
+
+func (gg *goGit) SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error {
 	return r.Storer.SetReference(p)
 }

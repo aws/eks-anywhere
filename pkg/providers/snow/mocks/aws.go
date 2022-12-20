@@ -77,3 +77,33 @@ func (mr *MockAwsClientMockRecorder) EC2KeyNameExists(ctx, keyName interface{}) 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2KeyNameExists", reflect.TypeOf((*MockAwsClient)(nil).EC2KeyNameExists), ctx, keyName)
 }
+
+// IsSnowballDeviceUnlocked mocks base method.
+func (m *MockAwsClient) IsSnowballDeviceUnlocked(ctx context.Context) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsSnowballDeviceUnlocked", ctx)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsSnowballDeviceUnlocked indicates an expected call of IsSnowballDeviceUnlocked.
+func (mr *MockAwsClientMockRecorder) IsSnowballDeviceUnlocked(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsSnowballDeviceUnlocked", reflect.TypeOf((*MockAwsClient)(nil).IsSnowballDeviceUnlocked), ctx)
+}
+
+// SnowballDeviceSoftwareVersion mocks base method.
+func (m *MockAwsClient) SnowballDeviceSoftwareVersion(ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SnowballDeviceSoftwareVersion", ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SnowballDeviceSoftwareVersion indicates an expected call of SnowballDeviceSoftwareVersion.
+func (mr *MockAwsClientMockRecorder) SnowballDeviceSoftwareVersion(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnowballDeviceSoftwareVersion", reflect.TypeOf((*MockAwsClient)(nil).SnowballDeviceSoftwareVersion), ctx)
+}

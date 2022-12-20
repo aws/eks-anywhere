@@ -29,7 +29,9 @@ EKS_A_TOOL_LICENSE_DIR="${OUTPUT_DIR}/eks-a-tools/licenses"
 mkdir -p $EKS_A_TOOL_BINARY_DIR
 mkdir -p $EKS_A_TOOL_LICENSE_DIR
 
-declare -A project_bin_licenses=(["eksa/vmware/govmomi"]="govc GOVMOMI")
+declare -A project_bin_licenses=(["eksa/vmware/govmomi"]="govc GOVMOMI"
+                                 ["eksa/helm/helm"]="helm HELM"
+                                 ["eksa/apache/cloudstack-cloudmonkey"]="cmk CMK")
 
 for project in "${!project_bin_licenses[@]}"
 do

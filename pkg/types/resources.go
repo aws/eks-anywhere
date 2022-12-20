@@ -28,6 +28,7 @@ type MachineStatus struct {
 }
 
 type MachineMetadata struct {
+	Name   string            `json:"name,omitempty"`
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
@@ -54,7 +55,8 @@ type CAPICluster struct {
 }
 
 type ClusterStatus struct {
-	Phase string
+	Phase      string
+	Conditions Conditions
 }
 
 type Metadata struct {

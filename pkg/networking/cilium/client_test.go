@@ -1,4 +1,4 @@
-package cilium
+package cilium_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -18,7 +19,7 @@ import (
 type retrierTest struct {
 	*WithT
 	ctx     context.Context
-	r       *retrierClient
+	r       *cilium.RetrierClient
 	c       *mocks.MockClient
 	cluster *types.Cluster
 }
@@ -29,7 +30,7 @@ func newRetrierTest(t *testing.T) *retrierTest {
 	return &retrierTest{
 		WithT: NewWithT(t),
 		ctx:   context.Background(),
-		r:     newRetrier(c),
+		r:     cilium.NewRetrier(c),
 		c:     c,
 		cluster: &types.Cluster{
 			KubeconfigFile: "kubeconfig",
@@ -140,6 +141,23 @@ func TestRetrierClientWaitForPreflightDaemonSetError(t *testing.T) {
 	tt.c.EXPECT().GetDaemonSet(tt.ctx, "cilium-pre-flight-check", "kube-system", tt.cluster.KubeconfigFile).Return(tt.preflightDaemonSet, nil).AnyTimes()
 
 	tt.Expect(tt.r.WaitForPreflightDaemonSet(tt.ctx, tt.cluster)).To(MatchError(ContainSubstring("error in get")), "retrierClient.waitForPreflightDaemonSet() should fail after 5 tries")
+}
+
+func TestRetrierClientRolloutRestartDaemonSetSuccess(t *testing.T) {
+	tt := newWaitForCiliumTest(t)
+	tt.c.EXPECT().RolloutRestartDaemonSet(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(errors.New("error in rollout")).Times(5)
+	tt.c.EXPECT().RolloutRestartDaemonSet(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(nil)
+
+	tt.Expect(tt.r.RolloutRestartCiliumDaemonSet(tt.ctx, tt.cluster)).To(Succeed(), "retrierClient.RolloutRestartDaemonSet() should succeed after 6 tries")
+}
+
+func TestRetrierClientRolloutRestartDaemonSetError(t *testing.T) {
+	tt := newWaitForCiliumTest(t)
+	tt.r.Retrier = retrier.NewWithMaxRetries(5, 0)
+	tt.c.EXPECT().RolloutRestartDaemonSet(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(errors.New("error in rollout")).Times(5)
+	tt.c.EXPECT().RolloutRestartDaemonSet(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(nil).AnyTimes()
+
+	tt.Expect(tt.r.RolloutRestartCiliumDaemonSet(tt.ctx, tt.cluster)).To(MatchError(ContainSubstring("error in rollout")), "retrierClient.RolloutRestartCiliumDaemonSet() should fail after 5 tries")
 }
 
 func TestRetrierClientWaitForPreflightDeploymentSuccess(t *testing.T) {

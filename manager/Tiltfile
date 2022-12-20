@@ -1,0 +1,131 @@
+# -*- mode: Python -*-
+settings = read_json('tilt-settings.json', default={})
+
+load('ext://restart_process', 'docker_build_with_restart')
+allow_k8s_contexts(settings.get("allowed_contexts"))
+default_registry(settings.get('default_registry'))
+
+IMG = 'eks-a-controller-manager'
+PROJECT_ROOT = os.path.abspath('./..')
+CONTROLLERS_FOLDER = PROJECT_ROOT + '/controllers'
+MANAGER_FOLDER = 'manager'
+MANAGER_PATH = PROJECT_ROOT + '/' + MANAGER_FOLDER 
+DOCKERFILE_PATH =  MANAGER_PATH + '/docker/linux/eks-anywhere-cluster-controller/Dockerfile'
+OUTPUT_DIR = 'tilt'
+OUTPUT_PATH = MANAGER_PATH + '/' + OUTPUT_DIR 
+OUTPUT_BIN_FOLDER = OUTPUT_PATH + '/bin'
+PKG_FOLDER = PROJECT_ROOT + '/pkg'
+API_FOLDER = PKG_FOLDER + '/api'
+CONFIG_FOLDER = PROJECT_ROOT + '/config'
+KUSTOMIZE_TILT_FOLDER = CONFIG_FOLDER + '/tilt/'
+KUSTOMIZE_BIN = PROJECT_ROOT + '/hack/tools/bin/kustomize'
+FULL_LIFECYCLE_API_KEY = "FULL_LIFECYCLE_API"
+
+def eksa_components():
+    local(
+		KUSTOMIZE_BIN + ' edit set image controller=' + IMG,
+		dir=KUSTOMIZE_TILT_FOLDER,
+	)
+    return kustomize(KUSTOMIZE_TILT_FOLDER, kustomize_bin = KUSTOMIZE_BIN)
+
+def manager_binary_dir(os, arch):
+	platform_subfolder = platform(os, arch)
+	return OUTPUT_BIN_FOLDER + '/eks-anywhere-cluster-controller/' + platform_subfolder
+
+def platform(os, arch):
+	return os + '-' + arch
+
+def manager_build_cmd(os, arch):
+    return 'make create-cluster-controller-binaries-local GO_OS=' + os + ' GO_ARCH=' + arch + ' OUTPUT_DIR=' + OUTPUT_PATH
+
+# This retrieves the latest available tag for our minimal nonroot image
+# we can't use it since it doesn't have a shell and that's required to make
+# tilt's live_update work. We can can update this to use a different image name
+# if we ever get support for a shell in a minimal image
+def manager_base_image():
+	base_repo = 'public.ecr.aws/eks-distro-build-tooling'
+	cluster_controller_base_image_name = 'eks-distro-minimal-base-nonroot'
+	cluster_controller_base_tag = str(local('cat ' + MANAGER_FOLDER + '/EKS_DISTRO_MINIMAL_BASE_TAG_FILE', dir=PROJECT_ROOT)).rstrip('\n')
+	return base_repo + '/' + cluster_controller_base_image_name + ':' + cluster_controller_base_tag
+
+
+#################
+# This is where the actual configuration logic exists
+#################
+
+# ignore kustomize tilt folder to avoid infinite loop
+watch_settings(ignore=[KUSTOMIZE_TILT_FOLDER])
+
+# TODO: figure a way to dynamically get the k8s arch, specially for M1's
+cluster_os = 'linux'
+cluster_arch = "amd64"
+cluster_platform = platform(cluster_os, cluster_arch)
+manager_binary_dir = manager_binary_dir(cluster_os, cluster_arch)
+
+# Build the api config manifests when anything changes in the api, controllers or manager folders
+# This can be either go API structs, RBAC in the controllers through kubebuilder
+# or other kubebuilder comments in the manager main.go
+local_resource(
+	"generate-eksa-components",
+	"make generate-manifests",
+	dir = PROJECT_ROOT,
+	deps = [API_FOLDER, CONTROLLERS_FOLDER, MANAGER_FOLDER],
+	ignore = [OUTPUT_DIR],
+)
+
+# Build the controller manager go binary when something changes in pkg, controllers or manager
+# Exclude the manager binary itself to avoid a infinite loop
+local_resource(
+  'eksa-controller-manager-build',
+  manager_build_cmd(cluster_os, cluster_arch),
+  dir = PROJECT_ROOT,
+  deps = [MANAGER_PATH, CONTROLLERS_FOLDER, PKG_FOLDER, "go.mod", "go.sum"],
+  ignore = [manager_binary_dir, API_FOLDER + '/*/zz_generated.deepcopy.go', DOCKERFILE_PATH],
+)
+
+# Run kustomize in the config folder for the Tilt overlay and apply yaml to cluster
+# This also takes care of rerunning itself if anything changes
+# kustomize watches the target folders and re runs if anything changes
+# Kustomize returns a Blob, which is watched by k8s_yaml, and when the blob changes,
+# the yaml is reapplied to the cluster 
+k8s_yaml(eksa_components())
+
+full_lifecycle_api_value = os.getenv(FULL_LIFECYCLE_API_KEY, "false")
+full_lifecycle_api_flag = 'FullLifecycleAPI' + "=" + full_lifecycle_api_value
+
+manager_binary_path = manager_binary_dir + "/manager"
+# It's important to use a folder where the nonroot user can write,
+# since Tilt needs to write to that folder in order to replace the binary (live_update)
+manager_binary_dir_in_container = '/home/nonroot'
+manager_binary_path_in_container = manager_binary_dir_in_container + '/manager'
+
+# Build image for controller manager, trigger when the manager binary changes
+# This uses live_update, so it won't rebuild the whole container image every time
+# the binary changes, just at the begginning
+# When the binary changes, it updates the running container live, by replacing the binary
+# and restarting the process. This is way faster than building a new image and pushing and pulling
+docker_build_with_restart(
+	IMG,
+	# This is the docker build context path: use the project root so we have access to all folders
+	PROJECT_ROOT,
+	dockerfile=DOCKERFILE_PATH,
+	build_args = {
+		# TODO: we should eventually move this to one of our own minimal images
+		# once we have one with sh support
+		'BASE_IMAGE': 'gcr.io/distroless/base:debug',
+		'TARGETARCH': cluster_arch,
+		'TARGETOS': cluster_os,
+		# All paths inside a dockerfile need to be relative to the context path
+		'MANAGER_BIN_PATH': os.path.relpath(manager_binary_path, basepath = PROJECT_ROOT),
+		'DST_MANAGER_BINARY_DIR': manager_binary_dir_in_container, 
+	},
+	entrypoint=[manager_binary_path_in_container, '--feature-gates', full_lifecycle_api_flag],
+	# `only` is a mix between the context passed to the docker build and the paths that will
+	# trigger a new build. This means we need to include all paths needed in the dockerfile
+	# but nothing else, so we don't trigger image builds unnecessary 
+	only=[manager_binary_path, '_output', 'ATTRIBUTION.txt'],
+	trigger=[manager_binary_path],
+	live_update=[
+		sync(manager_binary_path, manager_binary_path_in_container),
+	]
+)

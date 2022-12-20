@@ -1,0 +1,48 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-cluster-md-0-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      format: cloud-config
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /var/run/containerd/containerd.sock
+          kubeletExtraArgs:
+            anonymous-auth: "false"
+            provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+            read-only-port: "0"
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          name: "{{ ds.meta_data.hostname }}"
+          taints: []
+      preKubeadmCommands:
+        - swapoff -a
+        - hostname "{{ ds.meta_data.hostname }}"
+        - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+        - echo "127.0.0.1   localhost" >>/etc/hosts
+        - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+        - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+      diskSetup:
+        filesystems:
+          - device: /dev/vdb1
+            overwrite: false
+            extraOpts:
+              - -E
+              - lazy_itable_init=1,lazy_journal_init=1
+            filesystem: ext4
+            label: data_disk
+        partitions:
+          - device: /dev/vdb
+            layout: true
+            overwrite: false
+            tableType: gpt
+      mounts:
+        - - LABEL=data_disk
+          - /data-small
+      users:
+        - name: capc
+          sshAuthorizedKeys:
+            - 'ssh-rsa ssh_key_value'
+          sudo: ALL=(ALL) NOPASSWD:ALL

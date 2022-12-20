@@ -10,7 +10,7 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -128,16 +128,27 @@ func WithEksdRelease(release *eksdv1alpha1.Release) SpecOpt {
 	}
 }
 
+func WithFluxConfig(fluxConfig *eksav1alpha1.FluxConfig) SpecOpt {
+	return func(s *Spec) {
+		s.FluxConfig = fluxConfig
+	}
+}
+
 func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	return func(s *Spec) {
 		s.GitOpsConfig = gitOpsConfig
-		s.FluxConfig = gitOpsConfig.ConvertToFluxConfig()
 	}
 }
 
 func WithOIDCConfig(oidcConfig *eksav1alpha1.OIDCConfig) SpecOpt {
 	return func(s *Spec) {
 		s.OIDCConfig = oidcConfig
+	}
+}
+
+func WithAWSIamConfig(awsIamConfig *eksav1alpha1.AWSIamConfig) SpecOpt {
+	return func(s *Spec) {
+		s.AWSIamConfig = awsIamConfig
 	}
 }
 
@@ -170,16 +181,28 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	if err != nil {
 		return nil, err
 	}
-	if err = SetConfigDefaults(clusterConfig); err != nil {
-		return nil, err
-	}
-
 	bundlesManifest, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
+	bundlesManifest.Namespace = constants.EksaSystemNamespace
 
-	versionsBundle, err := s.getVersionsBundle(clusterConfig.Cluster.Spec.KubernetesVersion, bundlesManifest)
+	configManager, err := NewDefaultConfigManager()
+	if err != nil {
+		return nil, err
+	}
+	configManager.RegisterDefaulters(BundlesRefDefaulter())
+
+	if err = configManager.SetDefaults(clusterConfig); err != nil {
+		return nil, err
+	}
+
+	// We are pulling the latest available Bundles, so making sure we update the ref to make the spec consistent
+	clusterConfig.Cluster.Spec.BundlesRef.Name = bundlesManifest.Name
+	clusterConfig.Cluster.Spec.BundlesRef.Namespace = bundlesManifest.Namespace
+	clusterConfig.Cluster.Spec.BundlesRef.APIVersion = v1alpha1.GroupVersion.String()
+
+	versionsBundle, err := GetVersionsBundle(clusterConfig.Cluster, bundlesManifest)
 	if err != nil {
 		return nil, err
 	}
@@ -189,18 +212,36 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 
-	kubeDistro, err := buildKubeDistro(eksd)
-	if err != nil {
+	if err = s.init(clusterConfig, bundlesManifest, versionsBundle, eksd); err != nil {
 		return nil, err
 	}
 
-	s.Bundles = bundlesManifest
-	s.Config = clusterConfig
+	switch s.Cluster.Spec.DatacenterRef.Kind {
+	case eksav1alpha1.TinkerbellDatacenterKind:
+		templateConfigs, err := eksav1alpha1.GetTinkerbellTemplateConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.TinkerbellTemplateConfigs = templateConfigs
+	}
+
+	return s, nil
+}
+
+// init does the basic initialization with the provided necessary api objects.
+func (s *Spec) init(config *Config, bundles *v1alpha1.Bundles, versionsBundle *v1alpha1.VersionsBundle, eksdRelease *eksdv1alpha1.Release) error {
+	kubeDistro, err := buildKubeDistro(eksdRelease)
+	if err != nil {
+		return err
+	}
+
+	s.Bundles = bundles
+	s.Config = config
 	s.VersionsBundle = &VersionsBundle{
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,
 	}
-	s.eksdRelease = eksd
+	s.eksdRelease = eksdRelease
 
 	// Get first aws iam config if it exists
 	// Config supports multiple configs because Cluster references a slice
@@ -216,32 +257,13 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		break
 	}
 
-	switch s.Cluster.Spec.DatacenterRef.Kind {
-	case eksav1alpha1.TinkerbellDatacenterKind:
-		if features.IsActive(features.TinkerbellProvider()) {
-			templateConfigs, err := eksav1alpha1.GetTinkerbellTemplateConfig(clusterConfigPath)
-			if err != nil {
-				return nil, err
-			}
-			s.TinkerbellTemplateConfigs = templateConfigs
-		} else {
-			return nil, fmt.Errorf("unsupported DatacenterRef.Kind: %s", eksav1alpha1.TinkerbellDatacenterKind)
-		}
-	}
-
-	if s.ManagementCluster != nil {
-		s.Cluster.SetManagedBy(s.ManagementCluster.Name)
-	} else {
-		s.Cluster.SetSelfManaged()
-	}
-
-	return s, nil
+	return nil
 }
 
 func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundlesManifest *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
 	s := NewSpec(opts...)
 
-	versionsBundle, err := s.getVersionsBundle(cluster.Spec.KubernetesVersion, bundlesManifest)
+	versionsBundle, err := GetVersionsBundle(cluster, bundlesManifest)
 	if err != nil {
 		return nil, err
 	}
@@ -270,15 +292,6 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundlesManifest *v1alph
 
 func (s *Spec) newReader() *files.Reader {
 	return files.NewReader(files.WithEmbedFS(s.configFS), files.WithUserAgent(s.userAgent))
-}
-
-func (s *Spec) getVersionsBundle(kubeVersion eksav1alpha1.KubernetesVersion, bundles *v1alpha1.Bundles) (*v1alpha1.VersionsBundle, error) {
-	for _, versionsBundle := range bundles.Spec.VersionsBundles {
-		if versionsBundle.KubeVersion == string(kubeVersion) {
-			return &versionsBundle, nil
-		}
-	}
-	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", kubeVersion, bundles.Spec.Number)
 }
 
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
@@ -367,17 +380,6 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 	return i.Image()[:lastInd], i.Tag()
 }
 
-// GetVersionsBundleForVersion returns the  versionBundle for gitVersion and kubernetes version
-func GetVersionsBundleForVersion(cliVersion version.Info, kubernetesVersion eksav1alpha1.KubernetesVersion) (*v1alpha1.VersionsBundle, error) {
-	s := newWithCliVersion(cliVersion)
-	bundles, err := s.GetBundles(cliVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.getVersionsBundle(kubernetesVersion, bundles)
-}
-
 type Manifest struct {
 	Filename string
 	Content  []byte
@@ -404,28 +406,6 @@ func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
 }
 
-type EksdManifests struct {
-	ReleaseManifestContent []byte
-	ReleaseCrdContent      []byte
-}
-
-func (s *Spec) ReadEksdManifests(release v1alpha1.EksDRelease) (*EksdManifests, error) {
-	releaseCrdContent, err := s.reader.ReadFile(release.Components)
-	if err != nil {
-		return nil, err
-	}
-
-	releaseManifestContent, err := s.reader.ReadFile(release.EksDReleaseUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	return &EksdManifests{
-		ReleaseManifestContent: releaseManifestContent,
-		ReleaseCrdContent:      releaseCrdContent,
-	}, nil
-}
-
 func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {
 	var images []v1alpha1.Image
 	images = append(images, vb.KubeDistro.EtcdImage)
@@ -448,4 +428,13 @@ func (vb *VersionsBundle) Images() []v1alpha1.Image {
 
 func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {
 	return vb.VersionsBundle.Ovas()
+}
+
+func BundlesRefDefaulter() Defaulter {
+	return func(c *Config) error {
+		if c.Cluster.Spec.BundlesRef == nil {
+			c.Cluster.Spec.BundlesRef = &eksav1alpha1.BundlesRef{}
+		}
+		return nil
+	}
 }

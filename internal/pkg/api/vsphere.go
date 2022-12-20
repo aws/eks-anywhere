@@ -1,14 +1,12 @@
 package api
 
 import (
-	"fmt"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 )
 
 type VSphereConfig struct {
@@ -18,49 +16,39 @@ type VSphereConfig struct {
 
 type VSphereFiller func(config VSphereConfig)
 
-func AutoFillVSphereProvider(filename string, fillers ...VSphereFiller) ([]byte, error) {
-	vsphereDatacenterConfig, err := anywherev1.GetVSphereDatacenterConfig(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get vsphere datacenter config from file: %v", err)
+// VSphereToConfigFiller transforms a set of VSphereFiller's in a single ClusterConfigFiller.
+func VSphereToConfigFiller(fillers ...VSphereFiller) ClusterConfigFiller {
+	return func(c *cluster.Config) {
+		updateVSphere(c, fillers...)
 	}
+}
 
-	vsphereMachineConfigs, err := anywherev1.GetVSphereMachineConfigs(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get vsphere machine config from file: %v", err)
-	}
-
-	config := VSphereConfig{
-		datacenterConfig: vsphereDatacenterConfig,
-		machineConfigs:   vsphereMachineConfigs,
+// updateVSphere updates the vSphere datacenter and machine configs in the
+// cluster.Config by applying all the fillers.
+func updateVSphere(config *cluster.Config, fillers ...VSphereFiller) {
+	vc := VSphereConfig{
+		datacenterConfig: config.VSphereDatacenter,
+		machineConfigs:   config.VSphereMachineConfigs,
 	}
 
 	for _, f := range fillers {
-		f(config)
+		f(vc)
 	}
-
-	resources := make([]interface{}, 0, len(config.machineConfigs)+1)
-	resources = append(resources, config.datacenterConfig)
-	for _, m := range config.machineConfigs {
-		resources = append(resources, m)
-	}
-
-	yamlResources := make([][]byte, 0, len(resources))
-	for _, r := range resources {
-		yamlContent, err := yaml.Marshal(r)
-		if err != nil {
-			return nil, fmt.Errorf("marshalling vsphere resource: %v", err)
-		}
-
-		yamlResources = append(yamlResources, yamlContent)
-	}
-
-	return templater.AppendYamlResources(yamlResources...), nil
 }
 
 func WithOsFamilyForAllMachines(value anywherev1.OSFamily) VSphereFiller {
 	return func(config VSphereConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.OSFamily = value
+		}
+	}
+}
+
+// WithTagsForAllMachines add provided tags to all machines.
+func WithTagsForAllMachines(value []string) VSphereFiller {
+	return func(config VSphereConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.TagIDs = value
 		}
 	}
 }
@@ -173,6 +161,13 @@ func WithDatastoreForAllMachines(value string) VSphereFiller {
 func WithDatacenter(value string) VSphereFiller {
 	return func(config VSphereConfig) {
 		config.datacenterConfig.Spec.Datacenter = value
+	}
+}
+
+// WithDisableCSI sets the value for DisableCSI in VSphereDatacenterConfig.
+func WithDisableCSI(value bool) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.datacenterConfig.Spec.DisableCSI = value
 	}
 }
 

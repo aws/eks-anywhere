@@ -1,0 +1,58 @@
+@startuml cluster-controller-container-components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component diagram for EKS-A Cluster controller
+
+AddRelTag("indirect relationship", $textColor="orange", $lineColor="orange", $lineStyle = DashedLine())
+
+Person(user, "EKS-A user", "Manages EKS-A clusters")
+Container(kubeApiServer, "Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server and allows to subscribe to events when they change")
+Container_Ext(workloadKubeApiServer, "Workload Cluster Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server")
+Container_Ext(ociRegistry, "OCI registry", "Public ECR or other", "OCI compliant registry to store container images and Helm charts")
+
+Container_Boundary(clusterController, "Cluster Controller") {
+    AddElementTag("port", $fontColor="#ffffbf", $borderColor="#ffffbf")
+    AddElementTag("busines logic", $fontColor="#01ffff", $borderColor="#01ffff")
+
+    Component(clusterReconciler, "Cluster Reconciler", "K8s controller-runtime Reconciler", "Validates input and orchestrates Cluster reconcile requests", $tags="busines logic")
+    Component(vsphereHandler, "vSphere Cluster Reconciler", "ProviderClusterReconciler", "Reconciles a vSphere Cluster to the desired state", $tags="busines logic")
+    Component(snowHandler, "Snow Cluster Reconciler", "ProviderClusterReconciler", "Reconciles a Snow Cluster to the desired state", $tags="busines logic")
+
+    Component(cilimHandler, "Cilium Reconciler", "", "Reonciles the Cilium CNI installation to the desired state", $tags="busines logic")
+
+    Component(client, "Kubernetes API client", "controller-runtime client.Client", "Kubernetes client provided by controller-runtime", $tags="port")
+    Component(remoteClient, "Remote Kubernetes API client", "controller-runtime client.Client", "Kubernetes client for external cluster authenticated with kubeconfig", $tags="port")
+
+    Component(helm, "Helm client", "Helm cli binary [Go]", "Client to interact with Helm charts", $tags="port")
+
+    Rel(vsphereHandler, cilimHandler, "Delegates")
+    Rel(snowHandler, cilimHandler, "Delegates")
+
+    Rel(clusterReconciler, vsphereHandler, "Delegates")
+    Rel(clusterReconciler, snowHandler, "Delegates")
+
+    Rel(vsphereHandler, client, "Reads/writes CAPI objects through")
+    Rel(snowHandler, client, "Reads/writes CAPI objects through")
+    Rel(clusterReconciler, client, "Reads objects through")
+    Rel(cilimHandler, remoteClient, "Reads/writes Cilium DS/deployment and CRDs")
+
+    Rel(cilimHandler, helm, "Generates Cilium resources in yaml")
+}
+
+Container(capiControllers, "CAPI controllers", "Go", "Reoncile workload clusters")
+Rel(snowHandler, capiControllers, "Creates/updates snow clusters", $tags="indirect relationship")
+Rel(vsphereHandler, capiControllers, "Creates/updates vSphere clusters", $tags="indirect relationship")
+Rel(capiControllers, cilimHandler, "Marks control plane as ready", $tags="indirect relationship")
+
+Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
+
+Rel(clusterReconciler, kubeApiServer, "Subscribes to API events", "controller-runtime JSON/HTTPS")
+
+Rel(client, kubeApiServer, "Reads/Writes Objects", "JSON/HTTPS")
+
+Rel(remoteClient, workloadKubeApiServer, "Reads/Writes Objects", "JSON/HTTPS")
+
+Rel(helm, ociRegistry, "Reads Helm charts", "OCI/HTTPS")
+
+SHOW_LEGEND()
+@enduml

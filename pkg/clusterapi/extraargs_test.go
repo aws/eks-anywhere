@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestOIDCToExtraArgs(t *testing.T) {
@@ -309,6 +310,50 @@ func TestSecureEtcdTlsCipherSuitesExtraArgs(t *testing.T) {
 	}
 }
 
+func TestCgroupDriverCgroupfsExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"cgroup-driver": "cgroupfs",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.CgroupDriverCgroupfsExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CgroupDriverCgroupfsExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCgroupDriverSystemdExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"cgroup-driver": "systemd",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.CgroupDriverSystemdExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CgroupDriverSystemdExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestNodeLabelsExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string
@@ -318,14 +363,14 @@ func TestNodeLabelsExtraArgs(t *testing.T) {
 		{
 			testName: "no labels",
 			wnc: v1alpha1.WorkerNodeGroupConfiguration{
-				Count: 3,
+				Count: ptr.Int(3),
 			},
 			want: clusterapi.ExtraArgs{},
 		},
 		{
 			testName: "with labels",
 			wnc: v1alpha1.WorkerNodeGroupConfiguration{
-				Count:  3,
+				Count:  ptr.Int(3),
 				Labels: map[string]string{"label1": "foo", "label2": "bar"},
 			},
 			want: clusterapi.ExtraArgs{
@@ -422,6 +467,89 @@ func TestAppend(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := tt.e.Append(tt.a); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ExtraArgs.Append() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNodeCIDRMaskExtraArgs(t *testing.T) {
+	nodeCidrMaskSize := new(int)
+	*nodeCidrMaskSize = 28
+	tests := []struct {
+		testName       string
+		clusterNetwork *v1alpha1.ClusterNetwork
+		want           clusterapi.ExtraArgs
+	}{
+		{
+			testName:       "no cluster network config",
+			clusterNetwork: nil,
+			want:           nil,
+		},
+		{
+			testName: "no nodes config",
+			clusterNetwork: &v1alpha1.ClusterNetwork{
+				Pods: v1alpha1.Pods{CidrBlocks: []string{"test", "test"}},
+			},
+			want: nil,
+		},
+		{
+			testName: "with nodes config",
+			clusterNetwork: &v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{CIDRMaskSize: nodeCidrMaskSize},
+			},
+			want: clusterapi.ExtraArgs{
+				"node-cidr-mask-size": "28",
+			},
+		},
+		{
+			testName: "with nodes config empty",
+			clusterNetwork: &v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{},
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.NodeCIDRMaskExtraArgs(tt.clusterNetwork); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NodeCIDRMaskExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFeatureGatesExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		features []string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "no feature gates",
+			features: []string{},
+			want:     nil,
+		},
+		{
+			testName: "single feature gate",
+			features: []string{"feature1=true"},
+			want: clusterapi.ExtraArgs{
+				"feature-gates": "feature1=true",
+			},
+		},
+		{
+			testName: "multiple feature gates",
+			features: []string{"feature1=true", "feature2=false", "feature3=true"},
+			want: clusterapi.ExtraArgs{
+				"feature-gates": "feature1=true,feature2=false,feature3=true",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.FeatureGatesExtraArgs(tt.features...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FeatureGatesExtraArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}

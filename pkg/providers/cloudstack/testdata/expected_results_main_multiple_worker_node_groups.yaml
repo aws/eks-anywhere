@@ -18,14 +18,14 @@ spec:
             read-only-port: "0"
             anonymous-auth: "false"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          name: '{{ ds.meta_data.local_hostname }}'
+          name: "{{ ds.meta_data.hostname }}"
       preKubeadmCommands:
       - swapoff -a
-      - hostname "{{ ds.meta_data.local_hostname }}"
+      - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
       users:
       - name: mySshUsername
         sshAuthorizedKeys:
@@ -57,27 +57,40 @@ spec:
           name: test-md-0-template-1234567890000
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: CloudStackMachineTemplate
         name: test-md-0-1234567890000
       version: v1.21.2-eks-1-21-4
+
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
+  creationTimestamp: null
   name: test-md-0-1234567890000
   namespace: eksa-system
 spec:
   template:
+    metadata:
+      creationTimestamp: null
     spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
+      affinityGroupIDs:
+      - worker-affinity
       details:
         foo: bar
-      affinitygroupids:
-      - worker-affinity
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---
 
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
@@ -100,14 +113,14 @@ spec:
             read-only-port: "0"
             anonymous-auth: "false"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          name: '{{ ds.meta_data.local_hostname }}'
+          name: "{{ ds.meta_data.hostname }}"
       preKubeadmCommands:
       - swapoff -a
-      - hostname "{{ ds.meta_data.local_hostname }}"
+      - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
       users:
       - name: mySshUsername
         sshAuthorizedKeys:
@@ -139,26 +152,39 @@ spec:
           name: test-md-1-template-1234567890000
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: CloudStackMachineTemplate
         name: test-md-1-1234567890000
       version: v1.21.2-eks-1-21-4
+
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
+  creationTimestamp: null
   name: test-md-1-1234567890000
   namespace: eksa-system
 spec:
   template:
+    metadata:
+      creationTimestamp: null
     spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
+      affinityGroupIDs:
+      - worker-affinity
       details:
         foo: bar
-      affinitygroupids:
-      - worker-affinity
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---
 
 ---

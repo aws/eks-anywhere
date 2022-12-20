@@ -1,0 +1,74 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "test-ip"
+    machineGroupRef:
+      kind: TinkerbellMachineConfig
+      name: eksa-unit-test-cp
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: eksa-unit-test
+  kubernetesVersion: "1.20"
+  managementCluster:
+    name: eksa-unit-test
+  workerNodeGroupConfigurations:
+  - count: 1
+    machineGroupRef:
+      kind: TinkerbellMachineConfig
+      name: eksa-unit-test
+    name: md-0
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  tinkerbellIP: "test-tinkerbell-ip"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: eksa-unit-test-cp
+spec:
+  hardwareSelector:
+    type: test-control-plane
+  osFamily: ubuntu
+  templateRef: {}
+  users:
+  - name: "mySshUsername"
+    sshAuthorizedKeys:
+    - "mySshAuthorizedKey"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  hardwareSelector:
+    type: test-md
+  osFamily: ubuntu
+  templateRef: {}
+  users:
+  - name: "mySshUsername"
+    sshAuthorizedKeys:
+    - "mySshAuthorizedKey"
+
+---
+

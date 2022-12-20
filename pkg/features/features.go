@@ -1,15 +1,12 @@
 package features
 
 const (
-	TinkerbellProviderEnvVar        = "TINKERBELL_PROVIDER"
-	TinkebellStackSetupEnvVar       = "TINKERBELL_ENABLE_STACK_CREATION"
-	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
-	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
-	GenericGitProviderEnvVar        = "GENERIC_GIT_PROVIDER_SUPPORT"
+	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
+	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 )
 
 func FeedGates(featureGates []string) {
@@ -25,31 +22,15 @@ func IsActive(feature Feature) bool {
 	return feature.IsActive()
 }
 
+// ClearCache is mainly used for unit tests as of now.
+func ClearCache() {
+	globalFeatures.clearCache()
+}
+
 func FullLifecycleAPI() Feature {
 	return Feature{
 		Name:     "Full lifecycle API support through the EKS-A controller",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
-	}
-}
-
-func TinkerbellProvider() Feature {
-	return Feature{
-		Name:     "Tinkerbell provider support",
-		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
-	}
-}
-
-func TinkerbellStackSetup() Feature {
-	return Feature{
-		Name:     "Tinkerbell stack creation support",
-		IsActive: globalFeatures.isActiveForEnvVar(TinkebellStackSetupEnvVar),
-	}
-}
-
-func CloudStackProvider() Feature {
-	return Feature{
-		Name:     "CloudStack provider support",
-		IsActive: globalFeatures.isActiveForEnvVar(CloudStackProviderEnvVar),
 	}
 }
 
@@ -67,16 +48,16 @@ func SnowProvider() Feature {
 	}
 }
 
-func CuratedPackagesSupport() Feature {
+func CheckpointEnabled() Feature {
 	return Feature{
-		Name:     "Curated Packages Support",
-		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
+		Name:     "Checkpoint to rerun commands enabled",
+		IsActive: globalFeatures.isActiveForEnvVar(CheckpointEnabledEnvVar),
 	}
 }
 
-func GenericGitProviderSupport() Feature {
+func UseNewWorkflows() Feature {
 	return Feature{
-		Name:     "Generic Git Provider Support",
-		IsActive: globalFeatures.isActiveForEnvVar(GenericGitProviderEnvVar),
+		Name:     "Use new workflow logic for cluster management operations",
+		IsActive: globalFeatures.isActiveForEnvVar(UseNewWorkflowsEnvVar),
 	}
 }

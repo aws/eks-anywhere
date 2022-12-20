@@ -15,17 +15,22 @@ const (
 	// object to prevent a controller from processing a resource.
 	pausedAnnotation = "anywhere.eks.amazonaws.com/paused"
 
+	// ManagedByCLIAnnotation can be applied to an EKS-A Cluster to signal when the CLI is currently
+	// performing an operation so the controller should not take any action. When marked for deletion,
+	// the controller will remove the finalizer and let the cluster be deleted.
+	ManagedByCLIAnnotation = "anywhere.eks.amazonaws.com/managed-by-cli"
+
 	// ControlPlaneAnnotation is an annotation that can be applied to EKS-A machineconfig
 	// object to prevent a controller from making changes to that resource.
 	controlPlaneAnnotation = "anywhere.eks.amazonaws.com/control-plane"
 
 	clusterResourceType = "clusters.anywhere.eks.amazonaws.com"
 
-	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it
+	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it.
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
 
 	// managementAnnotation points to the name of a management cluster
-	// cluster object
+	// cluster object.
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 
 	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
@@ -34,7 +39,7 @@ const (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// ClusterSpec defines the desired state of Cluster
+// ClusterSpec defines the desired state of Cluster.
 type ClusterSpec struct {
 	KubernetesVersion             KubernetesVersion              `json:"kubernetesVersion,omitempty"`
 	ControlPlaneConfiguration     ControlPlaneConfiguration      `json:"controlPlaneConfiguration,omitempty"`
@@ -42,15 +47,26 @@ type ClusterSpec struct {
 	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
 	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
 	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
-	// Deprecated: This field has no function and is going to be removed in a future release.
-	OverrideClusterSpecFile string         `json:"overrideClusterSpecFile,omitempty"`
-	ClusterNetwork          ClusterNetwork `json:"clusterNetwork,omitempty"`
+	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
 	// +kubebuilder:validation:Optional
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
+	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
+	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
+}
+
+// HasAWSIamConfig checks if AWSIamConfig is configured for the cluster.
+func (c *Cluster) HasAWSIamConfig() bool {
+	for _, identityProvider := range c.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == AWSIamConfigKind {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (n *Cluster) Equal(o *Cluster) bool {
@@ -93,6 +109,10 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	if !n.ManagementClusterEqual(o) {
 		return false
 	}
+	if !n.Spec.BundlesRef.Equal(o.Spec.BundlesRef) {
+		return false
+	}
+
 	return true
 }
 
@@ -124,7 +144,7 @@ func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
 	return n.HttpProxy == o.HttpProxy && n.HttpsProxy == o.HttpsProxy && SliceEqual(n.NoProxy, o.NoProxy)
 }
 
-// RegistryMirrorConfiguration defines the settings for image registry mirror
+// RegistryMirrorConfiguration defines the settings for image registry mirror.
 type RegistryMirrorConfiguration struct {
 	// Endpoint defines the registry mirror endpoint to use for pulling images
 	Endpoint string `json:"endpoint,omitempty"`
@@ -132,13 +152,28 @@ type RegistryMirrorConfiguration struct {
 	// Port defines the port exposed for registry mirror endpoint
 	Port string `json:"port,omitempty"`
 
+	// OCINamespaces defines the mapping from an upstream registry to a local namespace where upstream
+	// artifacts are placed into
+	OCINamespaces []OCINamespace `json:"ociNamespaces,omitempty"`
+
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
+
+	// Authenticate defines if registry requires authentication
+	Authenticate bool `json:"authenticate,omitempty"`
 
 	// InsecureSkipVerify skips the registry certificate verification.
 	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
 	// Currently only supported for snow provider
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+}
+
+// OCINamespace represents an entity in a local reigstry to group related images.
+type OCINamespace struct {
+	// Name refers to the name of the upstream registry
+	Registry string `json:"registry"`
+	// Namespace refers to the name of a namespace in the local registry
+	Namespace string `json:"namespace"`
 }
 
 func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
@@ -148,7 +183,35 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent &&
+		n.InsecureSkipVerify == o.InsecureSkipVerify && n.Authenticate == o.Authenticate &&
+		OCINamespacesSliceEqual(n.OCINamespaces, o.OCINamespaces)
+}
+
+// OCINamespacesSliceEqual is used to check equality of the OCINamespaces fields of two RegistryMirrorConfiguration.
+func OCINamespacesSliceEqual(a, b []OCINamespace) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string]int, len(a))
+	for _, v := range a {
+		m[generateOCINamespaceKey(v)]++
+	}
+	for _, v := range b {
+		k := generateOCINamespaceKey(v)
+		if _, ok := m[k]; !ok {
+			return false
+		}
+		m[k]--
+		if m[k] == 0 {
+			delete(m, k)
+		}
+	}
+	return len(m) == 0
+}
+
+func generateOCINamespaceKey(n OCINamespace) (key string) {
+	return n.Registry + n.Namespace
 }
 
 type ControlPlaneConfiguration struct {
@@ -162,6 +225,9 @@ type ControlPlaneConfiguration struct {
 	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
+	// UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+	// and related parameters/knobs
+	UpgradeRolloutStrategy *ControlPlaneUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
@@ -181,7 +247,8 @@ func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	return true
 }
 
-func LabelsMapEqual(s1, s2 map[string]string) bool {
+// MapEqual compares two maps to check whether or not they are equal.
+func MapEqual(s1, s2 map[string]string) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
@@ -205,7 +272,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 		return false
 	}
 	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
-		TaintsSliceEqual(n.Taints, o.Taints) && LabelsMapEqual(n.Labels, o.Labels)
+		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels)
 }
 
 type Endpoint struct {
@@ -227,21 +294,32 @@ type WorkerNodeGroupConfiguration struct {
 	// Name refers to the name of the worker node group
 	Name string `json:"name,omitempty"`
 	// Count defines the number of desired worker nodes. Defaults to 1.
-	Count int `json:"count,omitempty"`
+	Count *int `json:"count,omitempty"`
+	// AutoScalingConfiguration defines the auto scaling configuration
+	AutoScalingConfiguration *AutoScalingConfiguration `json:"autoscalingConfiguration,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 	// Taints define the set of taints to be applied on worker nodes
 	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
+	// UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+	// and related parameters/knobs
+	UpgradeRolloutStrategy *WorkerNodesUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
 	key = c.Name
 	if c.MachineGroupRef != nil {
-		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
+		key += c.MachineGroupRef.Kind + c.MachineGroupRef.Name
 	}
-	return strconv.Itoa(c.Count) + key
+	if c.AutoScalingConfiguration != nil {
+		key += "autoscaling" + strconv.Itoa(c.AutoScalingConfiguration.MaxCount) + strconv.Itoa(c.AutoScalingConfiguration.MinCount)
+	}
+	if c.Count == nil {
+		return "nil" + key
+	}
+	return strconv.Itoa(*c.Count) + key
 }
 
 func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration) bool {
@@ -303,7 +381,7 @@ func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfigura
 			// if a node group is present in a but not b, or vise versa, it's immaterial
 			continue
 		} else {
-			if !LabelsMapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
+			if !MapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
 				return false
 			}
 		}
@@ -321,6 +399,7 @@ type ClusterNetwork struct {
 	// CNIConfig specifies the CNI plugin to be installed in the cluster
 	CNIConfig *CNIConfig `json:"cniConfig,omitempty"`
 	DNS       DNS        `json:"dns,omitempty"`
+	Nodes     *Nodes     `json:"nodes,omitempty"`
 }
 
 func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
@@ -341,7 +420,10 @@ func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
 		return false
 	}
 
-	return n.Pods.Equal(&o.Pods) && n.Services.Equal(&o.Services) && n.DNS.Equal(&o.DNS)
+	return n.Pods.Equal(&o.Pods) &&
+		n.Services.Equal(&o.Services) &&
+		n.DNS.Equal(&o.DNS) &&
+		n.Nodes.Equal(o.Nodes)
 }
 
 func getCNIConfig(cn *ClusterNetwork) *CNIConfig {
@@ -526,6 +608,30 @@ type ResolvConf struct {
 	Path string `json:"path,omitempty"`
 }
 
+type Nodes struct {
+	// CIDRMaskSize defines the mask size for node cidr in the cluster, default for ipv4 is 24. This is an optional field
+	CIDRMaskSize *int `json:"cidrMaskSize,omitempty"`
+}
+
+// Equal compares two Nodes definitions and return true if the are equivalent.
+func (n *Nodes) Equal(o *Nodes) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+
+	if n.CIDRMaskSize == o.CIDRMaskSize {
+		return true
+	}
+	if n.CIDRMaskSize == nil || o.CIDRMaskSize == nil {
+		return false
+	}
+
+	return *n.CIDRMaskSize == *o.CIDRMaskSize
+}
+
 func (n *ResolvConf) Equal(o *ResolvConf) bool {
 	if n == o {
 		return true
@@ -544,6 +650,8 @@ const (
 	Kube120 KubernetesVersion = "1.20"
 	Kube121 KubernetesVersion = "1.21"
 	Kube122 KubernetesVersion = "1.22"
+	Kube123 KubernetesVersion = "1.23"
+	Kube124 KubernetesVersion = "1.24"
 )
 
 type CNI string
@@ -585,7 +693,7 @@ var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
 	CiliumPolicyModeNever:   true,
 }
 
-// ClusterStatus defines the observed state of Cluster
+// ClusterStatus defines the observed state of Cluster.
 type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
 	// +optional
@@ -607,6 +715,23 @@ type EksdReleaseRef struct {
 	Namespace string `json:"namespace"`
 }
 
+type BundlesRef struct {
+	// APIVersion refers to the Bundles APIVersion
+	APIVersion string `json:"apiVersion"`
+	// Name refers to the name of the Bundles object in the cluster
+	Name string `json:"name"`
+	// Namespace refers to the Bundles's namespace
+	Namespace string `json:"namespace"`
+}
+
+func (b *BundlesRef) Equal(o *BundlesRef) bool {
+	if b == nil || o == nil {
+		return b == o
+	}
+
+	return b.APIVersion == o.APIVersion && b.Name == o.Name && b.Namespace == o.Namespace
+}
+
 type Ref struct {
 	Kind string `json:"kind,omitempty"`
 	Name string `json:"name,omitempty"`
@@ -623,20 +748,20 @@ func (n *Ref) Equal(o *Ref) bool {
 }
 
 // +kubebuilder:object:generate=false
-// Interface for getting DatacenterRef fields for Cluster type
+// Interface for getting DatacenterRef fields for Cluster type.
 type ProviderRefAccessor interface {
 	Kind() string
 	Name() string
 }
 
 // +kubebuilder:object:generate=false
-// Interface for getting Kind field for Cluster type
+// Interface for getting Kind field for Cluster type.
 type KindAccessor interface {
 	Kind() string
 	ExpectedKind() string
 }
 
-// ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology
+// ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology.
 type ExternalEtcdConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the etcd machines.
@@ -675,9 +800,43 @@ func (n *PodIAMConfig) Equal(o *PodIAMConfig) bool {
 	return n.ServiceAccountIssuer == o.ServiceAccountIssuer
 }
 
+// AutoScalingConfiguration defines the configuration for the node autoscaling feature.
+type AutoScalingConfiguration struct {
+	// MinCount defines the minimum number of nodes for the associated resource group.
+	// +optional
+	MinCount int `json:"minCount,omitempty"`
+
+	// MaxCount defines the maximum number of nodes for the associated resource group.
+	// +optional
+	MaxCount int `json:"maxCount,omitempty"`
+}
+
+// ControlPlaneUpgradeRolloutStrategy indicates rollout strategy for cluster.
+type ControlPlaneUpgradeRolloutStrategy struct {
+	Type          string                          `json:"type,omitempty"`
+	RollingUpdate ControlPlaneRollingUpdateParams `json:"rollingUpdate,omitempty"`
+}
+
+// ControlPlaneRollingUpdateParams is API for rolling update strategy knobs.
+type ControlPlaneRollingUpdateParams struct {
+	MaxSurge int `json:"maxSurge"`
+}
+
+// WorkerNodesUpgradeRolloutStrategy indicates rollout strategy for cluster.
+type WorkerNodesUpgradeRolloutStrategy struct {
+	Type          string                         `json:"type,omitempty"`
+	RollingUpdate WorkerNodesRollingUpdateParams `json:"rollingUpdate,omitempty"`
+}
+
+// WorkerNodesRollingUpdateParams is API for rolling update strategy knobs.
+type WorkerNodesRollingUpdateParams struct {
+	MaxSurge       int `json:"maxSurge"`
+	MaxUnavailable int `json:"maxUnavailable"`
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// Cluster is the Schema for the clusters API
+// Cluster is the Schema for the clusters API.
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -695,7 +854,7 @@ func (c *Cluster) SetConditions(conditions clusterv1.Conditions) {
 }
 
 // +kubebuilder:object:generate=false
-// Same as Cluster except stripped down for generation of yaml file during generate clusterconfig
+// Same as Cluster except stripped down for generation of yaml file during generate clusterconfig.
 type ClusterGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -823,7 +982,7 @@ func (c *Cluster) ManagedBy() string {
 }
 
 // +kubebuilder:object:root=true
-// ClusterList contains a list of Cluster
+// ClusterList contains a list of Cluster.
 type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

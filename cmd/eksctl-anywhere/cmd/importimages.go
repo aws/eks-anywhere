@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -41,10 +41,11 @@ func init() {
 
 var importImagesCmdDeprecated = &cobra.Command{
 	Use:          "import-images",
-	Short:        "Push EKS Anywhere images to a private registry",
+	Short:        "Push EKS Anywhere images to a private registry (Deprecated)",
 	Long:         "This command is used to import images from an EKS Anywhere release bundle into a private registry",
 	PreRunE:      preRunImportImagesCmd,
 	SilenceUsage: true,
+	Deprecated:   "use `eksctl anywhere import images` instead",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := importImages(cmd.Context(), opts.fileName); err != nil {
 			return err
@@ -59,7 +60,7 @@ func importImages(ctx context.Context, spec string) error {
 	if registryUsername == "" || registryPassword == "" {
 		return fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD for importing helm charts (e.g. cilium)")
 	}
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
 	if err != nil {
 		return err
 	}
@@ -67,12 +68,12 @@ func importImages(ctx context.Context, spec string) error {
 	de := executables.BuildDockerExecutable()
 
 	bundle := clusterSpec.VersionsBundle
-	executableBuilder, closer, err := executables.NewExecutableBuilder(ctx, bundle.Eksa.CliTools.VersionedImage())
+	executableBuilder, closer, err := executables.InitInDockerExecutablesBuilder(ctx, bundle.Eksa.CliTools.VersionedImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	defer closer.CheckErr(ctx)
-	helmExecutable := executableBuilder.BuildHelmExecutable()
+	helmExecutable := executableBuilder.BuildHelmExecutable(executables.WithInsecure())
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return fmt.Errorf("endpoint not set. It is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
@@ -97,7 +98,7 @@ func importImages(ctx context.Context, spec string) error {
 		}
 	}
 
-	endpoint := clusterSpec.Cluster.RegistryMirror()
+	endpoint := registrymirror.FromCluster(clusterSpec.Cluster).BaseRegistry
 	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
 }
 

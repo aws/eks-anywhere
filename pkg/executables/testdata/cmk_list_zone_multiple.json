@@ -1,0 +1,27 @@
+{
+  "count": 2,
+  "zone": [
+    {
+      "allocationstate": "Enabled",
+      "dhcpprovider": "VirtualRouter",
+      "id": "4e3b338d-87a6-4189-b931-a1747edeea8f",
+      "localstorageenabled": false,
+      "name": "zone1",
+      "networktype": "Advanced",
+      "securitygroupsenabled": false,
+      "tags": [],
+      "zonetoken": "1f999599-dbf0-3ba6-9091-1ba87c4f91f0"
+    },
+    {
+      "allocationstate": "Enabled",
+      "dhcpprovider": "VirtualRouter",
+      "id": "4e3b338d-87a6-4189-b931-a1747edeea8g",
+      "localstorageenabled": false,
+      "name": "zone1",
+      "networktype": "Advanced",
+      "securitygroupsenabled": false,
+      "tags": [],
+      "zonetoken": "1f999599-dbf0-3ba6-9091-1ba87c4f91f0"
+    },
+  ]
+}

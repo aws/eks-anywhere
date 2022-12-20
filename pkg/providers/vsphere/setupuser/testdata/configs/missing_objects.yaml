@@ -1,0 +1,9 @@
+apiVersion: "eks-anywhere.amazon.com/v1"
+kind: vSphereUser
+spec:
+  datacenter: "MyDatacenter"
+  vSphereDomain: "vsphere.local"
+  connection:
+    server: "https://my-vsphere.internal.acme.com"
+    insecure: false
+  objects:

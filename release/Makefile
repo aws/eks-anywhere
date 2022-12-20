@@ -28,6 +28,9 @@ SOURCE_BUCKET=projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f
 else
 DRY_RUN=false
 endif
+DATE_YYYYMMDD=$(shell date "+%F")
+WEEKLY?=false
+WEEKLY_RELEASES_URL_PREFIX=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/weekly-releases
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -42,7 +45,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Setup Go
-GOLANG_VERSION?="1.17"
+GOLANG_VERSION?="1.18"
 GO_VERSION ?= $(shell source ../scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 
@@ -51,6 +54,10 @@ GO ?= $(GO_VERSION)/go
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
+
+TOOLS_BIN_DIR := ../hack/tools/bin
+CONTROLLER_GEN_BIN := controller-gen
+CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
 all: build
 
@@ -79,6 +86,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 	## Copy only the bundles crd to root config kustomization folder
 	cp -f config/crd/bases/anywhere.eks.amazonaws.com_bundles.yaml ../config/crd/bases/
+	@echo "Make sure to update the test bundle with \`make update-bundle-golden-files\`"
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
@@ -112,19 +120,33 @@ bin/golangci-lint:
 unit-test: ## Run go test against code.
 	$(GO) test -count=1 ./...
 
+update-bundle-golden-files: ## Updates testdata files located under pkg/test/testdata
+	$(GO) test -count=1 ./pkg/operations -update
+	$(eval DIFF_LINE_COUNT=$(shell git diff pkg/test/testdata | wc -l))
+	@if [[ $(DIFF_LINE_COUNT) != 0 ]]; then \
+		printf "\n\033[33mWarning:\033[0m Testdata files have been updated! Ensure that these changes were intentional.\n"; \
+	fi
+
 run: manifests generate fmt vet ## Run a controller from your host.
 	$(GO) run ./main.go
 
 ##@ Release
 
 dev-release: build ## Perform a dev release of EKS-A bundles and CLI manifests
-	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN)
+	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN) $(WEEKLY)
 
 bundle-release: build ## Perform EKS-A versioned bundles release
 	scripts/bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)
 
 eks-a-release: build ## Perform EKS-A CLI release
 	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT) $(CLI_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)
+
+github-bundle-release:
+	scripts/github-bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(WEEKLY_RELEASES_URL_PREFIX)
+
+announce-eks-a-release: CDN=https://anywhere-assets.eks.amazonaws.com
+announce-eks-a-release:
+	scripts/announce_eksa_release.sh $(CDN)
 
 ##@ Deployment
 
@@ -141,7 +163,6 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 

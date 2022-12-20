@@ -39,14 +39,21 @@ func (r *FluxConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ webhook.Validator = &FluxConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *FluxConfig) ValidateCreate() error {
 	fluxconfiglog.Info("validate create", "name", r.Name)
+
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			r.GroupVersionKind().GroupKind(),
+			r.Name,
+			field.ErrorList{field.Invalid(field.NewPath("spec"), r.Spec, err.Error())})
+	}
 
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *FluxConfig) ValidateUpdate(old runtime.Object) error {
 	fluxconfiglog.Info("validate update", "name", r.Name)
 
@@ -59,6 +66,10 @@ func (r *FluxConfig) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateImmutableFluxFields(r, oldFluxConfig)...)
 
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
 	if len(allErrs) == 0 {
 		return nil
 	}
@@ -66,7 +77,7 @@ func (r *FluxConfig) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(FluxConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *FluxConfig) ValidateDelete() error {
 	fluxconfiglog.Info("validate delete", "name", r.Name)
 
@@ -79,7 +90,7 @@ func validateImmutableFluxFields(new, old *FluxConfig) field.ErrorList {
 	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", FluxConfigKind), new, "config is immutable"),
+			field.Forbidden(field.NewPath(FluxConfigKind), "config is immutable"),
 		)
 	}
 

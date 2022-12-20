@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	fluxupgrader "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	capiupgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
 	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	fluxupgrader "github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -59,6 +59,7 @@ func init() {
 	upgradePlanClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	upgradePlanClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradePlanClusterCmd.Flags().StringVarP(&output, outputFlagName, "o", outputDefault, "Output format: text|json")
+	upgradePlanClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	err := upgradePlanClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -77,21 +78,25 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster).
-		WithProvider(uc.fileName, newClusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, uc.forceClean).
-		WithFluxAddonClient(ctx, newClusterSpec.Cluster, newClusterSpec.FluxConfig).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
+		WithGitOpsFlux(newClusterSpec.Cluster, newClusterSpec.FluxConfig, nil).
 		WithCAPIManager().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
 
-	workloadCluster := &types.Cluster{
+	managementCluster := &types.Cluster{
 		Name:           newClusterSpec.Cluster.Name,
 		KubeconfigFile: getKubeconfigPath(newClusterSpec.Cluster.Name, uc.wConfig),
 	}
 
+	if newClusterSpec.ManagementCluster != nil {
+		managementCluster = newClusterSpec.ManagementCluster
+	}
+
 	logger.V(0).Info("Checking new release availability...")
-	currentSpec, err := deps.ClusterManager.GetCurrentClusterSpec(ctx, workloadCluster, newClusterSpec.Cluster.Name)
+	currentSpec, err := deps.ClusterManager.GetCurrentClusterSpec(ctx, managementCluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,9 @@ package api
 import (
 	"strings"
 
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -21,6 +24,27 @@ func CleanupPathsFromYaml(yamlContent []byte, paths []string) ([]byte, error) {
 	}
 
 	return newYaml, nil
+}
+
+// CleanupPathsInObject unsets or nullifies the provided paths in a give kubernetes Object.
+func CleanupPathsInObject[T any, PT interface {
+	*T
+	client.Object
+}](obj PT, paths []string,
+) error {
+	clusterObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return errors.Wrap(err, "failed converting cluster to unstructured")
+	}
+
+	deletePaths(clusterObj, paths)
+
+	*obj = *new(T)
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(clusterObj, obj); err != nil {
+		return errors.Wrap(err, "failed converting back to cluster from unstructured")
+	}
+
+	return nil
 }
 
 func deletePaths(m map[string]interface{}, paths []string) {

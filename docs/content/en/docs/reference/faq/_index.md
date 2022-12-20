@@ -1,7 +1,7 @@
 ---
 title: "Frequently Asked Questions"
 linkTitle: "FAQ"
-weight: 10
+weight: 40
 description: >
   Frequently asked questions about EKS Anywhere
 ---
@@ -11,7 +11,7 @@ description: >
 ### How do my applications running on EKS Anywhere authenticate with AWS services using IAM credentials?
 
 You can now leverage the [IAM Role for Service Account (IRSA)](https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/) feature 
-by following the [IRSA reference]({{< relref "../../reference/clusterspec/irsa.md" >}}) guide for details.
+by following the [IRSA reference]({{< relref "../../reference/clusterspec/optional/irsa.md" >}}) guide for details.
 
 
 ### Does EKS Anywhere support OIDC (including Azure AD and AD FS)?
@@ -19,7 +19,7 @@ by following the [IRSA reference]({{< relref "../../reference/clusterspec/irsa.m
 Yes, EKS Anywhere can create clusters that support API server OIDC authentication.
 This means you can federate authentication through AD FS locally or through Azure AD, along with other IDPs that support the OIDC standard.
 In order to add OIDC support to your EKS Anywhere clusters, you need to configure your cluster by updating the configuration file before creating the cluster.
-Please see the [OIDC reference]({{< relref "../../reference/clusterspec/oidc.md" >}}) for details.
+Please see the [OIDC reference]({{< relref "../../reference/clusterspec/optional/oidc.md" >}}) for details.
 
 ### Does EKS Anywhere support LDAP?
 EKS Anywhere does not support LDAP out of the box.
@@ -53,7 +53,7 @@ which gives permission to impersonate AWS IAM entities.
 #### How do I enable an AWS user account to view my connected cluster through the EKS console?
 
 For each AWS user or other IAM identity, you should add cluster role binding to the Kubernetes cluster with the appropriate permission for that IAM identity.
-Additionally, each of these IAM entities should be associated with the [IAM policy](SOME_MANAGED_POLICY)
+Additionally, each of these IAM entities should be associated with the IAM policy
 to invoke the EKS Connector on the cluster.
 
 ### Can I use Amazon Controllers for Kubernetes (ACK) on EKS Anywhere?
@@ -63,8 +63,8 @@ Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises t
 
 ### Can I deploy EKS Anywhere on other clouds?
 
-EKS Anywhere can be installed on any infrastructure with the required VMware vSphere versions.
-See EKS Anywhere [vSphere prerequisite]({{< relref "../vsphere" >}}) documentation.
+EKS Anywhere can be installed on any infrastructure with the required Bare Metal, Cloudstack, or VMware vSphere components.
+See EKS Anywhere [Baremetal]({{< relref "../baremetal" >}}), [CloudStack]({{< relref "../cloudstack" >}}), or [vSphere]({{< relref "../vsphere" >}}) documentation.
 
 ### How can I manage EKS Anywhere at scale?
 
@@ -74,5 +74,9 @@ See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md
 
 ### Can I run EKS Anywhere on ESXi?
 
-No. EKS Anywhere is dependent on the vSphere cluster API provider CAPV and it uses the vCenter API.
+No. EKS Anywhere is only supported on providers listed on the [Create production cluster]({{< relref "../../getting-started/production-environment/" >}}) page.
 There would need to be a change to the upstream project to support ESXi.
+
+### Can I deploy EKS Anywhere on a single node?
+
+Yes. Single node cluster deployment is supported for Bare Metal. See [workerNodeGroupConfigurations]({{< relref "../clusterspec/baremetal/#workernodegroupconfigurations">}})

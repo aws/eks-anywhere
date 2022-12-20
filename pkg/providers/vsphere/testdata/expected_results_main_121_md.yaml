@@ -14,6 +14,7 @@ spec:
             cloud-provider: external
             read-only-port: "0"
             anonymous-auth: "false"
+            cgroup-driver: systemd
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
@@ -67,7 +68,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'

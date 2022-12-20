@@ -3,12 +3,10 @@ providers:
     url: "{{.dir}}/infrastructure-docker/{{.DockerProviderVersion}}/infrastructure-components-development.yaml"
     type: "InfrastructureProvider"
     version: "{{.DockerProviderVersion}}"
-    {{- if (eq .IsActiveTinkerbellProvider "true") }}
   - name: "tinkerbell"
     url: "{{.dir}}/infrastructure-tinkerbell/{{.TinkerbellProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
     version: "{{.TinkerbellProviderVersion}}"
-    {{- end }}
   - name: "cloudstack"
     url: "{{.dir}}/infrastructure-cloudstack/{{.CloudStackProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -17,10 +15,6 @@ providers:
     url: "{{.dir}}/infrastructure-vsphere/{{.VSphereProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
     version: "{{.VSphereProviderVersion}}"
-  - name: "aws"
-    url: "{{.dir}}/infrastructure-aws/{{.AwsProviderVersion}}/infrastructure-components.yaml"
-    type: "InfrastructureProvider"
-    version: "{{.AwsProviderVersion}}"
   - name: "snow"
     url: "{{.dir}}/infrastructure-snow/{{.SnowProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -45,6 +39,10 @@ providers:
     url: "{{.dir}}/bootstrap-etcdadm-controller/{{.EtcdadmControllerProviderVersion}}/bootstrap-components.yaml"
     type: "BootstrapProvider"
     version: "{{.EtcdadmControllerProviderVersion}}"
+  - name: "nutanix"
+    url: "{{.dir}}/infrastructure-nutanix/{{.NutanixProviderVersion}}/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "{{.NutanixProviderVersion}}"
 
 overridesFolder: {{.dir}}
 images:
@@ -75,12 +73,9 @@ images:
   control-plane-kubeadm/kube-rbac-proxy:
     repository: {{ .KubeadmControlPlaneKubeRbacProxyRepository }}
     tag: {{ .KubeadmControlPlaneKubeRbacProxyTag }} #org one is v0.4.1
-  infrastructure-aws/cluster-api-aws-controller:
-    repository: {{ .ClusterApiAwsControllerRepository }}
-    tag: {{ .ClusterApiAwsControllerTag }}
-  infrastructure-aws/kube-rbac-proxy:
-    repository: {{ .ClusterApiAwsKubeRbacProxyRepository }}
-    tag: {{ .ClusterApiAwsKubeRbacProxyTag }} #org one is v0.4.1
+  infrastructure-cloudstack/kube-rbac-proxy:
+    repository: {{ .ClusterApiCloudStackKubeRbacProxyRepository }}
+    tag: {{ .ClusterApiCloudStackKubeRbacProxyTag }} #org one is v0.8.0
   infrastructure-vsphere/manager:
     repository: {{ .ClusterApiVSphereControllerRepository }}
     tag: {{ .ClusterApiVSphereControllerTag }}
@@ -93,6 +88,9 @@ images:
   infrastructure-docker/kube-rbac-proxy:
     repository: {{ .DockerKubeRbacProxyRepository }}
     tag: {{ .DockerKubeRbacProxyTag }} #org one is v0.4.0
+  infrastructure-nutanix/manager:
+    repository: {{ .ClusterApiNutanixControllerRepository }}
+    tag: {{ .ClusterApiNutanixControllerTag }}
   bootstrap-etcdadm-bootstrap/etcdadm-bootstrap-provider:
     repository: {{ .EtcdadmBootstrapProviderRepository }}
     tag: {{ .EtcdadmBootstrapProviderTag }}

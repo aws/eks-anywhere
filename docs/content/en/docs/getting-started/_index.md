@@ -36,4 +36,4 @@ See [EKS Anywhere local environment]({{< relref "local-environment" >}}).
 ## Production environment
 
 When evaluating a solution for a production environment
-consider deploying EKS Anywhere on [vSphere]({{< relref "production-environment" >}}).
+consider deploying EKS Anywhere on providers listed on the [Create production cluster]({{< relref "production-environment/" >}}) page.

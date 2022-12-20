@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint
 package snow
 
 import (
@@ -100,6 +101,10 @@ type Instance struct {
 	// Configuration options for the non root storage volumes.
 	// +optional
 	NonRootVolumes []*Volume `json:"nonRootVolumes,omitempty"`
+
+	// Configuration options for the containers data volume
+	// +optional
+	ContainersVolume *Volume `json:"containersVolume,omitempty"`
 
 	// Specifies ENIs attached to instance
 	NetworkInterfaces []string `json:"networkInterfaces,omitempty"`
@@ -203,3 +208,5 @@ type AWSSnowMachineTemplateResource struct {
 	// Spec is the specification of the desired behavior of the machine.
 	Spec AWSSnowMachineSpec `json:"spec"`
 }
+
+type OSFamily string
