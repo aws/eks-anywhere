@@ -19,6 +19,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	kubemock "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -79,6 +80,7 @@ func givenClusterSpec() *cluster.Spec {
 		s.SnowDatacenter = givenDatacenterConfig()
 		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
 		s.SnowMachineConfigs = givenMachineConfigs()
+		s.SnowIPPools = givenIPPools()
 		s.VersionsBundle = givenVersionsBundle()
 		s.ManagementCluster = givenManagementCluster()
 	})
@@ -379,8 +381,8 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 					"1.2.3.5",
 				},
 				OSFamily: v1alpha1.Ubuntu,
-				Network: snowv1.AWSSnowNetwork{
-					DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+				Network: v1alpha1.SnowNetwork{
+					DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
 						{
 							Index:   1,
 							DHCP:    true,
@@ -408,13 +410,37 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 					"1.2.3.5",
 				},
 				OSFamily: v1alpha1.Ubuntu,
-				Network: snowv1.AWSSnowNetwork{
-					DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+				Network: v1alpha1.SnowNetwork{
+					DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
 						{
 							Index:   1,
 							DHCP:    true,
 							Primary: true,
 						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func givenIPPools() map[string]*anywherev1.SnowIPPool {
+	return map[string]*v1alpha1.SnowIPPool{
+		"ip-pool-1": {
+			TypeMeta: metav1.TypeMeta{
+				Kind: snow.SnowIPPoolKind,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "ip-pool-1",
+				Namespace: "test-namespace",
+			},
+			Spec: anywherev1.SnowIPPoolSpec{
+				Pools: []snowv1.IPPool{
+					{
+						IPStart: ptr.String("start"),
+						IPEnd:   ptr.String("end"),
+						Gateway: ptr.String("gateway"),
+						Subnet:  ptr.String("subnet"),
 					},
 				},
 			},

@@ -52,7 +52,47 @@ type SnowMachineConfigSpec struct {
 	OSFamily OSFamily `json:"osFamily,omitempty"`
 
 	// Network provides the custom network setting for the machine.
-	Network snowv1.AWSSnowNetwork `json:"network,omitempty"`
+	Network SnowNetwork `json:"network"`
+}
+
+// SnowNetwork specifies the network configurations for snow.
+type SnowNetwork struct {
+	// DirectNetworkInterfaces contains a list of direct network interface (DNI) configuration.
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=8
+	DirectNetworkInterfaces []SnowDirectNetworkInterface `json:"directNetworkInterfaces,omitempty"`
+
+	// DNS specifies a list of static IPs.
+	// +optional
+	DNS []string `json:"dns,omitempty"`
+}
+
+// SnowDirectNetworkInterface defines a direct network interface (DNI) configuration.
+type SnowDirectNetworkInterface struct {
+	// Index is the index number of DNI.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=8
+	// +optional
+	Index int `json:"index,omitempty"`
+
+	// VlanID is the vlan id assigned by the user.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=4095
+	// +optional
+	VlanID *int32 `json:"vlanID,omitempty"`
+
+	// DHCP decides whether the ip assigned by using DHCP.
+	// +optional
+	DHCP bool `json:"dhcp,omitempty"`
+
+	// IPPool contains a reference to the snow ip pool.
+	// When specified, this interface will use a random IP from that pool.
+	// +optional
+	IPPoolRef *Ref `json:"ipPoolRef,omitempty"`
+
+	// Primary indicates whether the DNI is primary or not.
+	// +optional
+	Primary bool `json:"primary,omitempty"`
 }
 
 func (s *SnowMachineConfig) SetManagedBy(clusterName string) {
@@ -111,6 +151,17 @@ func (s *SnowMachineConfig) SetEtcdAnnotation() {
 	}
 
 	s.Annotations[etcdAnnotation] = "true"
+}
+
+// IPPoolRefs returns a slice of snow IP pools that belongs to a snowMachineConfig.
+func (s *SnowMachineConfig) IPPoolRefs() []Ref {
+	ipPoolRefMap := make(refSet, 1)
+
+	for _, dni := range s.Spec.Network.DirectNetworkInterfaces {
+		ipPoolRefMap.addIfNotNil(dni.IPPoolRef)
+	}
+
+	return ipPoolRefMap.toSlice()
 }
 
 // +kubebuilder:object:generate=false

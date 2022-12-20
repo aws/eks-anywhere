@@ -79,7 +79,7 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, log logr.Logger, kubeC
 		}
 
 		// build worker machineTemplate with new clusterSpec
-		newMachineTemplate := SnowMachineTemplate(clusterapi.WorkerMachineTemplateName(clusterSpec, workerNodeGroupConfig), clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
+		newMachineTemplate := MachineTemplate(clusterapi.WorkerMachineTemplateName(clusterSpec, workerNodeGroupConfig), clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name], nil)
 
 		// build worker kubeadmConfigTemplate with new clusterSpec
 		newConfigTemplate, err := KubeadmConfigTemplate(log, clusterSpec, workerNodeGroupConfig)

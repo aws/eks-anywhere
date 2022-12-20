@@ -28,6 +28,7 @@ type Config struct {
 	GitOpsConfig              *anywherev1.GitOpsConfig
 	FluxConfig                *anywherev1.FluxConfig
 	SnowCredentialsSecret     *v1.Secret
+	SnowIPPools               map[string]*anywherev1.SnowIPPool
 }
 
 func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineConfig {
@@ -40,6 +41,11 @@ func (c *Config) CloudStackMachineConfig(name string) *anywherev1.CloudStackMach
 
 func (c *Config) SnowMachineConfig(name string) *anywherev1.SnowMachineConfig {
 	return c.SnowMachineConfigs[name]
+}
+
+// SnowIPPool returns a SnowIPPool based on a name.
+func (c *Config) SnowIPPool(name string) *anywherev1.SnowIPPool {
+	return c.SnowIPPools[name]
 }
 
 func (c *Config) OIDCConfig(name string) *anywherev1.OIDCConfig {
@@ -110,6 +116,13 @@ func (c *Config) DeepCopy() *Config {
 		c2.SnowMachineConfigs[k] = v.DeepCopy()
 	}
 
+	if c.SnowIPPools != nil {
+		c2.SnowIPPools = make(map[string]*anywherev1.SnowIPPool, len(c.SnowIPPools))
+	}
+	for k, v := range c.SnowIPPools {
+		c2.SnowIPPools[k] = v.DeepCopy()
+	}
+
 	if c.TinkerbellMachineConfigs != nil {
 		c2.TinkerbellMachineConfigs = make(map[string]*anywherev1.TinkerbellMachineConfig, len(c.TinkerbellMachineConfigs))
 	}
@@ -156,6 +169,10 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 	}
 
 	for _, e := range c.SnowMachineConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.SnowIPPools {
 		objs = appendIfNotNil(objs, e)
 	}
 

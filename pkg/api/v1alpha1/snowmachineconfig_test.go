@@ -109,8 +109,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Bottlerocket,
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -132,8 +132,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Ubuntu,
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -156,8 +156,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: "invalid-instance-type",
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Bottlerocket,
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -179,8 +179,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
 					OSFamily:     Bottlerocket,
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -203,8 +203,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Ubuntu,
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -227,8 +227,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Bottlerocket,
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -251,8 +251,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     Bottlerocket,
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -272,8 +272,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     "invalidOS",
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -296,8 +296,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					InstanceType: DefaultSnowInstanceType,
 					Devices:      []string{"1.2.3.4"},
 					OSFamily:     "",
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -338,8 +338,8 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					ContainersVolume: &snowv1.Volume{
 						Size: 25,
 					},
-					Network: snowv1.AWSSnowNetwork{
-						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 							{
 								Index:   1,
 								DHCP:    true,
@@ -395,8 +395,8 @@ func TestNewSnowMachineConfigGenerate(t *testing.T) {
 			SshKeyName:               DefaultSnowSshKeyName,
 			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 			OSFamily:                 DefaultOSFamily,
-			Network: snowv1.AWSSnowNetwork{
-				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			Network: SnowNetwork{
+				DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 					{
 						Index:   1,
 						DHCP:    true,
