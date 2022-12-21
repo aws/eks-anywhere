@@ -8,6 +8,13 @@
     "computeOffering": {
       "name": "testOffering"
     },
+    "diskOffering": {
+      "name": "testOffering",
+      "mountPath": "/data",
+      "device": "/dev/vdb",
+      "filesystem": "ext4",
+      "label": "data_disk"
+    },
     "users": [
       {
         "name": "maxdrib",

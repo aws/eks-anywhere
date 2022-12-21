@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
@@ -53,25 +53,18 @@ func TestUniquenessAssertions(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"Ids": {
-			Assertion: hardware.UniqueIds(),
+		"IPAddresses": {
+			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
-				{Id: "foo"},
-				{Id: "bar"},
+				{IPAddress: "foo"},
+				{IPAddress: "bar"},
 			},
 		},
-		"IpAddresses": {
-			Assertion: hardware.UniqueIpAddress(),
+		"MACAddresses": {
+			Assertion: hardware.UniqueMACAddress(),
 			Machines: []hardware.Machine{
-				{IpAddress: "foo"},
-				{IpAddress: "bar"},
-			},
-		},
-		"MacAddresses": {
-			Assertion: hardware.UniqueMacAddress(),
-			Machines: []hardware.Machine{
-				{MacAddress: "foo"},
-				{MacAddress: "bar"},
+				{MACAddress: "foo"},
+				{MACAddress: "bar"},
 			},
 		},
 		"Hostnames": {
@@ -81,11 +74,11 @@ func TestUniquenessAssertions(t *testing.T) {
 				{Hostname: "bar"},
 			},
 		},
-		"BmcIpAddresses": {
-			Assertion: hardware.UniqueBmcIpAddress(),
+		"BMCIPAddresses": {
+			Assertion: hardware.UniqueBMCIPAddress(),
 			Machines: []hardware.Machine{
-				{BmcIpAddress: "foo"},
-				{BmcIpAddress: "bar"},
+				{BMCIPAddress: "foo"},
+				{BMCIPAddress: "bar"},
 			},
 		},
 	}
@@ -104,25 +97,18 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"Ids": {
-			Assertion: hardware.UniqueIds(),
+		"IPAddresses": {
+			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
-				{Id: "foo"},
-				{Id: "foo"},
+				{IPAddress: "foo"},
+				{IPAddress: "foo"},
 			},
 		},
-		"IpAddresses": {
-			Assertion: hardware.UniqueIpAddress(),
+		"MACAddresses": {
+			Assertion: hardware.UniqueMACAddress(),
 			Machines: []hardware.Machine{
-				{IpAddress: "foo"},
-				{IpAddress: "foo"},
-			},
-		},
-		"MacAddresses": {
-			Assertion: hardware.UniqueMacAddress(),
-			Machines: []hardware.Machine{
-				{MacAddress: "foo"},
-				{MacAddress: "foo"},
+				{MACAddress: "foo"},
+				{MACAddress: "foo"},
 			},
 		},
 		"Hostnames": {
@@ -132,11 +118,11 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 				{Hostname: "foo"},
 			},
 		},
-		"BmcIpAddresses": {
-			Assertion: hardware.UniqueBmcIpAddress(),
+		"BMCIPAddresses": {
+			Assertion: hardware.UniqueBMCIPAddress(),
 			Machines: []hardware.Machine{
-				{BmcIpAddress: "foo"},
-				{BmcIpAddress: "foo"},
+				{BMCIPAddress: "foo"},
+				{BMCIPAddress: "foo"},
 			},
 		},
 	}
@@ -150,18 +136,218 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 	}
 }
 
+func TestStaticMachineAssertions_ValidMachine(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	machine := NewValidMachine()
+
+	validate := hardware.StaticMachineAssertions()
+	g.Expect(validate(machine)).ToNot(gomega.HaveOccurred())
+}
+
+func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	cases := map[string]func(*hardware.Machine){
+		"EmptyIPAddress": func(h *hardware.Machine) {
+			h.IPAddress = ""
+		},
+		"InvalidIPAddress": func(h *hardware.Machine) {
+			h.IPAddress = "invalid"
+		},
+		"EmptyGateway": func(h *hardware.Machine) {
+			h.Gateway = ""
+		},
+		"InvalidGateway": func(h *hardware.Machine) {
+			h.Gateway = "invalid"
+		},
+		"NoNameservers": func(h *hardware.Machine) {
+			h.Nameservers = []string{}
+		},
+		"EmptyNameserver": func(h *hardware.Machine) {
+			h.Nameservers = []string{""}
+		},
+		"EmptyNetmask": func(h *hardware.Machine) {
+			h.Netmask = ""
+		},
+		"EmptyMACAddress": func(h *hardware.Machine) {
+			h.MACAddress = ""
+		},
+		"InvalidMACAddress": func(h *hardware.Machine) {
+			h.MACAddress = "invalid mac"
+		},
+		"EmptyHostname": func(h *hardware.Machine) {
+			h.Hostname = ""
+		},
+		"InvalidHostname": func(h *hardware.Machine) {
+			h.Hostname = "!@#$%"
+		},
+		"EmptyBMCIPAddress": func(h *hardware.Machine) {
+			h.BMCIPAddress = ""
+		},
+		"InvalidBMCIPAddress": func(h *hardware.Machine) {
+			h.BMCIPAddress = "invalid"
+		},
+		"EmptyBMCUsername": func(h *hardware.Machine) {
+			h.BMCUsername = ""
+		},
+		"EmptyBMCPassword": func(h *hardware.Machine) {
+			h.BMCPassword = ""
+		},
+		"InvalidLabelKey": func(h *hardware.Machine) {
+			h.Labels["?$?$?"] = "foo"
+		},
+		"InvalidLabelValue": func(h *hardware.Machine) {
+			h.Labels["foo"] = "\\/dsa"
+		},
+		"InvalidDisk": func(h *hardware.Machine) {
+			h.Disk = "*&!@#!%"
+		},
+		"InvalidWithJustDev": func(h *hardware.Machine) {
+			h.Disk = "/dev/"
+		},
+		"InvalidVLANUnder": func(h *hardware.Machine) {
+			h.VLANID = "0"
+		},
+		"InvalidVLANOver": func(h *hardware.Machine) {
+			h.VLANID = "4095"
+		},
+		"NonIntVLAN": func(h *hardware.Machine) {
+			h.VLANID = "im not an int"
+		},
+	}
+
+	validate := hardware.StaticMachineAssertions()
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			machine := NewValidMachine()
+			mutate(&machine)
+			g.Expect(validate(machine)).To(gomega.HaveOccurred())
+		})
+	}
+}
+
+func TestMatchingDisksForSelectors_SingleMachine_SingleLabelMatches(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machine := hardware.Machine{
+		Labels: map[string]string{"type": "cp"},
+		Disk:   "/dev/sda",
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machine)
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_SingleMachine_MultipleLabelsMatch(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machine := hardware.Machine{
+		Labels: map[string]string{"type": "cp", "foo": "bar"},
+		Disk:   "/dev/sda",
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machine)
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_SingleMachine_NoMatches(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machine := hardware.Machine{
+		Labels: map[string]string{},
+		Disk:   "/dev/sda",
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machine)
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_MultipleMachines_SameDisk(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machines := []hardware.Machine{
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sda",
+		},
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sda",
+		},
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machines[0])
+	g.Expect(err).To(gomega.Succeed())
+
+	err = assertion(machines[1])
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_MultipleMachines_DifferentDisk(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machines := []hardware.Machine{
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sda",
+		},
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sdb",
+		},
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machines[0])
+	g.Expect(err).To(gomega.Succeed())
+
+	err = assertion(machines[1])
+	g.Expect(err).ToNot(gomega.Succeed())
+}
+
 func NewValidMachine() hardware.Machine {
 	return hardware.Machine{
-		Id:           uuid.NewString(),
-		IpAddress:    "10.10.10.10",
+		IPAddress:    "10.10.10.10",
 		Gateway:      "10.10.10.1",
 		Nameservers:  []string{"ns1"},
-		MacAddress:   "00:00:00:00:00:00",
+		MACAddress:   "00:00:00:00:00:00",
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",
-		BmcIpAddress: "10.10.10.11",
-		BmcUsername:  "username",
-		BmcPassword:  "password",
-		BmcVendor:    "dell",
+		Labels:       hardware.Labels{"type": "cp"},
+		Disk:         "/dev/sda",
+		BMCIPAddress: "10.10.10.11",
+		BMCUsername:  "username",
+		BMCPassword:  "password",
+		VLANID:       "200",
 	}
 }

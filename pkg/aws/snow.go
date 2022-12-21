@@ -2,6 +2,7 @@ package aws
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 
@@ -10,14 +11,49 @@ import (
 )
 
 const (
-	snowEC2Port = 8243
+	snowEC2Port        = 8243
+	snowballDevicePort = 9092
 )
 
-func snowEndpoint(deviceIP string) *ServiceEndpoint {
-	return &ServiceEndpoint{
-		ServiceID:     "EC2",
-		SigningRegion: "snow",
-		URL:           fmt.Sprintf("https://%s:%d", deviceIP, snowEC2Port),
+func BuildClients(ctx context.Context) (Clients, error) {
+	credsFile, err := AwsCredentialsFile()
+	if err != nil {
+		return nil, fmt.Errorf("fetching aws credentials from env: %v", err)
+	}
+	certsFile, err := AwsCABundlesFile()
+	if err != nil {
+		return nil, fmt.Errorf("fetching aws CA bundles from env: %v", err)
+	}
+
+	deviceIps, err := ParseDeviceIPsFromFile(credsFile)
+	if err != nil {
+		return nil, fmt.Errorf("getting device ips from aws credentials: %v", err)
+	}
+
+	deviceClientMap := make(Clients, len(deviceIps))
+
+	for _, ip := range deviceIps {
+		config, err := LoadConfig(ctx, WithSnowEndpointAccess(ip, certsFile, credsFile))
+		if err != nil {
+			return nil, fmt.Errorf("setting up aws client: %v", err)
+		}
+		deviceClientMap[ip] = NewClient(ctx, config)
+	}
+	return deviceClientMap, nil
+}
+
+func snowEndpoints(deviceIP string) []ServiceEndpoint {
+	return []ServiceEndpoint{
+		{
+			ServiceID:     "EC2",
+			SigningRegion: "snow",
+			URL:           fmt.Sprintf("https://%s:%d", deviceIP, snowEC2Port),
+		},
+		{
+			ServiceID:     "Snowball Device",
+			SigningRegion: "snow",
+			URL:           fmt.Sprintf("https://%s:%d", deviceIP, snowballDevicePort),
+		},
 	}
 }
 
@@ -39,7 +75,7 @@ func WithCustomCABundleFile(certsFile string) AwsConfigOpt {
 	}
 }
 
-// WithSnowEndpointAccess gatheres all the config's LoadOptions for snow,
+// WithSnowEndpointAccess gathers all the config's LoadOptions for snow,
 // which includes snowball ec2 endpoint, snow credentials for a specific profile,
 // and CA bundles for accessing the https endpoint.
 func WithSnowEndpointAccess(deviceIP string, certsFile, credsFile string) AwsConfigOpt {
@@ -53,12 +89,13 @@ func WithSnowEndpointAccess(deviceIP string, certsFile, credsFile string) AwsCon
 
 func SnowEndpointResolver(deviceIP string) aws.EndpointResolverWithOptionsFunc {
 	return aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		endpoint := snowEndpoint(deviceIP)
-		if service == endpoint.ServiceID {
-			return aws.Endpoint{
-				URL:           endpoint.URL,
-				SigningRegion: endpoint.SigningRegion,
-			}, nil
+		for _, endpoint := range snowEndpoints(deviceIP) {
+			if service == endpoint.ServiceID {
+				return aws.Endpoint{
+					URL:           endpoint.URL,
+					SigningRegion: endpoint.SigningRegion,
+				}, nil
+			}
 		}
 		// returning EndpointNotFoundError allows the service to fallback to it's default resolution
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}

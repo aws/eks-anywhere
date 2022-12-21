@@ -10,21 +10,20 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type createSupportBundleOptions struct {
-	fileName         string
-	wConfig          string
-	since            string
-	sinceTime        string
-	bundleConfig     string
-	hardwareFileName string
+	fileName              string
+	wConfig               string
+	since                 string
+	sinceTime             string
+	bundleConfig          string
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var csbo = &createSupportBundleOptions{}
@@ -66,8 +65,8 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 	}
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
-	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return kubeconfig.NewMissingFileError(kubeconfigPath)
+	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
+		return err
 	}
 
 	return nil
@@ -84,13 +83,13 @@ func preRunSupportBundle(cmd *cobra.Command, args []string) error {
 }
 
 func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string) error {
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(csbo.fileName, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(csbo.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck, csbo.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
+		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck, csbo.hardwareFileName, false, csbo.tinkerbellBootstrapIP).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {

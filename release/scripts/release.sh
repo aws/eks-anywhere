@@ -33,6 +33,7 @@ CLI_REPO_URL="${8?Specify eighth argument - CLI repo URL}"
 BUILD_REPO_BRANCH_NAME="${9?Specify ninth argument - Build repo branch name}"
 CLI_REPO_BRANCH_NAME="${10?Specify tenth argument - CLI repo branch name}"
 DRY_RUN="${11?Specify eleventh argument - Dry run}"
+WEEKLY="${12?Specify twelfth argument - Weekly release}"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
@@ -48,4 +49,5 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --release-bucket "${RELEASE_BUCKET}" \
     --release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
     --dev-release=true \
-    --dry-run=${DRY_RUN}
+    --dry-run=${DRY_RUN} \
+    --weekly=${WEEKLY}

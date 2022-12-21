@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestParseConfig(t *testing.T) {
@@ -19,10 +20,8 @@ func TestParseConfig(t *testing.T) {
 		wantCloudStackDatacenter     *anywherev1.CloudStackDatacenterConfig
 		wantVsphereDatacenter        *anywherev1.VSphereDatacenterConfig
 		wantDockerDatacenter         *anywherev1.DockerDatacenterConfig
-		wantSnowDatacenter           *anywherev1.SnowDatacenterConfig
 		wantVsphereMachineConfigs    []*anywherev1.VSphereMachineConfig
 		wantCloudStackMachineConfigs []*anywherev1.CloudStackMachineConfig
-		wantSnowMachineConfigs       []*anywherev1.SnowMachineConfig
 		wantOIDCConfigs              []*anywherev1.OIDCConfig
 		wantAWSIamConfigs            []*anywherev1.AWSIamConfig
 		wantGitOpsConfig             *anywherev1.GitOpsConfig
@@ -52,7 +51,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "VSphereMachineConfig",
 								Name: "eksa-unit-test",
@@ -84,7 +83,7 @@ func TestParseConfig(t *testing.T) {
 				},
 				Spec: anywherev1.VSphereDatacenterConfigSpec{
 					Datacenter: "myDatacenter",
-					Network:    "myNetwork",
+					Network:    "/myDatacenter/network-1",
 					Server:     "myServer",
 					Thumbprint: "myTlsThumbprint",
 					Insecure:   false,
@@ -100,10 +99,12 @@ func TestParseConfig(t *testing.T) {
 						Name: "eksa-unit-test-cp",
 					},
 					Spec: anywherev1.VSphereMachineConfigSpec{
-						DiskGiB:   25,
-						MemoryMiB: 8192,
-						NumCPUs:   2,
-						OSFamily:  anywherev1.Ubuntu,
+						Datastore:    "myDatastore",
+						DiskGiB:      25,
+						MemoryMiB:    8192,
+						NumCPUs:      2,
+						OSFamily:     anywherev1.Ubuntu,
+						ResourcePool: "myResourcePool",
 						Users: []anywherev1.UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -119,10 +120,12 @@ func TestParseConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: anywherev1.VSphereMachineConfigSpec{
-						DiskGiB:   25,
-						MemoryMiB: 8192,
-						NumCPUs:   2,
-						OSFamily:  anywherev1.Ubuntu,
+						Datastore:    "myDatastore",
+						DiskGiB:      25,
+						MemoryMiB:    8192,
+						NumCPUs:      2,
+						OSFamily:     anywherev1.Ubuntu,
+						ResourcePool: "myResourcePool",
 						Users: []anywherev1.UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -154,7 +157,7 @@ func TestParseConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "CloudStackMachineConfig",
 								Name: "eksa-unit-test",
@@ -220,93 +223,7 @@ func TestParseConfig(t *testing.T) {
 						}},
 						Affinity:          "pro",
 						UserCustomDetails: map[string]string{"foo": "bar"},
-					},
-				},
-			},
-		},
-		{
-			name:         "snow cluster",
-			yamlManifest: []byte(test.ReadFile(t, "testdata/cluster_snow_1_21.yaml")),
-			wantCluster: &anywherev1.Cluster{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       anywherev1.ClusterKind,
-					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: anywherev1.ClusterSpec{
-					KubernetesVersion: "1.21",
-					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
-						Count:    1,
-						Endpoint: &anywherev1.Endpoint{Host: "myHostIp"},
-						MachineGroupRef: &anywherev1.Ref{
-							Kind: "SnowMachineConfig",
-							Name: "eksa-unit-test-cp",
-						},
-					},
-					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
-						{
-							Name:  "workers-1",
-							Count: 1,
-							MachineGroupRef: &anywherev1.Ref{
-								Kind: "SnowMachineConfig",
-								Name: "eksa-unit-test",
-							},
-						},
-					},
-					DatacenterRef: anywherev1.Ref{
-						Kind: "SnowDatacenterConfig",
-						Name: "eksa-unit-test",
-					},
-					ClusterNetwork: anywherev1.ClusterNetwork{
-						Pods: anywherev1.Pods{
-							CidrBlocks: []string{"192.168.0.0/16"},
-						},
-						Services: anywherev1.Services{
-							CidrBlocks: []string{"10.96.0.0/12"},
-						},
-						CNI: "cilium",
-					},
-				},
-			},
-			wantSnowDatacenter: &anywherev1.SnowDatacenterConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       anywherev1.SnowDatacenterKind,
-					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: anywherev1.SnowDatacenterConfigSpec{},
-			},
-			wantSnowMachineConfigs: []*anywherev1.SnowMachineConfig{
-				{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       anywherev1.SnowMachineConfigKind,
-						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "eksa-unit-test-cp",
-					},
-					Spec: anywherev1.SnowMachineConfigSpec{
-						AMIID:        "eks-d-v1-21-ami",
-						InstanceType: "sbe-c.large",
-						SshKeyName:   "default",
-					},
-				},
-				{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       anywherev1.SnowMachineConfigKind,
-						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "eksa-unit-test",
-					},
-					Spec: anywherev1.SnowMachineConfigSpec{
-						AMIID:        "eks-d-v1-21-ami",
-						InstanceType: "sbe-c.xlarge",
-						SshKeyName:   "default",
+						Symlinks:          map[string]string{"/var/log/kubernetes": "/data/var/log/kubernetes"},
 					},
 				},
 			},
@@ -333,7 +250,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 						},
 					},
 					DatacenterRef: anywherev1.Ref{
@@ -484,7 +401,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 						},
 					},
 					DatacenterRef: anywherev1.Ref{
@@ -607,14 +524,9 @@ func TestParseConfig(t *testing.T) {
 			g.Expect(got.Cluster).To(Equal(tt.wantCluster))
 			g.Expect(got.VSphereDatacenter).To(Equal(tt.wantVsphereDatacenter))
 			g.Expect(got.DockerDatacenter).To(Equal(tt.wantDockerDatacenter))
-			g.Expect(got.SnowDatacenter).To(Equal(tt.wantSnowDatacenter))
 			g.Expect(len(got.VSphereMachineConfigs)).To(Equal(len(tt.wantVsphereMachineConfigs)), "it should return the right number of VSphereMachineConfigs")
-			g.Expect(len(got.SnowMachineConfigs)).To(Equal(len(tt.wantSnowMachineConfigs)), "it should return the right number of SnowMachineConfigs")
 			for _, m := range tt.wantVsphereMachineConfigs {
 				g.Expect(got.VsphereMachineConfig(m.Name)).To(Equal(m))
-			}
-			for _, m := range tt.wantSnowMachineConfigs {
-				g.Expect(got.SnowMachineConfig(m.Name)).To(Equal(m))
 			}
 			g.Expect(len(got.OIDCConfigs)).To(Equal(len(tt.wantOIDCConfigs)), "it should return the right number of OIDCConfigs")
 			for _, o := range tt.wantOIDCConfigs {
@@ -626,6 +538,313 @@ func TestParseConfig(t *testing.T) {
 			}
 			g.Expect(got.GitOpsConfig).To(Equal(tt.wantGitOpsConfig))
 			g.Expect(got.FluxConfig).To(Equal(tt.wantFluxConfig))
+		})
+	}
+}
+
+func TestParseConfigForSnow(t *testing.T) {
+	tests := []struct {
+		name                   string
+		yamlManifest           []byte
+		wantCluster            *anywherev1.Cluster
+		wantSnowDatacenter     *anywherev1.SnowDatacenterConfig
+		wantSnowMachineConfigs []*anywherev1.SnowMachineConfig
+		wantSnowIPPools        []*anywherev1.SnowIPPool
+	}{
+		{
+			name:         "snow cluster basic",
+			yamlManifest: []byte(test.ReadFile(t, "testdata/cluster_snow_1_21.yaml")),
+			wantCluster: &anywherev1.Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.ClusterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.21",
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count:    1,
+						Endpoint: &anywherev1.Endpoint{Host: "myHostIp"},
+						MachineGroupRef: &anywherev1.Ref{
+							Kind: "SnowMachineConfig",
+							Name: "eksa-unit-test-cp",
+						},
+					},
+					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+						{
+							Name:  "workers-1",
+							Count: ptr.Int(1),
+							MachineGroupRef: &anywherev1.Ref{
+								Kind: "SnowMachineConfig",
+								Name: "eksa-unit-test",
+							},
+						},
+					},
+					DatacenterRef: anywherev1.Ref{
+						Kind: "SnowDatacenterConfig",
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						Pods: anywherev1.Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: anywherev1.Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+						CNI: "cilium",
+					},
+				},
+			},
+			wantSnowDatacenter: &anywherev1.SnowDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.SnowDatacenterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.SnowDatacenterConfigSpec{},
+			},
+			wantSnowMachineConfigs: []*anywherev1.SnowMachineConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test-cp",
+					},
+					Spec: anywherev1.SnowMachineConfigSpec{
+						AMIID:        "eks-d-v1-21-ami",
+						InstanceType: "sbe-c.large",
+						SshKeyName:   "default",
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: anywherev1.SnowMachineConfigSpec{
+						AMIID:        "eks-d-v1-21-ami",
+						InstanceType: "sbe-c.xlarge",
+						SshKeyName:   "default",
+					},
+				},
+			},
+		},
+		{
+			name:         "snow cluster with ip pool",
+			yamlManifest: []byte(test.ReadFile(t, "testdata/cluster_snow_with_ip_pool.yaml")),
+			wantCluster: &anywherev1.Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.ClusterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.21",
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count:    1,
+						Endpoint: &anywherev1.Endpoint{Host: "myHostIp"},
+						MachineGroupRef: &anywherev1.Ref{
+							Kind: "SnowMachineConfig",
+							Name: "eksa-unit-test-cp",
+						},
+					},
+					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+						{
+							Name:  "workers-1",
+							Count: ptr.Int(1),
+							MachineGroupRef: &anywherev1.Ref{
+								Kind: "SnowMachineConfig",
+								Name: "eksa-unit-test-worker-1",
+							},
+						},
+						{
+							Name:  "workers-2",
+							Count: ptr.Int(1),
+							MachineGroupRef: &anywherev1.Ref{
+								Kind: "SnowMachineConfig",
+								Name: "eksa-unit-test-worker-2",
+							},
+						},
+					},
+					DatacenterRef: anywherev1.Ref{
+						Kind: "SnowDatacenterConfig",
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						Pods: anywherev1.Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: anywherev1.Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+						CNI: "cilium",
+					},
+				},
+			},
+			wantSnowDatacenter: &anywherev1.SnowDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.SnowDatacenterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.SnowDatacenterConfigSpec{},
+			},
+			wantSnowMachineConfigs: []*anywherev1.SnowMachineConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test-cp",
+					},
+					Spec: anywherev1.SnowMachineConfigSpec{
+						AMIID:        "eks-d-v1-21-ami",
+						InstanceType: "sbe-c.large",
+						SshKeyName:   "default",
+						Network: anywherev1.SnowNetwork{
+							DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+								{
+									Index: 1,
+									IPPoolRef: &anywherev1.Ref{
+										Kind: anywherev1.SnowIPPoolKind,
+										Name: "ip-pool-1",
+									},
+									Primary: true,
+								},
+								{
+									Index: 2,
+									IPPoolRef: &anywherev1.Ref{
+										Kind: anywherev1.SnowIPPoolKind,
+										Name: "ip-pool-2",
+									},
+									Primary: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test-worker-1",
+					},
+					Spec: anywherev1.SnowMachineConfigSpec{
+						AMIID:        "eks-d-v1-21-ami",
+						InstanceType: "sbe-c.xlarge",
+						SshKeyName:   "default",
+						Network: anywherev1.SnowNetwork{
+							DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+								{
+									Index: 1,
+									IPPoolRef: &anywherev1.Ref{
+										Kind: anywherev1.SnowIPPoolKind,
+										Name: "ip-pool-1",
+									},
+									Primary: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test-worker-2",
+					},
+					Spec: anywherev1.SnowMachineConfigSpec{
+						AMIID:        "eks-d-v1-21-ami",
+						InstanceType: "sbe-c.xlarge",
+						SshKeyName:   "default",
+						Network: anywherev1.SnowNetwork{
+							DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+								{
+									Index:   1,
+									DHCP:    true,
+									Primary: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantSnowIPPools: []*anywherev1.SnowIPPool{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowIPPoolKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ip-pool-1",
+					},
+					Spec: anywherev1.SnowIPPoolSpec{
+						Pools: []anywherev1.IPPool{
+							{
+								IPStart: "start-1",
+								IPEnd:   "end-1",
+								Subnet:  "subnet-1",
+								Gateway: "gateway-1",
+							},
+						},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowIPPoolKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ip-pool-2",
+					},
+					Spec: anywherev1.SnowIPPoolSpec{
+						Pools: []anywherev1.IPPool{
+							{
+								IPStart: "start-2",
+								IPEnd:   "end-2",
+								Subnet:  "subnet-2",
+								Gateway: "gateway-2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got, err := cluster.ParseConfig(tt.yamlManifest)
+
+			g.Expect(err).To(Not(HaveOccurred()))
+
+			g.Expect(got.Cluster).To(Equal(tt.wantCluster))
+			g.Expect(got.SnowDatacenter).To(Equal(tt.wantSnowDatacenter))
+			g.Expect(len(got.SnowMachineConfigs)).To(Equal(len(tt.wantSnowMachineConfigs)), "it should return the right number of SnowMachineConfigs")
+			for _, m := range tt.wantSnowMachineConfigs {
+				g.Expect(got.SnowMachineConfig(m.Name)).To(Equal(m))
+			}
+			for _, p := range tt.wantSnowIPPools {
+				g.Expect(got.SnowIPPool(p.Name)).To(Equal(p))
+			}
 		})
 	}
 }

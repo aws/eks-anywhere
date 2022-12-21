@@ -68,13 +68,13 @@ All steps listed below should be executed on the admin machine with reachability
       * osFamily (operating System on virtual machines) parameter in VSphereMachineConfig by default is set to bottlerocket. Permitted values: ubuntu, bottlerocket.
       * The recommended mode of deploying etcd on EKS Anywhere production clusters is unstacked (etcd members have dedicated machines and are not collocated with control plane components). More information here. The generated config file comes with external etcd enabled already. So leave this part as it is.
       * Apart from the base configuration, you can optionally add additional configuration to enable supported EKS Anywhere functionalities. 
-         * [OIDC]({{< relref "/docs/reference/clusterspec/oidc" >}}) 
-         * [etcd]({{< relref "/docs/reference/clusterspec/etcd" >}}) (comes by default with the generated config file) 
-         * [proxy]({{< relref "/docs/reference/clusterspec/proxy" >}}) 
-         * [GitOps]({{< relref "/docs/reference/clusterspec/gitops" >}}) 
-         * [IAM for Pods]({{< relref "/docs/reference/clusterspec/irsa" >}}) 
-         * [IAM Authenticator]({{< relref "/docs/reference/clusterspec/iamauth" >}}) 
-         * [container registry mirror]({{< relref "/docs/reference/clusterspec/registrymirror" >}})
+         * [OIDC]({{< relref "/docs/reference/clusterspec/optional/oidc" >}}) 
+         * [etcd]({{< relref "/docs/reference/clusterspec/optional/etcd" >}}) (comes by default with the generated config file) 
+         * [proxy]({{< relref "/docs/reference/clusterspec/optional/proxy" >}}) 
+         * [GitOps]({{< relref "/docs/reference/clusterspec/optional/gitops" >}}) 
+         * [IAM for Pods]({{< relref "/docs/reference/clusterspec/optional/irsa" >}}) 
+         * [IAM Authenticator]({{< relref "/docs/reference/clusterspec/optional/iamauth" >}}) 
+         * [container registry mirror]({{< relref "/docs/reference/clusterspec/optional/registrymirror" >}})
 
          As of now, you have to pre-determine which features you want to enable on your cluster before cluster creation. Otherwise, to enable them post-creation will require you to delete and recreate the cluster. However, the next EKS-A release will remove such limitation.
       * To enable managing cluster resources using GitOps, you would need to enable GitOps configurations on the initial/managemet cluster. You can not enable GitOps on workload clusters as long as you have enabled it on the initial/management cluster. And if you want to manage the deployment of Kubernetes resources on a workload cluster, then you would need to bootstrap Flux against your workload cluster manually, to be able deploying Kubernetes resources to this workload cluster using GitOps 
@@ -242,9 +242,9 @@ Follow these steps if you want to use your initial cluster to create and manage 
    Same key considerations and configuration parameters apply to workload cluster as well, that were mentioned above with the initial cluster.
 
 1. Refer to the initial config described earlier for the required and optional settings.
-   The main differences are that you must have a new cluster name and cannot use the same vSphere resources.
+   Ensure workload cluster object names (`Cluster`, `vSphereDatacenterConfig`, `vSphereMachineConfig`, etc.) are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
 
-1. Modify the generated workload cluster config parameters same way you did in the generated configuration file of the management cluster. The only differences are with the following fileds:
+1. Modify the generated workload cluster config parameters same way you did in the generated configuration file of the management cluster. The only differences are with the following fields:
 
    * controlPlaneConfiguration.endpoint.host:
    That you will use a different IP address for the Cluster filed `controlPlaneConfiguration.endpoint.host` for each workload cluster as with the initial cluster. Notice here that you use a different IP address from this one that was used with the management cluster.

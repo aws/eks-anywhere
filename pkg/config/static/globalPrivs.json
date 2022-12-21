@@ -1,0 +1,21 @@
+[
+  "ContentLibrary.AddLibraryItem",
+  "ContentLibrary.CheckInTemplate",
+  "ContentLibrary.CheckOutTemplate",
+  "ContentLibrary.CreateLocalLibrary",
+  "ContentLibrary.UpdateSession",
+  "InventoryService.Tagging.AttachTag",
+  "InventoryService.Tagging.CreateCategory",
+  "InventoryService.Tagging.CreateTag",
+  "InventoryService.Tagging.DeleteCategory",
+  "InventoryService.Tagging.DeleteTag",
+  "InventoryService.Tagging.EditCategory",
+  "InventoryService.Tagging.EditTag",
+  "InventoryService.Tagging.ModifyUsedByForCategory",
+  "InventoryService.Tagging.ModifyUsedByForTag",
+  "InventoryService.Tagging.ObjectAttachable",
+  "Sessions.ValidateSession",
+  "System.Anonymous",
+  "System.Read",
+  "System.View"
+]

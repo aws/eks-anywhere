@@ -7,31 +7,42 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-type upgraderClient interface {
+// KubernetesClient is a client to interact with the Kubernetes API.
+type KubernetesClient interface {
 	Apply(ctx context.Context, cluster *types.Cluster, data []byte) error
 	Delete(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForPreflightDaemonSet(ctx context.Context, cluster *types.Cluster) error
 	WaitForPreflightDeployment(ctx context.Context, cluster *types.Cluster) error
 	WaitForCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error
 	WaitForCiliumDeployment(ctx context.Context, cluster *types.Cluster) error
+	RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error
 }
 
+// UpgradeTemplater generates a Cilium manifests for upgrade.
+type UpgradeTemplater interface {
+	GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error)
+	GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...ManifestOpt) ([]byte, error)
+}
+
+// Upgrader allows to upgrade a Cilium installation in a EKS-A cluster.
 type Upgrader struct {
-	templater *Templater
-	client    upgraderClient
+	templater UpgradeTemplater
+	client    KubernetesClient
 }
 
-func NewUpgrader(client Client, helm Helm) *Upgrader {
+// NewUpgrader constructs a new Upgrader.
+func NewUpgrader(client KubernetesClient, templater UpgradeTemplater) *Upgrader {
 	return &Upgrader{
-		templater: NewTemplater(helm),
-		client:    newRetrier(client),
+		templater: templater,
+		client:    client,
 	}
 }
 
+// Upgrade configures a Cilium installation to match the desired state in the cluster Spec.
 func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error) {
 	diff := ciliumChangeDiff(currentSpec, newSpec)
 	chartValuesChanged := ciliumHelmChartValuesChanged(currentSpec, newSpec)
@@ -65,20 +76,23 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 	}
 
 	logger.V(3).Info("Generating Cilium upgrade manifest")
-	upgradeManifest, err := u.templater.GenerateUpgradeManifest(ctx, currentSpec, newSpec)
+	currentKubeVersion, err := getKubeVersionString(currentSpec)
 	if err != nil {
 		return nil, err
 	}
 
-	if chartValuesChanged {
-		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == v1alpha1.CiliumPolicyModeAlways {
-			logger.V(3).Info("Installing NetworkPolicy resources for policy enforcement mode 'always'")
-			networkPolicyManifest, err := u.templater.GenerateNetworkPolicyManifest(newSpec, namespaces)
-			if err != nil {
-				return nil, err
-			}
-			upgradeManifest = templater.AppendYamlResources(upgradeManifest, networkPolicyManifest)
-		}
+	previousCiliumVersion, err := semver.New(currentSpec.VersionsBundle.Cilium.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	upgradeManifest, err := u.templater.GenerateManifest(ctx, newSpec,
+		WithKubeVersion(currentKubeVersion),
+		WithUpgradeFromVersion(*previousCiliumVersion),
+		WithPolicyAllowedNamespaces(namespaces),
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	logger.V(2).Info("Installing new Cilium version")
@@ -152,4 +166,12 @@ func ciliumHelmChartValuesChanged(currentSpec, newSpec *cluster.Spec) bool {
 	}
 	// we can add comparisons for more values here as we start accepting them from cluster spec
 	return false
+}
+
+func (u *Upgrader) RunPostControlPlaneUpgradeSetup(ctx context.Context, cluster *types.Cluster) error {
+	// we need to restart cilium pods after control plane vms get upgraded to prevent issue seen in https://github.com/aws/eks-anywhere/issues/1888
+	if err := u.client.RolloutRestartCiliumDaemonSet(ctx, cluster); err != nil {
+		return fmt.Errorf("restarting cilium daemonset: %v", err)
+	}
+	return nil
 }

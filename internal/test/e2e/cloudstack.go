@@ -4,7 +4,6 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -15,7 +14,6 @@ const (
 func (e *E2ESession) setupCloudStackEnv(testRegex string) error {
 	re := regexp.MustCompile(cloudstackRegex)
 	if !re.MatchString(testRegex) {
-		logger.V(2).Info("Not running CloudStack tests, skipping Env variable setup")
 		return nil
 	}
 

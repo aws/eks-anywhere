@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	executables "github.com/aws/eks-anywhere/pkg/executables"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -92,10 +93,10 @@ func (mr *MockGovcClientMockRecorder) ListCategories(ctx interface{}) *gomock.Ca
 }
 
 // ListTags mocks base method.
-func (m *MockGovcClient) ListTags(ctx context.Context) ([]string, error) {
+func (m *MockGovcClient) ListTags(ctx context.Context) ([]executables.Tag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListTags", ctx)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]executables.Tag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

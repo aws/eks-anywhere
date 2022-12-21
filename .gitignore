@@ -18,3 +18,9 @@ eks-anywhere-downloads*
 hardware-manifests/
 *.env
 support-bundle*
+/.ignore
+coverage.out
+docs/.hugo_build.lock
+*-logs
+*-artifacts
+*.log

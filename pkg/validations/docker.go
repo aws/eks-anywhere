@@ -97,3 +97,19 @@ func ValidateDockerDesktopVersion(ctx context.Context, dockerExecutable DockerEx
 
 	return nil
 }
+
+func ValidateDockerExecutable(ctx context.Context, docker DockerExecutable, os string) error {
+	err := CheckMinimumDockerVersion(ctx, docker)
+	if err != nil {
+		return fmt.Errorf("failed to validate docker: %v", err)
+	}
+	if os == "darwin" {
+		err = CheckDockerDesktopVersion(ctx, docker)
+		if err != nil {
+			return fmt.Errorf("failed to validate docker desktop: %v", err)
+		}
+	}
+	CheckDockerAllocatedMemory(ctx, docker)
+
+	return nil
+}

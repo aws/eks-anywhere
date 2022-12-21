@@ -3,6 +3,7 @@ package clusterapi
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -42,12 +43,32 @@ func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
 	return args
 }
 
+// FeatureGatesExtraArgs takes a list of features with the value and returns it in the proper format
+// Example FeatureGatesExtraArgs("ServiceLoadBalancerClass=true").
+func FeatureGatesExtraArgs(features ...string) ExtraArgs {
+	if len(features) == 0 {
+		return nil
+	}
+	return ExtraArgs{
+		"feature-gates": strings.Join(features[:], ","),
+	}
+}
+
 func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 	if podIAMConfig == nil {
 		return nil
 	}
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("service-account-issuer", podIAMConfig.ServiceAccountIssuer)
+	return args
+}
+
+func NodeCIDRMaskExtraArgs(clusterNetwork *v1alpha1.ClusterNetwork) ExtraArgs {
+	if clusterNetwork == nil || clusterNetwork.Nodes == nil || clusterNetwork.Nodes.CIDRMaskSize == nil {
+		return nil
+	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("node-cidr-mask-size", strconv.Itoa(*clusterNetwork.Nodes.CIDRMaskSize))
 	return args
 }
 
@@ -60,7 +81,7 @@ func ResolvConfExtraArgs(resolvConf *v1alpha1.ResolvConf) ExtraArgs {
 	return args
 }
 
-// We don't need to add these once the Kubernetes components default to using the secure cipher suites
+// We don't need to add these once the Kubernetes components default to using the secure cipher suites.
 func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("tls-cipher-suites", crypto.SecureCipherSuitesString())
@@ -79,6 +100,20 @@ func WorkerNodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraA
 
 func ControlPlaneNodeLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) ExtraArgs {
 	return nodeLabelsExtraArgs(cpc.Labels)
+}
+
+// CgroupDriverExtraArgs args added for kube versions below 1.24.
+func CgroupDriverCgroupfsExtraArgs() ExtraArgs {
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("cgroup-driver", "cgroupfs")
+	return args
+}
+
+// CgroupDriverSystemdExtraArgs args added for kube versions 1.24 and above.
+func CgroupDriverSystemdExtraArgs() ExtraArgs {
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("cgroup-driver", "systemd")
+	return args
 }
 
 func nodeLabelsExtraArgs(labels map[string]string) ExtraArgs {

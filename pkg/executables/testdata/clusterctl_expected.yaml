@@ -3,6 +3,10 @@ providers:
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml"
     type: "InfrastructureProvider"
     version: "v0.3.19"
+  - name: "tinkerbell"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "v0.1.0"
   - name: "cloudstack"
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-cloudstack/v0.7.8/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -11,10 +15,6 @@ providers:
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-vsphere/v0.7.8/infrastructure-components.yaml"
     type: "InfrastructureProvider"
     version: "v0.7.8"
-  - name: "aws"
-    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-aws/v0.6.4/infrastructure-components.yaml"
-    type: "InfrastructureProvider"
-    version: "v0.6.4"
   - name: "snow"
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-snow/v0.0.0/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -39,17 +39,21 @@ providers:
     url: "{{.dir}}/cluster-name/generated/overrides/bootstrap-etcdadm-controller/v0.1.0/bootstrap-components.yaml"
     type: "BootstrapProvider"
     version: "v0.1.0"
+  - name: "nutanix"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-nutanix/v1.0.1/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "v1.0.1"
 
 overridesFolder: {{.dir}}/cluster-name/generated/overrides
 images:
   cert-manager/cert-manager-cainjector:
-    repository: public.ecr.aws/l0g8r8j6/jetstack
+    repository: public.ecr.aws/l0g8r8j6/cert-manager
     tag: v1.1.0
   cert-manager/cert-manager-controller:
-    repository: public.ecr.aws/l0g8r8j6/jetstack
+    repository: public.ecr.aws/l0g8r8j6/cert-manager
     tag: v1.1.0
   cert-manager/cert-manager-webhook:
-    repository: public.ecr.aws/l0g8r8j6/jetstack
+    repository: public.ecr.aws/l0g8r8j6/cert-manager
     tag: v1.1.0
   cluster-api/cluster-api-controller:
     repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api
@@ -69,12 +73,9 @@ images:
   control-plane-kubeadm/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
-  infrastructure-aws/cluster-api-aws-controller:
-    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws
-    tag: v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244
-  infrastructure-aws/kube-rbac-proxy:
+  infrastructure-cloudstack/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz
-    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.8.0
   infrastructure-vsphere/manager:
     repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release
     tag: v0.7.8-eks-a-0.0.1.build.38
@@ -87,6 +88,9 @@ images:
   infrastructure-docker/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.0
+  infrastructure-nutanix/manager:
+    repository: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release
+    tag: v1.0.1-eks-a-v0.0.0-dev-build.1
   bootstrap-etcdadm-bootstrap/etcdadm-bootstrap-provider:
     repository: public.ecr.aws/l0g8r8j6/mrajashree
     tag: v0.1.0

@@ -36,11 +36,12 @@ metadata:
 spec:
   account: "admin"
   domain: "domain1"
-  zones:
-    - name: "zone1"
-      network:
-        name: "net1"
-  managementApiEndpoint: "https://127.0.0.1:8080/client/api"
+  availabilityZones:
+    - name: "default-az-0"
+      zone:
+        network:
+          name: "net1"
+      managementApiEndpoint: "https://127.0.0.1:8080/client/api"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

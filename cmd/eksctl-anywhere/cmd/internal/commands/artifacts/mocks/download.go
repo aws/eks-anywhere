@@ -51,32 +51,32 @@ func (mr *MockReaderMockRecorder) ReadBundlesForVersion(eksaVersion interface{})
 }
 
 // ReadChartsFromBundles mocks base method.
-func (m *MockReader) ReadChartsFromBundles(bundles *v1alpha1.Bundles) []v1alpha1.Image {
+func (m *MockReader) ReadChartsFromBundles(ctx context.Context, bundles *v1alpha1.Bundles) []v1alpha1.Image {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadChartsFromBundles", bundles)
+	ret := m.ctrl.Call(m, "ReadChartsFromBundles", ctx, bundles)
 	ret0, _ := ret[0].([]v1alpha1.Image)
 	return ret0
 }
 
 // ReadChartsFromBundles indicates an expected call of ReadChartsFromBundles.
-func (mr *MockReaderMockRecorder) ReadChartsFromBundles(bundles interface{}) *gomock.Call {
+func (mr *MockReaderMockRecorder) ReadChartsFromBundles(ctx, bundles interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadChartsFromBundles", reflect.TypeOf((*MockReader)(nil).ReadChartsFromBundles), bundles)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadChartsFromBundles", reflect.TypeOf((*MockReader)(nil).ReadChartsFromBundles), ctx, bundles)
 }
 
 // ReadImagesFromBundles mocks base method.
-func (m *MockReader) ReadImagesFromBundles(bundles *v1alpha1.Bundles) ([]v1alpha1.Image, error) {
+func (m *MockReader) ReadImagesFromBundles(ctx context.Context, bundles *v1alpha1.Bundles) ([]v1alpha1.Image, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadImagesFromBundles", bundles)
+	ret := m.ctrl.Call(m, "ReadImagesFromBundles", ctx, bundles)
 	ret0, _ := ret[0].([]v1alpha1.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ReadImagesFromBundles indicates an expected call of ReadImagesFromBundles.
-func (mr *MockReaderMockRecorder) ReadImagesFromBundles(bundles interface{}) *gomock.Call {
+func (mr *MockReaderMockRecorder) ReadImagesFromBundles(ctx, bundles interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadImagesFromBundles", reflect.TypeOf((*MockReader)(nil).ReadImagesFromBundles), bundles)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadImagesFromBundles", reflect.TypeOf((*MockReader)(nil).ReadImagesFromBundles), ctx, bundles)
 }
 
 // MockImageMover is a mock of ImageMover interface.
@@ -161,6 +161,41 @@ func (mr *MockChartDownloaderMockRecorder) Download(ctx interface{}, artifacts .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, artifacts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockChartDownloader)(nil).Download), varargs...)
+}
+
+// MockManifestDownloader is a mock of ManifestDownloader interface.
+type MockManifestDownloader struct {
+	ctrl     *gomock.Controller
+	recorder *MockManifestDownloaderMockRecorder
+}
+
+// MockManifestDownloaderMockRecorder is the mock recorder for MockManifestDownloader.
+type MockManifestDownloaderMockRecorder struct {
+	mock *MockManifestDownloader
+}
+
+// NewMockManifestDownloader creates a new mock instance.
+func NewMockManifestDownloader(ctrl *gomock.Controller) *MockManifestDownloader {
+	mock := &MockManifestDownloader{ctrl: ctrl}
+	mock.recorder = &MockManifestDownloaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockManifestDownloader) EXPECT() *MockManifestDownloaderMockRecorder {
+	return m.recorder
+}
+
+// Download mocks base method.
+func (m *MockManifestDownloader) Download(ctx context.Context, bundles *v1alpha1.Bundles) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Download", ctx, bundles)
+}
+
+// Download indicates an expected call of Download.
+func (mr *MockManifestDownloaderMockRecorder) Download(ctx, bundles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockManifestDownloader)(nil).Download), ctx, bundles)
 }
 
 // MockPackager is a mock of Packager interface.

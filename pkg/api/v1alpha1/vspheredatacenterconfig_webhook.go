@@ -38,14 +38,35 @@ func (r *VSphereDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
+//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheredatacenterconfigs,verbs=create;update,versions=v1alpha1,name=mutation.vspheredatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Defaulter = &VSphereDatacenterConfig{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
+func (r *VSphereDatacenterConfig) Default() {
+	vspheredatacenterconfiglog.Info("Setting up VSphere Datacenter Config defaults for", "name", r.Name)
+	r.SetDefaults()
+}
+
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheredatacenterconfigs,verbs=create;update,versions=v1alpha1,name=validation.vspheredatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
 var _ webhook.Validator = &VSphereDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	vspheredatacenterconfiglog.Info("validate create", "name", r.Name)
+
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
+			r.Name,
+			field.ErrorList{
+				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+			},
+		)
+	}
+
 	if r.IsReconcilePaused() {
 		vspheredatacenterconfiglog.Info("VSphereDatacenterConfig is paused, so allowing create", "name", r.Name)
 		return nil
@@ -53,16 +74,27 @@ func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	if !features.IsActive(features.FullLifecycleAPI()) {
 		return apierrors.NewBadRequest("Creating new VSphereDatacenterConfig on existing cluster is not supported")
 	}
+
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	vspheredatacenterconfiglog.Info("validate update", "name", r.Name)
 
 	oldDatacenterConfig, ok := old.(*VSphereDatacenterConfig)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDataCenterConfig but got a %T", old))
+	}
+
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
+			r.Name,
+			field.ErrorList{
+				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+			},
+		)
 	}
 
 	if oldDatacenterConfig.IsReconcilePaused() {
@@ -72,63 +104,56 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 
 	r.SetDefaults()
 
-	var allErrs field.ErrorList
-
-	if err := r.ValidateFields(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if allErrs := validateImmutableFieldsVSphereCluster(r, oldDatacenterConfig); len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	allErrs = append(allErrs, validateImmutableFieldsVSphereCluster(r, oldDatacenterConfig)...)
-
-	if len(allErrs) == 0 {
-		return nil
-	}
-
-	return apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), r.Name, allErrs)
+	return nil
 }
 
 func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) field.ErrorList {
 	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
 
 	if old.Spec.Server != new.Spec.Server {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "server"), new.Spec.Server, "field is immutable"),
+			field.Forbidden(specPath.Child("server"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Datacenter != new.Spec.Datacenter {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "datacenter"), new.Spec.Datacenter, "field is immutable"),
+			field.Forbidden(specPath.Child("datacenter"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Network != new.Spec.Network {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "network"), new.Spec.Network, "field is immutable"),
+			field.Forbidden(specPath.Child("network"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Insecure != new.Spec.Insecure {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "insecure"), new.Spec.Insecure, "field is immutable"),
+			field.Forbidden(specPath.Child("insecure"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Thumbprint != new.Spec.Thumbprint {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "thumbprint"), new.Spec.Thumbprint, "field is immutable"),
+			field.Forbidden(specPath.Child("thumbprint"), "field is immutable"),
 		)
 	}
 
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereDatacenterConfig) ValidateDelete() error {
 	vspheredatacenterconfiglog.Info("validate delete", "name", r.Name)
 

@@ -16,7 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
+func TestBootstrapperCreateBootstrapClusterSuccess(t *testing.T) {
 	kubeconfigFile := "c.kubeconfig"
 	clusterName := "cluster-name"
 	clusterSpec, wantCluster := given(t, clusterName, kubeconfigFile)
@@ -36,7 +36,7 @@ func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
 			client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-			client.EXPECT().GetNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
+			client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 
 			got, err := b.CreateBootstrapCluster(ctx, clusterSpec, tt.opts...)
 			if err != nil {
@@ -50,26 +50,21 @@ func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
 	}
 }
 
-func TestBootstrapperCreateBootstrapClusterSuccessExtraObjects(t *testing.T) {
+func TestBootstrapperCreateBootstrapClusterFailureOnCreateNamespaceIfNotPresentFailure(t *testing.T) {
 	kubeconfigFile := "c.kubeconfig"
 	clusterName := "cluster-name"
-	clusterSpec, wantCluster := given(t, clusterName, kubeconfigFile)
+	clusterSpec, _ := given(t, clusterName, kubeconfigFile)
 	clusterSpec.VersionsBundle.KubeVersion = "1.20"
 	clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
 
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-	client.EXPECT().GetNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
-	client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
+	client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace).Return(errors.New(""))
 
-	got, err := b.CreateBootstrapCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("Bootstrapper.CreateBootstrapCluster() error = %v, wantErr nil", err)
-	}
-
-	if !reflect.DeepEqual(got, wantCluster) {
-		t.Fatalf("Bootstrapper.CreateBootstrapCluster() cluster = %#v, want %#v", got, wantCluster)
+	_, err := b.CreateBootstrapCluster(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("Bootstrapper.CreateBootstrapCluster() error == nil, wantErr %v", err)
 	}
 }
 
@@ -82,7 +77,7 @@ func TestBootstrapperDeleteBootstrapClusterNoBootstrap(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 	client.EXPECT().ClusterExists(ctx, cluster.Name).Return(false, nil)
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -103,7 +98,7 @@ func TestBootstrapperDeleteBootstrapClusterNoKubeconfig(t *testing.T) {
 	client.EXPECT().GetClusters(ctx, cluster).Return(nil, nil)
 	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -122,7 +117,7 @@ func TestBootstrapperDeleteBootstrapClusterNoClusterCRD(t *testing.T) {
 	client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(errors.New("cluster crd not found"))
 	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -142,7 +137,7 @@ func TestBootstrapperDeleteBootstrapClusterNoManagement(t *testing.T) {
 	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 	client.EXPECT().GetClusters(ctx, cluster).Return(nil, nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -172,7 +167,7 @@ func TestBootstrapperDeleteBootstrapClusterErrorWithManagement(t *testing.T) {
 	}
 	client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, true)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Upgrade, false)
 	if err == nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error == nil, wantErr %v", err)
 	}
@@ -227,7 +222,7 @@ func TestBootstrapperDeleteBootstrapClusterCreateOrDelete(t *testing.T) {
 			client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
 			client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 
-			err := b.DeleteBootstrapCluster(ctx, cluster, false)
+			err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 			if err != nil {
 				t.Fatalf("It shoud be possible to delete a management cluster while in %s phase. Expected error == nil, got %v", tt.clusterPhase, err)
 			}
@@ -288,7 +283,7 @@ func TestBootstrapperDeleteBootstrapClusterUpgrade(t *testing.T) {
 			client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
 			client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil).Times(0)
 
-			err := b.DeleteBootstrapCluster(ctx, cluster, true)
+			err := b.DeleteBootstrapCluster(ctx, cluster, constants.Upgrade, false)
 			if err == nil {
 				t.Fatalf("upgrade should not delete a management cluster. Expected error == nil, got %v", err)
 			}
@@ -296,11 +291,11 @@ func TestBootstrapperDeleteBootstrapClusterUpgrade(t *testing.T) {
 	}
 }
 
-func newBootstrapper(t *testing.T) (*bootstrapper.Bootstrapper, *mocks.MockClusterClient) {
+func newBootstrapper(t *testing.T, opts ...bootstrapper.BootstrapperOpt) (*bootstrapper.Bootstrapper, *mocks.MockClusterClient) {
 	mockCtrl := gomock.NewController(t)
 
 	client := mocks.NewMockClusterClient(mockCtrl)
-	b := bootstrapper.New(client)
+	b := bootstrapper.New(client, opts...)
 	return b, client
 }
 

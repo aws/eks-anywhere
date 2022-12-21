@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -17,7 +16,7 @@ func TestVSphereDatacenterValidateUpdateServerImmutable(t *testing.T) {
 
 	c.Spec.Server = "https://newFancyServer.newFancyCloud.io"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.server: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateDataCenterImmutable(t *testing.T) {
@@ -25,9 +24,10 @@ func TestVSphereDatacenterValidateUpdateDataCenterImmutable(t *testing.T) {
 	vOld.Spec.Datacenter = "oldCruftyDatacenter"
 	c := vOld.DeepCopy()
 
-	c.Spec.Datacenter = "shinyNewDatacenter"
+	c.Spec.Datacenter = "/shinyNewDatacenter"
+	c.Spec.Network = "/shinyNewDatacenter/network"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.datacenter: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
@@ -35,9 +35,10 @@ func TestVSphereDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld.Spec.Network = "OldNet"
 	c := vOld.DeepCopy()
 
-	c.Spec.Network = "NewNet"
+	c.Spec.Network = "/datacenter/network"
+
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.network: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
@@ -47,7 +48,7 @@ func TestVSphereDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
 
 	c.Spec.Insecure = false
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.insecure: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateTlsThumbprintImmutable(t *testing.T) {
@@ -57,15 +58,15 @@ func TestVSphereDatacenterValidateUpdateTlsThumbprintImmutable(t *testing.T) {
 
 	c.Spec.Thumbprint = "B3D1C464976E725E599D3548180CB56311818F224E701F9D56F22E8079A7B396"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.thumbprint: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := vsphereDatacenterConfig()
-	vOld.Spec.Network = "oldNetwork"
+	vOld.Spec.Network = "/datacenter/oldNetwork"
 	c := vOld.DeepCopy()
 
-	c.Spec.Network = "newNetwork"
+	c.Spec.Network = "/datacenter/network/newNetwork"
 
 	vOld.PauseReconcile()
 
@@ -78,7 +79,7 @@ func TestVSphereDatacenterValidateUpdateInvalidType(t *testing.T) {
 	c := &v1alpha1.VSphereDatacenterConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(vOld)).To(MatchError(ContainSubstring("expected a VSphereDataCenterConfig but got a *v1alpha1.Cluster")))
 }
 
 func TestVSphereDatacenterValidateUpdateInvalidServer(t *testing.T) {
@@ -88,7 +89,7 @@ func TestVSphereDatacenterValidateUpdateInvalidServer(t *testing.T) {
 	c.Spec.Server = ""
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("VSphereDatacenterConfig server is not set or is empty")))
 }
 
 func TestVSphereDatacenterValidateUpdateInvalidDatacenter(t *testing.T) {
@@ -98,7 +99,7 @@ func TestVSphereDatacenterValidateUpdateInvalidDatacenter(t *testing.T) {
 	c.Spec.Datacenter = ""
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("VSphereDatacenterConfig datacenter is not set or is empty")))
 }
 
 func TestVSphereDatacenterValidateUpdateInvalidNetwork(t *testing.T) {
@@ -108,7 +109,17 @@ func TestVSphereDatacenterValidateUpdateInvalidNetwork(t *testing.T) {
 	c.Spec.Network = ""
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("VSphereDatacenterConfig VM network is not set or is empty")))
+}
+
+func TestVSphereDatacenterConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := vsphereDatacenterConfig()
+	sOld.Spec.Network = "network-1"
+	sOld.Default()
+
+	g.Expect(sOld.Spec.Network).To(Equal("/datacenter/network/network-1"))
 }
 
 func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
@@ -127,14 +138,24 @@ func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 }
 
 func TestVSphereDatacenterValidateCreateFullManagementCycleOn(t *testing.T) {
-	os.Setenv("FULL_LIFECYCLE_API", "true")
+	t.Setenv("FULL_LIFECYCLE_API", "true")
 	dataCenterConfig := vsphereDatacenterConfig()
-	dataCenterConfig.Spec.Network = "Network"
-	c := dataCenterConfig.DeepCopy()
-
-	c.Spec.Network = "Network"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).To(Succeed())
-	os.Unsetenv("FULL_LIFECYCLE_API")
+	g.Expect(dataCenterConfig.ValidateCreate()).To(Succeed())
+}
+
+func TestVSphereDatacenterValidateCreate(t *testing.T) {
+	dataCenterConfig := vsphereDatacenterConfig()
+
+	g := NewWithT(t)
+	g.Expect(dataCenterConfig.ValidateCreate()).To(Succeed())
+}
+
+func TestVSphereDatacenterValidateCreateFail(t *testing.T) {
+	dataCenterConfig := vsphereDatacenterConfig()
+	dataCenterConfig.Spec.Datacenter = ""
+
+	g := NewWithT(t)
+	g.Expect(dataCenterConfig.ValidateCreate()).To(MatchError(ContainSubstring("VSphereDatacenterConfig datacenter is not set or is empty")))
 }

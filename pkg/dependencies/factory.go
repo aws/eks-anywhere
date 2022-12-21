@@ -2,69 +2,103 @@ package dependencies
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/google/uuid"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
+	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+	"golang.org/x/exp/maps"
 
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
-	"github.com/aws/eks-anywhere/pkg/clients/flux"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
+	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/executables/cmk"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	"github.com/aws/eks-anywhere/pkg/gitops/flux"
+	"github.com/aws/eks-anywhere/pkg/govmomi"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
-	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
+	"github.com/aws/eks-anywhere/pkg/providers/validator"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/pkg/workflow/task/workload"
+	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
 type Dependencies struct {
-	Provider                  providers.Provider
-	ClusterAwsCli             *executables.Clusterawsadm
-	DockerClient              *executables.Docker
-	Kubectl                   *executables.Kubectl
-	Govc                      *executables.Govc
-	Cmk                       *executables.Cmk
-	Tink                      *executables.Tink
-	Pbnj                      *pbnj.Pbnj
-	SnowAwsClient             aws.Clients
-	SnowConfigManager         *snow.ConfigManager
-	TinkerbellClients         tinkerbell.TinkerbellClients
-	Writer                    filewriter.FileWriter
-	Kind                      *executables.Kind
-	Clusterctl                *executables.Clusterctl
-	Flux                      *executables.Flux
-	Troubleshoot              *executables.Troubleshoot
-	Helm                      *executables.Helm
-	Networking                clustermanager.Networking
-	AwsIamAuth                clustermanager.AwsIamAuth
-	ClusterManager            *clustermanager.ClusterManager
-	Bootstrapper              *bootstrapper.Bootstrapper
-	FluxAddonClient           *addonclients.FluxAddonClient
-	AnalyzerFactory           diagnostics.AnalyzerFactory
-	CollectorFactory          diagnostics.CollectorFactory
-	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
-	CAPIManager               *clusterapi.Manager
-	ResourceSetManager        *clusterapi.ResourceSetManager
-	FileReader                *files.Reader
-	ManifestReader            *manifests.Reader
-	closers                   []types.Closer
+	Provider                    providers.Provider
+	ClusterAwsCli               *executables.Clusterawsadm
+	DockerClient                *executables.Docker
+	Kubectl                     *executables.Kubectl
+	Govc                        *executables.Govc
+	CloudStackValidatorRegistry cloudstack.ValidatorRegistry
+	SnowAwsClientRegistry       *snow.AwsClientRegistry
+	SnowConfigManager           *snow.ConfigManager
+	Writer                      filewriter.FileWriter
+	Kind                        *executables.Kind
+	Clusterctl                  *executables.Clusterctl
+	Flux                        *executables.Flux
+	Troubleshoot                *executables.Troubleshoot
+	Helm                        *executables.Helm
+	UnAuthKubeClient            *kubernetes.UnAuthClient
+	Networking                  clustermanager.Networking
+	CNIInstaller                workload.CNIInstaller
+	CiliumTemplater             *cilium.Templater
+	AwsIamAuth                  *awsiamauth.Installer
+	ClusterManager              *clustermanager.ClusterManager
+	Bootstrapper                *bootstrapper.Bootstrapper
+	GitOpsFlux                  *flux.Flux
+	Git                         *gitfactory.GitTools
+	EksdInstaller               *eksd.Installer
+	EksdUpgrader                *eksd.Upgrader
+	AnalyzerFactory             diagnostics.AnalyzerFactory
+	CollectorFactory            diagnostics.CollectorFactory
+	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
+	CAPIManager                 *clusterapi.Manager
+	FileReader                  *files.Reader
+	ManifestReader              *manifests.Reader
+	closers                     []types.Closer
+	CliConfig                   *config.CliConfig
+	PackageInstaller            interfaces.PackageInstaller
+	BundleRegistry              curatedpackages.BundleRegistry
+	PackageControllerClient     *curatedpackages.PackageControllerClient
+	PackageClient               curatedpackages.PackageHandler
+	VSphereValidator            *vsphere.Validator
+	VSphereDefaulter            *vsphere.Defaulter
+	NutanixPrismClient          *v3.Client
+	SnowValidator               *snow.AwsClientValidator
+	IPValidator                 *validator.IPValidator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -82,21 +116,29 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
-		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
+		WithRegistryMirror(registrymirror.FromCluster(clusterSpec.Cluster)).
+		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
 
+// Factory helps initialization.
 type Factory struct {
-	executableBuilder        *executables.ExecutableBuilder
-	providerFactory          *factory.ProviderFactory
-	executablesImage         string
-	registryMirror           string
-	executablesMountDirs     []string
+	executablesConfig        *executablesConfig
+	registryMirror           *registrymirror.RegistryMirror
+	proxyConfiguration       map[string]string
 	writerFolder             string
 	diagnosticCollectorImage string
 	buildSteps               []buildStep
 	dependencies             Dependencies
+}
+
+type executablesConfig struct {
+	builder            *executables.ExecutablesBuilder
+	image              string
+	useDockerContainer bool
+	dockerClient       executables.DockerClient
+	mountDirs          []string
 }
 
 type buildStep func(ctx context.Context) error
@@ -104,7 +146,10 @@ type buildStep func(ctx context.Context) error
 func NewFactory() *Factory {
 	return &Factory{
 		writerFolder: "./",
-		buildSteps:   make([]buildStep, 0),
+		executablesConfig: &executablesConfig{
+			useDockerContainer: executables.ExecutablesInDocker(),
+		},
+		buildSteps: make([]buildStep, 0),
 	}
 }
 
@@ -129,13 +174,37 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
-func (f *Factory) WithRegistryMirror(mirror string) *Factory {
-	f.registryMirror = mirror
+// WithRegistryMirror configures the factory to use registry mirror wherever applicable.
+func (f *Factory) WithRegistryMirror(registryMirror *registrymirror.RegistryMirror) *Factory {
+	f.registryMirror = registryMirror
+
+	return f
+}
+
+func (f *Factory) UseProxyConfiguration(proxyConfig map[string]string) *Factory {
+	f.proxyConfiguration = proxyConfig
+	return f
+}
+
+func (f *Factory) GetProxyConfiguration() map[string]string {
+	return f.proxyConfiguration
+}
+
+func (f *Factory) WithProxyConfiguration() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.proxyConfiguration == nil {
+			proxyConfig := config.GetProxyConfigFromEnv()
+			f.UseProxyConfiguration(proxyConfig)
+		}
+		return nil
+	},
+	)
+
 	return f
 }
 
 func (f *Factory) UseExecutableImage(image string) *Factory {
-	f.executablesImage = image
+	f.executablesConfig.image = image
 	return f
 }
 
@@ -143,12 +212,12 @@ func (f *Factory) UseExecutableImage(image string) *Factory {
 // from the Bundle and using the first VersionsBundle
 // This is just the default for when there is not an specific kubernetes version available
 // For commands that receive a cluster config file or a kubernetes version directly as input,
-// use UseExecutableImage to specify the image directly
+// use UseExecutableImage to specify the image directly.
 func (f *Factory) WithExecutableImage() *Factory {
 	f.WithManifestReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.executablesImage != "" {
+		if f.executablesConfig.image != "" {
 			return nil
 		}
 
@@ -157,108 +226,261 @@ func (f *Factory) WithExecutableImage() *Factory {
 			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
 		}
 
-		f.executablesImage = bundles.DefaultEksAToolsImage().VersionedImage()
+		f.executablesConfig.image = bundles.DefaultEksAToolsImage().VersionedImage()
 		return nil
 	})
+
 	return f
 }
 
 func (f *Factory) WithExecutableMountDirs(mountDirs ...string) *Factory {
-	f.executablesMountDirs = mountDirs
+	f.executablesConfig.mountDirs = mountDirs
+	return f
+}
+
+func (f *Factory) WithLocalExecutables() *Factory {
+	f.executablesConfig.useDockerContainer = false
+	return f
+}
+
+// UseExecutablesDockerClient forces a specific DockerClient to build
+// Executables as opposed to follow the normal building flow
+// This is only for testing.
+func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *Factory {
+	f.executablesConfig.dockerClient = client
+	return f
+}
+
+// dockerLogin performs a docker login with the ENV VARS.
+func dockerLogin(ctx context.Context, registry string, docker executables.DockerClient) error {
+	username, password, _ := config.ReadCredentials()
+	err := docker.Login(ctx, registry, username, password)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// WithDockerLogin adds a docker login to the build steps.
+func (f *Factory) WithDockerLogin() *Factory {
+	f.WithDocker()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.registryMirror != nil {
+			err := dockerLogin(ctx, f.registryMirror.BaseRegistry, f.executablesConfig.dockerClient)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 	return f
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
-	f.WithExecutableImage()
+	if f.executablesConfig.useDockerContainer {
+		f.WithExecutableImage().WithDocker()
+		if f.registryMirror != nil && f.registryMirror.Auth {
+			f.WithDockerLogin()
+		}
+	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.executableBuilder != nil {
+		if f.executablesConfig.builder != nil {
 			return nil
 		}
 
-		image := urls.ReplaceHost(f.executablesImage, f.registryMirror)
-		b, close, err := executables.NewExecutableBuilder(ctx, image, f.executablesMountDirs...)
+		if f.executablesConfig.useDockerContainer {
+			image := f.executablesConfig.image
+			if f.registryMirror != nil {
+				image = f.registryMirror.ReplaceRegistry(image)
+			}
+			b, err := executables.NewInDockerExecutablesBuilder(
+				f.executablesConfig.dockerClient,
+				image,
+				f.executablesConfig.mountDirs...,
+			)
+			if err != nil {
+				return err
+			}
+			f.executablesConfig.builder = b
+		} else {
+			f.executablesConfig.builder = executables.NewLocalExecutablesBuilder()
+		}
+
+		closer, err := f.executablesConfig.builder.Init(ctx)
 		if err != nil {
 			return err
 		}
+		if f.registryMirror != nil && f.registryMirror.Auth {
+			docker := f.executablesConfig.builder.BuildDockerExecutable()
+			err := dockerLogin(ctx, f.registryMirror.BaseRegistry, docker)
+			if err != nil {
+				return err
+			}
+		}
+		f.dependencies.closers = append(f.dependencies.closers, closer)
 
-		f.dependencies.closers = append(f.dependencies.closers, close)
-
-		f.executableBuilder = b
 		return nil
 	})
 
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, setupTinkerbell, force bool) *Factory {
-	f.WithProviderFactory(clusterConfigFile, clusterConfig)
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
+	switch clusterConfig.Spec.DatacenterRef.Kind {
+	case v1alpha1.VSphereDatacenterKind:
+		f.WithKubectl().WithGovc().WithWriter().WithIPValidator()
+	case v1alpha1.CloudStackDatacenterKind:
+		f.WithKubectl().WithCloudStackValidatorRegistry(skipIpCheck).WithWriter()
+	case v1alpha1.DockerDatacenterKind:
+		f.WithDocker().WithKubectl()
+	case v1alpha1.TinkerbellDatacenterKind:
+		if clusterConfig.Spec.RegistryMirrorConfiguration != nil {
+			f.WithDocker().WithKubectl().WithWriter().WithHelm(executables.WithInsecure())
+		} else {
+			f.WithDocker().WithKubectl().WithWriter().WithHelm()
+		}
+	case v1alpha1.SnowDatacenterKind:
+		f.WithUnAuthKubeClient().WithSnowConfigManager()
+	case v1alpha1.NutanixDatacenterKind:
+		f.WithKubectl().WithPrismClient(clusterConfigFile)
+	}
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Provider != nil {
 			return nil
 		}
 
-		var err error
-		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile, skipPowerActions, setupTinkerbell, force)
-		if err != nil {
-			return err
+		switch clusterConfig.Spec.DatacenterRef.Kind {
+		case v1alpha1.VSphereDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			f.dependencies.Provider = vsphere.NewProvider(
+				datacenterConfig,
+				clusterConfig,
+				f.dependencies.Govc,
+				f.dependencies.Kubectl,
+				f.dependencies.Writer,
+				f.dependencies.IPValidator,
+				time.Now,
+				skipIpCheck,
+			)
+
+		case v1alpha1.CloudStackDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+			execConfig, err := decoder.ParseCloudStackCredsFromEnv()
+			if err != nil {
+				return fmt.Errorf("parsing CloudStack credentials: %v", err)
+			}
+			validator, err := f.dependencies.CloudStackValidatorRegistry.Get(execConfig)
+			if err != nil {
+				return fmt.Errorf("building validator from exec config: %v", err)
+			}
+			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, validator, f.dependencies.Writer, time.Now, logger.Get())
+
+		case v1alpha1.SnowDatacenterKind:
+			f.dependencies.Provider = snow.NewProvider(
+				f.dependencies.UnAuthKubeClient,
+				f.dependencies.SnowConfigManager,
+				skipIpCheck,
+			)
+
+		case v1alpha1.TinkerbellDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetTinkerbellMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			tinkerbellIp := tinkerbellBootstrapIp
+			if tinkerbellIp == "" {
+				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
+				localIp, err := networkutils.GetLocalIP()
+				if err != nil {
+					return err
+				}
+				tinkerbellIp = localIp.String()
+			}
+			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIp)
+
+			provider, err := tinkerbell.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				hardwareCSVPath,
+				f.dependencies.Writer,
+				f.dependencies.DockerClient,
+				f.dependencies.Helm,
+				f.dependencies.Kubectl,
+				tinkerbellIp,
+				time.Now,
+				force,
+				skipIpCheck,
+			)
+			if err != nil {
+				return err
+			}
+
+			f.dependencies.Provider = provider
+
+		case v1alpha1.DockerDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			f.dependencies.Provider = docker.NewProvider(
+				datacenterConfig,
+				f.dependencies.DockerClient,
+				f.dependencies.Kubectl,
+				time.Now,
+			)
+		case v1alpha1.NutanixDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetNutanixMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			skipVerifyTransport := http.DefaultTransport.(*http.Transport).Clone()
+			skipVerifyTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			httpClient := &http.Client{Transport: skipVerifyTransport}
+			provider := nutanix.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				f.dependencies.Kubectl,
+				f.dependencies.Writer,
+				f.dependencies.NutanixPrismClient.V3,
+				crypto.NewTlsValidator(),
+				httpClient,
+				time.Now,
+			)
+			f.dependencies.Provider = provider
+		default:
+			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 		}
 
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v1alpha1.Cluster) *Factory {
-	switch clusterConfig.Spec.DatacenterRef.Kind {
-	case v1alpha1.VSphereDatacenterKind:
-		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
-	case v1alpha1.CloudStackDatacenterKind:
-		f.WithKubectl().WithCmk().WithWriter()
-	case v1alpha1.DockerDatacenterKind:
-		f.WithDocker().WithKubectl()
-	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile)
-	case v1alpha1.SnowDatacenterKind:
-		f.WithKubectl().WithSnowConfigManager()
-	}
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.providerFactory != nil {
-			return nil
-		}
-
-		f.providerFactory = &factory.ProviderFactory{
-			DockerClient:              f.dependencies.DockerClient,
-			DockerKubectlClient:       f.dependencies.Kubectl,
-			CloudStackCmkClient:       f.dependencies.Cmk,
-			CloudStackKubectlClient:   f.dependencies.Kubectl,
-			VSphereGovcClient:         f.dependencies.Govc,
-			VSphereKubectlClient:      f.dependencies.Kubectl,
-			SnowKubectlClient:         f.dependencies.Kubectl,
-			SnowConfigManager:         f.dependencies.SnowConfigManager,
-			TinkerbellKubectlClient:   f.dependencies.Kubectl,
-			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
-			Writer:                    f.dependencies.Writer,
-			ClusterResourceSetManager: f.dependencies.ResourceSetManager,
-		}
-
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithClusterAwsCli() *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.ClusterAwsCli != nil {
-			return nil
-		}
-
-		f.dependencies.ClusterAwsCli = f.executableBuilder.BuildClusterAwsAdmExecutable()
 		return nil
 	})
 
@@ -266,14 +488,16 @@ func (f *Factory) WithClusterAwsCli() *Factory {
 }
 
 func (f *Factory) WithDocker() *Factory {
-	f.WithExecutableBuilder()
-
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.DockerClient != nil {
 			return nil
 		}
 
 		f.dependencies.DockerClient = executables.BuildDockerExecutable()
+		if f.executablesConfig.dockerClient == nil {
+			f.executablesConfig.dockerClient = f.dependencies.DockerClient
+		}
+
 		return nil
 	})
 
@@ -288,7 +512,7 @@ func (f *Factory) WithKubectl() *Factory {
 			return nil
 		}
 
-		f.dependencies.Kubectl = f.executableBuilder.BuildKubectlExecutable()
+		f.dependencies.Kubectl = f.executablesConfig.builder.BuildKubectlExecutable()
 		return nil
 	})
 
@@ -303,7 +527,7 @@ func (f *Factory) WithGovc() *Factory {
 			return nil
 		}
 
-		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
+		f.dependencies.Govc = f.executablesConfig.builder.BuildGovcExecutable(f.dependencies.Writer)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Govc)
 
 		return nil
@@ -312,20 +536,17 @@ func (f *Factory) WithGovc() *Factory {
 	return f
 }
 
-func (f *Factory) WithCmk() *Factory {
+// WithCloudStackValidatorRegistry initializes the CloudStack validator for the object being constructed to make it available in the constructor.
+func (f *Factory) WithCloudStackValidatorRegistry(skipIPCheck bool) *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Cmk != nil {
+		if f.dependencies.CloudStackValidatorRegistry != nil {
 			return nil
 		}
-		execConfig, err := decoder.ParseCloudStackSecret()
-		if err != nil {
-			return fmt.Errorf("building cmk executable: %v", err)
-		}
 
-		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
-		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
+		cmkBuilder := cmk.NewCmkBuilder(f.executablesConfig.builder)
+		f.dependencies.CloudStackValidatorRegistry = cloudstack.NewValidatorFactory(cmkBuilder, f.dependencies.Writer, skipIPCheck)
 
 		return nil
 	})
@@ -341,8 +562,8 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 			return nil
 		}
 
-		validator := snow.NewValidator(f.dependencies.SnowAwsClient)
-		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClient, f.dependencies.Writer)
+		validator := snow.NewValidator(f.dependencies.SnowAwsClientRegistry)
+		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClientRegistry, f.dependencies.Writer)
 
 		f.dependencies.SnowConfigManager = snow.NewConfigManager(defaulters, validator)
 
@@ -354,77 +575,17 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 
 func (f *Factory) WithAwsSnow() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.SnowAwsClient != nil {
+		if f.dependencies.SnowAwsClientRegistry != nil {
 			return nil
 		}
-		credsFile, err := aws.AwsCredentialsFile()
-		if err != nil {
-			return fmt.Errorf("fetching aws credentials from env: %v", err)
-		}
-		certsFile, err := aws.AwsCABundlesFile()
-		if err != nil {
-			return fmt.Errorf("fetching aws CA bundles from env: %v", err)
-		}
 
-		deviceIps, err := aws.ParseDeviceIPsFromFile(credsFile)
-		if err != nil {
-			return fmt.Errorf("getting device ips from aws credentials: %v", err)
-		}
-
-		deviceClientMap := make(aws.Clients, len(deviceIps))
-
-		for _, ip := range deviceIps {
-			config, err := aws.LoadConfig(ctx, aws.WithSnowEndpointAccess(ip, certsFile, credsFile))
-			if err != nil {
-				return fmt.Errorf("setting up aws client: %v", err)
-			}
-			deviceClientMap[ip] = aws.NewClient(ctx, config)
-		}
-
-		f.dependencies.SnowAwsClient = deviceClientMap
-
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithTink(clusterConfigFile string) *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Tink != nil {
-			return nil
-		}
-		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
+		clientRegistry := snow.NewAwsClientRegistry()
+		err := clientRegistry.Build(ctx)
 		if err != nil {
 			return err
 		}
-		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
+		f.dependencies.SnowAwsClientRegistry = clientRegistry
 
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithPbnj(clusterConfigFile string) *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Pbnj != nil {
-			return nil
-		}
-		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
-		if err != nil {
-			return err
-		}
-
-		pbnjClient, err := pbnj.NewPBNJClient(tinkerbellDatacenterConfig.Spec.TinkerbellPBnJGRPCAuth)
-		if err != nil {
-			return err
-		}
-		f.dependencies.Pbnj = pbnjClient
 		return nil
 	})
 
@@ -457,7 +618,7 @@ func (f *Factory) WithKind() *Factory {
 			return nil
 		}
 
-		f.dependencies.Kind = f.executableBuilder.BuildKindExecutable(f.dependencies.Writer)
+		f.dependencies.Kind = f.executablesConfig.builder.BuildKindExecutable(f.dependencies.Writer)
 		return nil
 	})
 
@@ -472,7 +633,7 @@ func (f *Factory) WithClusterctl() *Factory {
 			return nil
 		}
 
-		f.dependencies.Clusterctl = f.executableBuilder.BuildClusterCtlExecutable(f.dependencies.Writer)
+		f.dependencies.Clusterctl = f.executablesConfig.builder.BuildClusterCtlExecutable(f.dependencies.Writer)
 		return nil
 	})
 
@@ -487,7 +648,7 @@ func (f *Factory) WithFlux() *Factory {
 			return nil
 		}
 
-		f.dependencies.Flux = f.executableBuilder.BuildFluxExecutable()
+		f.dependencies.Flux = f.executablesConfig.builder.BuildFluxExecutable()
 		return nil
 	})
 
@@ -502,27 +663,26 @@ func (f *Factory) WithTroubleshoot() *Factory {
 			return nil
 		}
 
-		f.dependencies.Troubleshoot = f.executableBuilder.BuildTroubleshootExecutable()
+		f.dependencies.Troubleshoot = f.executablesConfig.builder.BuildTroubleshootExecutable()
 		return nil
 	})
 
 	return f
 }
 
-func (f *Factory) WithHelm() *Factory {
-	f.WithExecutableBuilder()
+func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
+	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Helm != nil {
-			return nil
-		}
-
-		var opts []executables.HelmOpt
-		if f.registryMirror != "" {
+		if f.registryMirror != nil {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
 
-		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable(opts...)
+		if f.proxyConfiguration != nil {
+			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
+		}
+
+		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -537,9 +697,12 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelm()
+		f.WithKubectl().WithCiliumTemplater()
 		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
+			return cilium.NewCilium(
+				cilium.NewRetrier(f.dependencies.Kubectl),
+				f.dependencies.CiliumTemplater,
+			)
 		}
 	}
 
@@ -555,17 +718,78 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	return f
 }
 
+// WithCNIInstaller builds a CNI installer for the given cluster.
+func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provider) *Factory {
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
+		f.WithKubectl()
+	} else {
+		f.WithKubectl().WithCiliumTemplater()
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CNIInstaller != nil {
+			return nil
+		}
+
+		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
+			f.dependencies.CNIInstaller = kindnetd.NewInstallerForSpec(f.dependencies.Kubectl, spec)
+		} else {
+			f.dependencies.CNIInstaller = cilium.NewInstallerForSpec(
+				cilium.NewRetrier(f.dependencies.Kubectl),
+				f.dependencies.CiliumTemplater,
+				cilium.Config{
+					Spec:              spec,
+					AllowedNamespaces: maps.Keys(provider.GetDeployments()),
+				},
+			)
+		}
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCiliumTemplater() *Factory {
+	f.WithHelm(executables.WithInsecure())
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CiliumTemplater != nil {
+			return nil
+		}
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.Helm)
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithAwsIamAuth() *Factory {
+	f.WithKubectl().WithWriter()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.AwsIamAuth != nil {
 			return nil
 		}
 		certgen := crypto.NewCertificateGenerator()
 		clusterId := uuid.New()
-		f.dependencies.AwsIamAuth = awsiamauth.NewAwsIamAuth(certgen, clusterId)
+		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(certgen, clusterId, f.dependencies.Kubectl, f.dependencies.Writer)
 		return nil
 	})
 
+	return f
+}
+
+// WithIPValidator builds the IPValidator for the given cluster.
+func (f *Factory) WithIPValidator() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.IPValidator != nil {
+			return nil
+		}
+		f.dependencies.IPValidator = validator.NewIPValidator()
+		return nil
+	})
 	return f
 }
 
@@ -594,7 +818,7 @@ type clusterManagerClient struct {
 	*executables.Kubectl
 }
 
-func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
+func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
 	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -602,15 +826,23 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			return nil
 		}
 
-		f.dependencies.ClusterManager = clustermanager.New(
+		client := clustermanager.NewRetrierClient(
 			&clusterManagerClient{
 				f.dependencies.Clusterctl,
 				f.dependencies.Kubectl,
 			},
+			clustermanager.DefaultRetrier(),
+		)
+		installer := clustermanager.NewEKSAInstaller(client)
+
+		f.dependencies.ClusterManager = clustermanager.New(
+			client,
 			f.dependencies.Networking,
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			installer,
+			opts...,
 		)
 		return nil
 	})
@@ -618,30 +850,203 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
-	f.WithWriter().WithFlux().WithKubectl()
+func (f *Factory) WithCliConfig(cliConfig *config.CliConfig) *Factory {
+	f.dependencies.CliConfig = cliConfig
+	return f
+}
+
+type eksdInstallerClient struct {
+	*executables.Kubectl
+}
+
+func (f *Factory) WithEksdInstaller() *Factory {
+	f.WithKubectl().WithFileReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.FluxAddonClient != nil {
+		if f.dependencies.EksdInstaller != nil {
 			return nil
 		}
 
-		gitOpts, err := addonclients.NewGitOptions(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
-		if err != nil {
-			return err
+		f.dependencies.EksdInstaller = eksd.NewEksdInstaller(
+			&eksdInstallerClient{
+				f.dependencies.Kubectl,
+			},
+			f.dependencies.FileReader,
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithEksdUpgrader() *Factory {
+	f.WithKubectl().WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksdUpgrader != nil {
+			return nil
 		}
 
-		f.dependencies.FluxAddonClient = addonclients.NewFluxAddonClient(
-			&flux.FluxKubectl{
-				Flux:    f.dependencies.Flux,
-				Kubectl: f.dependencies.Kubectl,
+		f.dependencies.EksdUpgrader = eksd.NewUpgrader(
+			&eksdInstallerClient{
+				f.dependencies.Kubectl,
 			},
-			gitOpts,
+			f.dependencies.FileReader,
 		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+	f.WithWriter()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Git != nil {
+			return nil
+		}
+
+		if fluxConfig == nil {
+			return nil
+		}
+
+		tools, err := gitfactory.Build(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
+		if err != nil {
+			return fmt.Errorf("creating Git provider: %v", err)
+		}
+
+		if fluxConfig.Spec.Git != nil {
+			err = tools.Client.ValidateRemoteExists(ctx)
+			if err != nil {
+				return err
+			}
+		}
+
+		if tools.Provider != nil {
+			err = tools.Provider.Validate(ctx)
+			if err != nil {
+				return fmt.Errorf("validating provider: %v", err)
+			}
+		}
+
+		f.dependencies.Git = tools
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
+	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.GitOpsFlux != nil {
+			return nil
+		}
+
+		f.dependencies.GitOpsFlux = flux.NewFlux(f.dependencies.Flux, f.dependencies.Kubectl, f.dependencies.Git, cliConfig)
 
 		return nil
 	})
 
+	return f
+}
+
+func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+	f.WithKubectl().WithPackageControllerClient(spec, kubeConfig).WithPackageClient()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageInstaller != nil {
+			return nil
+		}
+		managementClusterName := getManagementClusterName(spec)
+		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
+
+		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
+			f.dependencies.Kubectl,
+			f.dependencies.PackageClient,
+			f.dependencies.PackageControllerClient,
+			spec,
+			packagesLocation,
+			mgmtKubeConfig,
+		)
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string) *Factory {
+	f.WithHelm(executables.WithInsecure()).WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageControllerClient != nil || spec == nil {
+			return nil
+		}
+		managementClusterName := getManagementClusterName(spec)
+		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
+
+		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
+		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
+			f.dependencies.Helm,
+			f.dependencies.Kubectl,
+			spec.Cluster.Name,
+			mgmtKubeConfig,
+			&spec.VersionsBundle.PackageController.HelmChart,
+			f.registryMirror,
+			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
+			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
+			curatedpackages.WithEksaRegion(eksaRegion),
+			curatedpackages.WithHTTPProxy(httpProxy),
+			curatedpackages.WithHTTPSProxy(httpsProxy),
+			curatedpackages.WithNoProxy(noProxy),
+			curatedpackages.WithManagementClusterName(managementClusterName),
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPackageClient() *Factory {
+	f.WithKubectl()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageClient != nil {
+			return nil
+		}
+
+		f.dependencies.PackageClient = curatedpackages.NewPackageClient(
+			f.dependencies.Kubectl,
+		)
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
+	if registryName != "" {
+		f.WithHelm(executables.WithInsecure())
+	} else {
+		f.WithManifestReader()
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.BundleRegistry != nil {
+			return nil
+		}
+
+		if registryName != "" {
+			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
+				f.dependencies.Helm,
+				registryName,
+			)
+		} else {
+			f.dependencies.BundleRegistry = curatedpackages.NewDefaultRegistry(
+				f.dependencies.ManifestReader,
+				kubeVersion,
+				version,
+			)
+		}
+		return nil
+	})
 	return f
 }
 
@@ -718,21 +1123,6 @@ func (f *Factory) WithCAPIManager() *Factory {
 	return f
 }
 
-func (f *Factory) WithCAPIClusterResourceSetManager() *Factory {
-	f.WithKubectl()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.ResourceSetManager != nil {
-			return nil
-		}
-
-		f.dependencies.ResourceSetManager = clusterapi.NewResourceSetManager(f.dependencies.Kubectl)
-		return nil
-	})
-
-	return f
-}
-
 func (f *Factory) WithFileReader() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.FileReader != nil {
@@ -761,4 +1151,121 @@ func (f *Factory) WithManifestReader() *Factory {
 	})
 
 	return f
+}
+
+func (f *Factory) WithUnAuthKubeClient() *Factory {
+	f.WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.UnAuthKubeClient != nil {
+			return nil
+		}
+
+		f.dependencies.UnAuthKubeClient = kubernetes.NewUnAuthClient(f.dependencies.Kubectl)
+		if err := f.dependencies.UnAuthKubeClient.Init(); err != nil {
+			return fmt.Errorf("building unauth kube client: %v", err)
+		}
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithVSphereValidator() *Factory {
+	f.WithGovc()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.VSphereValidator != nil {
+			return nil
+		}
+		vcb := govmomi.NewVMOMIClientBuilder()
+		v := vsphere.NewValidator(
+			f.dependencies.Govc,
+			vcb,
+		)
+		f.dependencies.VSphereValidator = v
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithVSphereDefaulter() *Factory {
+	f.WithGovc()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.VSphereDefaulter != nil {
+			return nil
+		}
+
+		f.dependencies.VSphereDefaulter = vsphere.NewDefaulter(f.dependencies.Govc)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
+	if f.dependencies.NutanixPrismClient != nil {
+		return f
+	}
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+		if err != nil {
+			return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+		}
+
+		clientOpts := make([]v3.ClientOption, 0)
+		if datacenterConfig.Spec.AdditionalTrustBundle != "" {
+			block, _ := pem.Decode([]byte(datacenterConfig.Spec.AdditionalTrustBundle))
+			certs, err := x509.ParseCertificates(block.Bytes)
+			if err != nil {
+				return fmt.Errorf("unable to parse additional trust bundle %s: %v", datacenterConfig.Spec.AdditionalTrustBundle, err)
+			}
+			if len(certs) == 0 {
+				return fmt.Errorf("unable to extract certs from the addtional trust bundle %s", datacenterConfig.Spec.AdditionalTrustBundle)
+			}
+			clientOpts = append(clientOpts, v3.WithCertificate(certs[0]))
+		}
+
+		endpoint := datacenterConfig.Spec.Endpoint
+		port := datacenterConfig.Spec.Port
+		url := fmt.Sprintf("%s:%d", endpoint, port)
+		creds := nutanix.GetCredsFromEnv()
+		nutanixCreds := prismgoclient.Credentials{
+			URL:      url,
+			Username: creds.PrismCentral.Username,
+			Password: creds.PrismCentral.Password,
+			Endpoint: endpoint,
+			Port:     fmt.Sprintf("%d", port),
+			Insecure: datacenterConfig.Spec.Insecure,
+		}
+
+		client, err := v3.NewV3Client(nutanixCreds, clientOpts...)
+		if err != nil {
+			return fmt.Errorf("error creating nutanix client: %v", err)
+		}
+		f.dependencies.NutanixPrismClient = client
+		return nil
+	})
+
+	return f
+}
+
+func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy string, noProxy []string) {
+	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
+	if proxyConfiguration != nil {
+		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
+	}
+	return "", "", nil
+}
+
+func getManagementClusterName(clusterSpec *cluster.Spec) string {
+	if clusterSpec.Cluster.Spec.ManagementCluster.Name != "" {
+		return clusterSpec.Cluster.Spec.ManagementCluster.Name
+	}
+	return clusterSpec.Cluster.Name
 }

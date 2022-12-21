@@ -1,0 +1,93 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+  name: "{{.workerNodeGroupName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+  {{- if .autoscalingConfig }}
+  annotations:
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ .autoscalingConfig.MinCount }}"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ .autoscalingConfig.MaxCount }}"
+  {{- end }}
+spec:
+  clusterName: "{{.clusterName}}"
+  replicas: {{.workerReplicas}}
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "{{.workloadkubeadmconfigTemplateName}}"
+      clusterName: "{{.clusterName}}"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "{{.workloadTemplateName}}"
+      version: "{{.kubernetesVersion}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{.workloadTemplateName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{.clusterName}}-m1"
+      vcpusPerSocket: {{.vcpusPerSocket}}
+      vcpuSockets: {{.vcpuSockets}}
+      memorySize: {{.memorySize}}
+      systemDiskSize: {{.systemDiskSize}}
+      image:
+{{- if (eq .imageIDType "name") }}
+        type: name
+        name: "{{.imageName}}"
+{{ else if (eq .imageIDType "uuid") }}
+        type: uuid
+        uuid: "{{.imageUUID}}"
+{{ end }}
+      cluster:
+{{- if (eq .nutanixPEClusterIDType "name") }}
+        type: name
+        name: "{{.nutanixPEClusterName}}"
+{{- else if (eq .nutanixPEClusterIDType "uuid") }}
+        type: uuid
+        uuid: "{{.nutanixPEClusterUUID}}"
+{{ end }}
+      subnet:
+{{- if (eq .subnetIDType "name") }}
+        - type: name
+          name: "{{.subnetName}}"
+{{- else if (eq .subnetIDType "uuid") }}
+        - type: uuid
+          uuid: "{{.subnetUUID}}"
+{{ end }}
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: "{{.workloadkubeadmconfigTemplateName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+            #cgroup-driver: cgroupfs
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+      users:
+        - name: "{{.workerSshUsername}}"
+          lockPassword: false
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          sshAuthorizedKeys:
+            - "{{.workerSshAuthorizedKey}}"

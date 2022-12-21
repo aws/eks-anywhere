@@ -2,7 +2,9 @@ package framework
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
@@ -32,6 +34,28 @@ func GenerateUniqueIp(cidr string) (string, error) {
 	ip, err := ipgen.GenerateUniqueIP(cidr)
 	if err != nil {
 		return "", fmt.Errorf("getting unique IP for cidr %s: %v", cidr, err)
+	}
+	return ip, nil
+}
+
+func GetIP(cidr, ipEnvVar string) (string, error) {
+	value, ok := os.LookupEnv(ipEnvVar)
+	var ip string
+	var err error
+	if ok && value != "" {
+		ip, err = PopIPFromEnv(ipEnvVar)
+		if err != nil {
+			logger.V(2).Info("WARN: failed to pop ip from environment, attempting to generate unique ip")
+			ip, err = GenerateUniqueIp(cidr)
+			if err != nil {
+				return "", fmt.Errorf("failed to generate ip for cidr %s: %v", cidr, err)
+			}
+		}
+	} else {
+		ip, err = GenerateUniqueIp(cidr)
+		if err != nil {
+			return "", fmt.Errorf("failed to generate ip for cidr %s: %v", cidr, err)
+		}
 	}
 	return ip, nil
 }

@@ -1,0 +1,17 @@
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: cluster-autoscaler
+spec:
+  packageName: cluster-autoscaler
+  targetNamespace: {{.targetNamespace}}
+  config: |-
+    cloudProvider: "clusterapi"
+    autoDiscovery:
+      clusterName: {{.clusterName}}
+    extraArgs:
+      scale-down-delay-after-add: 2m
+      scale-down-delay-after-failure: 3m
+      scale-down-unneeded-time: 2m
+
+---

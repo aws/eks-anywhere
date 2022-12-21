@@ -13,7 +13,7 @@ import (
 	untar "github.com/aws/eks-anywhere/pkg/tar"
 )
 
-// GzipFileDownloadExtract downloads and extracts a specific file to destination
+// GzipFileDownloadExtract downloads and extracts a specific file to destination.
 func GzipFileDownloadExtract(uri, fileToExtract, destination string) error {
 	targetFile := filepath.Join(destination, fileToExtract)
 	if _, err := os.Stat(targetFile); err == nil {

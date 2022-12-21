@@ -7,6 +7,9 @@ description: >
   Use Terraform to manage EKS Anywhere Clusters
 ---
 
+>**_NOTE_**: Support for using Terraform to manage and modify an EKS Anywhere cluster is available for vSphere clusters, but not yet for Bare Metal, CloudStack, or Nutanix clusters.
+>
+
 ## Using Terraform to manage an EKS Anywhere Cluster (Optional)
 This guide explains how you can use Terraform to manage and modify an EKS Anywhere cluster. 
 The guide is meant for illustrative purposes and is not a definitive approach to building production systems with Terraform and EKS Anywhere.

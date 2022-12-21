@@ -84,6 +84,8 @@ function build::common::upload_artifacts() {
 }
 
 function build::gather_licenses() {
+  # force 1.16 since thats the version used to install go-licenses in builder-base
+  build::common::use_go_version 1.18
   if ! command -v go-licenses &> /dev/null
   then
     echo " go-licenses not found.  If you need license or attribtuion file handling"
@@ -94,8 +96,6 @@ function build::gather_licenses() {
   local -r outputdir=$1
   local -r patterns=$2
 
-  # force 1.16 since thats the version used to install go-licenses in builder-base
-  build::common::use_go_version 1.16
 
   # Force deps to only be pulled form vendor directories
   # this is important in a couple cases where license files

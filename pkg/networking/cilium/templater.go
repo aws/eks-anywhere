@@ -4,9 +4,14 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
 	"strings"
+	"time"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
@@ -14,8 +19,14 @@ import (
 //go:embed network_policy.yaml
 var networkPolicyAllowAll string
 
+const (
+	maxRetries           = 10
+	defaultBackOffPeriod = 5 * time.Second
+)
+
 type Helm interface {
-	Template(ctx context.Context, ociURI, version, namespace string, values interface{}) ([]byte, error)
+	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
+	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
 
 type Templater struct {
@@ -28,7 +39,7 @@ func NewTemplater(helm Helm) *Templater {
 	}
 }
 
-func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
+func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
 	v := templateValues(spec)
 	v.set(true, "preflight", "enabled")
 	v.set(spec.VersionsBundle.Cilium.Cilium.Image(), "preflight", "image", "repository")
@@ -38,7 +49,12 @@ func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 
 	uri, version := getChartUriAndVersion(spec)
 
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
+	kubeVersion, err := getKubeVersionString(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	manifest, err := t.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
 	}
@@ -46,39 +62,99 @@ func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	return manifest, nil
 }
 
-func (c *Templater) GenerateUpgradeManifest(ctx context.Context, currentSpec, newSpec *cluster.Spec) ([]byte, error) {
-	currentVersion, err := semver.New(currentSpec.VersionsBundle.Cilium.Version)
-	if err != nil {
-		return nil, fmt.Errorf("invalid version for Cilium in current spec: %v", err)
-	}
+// ManifestOpt allows to modify options for a cilium manifest.
+type ManifestOpt func(*ManifestConfig)
 
-	v := templateValues(newSpec)
-	v.set(fmt.Sprintf("%d.%d", currentVersion.Major, currentVersion.Minor), "upgradeCompatibility")
-
-	uri, version := getChartUriAndVersion(newSpec)
-
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
-	if err != nil {
-		return nil, fmt.Errorf("failed generating cilium upgrade manifest: %v", err)
-	}
-
-	return manifest, nil
+type ManifestConfig struct {
+	values      values
+	retrier     *retrier.Retrier
+	kubeVersion string
+	namespaces  []string
 }
 
-func (c *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
-	v := templateValues(spec)
+// WithKubeVersion allows to generate the Cilium manifest for a different kubernetes version
+// than the one specified in the cluster spec. Useful for upgrades scenarios where Cilium is upgraded before
+// the kubernetes components.
+func WithKubeVersion(kubeVersion string) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.kubeVersion = kubeVersion
+	}
+}
+
+// WithRetrier introduced for optimizing unit tests.
+func WithRetrier(retrier *retrier.Retrier) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.retrier = retrier
+	}
+}
+
+// WithUpgradeFromVersion allows to specify the compatibility Cilium version to use in the manifest.
+// This is necessary for Cilium upgrades.
+func WithUpgradeFromVersion(version semver.Version) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.values.set(fmt.Sprintf("%d.%d", version.Major, version.Minor), "upgradeCompatibility")
+	}
+}
+
+// WithPolicyAllowedNamespaces allows to specify which namespaces traffic should be allowed when using
+// and "Always" policy enforcement mode.
+func WithPolicyAllowedNamespaces(namespaces []string) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.namespaces = namespaces
+	}
+}
+
+func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...ManifestOpt) ([]byte, error) {
+	kubeVersion, err := getKubeVersionString(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &ManifestConfig{
+		values:      templateValues(spec),
+		kubeVersion: kubeVersion,
+		retrier:     retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod),
+	}
+	for _, o := range opts {
+		o(c)
+	}
 
 	uri, version := getChartUriAndVersion(spec)
+	var manifest []byte
 
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
+	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return nil, err
+			}
+			endpoint := net.JoinHostPort(spec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, spec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	err = c.retrier.Retry(func() error {
+		manifest, err = t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium manifest: %v", err)
 	}
 
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == anywherev1.CiliumPolicyModeAlways {
+		networkPolicyManifest, err := t.GenerateNetworkPolicyManifest(spec, c.namespaces)
+		if err != nil {
+			return nil, err
+		}
+		manifest = templater.AppendYamlResources(manifest, networkPolicyManifest)
+	}
+
 	return manifest, nil
 }
 
-func (c *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces []string) ([]byte, error) {
+func (t *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces []string) ([]byte, error) {
 	values := map[string]interface{}{
 		"managementCluster":  spec.Cluster.IsSelfManaged(),
 		"providerNamespaces": namespaces,
@@ -89,20 +165,6 @@ func (c *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces
 		if spec.GitOpsConfig != nil {
 			values["fluxNamespace"] = spec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
 		}
-	}
-
-	/* k8s versions 1.21 and higher label each namespace with key `kubernetes.io/metadata.name:` and value is the namespace's name.
-	This can be used to create a networkPolicy that allows traffic only between pods within kube-system ns, which is ideal for workload clusters. (not needed
-	for mgmt clusters).
-	So we will create networkPolicy using this default label as namespaceSelector for all versions 1.21 and higher
-	For 1.20 we will create a networkPolicy that allows allow traffic to/from kube-system pods, and document this. Users can still modify it and add new policies
-	as needed*/
-	k8sVersion, err := semver.New(spec.VersionsBundle.KubeDistro.Kubernetes.Tag)
-	if err != nil {
-		return nil, fmt.Errorf("parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
-	}
-	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
-		values["kubeSystemNSHasLabel"] = true
 	}
 
 	return templater.Execute(networkPolicyAllowAll, values)
@@ -154,6 +216,10 @@ func templateValues(spec *cluster.Spec) values {
 		},
 	}
 
+	if len(spec.Cluster.Spec.WorkerNodeGroupConfigurations) == 0 && spec.Cluster.Spec.ControlPlaneConfiguration.Count == 1 {
+		val["operator"].(values)["replicas"] = 1
+	}
+
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != "" {
 		val["policyEnforcementMode"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
 	}
@@ -165,4 +231,20 @@ func getChartUriAndVersion(spec *cluster.Spec) (uri, version string) {
 	uri = fmt.Sprintf("oci://%s", chart.Image())
 	version = chart.Tag()
 	return uri, version
+}
+
+func getKubeVersion(spec *cluster.Spec) (*semver.Version, error) {
+	k8sVersion, err := semver.New(spec.VersionsBundle.KubeDistro.Kubernetes.Tag)
+	if err != nil {
+		return nil, fmt.Errorf("parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
+	}
+	return k8sVersion, nil
+}
+
+func getKubeVersionString(spec *cluster.Spec) (string, error) {
+	k8sVersion, err := getKubeVersion(spec)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d.%d", k8sVersion.Major, k8sVersion.Minor), nil
 }

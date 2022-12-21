@@ -1,0 +1,24 @@
+apiVersion: "eks-anywhere.amazon.com/v1"
+kind: vSphereUser
+spec:
+  username: "eksa"
+  group: "MyExistingGroup"
+  globalRole: "MyExistingGlobalRole"
+  userRole: "MyExistingUserRole"
+  adminRole: "MyExistingEKSAAdminRole"
+  datacenter: "MyDatacenter"
+  vSphereDomain: "vsphere.local"
+  connection:
+    server: "https://my-vsphere.internal.acme.com"
+    insecure: false
+  objects:
+    networks:
+      - !!str "/MyDatacenter/network/My Network"
+    datastores:
+      - !!str "/MyDatacenter/datastore/MyDatastore2"
+    resourcePools:
+      - !!str "/MyDatacenter/host/Cluster-03/MyResourcePool"
+    folders:
+      - !!str "/MyDatacenter/vm/OrgDirectory/MyVMs"
+    templates:
+      - !!str "/MyDatacenter/vm/Templates/MyTemplates"

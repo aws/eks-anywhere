@@ -7,20 +7,8 @@ description: >
   How to deploy an ingress controller for simple host or URL-based HTTP routing into workload running in EKS-A
 ---
 
-<!-- overview -->
-
-A production-quality Kubernetes cluster requires planning and preparation for various networking features.
-
-<!-- body -->
-
-
-The purpose of this document is to walk you through getting set up with a recommended Kubernetes Ingress Controller for EKS Anywhere.
-Ingress Controller is essential in order to have routing rules that decide how external users access services running in a Kubernetes cluster. It enables efficient distribution of incoming network traffic among multiple backend services.
-
-
-## Current Recommendation: Emissary-ingress 
-
-We currently recommend using Emissary-ingress Kubernetes Ingress Controller by Ambassador. Emissary-ingress allows you to route and secure traffic to your cluster with an Open Source Kubernetes-native API Gateway. Detailed information about Emissary-ingress can be found [here](https://www.getambassador.io/docs/emissary/).
+While you are free to use any Ingress Controller you like with your EKS Anywhere cluster, AWS currently only supports Emissary Ingress.
+For information on how to configure a Emissary Ingress curated package for EKS Anywhere, see the [Add Emissary Ingress]({{< relref "../../tasks/packages/emissary" >}}) page.
 
 ## Setting up Emissary-ingress for Ingress Controller
 
@@ -29,37 +17,44 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
     kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
     ```
 
-2. Set up kube-vip service type: Load Balancer in your cluster by following the instructions [here]({{< relref "./loadbalance#setting-up-kube-vip-for-service-type-load-balancer" >}}).
-Alternatively, you can set up MetalLB Load Balancer by following the instructions [here]({{< relref "./loadbalance#alternatives" >}})
+2. Set up a load balancer: Set up MetalLB Load Balancer by following the instructions [here]({{< relref "./loadbalance" >}})
 
-3. Install Ambassador CRDs and ClusterRoles and RoleBindings
+3. Install Emissary Ingress: Follow the instructions here [Add Emissary Ingress]({{< relref "../../tasks/packages/emissary" >}})
 
-    ```bash
-    kubectl apply -f "https://www.getambassador.io/yaml/ambassador/ambassador-crds.yaml"
-    kubectl apply -f "https://www.getambassador.io/yaml/ambassador/ambassador-rbac.yaml"
-    ```
-
-4. Create Ambassador Service with Type LoadBalancer.
-
+4. Create Emissary Listeners on your cluster (This is a one time setup).
+   
     ```bash
     kubectl apply -f - <<EOF
     ---
-    apiVersion: v1
-    kind: Service
+    apiVersion: getambassador.io/v3alpha1
+    kind: Listener
     metadata:
-      name: ambassador
+      name: http-listener
+      namespace: default
     spec:
-      type: LoadBalancer
-      externalTrafficPolicy: Local
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        service: ambassador
+      port: 8080
+      protocol: HTTPS
+      securityModel: XFP
+      hostBinding:
+        namespace:
+          from: ALL
+    ---
+    apiVersion: getambassador.io/v3alpha1
+    kind: Listener
+    metadata:
+      name: https-listener
+      namespace: default
+    spec:
+      port: 8443
+      protocol: HTTPS
+      securityModel: XFP
+      hostBinding:
+        namespace:
+          from: ALL
     EOF
     ```
 
-5. Create a Mapping on your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /backend/ path to the quote Service.
+5. Create a Mapping on your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /backend/ path to the Hello EKS Anywhere Service. This hostname IP is the IP found from the LoadBalancer resource deployed by MetalLB for you.
 
     ```bash
     kubectl apply -f - <<EOF
@@ -71,6 +66,7 @@ Alternatively, you can set up MetalLB Load Balancer by following the instruction
     spec:
       prefix: /backend/
       service: hello-eks-a
+      hostname: "195.16.99.65"
     EOF
     ```  
  

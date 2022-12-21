@@ -68,6 +68,9 @@ func (c *Codebuild) getBuildById(id string) (*codebuild.Build, error) {
 	if err != nil {
 		return nil, fmt.Errorf("got an error when fetching latest build for project: %v", err)
 	}
+	if len(latestBuild.Builds) < 1 {
+		return nil, fmt.Errorf("no builds found with id %s", id)
+	}
 	return latestBuild.Builds[0], nil
 }
 

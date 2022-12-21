@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: VSphereMachineConfig is the Schema for the vspheremachineconfigs
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig
+            description: VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig.
             properties:
               datastore:
                 type: string
@@ -53,12 +53,16 @@ spec:
                 type: string
               storagePolicyName:
                 type: string
+              tags:
+                items:
+                  type: string
+                type: array
               template:
                 type: string
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VM
+                    user to be added to the VM.
                   properties:
                     name:
                       type: string
@@ -81,7 +85,7 @@ spec:
             type: object
           status:
             description: VSphereMachineConfigStatus defines the observed state of
-              VSphereMachineConfig
+              VSphereMachineConfig.
             type: object
         type: object
     served: true

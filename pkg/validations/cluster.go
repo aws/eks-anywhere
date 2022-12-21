@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -19,25 +20,36 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 	}
 
 	host, port := cluster.Spec.RegistryMirrorConfiguration.Endpoint, cluster.Spec.RegistryMirrorConfiguration.Port
-	selfSigned, err := tlsValidator.HasSelfSignedCert(host, port)
+	authorityUnknown, err := tlsValidator.IsSignedByUnknownAuthority(host, port)
 	if err != nil {
 		return fmt.Errorf("validating registry mirror endpoint: %v", err)
 	}
-	if selfSigned {
+	if authorityUnknown {
 		logger.V(1).Info(fmt.Sprintf("Warning: registry mirror endpoint %s is using self-signed certs", cluster.Spec.RegistryMirrorConfiguration.Endpoint))
 	}
 
 	certContent := cluster.Spec.RegistryMirrorConfiguration.CACertContent
-	if certContent == "" && selfSigned {
+	if certContent == "" && authorityUnknown {
 		return fmt.Errorf("registry %s is using self-signed certs, please provide the certificate using caCertContent field. Or use insecureSkipVerify field to skip registry certificate verification", cluster.Spec.RegistryMirrorConfiguration.Endpoint)
 	}
 
 	if certContent != "" {
-		err := tlsValidator.ValidateCert(host, port, certContent)
-		if err != nil {
+		if err = tlsValidator.ValidateCert(host, port, certContent); err != nil {
 			return fmt.Errorf("invalid registry certificate: %v", err)
 		}
 	}
 
+	return nil
+}
+
+// ValidateAuthenticationForRegistryMirror checks if REGISTRY_USERNAME and REGISTRY_PASSWORD is set if authenticated registry mirrors are used.
+func ValidateAuthenticationForRegistryMirror(clusterSpec *cluster.Spec) error {
+	cluster := clusterSpec.Cluster
+	if cluster.Spec.RegistryMirrorConfiguration != nil && cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+		_, _, err := config.ReadCredentials()
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

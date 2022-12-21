@@ -1,6 +1,7 @@
 package filewriter_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -153,5 +154,50 @@ func TestWriterWritePersistent(t *testing.T) {
 
 			test.AssertFilesEquals(t, gotPath, wantPath)
 		})
+	}
+}
+
+func TestWriterDir(t *testing.T) {
+	rootFolder := "folder_root"
+	defer os.RemoveAll(rootFolder)
+
+	tr, err := filewriter.NewWriter(rootFolder)
+	if err != nil {
+		t.Fatalf("failed creating writer error = %v", err)
+	}
+
+	if strings.Compare(tr.Dir(), rootFolder) != 0 {
+		t.Errorf("writer.Dir() = %v, want %v", tr.Dir(), rootFolder)
+	}
+}
+
+func TestWriterTempDir(t *testing.T) {
+	rootFolder := "folder_root"
+	tempFolder := fmt.Sprintf("%s/generated", rootFolder)
+	defer os.RemoveAll(rootFolder)
+
+	tr, err := filewriter.NewWriter(rootFolder)
+	if err != nil {
+		t.Fatalf("failed creating writer error = %v", err)
+	}
+
+	if strings.Compare(tr.TempDir(), tempFolder) != 0 {
+		t.Errorf("writer.TempDir() = %v, want %v", tr.TempDir(), tempFolder)
+	}
+}
+
+func TestWriterCleanUpTempDir(t *testing.T) {
+	rootFolder := "folder_root"
+	defer os.RemoveAll(rootFolder)
+
+	tr, err := filewriter.NewWriter(rootFolder)
+	if err != nil {
+		t.Fatalf("failed creating writer error = %v", err)
+	}
+
+	tr.CleanUpTemp()
+
+	if _, err := os.Stat(tr.TempDir()); err == nil {
+		t.Errorf("writer.CleanUp(), want err, got nil")
 	}
 }

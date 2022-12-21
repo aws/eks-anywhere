@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: SnowMachineConfig is the Schema for the SnowMachineConfigs API
+        description: SnowMachineConfig is the Schema for the SnowMachineConfigs API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,20 +34,112 @@ spec:
           metadata:
             type: object
           spec:
-            description: SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec
+            description: SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec.
             properties:
               amiID:
                 description: The AMI ID from which to create the machine instance.
                 type: string
+              containersVolume:
+                description: ContainersVolume provides the configuration options for
+                  the containers data storage volume.
+                properties:
+                  deviceName:
+                    description: Device name
+                    type: string
+                  encrypted:
+                    description: Encrypted is whether the volume should be encrypted
+                      or not.
+                    type: boolean
+                  encryptionKey:
+                    description: EncryptionKey is the KMS key to use to encrypt the
+                      volume. Can be either a KMS key ID or ARN. If Encrypted is set
+                      and this is omitted, the default AWS key will be used. The key
+                      must already exist and be accessible by the controller.
+                    type: string
+                  iops:
+                    description: IOPS is the number of IOPS requested for the disk.
+                      Not applicable to all types.
+                    format: int64
+                    type: integer
+                  size:
+                    description: Size specifies size (in Gi) of the storage device.
+                      Must be greater than the image snapshot size or 8 (whichever
+                      is greater).
+                    format: int64
+                    minimum: 8
+                    type: integer
+                  type:
+                    description: Type is the type of the volume (e.g. gp2, io1, etc...).
+                    type: string
+                required:
+                - size
+                type: object
+              devices:
+                description: Devices contains a device ip list assigned by the user
+                  to provision machines.
+                items:
+                  type: string
+                type: array
               instanceType:
                 description: 'InstanceType is the type of instance to create. Valid
                   values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge"
                   and "sbe-c.4xlarge".'
                 type: string
+              network:
+                description: Network provides the custom network setting for the machine.
+                properties:
+                  directNetworkInterfaces:
+                    description: DirectNetworkInterfaces contains a list of direct
+                      network interface (DNI) configuration.
+                    items:
+                      description: SnowDirectNetworkInterface defines a direct network
+                        interface (DNI) configuration.
+                      properties:
+                        dhcp:
+                          description: DHCP defines whether DHCP is used to assign
+                            ip for the DNI.
+                          type: boolean
+                        index:
+                          description: Index is the index number of DNI used to clarify
+                            the position in the list. Usually starts with 1.
+                          maximum: 8
+                          minimum: 1
+                          type: integer
+                        ipPoolRef:
+                          description: IPPool contains a reference to a snow ip pool
+                            which provides a range of ip addresses. When specified,
+                            an ip address selected from the pool is allocated to this
+                            DNI.
+                          properties:
+                            kind:
+                              type: string
+                            name:
+                              type: string
+                          type: object
+                        primary:
+                          description: Primary indicates whether the DNI is primary
+                            or not.
+                          type: boolean
+                        vlanID:
+                          description: VlanID is the vlan id assigned by the user
+                            for the DNI.
+                          format: int32
+                          maximum: 4095
+                          minimum: 0
+                          type: integer
+                      type: object
+                    maxItems: 8
+                    minItems: 1
+                    type: array
+                type: object
+              osFamily:
+                description: 'OSFamily is the node instance OS. Valid values: "bottlerocket"
+                  and "ubuntu".'
+                type: string
               physicalNetworkConnector:
                 description: 'PhysicalNetworkConnector is the physical network connector
                   type to use for creating direct network interfaces (DNI). Valid
-                  values: "SFP_PLUS" (default) and "QSFP"'
+                  values: "SFP_PLUS" (default), "QSFP" and "RJ45".'
                 type: string
               sshKeyName:
                 description: SSHKeyName is the name of the ssh key defined in the
@@ -55,9 +147,19 @@ spec:
                 type: string
             required:
             - amiID
+            - network
             type: object
           status:
-            description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig
+            description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig.
+            properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
+              specValid:
+                description: SpecValid is set to true if vspheredatacenterconfig is
+                  validated.
+                type: boolean
             type: object
         type: object
     served: true

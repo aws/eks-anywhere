@@ -17,7 +17,7 @@ func TestManagementCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T)
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.template: Forbidden: field is immutable")))
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
@@ -61,7 +61,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateTemplateImmutable(t *testing.
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.template: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
@@ -83,7 +83,7 @@ func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
 
 	c.Spec.OSFamily = v1alpha1.Bottlerocket
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.osFamily: Forbidden: field is immutable")))
 }
 
 func TestManagementCPVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
@@ -94,7 +94,7 @@ func TestManagementCPVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.memoryMiB: Forbidden: field is immutable")))
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
@@ -139,7 +139,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.memoryMiB: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
@@ -162,7 +162,7 @@ func TestManagementCPVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) 
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.numCPUs: Forbidden: field is immutable")))
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
@@ -206,7 +206,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.numCPUs: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
@@ -229,7 +229,7 @@ func TestManagementCPVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) 
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.diskGiB: Forbidden: field is immutable")))
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
@@ -274,7 +274,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.diskGiB: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
@@ -298,7 +298,7 @@ func TestManagementControlPlaneSphereMachineValidateUpdateSshAuthorizedKeyImmuta
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.users: Forbidden: field is immutable")))
 }
 
 func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
@@ -322,7 +322,7 @@ func TestManagementControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.users: Forbidden: field is immutable")))
 }
 
 func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
@@ -362,7 +362,7 @@ func TestManagementEtcdSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *t
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.users: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
@@ -386,7 +386,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateSshUsernameImmutable(t *testi
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.users: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
@@ -450,7 +450,7 @@ func TestVSphereMachineValidateUpdateInvalidType(t *testing.T) {
 	c := &v1alpha1.VSphereMachineConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(vOld)).To(MatchError(ContainSubstring("expected a VSphereMachineConfig but got a *v1alpha1.Cluster")))
 }
 
 func TestVSphereMachineValidateUpdateSuccess(t *testing.T) {
@@ -472,7 +472,7 @@ func TestManagementCPVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.datastore: Forbidden: field is immutable")))
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
@@ -495,7 +495,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateDatastoreImmutable(t *testing
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.datastore: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
@@ -539,7 +539,7 @@ func TestManagementCPVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.folder: Forbidden: field is immutable")))
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
@@ -562,7 +562,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateFolderImmutable(t *testing.T)
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.folder: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
@@ -606,7 +606,7 @@ func TestManagementCPVSphereMachineValidateUpdateResourcePoolImmutable(t *testin
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.resourcePool: Forbidden: field is immutable")))
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
@@ -629,7 +629,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateResourcePoolImmutable(t *test
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.resourcePool: Forbidden: field is immutable")))
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
@@ -672,14 +672,55 @@ func TestVSphereMachineValidateUpdateStoragePolicyImmutable(t *testing.T) {
 
 	c.Spec.StoragePolicyName = "Space-Efficient"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.storagePolicyName: Forbidden: field is immutable")))
+}
+
+func TestVSphereMachineConfigValidateCreateSuccess(t *testing.T) {
+	config := vsphereMachineConfig()
+
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).To(Succeed())
+}
+
+func TestVSphereMachineConfigValidateCreateResourcePoolNotSet(t *testing.T) {
+	config := vsphereMachineConfig()
+	config.Spec.ResourcePool = ""
+
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).To(MatchError(ContainSubstring("resourcePool is not set or is empty")))
+}
+
+func TestVSphereMachineConfigValidateCreateTemplateNotSet(t *testing.T) {
+	config := vsphereMachineConfig()
+	config.Spec.Template = ""
+
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).To(MatchError(ContainSubstring("template field is required")))
+}
+
+func TestVSphereMachineConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := vsphereMachineConfig()
+	sOld.Spec.OSFamily = ""
+	sOld.Default()
+
+	g.Expect(sOld.Spec.MemoryMiB).To(Equal(8192))
+	g.Expect(sOld.Spec.NumCPUs).To(Equal(2))
+	g.Expect(sOld.Spec.OSFamily).To(Equal(v1alpha1.Bottlerocket))
+	g.Expect(sOld.Spec.Users).To(Equal([]v1alpha1.UserConfiguration{{Name: "ec2-user", SshAuthorizedKeys: []string{""}}}))
 }
 
 func vsphereMachineConfig() v1alpha1.VSphereMachineConfig {
 	return v1alpha1.VSphereMachineConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 2)},
-		Spec:       v1alpha1.VSphereMachineConfigSpec{},
-		Status:     v1alpha1.VSphereMachineConfigStatus{},
+		Spec: v1alpha1.VSphereMachineConfigSpec{
+			ResourcePool: "my-resourcePool",
+			Datastore:    "my-datastore",
+			OSFamily:     "ubuntu",
+			Template:     "/Datacenter/vm/Templates/bottlerocket-v1.23.12-kubernetes-1-23-eks-7-amd64-d44065e",
+		},
+		Status: v1alpha1.VSphereMachineConfigStatus{},
 	}
 }

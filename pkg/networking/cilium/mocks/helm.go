@@ -34,17 +34,31 @@ func (m *MockHelm) EXPECT() *MockHelmMockRecorder {
 	return m.recorder
 }
 
-// Template mocks base method.
-func (m *MockHelm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}) ([]byte, error) {
+// RegistryLogin mocks base method.
+func (m *MockHelm) RegistryLogin(ctx context.Context, registry, username, password string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Template", ctx, ociURI, version, namespace, values)
+	ret := m.ctrl.Call(m, "RegistryLogin", ctx, registry, username, password)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegistryLogin indicates an expected call of RegistryLogin.
+func (mr *MockHelmMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockHelm)(nil).RegistryLogin), ctx, registry, username, password)
+}
+
+// Template mocks base method.
+func (m *MockHelm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Template", ctx, ociURI, version, namespace, values, kubeVersion)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Template indicates an expected call of Template.
-func (mr *MockHelmMockRecorder) Template(ctx, ociURI, version, namespace, values interface{}) *gomock.Call {
+func (mr *MockHelmMockRecorder) Template(ctx, ociURI, version, namespace, values, kubeVersion interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockHelm)(nil).Template), ctx, ociURI, version, namespace, values)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockHelm)(nil).Template), ctx, ociURI, version, namespace, values, kubeVersion)
 }

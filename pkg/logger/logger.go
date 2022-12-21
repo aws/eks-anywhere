@@ -12,17 +12,26 @@ const (
 	markPass    = "✅ "
 	markSuccess = "🎉 "
 	markFailed  = "❌ "
+	markWarning = "⚠️"
 )
 
 var (
-	l    logr.Logger = logr.Discard()
-	once sync.Once
+	l              logr.Logger = logr.Discard()
+	once           sync.Once
+	outputFilePath string
 )
 
-func set(logger logr.Logger) {
+func set(logger logr.Logger, out string) {
 	once.Do(func() {
 		l = logger
+		outputFilePath = out
 	})
+}
+
+// GetOutputFilePath returns the path to the file where high verbosity logs are written to.
+// If the logger hasn't been configured to output to a file, it returns an empty string.
+func GetOutputFilePath() string {
+	return outputFilePath
 }
 
 // Get returns the logger instance that has been previously set.
@@ -79,10 +88,6 @@ func MarkFail(msg string, keysAndValues ...interface{}) {
 	l.V(0).Info(markFailed+msg, keysAndValues...)
 }
 
-type LoggerOpt func(logr *logr.Logger)
-
-func WithName(name string) LoggerOpt {
-	return func(logr *logr.Logger) {
-		*logr = (*logr).WithName(name)
-	}
+func MarkWarning(msg string, keysAndValues ...interface{}) {
+	l.V(0).Info(markWarning+msg, keysAndValues...)
 }

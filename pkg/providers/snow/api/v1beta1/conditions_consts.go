@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint
 package snow
 
 import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -136,6 +137,8 @@ const (
 	WaitingForBootstrapDataReason = "WaitingForBootstrapData"
 )
 
+// TODO add Snowball Device conditions, e.g., direct-network-interface ready condition
+
 const (
 	// SecurityGroupsReadyCondition indicates the security groups are up to date on the AWSMachine.
 	SecurityGroupsReadyCondition clusterv1.ConditionType = "SecurityGroupsReady"
@@ -155,4 +158,9 @@ const (
 	ELBAttachFailedReason = "ELBAttachFailed"
 	// ELBDetachFailedReason used when a control plane node fails to detach from an ELB.
 	ELBDetachFailedReason = "ELBDetachFailed"
+)
+
+const (
+	Bottlerocket OSFamily = "bottlerocket"
+	Ubuntu       OSFamily = "ubuntu"
 )

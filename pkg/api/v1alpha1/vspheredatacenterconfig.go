@@ -18,7 +18,7 @@ const (
 	networkFolderType folderType = "network"
 )
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewVSphereDatacenterConfigGenerate(clusterName string) *VSphereDatacenterConfigGenerate {
 	return &VSphereDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

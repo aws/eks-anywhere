@@ -1,0 +1,135 @@
+{
+  "count": 1,
+  "network": [
+    {
+      "acltype": "Domain",
+      "broadcastdomaintype": "Native",
+      "broadcasturi": "vlan://untagged",
+      "canusefordeploy": true,
+      "cidr": "192.168.1.0/24",
+      "details": {},
+      "displaynetwork": true,
+      "displaytext": "for zone 1, shared",
+      "dns1": "8.8.8.8",
+      "dns2": "8.8.4.4",
+      "domain": "ROOT",
+      "domainid": "5300cdac-74d5-11ec-8696-c81f66d3e965",
+      "gateway": "192.168.1.1",
+      "id": "aeb3a5e6-2e80-4a73-900f-d01bbd4874b5",
+      "ispersistent": false,
+      "issystem": false,
+      "name": "TEST_RESOURCE",
+      "netmask": "255.255.255.0",
+      "networkdomain": "cs1cloud.internal",
+      "networkofferingavailability": "Optional",
+      "networkofferingconservemode": true,
+      "networkofferingdisplaytext": "Offering for Shared networks",
+      "networkofferingid": "928c228c-c5c3-4f26-92ca-d611d5ebda49",
+      "networkofferingname": "DefaultSharedNetworkOffering",
+      "physicalnetworkid": "67ad3d0a-5a2f-4557-8563-1bb6577eebcf",
+      "redundantrouter": false,
+      "related": "aeb3a5e6-2e80-4a73-900f-d01bbd4874b5",
+      "restartrequired": false,
+      "service": [
+        {
+          "capability": [
+            {
+              "canchooseservicecapability": false,
+              "name": "DhcpAccrossMultipleSubnets",
+              "value": "true"
+            }
+          ],
+          "name": "Dhcp"
+        },
+        {
+          "name": "UserData"
+        },
+        {
+          "capability": [
+            {
+              "canchooseservicecapability": false,
+              "name": "AllowDnsSuffixModification",
+              "value": "true"
+            }
+          ],
+          "name": "Dns"
+        }
+      ],
+      "specifyipranges": true,
+      "state": "Setup",
+      "strechedl2subnet": false,
+      "subdomainaccess": true,
+      "tags": [],
+      "traffictype": "Guest",
+      "type": "Shared",
+      "vlan": "untagged",
+      "zoneid": "151e4c35-7ba4-4f74-b35d-f3d8627118cc",
+      "zonename": "zone1"
+    },
+    {
+      "acltype": "Domain",
+      "broadcastdomaintype": "Native",
+      "broadcasturi": "vlan://untagged",
+      "canusefordeploy": true,
+      "cidr": "192.168.1.0/24",
+      "details": {},
+      "displaynetwork": true,
+      "displaytext": "for zone 1, shared",
+      "dns1": "8.8.8.8",
+      "dns2": "8.8.4.4",
+      "domain": "ROOT",
+      "domainid": "5300cdac-74d5-11ec-8696-c81f66d3e966",
+      "gateway": "192.168.1.1",
+      "id": "aeb3a5e6-2e80-4a73-900f-d01bbd4874b5",
+      "ispersistent": false,
+      "issystem": false,
+      "name": "TEST_RESOURCE",
+      "netmask": "255.255.255.0",
+      "networkdomain": "cs1cloud.internal",
+      "networkofferingavailability": "Optional",
+      "networkofferingconservemode": true,
+      "networkofferingdisplaytext": "Offering for Shared networks",
+      "networkofferingid": "928c228c-c5c3-4f26-92ca-d611d5ebda49",
+      "networkofferingname": "DefaultSharedNetworkOffering",
+      "physicalnetworkid": "67ad3d0a-5a2f-4557-8563-1bb6577eebcf",
+      "redundantrouter": false,
+      "related": "aeb3a5e6-2e80-4a73-900f-d01bbd4874b5",
+      "restartrequired": false,
+      "service": [
+        {
+          "capability": [
+            {
+              "canchooseservicecapability": false,
+              "name": "DhcpAccrossMultipleSubnets",
+              "value": "true"
+            }
+          ],
+          "name": "Dhcp"
+        },
+        {
+          "name": "UserData"
+        },
+        {
+          "capability": [
+            {
+              "canchooseservicecapability": false,
+              "name": "AllowDnsSuffixModification",
+              "value": "true"
+            }
+          ],
+          "name": "Dns"
+        }
+      ],
+      "specifyipranges": true,
+      "state": "Setup",
+      "strechedl2subnet": false,
+      "subdomainaccess": true,
+      "tags": [],
+      "traffictype": "Guest",
+      "type": "Shared",
+      "vlan": "untagged",
+      "zoneid": "151e4c35-7ba4-4f74-b35d-f3d8627118cc",
+      "zonename": "zone1"
+    }
+  ]
+}

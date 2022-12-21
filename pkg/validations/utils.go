@@ -18,7 +18,9 @@ func (v *ValidationResult) Report() {
 		logger.MarkFail("Validation failed", "validation", v.Name, "error", v.Err, "remediation", v.Remediation)
 		return
 	}
-	v.LogPass()
+	if !v.Silent {
+		v.LogPass()
+	}
 }
 
 func (v *ValidationResult) LogPass() {

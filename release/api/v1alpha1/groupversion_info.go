@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // package v1alpha1 contains API Schema definitions for the release v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=anywhere.eks.amazonaws.com
+// +kubebuilder:object:generate=true
+// +groupName=anywhere.eks.amazonaws.com
 package v1alpha1
 
 import (
@@ -23,10 +23,10 @@ import (
 )
 
 var (
-	// GroupVersion is group version used to register these objects
+	// GroupVersion is group version used to register these objects.
 	GroupVersion = schema.GroupVersion{Group: "anywhere.eks.amazonaws.com", Version: "v1alpha1"}
 
-	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
+	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
 
 	// AddToScheme adds the types in this group-version to the given scheme.

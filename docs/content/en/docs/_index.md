@@ -6,7 +6,6 @@ weight: 10
 menu:
   main:
     weight: 20
-    pre: <i class='fas fa-book'></i>
 description: >
   EKS Anywhere provides a means of managing Kubernetes clusters using the same operational excellence and practices that Amazon Web Services uses for its Amazon Elastic Kubernetes Service (Amazon EKS).
   Based on [EKS Distro](https://github.com/aws/eks-distro), EKS Anywhere adds methods for deploying, using, and managing Kubernetes clusters that run in your own data centers.

@@ -62,3 +62,7 @@ func (f *features) isActiveForEnvVarOrGate(envVar, gateName string) func() bool 
 		return active
 	}
 }
+
+func (f *features) clearCache() {
+	f.cache.clear()
+}

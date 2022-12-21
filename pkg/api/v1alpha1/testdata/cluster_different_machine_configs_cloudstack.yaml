@@ -50,6 +50,12 @@ metadata:
 spec:
   computeOffering:
     name: "m4-large"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
+    device: /dev/vdb
+    filesystem: ext4
+    label: data_disk
   users:
     - name: "mySshUsername"
       sshAuthorizedKeys:
@@ -65,6 +71,12 @@ metadata:
 spec:
   computeOffering:
     name: "m5-xlarge"
+  diskOffering:
+    name: "Medium"
+    mountPath: "/data-medium"
+    device: /dev/vdb
+    filesystem: ext4
+    label: data_disk
   users:
     - name: "mySshUsername"
       sshAuthorizedKeys:

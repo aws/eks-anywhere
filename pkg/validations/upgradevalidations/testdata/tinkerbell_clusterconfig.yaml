@@ -1,0 +1,209 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: 1.2.3.4
+    machineGroupRef:
+      name: test-cp
+      kind: TinkerbellMachineConfig
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: test
+  identityProviderRefs:
+    - kind: OIDCConfig
+      name: test
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: test
+  workerNodeGroupConfigurations:
+    - count: 1
+      machineGroupRef:
+        name: test-md
+        kind: TinkerbellMachineConfig
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  tinkerbellIP: "5.6.7.8"
+  osImageURL: "https://ubuntu.gz"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-cp
+  namespace: test-namespace
+spec:
+  hardwareSelector:
+    type: "cp"
+  osFamily: ubuntu
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-md
+  namespace: test-namespace
+spec:
+  hardwareSelector:
+    type: "worker"
+  osFamily: ubuntu
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-etcd
+  namespace: test-namespace
+spec:
+  hardwareSelector:
+    type: "etcd"
+  osFamily: ubuntu
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: tink-test
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: tink-test
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: tink-test
+    tasks:
+      - actions:
+          - environment:
+              COMPRESSED: "true"
+              DEST_DISK: /dev/sda
+              IMG_URL: ""
+            image: image2disk:v1.0.0
+            name: stream-image
+            timeout: 360
+          - environment:
+              BLOCK_DEVICE: /dev/sda2
+              CHROOT: "y"
+              CMD_LINE: apt -y update && apt -y install openssl
+              DEFAULT_INTERPRETER: /bin/sh -c
+              FS_TYPE: ext4
+            image: cexec:v1.0.0
+            name: install-openssl
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                network:
+                  version: 2
+                  renderer: networkd
+                  ethernets:
+                      eno1:
+                          dhcp4: true
+                      eno2:
+                          dhcp4: true
+                      eno3:
+                          dhcp4: true
+                      eno4:
+                          dhcp4: true
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/netplan/config.yaml
+              DIRMODE: "0755"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-netplan
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                datasource:
+                  Ec2:
+                    metadata_urls: []
+                    strict_id: false
+                system_info:
+                  default_user:
+                    name: tink
+                    groups: [wheel, adm]
+                    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                    shell: /bin/bash
+                manage_etc_hosts: localhost
+                warnings:
+                  dsid_missing_source: off
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0600"
+            image: writefile:v1.0.0
+            name: add-tink-cloud-init-config
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                datasource: Ec2
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/cloud/ds-identify.cfg
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0600"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: add-tink-cloud-init-ds-config
+            timeout: 90
+          - environment:
+              BLOCK_DEVICE: /dev/sda2
+              FS_TYPE: ext4
+            image: kexec:v1.0.0
+            name: kexec-image
+            pid: host
+            timeout: 90
+        name: tink-test
+        volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+        worker: "{{.device_1}}"
+    version: "0.1"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: OIDCConfig
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  issuerUrl: https://mydomain.com/issuer
+  clientId: my-client-id

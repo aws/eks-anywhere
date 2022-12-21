@@ -26,3 +26,15 @@ func TestLoadConfig(t *testing.T) {
 	_, err := aws.LoadConfig(tt.ctx)
 	tt.Expect(err).To(Succeed())
 }
+
+func TestLoadConfigSnow(t *testing.T) {
+	tt := newAwsTest(t)
+	config, err := aws.LoadConfig(tt.ctx, aws.WithSnowEndpointAccess("1.2.3.4", certificatesFile, credentialsFile))
+	tt.Expect(err).To(Succeed())
+	snowballDeviceEndpoint, err := config.EndpointResolverWithOptions.ResolveEndpoint("Snowball Device", "snow")
+	tt.Expect(snowballDeviceEndpoint.URL).To(Equal("https://1.2.3.4:9092"))
+	tt.Expect(err).To(Succeed())
+	ec2Endpoint, err := config.EndpointResolverWithOptions.ResolveEndpoint("EC2", "snow")
+	tt.Expect(ec2Endpoint.URL).To(Equal("https://1.2.3.4:8243"))
+	tt.Expect(err).To(Succeed())
+}

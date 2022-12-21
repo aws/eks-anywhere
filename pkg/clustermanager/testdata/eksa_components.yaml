@@ -1,1 +1,16 @@
-test data
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eksa-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eksa-controller-manager
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+        - --leader-elect

@@ -93,3 +93,17 @@ func (mr *MockClientMockRecorder) GetDeployment(ctx, name, namespace, kubeconfig
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeployment", reflect.TypeOf((*MockClient)(nil).GetDeployment), ctx, name, namespace, kubeconfig)
 }
+
+// RolloutRestartDaemonSet mocks base method.
+func (m *MockClient) RolloutRestartDaemonSet(ctx context.Context, name, namespace, kubeconfig string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RolloutRestartDaemonSet", ctx, name, namespace, kubeconfig)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RolloutRestartDaemonSet indicates an expected call of RolloutRestartDaemonSet.
+func (mr *MockClientMockRecorder) RolloutRestartDaemonSet(ctx, name, namespace, kubeconfig interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RolloutRestartDaemonSet", reflect.TypeOf((*MockClient)(nil).RolloutRestartDaemonSet), ctx, name, namespace, kubeconfig)
+}

@@ -7,12 +7,5 @@ description: >
   How to deploy a load balancer controller to expose a workload running in EKS Anywhere
 ---
 
-<!-- overview -->
-
-A production-quality Kubernetes cluster requires planning and preparation for various networking features.
-
-<!-- body -->
-
-
-The purpose of this document is to walk you through getting set up with a recommended Kubernetes Load Balancer for EKS Anywhere.
-Load Balancing is essential in order to maximize availability and scalability. It enables efficient distribution of incoming network traffic among multiple backend services.
+While you are free to use any load balancer you like with your EKS Anywhere cluster, AWS currently only supports the MetalLB load balancer.
+For information on how to configure a MetalLB curated package for EKS Anywhere, see the [Add MetalLB]({{< relref "../../../tasks/packages/metallb" >}}) page.

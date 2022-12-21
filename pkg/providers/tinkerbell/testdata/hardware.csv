@@ -1,0 +1,5 @@
+hostname,bmc_ip,bmc_username,bmc_password,mac,ip_address,netmask,gateway,nameservers,labels,disk
+worker1,192.168.0.10,Admin,admin,00:00:00:00:00:01,10.10.10.10,255.255.255.0,10.10.10.1,1.1.1.1,type=cp,/dev/sda
+worker2,192.168.0.11,Admin,admin,00:00:00:00:00:02,10.10.10.11,255.255.255.0,10.10.10.1,1.1.1.1,type=worker,/dev/sda
+worker3,192.168.0.12,Admin,admin,00:00:00:00:00:03,10.10.10.12,255.255.255.0,10.10.10.1,1.1.1.1,type=etcd,/dev/sda
+worker4,192.168.0.13,Admin,admin,00:00:00:00:00:04,10.10.10.13,255.255.255.0,10.10.10.1,1.1.1.1,type=cp,/dev/sda

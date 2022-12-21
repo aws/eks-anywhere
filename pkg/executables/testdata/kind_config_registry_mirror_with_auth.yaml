@@ -1,0 +1,27 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    dns:
+      type: CoreDNS
+      imageRepository: registry-mirror.test:443/eks-anywhere/eks-distro/coredns
+      imageTag: v1.8.0-eks-1-19-2
+    etcd:
+      local:
+        imageRepository: registry-mirror.test:443/eks-anywhere/eks-distro/etcd-io
+        imageTag: v3.4.14-eks-1-19-2
+    imageRepository: registry-mirror.test:443/eks-anywhere/eks-distro/kubernetes
+    kubernetesVersion: v1.19.6-eks-1-19-2
+containerdConfigPatches:
+  - |
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+        endpoint = ["https://registry-mirror.test:443/v2/curated-packages"]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+        endpoint = ["https://registry-mirror.test:443/v2/eks-anywhere"]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test:443".tls]
+        insecure_skip_verify = true
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test:443".auth]
+        username = "username"
+        password = "password"

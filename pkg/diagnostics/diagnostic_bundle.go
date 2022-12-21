@@ -46,7 +46,7 @@ type EksaDiagnosticBundle struct {
 	analysis         []*executables.SupportBundleAnalysis
 }
 
-func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
+func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, client BundleClient,
 	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
 ) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
@@ -69,7 +69,12 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		writer:           writer,
 	}
 
-	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true)
+	b.WithDefaultCollectors().
+		WithFileCollectors([]string{logger.GetOutputFilePath()}).
+		WithDefaultAnalyzers().
+		WithManagementCluster(true).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef, spec).
+		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
 	if err != nil {
@@ -107,11 +112,13 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithGitOpsConfig(spec.GitOpsConfig).
 		WithOidcConfig(spec.OIDCConfig).
 		WithExternalEtcd(spec.Cluster.Spec.ExternalEtcdConfiguration).
-		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef, spec).
 		WithMachineConfigs(provider.MachineConfigs(spec)).
 		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
+		WithFileCollectors([]string{logger.GetOutputFilePath()}).
+		WithPackagesCollectors().
 		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
@@ -137,7 +144,9 @@ func newDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 		analyzerFactory:  af,
 		collectorFactory: cf,
 	}
-	return b.WithDefaultAnalyzers().WithDefaultCollectors().WithManagementCluster(true)
+	return b.WithDefaultAnalyzers().
+		WithDefaultCollectors().
+		WithManagementCluster(true)
 }
 
 func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string, writer filewriter.FileWriter) *EksaDiagnosticBundle {
@@ -255,9 +264,21 @@ func (e *EksaDiagnosticBundle) WithManagementCluster(isSelfManaged bool) *EksaDi
 	return e
 }
 
-func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle {
+// WithFileCollectors appends collectors that collect static data from the specified paths to the bundle.
+func (e *EksaDiagnosticBundle) WithFileCollectors(paths []string) *EksaDiagnosticBundle {
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.FileCollectors(paths)...)
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithPackagesCollectors() *EksaDiagnosticBundle {
+	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.PackageAnalyzers()...)
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.PackagesCollectors()...)
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref, spec *cluster.Spec) *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.DataCenterConfigAnalyzers(config)...)
-	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.DataCenterConfigCollectors(config)...)
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.DataCenterConfigCollectors(config, spec)...)
 	return e
 }
 
@@ -295,7 +316,7 @@ func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 // createDiagnosticNamespace attempts to create the namespace eksa-diagnostics and associated RBAC objects.
 // collector pods, for example host log collectors or run command collectors, will be launched in this namespace with the default service account.
 // this method intentionally does not return an error
-// a cluster in need of diagnosis may be unable to create new API objects and we should not stop our collection/analysis just because the namespace fails to create
+// a cluster in need of diagnosis may be unable to create new API objects and we should not stop our collection/analysis just because the namespace fails to create.
 func (e *EksaDiagnosticBundle) createDiagnosticNamespaceAndRoles(ctx context.Context) {
 	targetCluster := &types.Cluster{
 		KubeconfigFile: e.kubeconfig,
@@ -363,7 +384,9 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 	var sinceTimeValue time.Time
 	var err error
 	if sinceTime == "" && since == "" {
-		return &sinceTimeValue, nil
+		return &sinceTimeValue, nil // returning an uninitialized (zero) Time value here results in a
+		// sinceTimeValue of "0001-01-01 00:00:00 +0000 UTC"
+		// so all pod logs will be collected from the very beginning
 	} else if sinceTime != "" && since != "" {
 		return nil, fmt.Errorf("at most one of `sinceTime` or `since` could be specified")
 	} else if sinceTime != "" {

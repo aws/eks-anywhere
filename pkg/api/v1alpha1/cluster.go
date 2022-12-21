@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,21 +17,24 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 const (
-	ClusterKind         = "Cluster"
-	YamlSeparator       = "\n---\n"
-	RegistryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
+	ClusterKind              = "Cluster"
+	YamlSeparator            = "\n---\n"
+	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
+	podSubnetNodeMaskMaxDiff = 16
 )
+
+var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
 
 // +kubebuilder:object:generate=false
 type ClusterGenerateOpt func(config *ClusterGenerate)
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
 	clusterConfig := &ClusterGenerate{
 		TypeMeta: metav1.TypeMeta{
@@ -77,7 +81,7 @@ func ExternalETCDConfigCount(count int) ClusterGenerateOpt {
 
 func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
-		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: count}}
+		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: &count}}
 	}
 }
 
@@ -90,6 +94,13 @@ func WorkerNodeConfigName(name string) ClusterGenerateOpt {
 func WithClusterEndpoint() ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.ControlPlaneConfiguration.Endpoint = &Endpoint{Host: ""}
+	}
+}
+
+// WithCPUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under ControlPlaneConfiguration.
+func WithCPUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: maxSurge}}
 	}
 }
 
@@ -133,6 +144,16 @@ func WithWorkerMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	}
 }
 
+// WithWorkerMachineUpgradeRolloutStrategy allows add UpgradeRolloutStrategy option to cluster config under WorkerNodeGroupConfiguration.
+func WithWorkerMachineUpgradeRolloutStrategy(maxSurge int, maxUnavailable int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &WorkerNodesUpgradeRolloutStrategy{
+			Type:          "RollingUpdate",
+			RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: maxSurge, MaxUnavailable: maxUnavailable},
+		}
+	}
+}
+
 func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		if c.Spec.ExternalEtcdConfiguration != nil {
@@ -165,6 +186,8 @@ func NewCluster(clusterName string) *Cluster {
 
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
+	validateControlPlaneEndpoint,
+	validateMachineGroupRefs,
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
 	validateNetworking,
@@ -174,11 +197,12 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateProxyConfig,
 	validateMirrorConfig,
 	validatePodIAMConfig,
+	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
-// and sets defaults if necessary
+// and sets defaults if necessary.
 func GetClusterConfig(fileName string) (*Cluster, error) {
 	clusterConfig := &Cluster{}
 	err := ParseClusterConfig(fileName, clusterConfig)
@@ -191,7 +215,7 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 	return clusterConfig, nil
 }
 
-// GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content
+// GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content.
 func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
 	clusterConfig := &Cluster{}
 	err := ParseClusterConfigFromContent(content, clusterConfig)
@@ -202,7 +226,7 @@ func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
-// sets defaults if necessary and validates the Cluster
+// sets defaults if necessary and validates the Cluster.
 func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	clusterConfig, err := GetClusterConfig(fileName)
 	if err != nil {
@@ -216,13 +240,13 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	return clusterConfig, nil
 }
 
-// GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster
+// GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster.
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
-	return Kube122
+	return Kube124
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
-// Some of the validations are a bit heavy and need a network connection
+// Some of the validations are a bit heavy and need a network connection.
 func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 	for _, v := range clusterConfigValidations {
 		if err := v(clusterConfig); err != nil {
@@ -233,7 +257,7 @@ func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 }
 
 // ParseClusterConfig unmarshalls an API object implementing the KindAccessor interface
-// from a multiobject yaml file in disk. It doesn't set defaults nor validates the object
+// from a multiobject yaml file in disk. It doesn't set defaults nor validates the object.
 func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -252,7 +276,7 @@ type kindObject struct {
 }
 
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
-// from a multiobject yaml content. It doesn't set defaults nor validates the object
+// from a multiobject yaml content. It doesn't set defaults nor validates the object.
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
 		k := &kindObject{}
@@ -281,12 +305,25 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
-func (c *Cluster) RegistryMirror() string {
+// RegistryAuth returns whether registry requires authentication or not.
+func (c *Cluster) RegistryAuth() bool {
 	if c.Spec.RegistryMirrorConfiguration == nil {
-		return ""
+		return false
 	}
+	return c.Spec.RegistryMirrorConfiguration.Authenticate
+}
 
-	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
+func (c *Cluster) ProxyConfiguration() map[string]string {
+	if c.Spec.ProxyConfiguration == nil {
+		return nil
+	}
+	noProxyList := append(c.Spec.ProxyConfiguration.NoProxy, c.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, c.Spec.ClusterNetwork.Services.CidrBlocks...)
+	return map[string]string{
+		"HTTP_PROXY":  c.Spec.ProxyConfiguration.HttpProxy,
+		"HTTPS_PROXY": c.Spec.ProxyConfiguration.HttpsProxy,
+		"NO_PROXY":    strings.Join(noProxyList[:], ","),
+	}
 }
 
 func (c *Cluster) IsReconcilePaused() bool {
@@ -326,6 +363,24 @@ func validateClusterConfigName(clusterConfig *Cluster) error {
 	return nil
 }
 
+func validateMachineGroupRefs(cluster *Cluster) error {
+	if cluster.Spec.DatacenterRef.Kind != DockerDatacenterKind {
+		if cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
+			return errors.New("must specify machineGroupRef control plane machines")
+		}
+		for _, workerNodeGroupConfiguration := range cluster.Spec.WorkerNodeGroupConfigurations {
+			if workerNodeGroupConfiguration.MachineGroupRef == nil {
+				return errors.New("must specify machineGroupRef for worker nodes")
+			}
+		}
+		if cluster.Spec.ExternalEtcdConfiguration != nil && cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
+			return errors.New("must specify machineGroupRef for etcd machines")
+		}
+	}
+
+	return nil
+}
+
 func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count <= 0 {
 		return errors.New("control plane node count must be positive")
@@ -352,20 +407,48 @@ func validateControlPlaneLabels(clusterConfig *Cluster) error {
 	return nil
 }
 
+func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
+	if (clusterConfig.Spec.ControlPlaneConfiguration.Endpoint == nil || len(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0) && clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
+		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
+	}
+	return nil
+}
+
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
-		return errors.New("worker node group must be specified")
+		if clusterConfig.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
+			logger.Info("Warning: No configurations provided for worker node groups, pods will be scheduled on control-plane nodes")
+		} else {
+			return fmt.Errorf("WorkerNodeGroupConfigs cannot be empty for %s", clusterConfig.Spec.DatacenterRef.Kind)
+		}
 	}
+
 	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
 	noExecuteNoScheduleTaintedNodeGroups := make(map[string]struct{})
 	for i, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")
 		}
+
+		if workerNodeGroupConfig.Count == nil {
+			// This block should never fire. If it does, it means we have a bug in how we set our defaults.
+			// When Count == nil it should be set to 1 by SetDefaults method prior to reaching validation.
+			return errors.New("worker node count must be >= 0")
+		}
+
+		if err := validateAutoscalingConfig(&workerNodeGroupConfig); err != nil {
+			return fmt.Errorf("validating autoscaling configuration: %v", err)
+		}
+
+		if err := validateMDUpgradeRolloutStrategy(&workerNodeGroupConfig); err != nil {
+			return fmt.Errorf("validating upgrade rollout strategy configuration: %v", err)
+		}
+
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
 			return errors.New("worker node group names must be unique")
 		}
+
 		if len(workerNodeGroupConfig.Taints) != 0 {
 			for _, taint := range workerNodeGroupConfig.Taints {
 				if taint.Effect == "NoExecute" || taint.Effect == "NoSchedule" {
@@ -373,15 +456,53 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 				}
 			}
 		}
+
 		workerNodeGroupField := fmt.Sprintf("workerNodeGroupConfigurations[%d]", i)
 		if err := validateNodeLabels(workerNodeGroupConfig.Labels, field.NewPath("spec", workerNodeGroupField, "labels")); err != nil {
 			return fmt.Errorf("labels for worker node group %v not valid: %v", workerNodeGroupConfig.Name, err)
 		}
+
 		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
 	}
-	if len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
+
+	if len(workerNodeGroupConfigs) > 0 && len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
 		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
 	}
+
+	if len(workerNodeGroupConfigs) == 0 && len(clusterConfig.Spec.ControlPlaneConfiguration.Taints) != 0 {
+		return errors.New("cannot taint control plane when there is no worker node")
+	}
+
+	if len(workerNodeGroupConfigs) == 0 && clusterConfig.Spec.KubernetesVersion <= Kube121 {
+		return errors.New("Empty workerNodeGroupConfigs is not supported for kube version <= 1.21")
+	}
+
+	return nil
+}
+
+func validateAutoscalingConfig(w *WorkerNodeGroupConfiguration) error {
+	if w == nil {
+		return nil
+	}
+	if w.AutoScalingConfiguration == nil && *w.Count < 0 {
+		return errors.New("worker node count must be zero or greater if autoscaling is not enabled")
+	}
+	if w.AutoScalingConfiguration == nil {
+		return nil
+	}
+	if w.AutoScalingConfiguration.MinCount < 0 {
+		return errors.New("min count must be non negative")
+	}
+	if w.AutoScalingConfiguration.MinCount > w.AutoScalingConfiguration.MaxCount {
+		return errors.New("min count must be no greater than max count")
+	}
+	if w.AutoScalingConfiguration.MinCount > *w.Count {
+		return errors.New("min count must be less than or equal to count")
+	}
+	if w.AutoScalingConfiguration.MaxCount < *w.Count {
+		return errors.New("max count must be greater than or equal to count")
+	}
+
 	return nil
 }
 
@@ -416,28 +537,45 @@ func validateEtcdReplicas(clusterConfig *Cluster) error {
 }
 
 func validateNetworking(clusterConfig *Cluster) error {
-	if len(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks) <= 0 {
+	clusterNetwork := clusterConfig.Spec.ClusterNetwork
+
+	if len(clusterNetwork.Pods.CidrBlocks) <= 0 {
 		return errors.New("pods CIDR block not specified or empty")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks) <= 0 {
+	if len(clusterNetwork.Services.CidrBlocks) <= 0 {
 		return errors.New("services CIDR block not specified or empty")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks) > 1 {
+	if len(clusterNetwork.Pods.CidrBlocks) > 1 {
 		return fmt.Errorf("multiple CIDR blocks for Pods are not yet supported")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks) > 1 {
+	if len(clusterNetwork.Services.CidrBlocks) > 1 {
 		return fmt.Errorf("multiple CIDR blocks for Services are not yet supported")
 	}
-	_, _, err := net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0])
+	_, podCIDRIpNet, err := net.ParseCIDR(clusterNetwork.Pods.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterConfig.Spec.ClusterNetwork.Pods)
+		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterNetwork.Pods)
 	}
-	_, _, err = net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks[0])
+	_, _, err = net.ParseCIDR(clusterNetwork.Services.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterConfig.Spec.ClusterNetwork.Services)
+		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterNetwork.Services)
 	}
 
-	return validateCNIPlugin(clusterConfig.Spec.ClusterNetwork)
+	if clusterNetwork.Nodes != nil && clusterNetwork.Nodes.CIDRMaskSize != nil {
+		podMaskSize, _ := podCIDRIpNet.Mask.Size()
+		nodeCidrMaskSize := clusterNetwork.Nodes.CIDRMaskSize
+		// the pod subnet mask needs to allow one or multiple node-masks
+		// i.e. if it has a /24 the node mask must be between 24 and 32 for ipv4
+		// the below validations are run by kubeadm and we are bubbling those up here for better customer experience
+		if podMaskSize > *nodeCidrMaskSize {
+			return fmt.Errorf("the size of pod subnet with mask %d is smaller than the size of node subnet with mask %d", podMaskSize, *nodeCidrMaskSize)
+		} else if (*nodeCidrMaskSize - podMaskSize) > podSubnetNodeMaskMaxDiff {
+			// PodSubnetNodeMaskMaxDiff is limited to 16 due to an issue with uncompressed IP bitmap in core
+			// The node subnet mask size must be no more than the pod subnet mask size + 16
+			return fmt.Errorf("pod subnet mask (%d) and node-mask (%d) difference is greater than %d", podMaskSize, *nodeCidrMaskSize, podSubnetNodeMaskMaxDiff)
+		}
+	}
+
+	return validateCNIPlugin(clusterNetwork)
 }
 
 func validateCNIPlugin(network ClusterNetwork) error {
@@ -526,12 +664,13 @@ func validateProxyData(proxy string) error {
 	} else {
 		proxyHost = proxy
 	}
-	ip, port, err := net.SplitHostPort(proxyHost)
+	host, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
-		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
+		return fmt.Errorf("proxy endpoint %s is invalid (%s), please provide a valid proxy address", proxy, err)
 	}
-	if net.ParseIP(ip) == nil {
-		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
+	_, err = net.DefaultResolver.LookupIPAddr(context.Background(), host)
+	if err != nil && net.ParseIP(host) == nil {
+		return fmt.Errorf("proxy endpoint %s is invalid, please provide a valid proxy domain name or ip: %v", host, err)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
 		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
@@ -553,6 +692,28 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
+
+	mirrorCount := 0
+	ociNamespaces := clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces
+	for _, ociNamespace := range ociNamespaces {
+		if ociNamespace.Registry == "" {
+			return errors.New("registry can't be set to empty in OCINamespaces")
+		}
+		if re.MatchString(ociNamespace.Registry) {
+			mirrorCount++
+			// More than one mirror for curated package would introduce ambiguity in the package controller
+			if mirrorCount > 1 {
+				return errors.New("only one registry mirror for curated packages is suppported")
+			}
+		}
+	}
+	if mirrorCount == 1 {
+		// BottleRocket accepts only one registry mirror and that is hardcoded for public.ecr.aws at this moment.
+		// Such a validation will be removed once CAPI is patched to support more than one endpoints for BottleRocket.
+		if ociNamespaces[0].Registry != constants.DefaultCoreEKSARegistry {
+			return errors.New("registry must be public.ecr.aws when only one mapping is specified")
+		}
 	}
 	return nil
 }
@@ -580,16 +741,6 @@ func validateGitOps(clusterConfig *Cluster) error {
 	}
 
 	gitOpsRefKind := gitOpsRef.Kind
-	fluxConfigActive := features.IsActive(features.GenericGitProviderSupport())
-
-	if gitOpsRefKind == FluxConfigKind && !fluxConfigActive {
-		return fmt.Errorf("FluxConfig and the generic git provider are not currently supported; " +
-			"to use this experimental feature, please set the environment variable GENERIC_GIT_PROVIDER_SUPPORT to true")
-	}
-
-	if gitOpsRefKind != GitOpsConfigKind && !fluxConfigActive {
-		return errors.New("only GitOpsConfig Kind is supported at this time")
-	}
 
 	if gitOpsRefKind != GitOpsConfigKind && gitOpsRefKind != FluxConfigKind {
 		return errors.New("only GitOpsConfig or FluxConfig Kind are supported at this time")
@@ -608,5 +759,45 @@ func validatePodIAMConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.PodIAMConfig.ServiceAccountIssuer == "" {
 		return errors.New("ServiceAccount Issuer can't be empty while configuring IAM roles for pods")
 	}
+	return nil
+}
+
+func validateCPUpgradeRolloutStrategy(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy == nil {
+		return nil
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type != "RollingUpdate" {
+		return fmt.Errorf("ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 {
+		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value")
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge > 1 {
+		return fmt.Errorf("ControlPlaneConfiguration: maxSurge for control plane must be 0 or 1")
+	}
+
+	return nil
+}
+
+func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
+	if w.UpgradeRolloutStrategy == nil {
+		return nil
+	}
+
+	if w.UpgradeRolloutStrategy.Type != "RollingUpdate" {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type")
+	}
+
+	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge < 0 || w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable < 0 {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative")
+	}
+
+	if w.UpgradeRolloutStrategy.RollingUpdate.MaxSurge == 0 && w.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable == 0 {
+		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
+	}
+
 	return nil
 }

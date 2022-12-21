@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/go-logr/logr"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
@@ -19,7 +19,7 @@ var initE2EDirCommand = "mkdir -p /home/e2e/bin && cd /home/e2e"
 
 func WaitForSSMReady(session *session.Session, instanceId string) error {
 	err := retrier.Retry(10, 20*time.Second, func() error {
-		return Run(session, instanceId, "ls")
+		return Run(session, logr.Discard(), instanceId, "ls")
 	})
 	if err != nil {
 		return fmt.Errorf("waiting for ssm to be ready: %v", err)
@@ -53,8 +53,8 @@ var nonFinalStatuses = map[string]struct{}{
 	ssm.CommandInvocationStatusInProgress: {}, ssm.CommandInvocationStatusDelayed: {}, ssm.CommandInvocationStatusPending: {},
 }
 
-func Run(session *session.Session, instanceId, command string, opts ...CommandOpt) error {
-	o, err := RunCommand(session, instanceId, command, opts...)
+func Run(session *session.Session, logger logr.Logger, instanceId, command string, opts ...CommandOpt) error {
+	o, err := RunCommand(session, logger, instanceId, command, opts...)
 	if err != nil {
 		return err
 	}
@@ -65,10 +65,10 @@ func Run(session *session.Session, instanceId, command string, opts ...CommandOp
 	return nil
 }
 
-func RunCommand(session *session.Session, instanceId, command string, opts ...CommandOpt) (*RunOutput, error) {
+func RunCommand(session *session.Session, logger logr.Logger, instanceId, command string, opts ...CommandOpt) (*RunOutput, error) {
 	service := ssm.New(session)
 
-	result, err := sendCommand(service, instanceId, command, opts...)
+	result, err := sendCommand(service, logger, instanceId, command, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func RunCommand(session *session.Session, instanceId, command string, opts ...Co
 	}
 
 	// Make sure ssm send command is registered
-	logger.V(2).Info("Waiting for ssm command to be registered")
+	logger.V(4).Info("Waiting for ssm command to be registered")
 	err = retrier.Retry(10, 5*time.Second, func() error {
 		_, err := service.GetCommandInvocation(commandIn)
 		if err != nil {
@@ -92,9 +92,9 @@ func RunCommand(session *session.Session, instanceId, command string, opts ...Co
 		return nil, fmt.Errorf("waiting for ssm command to be registered: %v", err)
 	}
 
-	logger.V(2).Info("Waiting for ssm command to finish")
+	logger.V(4).Info("Waiting for ssm command to finish")
 	var commandOut *ssm.GetCommandInvocationOutput
-	r := retrier.New(180*time.Minute, retrier.WithMaxRetries(2160, 60*time.Second))
+	r := retrier.New(300*time.Minute, retrier.WithMaxRetries(2160, 60*time.Second))
 	err = r.Retry(func() error {
 		var err error
 		commandOut, err = service.GetCommandInvocation(commandIn)
@@ -104,7 +104,7 @@ func RunCommand(session *session.Session, instanceId, command string, opts ...Co
 
 		status := *commandOut.Status
 		if isFinalStatus(status) {
-			logger.V(2).Info("SSM command finished", "status", status, "commandId", *result.Command.CommandId)
+			logger.V(4).Info("SSM command finished", "status", status, "commandId", *result.Command.CommandId)
 			return nil
 		}
 
@@ -117,11 +117,11 @@ func RunCommand(session *session.Session, instanceId, command string, opts ...Co
 	return buildRunOutput(commandOut), nil
 }
 
-func sendCommand(service *ssm.SSM, instanceId, command string, opts ...CommandOpt) (*ssm.SendCommandOutput, error) {
+func sendCommand(service *ssm.SSM, logger logr.Logger, instanceId, command string, opts ...CommandOpt) (*ssm.SendCommandOutput, error) {
 	in := &ssm.SendCommandInput{
 		DocumentName: aws.String("AWS-RunShellScript"),
 		InstanceIds:  []*string{aws.String(instanceId)},
-		Parameters:   map[string][]*string{"commands": {aws.String(initE2EDirCommand), aws.String(command)}, "executionTimeout": {aws.String("10800")}},
+		Parameters:   map[string][]*string{"commands": {aws.String(initE2EDirCommand), aws.String(command)}, "executionTimeout": {aws.String("18000")}},
 	}
 
 	for _, opt := range opts {
@@ -129,7 +129,7 @@ func sendCommand(service *ssm.SSM, instanceId, command string, opts ...CommandOp
 	}
 
 	var result *ssm.SendCommandOutput
-	r := retrier.New(180*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+	r := retrier.New(300*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
 		if request.IsErrorThrottle(err) && totalRetries < 60 {
 			return true, 60 * time.Second
 		}
@@ -137,7 +137,7 @@ func sendCommand(service *ssm.SSM, instanceId, command string, opts ...CommandOp
 	}))
 	err := r.Retry(func() error {
 		var err error
-		logger.V(2).Info("Running ssm command", "cmd", command)
+		logger.V(4).Info("Running ssm command", "cmd", command)
 		result, err = service.SendCommand(in)
 		if err != nil {
 			return err
@@ -148,7 +148,7 @@ func sendCommand(service *ssm.SSM, instanceId, command string, opts ...CommandOp
 		return nil, fmt.Errorf("retries exhausted sending ssm command: %v", err)
 	}
 
-	logger.V(2).Info("SSM command started", "commandId", result.Command.CommandId)
+	logger.V(4).Info("SSM command started", "commandId", result.Command.CommandId)
 	if in.OutputS3BucketName != nil {
 		logger.V(4).Info(
 			"SSM command output to S3", "url",

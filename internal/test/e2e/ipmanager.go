@@ -1,41 +1,27 @@
 package e2e
 
 import (
-	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/go-logr/logr"
+
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 type E2EIPManager struct {
-	vspherenetworkCidr string
-	privateNetworkCidr string
-	vsphereNetworkIPs  map[string]bool
-	privateNetworkIPs  map[string]bool
+	networkCidr string
+	networkIPs  map[string]bool
+	logger      logr.Logger
 }
 
-func newE2EIPManager(networkCidr, privateNetworkCidr string) *E2EIPManager {
-	ipman := &E2EIPManager{
-		vspherenetworkCidr: networkCidr,
-		privateNetworkCidr: privateNetworkCidr,
-		vsphereNetworkIPs:  make(map[string]bool),
-		privateNetworkIPs:  make(map[string]bool),
+func newE2EIPManager(logger logr.Logger, networkCidr string) *E2EIPManager {
+	return &E2EIPManager{
+		networkCidr: networkCidr,
+		networkIPs:  make(map[string]bool),
+		logger:      logger,
 	}
-	return ipman
 }
 
 func (ipman *E2EIPManager) reserveIP() string {
-	return getUniqueIP(ipman.vspherenetworkCidr, ipman.vsphereNetworkIPs)
-}
-
-func (ipMan *E2EIPManager) reservePrivateIP() string {
-	return getUniqueIP(ipMan.privateNetworkCidr, ipMan.privateNetworkIPs)
-}
-
-func (ipman *E2EIPManager) reservePrivateIPPool(count int) networkutils.IPPool {
-	pool := networkutils.NewIPPool()
-	for i := 0; i < count; i++ {
-		pool.AddIP(ipman.reservePrivateIP())
-	}
-	return pool
+	return ipman.getUniqueIP(ipman.networkCidr, ipman.networkIPs)
 }
 
 func (ipman *E2EIPManager) reserveIPPool(count int) networkutils.IPPool {
@@ -46,15 +32,15 @@ func (ipman *E2EIPManager) reserveIPPool(count int) networkutils.IPPool {
 	return pool
 }
 
-func getUniqueIP(cidr string, usedIPs map[string]bool) string {
+func (ipman *E2EIPManager) getUniqueIP(cidr string, usedIPs map[string]bool) string {
 	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
 	ip, err := ipgen.GenerateUniqueIP(cidr)
 	for ; err != nil || usedIPs[ip]; ip, err = ipgen.GenerateUniqueIP(cidr) {
 		if err != nil {
-			logger.V(2).Info("Warning: getting unique IP for vsphere failed", "error", err)
+			ipman.logger.V(2).Info("Warning: getting unique IP for vsphere failed", "error", err)
 		}
 		if usedIPs[ip] {
-			logger.V(2).Info("Warning: generated IP is already taken", "IP", ip)
+			ipman.logger.V(2).Info("Warning: generated IP is already taken", "IP", ip)
 		}
 	}
 	usedIPs[ip] = true

@@ -14,13 +14,16 @@ func TarFolder(sourceFolder, dstFile string) error {
 	}
 	defer tarfile.Close()
 
-	walker := NewFolderWalker(sourceFolder)
-
-	if err := Tar(walker, tarfile); err != nil {
+	if err := tarFolderToWriter(sourceFolder, tarfile); err != nil {
 		return fmt.Errorf("taring folder [%s] to [%s]: %v", sourceFolder, dstFile, err)
 	}
 
 	return nil
+}
+
+func tarFolderToWriter(sourceFolder string, dst io.Writer) error {
+	walker := NewFolderWalker(sourceFolder)
+	return Tar(walker, dst)
 }
 
 type TarFunc func(file string, info os.FileInfo, header *tar.Header) error

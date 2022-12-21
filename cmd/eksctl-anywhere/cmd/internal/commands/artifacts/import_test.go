@@ -22,6 +22,7 @@ type importArtifactsTest struct {
 	command        *artifacts.Import
 	images, charts []releasev1.Image
 	bundles        *releasev1.Bundles
+	fileImporter   *mocks.MockFileImporter
 }
 
 func newImportArtifactsTest(t *testing.T) *importArtifactsTest {
@@ -33,6 +34,7 @@ func newImportArtifactsTest(t *testing.T) *importArtifactsTest {
 	reader := mocks.NewMockReader(ctrl)
 	mover := mocks.NewMockImageMover(ctrl)
 	importer := mocks.NewMockChartImporter(ctrl)
+	fileImporter := mocks.NewMockFileImporter(ctrl)
 	images := []releasev1.Image{
 		{
 			Name: "image 1",
@@ -77,16 +79,19 @@ func newImportArtifactsTest(t *testing.T) *importArtifactsTest {
 			ChartImporter:      importer,
 			TmpArtifactsFolder: downloadFolder,
 			Bundles:            bundles,
+			FileImporter:       fileImporter,
 		},
-		bundles: bundles,
+		bundles:      bundles,
+		fileImporter: fileImporter,
 	}
 }
 
 func TestImportRun(t *testing.T) {
 	tt := newImportArtifactsTest(t)
-	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles).Return(tt.images, nil)
+	tt.reader.EXPECT().ReadImagesFromBundles(tt.ctx, tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
-	tt.reader.EXPECT().ReadChartsFromBundles(tt.bundles).Return(tt.charts)
+	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
+	tt.fileImporter.EXPECT().Push(tt.ctx, tt.bundles)
 	tt.importer.EXPECT().Import(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
 
 	tt.Expect(tt.command.Run(tt.ctx)).To(Succeed())

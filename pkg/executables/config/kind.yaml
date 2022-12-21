@@ -1,13 +1,7 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-{{- if .DisableDefaultCNI }}
-networking:
-  # the default CNI will not be installed
-  disableDefaultCNI: true
-{{- end }}
 kubeadmConfigPatches:
   - |
-    apiVersion: kubeadm.k8s.io/v1beta2
     kind: ClusterConfiguration
     dns:
       type: CoreDNS
@@ -19,38 +13,46 @@ kubeadmConfigPatches:
         imageTag: {{.EtcdVersion}}
     imageRepository: {{.KubernetesRepository}}
     kubernetesVersion: {{.KubernetesVersion}}
-{{- if (ne .RegistryMirrorEndpoint "") }}
+{{- if .RegistryMirrorMap }}
 containerdConfigPatches:
   - |
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-        endpoint = ["https://{{.RegistryMirrorEndpoint}}"]
-      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.RegistryMirrorEndpoint}}".tls]
+{{- range $orig, $mirror := .RegistryMirrorMap }}
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+        endpoint = ["https://{{ $mirror }}"]
+{{- end }}
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .MirrorBase }}".tls]
 {{- if (eq .RegistryCACertPath "") }}
         insecure_skip_verify = true
 {{- else }}
-        ca_file = "/etc/containerd/certs.d/{{.RegistryMirrorEndpoint}}/ca.crt"
+        ca_file = "/etc/containerd/certs.d/{{ .MirrorBase }}/ca.crt"
+{{- end }}
+{{- if .RegistryAuth }}
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .MirrorBase }}".auth]
+        username = "{{.RegistryUsername}}"
+        password = "{{.RegistryPassword}}"
+{{- end }}
+{{- end }}
+{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) (ne (len .ExtraPortMappings) 0)}}
 nodes:
 - role: control-plane
+{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) }}
   extraMounts:
+{{- if (ne .RegistryCACertPath "") }}
     - containerPath: /etc/containerd/certs.d
       hostPath: {{.RegistryCACertPath}}
       readOnly: true
 {{- end }}
-{{- end }}
 {{- if .DockerExtraMounts }}
-nodes:
-- role: control-plane
-  extraMounts:
     - hostPath: /var/run/docker.sock
       containerPath: /var/run/docker.sock
 {{- end }}
+{{- end }}
 {{- if ne (len .ExtraPortMappings) 0 }}
-nodes:
-- role: control-plane
   extraPortMappings:
 {{- range .ExtraPortMappings }}
   - containerPort: {{ . }}
     hostPort: {{ . }}
+{{- end }}
 {{- end }}
 {{- end }}

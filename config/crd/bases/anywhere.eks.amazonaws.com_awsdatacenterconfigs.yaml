@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: AWSDatacenterConfig is the Schema for the AWSDatacenterConfigs
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AWSDatacenterConfigSpec defines the desired state of AWSDatacenterConfig
+            description: AWSDatacenterConfigSpec defines the desired state of AWSDatacenterConfig.
             properties:
               amiID:
                 type: string
@@ -46,7 +46,7 @@ spec:
             - region
             type: object
           status:
-            description: AWSDatacenterConfigStatus defines the observed state of AWSDatacenterConfig
+            description: AWSDatacenterConfigStatus defines the observed state of AWSDatacenterConfig.
             type: object
         type: object
     served: true

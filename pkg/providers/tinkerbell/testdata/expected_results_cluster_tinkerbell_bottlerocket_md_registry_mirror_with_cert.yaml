@@ -1,0 +1,177 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+    pool: md-0
+  name: test-md-0
+  namespace: eksa-system
+spec:
+  clusterName: test
+  replicas: 1
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: test
+        pool: md-0
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: test-md-0-template-1234567890000
+      clusterName: test
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: TinkerbellMachineTemplate
+        name: test-md-0-1234567890000
+      version: v1.21.2-eks-1-21-4
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: TinkerbellMachineTemplate
+metadata:
+  name: test-md-0-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: worker
+      templateOverride: |
+        global_timeout: 6000
+        id: ""
+        name: tink-test
+        tasks:
+        - actions:
+          - environment:
+              COMPRESSED: "true"
+              DEST_DISK: /dev/sda
+              IMG_URL: ""
+            image: image2disk:v1.0.0
+            name: stream-image
+            timeout: 600
+          - environment:
+              CONTENTS: |
+                # Version is required, it will change as we support
+                # additional settings
+                version = 1
+                # "eno1" is the interface name
+                # Users may turn on dhcp4 and dhcp6 via boolean
+                [eno1]
+                dhcp4 = true
+                # Define this interface as the "primary" interface
+                # for the system.  This IP is what kubelet will use
+                # as the node IP.  If none of the interfaces has
+                # "primary" set, we choose the first interface in
+                # the file
+                primary = true
+              DEST_DISK: /dev/sda12
+              DEST_PATH: /etc/netplan/config.yaml
+              DIRMODE: "0755"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-netplan
+            timeout: 90
+          - environment:
+              BOOTCONFIG_CONTENTS: |
+                kernel {
+                  console = "tty0", "ttyS0,115200n8"
+                }
+              DEST_DISK: /dev/sda12
+              DEST_PATH: /bootconfig.data
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-bootconfig
+            timeout: 90
+          - environment:
+              DEST_DISK: /dev/sda12
+              DEST_PATH: /user-data.toml
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              HEGEL_URLS: http://1.2.3.4:50061
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-user-data
+            timeout: 90
+          - image: reboot:v1.0.0
+            name: reboot-image
+            pid: host
+            timeout: 90
+            volumes:
+            - /worker:/worker
+          name: tink-test
+          volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+          worker: '{{.device_1}}'
+        version: "0.1"
+        
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-md-0-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        pause:
+          imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
+          imageTag: v1.21.2-eks-1-21-4
+        bottlerocketBootstrap:
+          imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
+          imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
+        registryMirror:
+          endpoint: 1.2.3.4:1234
+          caCert: |
+            -----BEGIN CERTIFICATE-----
+            MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+            BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+            MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+            CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+            EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+            lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+            2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+            o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+            cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+            LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+            ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+            hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+            iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+            zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+            9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+            -----END CERTIFICATE-----
+        nodeRegistration:
+          kubeletExtraArgs:
+            provider-id: PROVIDER_ID
+            read-only-port: "0"
+            anonymous-auth: "false"
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      users:
+      - name: tink-user
+        sshAuthorizedKeys:
+        - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      format: bottlerocket
+
+---

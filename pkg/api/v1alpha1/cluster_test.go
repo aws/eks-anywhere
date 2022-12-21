@@ -10,6 +10,8 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestValidateClusterName(t *testing.T) {
@@ -135,7 +137,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -183,7 +185,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -231,7 +233,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -279,7 +281,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -337,7 +339,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -385,7 +387,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test-2",
@@ -433,7 +435,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -485,7 +487,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -513,7 +515,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			testName: "with valid proxy configuration",
+			testName: "with valid ip proxy configuration",
 			fileName: "testdata/cluster_valid_proxy.yaml",
 			wantCluster: &Cluster{
 				TypeMeta: metav1.TypeMeta{
@@ -537,7 +539,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -559,6 +561,59 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					ProxyConfiguration: &ProxyConfiguration{
 						HttpProxy:  "http://0.0.0.0:1",
 						HttpsProxy: "0.0.0.0:1",
+						NoProxy:    []string{"localhost"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName: "with valid domain name proxy configuration",
+			fileName: "testdata/cluster_valid_domainname_proxy.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
+						Count: ptr.Int(3),
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					}},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+					ProxyConfiguration: &ProxyConfiguration{
+						HttpProxy:  "http://google.com:1",
+						HttpsProxy: "google.com:1",
 						NoProxy:    []string{"localhost"},
 					},
 				},
@@ -591,7 +646,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{
 						{
 							Name:  "md-0",
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &Ref{
 								Kind: VSphereMachineConfigKind,
 								Name: "eksa-unit-test-2",
@@ -606,7 +661,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 						{
 							Name:  "md-1",
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &Ref{
 								Kind: VSphereMachineConfigKind,
 								Name: "eksa-unit-test-2",
@@ -769,6 +824,74 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantCluster: nil,
 			wantErr:     true,
 		},
+		{
+			testName: "tinkerbell without worker nodes",
+			fileName: "testdata/tinkerbell_cluster_without_worker_nodes.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "single-node",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube123,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 1,
+						Endpoint: &Endpoint{
+							Host: "10.80.8.90",
+						},
+						MachineGroupRef: &Ref{
+							Kind: TinkerbellMachineConfigKind,
+							Name: "single-node-cp",
+						},
+					},
+					WorkerNodeGroupConfigurations: nil,
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+						Name: "single-node",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+					ManagementCluster: ManagementCluster{
+						Name: "single-node",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName:    "tinkerbell 1.21 cluster without worker nodes",
+			fileName:    "testdata/tinkerbell_121cluster_without_worker_nodes.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName:    "nontinkerbell datacenter without worker nodes",
+			fileName:    "testdata/vsphere_cluster_without_worker_nodes.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName:    "without worker nodes but has control plane taints",
+			fileName:    "testdata/cluster_without_worker_nodes_has_cp_taints.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName:    "Invalid registry",
+			fileName:    "testdata/invalid_registry.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -815,7 +938,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -863,7 +986,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -911,7 +1034,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -959,7 +1082,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1036,7 +1159,7 @@ func TestParseClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1131,7 +1254,7 @@ func TestParseClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1811,7 +1934,9 @@ func TestRefEquals(t *testing.T) {
 	}
 }
 
-func TestValidateNetworkingCNIPlugin(t *testing.T) {
+func TestValidateNetworking(t *testing.T) {
+	nodeCidrMaskSize := new(int)
+	*nodeCidrMaskSize = 28
 	tests := []struct {
 		name    string
 		wantErr error
@@ -1878,6 +2003,131 @@ func TestValidateNetworkingCNIPlugin(t *testing.T) {
 							},
 						},
 						CNI:       "",
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size valid",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/24",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size invalid",
+			wantErr: fmt.Errorf("the size of pod subnet with mask 30 is smaller than the size of node subnet with mask 28"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/30",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size invalid diff",
+			wantErr: fmt.Errorf("pod subnet mask (6) and node-mask (28) difference is greater than 16"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid pods CIDR block",
+			wantErr: fmt.Errorf("invalid CIDR block format for Pods: {[1.2.3]}. Please specify a valid CIDR block for pod subnet"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid services CIDR block",
+			wantErr: fmt.Errorf("invalid CIDR block for Services: {[1.2.3]}. Please specify a valid CIDR block for service subnet"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
 						CNIConfig: nil,
 					},
 				},
@@ -2023,6 +2273,64 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
+			name:    "multiple mappings for curated packages",
+			wantErr: "only one registry mirror for curated packages is suppported",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Namespace: "",
+							},
+							{
+								Registry:  "783794618700.dkr.ecr.us-east-1.amazonaws.com",
+								Namespace: "",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "one registry in OCINamespace but not public.ecr.aws",
+			wantErr: "registry must be public.ecr.aws when only one mapping is specified",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "783794618700.dkr.ecr.us-west-2.amazonaws.com",
+								Namespace: "curated-packages",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "empty registry in OCINamespace",
+			wantErr: "registry can't be set to empty in OCINamespaces",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "30003",
+						OCINamespaces: []OCINamespace{
+							{
+								Registry:  "",
+								Namespace: "",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "insecureSkipVerify on non snow provider",
 			wantErr: "insecureSkipVerify is only supported for snow provider",
 			cluster: &Cluster{
@@ -2068,14 +2376,120 @@ func TestValidateMirrorConfig(t *testing.T) {
 	}
 }
 
-func TestClusterRegistryMirror(t *testing.T) {
+func TestValidateAutoscalingConfig(t *testing.T) {
+	tests := []struct {
+		name                         string
+		wantErr                      string
+		workerNodeGroupConfiguration *WorkerNodeGroupConfiguration
+	}{
+		{
+			name:                         "autoscaling config nil",
+			wantErr:                      "",
+			workerNodeGroupConfiguration: nil,
+		},
+		{
+			name:    "autoscaling config valid",
+			wantErr: "",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(2),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 1,
+					MaxCount: 2,
+				},
+			},
+		},
+		{
+			name:    "negative min count",
+			wantErr: "min count must be non negative",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: -1,
+				},
+			},
+		},
+		{
+			name:    "min count > max count",
+			wantErr: "min count must be no greater than max count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 1,
+				},
+			},
+		},
+		{
+			name:    "count < min count",
+			wantErr: "min count must be less than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count > max count",
+			wantErr: "max count must be greater than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(4),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count < 0 with nil autoscaling",
+			wantErr: "worker node count must be zero or greater if autoscaling is not enabled",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(-1),
+			},
+		},
+		{
+			name:    "nil autoscaling",
+			wantErr: "",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateAutoscalingConfig(tt.workerNodeGroupConfiguration)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestClusterRegistryAuth(t *testing.T) {
 	tests := []struct {
 		name    string
 		cluster *Cluster
-		want    string
+		want    bool
 	}{
 		{
-			name: "with registry mirror",
+			name: "with registry mirror auth",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "without registry mirror auth",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
@@ -2084,18 +2498,487 @@ func TestClusterRegistryMirror(t *testing.T) {
 					},
 				},
 			},
-			want: "1.2.3.4:443",
+			want: false,
 		},
 		{
 			name:    "without registry mirror",
 			cluster: &Cluster{},
-			want:    "",
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
+			g.Expect(tt.cluster.RegistryAuth()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterProxyConfiguration(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    map[string]string
+	}{
+		{
+			name: "with proxy configuration",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ProxyConfiguration: &ProxyConfiguration{
+						HttpProxy:  "test-http",
+						HttpsProxy: "test-https",
+						NoProxy:    []string{"test-noproxy-1", "test-noproxy-2", "test-noproxy-3"},
+					},
+				},
+			},
+			want: map[string]string{
+				"HTTP_PROXY":  "test-http",
+				"HTTPS_PROXY": "test-https",
+				"NO_PROXY":    "test-noproxy-1,test-noproxy-2,test-noproxy-3",
+			},
+		},
+		{
+			name:    "without proxy configuration",
+			cluster: &Cluster{},
+			want:    nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.ProxyConfiguration()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestValidateControlPlaneEndpoint(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "docker provider - control plane endpoint is not set",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: DockerDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{},
+				},
+			},
+		},
+		{
+			name:    "control plane ip is not set",
+			wantErr: "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "control plane ip is set",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateControlPlaneEndpoint(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestValidateCPUpgradeRolloutStrategy(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "rolling upgrade strategy invalid",
+			wantErr: "ControlPlaneConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "NotRollingUpdate"},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs not specified",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate"},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade invalid",
+			wantErr: "maxSurge for control plane must be 0 or 1",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 2}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 0}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 1}},
+					},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid value -1",
+			wantErr: "ControlPlaneConfiguration: maxSurge for control plane cannot be a negative value",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: -1}},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateCPUpgradeRolloutStrategy(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "rolling upgrade strategy invalid",
+			wantErr: "WorkerNodeGroupConfiguration: only 'RollingUpdate' supported for upgrade rollout strategy type",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "NotRollingUpdate"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs not specified",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate"},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade invalid",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 0,1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 0, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 1,0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 1, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 5,0",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 0}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs valid value 3,1",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values 3,-1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 3, MaxUnavailable: -1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values -3,1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: 1}},
+					}},
+				},
+			},
+		},
+		{
+			name:    "rolling upgrade knobs invalid values -3,-1",
+			wantErr: "WorkerNodeGroupConfiguration: maxSurge and maxUnavailable values cannot be negative",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: -3, MaxUnavailable: -1}},
+					}},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateMDUpgradeRolloutStrategy(&tt.cluster.Spec.WorkerNodeGroupConfigurations[0])
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
+	g := NewWithT(t)
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube124))
+}
+
+func TestClusterWorkerNodeConfigCount(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with worker node config count",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Name:                     "",
+					Count:                    ptr.Int(5),
+					AutoScalingConfiguration: nil,
+					MachineGroupRef:          nil,
+					Taints:                   nil,
+					Labels:                   nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(5))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterCPUpgradeRolloutStrategyNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    ControlPlaneConfiguration
+	}{
+		{
+			name: "with control plane rollout upgrade strategy nil",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: ControlPlaneConfiguration{
+				Endpoint:               nil,
+				Count:                  1,
+				MachineGroupRef:        nil,
+				Taints:                 nil,
+				Labels:                 nil,
+				UpgradeRolloutStrategy: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterCPUpgradeRolloutStrategyNotNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    ControlPlaneConfiguration
+	}{
+		{
+			name: "with control plane rollout upgrade strategy non-nil",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: ControlPlaneConfiguration{
+				Endpoint:               nil,
+				Count:                  1,
+				MachineGroupRef:        nil,
+				Taints:                 nil,
+				Labels:                 nil,
+				UpgradeRolloutStrategy: &ControlPlaneUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: ControlPlaneRollingUpdateParams{MaxSurge: 5}},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", ControlPlaneConfigCount(1), WithCPUpgradeRolloutStrategy(5, 2))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.ControlPlaneConfiguration).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterMDUpgradeRolloutStrategyNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with md rollout upgrade strategy knobs not specified",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Count:           ptr.Int(1),
+					MachineGroupRef: nil,
+					Taints:          nil,
+					Labels:          nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterMDUpgradeRolloutStrategyNotNil(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with md rollout upgrade strategy",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Count:                  ptr.Int(1),
+					MachineGroupRef:        nil,
+					Taints:                 nil,
+					Labels:                 nil,
+					UpgradeRolloutStrategy: &WorkerNodesUpgradeRolloutStrategy{Type: "RollingUpdate", RollingUpdate: WorkerNodesRollingUpdateParams{MaxSurge: 5, MaxUnavailable: 2}},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(1), WithWorkerMachineUpgradeRolloutStrategy(5, 2))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
 		})
 	}
 }

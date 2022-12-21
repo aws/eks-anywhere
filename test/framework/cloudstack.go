@@ -1,21 +1,30 @@
 package framework
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 const (
 	cloudstackDomainVar                = "T_CLOUDSTACK_DOMAIN"
 	cloudstackZoneVar                  = "T_CLOUDSTACK_ZONE"
+	cloudstackZone2Var                 = "T_CLOUDSTACK_ZONE_2"
 	cloudstackAccountVar               = "T_CLOUDSTACK_ACCOUNT"
 	cloudstackNetworkVar               = "T_CLOUDSTACK_NETWORK"
+	cloudstackNetwork2Var              = "T_CLOUDSTACK_NETWORK_2"
+	cloudstackCredentialsVar           = "T_CLOUDSTACK_CREDENTIALS"
+	cloudstackCredentials2Var          = "T_CLOUDSTACK_CREDENTIALS_2"
 	cloudstackManagementServerVar      = "T_CLOUDSTACK_MANAGEMENT_SERVER"
+	cloudstackManagementServer2Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
-	cloudstackTemplateRedhat120Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_20"
 	cloudstackTemplateRedhat121Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_21"
+	cloudstackTemplateRedhat122Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_22"
+	cloudstackTemplateRedhat123Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_23"
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
 	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
@@ -27,13 +36,18 @@ const (
 )
 
 var requiredCloudStackEnvVars = []string{
+	cloudstackAccountVar,
 	cloudstackDomainVar,
 	cloudstackZoneVar,
+	cloudstackZone2Var,
+	cloudstackCredentialsVar,
+	cloudstackCredentials2Var,
 	cloudstackAccountVar,
 	cloudstackNetworkVar,
+	cloudstackNetwork2Var,
 	cloudstackManagementServerVar,
+	cloudstackManagementServer2Var,
 	cloudstackSshAuthorizedKeyVar,
-	cloudstackTemplateRedhat120Var,
 	cloudstackTemplateRedhat121Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
@@ -45,25 +59,46 @@ var requiredCloudStackEnvVars = []string{
 }
 
 type CloudStack struct {
-	t           *testing.T
-	fillers     []api.CloudStackFiller
-	cidr        string
-	podCidr     string
-	serviceCidr string
+	t              *testing.T
+	fillers        []api.CloudStackFiller
+	clusterFillers []api.ClusterFiller
+	cidr           string
+	podCidr        string
+	serviceCidr    string
 }
 
 type CloudStackOpt func(*CloudStack)
 
-func UpdateRedhatTemplate120Var() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplate)
+func UpdateRedhatTemplate121Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines)
 }
 
-func UpdateRedhatTemplate121Var() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplate)
+// UpdateRedhatTemplate122Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.22.
+func UpdateRedhatTemplate122Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat122Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// UpdateRedhatTemplate123Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.23.
+func UpdateRedhatTemplate123Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines)
 }
 
 func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOffering)
+	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOfferingForAllMachines)
+}
+
+func UpdateAddCloudStackAz2() api.CloudStackFiller {
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone2Var, cloudstackCredentials2Var, cloudstackNetwork2Var,
+		cloudstackManagementServer2Var, api.WithCloudStackAz)
+}
+
+func UpdateAddCloudStackAz1() api.CloudStackFiller {
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
+		cloudstackManagementServerVar, api.WithCloudStackAz)
+}
+
+func RemoveAllCloudStackAzs() api.CloudStackFiller {
+	return api.RemoveCloudStackAzs()
 }
 
 func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
@@ -71,18 +106,16 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	c := &CloudStack{
 		t: t,
 		fillers: []api.CloudStackFiller{
-			api.WithCloudStackStringFromEnvVar(cloudstackDomainVar, api.WithCloudStackDomain),
-			api.WithCloudStackStringFromEnvVar(cloudstackManagementServerVar, api.WithCloudStackManagementServer),
-			api.WithCloudStackStringFromEnvVar(cloudstackZoneVar, api.WithCloudStackZone),
-			api.WithCloudStackStringFromEnvVar(cloudstackNetworkVar, api.WithCloudStackNetwork),
-			api.WithCloudStackStringFromEnvVar(cloudstackAccountVar, api.WithCloudStackAccount),
+			api.RemoveCloudStackAzs(),
+			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
+				cloudstackManagementServerVar, api.WithCloudStackAz),
 			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplate),
-			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOffering),
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
+			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOfferingForAllMachines),
 		},
 	}
 
-	c.cidr = os.Getenv(cidrVar)
+	c.cidr = os.Getenv(cloudStackCidrVar)
 	c.podCidr = os.Getenv(podCidrVar)
 	c.serviceCidr = os.Getenv(serviceCidrVar)
 
@@ -93,18 +126,36 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	return c
 }
 
-func WithRedhat121() CloudStackOpt {
+func WithCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.CloudStackMachineConfigFiller) CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers, cloudStackMachineConfig(name, fillers...))
+
+		c.clusterFillers = append(c.clusterFillers, buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+	}
+}
+
+func WithCloudStackRedhat121() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplate),
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
 		)
 	}
 }
 
-func WithRedhat120() CloudStackOpt {
+// WithCloudStackRedhat122 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.22.
+func WithCloudStackRedhat122() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplate),
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat122Var, api.WithCloudStackTemplateForAllMachines),
+		)
+	}
+}
+
+// WithCloudStackRedhat123 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.23.
+func WithCloudStackRedhat123() CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines),
 		)
 	}
 }
@@ -121,27 +172,36 @@ func (c *CloudStack) Name() string {
 
 func (c *CloudStack) Setup() {}
 
-func (c *CloudStack) CustomizeProviderConfig(file string) []byte {
-	return c.customizeProviderConfig(file, c.fillers...)
+// ClusterConfigUpdates satisfies the test framework Provider.
+func (c *CloudStack) ClusterConfigUpdates() []api.ClusterConfigFiller {
+	controlPlaneIP, err := c.getControlPlaneIP()
+	if err != nil {
+		c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+	}
+
+	f := make([]api.ClusterFiller, 0, len(c.clusterFillers)+3)
+	f = append(f, c.clusterFillers...)
+	f = append(f,
+		api.WithPodCidr(os.Getenv(podCidrVar)),
+		api.WithServiceCidr(os.Getenv(serviceCidrVar)),
+		api.WithControlPlaneEndpointIP(controlPlaneIP))
+
+	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.CloudStackToConfigFiller(c.fillers...)}
 }
 
-func (c *CloudStack) customizeProviderConfig(file string, fillers ...api.CloudStackFiller) []byte {
-	providerOutput, err := api.AutoFillCloudStackProvider(file, fillers...)
-	if err != nil {
-		c.t.Fatalf("Error customizing provider config from file: %v", err)
-	}
-	return providerOutput
+func (c *CloudStack) CleanupVMs(clusterName string) error {
+	return cleanup.CleanUpCloudstackTestResources(context.Background(), clusterName, false)
 }
 
 func (c *CloudStack) WithProviderUpgrade(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = c.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+		e.UpdateClusterConfig(api.CloudStackToConfigFiller(fillers...))
 	}
 }
 
 func (c *CloudStack) WithProviderUpgradeGit(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = c.customizeProviderConfig(e.clusterConfigGitPath(), fillers...)
+		e.UpdateClusterConfig(api.CloudStackToConfigFiller(fillers...))
 	}
 }
 
@@ -163,18 +223,35 @@ func (c *CloudStack) getControlPlaneIP() (string, error) {
 	return clusterIP, nil
 }
 
-func (c *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
-	controlPlaneIP, err := c.getControlPlaneIP()
-	if err != nil {
-		c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
-	}
-	return []api.ClusterFiller{
-		api.WithPodCidr(os.Getenv(podCidrVar)),
-		api.WithServiceCidr(os.Getenv(serviceCidrVar)),
-		api.WithControlPlaneEndpointIP(controlPlaneIP),
+func RequiredCloudstackEnvVars() []string {
+	return requiredCloudStackEnvVars
+}
+
+func (c *CloudStack) WithNewCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.CloudStackMachineConfigFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.UpdateClusterConfig(
+			api.CloudStackToConfigFiller(cloudStackMachineConfig(name, fillers...)),
+			api.ClusterToConfigFiller(buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+		)
 	}
 }
 
-func RequiredCloudstackEnvVars() []string {
-	return requiredCloudStackEnvVars
+func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfigFiller) api.CloudStackFiller {
+	f := make([]api.CloudStackMachineConfigFiller, 0, len(fillers)+2)
+	// Need to add these because at this point the default fillers that assign these
+	// values to all machines have already ran
+	f = append(f,
+		api.WithCloudStackComputeOffering(os.Getenv(cloudstackComputeOfferingLargeVar)),
+		api.WithCloudStackSSHKey(os.Getenv(cloudstackSshAuthorizedKeyVar)),
+	)
+	f = append(f, fillers...)
+
+	return api.WithCloudStackMachineConfig(name, f...)
+}
+
+func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
+	// Set worker node group ref to cloudstack machine config
+	workerNodeGroup.MachineConfigKind = anywherev1.CloudStackMachineConfigKind
+	workerNodeGroup.MachineConfigName = machineConfigName
+	return workerNodeGroup.ClusterFiller()
 }

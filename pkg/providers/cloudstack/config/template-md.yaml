@@ -28,8 +28,8 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
-          name: '{{`{{ ds.meta_data.local_hostname }}`}}'
-{{- if or .proxyConfig .registryMirrorConfiguration }}
+          name: "{{`{{ ds.meta_data.hostname }}`}}"
+{{- if or .proxyConfig .registryMirrorMap }}
       files:
 {{- end }}
 {{- if .proxyConfig }}
@@ -45,34 +45,64 @@ spec:
       - content: |
 {{ .registryCACert | indent 10 }}
         owner: root:root
-        path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+        path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
 {{- end }}
-{{- if .registryMirrorConfiguration }}
+{{- if .registryMirrorMap }}
       - content: |
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-              endpoint = ["https://{{.registryMirrorConfiguration}}"]
+            {{- range $orig, $mirror := .registryMirrorMap }}
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+              endpoint = ["https://{{ $mirror }}"]
+            {{- end }}
             {{- if .registryCACert }}
-            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
-              ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+              ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
             {{- end }}
         owner: root:root
         path: "/etc/containerd/config_append.toml"
 {{- end }}
       preKubeadmCommands:
       - swapoff -a
-{{- if .registryMirrorConfiguration }}
+{{- if .registryMirrorMap }}
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
-{{- if or .proxyConfig .registryMirrorConfiguration }}
+{{- if or .proxyConfig .registryMirrorMap }}
       - sudo systemctl daemon-reload
       - sudo systemctl restart containerd
 {{- end }}
-      - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
+      - hostname "{{`{{ ds.meta_data.hostname }}`}}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
-      - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+      - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- range $dir, $target := .cloudstackSymlinks}}
+      - >-
+        if [ ! -L {{$dir}} ] ;
+          then
+            mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+            mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+          else echo "{{$dir}} already symlnk" ;
+        fi
+{{- end}}
+{{- if .cloudstackDiskOfferingProvided }}
+      diskSetup:
+        filesystems:
+          - device: {{ .cloudstackDiskOfferingDevice }}1
+            overwrite: false
+            extraOpts:
+              - -E
+              - lazy_itable_init=1,lazy_journal_init=1
+            filesystem: {{ .cloudstackDiskOfferingFilesystem }}
+            label: {{ .cloudstackDiskOfferingLabel }}
+        partitions:
+          - device: {{ .cloudstackDiskOfferingDevice }}
+            layout: true
+            overwrite: false
+            tableType: gpt
+      mounts:
+        - - LABEL={{ .cloudstackDiskOfferingLabel }}
+          - {{ .cloudstackDiskOfferingPath }}
+{{- end }}
       users:
       - name: {{.workerSshUsername}}
         sshAuthorizedKeys:
@@ -87,6 +117,11 @@ metadata:
     cluster.x-k8s.io/cluster-name: {{.clusterName}}
   name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
+  {{- if .autoscalingConfig }}
+  annotations:
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ .autoscalingConfig.MinCount }}"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ .autoscalingConfig.MaxCount }}"
+{{- end }}
 spec:
   clusterName: {{.clusterName}}
   replicas: {{.workerReplicas}}
@@ -104,45 +139,13 @@ spec:
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: CloudStackMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: CloudStackMachineTemplate
-metadata:
-  name: {{.workloadTemplateName}}
-  namespace: {{.eksaSystemNamespace}}
-spec:
-  template:
-    spec:
-      offering:
-{{- if .cloudstackOfferingId }}
-        id: {{.cloudstackOfferingId}}
-{{- end}}
-{{- if .cloudstackOfferingName }}
-        name: {{.cloudstackOfferingName}}
-{{- end}}
-      template:
-{{- if .cloudstackTemplateId }}
-        id: {{.cloudstackTemplateId}}
-{{- end}}
-{{- if .cloudstackTemplateName }}
-        name: {{.cloudstackTemplateName}}
-{{- end}}
-{{- if .cloudstackCustomDetails }}
-      details:
-{{- range $key, $value := .cloudstackCustomDetails}}
-        {{$key}}: {{$value}}
-{{- end}}
-{{- end}}
-{{- if .cloudstackAffinity }}
-      affinity: '{{ .cloudstackAffinity }}'
-{{- end }}
-{{- if .cloudstackAffinityGroupIds }}
-      affinitygroupids:
-      {{- range .cloudstackAffinityGroupIds}}
-      - {{.}}
-      {{- end }}
+{{- if .upgradeRolloutStrategy }}
+      strategy:
+        rollingUpdate:
+          maxSurge: {{.maxSurge}}
+          maxUnavailable: {{.maxUnavailable}}
 {{- end }}

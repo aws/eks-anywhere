@@ -3,6 +3,142 @@ This document outlines best practices to follow when creating and reviewing PRs.
 
 ## As an author
 
+### Pull request process
+1. Create a GitHub PR from your fork
+1. Verify all checks are passing
+1. Get someone to review it
+1. Iterate your changes based on the feedback you receive. Don't rewrite the history (rebase or squash) with your new changes, keep them as individual commits. This facilitates the reviewers job.
+1. Once you have at least one `lgtm` and are ready to merge, squash your commits into one.
+    * Even if you leave multiple commits, they will all be squashed by GitHub before merging. Prefer to do it manually to control the format.
+    * Avoid any message derived from the review process itself: "Fix typo", "Address comment", "Implement feedback", etc. This provides absolutely no context and clutters the commit history.
+    * Treat this commit as if you were writing the PR for the first time but make sure you include any new relevant information derived from the conversations you had during the review.
+    * Follow the [commit messages](#commit-messages) guidelines
+1. Get the final `/approve` to start the merge process.
+### Commit messages
+
+Follow these guidelines:
+
+* [Capitalize the subject line](#capitalize-the-subject-line)
+
+* [Use the imperative mood in the subject line](#use-the-imperative-mood-in-the-subject-line)
+
+* [Limit the subject line to 50 characters](#limit-the-subject-line-to-50-characters)
+
+* [Do not end the subject line with a period](#do-not-end-the-subject-line-with-a-period)
+
+* [Separate subject from body with a blank line](#separate-subject-from-body-with-a-blank-line)
+
+* [Use the body to explain what and why](#use-the-body-to-explain-what-and-why)
+
+* [Wrap the body at 72 characters](#wrap-the-body-at-72-characters)
+
+
+Glossary:
+* **Commit subject line**: first line of the commit message
+* **Commit body**: everything after the first blank line.
+
+This is a great example from [Chris Beams](https://cbea.ms/git-commit/):
+
+```
+Summarize changes in around 50 characters or less
+
+More detailed explanatory text, if necessary. Wrap it to about 72
+characters or so. In some contexts, the first line is treated as the
+subject of the commit and the rest of the text as the body. The
+blank line separating the summary from the body is critical (unless
+you omit the body entirely); various tools like `log`, `shortlog`
+and `rebase` can get confused if you run the two together.
+
+Explain the problem that this commit is solving. Focus on why you
+are making this change as opposed to how (the code explains that).
+Are there side effects or other unintuitive consequences of this
+change? Here's the place to explain them.
+
+Further paragraphs come after blank lines.
+
+ * Bullet points are okay, too
+
+ * Typically a hyphen or asterisk is used for the bullet, preceded
+   by a single space, with blank lines in between, but conventions
+   vary here
+```
+
+#### Capitalize the subject line
+
+Example
+
+* ~~`fix error in code`~~
+* `Fix error in code`
+
+#### Use the imperative mood in the subject line
+
+Example
+
+* ~~`Fixed error in code`~~
+* ~~`Some code fixes for errors`~~
+* `Fix error in code`
+
+A good rule from Chris Beams on writing a subject is it should complete this sentence:
+
+```
+If applied, this commit will <your subject line here>
+```
+
+Following the previous example:
+
+* _If applied, this commit will_ `Fix error in code`
+
+#### Limit the subject line to 50 characters
+
+This aims to keep the subject line readable and concise.
+
+GitHub UI will truncate anything over 72 characters, so this is our hard limit.
+
+Try to stay on 50 but never go over 72.
+
+#### Do not end the subject line with a period
+
+This is unnecessary for subject lines since they are already visually separated from the body. It also saves space when trying to stay under 50 chars.
+
+Example
+
+* ~~`Fix error in code.`~~
+* `Fix error in code`
+
+#### Separate subject from body with a blank line
+
+If the commit is simple enough that it doesn't need further context, omit the blank line and body:
+```
+Fix typo in cert-manager log message
+```
+
+However, more often than not, commits can benefit from an extra explanation:
+
+```
+Fix bug in objects reconciliation order
+
+When using a map to get rid of duplicated objects by name and iterating
+over it, the order is not guaranteed. This caused the reconciliation
+loop to sometimes fail when children were created before their parents.
+```
+
+Separating subject and body helps visualizing the git history with, for example, `git shortlog`, `git log --oneline` and the GitHub UI.
+
+#### Use the body to explain what and why
+
+A good body provides context to the reviewer and to the next person who works on that code.
+
+Avoid explaining the _how_. Code should aim to be self-explanatory, and when it's not, code comments should be the preferred option. Focus on what the changes are, why the changes were necessary in the first place and why you decided to solve it that way.
+
+#### Wrap the body at 72 characters
+
+This presents the test correctly in `git log` with the default column width of 80 and the 4 chars of padding.
+
+#### Resources
+
+* https://cbea.ms/git-commit/
+* https://www.kubernetes.dev/docs/guide/pull-requests/#commit-message-guidelines
+
 ### PR size
 
 The recommended maximum number of LoC is 500. Split PRs as necessary and be guided by the [Single Responsibility Principle](https://blog.cleancoder.com/uncle-bob/2014/05/08/SingleReponsibilityPrinciple.html). Put yourself in the reviewers shoes and consider the cognitive load on the reviewer.

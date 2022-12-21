@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	providerValidator "github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -32,34 +37,57 @@ var (
 	snowMachineResourceType    = fmt.Sprintf("snowmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 )
 
-type snowProvider struct {
-	providerKubectlClient ProviderKubectlClient
-	retrier               *retrier.Retrier
-	bootstrapCreds        bootstrapCreds
-	configManager         *ConfigManager
+type SnowProvider struct {
+	kubeUnAuthClient KubeUnAuthClient
+	retrier          *retrier.Retrier
+	configManager    *ConfigManager
+	ipValidator      *providerValidator.IPValidator
+	skipIpCheck      bool
+	log              logr.Logger
 }
 
-type ProviderKubectlClient interface {
-	DeleteEksaDatacenterConfig(ctx context.Context, snowDatacenterResourceType string, snowDatacenterConfigName string, kubeconfigFile string, namespace string) error
-	DeleteEksaMachineConfig(ctx context.Context, snowMachineResourceType string, snowMachineConfigName string, kubeconfigFile string, namespace string) error
+type KubeUnAuthClient interface {
+	KubeconfigClient(kubeconfig string) kubernetes.Client
+	Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error
+	Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error
 }
 
-func NewProvider(providerKubectlClient ProviderKubectlClient, configManager *ConfigManager, now types.NowFunc) *snowProvider {
+func NewProvider(kubeUnAuthClient KubeUnAuthClient, configManager *ConfigManager, skipIpCheck bool) *SnowProvider {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
-	return &snowProvider{
-		providerKubectlClient: providerKubectlClient,
-		retrier:               retrier,
-		configManager:         configManager,
+	return &SnowProvider{
+		kubeUnAuthClient: kubeUnAuthClient,
+		retrier:          retrier,
+		configManager:    configManager,
+		ipValidator:      providerValidator.NewIPValidator(),
+		skipIpCheck:      skipIpCheck,
+		log:              logger.Get(),
 	}
 }
 
-func (p *snowProvider) Name() string {
+func (p *SnowProvider) Name() string {
 	return constants.SnowProviderName
 }
 
-func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := p.setupBootstrapCreds(); err != nil {
-		return fmt.Errorf("setting up credentials: %v", err)
+func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
+		return fmt.Errorf("setting defaults and validate snow config: %v", err)
+	}
+	if !p.skipIpCheck {
+		if err := p.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
+			return err
+		}
+	} else {
+		logger.Info("Skipping check for whether control plane ip is in use")
+	}
+	return nil
+}
+
+func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+	if err := p.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
@@ -67,72 +95,41 @@ func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	return nil
 }
 
-func (p *snowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return nil
-}
-
-func (p *snowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
-	if err := p.setupBootstrapCreds(); err != nil {
-		return fmt.Errorf("failed setting up credentials: %v", err)
+func (p *SnowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) error {
+	if err := p.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	if err := SetupEksaCredentialsSecret(clusterSpec.Config); err != nil {
+		return fmt.Errorf("setting up credentials: %v", err)
 	}
 	return nil
 }
 
-func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *SnowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if err := p.kubeUnAuthClient.Apply(ctx, cluster.KubeconfigFile, clusterSpec.SnowCredentialsSecret); err != nil {
+		return fmt.Errorf("applying eks-a snow credentials secret in cluster: %v", err)
+	}
 	return nil
 }
 
-func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
-	snowCluster := SnowCluster(clusterSpec)
-	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	kubeadmControlPlane, err := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
-	if err != nil {
-		return nil, err
-	}
-	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
-
-	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}, nil
-}
-
-func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
-	kubeadmConfigTemplates, err := KubeadmConfigTemplates(clusterSpec)
-	if err != nil {
-		return nil, err
-	}
-	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
-	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
-
-	workersObjs := make([]runtime.Object, 0, len(machineDeployments)+len(kubeadmConfigTemplates)+len(workerMachineTemplates))
-	for _, item := range machineDeployments {
-		workersObjs = append(workersObjs, item)
-	}
-	for _, item := range kubeadmConfigTemplates {
-		workersObjs = append(workersObjs, item)
-	}
-	for _, item := range workerMachineTemplates {
-		workersObjs = append(workersObjs, item)
-	}
-
-	return workersObjs, nil
-}
-
-func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneObjs, err := ControlPlaneObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
+// CAPIObjects generates the control plane and worker nodes objects for snow provider from clusterSpec.
+func CAPIObjects(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneObjs, err := ControlPlaneObjects(ctx, log, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	controlPlaneSpec, err = templater.ObjectsToYaml(controlPlaneObjs...)
+	controlPlaneSpec, err = templater.ObjectsToYaml(kubernetesToRuntimeObjects(controlPlaneObjs)...)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	workersObjs, err := WorkersObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
+	workersObjs, err := WorkersObjects(ctx, log, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
+	workersSpec, err = templater.ObjectsToYaml(kubernetesToRuntimeObjects(workersObjs)...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -140,47 +137,77 @@ func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.C
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *snowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return nil, nil, nil
+func kubernetesToRuntimeObjects(objs []kubernetes.Object) []runtime.Object {
+	runtimeObjs := make([]runtime.Object, 0, len(objs))
+	for _, o := range objs {
+		runtimeObjs = append(runtimeObjs, o)
+	}
+
+	return runtimeObjs
 }
 
-func (p *snowProvider) GenerateStorageClass() []byte {
+func (p *SnowProvider) generateCAPISpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	kubeconfigClient := p.kubeUnAuthClient.KubeconfigClient(cluster.KubeconfigFile)
+	return CAPIObjects(ctx, p.log, clusterSpec, kubeconfigClient)
+}
+
+func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	return p.generateCAPISpec(ctx, cluster, clusterSpec)
+}
+
+func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, _ *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	return p.generateCAPISpec(ctx, bootstrapCluster, clusterSpec)
+}
+
+func (p *SnowProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 
-func (p *snowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 
-func (p *snowProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
+func (p *SnowProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+	return nil
+}
+
+func (p *SnowProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *SnowProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
+func (p *SnowProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	return nil, nil
 }
 
-func (p *snowProvider) UpdateKubeConfig(content *[]byte, clusterName string) error {
+func (p *SnowProvider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	return nil
 }
 
-func (p *snowProvider) Version(clusterSpec *cluster.Spec) string {
+func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Snow.Version
 }
 
-func (p *snowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, error) {
+func (p *SnowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
-	envMap[snowCredentialsKey] = p.bootstrapCreds.snowCredsB64
-	envMap[snowCertsKey] = p.bootstrapCreds.snowCertsB64
+	envMap[snowCredentialsKey] = string(clusterSpec.SnowCredentialsSecret.Data[v1alpha1.SnowCredentialsKey])
+	envMap[snowCertsKey] = string(clusterSpec.SnowCredentialsSecret.Data[v1alpha1.SnowCertificatesKey])
 
 	envMap["SNOW_CONTROLLER_IMAGE"] = clusterSpec.VersionsBundle.Snow.Manager.VersionedImage()
 
 	return envMap, nil
 }
 
-func (p *snowProvider) GetDeployments() map[string][]string {
+func (p *SnowProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
-		"capas-system": {"capas-controller-manager"},
+		constants.CapasSystemNamespace: {"capas-controller-manager"},
 	}
 }
 
-func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
+func (p *SnowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
 	bundle := clusterSpec.VersionsBundle
 	folderName := fmt.Sprintf("infrastructure-snow/%s/", bundle.Snow.Version)
 
@@ -194,19 +221,19 @@ func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types
 	return &infraBundle
 }
 
-func (p *snowProvider) DatacenterConfig(clusterSpec *cluster.Spec) providers.DatacenterConfig {
+func (p *SnowProvider) DatacenterConfig(clusterSpec *cluster.Spec) providers.DatacenterConfig {
 	return clusterSpec.SnowDatacenter
 }
 
-func (p *snowProvider) DatacenterResourceType() string {
+func (p *SnowProvider) DatacenterResourceType() string {
 	return snowDatacenterResourceType
 }
 
-func (p *snowProvider) MachineResourceType() string {
+func (p *SnowProvider) MachineResourceType() string {
 	return snowMachineResourceType
 }
 
-func (p *snowProvider) MachineConfigs(clusterSpec *cluster.Spec) []providers.MachineConfig {
+func (p *SnowProvider) MachineConfigs(clusterSpec *cluster.Spec) []providers.MachineConfig {
 	configs := make([]providers.MachineConfig, 0, len(clusterSpec.SnowMachineConfigs))
 	for _, mc := range clusterSpec.SnowMachineConfigs {
 		configs = append(configs, mc)
@@ -214,44 +241,81 @@ func (p *snowProvider) MachineConfigs(clusterSpec *cluster.Spec) []providers.Mac
 	return configs
 }
 
-func (p *snowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 
-func (p *snowProvider) GenerateMHC() ([]byte, error) {
-	return nil, nil
+func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+	if currentSpec.VersionsBundle.Snow.Version == newSpec.VersionsBundle.Snow.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.SnowProviderName,
+		NewVersion:    newSpec.VersionsBundle.Snow.Version,
+		OldVersion:    currentSpec.VersionsBundle.Snow.Version,
+	}
 }
 
-func (p *snowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+func (p *SnowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	return nil
 }
 
-func (p *snowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func bundleImagesEqual(new, old releasev1alpha1.SnowBundle) bool {
+	return new.Manager.ImageDigest == old.Manager.ImageDigest && new.KubeVip.ImageDigest == old.KubeVip.ImageDigest
+}
+
+func machineConfigsEqual(new, old map[string]*v1alpha1.SnowMachineConfig) bool {
+	if len(new) != len(old) {
+		return false
+	}
+
+	for name, newConfig := range new {
+		oldConfig, ok := old[name]
+		if !ok || !equality.Semantic.DeepDerivative(newConfig.Spec, oldConfig.Spec) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *SnowProvider) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		return fmt.Errorf("Upgrade rollout strategy customization is not supported for snow provider")
+	}
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {
+			return fmt.Errorf("Upgrade rollout strategy customization is not supported for snow provider")
+		}
+	}
 	return nil
 }
 
-func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
-	return false, nil
+func (p *SnowProvider) UpgradeNeeded(ctx context.Context, newSpec, oldSpec *cluster.Spec, _ *types.Cluster) (bool, error) {
+	return !bundleImagesEqual(newSpec.VersionsBundle.Snow, oldSpec.VersionsBundle.Snow) ||
+		!machineConfigsEqual(newSpec.SnowMachineConfigs, oldSpec.SnowMachineConfigs), nil
 }
 
-func (p *snowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
+func (p *SnowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
 	for _, mc := range clusterSpec.SnowMachineConfigs {
-		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, snowMachineResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
+		if err := p.kubeUnAuthClient.Delete(ctx, mc.Name, mc.Namespace, clusterSpec.ManagementCluster.KubeconfigFile, mc); err != nil {
 			return err
 		}
 	}
-	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, snowDatacenterResourceType, clusterSpec.SnowDatacenter.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.SnowDatacenter.GetNamespace())
+	return p.kubeUnAuthClient.Delete(ctx, clusterSpec.SnowDatacenter.GetName(), clusterSpec.SnowDatacenter.GetNamespace(), clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.SnowDatacenter)
 }
 
-func (p *snowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
 	// No validations
 	return nil
 }
 
-func (p *snowProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+func (p *SnowProvider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Cluster) error {
+	// NOOP
 	return nil
 }
 
-func (p *snowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }

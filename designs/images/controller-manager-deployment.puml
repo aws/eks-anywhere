@@ -1,0 +1,35 @@
+@startuml controller-manager-deployment
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+title Deployment diagram for EKS-A controller manager
+
+Container(kubeApiServer, "Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server and allows to subscribe to events when they change")
+
+Deployment_Node(controllerManagerDeployment, "Controller Manager", "Kubernetes Deployment"){
+    Deployment_Node(controllerManagerContainer, "Controller Manager", "App Container"){
+        Deployment_Node(controllerManager, "Controller Manager", "Binary"){
+            Container(clusterController, "Cluster controller", "controller-runtime Controller", "Reconciles EKS-A Clusters")
+            Container(vsphereDatacenterController, "VSphereDatacenterConfig controller", "controller-runtime Controller", "Runs validations for VSphereDatacenterConfig that require external API calls (eg. vSphere endpoint)")
+            Container(snowMachineConfigController, "SnowMachineConfig controller", "controller-runtime Controller", "Runs validations for SnowMAchineConfig that require external API calls (eg. Snow endpoint)")
+
+            Container(clusterMutation, "Cluster mutation webhook", "K8s mutation webhook", "Sets defaults in Cluster objects before they are validated")
+            Container(clusterValidation, "Cluster validation webhook", "K8s validation webhook", "Validates Cluster objects before they are accepted by the kube api server")
+        }
+    }
+}
+
+Container_Ext(vCenter, "vCenter Server", "VMware", "vSphere Automation API")
+Rel(vsphereDatacenterController, vCenter, "Makes API calls", "JSON/HTTPS")
+
+Container_Ext(snowAPI, "Snow API endpoint")
+Rel(snowMachineConfigController, snowAPI, "Makes API calls", "JSON/HTTPS")
+
+Rel(clusterController, kubeApiServer, "Subscribes/reads/writes", "JSON/HTTPS")
+Rel(vsphereDatacenterController, kubeApiServer, "Subscribes/reads/writes", "JSON/HTTPS")
+Rel(snowMachineConfigController, kubeApiServer, "Subscribes/reads/writes", "JSON/HTTPS")
+
+Rel(kubeApiServer, clusterMutation, "Calls", "JSON/HTTPS")
+Rel(kubeApiServer, clusterValidation, "Calls", "JSON/HTTPS")
+
+SHOW_LEGEND()
+@enduml

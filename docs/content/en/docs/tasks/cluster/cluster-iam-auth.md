@@ -21,7 +21,7 @@ Enabling IAM Authenticator needs to be done during cluster creation.
 {{% /alert %}}
 
 ### Create IAM Authenticator enabled cluster
-Generate your cluster configuration and add the necessary IAM Authenticator configuration. For a full spec reference check [AWSIamConfig]({{< relref "../../reference/clusterspec/iamauth" >}}).
+Generate your cluster configuration and add the necessary IAM Authenticator configuration. For a full spec reference check [AWSIamConfig]({{< relref "../../reference/clusterspec/optional/iamauth" >}}).
 
 Create an EKS Anywhere cluster as follows:
 
@@ -66,7 +66,7 @@ spec:
 ```
 
 {{% alert title="Note" color="primary" %}}
-When using backend mode `CRD`, the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer to [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha)
+When using backend mode `CRD`, the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer to [CRD.](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha)
 {{% /alert %}}
 
 ### Authenticating with IAM Authenticator
@@ -134,6 +134,10 @@ EKS Anywhere now updates the role mappings for IAM authenticator in the cluster 
 
 #### GitOps
 If the cluster created has GitOps configured, then the `mapRoles` and `mapUsers` list in `AWSIamConfig` can be modified by the GitOps controller. For GitOps configuration details refer to [Manage Cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux" >}}).
+
+{{% alert title="Note" color="primary" %}}
+GitOps support for the `AWSIamConfig` is currently only on management or self-managed clusters.
+{{% /alert %}}
 
 1. Clone your git repo and modify the cluster specification.
    The default path for the cluster file is:

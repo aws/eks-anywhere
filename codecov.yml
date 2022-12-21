@@ -1,0 +1,20 @@
+coverage:
+  status:
+    patch:
+      default:
+        target: 80%
+    project:
+      default:
+        target: auto
+        threshold: 0.5%
+        informational: true
+
+ignore:
+  - internal/test/e2e
+  - internal/pkg/api
+  - internal/test/envtest
+  - internal/pkg/api
+  - "**/zz_generated.deepcopy.go"
+  - "test/framework" 
+  - "internal/aws-sdk-go-v2"
+  - "**/mock_*.go"

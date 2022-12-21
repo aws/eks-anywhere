@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"context"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func vsphereEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -20,6 +24,12 @@ func vsphereEntry() *ConfigManagerEntry {
 			func(c *Config) error {
 				if c.VSphereDatacenter != nil {
 					c.VSphereDatacenter.SetDefaults()
+				}
+				return nil
+			},
+			func(c *Config) error {
+				for _, m := range c.VSphereMachineConfigs {
+					m.SetDefaults()
 				}
 				return nil
 			},
@@ -62,7 +72,9 @@ func vsphereEntry() *ConfigManagerEntry {
 func processVSphereDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.VSphereDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		c.VSphereDatacenter = datacenter.(*anywherev1.VSphereDatacenterConfig)
+		if datacenter != nil {
+			c.VSphereDatacenter = datacenter.(*anywherev1.VSphereDatacenterConfig)
+		}
 	}
 }
 
@@ -85,4 +97,43 @@ func processVSphereMachineConfig(c *Config, objects ObjectLookup, machineRef *an
 	}
 
 	c.VSphereMachineConfigs[m.GetName()] = m.(*anywherev1.VSphereMachineConfig)
+}
+
+func getVSphereDatacenter(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.VSphereDatacenterKind {
+		return nil
+	}
+
+	datacenter := &anywherev1.VSphereDatacenterConfig{}
+	if err := client.Get(ctx, c.Cluster.Spec.DatacenterRef.Name, c.Cluster.Namespace, datacenter); err != nil {
+		return err
+	}
+
+	c.VSphereDatacenter = datacenter
+	return nil
+}
+
+func getVSphereMachineConfigs(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.VSphereDatacenterKind {
+		return nil
+	}
+
+	if c.VSphereMachineConfigs == nil {
+		c.VSphereMachineConfigs = map[string]*anywherev1.VSphereMachineConfig{}
+	}
+
+	for _, machineRef := range c.Cluster.MachineConfigRefs() {
+		if machineRef.Kind != anywherev1.VSphereMachineConfigKind {
+			continue
+		}
+
+		machine := &anywherev1.VSphereMachineConfig{}
+		if err := client.Get(ctx, machineRef.Name, c.Cluster.Namespace, machine); err != nil {
+			return err
+		}
+
+		c.VSphereMachineConfigs[machine.Name] = machine
+	}
+
+	return nil
 }

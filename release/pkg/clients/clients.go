@@ -60,7 +60,7 @@ type ReleaseECRPublicClient struct {
 	AuthConfig *docker.AuthConfiguration
 }
 
-// Function to create release clients for dev release
+// Function to create release clients for dev release.
 func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("                 Dev Release Clients Creation")
@@ -130,7 +130,7 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 	return sourceClients, releaseClients, nil
 }
 
-// Function to create clients for staging release
+// Function to create clients for staging release.
 func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("              Staging Release Clients Creation")
@@ -204,7 +204,7 @@ func CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	return sourceClients, releaseClients, nil
 }
 
-// Function to create clients for production release
+// Function to create clients for production release.
 func CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	fmt.Println("\n==========================================================")
 	fmt.Println("             Production Release Clients Creation")

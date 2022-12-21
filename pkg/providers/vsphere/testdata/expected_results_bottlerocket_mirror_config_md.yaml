@@ -14,7 +14,7 @@ spec:
           imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
           imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
         registryMirror:
-          endpoint: 1.2.3.4:1234
+          endpoint: 1.2.3.4:1234/v2/eks-anywhere
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
           taints: []
@@ -22,6 +22,7 @@ spec:
             cloud-provider: external
             read-only-port: "0"
             anonymous-auth: "false"
+            cgroup-driver: systemd
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
@@ -75,7 +76,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'

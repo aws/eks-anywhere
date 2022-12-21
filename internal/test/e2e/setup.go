@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 
-	"github.com/aws/eks-anywhere/internal/pkg/ec2"
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
@@ -25,41 +25,43 @@ const (
 	bundlesReleaseManifestFile = "local-bundle-release.yaml"
 	eksAComponentsManifestFile = "local-eksa-components.yaml"
 	testNameFile               = "e2e-test-name"
+	maxUserWatches             = 524288
+	maxUserInstances           = 512
+	key                        = "Integration-Test"
+	tag                        = "EKSA-E2E"
 )
 
 type E2ESession struct {
 	session             *session.Session
-	amiId               string
 	instanceProfileName string
 	storageBucket       string
 	jobId               string
-	subnetId            string
 	instanceId          string
 	ipPool              networkutils.IPPool
 	testEnvVars         map[string]string
 	bundlesOverride     bool
+	cleanupVms          bool
 	requiredFiles       []string
 	branchName          string
+	hardware            []*api.Hardware
+	logger              logr.Logger
 }
 
-func newSessionFromConf(conf instanceRunConf) (*E2ESession, error) {
-	session, err := session.NewSession()
-	if err != nil {
-		return nil, fmt.Errorf("creating session: %v", err)
-	}
-
+func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
 	e := &E2ESession{
-		session:             session,
-		amiId:               conf.amiId,
+		session:             conf.session,
+		instanceId:          instanceId,
 		instanceProfileName: conf.instanceProfileName,
 		storageBucket:       conf.storageBucket,
 		jobId:               conf.jobId,
-		subnetId:            conf.subnetId,
 		ipPool:              conf.ipPool,
 		testEnvVars:         make(map[string]string),
 		bundlesOverride:     conf.bundlesOverride,
+		cleanupVms:          conf.cleanupVms,
 		requiredFiles:       requiredFiles,
 		branchName:          conf.branchName,
+		hardware:            conf.hardware,
+		logger:              conf.logger,
 	}
 
 	return e, nil
@@ -71,23 +73,16 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
-	key := "Integration-Test"
-	tag := "EKSA-E2E"
-	name := fmt.Sprintf("eksa-e2e-%s", e.jobId)
-	logger.V(1).Info("Creating ec2 instance", "name", name)
-	instanceId, err := ec2.CreateInstance(e.session, e.amiId, key, tag, e.instanceProfileName, e.subnetId, name)
-	if err != nil {
-		return fmt.Errorf("creating instance for e2e tests: %v", err)
-	}
-	logger.V(1).Info("Instance created", "instance-id", instanceId)
-	e.instanceId = instanceId
-
-	logger.V(1).Info("Waiting until SSM is ready")
-	err = ssm.WaitForSSMReady(e.session, instanceId)
+	e.logger.V(1).Info("Waiting until SSM is ready")
+	err = ssm.WaitForSSMReady(e.session, e.instanceId)
 	if err != nil {
 		return fmt.Errorf("waiting for ssm in new instance: %v", err)
 	}
 
+	err = e.updateFSInotifyResources()
+	if err != nil {
+		return err
+	}
 	err = e.createTestNameFile(regex)
 	if err != nil {
 		return err
@@ -108,12 +103,27 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupTinkerbellEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupCloudStackEnv(regex)
 	if err != nil {
 		return err
 	}
 
+	err = e.setupNutanixEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupFluxEnv(regex)
+	if err != nil {
+		return err
+	}
+
+	err = e.setupFluxGitEnv(regex)
 	if err != nil {
 		return err
 	}
@@ -133,22 +143,44 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupPackagesEnv(regex)
+	if err != nil {
+		return err
+	}
+
+	ipPool := e.ipPool.ToString()
+	if ipPool != "" {
+		e.testEnvVars[e2etests.ClusterIPPoolEnvVar] = ipPool
+	}
+
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
+	e.testEnvVars[e2etests.CleanupVmsVar] = strconv.FormatBool(e.cleanupVms)
 
 	if e.branchName != "" {
 		e.testEnvVars[e2etests.BranchNameEnvVar] = e.branchName
 	}
 
-	e.testEnvVars[e2etests.ClusterNameVar] = clusterName(e.branchName, e.instanceId)
+	e.testEnvVars[e2etests.ClusterPrefixVar] = clusterPrefix(e.branchName, e.instanceId)
+	return nil
+}
+
+func (e *E2ESession) updateFSInotifyResources() error {
+	command := fmt.Sprintf("sudo sysctl fs.inotify.max_user_watches=%v && sudo sysctl fs.inotify.max_user_instances=%v", maxUserWatches, maxUserInstances)
+
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+		return fmt.Errorf("updating fs inotify resources: %v", err)
+	}
+	e.logger.V(1).Info("Successfully updates the fs inotify user watches and instances")
+
 	return nil
 }
 
 func (e *E2ESession) uploadRequiredFile(file string) error {
 	uploadFile := fmt.Sprintf("bin/%s", file)
 	key := fmt.Sprintf("%s/%s", e.jobId, file)
-	logger.V(1).Info("Uploading file to s3 bucket", "file", file, "key", key)
+	e.logger.V(1).Info("Uploading file to s3 bucket", "file", file, "key", key)
 	err := s3.UploadFile(e.session, uploadFile, key, e.storageBucket)
 	if err != nil {
 		return fmt.Errorf("uploading file [%s]: %v", file, err)
@@ -163,7 +195,7 @@ func (e *E2ESession) uploadRequiredFiles() error {
 		if _, err := os.Stat(fmt.Sprintf("bin/%s", eksAComponentsManifestFile)); err == nil {
 			e.requiredFiles = append(e.requiredFiles, eksAComponentsManifestFile)
 		} else if errors.Is(err, os.ErrNotExist) {
-			logger.V(0).Info("WARNING: no components manifest override found, but bundle override is present. " +
+			e.logger.V(0).Info("WARNING: no components manifest override found, but bundle override is present. " +
 				"If the EKS-A components have changed be sure to provide a components override!")
 		} else {
 			return err
@@ -180,13 +212,13 @@ func (e *E2ESession) uploadRequiredFiles() error {
 }
 
 func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
-	logger.V(1).Info("Downloading from s3 in instance", "file", file)
+	e.logger.V(1).Info("Downloading from s3 in instance", "file", file)
 
 	command := fmt.Sprintf("aws s3 cp s3://%s/%s/%[3]s ./bin/ && chmod 645 ./bin/%[3]s", e.storageBucket, e.jobId, file)
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("downloading file in instance: %v", err)
 	}
-	logger.V(1).Info("Successfully downloaded file")
+	e.logger.V(1).Info("Successfully downloaded file")
 
 	return nil
 }
@@ -202,30 +234,43 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 }
 
 func (e *E2ESession) createTestNameFile(testName string) error {
-	command := fmt.Sprintf("echo %s > %s", testName, testNameFile)
+	command := fmt.Sprintf("echo \"%s\" > %s", testName, testNameFile)
 
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("creating test name file in instance: %v", err)
 	}
-	logger.V(1).Info("Successfully created test name file")
+	e.logger.V(1).Info("Successfully created test name file")
 
 	return nil
 }
 
-func clusterName(branch string, instanceId string) (clusterName string) {
+func clusterPrefix(branch, instanceId string) (clusterPrefix string) {
 	if branch == "" {
 		return instanceId
 	}
-	clusterNameTemplate := "%s-%s"
 	forbiddenChars := []string{"."}
 	sanitizedBranch := strings.ToLower(branch)
 	for _, char := range forbiddenChars {
 		sanitizedBranch = strings.ReplaceAll(sanitizedBranch, char, "-")
 	}
-	clusterName = fmt.Sprintf(clusterNameTemplate, sanitizedBranch, instanceId)
-	if len(clusterName) > 80 {
-		logger.Info("Cluster name is longer than 80 characters; truncating to 80 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:80])
-		clusterName = clusterName[:80]
+
+	if len(sanitizedBranch) > 7 {
+		sanitizedBranch = sanitizedBranch[:7]
+	}
+
+	if len(instanceId) > 7 {
+		instanceId = instanceId[:7]
+	}
+
+	clusterPrefix = fmt.Sprintf("%s-%s", sanitizedBranch, instanceId)
+	return clusterPrefix
+}
+
+func (e *E2ESession) clusterName(branch, instanceId, testName string) (clusterName string) {
+	clusterName = fmt.Sprintf("%s-%s", clusterPrefix(branch, instanceId), e2etests.GetTestNameHash(testName))
+	if len(clusterName) > 63 {
+		e.logger.Info("Cluster name is longer than 63 characters; truncating to 63 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:63])
+		clusterName = clusterName[:63]
 	}
 	return clusterName
 }

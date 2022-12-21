@@ -1,0 +1,103 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: prod
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 2
+    endpoint:
+      host: 195.16.103.79
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: prod-cp
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: prod
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: prod-etcd
+  kubernetesVersion: "1.24"
+  managementCluster:
+    name: prod
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: prod-wn
+    name: md-0
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: prod
+spec:
+  datacenter: SDDC-Datacenter
+  insecure: false
+  network: "/SDDC-Datacenter/network/sddc-cgw-network-4"
+  server: vcenter.sddc-44-239-186-141.vmwarevmc.com
+  thumbprint: ""
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: prod-cp
+spec:
+  datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+  diskGiB: 25
+  folder: /SDDC-Datacenter/vm/capv/prod
+  memoryMiB: 8192
+  numCPUs: 2
+  resourcePool: '*/Resources/Compute-ResourcePool'
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDACSIcJsmvL4KQ42+AFOwB4UoqwBTGZeSO2kol/ncmw/4OU07zJNuc+0pF7tk1G/9MbrrJsCK1uKsBIFKSwv+w4+LRBOaVKtjfVzzqKWQzYKRGlM2PRxDbovbHbcVQ4fYcIn3LwfuujZmYb2JX8/lKyL6ga/ZQWP/TNJF6M+y69mWElrhfAGKMYZrxhbuZUjGRp4a2fkrDxY3w8qnFP2Glyd5427j0WGt46G8zW8s6EP+ROc+0NCFqzqkFIJPONd5tUvEiwUtqS0FfgtO5Grv5VYh134FMUWqFG2/Ot/G1fwrMV+1UivS4iLDSGlDplHJHLg2OIsNlL6F2wHGb2N1ykVZAZ2tlhHM0oxdyNd5SEs4htvayEx9/u8RxRYcP2Mtgot401kCGyhq1CVzVsZBCOVw45+jrVZ7xuLgkxaiKBQycj3IsUjWpmkGL66F6HH8wtMN1YriZn2QRV6+z6eg7eI+yspSILL4P/Kw7/1Vkb2IuWUU5h9wE0Iac1yIF1pM=
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: prod-wn
+spec:
+  datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+  diskGiB: 25
+  folder: /SDDC-Datacenter/vm/capv/prod
+  memoryMiB: 8192
+  numCPUs: 2
+  resourcePool: '*/Resources/Compute-ResourcePool'
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDACSIcJsmvL4KQ42+AFOwB4UoqwBTGZeSO2kol/ncmw/4OU07zJNuc+0pF7tk1G/9MbrrJsCK1uKsBIFKSwv+w4+LRBOaVKtjfVzzqKWQzYKRGlM2PRxDbovbHbcVQ4fYcIn3LwfuujZmYb2JX8/lKyL6ga/ZQWP/TNJF6M+y69mWElrhfAGKMYZrxhbuZUjGRp4a2fkrDxY3w8qnFP2Glyd5427j0WGt46G8zW8s6EP+ROc+0NCFqzqkFIJPONd5tUvEiwUtqS0FfgtO5Grv5VYh134FMUWqFG2/Ot/G1fwrMV+1UivS4iLDSGlDplHJHLg2OIsNlL6F2wHGb2N1ykVZAZ2tlhHM0oxdyNd5SEs4htvayEx9/u8RxRYcP2Mtgot401kCGyhq1CVzVsZBCOVw45+jrVZ7xuLgkxaiKBQycj3IsUjWpmkGL66F6HH8wtMN1YriZn2QRV6+z6eg7eI+yspSILL4P/Kw7/1Vkb2IuWUU5h9wE0Iac1yIF1pM=
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: prod-etcd
+spec:
+  datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+  diskGiB: 25
+  folder: /SDDC-Datacenter/vm/capv/prod
+  memoryMiB: 8192
+  numCPUs: 2
+  resourcePool: '*/Resources/Compute-ResourcePool'
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDACSIcJsmvL4KQ42+AFOwB4UoqwBTGZeSO2kol/ncmw/4OU07zJNuc+0pF7tk1G/9MbrrJsCK1uKsBIFKSwv+w4+LRBOaVKtjfVzzqKWQzYKRGlM2PRxDbovbHbcVQ4fYcIn3LwfuujZmYb2JX8/lKyL6ga/ZQWP/TNJF6M+y69mWElrhfAGKMYZrxhbuZUjGRp4a2fkrDxY3w8qnFP2Glyd5427j0WGt46G8zW8s6EP+ROc+0NCFqzqkFIJPONd5tUvEiwUtqS0FfgtO5Grv5VYh134FMUWqFG2/Ot/G1fwrMV+1UivS4iLDSGlDplHJHLg2OIsNlL6F2wHGb2N1ykVZAZ2tlhHM0oxdyNd5SEs4htvayEx9/u8RxRYcP2Mtgot401kCGyhq1CVzVsZBCOVw45+jrVZ7xuLgkxaiKBQycj3IsUjWpmkGL66F6HH8wtMN1YriZn2QRV6+z6eg7eI+yspSILL4P/Kw7/1Vkb2IuWUU5h9wE0Iac1yIF1pM=
+
+---

@@ -2,6 +2,7 @@
 [![Release](https://img.shields.io/github/v/release/aws/eks-anywhere.svg?logo=github&color=green)](https://github.com/aws/eks-anywhere/releases)
 [![Downloads](https://img.shields.io/github/downloads/aws/eks-anywhere/total.svg?color=brown)](https://github.com/aws/eks-anywhere/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aws/eks-anywhere)](https://goreportcard.com/report/github.com/aws/eks-anywhere)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6109/badge)](https://bestpractices.coreinfrastructure.org/projects/6109)
 [![Contributors](https://img.shields.io/github/contributors/aws/eks-anywhere?color=purple)](CONTRIBUTING.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -16,8 +17,12 @@ Its goal is to include full lifecycle management of multiple Kubernetes clusters
 Here are the steps for [getting started](https://anywhere.eks.amazonaws.com/docs/getting-started/) with EKS Anywhere.
 Full documentation for releases can be found on [https://anywhere.eks.amazonaws.com](https://anywhere.eks.amazonaws.com/).
 
-[<img src="docs/static/certified-kubernetes-1.21-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/1605)
-[<img src="docs/static/images/certified-kubernetes-1.22-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/1872)
+[<img src="docs/static/images/certified-kubernetes-1.23-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2109)
+<!-- 
+Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
+-->
+
+[<img src="docs/static/images/certified-kubernetes-1.24-pantone.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2275)
 <!-- 
 Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
 -->

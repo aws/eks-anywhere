@@ -1,6 +1,7 @@
 package diagnostics
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,9 +10,10 @@ type Collect struct {
 	ClusterResources *clusterResources `json:"clusterResources,omitempty"`
 	Secret           *secret           `json:"secret,omitempty"`
 	Logs             *logs             `json:"logs,omitempty"`
+	Data             *data             `json:"data,omitempty"`
 	CopyFromHost     *copyFromHost     `json:"copyFromHost,omitempty"`
 	Exec             *exec             `json:"exec,omitempty"`
-	Run              *run              `json:"run,omitempty"`
+	RunPod           *runPod           `json:"runPod,omitempty"`
 }
 
 type clusterResources struct {
@@ -45,6 +47,11 @@ type logs struct {
 	Limits         *logLimits `json:"limits,omitempty"`
 }
 
+type data struct {
+	Name string `json:"name,omitempty"`
+	Data string `json:"data,omitempty"`
+}
+
 type copyFromHost struct {
 	collectorMeta   `json:",inline"`
 	Name            string            `json:"name,omitempty"`
@@ -68,18 +75,6 @@ type exec struct {
 	Timeout       string   `json:"timeout,omitempty"`
 }
 
-type run struct {
-	collectorMeta   `json:",inline"`
-	Name            string            `json:"name,omitempty"`
-	Namespace       string            `json:"namespace"`
-	Image           string            `json:"image"`
-	Command         []string          `json:"command,omitempty"`
-	Args            []string          `json:"args,omitempty"`
-	Timeout         string            `json:"timeout,omitempty"`
-	ImagePullPolicy string            `json:"imagePullPolicy,omitempty"`
-	ImagePullSecret *imagePullSecrets `json:"imagePullSecret,omitempty"`
-}
-
 type imagePullSecrets struct {
 	Name       string            `json:"name,omitempty"`
 	Data       map[string]string `json:"data,omitempty"`
@@ -89,4 +84,13 @@ type imagePullSecrets struct {
 type collectorMeta struct {
 	CollectorName string `json:"collectorName,omitempty"`
 	Exclude       bool   `json:"exclude,omitempty"`
+}
+
+type runPod struct {
+	collectorMeta    `json:",inline"`
+	Name             string      `json:"name,omitempty"`
+	Namespace        string      `json:"namespace"`
+	PodSpec          *v1.PodSpec `json:"podSpec,omitempty"`
+	Timeout          string      `json:"timeout,omitempty"`
+	imagePullSecrets `json:",inline"`
 }

@@ -15,42 +15,39 @@
 package git
 
 import (
+	"fmt"
 	"os/exec"
 
-	"github.com/aws/eks-anywhere/release/pkg/utils"
+	commandutils "github.com/aws/eks-anywhere/release/pkg/util/command"
 )
 
 func CloneRepo(cloneUrl, destination string) (string, error) {
-	cmd := exec.Command("git", "clone", cloneUrl, destination)
-	return utils.ExecCommand(cmd)
+	cloneRepoCommandSequence := fmt.Sprintf("git clone --depth 1 %s %[2]s; cd %[2]s; git config --unset-all remote.origin.fetch; git config --add remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'; git fetch --unshallow; git pull --all", cloneUrl, destination)
+	cmd := exec.Command("bash", "-c", cloneRepoCommandSequence)
+	return commandutils.ExecCommand(cmd)
 }
 
 func CheckoutRepo(gitRoot, branch string) (string, error) {
 	cmd := exec.Command("git", "-C", gitRoot, "checkout", branch)
-	return utils.ExecCommand(cmd)
+	return commandutils.ExecCommand(cmd)
 }
 
 func DescribeTag(gitRoot string) (string, error) {
 	cmd := exec.Command("git", "-C", gitRoot, "describe", "--tag")
-	return utils.ExecCommand(cmd)
+	return commandutils.ExecCommand(cmd)
 }
 
 func GetRepoTagsDescending(gitRoot string) (string, error) {
-	cmd := exec.Command("git", "-C", gitRoot, "tag", "-l", "--sort", "-v:refname")
-	return utils.ExecCommand(cmd)
-}
-
-func GetLatestCommitForPath(gitRoot, path string) (string, error) {
-	cmd := exec.Command("git", "-C", gitRoot, "log", "--pretty=format:%h", "-n1", path)
-	return utils.ExecCommand(cmd)
+	cmd := exec.Command("git", "-C", gitRoot, "tag", "-l", "v*", "--sort", "-v:refname")
+	return commandutils.ExecCommand(cmd)
 }
 
 func GetHead(gitRoot string) (string, error) {
 	cmd := exec.Command("git", "-C", gitRoot, "rev-parse", "HEAD")
-	return utils.ExecCommand(cmd)
+	return commandutils.ExecCommand(cmd)
 }
 
 func GetRepoRoot() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	return utils.ExecCommand(cmd)
+	return commandutils.ExecCommand(cmd)
 }

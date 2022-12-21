@@ -45,7 +45,7 @@ func init() {
 }
 
 func validateCluster(ctx context.Context, cluster *types.Cluster, clusterName string) error {
-	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

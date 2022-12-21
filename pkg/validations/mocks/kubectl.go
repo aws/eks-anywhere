@@ -12,6 +12,7 @@ import (
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // MockKubectlClient is a mock of KubectlClient interface.
@@ -82,6 +83,21 @@ func (mr *MockKubectlClientMockRecorder) GetEksaCluster(ctx, cluster, clusterNam
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaCluster), ctx, cluster, clusterName)
 }
 
+// GetEksaFluxConfig mocks base method.
+func (m *MockKubectlClient) GetEksaFluxConfig(ctx context.Context, fluxConfigName, kubeconfigFile, namespace string) (*v1alpha1.FluxConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaFluxConfig", ctx, fluxConfigName, kubeconfigFile, namespace)
+	ret0, _ := ret[0].(*v1alpha1.FluxConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaFluxConfig indicates an expected call of GetEksaFluxConfig.
+func (mr *MockKubectlClientMockRecorder) GetEksaFluxConfig(ctx, fluxConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaFluxConfig", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaFluxConfig), ctx, fluxConfigName, kubeconfigFile, namespace)
+}
+
 // GetEksaGitOpsConfig mocks base method.
 func (m *MockKubectlClient) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) (*v1alpha1.GitOpsConfig, error) {
 	m.ctrl.T.Helper()
@@ -112,6 +128,36 @@ func (mr *MockKubectlClientMockRecorder) GetEksaOIDCConfig(ctx, oidcConfigName, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaOIDCConfig", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaOIDCConfig), ctx, oidcConfigName, kubeconfigFile, namespace)
 }
 
+// GetEksaTinkerbellDatacenterConfig mocks base method.
+func (m *MockKubectlClient) GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaTinkerbellDatacenterConfig", ctx, tinkerbellDatacenterConfigName, kubeconfigFile, namespace)
+	ret0, _ := ret[0].(*v1alpha1.TinkerbellDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaTinkerbellDatacenterConfig indicates an expected call of GetEksaTinkerbellDatacenterConfig.
+func (mr *MockKubectlClientMockRecorder) GetEksaTinkerbellDatacenterConfig(ctx, tinkerbellDatacenterConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaTinkerbellDatacenterConfig", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaTinkerbellDatacenterConfig), ctx, tinkerbellDatacenterConfigName, kubeconfigFile, namespace)
+}
+
+// GetEksaTinkerbellMachineConfig mocks base method.
+func (m *MockKubectlClient) GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.TinkerbellMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaTinkerbellMachineConfig", ctx, tinkerbellMachineConfigName, kubeconfigFile, namespace)
+	ret0, _ := ret[0].(*v1alpha1.TinkerbellMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaTinkerbellMachineConfig indicates an expected call of GetEksaTinkerbellMachineConfig.
+func (mr *MockKubectlClientMockRecorder) GetEksaTinkerbellMachineConfig(ctx, tinkerbellMachineConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaTinkerbellMachineConfig", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaTinkerbellMachineConfig), ctx, tinkerbellMachineConfigName, kubeconfigFile, namespace)
+}
+
 // GetEksaVSphereDatacenterConfig mocks base method.
 func (m *MockKubectlClient) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()
@@ -127,19 +173,18 @@ func (mr *MockKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(ctx, vsp
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaVSphereDatacenterConfig), ctx, vsphereDatacenterConfigName, kubeconfigFile, namespace)
 }
 
-// SearchEksaGitOpsConfig mocks base method.
-func (m *MockKubectlClient) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) ([]*v1alpha1.GitOpsConfig, error) {
+// GetObject mocks base method.
+func (m *MockKubectlClient) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchEksaGitOpsConfig", ctx, gitOpsConfigName, kubeconfigFile, namespace)
-	ret0, _ := ret[0].([]*v1alpha1.GitOpsConfig)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GetObject", ctx, resourceType, name, namespace, kubeconfig, obj)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// SearchEksaGitOpsConfig indicates an expected call of SearchEksaGitOpsConfig.
-func (mr *MockKubectlClientMockRecorder) SearchEksaGitOpsConfig(ctx, gitOpsConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
+// GetObject indicates an expected call of GetObject.
+func (mr *MockKubectlClientMockRecorder) GetObject(ctx, resourceType, name, namespace, kubeconfig, obj interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchEksaGitOpsConfig", reflect.TypeOf((*MockKubectlClient)(nil).SearchEksaGitOpsConfig), ctx, gitOpsConfigName, kubeconfigFile, namespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockKubectlClient)(nil).GetObject), ctx, resourceType, name, namespace, kubeconfig, obj)
 }
 
 // SearchIdentityProviderConfig mocks base method.

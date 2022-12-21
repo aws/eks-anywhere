@@ -17,8 +17,8 @@ type BundleClient interface {
 
 type DiagnosticBundleFactory interface {
 	DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error)
-	DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
-	DiagnosticBundleManagementCluster(kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleWorkloadCluster(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleManagementCluster(spec *cluster.Spec, kubeconfig string) (DiagnosticBundle, error)
 	DiagnosticBundleDefault() DiagnosticBundle
 	DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle
 }
@@ -31,7 +31,8 @@ type DiagnosticBundle interface {
 	CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error
 	WithDefaultAnalyzers() *EksaDiagnosticBundle
 	WithDefaultCollectors() *EksaDiagnosticBundle
-	WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle
+	WithFileCollectors(paths []string) *EksaDiagnosticBundle
+	WithDatacenterConfig(config v1alpha1.Ref, spec *cluster.Spec) *EksaDiagnosticBundle
 	WithOidcConfig(config *v1alpha1.OIDCConfig) *EksaDiagnosticBundle
 	WithExternalEtcd(config *v1alpha1.ExternalEtcdConfiguration) *EksaDiagnosticBundle
 	WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *EksaDiagnosticBundle
@@ -47,11 +48,14 @@ type AnalyzerFactory interface {
 	EksaExternalEtcdAnalyzers() []*Analyze
 	DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze
 	ManagementClusterAnalyzers() []*Analyze
+	PackageAnalyzers() []*Analyze
 }
 
 type CollectorFactory interface {
+	PackagesCollectors() []*Collect
 	DefaultCollectors() []*Collect
+	FileCollectors(paths []string) []*Collect
 	ManagementClusterCollectors() []*Collect
 	EksaHostCollectors(configs []providers.MachineConfig) []*Collect
-	DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*Collect
+	DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*Collect
 }

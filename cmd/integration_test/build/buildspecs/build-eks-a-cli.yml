@@ -10,4 +10,5 @@ artifacts:
   files:
   - "bin/**/*"
   - "cmd/integration_test/build/**/*"
+  - "test/e2e/SKIPPED_TESTS.yaml"
   - "ATTRIBUTION.txt"

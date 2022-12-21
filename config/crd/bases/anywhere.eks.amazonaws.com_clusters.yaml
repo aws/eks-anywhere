@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Cluster is the Schema for the clusters API
+        description: Cluster is the Schema for the clusters API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,8 +34,27 @@ spec:
           metadata:
             type: object
           spec:
-            description: ClusterSpec defines the desired state of Cluster
+            description: ClusterSpec defines the desired state of Cluster.
             properties:
+              bundlesRef:
+                description: BundlesRef contains a reference to the Bundles containing
+                  the desired dependencies for the cluster
+                properties:
+                  apiVersion:
+                    description: APIVersion refers to the Bundles APIVersion
+                    type: string
+                  name:
+                    description: Name refers to the name of the Bundles object in
+                      the cluster
+                    type: string
+                  namespace:
+                    description: Namespace refers to the Bundles's namespace
+                    type: string
+                required:
+                - apiVersion
+                - name
+                - namespace
+                type: object
               clusterNetwork:
                 properties:
                   cni:
@@ -66,6 +85,14 @@ spec:
                               the DNS resolver configuration
                             type: string
                         type: object
+                    type: object
+                  nodes:
+                    properties:
+                      cidrMaskSize:
+                        description: CIDRMaskSize defines the mask size for node cidr
+                          in the cluster, default for ipv4 is 24. This is an optional
+                          field
+                        type: integer
                     type: object
                   pods:
                     description: Comma-separated list of CIDR blocks to use for pod
@@ -145,6 +172,22 @@ spec:
                       - key
                       type: object
                     type: array
+                  upgradeRolloutStrategy:
+                    description: UpgradeRolloutStrategy determines the rollout strategy
+                      to use for rolling upgrades and related parameters/knobs
+                    properties:
+                      rollingUpdate:
+                        description: ControlPlaneRollingUpdateParams is API for rolling
+                          update strategy knobs.
+                        properties:
+                          maxSurge:
+                            type: integer
+                        required:
+                        - maxSurge
+                        type: object
+                      type:
+                        type: string
+                    type: object
                 type: object
               datacenterRef:
                 properties:
@@ -155,7 +198,7 @@ spec:
                 type: object
               externalEtcdConfiguration:
                 description: ExternalEtcdConfiguration defines the configuration options
-                  for using unstacked etcd topology
+                  for using unstacked etcd topology.
                 properties:
                   count:
                     type: integer
@@ -192,10 +235,6 @@ spec:
                   name:
                     type: string
                 type: object
-              overrideClusterSpecFile:
-                description: 'Deprecated: This field has no function and is going
-                  to be removed in a future release.'
-                type: string
               podIamConfig:
                 properties:
                   serviceAccountIssuer:
@@ -216,8 +255,11 @@ spec:
                 type: object
               registryMirrorConfiguration:
                 description: RegistryMirrorConfiguration defines the settings for
-                  image registry mirror
+                  image registry mirror.
                 properties:
+                  authenticate:
+                    description: Authenticate defines if registry requires authentication
+                    type: boolean
                   caCertContent:
                     description: CACertContent defines the contents registry mirror
                       CA certificate
@@ -232,6 +274,26 @@ spec:
                       in a tightly controlled, air-gapped environment. Currently only
                       supported for snow provider
                     type: boolean
+                  ociNamespaces:
+                    description: OCINamespaces defines the mapping from an upstream
+                      registry to a local namespace where upstream artifacts are placed
+                      into
+                    items:
+                      description: OCINamespace represents an entity in a local reigstry
+                        to group related images.
+                      properties:
+                        namespace:
+                          description: Namespace refers to the name of a namespace
+                            in the local registry
+                          type: string
+                        registry:
+                          description: Name refers to the name of the upstream registry
+                          type: string
+                      required:
+                      - namespace
+                      - registry
+                      type: object
+                    type: array
                   port:
                     description: Port defines the port exposed for registry mirror
                       endpoint
@@ -240,6 +302,19 @@ spec:
               workerNodeGroupConfigurations:
                 items:
                   properties:
+                    autoscalingConfiguration:
+                      description: AutoScalingConfiguration defines the auto scaling
+                        configuration
+                      properties:
+                        maxCount:
+                          description: MaxCount defines the maximum number of nodes
+                            for the associated resource group.
+                          type: integer
+                        minCount:
+                          description: MinCount defines the minimum number of nodes
+                            for the associated resource group.
+                          type: integer
+                      type: object
                     count:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
@@ -291,11 +366,30 @@ spec:
                         - key
                         type: object
                       type: array
+                    upgradeRolloutStrategy:
+                      description: UpgradeRolloutStrategy determines the rollout strategy
+                        to use for rolling upgrades and related parameters/knobs
+                      properties:
+                        rollingUpdate:
+                          description: WorkerNodesRollingUpdateParams is API for rolling
+                            update strategy knobs.
+                          properties:
+                            maxSurge:
+                              type: integer
+                            maxUnavailable:
+                              type: integer
+                          required:
+                          - maxSurge
+                          - maxUnavailable
+                          type: object
+                        type:
+                          type: string
+                      type: object
                   type: object
                 type: array
             type: object
           status:
-            description: ClusterStatus defines the observed state of Cluster
+            description: ClusterStatus defines the observed state of Cluster.
             properties:
               conditions:
                 items:

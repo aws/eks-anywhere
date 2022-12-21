@@ -19,12 +19,6 @@ import (
 //go:embed config/audit-policy.yaml
 var auditPolicy string
 
-var NoProxyDefaults = []string{
-	"localhost",
-	"127.0.0.1",
-	".svc",
-}
-
 // TODO: Split out common into separate packages to avoid becoming a dumping ground
 
 const (
@@ -32,22 +26,19 @@ const (
 	publicKeyFileName  = "eks-a-id_rsa.pub"
 )
 
-func GetAuditPolicy() string {
-	return auditPolicy
-}
-
-func BootstrapClusterOpts(serverEndpoint string, clusterConfig *v1alpha1.Cluster) ([]bootstrapper.BootstrapClusterOption, error) {
+func BootstrapClusterOpts(clusterConfig *v1alpha1.Cluster, serverEndpoints ...string) ([]bootstrapper.BootstrapClusterOption, error) {
 	env := map[string]string{}
 	if clusterConfig.Spec.ProxyConfiguration != nil {
-		noProxy := fmt.Sprintf("%s,%s", clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, serverEndpoint)
+		noProxyes := append([]string{}, serverEndpoints...)
+		noProxyes = append(noProxyes, clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host)
 		for _, s := range clusterConfig.Spec.ProxyConfiguration.NoProxy {
 			if s != "" {
-				noProxy += "," + s
+				noProxyes = append(noProxyes, s)
 			}
 		}
 		env["HTTP_PROXY"] = clusterConfig.Spec.ProxyConfiguration.HttpProxy
 		env["HTTPS_PROXY"] = clusterConfig.Spec.ProxyConfiguration.HttpsProxy
-		env["NO_PROXY"] = noProxy
+		env["NO_PROXY"] = strings.Join(noProxyes, ",")
 	}
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
@@ -78,19 +69,31 @@ func GenerateSSHAuthKey(writer filewriter.FileWriter) (string, error) {
 	return key, nil
 }
 
+func CPMachineTemplateBase(clusterName string) string {
+	return fmt.Sprintf("%s-control-plane-template", clusterName)
+}
+
+func EtcdMachineTemplateBase(clusterName string) string {
+	return fmt.Sprintf("%s-etcd-template", clusterName)
+}
+
+func WorkerMachineTemplateBase(clusterName, workerNodeGroupName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, workerNodeGroupName)
+}
+
 func CPMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%d", CPMachineTemplateBase(clusterName), t)
 }
 
 func EtcdMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%d", EtcdMachineTemplateBase(clusterName), t)
 }
 
 func WorkerMachineTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
+	return fmt.Sprintf("%s-%d", WorkerMachineTemplateBase(clusterName, workerNodeGroupName), t)
 }
 
 func KubeadmConfigTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {

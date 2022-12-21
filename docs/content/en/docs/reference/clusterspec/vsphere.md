@@ -1,12 +1,22 @@
 ---
 title: "vSphere configuration"
-linkTitle: "vSphere"
-weight: 10
+linkTitle: "vSphere configuration"
+weight: 20
 description: >
   Full EKS Anywhere configuration reference for a VMware vSphere cluster.
 ---
 
-This is a generic template with detailed descriptions below for reference
+This is a generic template with detailed descriptions below for reference.
+The following additional optional configuration can also be included:
+
+* [CNI]({{< relref "optional/cni.md" >}})
+* [IAM for pods]({{< relref "optional/irsa.md" >}})
+* [IAM Authenticator]({{< relref "optional/iamauth.md" >}})
+* [OIDC]({{< relref "optional/oidc.md" >}})
+* [gitops]({{< relref "optional/gitops.md" >}})
+* [proxy]({{< relref "optional/proxy.md" >}})
+* [Registry Mirror]({{< relref "optional/registrymirror.md" >}})
+
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -15,7 +25,8 @@ metadata:
    name: my-cluster-name
 spec:
    clusterNetwork:
-      cni: "cilium"
+      cniConfig:
+         cilium: {}
       pods:
          cidrBlocks:
             - 192.168.0.0/16
@@ -44,7 +55,7 @@ spec:
      machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: "1.22"
+   kubernetesVersion: "1.24"
    workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
@@ -65,9 +76,10 @@ metadata:
    name: my-cluster-datacenter
 spec:
   datacenter: ""
+  disableCSI: false
   server: ""
   network: ""
-  insecure:
+  insecure: false
   thumbprint: ""
 
 ---
@@ -89,16 +101,11 @@ spec:
   - name: ""
     sshAuthorizedKeys:
     - ""
+  tags:
+  - ""
 ```
 
 ## Cluster Fields
-
-The following additional optional configuration can also be included.
-
-* [OIDC]({{< relref "oidc.md" >}})
-* [etcd]({{< relref "etcd.md" >}})
-* [proxy]({{< relref "proxy.md" >}})
-* [gitops]({{< relref "gitops.md" >}})
 
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
@@ -106,8 +113,11 @@ Name of your cluster `my-cluster-name` in this example
 ### clusterNetwork (required)
 Specific network configuration for your Kubernetes cluster.
 
-### clusterNetwork.cni (required)
-CNI plugin to be installed in the cluster. The only supported value at the moment is `cilium`.
+### clusterNetwork.cniConfig (required)
+CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
+
+### clusterNetwork.cniConfig.cilium.policyEnforcementMode
+Optionally, you may specify a policyEnforcementMode of default, always, never.
 
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
@@ -135,7 +145,7 @@ range that does not conflict with other VMs.
 
 >**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
 the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
-creation process are [here]({{< relref "../vsphere/vsphere-prereq/#:~:text=Below%20are%20some,existent%20mac%20address." >}})
+creation process are [here]({{< relref "../vsphere/vsphere-prereq/#prepare-a-vmware-vsphere-environment" >}})
 
 ### controlPlaneConfiguration.taints
 A list of taints to apply to the control plane nodes of the cluster.
@@ -159,14 +169,20 @@ the existing nodes.
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
-Number of worker nodes
+### workerNodeGroupConfigurations.count
+Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+Minimum number of nodes for this node group's autoscaling configuration.
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations.taints
 A list of taints to apply to the nodes in the worker node group.
@@ -192,15 +208,16 @@ Refers to the Kubernetes object with vsphere specific configuration for your etc
 Refers to the Kubernetes object with vsphere environment specific configuration. See `VSphereDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.22`, `1.21`, `1.20`
+The Kubernetes version you want to use for your cluster. Supported values: `1.24`, `1.23`, `1.22`, `1.21`
 
 ## VSphereDatacenterConfig Fields
 
 ### datacenter (required)
-The vSphere datacenter to deploy the EKS Anywhere cluster on. For example `SDDC-Datacenter`.
+The name of the vSphere datacenter to deploy the EKS Anywhere cluster on. For example `SDDC-Datacenter`.
 
 ### network (required)
-The VM network to deploy your EKS Anywhere cluster on.
+The path to the VM network to deploy your EKS Anywhere cluster on. For example, `/<DATACENTER>/network/<NETWORK_NAME>`.
+Use `govc find -type n` to see a list of networks.
 
 ### server (required)
 The vCenter server fully qualified domain name or IP address. If the server IP is used, the `thumbprint` must be set
@@ -232,6 +249,31 @@ openssl x509 -sha1 -fingerprint -in ca.crt -noout
 If you specify the wrong thumbprint, an error message will be printed with the expected thumbprint. If no valid
 certificate is being used, `insecure` must be set to true.
 
+### disableCSI (optional)
+Set `disableCSI` to `true` if you don't want to have EKS Anywhere install and manage the vSphere CSI driver for you. 
+More details on the driver are [here](https://docs.vmware.com/en/VMware-vSphere-Container-Storage-Plug-in/2.0/vmware-vsphere-csp-getting-started/GUID-C44D8071-85E7-4933-83EA-6797518C1837.html)
+
+>**_NOTE:_** If you upgrade a cluster and disable the vSphere CSI driver after it has already been installed by EKS Anywhere, 
+> you will need to remove the resources manually from the cluster. Delete the `DaemonSet` and `Deployment` first, as they 
+> rely on the other resources. This should be done after setting `disableCSI` to `true` and running `upgrade cluster`.
+> 
+> These are the resources you would need to delete:
+> * `vsphere-csi-controller-role` (kind: ClusterRole)
+> * `vsphere-csi-controller-binding` (kind: ClusterRoleBinding)
+> * `csi.vsphere.vmware.com` (kind: CSIDriver)
+> 
+> These are the resources you would need to delete
+> in the `kube-system` namespace:
+> * `vsphere-csi-controller` (kind: ServiceAccount)
+> * `csi-vsphere-config` (kind: Secret)
+> * `vsphere-csi-node` (kind: DaemonSet)
+> * `vsphere-csi-controller` (kind: Deployment)
+> 
+> These are the resources you would need to delete
+> in the `eksa-system` namespace from the management cluster.
+> * `<cluster-name>-csi` (kind: ClusterResourceSet)
+> 
+> **_Note:_** If your cluster is self-managed, you would delete `<cluster-name>-csi` (kind: ClusterResourceSet) from the same cluster.
 
 ## VSphereMachineConfig Fields
 
@@ -242,7 +284,7 @@ Size of RAM on virtual machines (Default: 8192)
 Number of CPUs on virtual machines (Default: 2)
 
 ### osFamily (optional)
-Operating System on virtual machines. Permitted values: ubuntu, bottlerocket (Default: bottlerocket)
+Operating System on virtual machines. Permitted values: bottlerocket, ubuntu, redhat (Default: bottlerocket)
 
 ### diskGiB (optional)
 Size of disk on virtual machines if snapshots aren't included (Default: 25)
@@ -271,15 +313,19 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template (optional)
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/vsphere-ovas.md" >}}).
-This is a required field if you are using Bottlerocket OVAs.
+This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
 
 ### datastore (required)
-The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)
-to deploy your EKS Anywhere cluster on.
+The path to the vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)
+to deploy your EKS Anywhere cluster on, for example `/<DATACENTER>/datastore/<DATASTORE_NAME>`.
+Use `govc find -type s` to get a list of datastores.
 
 ### folder (required)
-The VM folder for your EKS anywhere cluster VMs. This allows you to organize your VMs. If the folder does not exist,
+The path to a VM folder for your EKS anywhere cluster VMs. This allows you to organize your VMs. If the folder does not exist,
 it will be created for you. If the folder is blank, the VMs will go in the root folder.
+For example `/<DATACENTER>/vm/<FOLDER_NAME>/...`.
+Use `govc find -type f` to get a list of existing folders.
+
 
 ### resourcePool (required)
 The vSphere [Resource pools](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.resmgmt.doc/GUID-60077B40-66FF-4625-934A-641703ED7601.html)
@@ -289,5 +335,32 @@ for your VMs in the EKS Anywhere cluster. Examples of resource pool values inclu
 * If there is a resource pool:  `/<datacenter>/host/<cluster-name>/Resources/<resource-pool-name>`
 * The wild card option `*/Resources` also often works.
 
+Use `govc find -type p` to get a list of available resource pools.
+
 ### storagePolicyName (optional)
-The storage policy name associated with your VMs.
+The storage policy name associated with your VMs. Generally this can be left blank.
+Use `govc storage.policy.ls` to get a list of available storage policies.
+
+### tags (optional)
+Optional list of tags to attach to your cluster VMs in the URN format.
+
+Example:
+```
+  tags:
+  - urn:vmomi:InventoryServiceTag:8e0ce079-0675-47d6-8665-16ada4e6dabd:GLOBAL
+```
+
+## Optional VSphere Credentials 
+Use the following environment variables to configure Cloud Provider and CSI Driver with different credentials.
+
+### EKSA_VSPHERE_CP_USERNAME
+Username for Cloud Provider (Default: $EKSA_VSPHERE_USERNAME).
+
+### EKSA_VSPHERE_CP_PASSWORD
+Password for Cloud Provider (Default: $EKSA_VSPHERE_PASSWORD).
+
+### EKSA_VSPHERE_CSI_USERNAME
+Username for CSI Driver (Default: $EKSA_VSPHERE_USERNAME).
+
+### EKSA_VSPHERE_CSI_PASSWORD
+Password for CSI Driver (Default: $EKSA_VSPHERE_PASSWORD).

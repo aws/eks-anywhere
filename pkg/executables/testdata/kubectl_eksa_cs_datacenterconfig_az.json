@@ -1,0 +1,23 @@
+{
+  "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+  "kind": "CloudStackDatacenterConfig",
+  "metadata": {
+    "name": "test"
+  },
+  "spec": {
+    "availabilityZones": [
+      {
+        "name": "default-az-0",
+        "credentialsRef": "global",
+        "zone": {
+          "name": "testZone",
+          "network": {
+            "name": "testNetwork"
+          }
+        },
+        "domain": "testDomain",
+        "account": "testAccount"
+      }
+    ]
+  }
+}

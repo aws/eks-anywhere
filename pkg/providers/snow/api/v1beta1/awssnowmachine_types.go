@@ -14,9 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint
 package snow
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/errors"
@@ -29,6 +31,9 @@ const (
 	// AWSSnowMachineFinalizer allows ReconcileAWSSnowMachine to clean up AWS Snow resources associated with AWSSnowMachine before
 	// removing it from the apiserver.
 	AWSSnowMachineFinalizer = "awssnowmachine.infrastructure.cluster.x-k8s.io"
+
+	// MachineEtcdLabelName is the label set on machines or related objects that are part of an etcd node.
+	MachineEtcdLabelName = "cluster.x-k8s.io/etcd-cluster"
 )
 
 // AWSSnowMachineSpec defines the desired state of AWSSnowMachine.
@@ -54,7 +59,7 @@ type AWSSnowMachineSpec struct {
 	// ImageLookupBaseOS or ubuntu (the default), and the kubernetes version as
 	// defined by the packages produced by kubernetes/release without v as a
 	// prefix: 1.13.0, 1.12.5-mybuild.1, or 1.17.3. For example, the default
-	// image format of capa-ami-{{.BaseOS}}-?{{.K8sVersion}}-* will end up
+	// image format of capas-ami-{{.BaseOS}}-.?{{.K8sVersion}}-* will end up
 	// searching for AMIs that match the pattern capa-ami-ubuntu-?1.18.0-* for a
 	// Machine that is targeting kubernetes v1.18.0 and the ubuntu base OS. See
 	// also: https://golang.org/pkg/text/template/
@@ -121,6 +126,10 @@ type AWSSnowMachineSpec struct {
 	// +optional
 	NonRootVolumes []*Volume `json:"nonRootVolumes,omitempty"`
 
+	// Configuration options for the containers data storage volumes.
+	// +optional
+	ContainersVolume *Volume `json:"containersVolume,omitempty"`
+
 	// NetworkInterfaces is a list of ENIs to associate with the instance.
 	// A maximum of 2 may be specified.
 	// +optional
@@ -141,8 +150,21 @@ type AWSSnowMachineSpec struct {
 
 	// PhysicalNetworkConnectorType is the physical network connector type to use for creating direct network interfaces. Valid values are a physical network connector type (SFP_PLUS or QSFP), or omitted (cluster-api selects a valid physical network interface, default is SFP_PLUS)
 	// +optional
-	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP
+	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP;RJ45
 	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
+
+	// Devices is a device ip list which is assigned by customer to provision machines
+	// +kubebuilder:validation:MinItems=1
+	Devices []string `json:"devices,omitempty"`
+
+	// OSFamily is the OS flavor which is used as the node instance OS, currently support ubuntu and bottlerocket
+	// +kubebuilder:validation:Enum:=ubuntu;bottlerocket
+	// +optional
+	OSFamily *OSFamily `json:"osFamily,omitempty"`
+
+	// Network is the DNI and ip address settings for this machine
+	// +kubebuilder:validation:Required
+	Network AWSSnowNetwork `json:"network"`
 
 	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
 	// TODO: Evaluate the need or remove completely.
@@ -154,6 +176,40 @@ type AWSSnowMachineSpec struct {
 	// TODO: Evaluate the need or remove completely.
 	// +kubebuilder:validation:Enum:=default;dedicated;host
 	// Tenancy string `json:"tenancy,omitempty"`
+}
+
+// AWSSnowNetwork is network configuration including DNI. We can add more in the future if need
+type AWSSnowNetwork struct {
+	// DirectNetworkInterfaces is a DNI configuration list what customers want
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=8
+	DirectNetworkInterfaces []AWSSnowDirectNetworkInterface `json:"directNetworkInterfaces"`
+}
+
+// AWSSnowDirectNetworkInterface is configuration of DNIs specified by customers.
+type AWSSnowDirectNetworkInterface struct {
+	// Index is the index number of DNI, usually starts from 1 which can clarify DNIs in the list
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=8
+	// +optional
+	Index int `json:"index,omitempty"`
+	// VlanID is the vlan ID assigned by the user to this DNI
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=4095
+	// +optional
+	VlanID *int32 `json:"vlanID,omitempty"`
+	// DHCP shows whether we assign ip using DHCP for this DNI
+	// If DHCP is true, CAPAS will alloacate ip address to this DNI using DHCP
+	// +optional
+	DHCP bool `json:"dhcp,omitempty"`
+	// IPPool is an ip pool which provides a range of ip addresses
+	// If IPPool is not nil, we will allocate an ip address from this pool to this DNI
+	// +optional
+	IPPool *corev1.ObjectReference `json:"ipPool,omitempty"`
+	// Primary indicates whether the DNI is primary or not
+	// +optional
+	Primary bool `json:"primary,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
@@ -254,7 +310,7 @@ type AWSSnowMachine struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	DeviceIp string               `json:"deviceIp,omitempty"`
+	DeviceIP string               `json:"deviceIP,omitempty"`
 	Spec     AWSSnowMachineSpec   `json:"spec,omitempty"`
 	Status   AWSSnowMachineStatus `json:"status,omitempty"`
 }
@@ -278,6 +334,11 @@ func (r *AWSSnowMachine) SetConditions(conditions clusterv1.Conditions) {
 
 func (r *AWSSnowMachine) IsControlPlane() bool {
 	_, keyExists := r.ObjectMeta.Labels[clusterv1.MachineControlPlaneLabelName]
+	return keyExists
+}
+
+func (r *AWSSnowMachine) IsEtcd() bool {
+	_, keyExists := r.ObjectMeta.Labels[MachineEtcdLabelName]
 	return keyExists
 }
 

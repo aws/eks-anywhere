@@ -5,5 +5,13 @@ resources:
 
 images:
 - name: controller
-  newName: cluster-controller
-  newTag: latest
+  newName: eks-a-controller-manager
+
+patches:
+- patch: |-
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: --logging-format=text
+  target:
+    kind: Deployment
+    name: eksa-controller-manager

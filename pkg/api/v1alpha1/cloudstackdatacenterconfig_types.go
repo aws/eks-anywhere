@@ -15,13 +15,20 @@
 package v1alpha1
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CloudStackDatacenterConfigSpec defines the desired state of CloudStackDatacenterConfig
+const DefaultCloudStackAZPrefix = "default-az"
+
+// CloudStackDatacenterConfigSpec defines the desired state of CloudStackDatacenterConfig.
 type CloudStackDatacenterConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -29,14 +36,23 @@ type CloudStackDatacenterConfigSpec struct {
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
-	//
-	Domain string `json:"domain"`
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
+	Domain string `json:"domain,omitempty"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
-	Zones []CloudStackZone `json:"zones"`
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
+	Zones []CloudStackZone `json:"zones,omitempty"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
-	ManagementApiEndpoint string `json:"managementApiEndpoint"`
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
+	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
+	// AvailabilityZones list of different partitions to distribute VMs across - corresponds to a list of CAPI failure domains
+	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
 }
 
 type CloudStackResourceIdentifier struct {
@@ -61,7 +77,7 @@ func (r *CloudStackResourceIdentifier) Equal(o *CloudStackResourceIdentifier) bo
 	return r.Id == "" && o.Id == "" && r.Name == o.Name
 }
 
-// CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
+// CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name.
 type CloudStackZone struct {
 	// Zone is the name or UUID of the CloudStack zone in which clusters should be created. Zones should be managed by a single CloudStack Management endpoint.
 	Id   string `json:"id,omitempty"`
@@ -71,15 +87,42 @@ type CloudStackZone struct {
 	Network CloudStackResourceIdentifier `json:"network"`
 }
 
-// CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
+// CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure.
+type CloudStackAvailabilityZone struct {
+	// Name is used as a unique identifier for each availability zone
+	Name string `json:"name"`
+	// CredentialRef is used to reference a secret in the eksa-system namespace
+	CredentialsRef string `json:"credentialsRef"`
+	// Zone represents the properties of the CloudStack zone in which clusters should be created, like the network.
+	Zone CloudStackZone `json:"zone"`
+	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
+	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
+	Domain string `json:"domain"`
+	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
+	Account string `json:"account,omitempty"`
+	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
+	ManagementApiEndpoint string `json:"managementApiEndpoint"`
+}
+
+// CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig.
 type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	// SpecValid is set to true if cloudstackdatacenterconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// ObservedGeneration is the latest generation observed by the controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	FailureMessage *string `json:"failureMessage,omitempty"`
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// CloudStackDatacenterConfig is the Schema for the cloudstackdatacenterconfigs API
+// CloudStackDatacenterConfig is the Schema for the cloudstackdatacenterconfigs API.
 type CloudStackDatacenterConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -139,7 +182,56 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 }
 
 func (v *CloudStackDatacenterConfig) Validate() error {
+	if v.Spec.Account != "" {
+		return errors.New("account must be empty")
+	}
+	if v.Spec.Domain != "" {
+		return errors.New("domain must be empty")
+	}
+	if v.Spec.ManagementApiEndpoint != "" {
+		return errors.New("managementApiEndpoint must be empty")
+	}
+	if len(v.Spec.Zones) > 0 {
+		return errors.New("zones must be empty")
+	}
+	if len(v.Spec.AvailabilityZones) == 0 {
+		return errors.New("availabilityZones must not be empty")
+	}
+	azSet := make(map[string]bool)
+	for _, az := range v.Spec.AvailabilityZones {
+		errorMessages := validation.IsValidLabelValue(az.Name)
+		if len(errorMessages) > 0 {
+			return fmt.Errorf("availabilityZone names must be a valid label value since it is used to label nodes: %s",
+				strings.Join(errorMessages, ";"))
+		}
+		if exists := azSet[az.Name]; exists {
+			return fmt.Errorf("availabilityZone names must be unique. Duplicate name: %s", az.Name)
+		}
+		azSet[az.Name] = true
+	}
+
 	return nil
+}
+
+func (v *CloudStackDatacenterConfig) SetDefaults() {
+	if v.Spec.AvailabilityZones == nil || len(v.Spec.AvailabilityZones) == 0 {
+		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
+		for index, csZone := range v.Spec.Zones {
+			az := CloudStackAvailabilityZone{
+				Name:                  fmt.Sprintf("%s-%d", DefaultCloudStackAZPrefix, index),
+				Zone:                  csZone,
+				Account:               v.Spec.Account,
+				Domain:                v.Spec.Domain,
+				ManagementApiEndpoint: v.Spec.ManagementApiEndpoint,
+				CredentialsRef:        "global",
+			}
+			v.Spec.AvailabilityZones = append(v.Spec.AvailabilityZones, az)
+		}
+	}
+	v.Spec.Zones = nil
+	v.Spec.Domain = ""
+	v.Spec.Account = ""
+	v.Spec.ManagementApiEndpoint = ""
 }
 
 func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec) bool {
@@ -154,6 +246,19 @@ func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec
 	}
 	for i, z := range s.Zones {
 		if !z.Equal(&o.Zones[i]) {
+			return false
+		}
+	}
+	if len(s.AvailabilityZones) != len(o.AvailabilityZones) {
+		return false
+	}
+	oAzsMap := map[string]CloudStackAvailabilityZone{}
+	for _, oAz := range o.AvailabilityZones {
+		oAzsMap[oAz.Name] = oAz
+	}
+	for _, sAz := range s.AvailabilityZones {
+		oAz, found := oAzsMap[sAz.Name]
+		if !found || !sAz.Equal(&oAz) {
 			return false
 		}
 	}
@@ -178,9 +283,24 @@ func (z *CloudStackZone) Equal(o *CloudStackZone) bool {
 	return false
 }
 
+func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool {
+	if az == o {
+		return true
+	}
+	if az == nil || o == nil {
+		return false
+	}
+	return az.Zone.Equal(&o.Zone) &&
+		az.Name == o.Name &&
+		az.CredentialsRef == o.CredentialsRef &&
+		az.Account == o.Account &&
+		az.Domain == o.Domain &&
+		az.ManagementApiEndpoint == o.ManagementApiEndpoint
+}
+
 // +kubebuilder:object:generate=false
 
-// Same as CloudStackDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
+// Same as CloudStackDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig.
 type CloudStackDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
@@ -190,7 +310,7 @@ type CloudStackDatacenterConfigGenerate struct {
 
 //+kubebuilder:object:root=true
 
-// CloudStackDatacenterConfigList contains a list of CloudStackDatacenterConfig
+// CloudStackDatacenterConfigList contains a list of CloudStackDatacenterConfig.
 type CloudStackDatacenterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: CloudStackDatacenterConfig is the Schema for the cloudstackdatacenterconfigs
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -36,18 +36,98 @@ spec:
             type: object
           spec:
             description: CloudStackDatacenterConfigSpec defines the desired state
-              of CloudStackDatacenterConfig
+              of CloudStackDatacenterConfig.
             properties:
               account:
-                description: Account typically represents a customer of the service
+                description: 'Account typically represents a customer of the service
                   provider or a department in a large organization. Multiple users
                   can exist in an account, and all CloudStack resources belong to
                   an account. Accounts have users and users have credentials to operate
                   on resources within that account. If an account name is provided,
-                  a domain must also be provided.
+                  a domain must also be provided. Deprecated: Please use AvailabilityZones
+                  instead'
                 type: string
+              availabilityZones:
+                description: AvailabilityZones list of different partitions to distribute
+                  VMs across - corresponds to a list of CAPI failure domains
+                items:
+                  description: CloudStackAvailabilityZone maps to a CAPI failure domain
+                    to distribute machines across Cloudstack infrastructure.
+                  properties:
+                    account:
+                      description: Account typically represents a customer of the
+                        service provider or a department in a large organization.
+                        Multiple users can exist in an account, and all CloudStack
+                        resources belong to an account. Accounts have users and users
+                        have credentials to operate on resources within that account.
+                        If an account name is provided, a domain must also be provided.
+                      type: string
+                    credentialsRef:
+                      description: CredentialRef is used to reference a secret in
+                        the eksa-system namespace
+                      type: string
+                    domain:
+                      description: Domain contains a grouping of accounts. Domains
+                        usually contain multiple accounts that have some logical relationship
+                        to each other and a set of delegated administrators with some
+                        authority over the domain and its subdomains This field is
+                        considered as a fully qualified domain name which is the same
+                        as the domain path without "ROOT/" prefix. For example, if
+                        "foo" is specified then a domain with "ROOT/foo" domain path
+                        is picked. The value "ROOT" is a special case that points
+                        to "the" ROOT domain of the CloudStack. That is, a domain
+                        with a path "ROOT/ROOT" is not allowed.
+                      type: string
+                    managementApiEndpoint:
+                      description: CloudStack Management API endpoint's IP. It is
+                        added to VM's noproxy list
+                      type: string
+                    name:
+                      description: Name is used as a unique identifier for each availability
+                        zone
+                      type: string
+                    zone:
+                      description: Zone represents the properties of the CloudStack
+                        zone in which clusters should be created, like the network.
+                      properties:
+                        id:
+                          description: Zone is the name or UUID of the CloudStack
+                            zone in which clusters should be created. Zones should
+                            be managed by a single CloudStack Management endpoint.
+                          type: string
+                        name:
+                          type: string
+                        network:
+                          description: Network is the name or UUID of the CloudStack
+                            network in which clusters should be created. It can either
+                            be an isolated or shared network. If it doesn’t already
+                            exist in CloudStack, it’ll automatically be created by
+                            CAPC as an isolated network. It can either be specified
+                            as a UUID or name In multiple-zones situation, only 'Shared'
+                            network is supported.
+                          properties:
+                            id:
+                              description: Id of a resource in the CloudStack environment.
+                                Mutually exclusive with Name
+                              type: string
+                            name:
+                              description: Name of a resource in the CloudStack environment.
+                                Mutually exclusive with Id
+                              type: string
+                          type: object
+                      required:
+                      - network
+                      type: object
+                  required:
+                  - credentialsRef
+                  - domain
+                  - managementApiEndpoint
+                  - name
+                  - zone
+                  type: object
+                type: array
               domain:
-                description: Domain contains a grouping of accounts. Domains usually
+                description: 'Domain contains a grouping of accounts. Domains usually
                   contain multiple accounts that have some logical relationship to
                   each other and a set of delegated administrators with some authority
                   over the domain and its subdomains This field is considered as a
@@ -55,20 +135,22 @@ spec:
                   without "ROOT/" prefix. For example, if "foo" is specified then
                   a domain with "ROOT/foo" domain path is picked. The value "ROOT"
                   is a special case that points to "the" ROOT domain of the CloudStack.
-                  That is, a domain with a path "ROOT/ROOT" is not allowed.
+                  That is, a domain with a path "ROOT/ROOT" is not allowed. Deprecated:
+                  Please use AvailabilityZones instead'
                 type: string
               managementApiEndpoint:
-                description: CloudStack Management API endpoint's IP. It is added
-                  to VM's noproxy list
+                description: 'CloudStack Management API endpoint''s IP. It is added
+                  to VM''s noproxy list Deprecated: Please use AvailabilityZones instead'
                 type: string
               zones:
-                description: Zones is a list of one or more zones that are managed
-                  by a single CloudStack management endpoint.
+                description: 'Zones is a list of one or more zones that are managed
+                  by a single CloudStack management endpoint. Deprecated: Please use
+                  AvailabilityZones instead'
                 items:
                   description: CloudStackZone is an organizational construct typically
                     used to represent a single datacenter, and all its physical and
                     virtual resources exist inside that zone. It can either be specified
-                    as a UUID or name
+                    as a UUID or name.
                   properties:
                     id:
                       description: Zone is the name or UUID of the CloudStack zone
@@ -98,14 +180,24 @@ spec:
                   - network
                   type: object
                 type: array
-            required:
-            - domain
-            - managementApiEndpoint
-            - zones
             type: object
           status:
             description: CloudStackDatacenterConfigStatus defines the observed state
-              of CloudStackDatacenterConfig
+              of CloudStackDatacenterConfig.
+            properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
+              observedGeneration:
+                description: ObservedGeneration is the latest generation observed
+                  by the controller.
+                format: int64
+                type: integer
+              specValid:
+                description: SpecValid is set to true if cloudstackdatacenterconfig
+                  is validated.
+                type: boolean
             type: object
         type: object
     served: true

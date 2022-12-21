@@ -6,7 +6,7 @@ import (
 
 const CloudStackDatacenterKind = "CloudStackDatacenterConfig"
 
-// Used for generating yaml for generate clusterconfig command
+// Used for generating yaml for generate clusterconfig command.
 func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatacenterConfigGenerate {
 	return &CloudStackDatacenterConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
@@ -17,13 +17,17 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 			Name: clusterName,
 		},
 		Spec: CloudStackDatacenterConfigSpec{
-			Domain: "domain1",
-			Zones: []CloudStackZone{
+			AvailabilityZones: []CloudStackAvailabilityZone{
 				{
-					Network: CloudStackResourceIdentifier{},
+					Name: "az-1",
+					Zone: CloudStackZone{
+						Network: CloudStackResourceIdentifier{},
+					},
+					CredentialsRef: "global",
+					Account:        "admin",
+					Domain:         "domain1",
 				},
 			},
-			Account: "admin",
 		},
 	}
 }

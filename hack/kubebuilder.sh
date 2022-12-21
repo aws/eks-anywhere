@@ -6,8 +6,8 @@ PATH_TO_KUBEBUILDER=hack/tools/bin/kubebuilder
 setupFakeKubebuilderEnv() {
 	mkdir -p $TEMP_FOLDER/hack
 	ln -s $(pwd)/pkg/api $TEMP_FOLDER/api
-	ln -s $(pwd)/controllers/controllers $TEMP_FOLDER/controllers
-	ln -s $(pwd)/controllers/main.go $TEMP_FOLDER/main.go
+	ln -s $(pwd)/controllers $TEMP_FOLDER/controllers
+	ln -s $(pwd)/manager/main.go $TEMP_FOLDER/main.go
 	ln -s $(pwd)/hack/boilerplate.go.txt $TEMP_FOLDER/hack/boilerplate.go.txt
 	ln -s $(pwd)/PROJECT $TEMP_FOLDER/PROJECT
 	cp hack/fake-Makefile $TEMP_FOLDER/Makefile

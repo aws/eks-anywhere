@@ -4,16 +4,14 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
-	providerValidator "github.com/aws/eks-anywhere/pkg/providers/validator"
 )
 
 type ConfigManager struct {
-	validator  *Validator
+	validator  *AwsClientValidator
 	defaulters *Defaulters
 }
 
-func NewConfigManager(defaulters *Defaulters, validators *Validator) *ConfigManager {
+func NewConfigManager(defaulters *Defaulters, validators *AwsClientValidator) *ConfigManager {
 	return &ConfigManager{
 		validator:  validators,
 		defaulters: defaulters,
@@ -43,11 +41,11 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 			func(c *cluster.Config) error {
 				return cm.defaulters.GenerateDefaultSshKeys(ctx, c.SnowMachineConfigs)
 			},
+			func(c *cluster.Config) error {
+				return SetupEksaCredentialsSecret(c)
+			},
 		},
 		Validations: []cluster.Validation{
-			func(c *cluster.Config) error {
-				return providerValidator.ValidateControlPlaneIpUniqueness(c.Cluster, &networkutils.DefaultNetClient{})
-			},
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
 					if err := cm.validator.ValidateEC2ImageExistsOnDevice(ctx, m); err != nil {
@@ -59,6 +57,22 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
 					if err := cm.validator.ValidateEC2SshKeyNameExists(ctx, m); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *cluster.Config) error {
+				for _, m := range c.SnowMachineConfigs {
+					if err := cm.validator.ValidateDeviceIsUnlocked(ctx, m); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *cluster.Config) error {
+				for _, m := range c.SnowMachineConfigs {
+					if err := cm.validator.ValidateDeviceSoftware(ctx, m); err != nil {
 						return err
 					}
 				}

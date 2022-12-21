@@ -9,6 +9,89 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
+func TestValidateCreateOIDCConfigSuccess(t *testing.T) {
+	c := oidcConfig()
+	c.Spec.ClientId = "test"
+	c.Spec.IssuerUrl = "https://test.com"
+	o := NewWithT(t)
+
+	o.Expect(c.ValidateCreate()).To(Succeed())
+}
+
+func TestClusterValidateCreateInvalidOIDCConfig(t *testing.T) {
+	tests := []struct {
+		name   string
+		config v1alpha1.OIDCConfig
+		err    string
+	}{
+		{
+			name: "No clientID",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId: "",
+				},
+			},
+			err: "clientId is required",
+		},
+		{
+			name: "Null issuerID",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "",
+				},
+			},
+			err: "issuerUrl is required",
+		},
+		{
+			name: "Invalid issuer url",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "invalid-url",
+				},
+			},
+			err: "invalid URI for request",
+		},
+		{
+			name: "Issuer url, non https",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "http://test.com",
+				},
+			},
+			err: "issuerUrl should have HTTPS scheme",
+		},
+		{
+			name: "Extra required claims",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "https://test.com",
+					RequiredClaims: []v1alpha1.OIDCConfigRequiredClaim{
+						{
+							Claim: "claim1",
+							Value: "val1",
+						},
+						{
+							Claim: "claim2",
+							Value: "val2",
+						},
+					},
+				},
+			},
+			err: "only one OIDConfig requiredClaim is supported at this time",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.config.ValidateCreate()).To(MatchError(ContainSubstring(tt.err)))
+		})
+	}
+}
+
 func TestValidateUpdateOIDCClientIdMgmtCluster(t *testing.T) {
 	ocOld := oidcConfig()
 	ocOld.Spec.ClientId = "test"
@@ -16,7 +99,7 @@ func TestValidateUpdateOIDCClientIdMgmtCluster(t *testing.T) {
 
 	c.Spec.ClientId = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCGroupsClaimMgmtCluster(t *testing.T) {
@@ -26,7 +109,7 @@ func TestValidateUpdateOIDCGroupsClaimMgmtCluster(t *testing.T) {
 
 	c.Spec.GroupsClaim = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCGroupsPrefixMgmtCluster(t *testing.T) {
@@ -36,7 +119,7 @@ func TestValidateUpdateOIDCGroupsPrefixMgmtCluster(t *testing.T) {
 
 	c.Spec.GroupsPrefix = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCIssuerUrlMgmtCluster(t *testing.T) {
@@ -46,7 +129,7 @@ func TestValidateUpdateOIDCIssuerUrlMgmtCluster(t *testing.T) {
 
 	c.Spec.IssuerUrl = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCUsernameClaimMgmtCluster(t *testing.T) {
@@ -56,7 +139,7 @@ func TestValidateUpdateOIDCUsernameClaimMgmtCluster(t *testing.T) {
 
 	c.Spec.UsernameClaim = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCUsernamePrefixMgmtCluster(t *testing.T) {
@@ -66,7 +149,7 @@ func TestValidateUpdateOIDCUsernamePrefixMgmtCluster(t *testing.T) {
 
 	c.Spec.UsernamePrefix = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCRequiredClaimsMgmtCluster(t *testing.T) {
@@ -76,7 +159,7 @@ func TestValidateUpdateOIDCRequiredClaimsMgmtCluster(t *testing.T) {
 
 	c.Spec.RequiredClaims = []v1alpha1.OIDCConfigRequiredClaim{{Claim: "test", Value: "value2"}}
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCRequiredClaimsMultipleMgmtCluster(t *testing.T) {
@@ -89,7 +172,7 @@ func TestValidateUpdateOIDCRequiredClaimsMultipleMgmtCluster(t *testing.T) {
 		Value: "value2",
 	})
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).NotTo(Succeed())
+	o.Expect(c.ValidateUpdate(&ocOld)).To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateOIDCclientIdMutableUpdateNameWorkloadCluster(t *testing.T) {

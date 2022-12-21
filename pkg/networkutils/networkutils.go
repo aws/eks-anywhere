@@ -1,9 +1,11 @@
 package networkutils
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -24,21 +26,40 @@ func ValidateIP(ip string) error {
 	return nil
 }
 
-// IsIPInUse performs a soft check to see if there are any services listening on a selection of common ports at
-// ip by trying to establish a TCP connection. Ports checked include: 22, 23, 80, 443 and 6443 (Kubernetes API Server).
-// Each connection attempt allows up-to 500ms for a response.
-//
-// todo(chrisdoherty) change to an icmp approach to eliminate the need for ports.
+// IsIPInUse performs a best effort check to see if an IP address is in use. It is not completely
+// reliable as testing if an IP is in use is inherently difficult, particularly with non-trivial
+// network topologies.
 func IsIPInUse(client NetClient, ip string) bool {
-	ports := []string{"22", "23", "80", "443", "6443"}
-	for _, port := range ports {
-		address := net.JoinHostPort(ip, port)
-		conn, err := client.DialTimeout("tcp", address, 500*time.Millisecond)
-		if err == nil {
-			conn.Close()
-			return true
-		}
+	// Dial and immediately close the connection if it was established as its superfluous for
+	// our check. We use port 80 as its common and is more likely to get through firewalls
+	// than other ports.
+	conn, err := client.DialTimeout("tcp", net.JoinHostPort(ip, "80"), 500*time.Millisecond)
+	if err == nil {
+		conn.Close()
+	}
+
+	// If we establish a connection or we receive a response assume that address is in use.
+	// The latter case covers situations like an IP in use but the port requested is not open.
+	return err == nil || errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ECONNRESET)
+}
+
+func IsPortInUse(client NetClient, host string, port string) bool {
+	address := net.JoinHostPort(host, port)
+	conn, err := client.DialTimeout("tcp", address, 500*time.Millisecond)
+	if err == nil {
+		conn.Close()
+		return true
 	}
 
 	return false
+}
+
+func GetLocalIP() (net.IP, error) {
+	conn, err := net.Dial("udp", "1.2.3.4:80")
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve local ip: %v", err)
+	}
+	defer conn.Close()
+
+	return conn.LocalAddr().(*net.UDPAddr).IP, nil
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/internal/test/e2e"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -62,7 +62,7 @@ func cleanUpAwsTestResources(ctx context.Context) error {
 	storageBucket := viper.GetString(storageBucketFlagName)
 	tag := viper.GetString(tagFlagName)
 
-	err := e2e.CleanUpAwsTestResources(storageBucket, maxAge, tag)
+	err := cleanup.CleanUpAwsTestResources(storageBucket, maxAge, tag)
 	if err != nil {
 		return fmt.Errorf("running cleanup for aws test resources: %v", err)
 	}

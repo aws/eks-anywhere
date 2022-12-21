@@ -5,8 +5,10 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
@@ -291,6 +293,35 @@ func TestClusterctlMoveManagement(t *testing.T) {
 	}
 }
 
+func TestClusterctlMoveManagementWithRetry(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	writer := mockswriter.NewMockFileWriter(mockCtrl)
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+
+	from := &types.Cluster{
+		KubeconfigFile: "from.kubeconfig",
+	}
+
+	to := &types.Cluster{
+		KubeconfigFile: "to.kubeconfig",
+	}
+
+	wantMoveArgs := []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"}
+
+	firstTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
+	secondTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, nil)
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+	)
+
+	c := executables.NewClusterctl(executable, writer)
+	if err := c.MoveManagement(ctx, from, to); err != nil {
+		t.Fatalf("Clusterctl.MoveManagement() error = %v, want nil", err)
+	}
+}
+
 func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 	tt := newClusterctlTest(t)
 
@@ -384,6 +415,37 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).NotTo(Succeed())
 }
 
+func TestClusterctlWaitRetryPolicy(t *testing.T) {
+	connectionRefusedError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:53733/api?timeout=30s\": dial tcp 127.0.0.1:53733: connect: connection refused\n")
+	ioTimeoutError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": net/http: TLS handshake timeout\n")
+	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
+
+	_, wait := executables.ClusterctlMoveRetryPolicy(1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for connection refused")
+	}
+
+	_, wait = executables.ClusterctlMoveRetryPolicy(-1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for total retries < 0")
+	}
+
+	_, wait = executables.ClusterctlMoveRetryPolicy(2, connectionRefusedError)
+	if wait != 15*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for second retry wait")
+	}
+
+	_, wait = executables.ClusterctlMoveRetryPolicy(1, ioTimeoutError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	retry, _ := executables.ClusterctlMoveRetryPolicy(1, miscellaneousError)
+	if retry != false {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't not-retry on non-network error")
+	}
+}
+
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
 	s.VersionsBundle = versionBundle
 })
@@ -412,16 +474,16 @@ var versionBundle = &cluster.VersionsBundle{
 		},
 		CertManager: v1alpha1.CertManagerBundle{
 			Acmesolver: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-acmesolver:v1.1.0",
 			},
 			Cainjector: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-cainjector:v1.1.0",
 			},
 			Controller: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-controller:v1.1.0",
 			},
 			Webhook: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-webhook:v1.1.0",
 			},
 			Manifest: v1alpha1.Manifest{
 				URI: "testdata/fake_manifest.yaml",
@@ -467,13 +529,6 @@ var versionBundle = &cluster.VersionsBundle{
 				URI: "testdata/fake_manifest.yaml",
 			},
 		},
-		Aws: v1alpha1.AwsBundle{
-			Version: "v0.6.4",
-			Controller: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws/cluster-api-aws-controller:v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244",
-			},
-			KubeProxy: kubeProxyVersion08,
-		},
 		Snow: v1alpha1.SnowBundle{
 			Version: "v0.0.0",
 		},
@@ -484,11 +539,24 @@ var versionBundle = &cluster.VersionsBundle{
 			},
 			KubeProxy: kubeProxyVersion08,
 		},
+		Nutanix: v1alpha1.NutanixBundle{
+			Version: "v1.0.1",
+			ClusterAPIController: v1alpha1.Image{
+				URI: "public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v1.0.1-eks-a-v0.0.0-dev-build.1",
+			},
+		},
+		Tinkerbell: v1alpha1.TinkerbellBundle{
+			Version: "v0.1.0",
+			ClusterAPIController: v1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-0.0.1.build.38",
+			},
+		},
 		CloudStack: v1alpha1.CloudStackBundle{
 			Version: "v0.7.8",
 			ClusterAPIController: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.7.8-eks-a-0.0.1.build.38",
 			},
+			KubeRbacProxy: kubeProxyVersion08,
 		},
 		Docker: v1alpha1.DockerBundle{
 			Version: "v0.3.19",

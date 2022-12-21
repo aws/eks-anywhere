@@ -36,7 +36,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: FluxConfigSpec defines the desired state of FluxConfig
+            description: FluxConfigSpec defines the desired state of FluxConfig.
             properties:
               branch:
                 default: main
@@ -54,13 +54,12 @@ spec:
                     description: Repository URL for the repository to be used with
                       flux. Can be either an SSH or HTTPS url.
                     type: string
-                  username:
-                    description: Username is the user to authenticate to the git repository
-                      with.
+                  sshKeyAlgorithm:
+                    description: SSH public key algorithm for the private key specified
+                      (rsa, ecdsa, ed25519) (default ecdsa)
                     type: string
                 required:
                 - repositoryUrl
-                - username
                 type: object
               github:
                 description: Used to specify Github provider to host the Git repo
@@ -87,7 +86,7 @@ spec:
                 type: string
             type: object
           status:
-            description: FluxConfigStatus defines the observed state of FluxConfig
+            description: FluxConfigStatus defines the observed state of FluxConfig.
             type: object
         type: object
     served: true

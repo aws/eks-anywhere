@@ -5,16 +5,19 @@ import (
 	_ "embed"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -27,10 +30,13 @@ const (
 	etcdadmBootstrapProviderName  = "etcdadm-bootstrap"
 	etcdadmControllerProviderName = "etcdadm-controller"
 	kubeadmBootstrapProviderName  = "kubeadm"
+	clusterctlMoveTimeout         = 30 * time.Minute // Arbitrarily established.  Equal to kubectl wait default timeouts.
 )
 
 //go:embed config/clusterctl.yaml
 var clusterctlConfigTemplate string
+
+var clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
 
 type Clusterctl struct {
 	Executable
@@ -149,12 +155,43 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 	return nil
 }
 
+func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+
+	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
+	if totalRetries < 1 {
+		totalRetries = 1
+	}
+	const networkFaultBaseRetryTime = 10 * time.Second
+	const backoffFactor = 1.5
+	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
+
+	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
+		return true, waitTime
+	}
+	return false, 0
+}
+
 func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster) error {
 	params := []string{"move", "--to-kubeconfig", to.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	if from.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", from.KubeconfigFile)
 	}
-	_, err := c.Execute(ctx, params...)
+
+	// Network errors, most commonly connection refused or timeout, can occur if either source or target
+	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
+	// abandons the move operation, leaving an unpredictable subset of the CAPI components copied to target
+	// or deleted from source.  Retrying once connectivity is re-established completes the partial move.
+	// Here we use a retrier, with the above defined clusterctlMoveRetryPolicy policy, to attempt to
+	// wait out the network disruption and complete the move.
+
+	retrier := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
+	err := retrier.Retry(
+		func() error {
+			_, err := c.Execute(ctx, params...)
+			return err
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed moving management cluster: %v", err)
 	}
@@ -222,11 +259,6 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		return nil, err
 	}
 
-	tinkerbellProvider := "false"
-	if features.IsActive(features.TinkerbellProvider()) {
-		tinkerbellProvider = "true"
-	}
-
 	data := map[string]string{
 		"CertManagerInjectorRepository":                   imageRepository(bundle.CertManager.Cainjector),
 		"CertManagerInjectorTag":                          bundle.CertManager.Cainjector.Tag(),
@@ -247,14 +279,14 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"KubeadmControlPlaneControllerTag":                bundle.ControlPlane.Controller.Tag(),
 		"KubeadmControlPlaneKubeRbacProxyRepository":      imageRepository(bundle.ControlPlane.KubeProxy),
 		"KubeadmControlPlaneKubeRbacProxyTag":             bundle.ControlPlane.KubeProxy.Tag(),
-		"ClusterApiAwsControllerRepository":               imageRepository(bundle.Aws.Controller),
-		"ClusterApiAwsControllerTag":                      bundle.Aws.Controller.Tag(),
-		"ClusterApiAwsKubeRbacProxyRepository":            imageRepository(bundle.Aws.KubeProxy),
-		"ClusterApiAwsKubeRbacProxyTag":                   bundle.Aws.KubeProxy.Tag(),
 		"ClusterApiVSphereControllerRepository":           imageRepository(bundle.VSphere.ClusterAPIController),
 		"ClusterApiVSphereControllerTag":                  bundle.VSphere.ClusterAPIController.Tag(),
+		"ClusterApiNutanixControllerRepository":           imageRepository(bundle.Nutanix.ClusterAPIController),
+		"ClusterApiNutanixControllerTag":                  bundle.Nutanix.ClusterAPIController.Tag(),
 		"ClusterApiCloudStackManagerRepository":           imageRepository(bundle.CloudStack.ClusterAPIController),
 		"ClusterApiCloudStackManagerTag":                  bundle.CloudStack.ClusterAPIController.Tag(),
+		"ClusterApiCloudStackKubeRbacProxyRepository":     imageRepository(bundle.CloudStack.KubeRbacProxy),
+		"ClusterApiCloudStackKubeRbacProxyTag":            bundle.CloudStack.KubeRbacProxy.Tag(),
 		"ClusterApiVSphereKubeRbacProxyRepository":        imageRepository(bundle.VSphere.KubeProxy),
 		"ClusterApiVSphereKubeRbacProxyTag":               bundle.VSphere.KubeProxy.Tag(),
 		"DockerKubeRbacProxyRepository":                   imageRepository(bundle.Docker.KubeProxy),
@@ -272,10 +304,9 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"DockerProviderVersion":                           bundle.Docker.Version,
 		"VSphereProviderVersion":                          bundle.VSphere.Version,
 		"CloudStackProviderVersion":                       bundle.CloudStack.Version,
-		"AwsProviderVersion":                              bundle.Aws.Version,
 		"SnowProviderVersion":                             bundle.Snow.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
-		"IsActiveTinkerbellProvider":                      tinkerbellProvider,
+		"NutanixProviderVersion":                          bundle.Nutanix.Version,
 		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,
 		"KubeadmControlPlaneProviderVersion":              bundle.ControlPlane.Version,
 		"KubeadmBootstrapProviderVersion":                 bundle.Bootstrap.Version,
@@ -307,6 +338,8 @@ var providerNamespaces = map[string]string{
 	constants.DockerProviderName:     constants.CapdSystemNamespace,
 	constants.CloudStackProviderName: constants.CapcSystemNamespace,
 	constants.AWSProviderName:        constants.CapaSystemNamespace,
+	constants.SnowProviderName:       constants.CapasSystemNamespace,
+	constants.NutanixProviderName:    constants.CapxSystemNamespace,
 	etcdadmBootstrapProviderName:     constants.EtcdAdmBootstrapProviderSystemNamespace,
 	etcdadmControllerProviderName:    constants.EtcdAdmControllerSystemNamespace,
 	kubeadmBootstrapProviderName:     constants.CapiKubeadmBootstrapSystemNamespace,

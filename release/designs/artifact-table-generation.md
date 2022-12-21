@@ -51,15 +51,18 @@ The following schema will be used to define project artifacts as a Go struct:
 
 ```Go
 type AssetConfig struct {
-	ProjectName     string               `json:"projectName,omitempty"`
-	ProjectPath     string               `json:"projectPath,omitempty"`
-	Archives        []*Archive           `json:"archives,omitempty"`
-	ArchivePrefix   string               `json:"archivePrefix,omitempty"`
-	Images          []*Image             `json:"images,omitempty"`
-	ImageRepoPrefix string               `json:"imageRepoPrefix,omitempty"`
-	ImageTagOptions []string             `json:"imageTagOptions,omitempty"`
-	Manifests       []*ManifestComponent `json:"manifests,omitempty"`
-	NoGitTag        bool                 `json:"noGitTag,omitempty"`
+	ProjectName                    string
+	ProjectPath                    string
+	Archives                       []*Archive
+	Images                         []*Image
+	ImageRepoPrefix                string
+	ImageTagOptions                []string
+	Manifests                      []*ManifestComponent
+	NoGitTag                       bool
+	HasReleaseBranches             bool
+	HasSeparateTagPerReleaseBranch bool
+	OnlyForDevRelease              bool
+	AssignEksATag                  bool
 }
 ```
 

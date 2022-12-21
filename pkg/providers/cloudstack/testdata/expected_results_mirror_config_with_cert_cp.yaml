@@ -11,12 +11,15 @@ spec:
       cidrBlocks: [192.168.0.0/16]
     services:
       cidrBlocks: [10.96.0.0/12]
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
     name: test
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackCluster
     name: test
   managedExternalEtcdRef:
@@ -24,7 +27,7 @@ spec:
     kind: EtcdadmCluster
     name: test-etcd
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackCluster
 metadata:
   name: test
@@ -33,25 +36,19 @@ spec:
   controlPlaneEndpoint:
     host: 1.2.3.4
     port: 6443
-  zones:
-    - network:
-        name: net1
+  failureDomains:
+  - name: default-az-0
+    zone:
+      id: 
       name: zone1
-  domain: domain1
-  account: admin
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: CloudStackMachineTemplate
-metadata:
-  name: test-control-plane-template-1234567890000
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
+      network:
+        id: 
+        name: net1
+    domain: domain1
+    account: admin
+    acsEndpoint:
+      name: global
+      namespace: eksa-system
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -61,7 +58,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: CloudStackMachineTemplate
       name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
@@ -141,7 +138,7 @@ spec:
               value: "2"
             - name: address
               value: 1.2.3.4
-            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
             imagePullPolicy: IfNotPresent
             name: kube-vip
             resources: {}
@@ -338,13 +335,13 @@ spec:
         9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
         -----END CERTIFICATE-----
       owner: root:root
-      path: "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+      path: "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
     - content: |
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://1.2.3.4"]
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4".tls]
-            ca_file = "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+            endpoint = ["https://1.2.3.4:443"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+            ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
       owner: root:root
       path: "/etc/containerd/config_append.toml"
     initConfiguration:
@@ -355,8 +352,7 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
-        taints: []
+        name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -365,18 +361,17 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
-        taints: []
+        name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
-    - hostname "{{ ds.meta_data.local_hostname }}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -395,18 +390,23 @@ metadata:
 spec:
   replicas: 3
   etcdadmConfigSpec:
-    etcdadmBuiltin: true
+    etcdadmBuiltin: false
     format: cloud-config
     cloudInitConfig:
       version: 3.4.16
       installDir: "/usr/bin"
+    etcdadmInstallCommands:
+      - echo this line exists so that etcdadmInstallCommands is not empty
+      - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
+      - echo that preEtcdadmCommands not run unless etcdadmBuiltin is false
+      - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
     preEtcdadmCommands:
     - swapoff -a
-    - hostname "{{ ds.meta_data.local_hostname }}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
@@ -414,7 +414,7 @@ spec:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
     registryMirror:
-      endpoint: 1.2.3.4
+      endpoint: 1.2.3.4:443
       caCert: |
         -----BEGIN CERTIFICATE-----
         MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
@@ -434,19 +434,55 @@ spec:
         9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
         -----END CERTIFICATE-----
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackMachineTemplate
     name: test-etcd-template-1234567890000
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
-  name: test-etcd-template-1234567890000
-  namespace: 'eksa-system'
+  creationTimestamp: null
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
 spec:
   template:
+    metadata:
+      creationTimestamp: null
     spec:
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
       offering:
         name: m4-large
+      sshKey: ""
       template:
         name: centos7-k8s-118
+
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: CloudStackMachineTemplate
+metadata:
+  creationTimestamp: null
+  name: test-etcd-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---

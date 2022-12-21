@@ -11,16 +11,19 @@ spec:
       cidrBlocks: [192.168.0.0/16]
     services:
       cidrBlocks: [10.96.0.0/12]
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
     name: test
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackCluster
     name: test
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackCluster
 metadata:
   name: test
@@ -29,25 +32,19 @@ spec:
   controlPlaneEndpoint:
     host: 1.2.3.4
     port: 6443
-  zones:
-    - network:
-        name: net1
+  failureDomains:
+  - name: default-az-0
+    zone:
+      id: 
       name: zone1
-  domain: domain1
-  account: admin
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: CloudStackMachineTemplate
-metadata:
-  name: test-control-plane-template-1234567890000
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
+      network:
+        id: 
+        name: net1
+    domain: domain1
+    account: admin
+    acsEndpoint:
+      name: global
+      namespace: eksa-system
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -57,7 +54,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: CloudStackMachineTemplate
       name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
@@ -137,7 +134,7 @@ spec:
               value: "2"
             - name: address
               value: 1.2.3.4
-            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
             imagePullPolicy: IfNotPresent
             name: kube-vip
             resources: {}
@@ -323,8 +320,7 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
-        taints: []
+        name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -333,15 +329,14 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.local_hostname }}'
-        taints: []
+        name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a
-    - hostname "{{ ds.meta_data.local_hostname }}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -351,3 +346,28 @@ spec:
     format: cloud-config
   replicas: 3
   version: v1.21.2-eks-1-21-4
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: CloudStackMachineTemplate
+metadata:
+  creationTimestamp: null
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---
