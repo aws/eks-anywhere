@@ -69,6 +69,10 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
 	}
 
+	if config.Spec.PhysicalNetworkConnector != SFPPlus && config.Spec.PhysicalNetworkConnector != QSFP && config.Spec.PhysicalNetworkConnector != RJ45 {
+		return fmt.Errorf("SnowMachineConfig PhysicalNetworkConnector %s is not supported, please use one of the following: %s, %s, %s ", config.Spec.PhysicalNetworkConnector, SFPPlus, QSFP, RJ45)
+	}
+
 	if len(config.Spec.Devices) == 0 {
 		return errors.New("SnowMachineConfig Devices must contain at least one device IP")
 	}
