@@ -9,7 +9,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -798,12 +797,12 @@ func TestParseConfigForSnow(t *testing.T) {
 						Name: "ip-pool-1",
 					},
 					Spec: anywherev1.SnowIPPoolSpec{
-						Pools: []snowv1.IPPool{
+						Pools: []anywherev1.IPPool{
 							{
-								IPStart: ptr.String("start-1"),
-								IPEnd:   ptr.String("end-1"),
-								Subnet:  ptr.String("subnet-1"),
-								Gateway: ptr.String("gateway-1"),
+								IPStart: "start-1",
+								IPEnd:   "end-1",
+								Subnet:  "subnet-1",
+								Gateway: "gateway-1",
 							},
 						},
 					},
@@ -817,12 +816,12 @@ func TestParseConfigForSnow(t *testing.T) {
 						Name: "ip-pool-2",
 					},
 					Spec: anywherev1.SnowIPPoolSpec{
-						Pools: []snowv1.IPPool{
+						Pools: []anywherev1.IPPool{
 							{
-								IPStart: ptr.String("start-2"),
-								IPEnd:   ptr.String("end-2"),
-								Subnet:  ptr.String("subnet-2"),
-								Gateway: ptr.String("gateway-2"),
+								IPStart: "start-2",
+								IPEnd:   "end-2",
+								Subnet:  "subnet-2",
+								Gateway: "gateway-2",
 							},
 						},
 					},

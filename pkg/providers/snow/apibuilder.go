@@ -216,7 +216,21 @@ func (p CAPASIPPools) addPools(dnis []v1alpha1.SnowDirectNetworkInterface, m map
 	}
 }
 
+func buildSnowIPPool(pool v1alpha1.IPPool) snowv1.IPPool {
+	return snowv1.IPPool{
+		IPStart: &pool.IPStart,
+		IPEnd:   &pool.IPEnd,
+		Gateway: &pool.Gateway,
+		Subnet:  &pool.Subnet,
+	}
+}
+
 func toAWSSnowIPPool(pool *v1alpha1.SnowIPPool) *snowv1.AWSSnowIPPool {
+	snowPools := make([]snowv1.IPPool, 0, len(pool.Spec.Pools))
+	for _, p := range pool.Spec.Pools {
+		snowPools = append(snowPools, buildSnowIPPool(p))
+	}
+
 	return &snowv1.AWSSnowIPPool{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterapi.InfrastructureAPIVersion(),
@@ -227,7 +241,7 @@ func toAWSSnowIPPool(pool *v1alpha1.SnowIPPool) *snowv1.AWSSnowIPPool {
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: snowv1.AWSSnowIPPoolSpec{
-			IPPools: pool.Spec.Pools,
+			IPPools: snowPools,
 		},
 	}
 }
