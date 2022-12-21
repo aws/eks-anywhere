@@ -17,6 +17,7 @@ func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
 	got := wantEtcdCluster()
 	v := "0.0.1"
 	want := got.DeepCopy()
+	want.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	want.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
 		Version:    v,
 		InstallDir: "/usr/bin",

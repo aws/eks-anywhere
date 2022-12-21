@@ -303,7 +303,6 @@ func EtcdadmCluster(clusterSpec *cluster.Spec, infrastructureTemplate APIObject)
 			Replicas: &replicas,
 			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
 				EtcdadmBuiltin: true,
-				Format:         etcdbootstrapv1.Format("cloud-config"),
 				CipherSuites:   crypto.SecureCipherSuitesString(),
 			},
 			InfrastructureTemplate: v1.ObjectReference{
