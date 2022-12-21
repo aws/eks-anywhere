@@ -521,7 +521,6 @@ func wantEtcdCluster() *etcdv1.EtcdadmCluster {
 			Replicas: &replicas,
 			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
 				EtcdadmBuiltin: true,
-				Format:         etcdbootstrapv1.Format("cloud-config"),
 				CipherSuites:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 			},
 			InfrastructureTemplate: v1.ObjectReference{

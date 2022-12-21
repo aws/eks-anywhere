@@ -872,7 +872,6 @@ func wantEtcdCluster() *etcdv1.EtcdadmCluster {
 			Replicas: &replicas,
 			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
 				EtcdadmBuiltin: true,
-				Format:         etcdbootstrapv1.Format("cloud-config"),
 				CipherSuites:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 			},
 			InfrastructureTemplate: v1.ObjectReference{
@@ -886,6 +885,7 @@ func wantEtcdCluster() *etcdv1.EtcdadmCluster {
 
 func wantEtcdClusterUbuntu() *etcdv1.EtcdadmCluster {
 	etcd := wantEtcdCluster()
+	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	etcd.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
 		Version:    "3.4.16",
 		InstallDir: "/usr/bin",
@@ -902,6 +902,7 @@ func wantEtcdClusterUbuntu() *etcdv1.EtcdadmCluster {
 
 func wantEtcdClusterBottlerocket() *etcdv1.EtcdadmCluster {
 	etcd := wantEtcdCluster()
+	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("bottlerocket")
 	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
 		EtcdImage:      "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
 		BootstrapImage: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",

@@ -6,6 +6,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -90,6 +91,7 @@ func SetBottlerocketControlContainerImageInKubeadmConfigTemplate(kct *bootstrapv
 
 // SetBottlerocketInEtcdCluster adds bottlerocket config in etcdadmCluster.
 func SetBottlerocketInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *cluster.VersionsBundle) {
+	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format(anywherev1.Bottlerocket)
 	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
 		EtcdImage:      versionsBundle.KubeDistro.EtcdImage.VersionedImage(),
 		BootstrapImage: versionsBundle.BottleRocketHostContainers.KubeadmBootstrap.VersionedImage(),
