@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func TestVSphereKubernetes124BottlerocketAndAndRemoveWorkerNodeGroups(t *testing.T) {
+func TestVSphereKubernetes124BottlerocketAndRemoveWorkerNodeGroups(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			"worker-1",
@@ -38,6 +38,45 @@ func TestVSphereKubernetes124BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 	runSimpleUpgradeFlow(
 		test,
 		anywherev1.Kube124,
+		framework.WithClusterUpgrade(
+			api.RemoveWorkerNodeGroup("workers-2"),
+			api.WithWorkerNodeGroup("workers-1", api.WithCount(1)),
+		),
+		provider.WithNewVSphereWorkerNodeGroup(
+			"worker-1",
+			framework.WithWorkerNodeGroup(
+				"workers-3",
+				api.WithCount(1),
+			),
+		),
+	)
+}
+
+func TestVSphereKubernetes124UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereWorkerNodeGroup(
+			"worker-1",
+			framework.WithWorkerNodeGroup("workers-1", api.WithCount(2)),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			"worker-2",
+			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
+		),
+		framework.WithUbuntu124(),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(anywherev1.Kube124),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+		),
+	)
+
+	runUpgradeFlowWithAPI(
+		test,
 		framework.WithClusterUpgrade(
 			api.RemoveWorkerNodeGroup("workers-2"),
 			api.WithWorkerNodeGroup("workers-1", api.WithCount(1)),
