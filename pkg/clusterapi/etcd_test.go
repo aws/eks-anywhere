@@ -55,9 +55,10 @@ func TestSetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(t *testing.T
 	}
 	got := wantKubeadmControlPlane()
 	got.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
-		CAFile:   "/var/lib/kubeadm/pki/etcd/ca.crt",
-		CertFile: "/var/lib/kubeadm/pki/server-etcd-client.crt",
-		KeyFile:  "/var/lib/kubeadm/pki/apiserver-etcd-client.key",
+		Endpoints: []string{},
+		CAFile:    "/var/lib/kubeadm/pki/etcd/ca.crt",
+		CertFile:  "/var/lib/kubeadm/pki/server-etcd-client.crt",
+		KeyFile:   "/var/lib/kubeadm/pki/apiserver-etcd-client.key",
 	}
 	want := got.DeepCopy()
 	clusterapi.SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(got, etcdConfig)
