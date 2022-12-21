@@ -235,7 +235,8 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anyw
 	return kct, nil
 }
 
-func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) clusterv1.MachineDeployment {
+// MachineDeployment builds a machineDeployment based on an eks-a cluster spec, workerNodeGroupConfig, bootstrapObject and infrastructureObject.
+func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) *clusterv1.MachineDeployment {
 	clusterName := clusterSpec.Cluster.GetName()
 	replicas := int32(*workerNodeGroupConfig.Count)
 	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
@@ -283,7 +284,7 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 
 	ConfigureAutoscalingInMachineDeployment(md, workerNodeGroupConfig.AutoScalingConfiguration)
 
-	return *md
+	return md
 }
 
 // EtcdadmCluster builds a etcdadmCluster based on an eks-a cluster spec and infrastructureTemplate.

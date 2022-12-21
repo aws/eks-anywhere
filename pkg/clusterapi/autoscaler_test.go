@@ -18,7 +18,7 @@ func TestConfigureAutoscalingInMachineDeployment(t *testing.T) {
 	tests := []struct {
 		name              string
 		autoscalingConfig *v1alpha1.AutoScalingConfiguration
-		want              clusterv1.MachineDeployment
+		want              *clusterv1.MachineDeployment
 	}{
 		{
 			name:              "no autoscaling config",
@@ -31,7 +31,7 @@ func TestConfigureAutoscalingInMachineDeployment(t *testing.T) {
 				MinCount: 1,
 				MaxCount: 3,
 			},
-			want: clusterv1.MachineDeployment{
+			want: &clusterv1.MachineDeployment{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "cluster.x-k8s.io/v1beta1",
 					Kind:       "MachineDeployment",
@@ -86,7 +86,7 @@ func TestConfigureAutoscalingInMachineDeployment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			got := wantMachineDeployment()
-			clusterapi.ConfigureAutoscalingInMachineDeployment(&got, tt.autoscalingConfig)
+			clusterapi.ConfigureAutoscalingInMachineDeployment(got, tt.autoscalingConfig)
 			g.Expect(got).To(Equal(tt.want))
 		})
 	}
