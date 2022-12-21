@@ -435,12 +435,12 @@ func givenIPPools() map[string]*anywherev1.SnowIPPool {
 				Namespace: "test-namespace",
 			},
 			Spec: anywherev1.SnowIPPoolSpec{
-				Pools: []snowv1.IPPool{
+				Pools: []anywherev1.IPPool{
 					{
-						IPStart: ptr.String("start"),
-						IPEnd:   ptr.String("end"),
-						Gateway: ptr.String("gateway"),
-						Subnet:  ptr.String("subnet"),
+						IPStart: "start",
+						IPEnd:   "end",
+						Gateway: "gateway",
+						Subnet:  "subnet",
 					},
 				},
 			},

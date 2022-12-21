@@ -39,23 +39,28 @@ spec:
               pools:
                 description: IPPools defines a list of ip pool for the DNI.
                 items:
-                  description: IPPool is the configuration of static ips used for
-                    machine's ip.
+                  description: IPPool defines an ip pool with ip range, subnet and
+                    gateway.
                   properties:
                     gateway:
-                      description: Gateway is the gateway of this subnet. Used for
-                        routing purpose
+                      description: Gateway is the gateway of the subnet for routing
+                        purpose.
                       type: string
                     ipEnd:
-                      description: IPEnd is the end of an ip range
+                      description: IPEnd is the end address of an ip range.
                       type: string
                     ipStart:
-                      description: IPStart is the start of an ip range
+                      description: IPStart is the start address of an ip range.
                       type: string
                     subnet:
-                      description: Subnet is customers' network subnet, we can use
-                        it to determine if two ip addresses are in the same subnet.
+                      description: Subnet is used to determine whether an ip is within
+                        subnet.
                       type: string
+                  required:
+                  - gateway
+                  - ipEnd
+                  - ipStart
+                  - subnet
                   type: object
                 type: array
             type: object

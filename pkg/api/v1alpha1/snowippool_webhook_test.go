@@ -7,8 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestSnowIPPoolValidateCreate(t *testing.T) {
@@ -35,32 +33,32 @@ func TestSnowIPPoolValidateUpdateIPPoolsSame(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	old := new.DeepCopy()
-	new.Spec.Pools = []snowv1.IPPool{
+	new.Spec.Pools = []v1alpha1.IPPool{
 		{
-			IPStart: nil,
-			IPEnd:   ptr.String("end-2"),
-			Subnet:  ptr.String("subnet-2"),
-			Gateway: ptr.String("gateway-2"),
+			IPStart: "start-2",
+			IPEnd:   "end-2",
+			Subnet:  "subnet-2",
+			Gateway: "gateway-2",
 		},
 		{
-			IPStart: ptr.String("start-1"),
-			IPEnd:   nil,
-			Subnet:  ptr.String("subnet-1"),
-			Gateway: nil,
+			IPStart: "start-1",
+			IPEnd:   "end-1",
+			Subnet:  "subnet-1",
+			Gateway: "gateway-1",
 		},
 	}
-	old.Spec.Pools = []snowv1.IPPool{
+	old.Spec.Pools = []v1alpha1.IPPool{
 		{
-			IPStart: ptr.String("start-1"),
-			IPEnd:   nil,
-			Subnet:  ptr.String("subnet-1"),
-			Gateway: nil,
+			IPStart: "start-1",
+			IPEnd:   "end-1",
+			Subnet:  "subnet-1",
+			Gateway: "gateway-1",
 		},
 		{
-			IPStart: nil,
-			IPEnd:   ptr.String("end-2"),
-			Subnet:  ptr.String("subnet-2"),
-			Gateway: ptr.String("gateway-2"),
+			IPStart: "start-2",
+			IPEnd:   "end-2",
+			Subnet:  "subnet-2",
+			Gateway: "gateway-2",
 		},
 	}
 	g.Expect(new.ValidateUpdate(old)).To(Succeed())
@@ -70,9 +68,9 @@ func TestSnowIPPoolValidateUpdateIPPoolsLengthDiff(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	old := new.DeepCopy()
-	old.Spec.Pools = []snowv1.IPPool{
+	old.Spec.Pools = []v1alpha1.IPPool{
 		{
-			IPStart: ptr.String("start"),
+			IPStart: "start",
 		},
 	}
 	g.Expect(new.ValidateUpdate(old)).To(MatchError(ContainSubstring("spec.pools: Forbidden: field is immutable")))
@@ -82,20 +80,20 @@ func TestSnowIPPoolValidateUpdateIPPoolsDiff(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	old := new.DeepCopy()
-	new.Spec.Pools = []snowv1.IPPool{
+	new.Spec.Pools = []v1alpha1.IPPool{
 		{
-			IPStart: ptr.String("start-1"),
-			IPEnd:   nil,
-			Subnet:  ptr.String("subnet-1"),
-			Gateway: nil,
+			IPStart: "start-1",
+			IPEnd:   "end-1",
+			Subnet:  "subnet-1",
+			Gateway: "gateway-1",
 		},
 	}
-	old.Spec.Pools = []snowv1.IPPool{
+	old.Spec.Pools = []v1alpha1.IPPool{
 		{
-			IPStart: nil,
-			IPEnd:   ptr.String("end-2"),
-			Subnet:  ptr.String("subnet-2"),
-			Gateway: ptr.String("gateway-2"),
+			IPStart: "start-2",
+			IPEnd:   "end-2",
+			Subnet:  "subnet-2",
+			Gateway: "gateway-2",
 		},
 	}
 	g.Expect(new.ValidateUpdate(old)).To(MatchError(ContainSubstring("spec.pools: Forbidden: field is immutable")))

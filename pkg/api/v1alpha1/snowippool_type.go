@@ -2,14 +2,27 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 // SnowIPPoolSpec defines the desired state of SnowIPPool.
 type SnowIPPoolSpec struct {
 	// IPPools defines a list of ip pool for the DNI.
-	Pools []snowv1.IPPool `json:"pools,omitempty"`
+	Pools []IPPool `json:"pools,omitempty"`
+}
+
+// IPPool defines an ip pool with ip range, subnet and gateway.
+type IPPool struct {
+	// IPStart is the start address of an ip range.
+	IPStart string `json:"ipStart"`
+
+	// IPEnd is the end address of an ip range.
+	IPEnd string `json:"ipEnd"`
+
+	// Subnet is used to determine whether an ip is within subnet.
+	Subnet string `json:"subnet"`
+
+	// Gateway is the gateway of the subnet for routing purpose.
+	Gateway string `json:"gateway"`
 }
 
 // SnowIPPoolStatus defines the observed state of SnowIPPool.
