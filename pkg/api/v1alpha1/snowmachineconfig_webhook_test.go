@@ -25,6 +25,7 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 
 	sOld := snowMachineConfig()
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
+	sOld.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
 	sOld.Spec.ContainersVolume = &snowv1.Volume{
@@ -58,6 +59,7 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 	sOld := snowMachineConfig()
 	sOld.Spec.AMIID = "testAMI"
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
+	sOld.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
 	sOld.Spec.ContainersVolume = &snowv1.Volume{
@@ -83,6 +85,7 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.Devices = []string{"1.2.3.4"}
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 	sNew.Spec.ContainersVolume = &snowv1.Volume{
@@ -108,6 +111,7 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
 	g.Expect(sNew.ValidateUpdate(&sOld)).To(MatchError(ContainSubstring("Devices must contain at least one device IP")))

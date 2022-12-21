@@ -9,6 +9,7 @@ import (
 const (
 	SFPPlus PhysicalNetworkConnectorType = "SFP_PLUS"
 	QSFP    PhysicalNetworkConnectorType = "QSFP"
+	RJ45    PhysicalNetworkConnectorType = "RJ45"
 
 	SbeCLarge   SnowInstanceType = "sbe-c.large"
 	SbeCXLarge  SnowInstanceType = "sbe-c.xlarge"
@@ -35,7 +36,7 @@ type SnowMachineConfigSpec struct {
 	InstanceType SnowInstanceType `json:"instanceType,omitempty"`
 
 	// PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
-	// Valid values: "SFP_PLUS" (default) and "QSFP".
+	// Valid values: "SFP_PLUS" (default), "QSFP" and "RJ45".
 	PhysicalNetworkConnector PhysicalNetworkConnectorType `json:"physicalNetworkConnector,omitempty"`
 
 	// SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
@@ -61,32 +62,28 @@ type SnowNetwork struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=8
 	DirectNetworkInterfaces []SnowDirectNetworkInterface `json:"directNetworkInterfaces,omitempty"`
-
-	// DNS specifies a list of static IPs.
-	// +optional
-	DNS []string `json:"dns,omitempty"`
 }
 
 // SnowDirectNetworkInterface defines a direct network interface (DNI) configuration.
 type SnowDirectNetworkInterface struct {
-	// Index is the index number of DNI.
+	// Index is the index number of DNI used to clarify the position in the list. Usually starts with 1.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=8
 	// +optional
 	Index int `json:"index,omitempty"`
 
-	// VlanID is the vlan id assigned by the user.
+	// VlanID is the vlan id assigned by the user for the DNI.
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=4095
 	// +optional
 	VlanID *int32 `json:"vlanID,omitempty"`
 
-	// DHCP decides whether the ip assigned by using DHCP.
+	// DHCP defines whether DHCP is used to assign ip for the DNI.
 	// +optional
 	DHCP bool `json:"dhcp,omitempty"`
 
-	// IPPool contains a reference to the snow ip pool.
-	// When specified, this interface will use a random IP from that pool.
+	// IPPool contains a reference to a snow ip pool which provides a range of ip addresses.
+	// When specified, an ip address selected from the pool is allocated to this DNI.
 	// +optional
 	IPPoolRef *Ref `json:"ipPoolRef,omitempty"`
 

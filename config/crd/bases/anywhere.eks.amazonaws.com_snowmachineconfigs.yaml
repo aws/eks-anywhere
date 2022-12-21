@@ -96,18 +96,20 @@ spec:
                         interface (DNI) configuration.
                       properties:
                         dhcp:
-                          description: DHCP decides whether the ip assigned by using
-                            DHCP.
+                          description: DHCP defines whether DHCP is used to assign
+                            ip for the DNI.
                           type: boolean
                         index:
-                          description: Index is the index number of DNI.
+                          description: Index is the index number of DNI used to clarify
+                            the position in the list. Usually starts with 1.
                           maximum: 8
                           minimum: 1
                           type: integer
                         ipPoolRef:
-                          description: IPPool contains a reference to the snow ip
-                            pool. When specified, this interface will use a random
-                            IP from that pool.
+                          description: IPPool contains a reference to a snow ip pool
+                            which provides a range of ip addresses. When specified,
+                            an ip address selected from the pool is allocated to this
+                            DNI.
                           properties:
                             kind:
                               type: string
@@ -119,7 +121,8 @@ spec:
                             or not.
                           type: boolean
                         vlanID:
-                          description: VlanID is the vlan id assigned by the user.
+                          description: VlanID is the vlan id assigned by the user
+                            for the DNI.
                           format: int32
                           maximum: 4095
                           minimum: 0
@@ -127,11 +130,6 @@ spec:
                       type: object
                     maxItems: 8
                     minItems: 1
-                    type: array
-                  dns:
-                    description: DNS specifies a list of static IPs.
-                    items:
-                      type: string
                     type: array
                 type: object
               osFamily:
@@ -141,7 +139,7 @@ spec:
               physicalNetworkConnector:
                 description: 'PhysicalNetworkConnector is the physical network connector
                   type to use for creating direct network interfaces (DNI). Valid
-                  values: "SFP_PLUS" (default) and "QSFP".'
+                  values: "SFP_PLUS" (default), "QSFP" and "RJ45".'
                 type: string
               sshKeyName:
                 description: SSHKeyName is the name of the ssh key defined in the
