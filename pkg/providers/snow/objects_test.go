@@ -77,11 +77,11 @@ func TestControlPlaneObjectsWithIPPools(t *testing.T) {
 		},
 	}
 	mt := wantSnowMachineTemplate()
-	mt.Spec.Template.Spec.Network = &snowv1.AWSSnowNetwork{
+	mt.Spec.Template.Spec.Network = snowv1.AWSSnowNetwork{
 		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
 			{
 				Index: 1,
-				IPPool: &snowv1.AWSSnowIPPoolReference{
+				IPPool: &v1.ObjectReference{
 					Kind: snow.SnowIPPoolKind,
 					Name: "ip-pool-1",
 				},
@@ -412,11 +412,11 @@ func TestWorkersObjectsWithIPPools(t *testing.T) {
 		},
 	}
 	mt := wantSnowMachineTemplate()
-	mt.Spec.Template.Spec.Network = &snowv1.AWSSnowNetwork{
+	mt.Spec.Template.Spec.Network = snowv1.AWSSnowNetwork{
 		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
 			{
 				Index: 1,
-				IPPool: &snowv1.AWSSnowIPPoolReference{
+				IPPool: &v1.ObjectReference{
 					Kind: snow.SnowIPPoolKind,
 					Name: "ip-pool-1",
 				},
@@ -618,15 +618,8 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 
 	md := wantMachineDeployment()
 	md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-2"
-	// TODO: the clusterapi providerMachineTemplate name change logic does not consider
-	// the kubeadmConfigTemplate name change, whereas in original snow code the machineTemplate
-	// name depends on kubeadmConfigTemplate: when kubeadmConfigTemplate is updated, machineTemplate
-	// name needs to be updated as well. Need to validate the logic and potentially fix the test
-	// when name change logic is updated in clusterapi workers.go
-	// md.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-2"
 	kct := wantKubeadmConfigTemplate()
 	kct.SetName("snow-test-md-0-2")
-	// mt.SetName("snow-test-md-0-2")
 
 	g.Expect(err).To(Succeed())
 	g.Expect(got).To(BeComparableTo([]kubernetes.Object{kct, md, mt}))

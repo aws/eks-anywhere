@@ -233,10 +233,10 @@ func toAWSSnowIPPool(pool *v1alpha1.SnowIPPool) *snowv1.AWSSnowIPPool {
 }
 
 func buildDNI(dni v1alpha1.SnowDirectNetworkInterface, capasPools CAPASIPPools) snowv1.AWSSnowDirectNetworkInterface {
-	var ipPoolRef *snowv1.AWSSnowIPPoolReference
+	var ipPoolRef *v1.ObjectReference
 	if dni.IPPoolRef != nil {
 		ipPool := capasPools[dni.IPPoolRef.Name]
-		ipPoolRef = &snowv1.AWSSnowIPPoolReference{
+		ipPoolRef = &v1.ObjectReference{
 			Kind: ipPool.Kind,
 			Name: ipPool.Name,
 		}
@@ -283,9 +283,8 @@ func MachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig, cap
 					PhysicalNetworkConnectorType: &networkConnector,
 					Devices:                      machineConfig.Spec.Devices,
 					ContainersVolume:             machineConfig.Spec.ContainersVolume,
-					Network: &snowv1.AWSSnowNetwork{
+					Network: snowv1.AWSSnowNetwork{
 						DirectNetworkInterfaces: dnis,
-						DNS:                     machineConfig.Spec.Network.DNS,
 					},
 					OSFamily: (*snowv1.OSFamily)(&machineConfig.Spec.OSFamily),
 				},

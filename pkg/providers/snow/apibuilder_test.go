@@ -760,7 +760,7 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 						"1.2.3.5",
 					},
 					OSFamily: &osFamily,
-					Network: &snowv1.AWSSnowNetwork{
+					Network: snowv1.AWSSnowNetwork{
 						DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
 							{
 								Index:   1,
@@ -814,7 +814,7 @@ func TestSnowMachineTemplateWithNetwork(t *testing.T) {
 			{
 				Index: 1,
 				DHCP:  false,
-				IPPool: &snowv1.AWSSnowIPPoolReference{
+				IPPool: &v1.ObjectReference{
 					Kind: "AWSSnowIPPool",
 					Name: "ip-pool",
 				},
@@ -849,7 +849,7 @@ func TestSnowMachineTemplateWithNetwork(t *testing.T) {
 	want := wantSnowMachineTemplate()
 	want.SetName("snow-test-control-plane-1")
 	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
-	want.Spec.Template.Spec.Network = &network
+	want.Spec.Template.Spec.Network = network
 	tt.Expect(got).To(BeComparableTo(want))
 }
 

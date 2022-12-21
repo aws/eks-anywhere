@@ -18,6 +18,7 @@ limitations under the License.
 package snow
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/errors"
@@ -149,7 +150,7 @@ type AWSSnowMachineSpec struct {
 
 	// PhysicalNetworkConnectorType is the physical network connector type to use for creating direct network interfaces. Valid values are a physical network connector type (SFP_PLUS or QSFP), or omitted (cluster-api selects a valid physical network interface, default is SFP_PLUS)
 	// +optional
-	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP
+	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP;RJ45
 	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
 
 	// Devices is a device ip list which is assigned by customer to provision machines
@@ -162,8 +163,8 @@ type AWSSnowMachineSpec struct {
 	OSFamily *OSFamily `json:"osFamily,omitempty"`
 
 	// Network is the DNI and ip address settings for this machine
-	// +optional
-	Network *AWSSnowNetwork `json:"network,omitempty"`
+	// +kubebuilder:validation:Required
+	Network AWSSnowNetwork `json:"network"`
 
 	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
 	// TODO: Evaluate the need or remove completely.
@@ -177,48 +178,38 @@ type AWSSnowMachineSpec struct {
 	// Tenancy string `json:"tenancy,omitempty"`
 }
 
-// AWSSnowNetwork is network configuration including DNI and DNS now. We can add more in the future if need
+// AWSSnowNetwork is network configuration including DNI. We can add more in the future if need
 type AWSSnowNetwork struct {
-	// DirectNetworkInterfaces is the configuration requirements for DNIs
+	// DirectNetworkInterfaces is a DNI configuration list what customers want
+	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=8
-	DirectNetworkInterfaces []AWSSnowDirectNetworkInterface `json:"directNetworkInterfaces,omitempty"`
-	// DNS is just for bottlerocket static ip config
-	// +optional
-	DNS []string `json:"dns,omitempty"`
+	DirectNetworkInterfaces []AWSSnowDirectNetworkInterface `json:"directNetworkInterfaces"`
 }
 
 // AWSSnowDirectNetworkInterface is configuration of DNIs specified by customers.
 type AWSSnowDirectNetworkInterface struct {
-	// Index is the index number of DNI
+	// Index is the index number of DNI, usually starts from 1 which can clarify DNIs in the list
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=8
 	// +optional
 	Index int `json:"index,omitempty"`
-	// VlanID is the vlan ID assigned by the user
+	// VlanID is the vlan ID assigned by the user to this DNI
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=4095
 	// +optional
 	VlanID *int32 `json:"vlanID,omitempty"`
-	// DHCP is whether we assign ip using DHCP for this DNI
+	// DHCP shows whether we assign ip using DHCP for this DNI
+	// If DHCP is true, CAPAS will alloacate ip address to this DNI using DHCP
 	// +optional
 	DHCP bool `json:"dhcp,omitempty"`
-	// IPPool is the ip pool for this DNI if customers want to specify
+	// IPPool is an ip pool which provides a range of ip addresses
+	// If IPPool is not nil, we will allocate an ip address from this pool to this DNI
 	// +optional
-	IPPool *AWSSnowIPPoolReference `json:"ipPool,omitempty"`
+	IPPool *corev1.ObjectReference `json:"ipPool,omitempty"`
 	// Primary indicates whether the DNI is primary or not
 	// +optional
 	Primary bool `json:"primary,omitempty"`
-}
-
-// AWSSnowIPPoolReference contains enough information to let you locate the
-// typed referenced object inside the same namespace.
-// +structType=atomic
-type AWSSnowIPPoolReference struct {
-	// Kind is the type of resource being referenced
-	Kind string `json:"kind"`
-	// Name is the name of resource being referenced
-	Name string `json:"name"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
