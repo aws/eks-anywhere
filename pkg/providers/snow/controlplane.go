@@ -2,6 +2,7 @@ package snow
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
@@ -85,4 +86,28 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 	}
 
 	return cp, nil
+}
+
+// credentialsSecret generates the credentials secret(s) used for provisioning a snow cluster.
+// - eks-a credentials secret: user managed secret referred from snowdatacenterconfig identityRef
+// - snow credentials secret: eks-a creates, updates and deletes in eksa-system namespace. this secret is fully managed by eks-a. User shall treat it as a "read-only" object.
+func capasCredentialsSecret(clusterSpec *cluster.Spec) (*corev1.Secret, error) {
+	if clusterSpec.SnowCredentialsSecret == nil {
+		return nil, errors.New("snowCredentialsSecret in clusterSpec shall not be nil")
+	}
+
+	// we reconcile the snow credentials secret to be in sync with the eks-a credentials secret user manages.
+	// notice for cli upgrade, we handle the eks-a credentials secret update in a separate step - under provider.UpdateSecrets
+	// which runs before the actual cluster upgrade.
+	// for controller secret, the user is responsible for making sure the eks-a credentials secret is created and up to date.
+	credsB64, ok := clusterSpec.SnowCredentialsSecret.Data["credentials"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve credentials from secret [%s]", clusterSpec.SnowCredentialsSecret.GetName())
+	}
+	certsB64, ok := clusterSpec.SnowCredentialsSecret.Data["ca-bundle"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve ca-bundle from secret [%s]", clusterSpec.SnowCredentialsSecret.GetName())
+	}
+
+	return CAPASCredentialsSecret(clusterSpec, credsB64, certsB64), nil
 }
