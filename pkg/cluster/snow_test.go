@@ -504,3 +504,97 @@ func TestValidateSnowMachineRefExistsError(t *testing.T) {
 		MatchError(ContainSubstring("unable to find SnowMachineConfig worker-not-exists")),
 	)
 }
+
+func TestValidateSnowUnstackedEtcdWithDHCPError(t *testing.T) {
+	g := NewWithT(t)
+	c := &cluster.Config{
+		Cluster: &anywherev1.Cluster{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       anywherev1.ClusterKind,
+				APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "eksa-unit-test",
+				Namespace: "ns-1",
+			},
+			Spec: anywherev1.ClusterSpec{
+				DatacenterRef: anywherev1.Ref{
+					Kind: anywherev1.SnowDatacenterKind,
+				},
+				ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
+					MachineGroupRef: &anywherev1.Ref{
+						Name: "etcd-1",
+					},
+				},
+			},
+		},
+		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
+			"etcd-1": {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "etcd-1",
+				},
+				Spec: anywherev1.SnowMachineConfigSpec{
+					Network: anywherev1.SnowNetwork{
+						DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	g.Expect(cluster.ValidateConfig(c)).To(
+		MatchError(ContainSubstring("creating unstacked etcd machine with DHCP is not supported for snow")),
+	)
+}
+
+func TestValidateSnowUnstackedEtcdMissIPPoolError(t *testing.T) {
+	g := NewWithT(t)
+	c := &cluster.Config{
+		Cluster: &anywherev1.Cluster{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       anywherev1.ClusterKind,
+				APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "eksa-unit-test",
+				Namespace: "ns-1",
+			},
+			Spec: anywherev1.ClusterSpec{
+				DatacenterRef: anywherev1.Ref{
+					Kind: anywherev1.SnowDatacenterKind,
+				},
+				ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
+					MachineGroupRef: &anywherev1.Ref{
+						Name: "etcd-1",
+					},
+				},
+			},
+		},
+		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
+			"etcd-1": {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "etcd-1",
+				},
+				Spec: anywherev1.SnowMachineConfigSpec{
+					Network: anywherev1.SnowNetwork{
+						DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    false,
+								Primary: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	g.Expect(cluster.ValidateConfig(c)).To(
+		MatchError(ContainSubstring("snow machine config ip pool must be specified when using static IP")),
+	)
+}

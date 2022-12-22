@@ -77,6 +77,9 @@ func snowEntry() *ConfigManagerEntry {
 			func(c *Config) error {
 				return ValidateSnowMachineRefExists(c)
 			},
+			func(c *Config) error {
+				return validateSnowUnstackedEtcd(c)
+			},
 		},
 	}
 }
@@ -264,6 +267,28 @@ func ValidateSnowMachineRefExists(c *Config) error {
 	for _, machineRef := range c.Cluster.MachineConfigRefs() {
 		if machineRef.Kind == anywherev1.SnowMachineConfigKind && c.SnowMachineConfig(machineRef.Name) == nil {
 			return fmt.Errorf("unable to find SnowMachineConfig %s", machineRef.Name)
+		}
+	}
+	return nil
+}
+
+func validateSnowUnstackedEtcd(c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.SnowDatacenterKind {
+		return nil
+	}
+
+	if c.Cluster.Spec.ExternalEtcdConfiguration == nil || c.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
+		return nil
+	}
+
+	mc := c.SnowMachineConfig(c.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
+
+	for _, dni := range mc.Spec.Network.DirectNetworkInterfaces {
+		if dni.DHCP {
+			return errors.New("creating unstacked etcd machine with DHCP is not supported for snow. Please use static IP for DNI configuration")
+		}
+		if dni.IPPoolRef == nil {
+			return errors.New("snow machine config ip pool must be specified when using static IP")
 		}
 	}
 	return nil
