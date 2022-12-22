@@ -433,7 +433,6 @@ func TestNutanixValidatorValidateDatacenterConfigWithInvalidCreds(t *testing.T) 
 			} else {
 				assert.NoError(t, err, tc.name)
 			}
-
 		})
 	}
 }

@@ -62,6 +62,7 @@ func PrintLicense() {
 	fmt.Println(license)
 	fmt.Println(userMsgSeparator)
 }
+
 func PullLatestBundle(ctx context.Context, art string) ([]byte, error) {
 	puller := artifacts.NewRegistryPuller()
 
