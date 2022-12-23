@@ -22,13 +22,6 @@ func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
 		Version:    v,
 		InstallDir: "/usr/bin",
 	}
-	want.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = []string{
-		"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
-		"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
-		"echo \"127.0.0.1   localhost\" >>/etc/hosts",
-		"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
-		"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
-	}
 	clusterapi.SetUbuntuConfigInEtcdCluster(got, v)
 	g.Expect(got).To(Equal(want))
 }
