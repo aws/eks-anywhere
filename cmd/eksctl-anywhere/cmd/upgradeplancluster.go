@@ -105,17 +105,8 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	if componentChangeDiffs == nil {
 		componentChangeDiffs = &types.ChangeDiff{}
 	}
-
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
-	if componentChangeDiffs == nil {
-		componentChangeDiffs = &types.ChangeDiff{}
-	}
-
 	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
-	if componentChangeDiffs == nil {
-		componentChangeDiffs = &types.ChangeDiff{}
-	}
-
 	componentChangeDiffs.Append(cilium.ChangeDiff(currentSpec, newClusterSpec))
 
 	serializedDiff, err := serialize(componentChangeDiffs, output)
