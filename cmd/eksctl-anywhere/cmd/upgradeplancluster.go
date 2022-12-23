@@ -102,6 +102,9 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 
 	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
+	if componentChangeDiffs == nil {
+		componentChangeDiffs = &types.ChangeDiff{}
+	}
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
 	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
 	componentChangeDiffs.Append(cilium.ChangeDiff(currentSpec, newClusterSpec))
