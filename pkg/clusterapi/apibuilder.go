@@ -304,6 +304,7 @@ func EtcdadmCluster(clusterSpec *cluster.Spec, infrastructureTemplate APIObject)
 			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
 				EtcdadmBuiltin: true,
 				CipherSuites:   crypto.SecureCipherSuitesString(),
+				PreEtcdadmCommands: []string{},
 			},
 			InfrastructureTemplate: v1.ObjectReference{
 				APIVersion: infrastructureTemplate.GetObjectKind().GroupVersionKind().GroupVersion().String(),

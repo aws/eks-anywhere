@@ -520,8 +520,9 @@ func wantEtcdCluster() *etcdv1.EtcdadmCluster {
 		Spec: etcdv1.EtcdadmClusterSpec{
 			Replicas: &replicas,
 			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
-				EtcdadmBuiltin: true,
-				CipherSuites:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+				EtcdadmBuiltin:     true,
+				CipherSuites:       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+				PreEtcdadmCommands: []string{},
 			},
 			InfrastructureTemplate: v1.ObjectReference{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",

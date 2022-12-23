@@ -141,6 +141,9 @@ func EtcdadmCluster(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTempl
 
 	case v1alpha1.Ubuntu:
 		clusterapi.SetUbuntuConfigInEtcdCluster(etcd, clusterSpec.VersionsBundle.KubeDistro.EtcdVersion)
+		etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = append(etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands,
+			"/etc/eks/bootstrap.sh",
+		)
 
 	default:
 		log.Info("Warning: unsupported OS family when setting up EtcdadmCluster", "OS family", osFamily)

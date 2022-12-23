@@ -20,13 +20,6 @@ func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, version string) {
 		Version:    version,
 		InstallDir: "/usr/bin",
 	}
-	etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = []string{
-		"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
-		"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
-		"echo \"127.0.0.1   localhost\" >>/etc/hosts",
-		"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
-		"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
-	}
 }
 
 // SetEtcdConfigInCluster sets up the etcd config in CAPI Cluster.

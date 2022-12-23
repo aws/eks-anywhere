@@ -871,8 +871,9 @@ func wantEtcdCluster() *etcdv1.EtcdadmCluster {
 		Spec: etcdv1.EtcdadmClusterSpec{
 			Replicas: &replicas,
 			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
-				EtcdadmBuiltin: true,
-				CipherSuites:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+				EtcdadmBuiltin:     true,
+				CipherSuites:       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+				PreEtcdadmCommands: []string{},
 			},
 			InfrastructureTemplate: v1.ObjectReference{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
@@ -891,11 +892,7 @@ func wantEtcdClusterUbuntu() *etcdv1.EtcdadmCluster {
 		InstallDir: "/usr/bin",
 	}
 	etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = []string{
-		"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
-		"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
-		"echo \"127.0.0.1   localhost\" >>/etc/hosts",
-		"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
-		"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
+		"/etc/eks/bootstrap.sh",
 	}
 	return etcd
 }
