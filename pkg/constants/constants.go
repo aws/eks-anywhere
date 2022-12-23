@@ -54,14 +54,14 @@ const (
 	DefaultCuratedPackagesRegistryRegex = "783794618700.dkr.ecr.*.amazonaws.com"
 
 	// Provider specific env vars.
-	VSphereUsernameKey = "VSPHERE_USERNAME"
-	VSpherePasswordKey = "VSPHERE_PASSWORD"
-	GovcUsernameKey    = "GOVC_USERNAME"
-	GovcPasswordKey    = "GOVC_PASSWORD"
-	SnowCredentialsKey = "AWS_B64ENCODED_CREDENTIALS"
-	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
-	NutanixUsernameKey = "NUTANIX_USER"
-	NutanixPasswordKey = "NUTANIX_PASSWORD"
+	VSphereUsernameKey     = "VSPHERE_USERNAME"
+	VSpherePasswordKey     = "VSPHERE_PASSWORD"
+	GovcUsernameKey        = "GOVC_USERNAME"
+	GovcPasswordKey        = "GOVC_PASSWORD"
+	SnowCredentialsKey     = "AWS_B64ENCODED_CREDENTIALS"
+	SnowCertsKey           = "AWS_B64ENCODED_CA_BUNDLES"
+	NutanixUsernameKey     = "NUTANIX_USER"
+	NutanixPasswordKey     = "NUTANIX_PASSWORD"
 	EksaNutanixUsernameKey = "EKSA_NUTANIX_USERNAME"
 	EksaNutanixPasswordKey = "EKSA_NUTANIX_PASSWORD"
 
