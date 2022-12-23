@@ -19,7 +19,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	kubemock "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -424,7 +423,7 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 	}
 }
 
-func givenIPPools() map[string]*anywherev1.SnowIPPool {
+func givenIPPools() map[string]*v1alpha1.SnowIPPool {
 	return map[string]*v1alpha1.SnowIPPool{
 		"ip-pool-1": {
 			TypeMeta: metav1.TypeMeta{
@@ -434,8 +433,8 @@ func givenIPPools() map[string]*anywherev1.SnowIPPool {
 				Name:      "ip-pool-1",
 				Namespace: "test-namespace",
 			},
-			Spec: anywherev1.SnowIPPoolSpec{
-				Pools: []anywherev1.IPPool{
+			Spec: v1alpha1.SnowIPPoolSpec{
+				Pools: []v1alpha1.IPPool{
 					{
 						IPStart: "start",
 						IPEnd:   "end",
@@ -789,9 +788,187 @@ func TestDeleteResources(t *testing.T) {
 
 func TestUpgradeNeededFalse(t *testing.T) {
 	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient).Times(2)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowDatacenterConfig) error {
+			tt.clusterSpec.SnowDatacenter.DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-cp",
+			"test-namespace",
+			&v1alpha1.SnowMachineConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
+			tt.clusterSpec.SnowMachineConfig("test-cp").DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-wn",
+			"test-namespace",
+			&v1alpha1.SnowMachineConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
+			tt.clusterSpec.SnowMachineConfig("test-wn").DeepCopyInto(obj)
+			return nil
+		})
 	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
 	tt.Expect(err).To(Succeed())
 	tt.Expect(got).To(Equal(false))
+}
+
+func TestUpgradeNeededDatacenterChanged(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowDatacenterConfig) error {
+			return nil
+		})
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(true))
+}
+
+func TestUpgradeNeededDatacenterNil(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(true))
+}
+
+func TestUpgradeNeededDatacenterError(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		Return(errors.New("error get dc"))
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(MatchError("error get dc"))
+	tt.Expect(got).To(Equal(false))
+}
+
+func TestUpgradeNeededMachineConfigNil(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient).Times(2)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowDatacenterConfig) error {
+			tt.clusterSpec.SnowDatacenter.DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-cp",
+			"test-namespace",
+			&v1alpha1.SnowMachineConfig{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(true))
+}
+
+func TestUpgradeNeededMachineConfigError(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient).Times(2)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowDatacenterConfig) error {
+			tt.clusterSpec.SnowDatacenter.DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-cp",
+			"test-namespace",
+			&v1alpha1.SnowMachineConfig{},
+		).
+		Return(errors.New("error get mc"))
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(MatchError("error get mc"))
+	tt.Expect(got).To(Equal(false))
+}
+
+func TestUpgradeNeededMachineConfigChanged(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient).Times(2)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowDatacenterConfig) error {
+			tt.clusterSpec.SnowDatacenter.DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-cp",
+			"test-namespace",
+			&v1alpha1.SnowMachineConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
+			tt.clusterSpec.SnowMachineConfig("test-cp").DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-wn",
+			"test-namespace",
+			&v1alpha1.SnowMachineConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
+			return nil
+		})
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(true))
 }
 
 func TestUpgradeNeededBundle(t *testing.T) {
@@ -800,29 +977,6 @@ func TestUpgradeNeededBundle(t *testing.T) {
 		bundle releasev1alpha1.SnowBundle
 		want   bool
 	}{
-		{
-			name: "non compared fields diff",
-			bundle: releasev1alpha1.SnowBundle{
-				Version: "v1.0.2-diff",
-				KubeVip: releasev1alpha1.Image{
-					Name:        "kube-vip-diff",
-					OS:          "linux-diff",
-					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433-diff",
-					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
-					Description: "Container image for kube-vip image-diff",
-					Arch:        []string{"amd64-diff"},
-				},
-				Manager: releasev1alpha1.Image{
-					Name:        "cluster-api-snow-controller-diff",
-					OS:          "linux-diff",
-					URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216-diff",
-					ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
-					Description: "Container image for cluster-api-snow-controller image-diff",
-					Arch:        []string{"amd64-diff"},
-				},
-			},
-			want: false,
-		},
 		{
 			name: "kube-vip image digest diff",
 			bundle: releasev1alpha1.SnowBundle{
@@ -876,133 +1030,6 @@ func TestUpgradeNeededBundle(t *testing.T) {
 			new := g.clusterSpec.DeepCopy()
 			new.VersionsBundle.Snow = tt.bundle
 			new.SnowMachineConfigs = givenMachineConfigs()
-			got, err := g.provider.UpgradeNeeded(g.ctx, new, g.clusterSpec, g.cluster)
-			g.Expect(err).To(Succeed())
-			g.Expect(got).To(Equal(tt.want))
-		})
-	}
-}
-
-func TestUpgradeNeededMachineConfigs(t *testing.T) {
-	tests := []struct {
-		name           string
-		machineConfigs map[string]*v1alpha1.SnowMachineConfig
-		want           bool
-	}{
-		{
-			name: "non compared fields diff",
-			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
-				"test-cp": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cp-diff",
-						Namespace: "test-namespace",
-					},
-					Spec: v1alpha1.SnowMachineConfigSpec{
-						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-						InstanceType:             "sbe-c.large",
-						SshKeyName:               "default",
-						PhysicalNetworkConnector: "SFP_PLUS",
-					},
-				},
-				"test-wn": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-wn",
-						Namespace: "test-namespace-diff",
-					},
-					Spec: v1alpha1.SnowMachineConfigSpec{
-						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-						InstanceType:             "sbe-c.xlarge",
-						SshKeyName:               "default",
-						PhysicalNetworkConnector: "SFP_PLUS",
-					},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "spec diff",
-			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
-				"test-cp": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cp",
-						Namespace: "test-namespace",
-					},
-					Spec: v1alpha1.SnowMachineConfigSpec{
-						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-0",
-						InstanceType:             "sbe-c.large",
-						SshKeyName:               "default",
-						PhysicalNetworkConnector: "SFP_PLUS",
-					},
-				},
-				"test-wn": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-wn",
-						Namespace: "test-namespace",
-					},
-					Spec: v1alpha1.SnowMachineConfigSpec{
-						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-1",
-						InstanceType:             "sbe-c.xlarge",
-						SshKeyName:               "default",
-						PhysicalNetworkConnector: "SFP_PLUS",
-					},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "length diff",
-			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
-				"test-cp": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cp-diff",
-						Namespace: "test-namespace",
-					},
-					Spec: v1alpha1.SnowMachineConfigSpec{
-						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-						InstanceType:             "sbe-c.large",
-						SshKeyName:               "default",
-						PhysicalNetworkConnector: "SFP_PLUS",
-					},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "key diff",
-			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
-				"test-cp-diff": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cp-diff",
-						Namespace: "test-namespace",
-					},
-					Spec: v1alpha1.SnowMachineConfigSpec{
-						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-						InstanceType:             "sbe-c.large",
-						SshKeyName:               "default",
-						PhysicalNetworkConnector: "SFP_PLUS",
-					},
-				},
-				"test-wn": {
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-wn",
-						Namespace: "test-namespace-diff",
-					},
-					Spec: v1alpha1.SnowMachineConfigSpec{
-						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-						InstanceType:             "sbe-c.xlarge",
-						SshKeyName:               "default",
-						PhysicalNetworkConnector: "SFP_PLUS",
-					},
-				},
-			},
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newSnowTest(t)
-			new := g.clusterSpec.DeepCopy()
-			new.SnowMachineConfigs = tt.machineConfigs
 			got, err := g.provider.UpgradeNeeded(g.ctx, new, g.clusterSpec, g.cluster)
 			g.Expect(err).To(Succeed())
 			g.Expect(got).To(Equal(tt.want))
