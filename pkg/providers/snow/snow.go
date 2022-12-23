@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -265,19 +266,40 @@ func bundleImagesEqual(new, old releasev1alpha1.SnowBundle) bool {
 	return new.Manager.ImageDigest == old.Manager.ImageDigest && new.KubeVip.ImageDigest == old.KubeVip.ImageDigest
 }
 
-func machineConfigsEqual(new, old map[string]*v1alpha1.SnowMachineConfig) bool {
-	if len(new) != len(old) {
-		return false
-	}
+func (p *SnowProvider) machineConfigsChanged(ctx context.Context, cluster *types.Cluster, spec *cluster.Spec) (bool, error) {
+	client := p.kubeUnAuthClient.KubeconfigClient(cluster.KubeconfigFile)
 
-	for name, newConfig := range new {
-		oldConfig, ok := old[name]
-		if !ok || !equality.Semantic.DeepDerivative(newConfig.Spec, oldConfig.Spec) {
-			return false
+	for _, new := range spec.SnowMachineConfigs {
+		old := &v1alpha1.SnowMachineConfig{}
+		err := client.Get(ctx, new.Name, new.Namespace, old)
+		if apierrors.IsNotFound(err) {
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+
+		if !equality.Semantic.DeepDerivative(new.Spec, old.Spec) {
+			return true, nil
 		}
 	}
 
-	return true
+	return false, nil
+}
+
+func (p *SnowProvider) datacenterChanged(ctx context.Context, cluster *types.Cluster, spec *cluster.Spec) (bool, error) {
+	client := p.kubeUnAuthClient.KubeconfigClient(cluster.KubeconfigFile)
+	new := spec.SnowDatacenter
+	old := &v1alpha1.SnowDatacenterConfig{}
+	err := client.Get(ctx, new.Name, new.Namespace, old)
+	if apierrors.IsNotFound(err) {
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return !equality.Semantic.DeepDerivative(new.Spec, old.Spec), nil
 }
 
 func (p *SnowProvider) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
@@ -292,9 +314,23 @@ func (p *SnowProvider) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec)
 	return nil
 }
 
-func (p *SnowProvider) UpgradeNeeded(ctx context.Context, newSpec, oldSpec *cluster.Spec, _ *types.Cluster) (bool, error) {
-	return !bundleImagesEqual(newSpec.VersionsBundle.Snow, oldSpec.VersionsBundle.Snow) ||
-		!machineConfigsEqual(newSpec.SnowMachineConfigs, oldSpec.SnowMachineConfigs), nil
+// UpgradeNeeded compares the new snow version bundle and objects with the existing ones in the cluster and decides whether
+// to trigger a cluster upgrade or not.
+// TODO: revert the change once cluster.BuildSpec is used in cluster_manager to replace the deprecated cluster.BuildSpecForCluster
+func (p *SnowProvider) UpgradeNeeded(ctx context.Context, newSpec, oldSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
+	if !bundleImagesEqual(newSpec.VersionsBundle.Snow, oldSpec.VersionsBundle.Snow) {
+		return true, nil
+	}
+
+	datacenterChanged, err := p.datacenterChanged(ctx, cluster, newSpec)
+	if err != nil {
+		return false, err
+	}
+	if datacenterChanged {
+		return true, nil
+	}
+
+	return p.machineConfigsChanged(ctx, cluster, newSpec)
 }
 
 func (p *SnowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
