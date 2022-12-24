@@ -39,30 +39,30 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: Cluster
    metadata:
-   name: mgmt
+      name: mgmt
    spec:
-   clusterNetwork:
-      cniConfig:
-         cilium: {}
-      pods:
-         cidrBlocks:
-         - 192.168.0.0/16
-      services:
-         cidrBlocks:
-         - 10.96.0.0/12
-   controlPlaneConfiguration:
-      count: 1
-   datacenterRef:
-      kind: DockerDatacenterConfig
-      name: mgmt
-   externalEtcdConfiguration:
-      count: 1
-   kubernetesVersion: "1.24"
-   managementCluster:
-      name: mgmt
-   workerNodeGroupConfigurations:
-   - count: 1
-      name: md-0
+      clusterNetwork:
+         cniConfig:
+            cilium: {}
+         pods:
+            cidrBlocks:
+               - 192.168.0.0/16
+         services:
+            cidrBlocks:
+               - 10.96.0.0/12
+      controlPlaneConfiguration:
+         count: 1
+      datacenterRef:
+         kind: DockerDatacenterConfig
+         name: mgmt
+      externalEtcdConfiguration:
+         count: 1
+      kubernetesVersion: "1.24"
+      managementCluster:
+         name: mgmt
+      workerNodeGroupConfigurations:
+         - count: 1
+            name: md-0
    ---
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: DockerDatacenterConfig
