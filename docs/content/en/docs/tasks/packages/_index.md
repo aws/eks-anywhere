@@ -42,10 +42,31 @@ When you have been notified that your account has been given access to curated p
 }
 ```
 
+**Note** Curated Packages now supports pulling images from the following regions. Use the corresponding `EKSA_AWS_REGION` prior to cluster creation to choose which region to pull form, if not set it will default to pull from `us-west-2`.
+```
+"us-east-2",
+"us-east-1",
+"us-west-1",
+"us-west-2",
+"ap-northeast-3",
+"ap-northeast-2",
+"ap-southeast-1",
+"ap-southeast-2",
+"ap-northeast-1",
+"ca-central-1",
+"eu-central-1",
+"eu-west-1",
+"eu-west-2",
+"eu-west-3",
+"eu-north-1",
+"sa-east-1"
+```
+
 Create credentials for this user and set and export the following environment variables:
 ```bash
 export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
 export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
+export EKSA_AWS_REGION="us-west-2"
 ```
 Make sure you are authenticated with the AWS CLI
 

@@ -97,6 +97,7 @@ Make sure you use single quotes around the values so that your shell does not in
    ```bash
    export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
    export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
+   export EKSA_AWS_REGION="us-west-2"
    ```
      
 1. Create cluster
