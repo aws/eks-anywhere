@@ -76,5 +76,4 @@ func runAutoscalerWitMetricsServerSimpleFlow(test *framework.ClusterE2ETest) {
 		test.InstallAutoScalerWithMetricServer(targetNamespace)
 		test.CombinedAutoScalerMetricServerTest(autoscalerName, metricServerName, targetNamespace, withMgmtCluster(test))
 	})
-
 }

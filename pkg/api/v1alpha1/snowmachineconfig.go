@@ -36,8 +36,8 @@ func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 			SshKeyName:               DefaultSnowSshKeyName,
 			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 			OSFamily:                 DefaultOSFamily,
-			Network: snowv1.AWSSnowNetwork{
-				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			Network: SnowNetwork{
+				DirectNetworkInterfaces: []SnowDirectNetworkInterface{
 					{
 						Index:   1,
 						DHCP:    true,
@@ -67,6 +67,10 @@ func (s *SnowMachineConfigGenerate) Name() string {
 func validateSnowMachineConfig(config *SnowMachineConfig) error {
 	if config.Spec.InstanceType != SbeCLarge && config.Spec.InstanceType != SbeCXLarge && config.Spec.InstanceType != SbeC2XLarge && config.Spec.InstanceType != SbeC4XLarge {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
+	}
+
+	if config.Spec.PhysicalNetworkConnector != SFPPlus && config.Spec.PhysicalNetworkConnector != QSFP && config.Spec.PhysicalNetworkConnector != RJ45 {
+		return fmt.Errorf("SnowMachineConfig PhysicalNetworkConnector %s is not supported, please use one of the following: %s, %s, %s ", config.Spec.PhysicalNetworkConnector, SFPPlus, QSFP, RJ45)
 	}
 
 	if len(config.Spec.Devices) == 0 {
@@ -107,7 +111,7 @@ func validateSnowMachineConfigContainerVolume(config *SnowMachineConfig) error {
 	return nil
 }
 
-func validateSnowMachineConfigNetwork(network snowv1.AWSSnowNetwork) error {
+func validateSnowMachineConfigNetwork(network SnowNetwork) error {
 	if len(network.DirectNetworkInterfaces) <= 0 {
 		return errors.New("SnowMachineConfig Network.DirectNetworkInterfaces length must be no smaller than 1")
 	}

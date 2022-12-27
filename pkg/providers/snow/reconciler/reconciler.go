@@ -139,12 +139,15 @@ func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 		return controller.Result{}, err
 	}
 
-	return clusters.ReconcileWorkersForEKSA(ctx, log, s.client, clusterSpec.Cluster, clusters.ToWorkers(w))
+	return clusters.ReconcileWorkersForEKSA(ctx, log, s.client, clusterSpec.Cluster, toClientWorkers(w))
 }
 
 func toClientControlPlane(cp *snow.ControlPlane) *clusters.ControlPlane {
-	other := make([]client.Object, 0, 2)
+	other := make([]client.Object, 0, 2+len(cp.CAPASIPPools))
 	other = append(other, cp.Secret)
+	for _, p := range cp.CAPASIPPools {
+		other = append(other, p)
+	}
 
 	return &clusters.ControlPlane{
 		Cluster:                     cp.Cluster,
@@ -155,4 +158,26 @@ func toClientControlPlane(cp *snow.ControlPlane) *clusters.ControlPlane {
 		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
 		Other:                       other,
 	}
+}
+
+func toClientWorkers(workers *snow.Workers) *clusters.Workers {
+	other := make([]client.Object, 0, len(workers.CAPASIPPools))
+	for _, p := range workers.CAPASIPPools {
+		other = append(other, p)
+	}
+
+	w := &clusters.Workers{
+		Groups: make([]clusters.WorkerGroup, 0, len(workers.Groups)),
+		Other:  other,
+	}
+
+	for _, g := range workers.Groups {
+		w.Groups = append(w.Groups, clusters.WorkerGroup{
+			MachineDeployment:       g.MachineDeployment,
+			KubeadmConfigTemplate:   g.KubeadmConfigTemplate,
+			ProviderMachineTemplate: g.ProviderMachineTemplate,
+		})
+	}
+
+	return w
 }

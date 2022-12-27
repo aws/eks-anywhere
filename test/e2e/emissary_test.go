@@ -30,7 +30,7 @@ func runCuratedPackageEmissaryInstall(test *framework.ClusterE2ETest) {
 }
 
 func runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
-	test.CreateManagementCluster()
+	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
 		e.GenerateClusterConfig()
 		e.CreateCluster()
@@ -61,7 +61,7 @@ func runCuratedPackageEmissaryInstallSimpleFlow(test *framework.ClusterE2ETest) 
 	test.WithCluster(runCuratedPackageEmissaryInstall)
 }
 
-func TestCPackagesEmissaryDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
+func TestCPackagesEmissaryDockerKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),

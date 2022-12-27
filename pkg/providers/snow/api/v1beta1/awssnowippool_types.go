@@ -29,20 +29,20 @@ type AWSSnowIPPoolSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	// IPPools is the configuration of static ips used for machine's ip.
+	// IPPools defines a range of ip addresses for static IP configurations.
 	IPPools []IPPool `json:"pools,omitempty"`
 }
 
-// IPPool is the configuration of static ips used for machine's ip.
+// IPPool is the configuration of static ip, it provides a range of ip addresses
 type IPPool struct {
-	// IPStart is the start of an ip range
-	IPStart string `json:"ipStart,omitempty"`
-	// IPEnd is the end of an ip range
-	IPEnd string `json:"ipEnd,omitempty"`
-	// Subnet is customers' network subnet, we can use it to determine if two ip addresses are in the same subnet.
-	Subnet string `json:"subnet,omitempty"`
+	// IPStart is the start ip address of an ip range
+	IPStart *string `json:"ipStart,omitempty"`
+	// IPEnd is the end ip address of an ip range
+	IPEnd *string `json:"ipEnd,omitempty"`
+	// Subnet is customers' network subnet, we can use it to determine whether an ip is in this subnet
+	Subnet *string `json:"subnet,omitempty"`
 	// Gateway is the gateway of this subnet. Used for routing purpose
-	Gateway string `json:"gateway,omitempty"`
+	Gateway *string `json:"gateway,omitempty"`
 }
 
 // AWSSnowIPPoolStatus defines the observed state of AWSSnowIPPool

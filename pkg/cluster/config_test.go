@@ -22,6 +22,9 @@ func TestConfigChildObjects(t *testing.T) {
 		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
 			"machine1": {}, "machine2": {},
 		},
+		SnowIPPools: map[string]*anywherev1.SnowIPPool{
+			"pool1": {}, "pool2": {},
+		},
 		VSphereMachineConfigs: map[string]*anywherev1.VSphereMachineConfig{
 			"machine1": {}, "machine2": {},
 		},
@@ -47,7 +50,7 @@ func TestConfigChildObjects(t *testing.T) {
 	}
 
 	objs := config.ChildObjects()
-	g.Expect(objs).To(HaveLen(20))
+	g.Expect(objs).To(HaveLen(22))
 	for _, o := range objs {
 		g.Expect(reflect.ValueOf(o).IsNil()).To(BeFalse())
 	}
@@ -66,6 +69,9 @@ func TestConfigDeepCopy(t *testing.T) {
 		GitOpsConfig:         &anywherev1.GitOpsConfig{},
 		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
 			"machine1": {}, "machine2": {},
+		},
+		SnowIPPools: map[string]*anywherev1.SnowIPPool{
+			"pool1": {}, "pool2": {},
 		},
 		VSphereMachineConfigs: map[string]*anywherev1.VSphereMachineConfig{
 			"machine1": {}, "machine2": {},

@@ -22,13 +22,16 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
@@ -72,6 +75,7 @@ type ClusterE2ETest struct {
 	WithNoPowerActions     bool
 	ClusterName            string
 	ClusterConfig          *cluster.Config
+	clusterValidator       *ClusterValidator
 	Provider               Provider
 	clusterFillers         []api.ClusterFiller
 	KubectlClient          *executables.Kubectl
@@ -98,12 +102,24 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
-	e.ClusterConfigFolder = e.ClusterName
-	e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
-	e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
-
 	for _, opt := range opts {
 		opt(e)
+	}
+
+	if e.ClusterConfigFolder == "" {
+		e.ClusterConfigFolder = e.ClusterName
+	}
+	if e.HardwareConfigLocation == "" {
+		e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
+	}
+	if e.HardwareCsvLocation == "" {
+		e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
+	}
+
+	e.ClusterConfigLocation = filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a.yaml")
+
+	if err := os.MkdirAll(e.ClusterConfigFolder, os.ModePerm); err != nil {
+		t.Fatalf("Failed creating cluster config folder for test: %s", err)
 	}
 
 	provider.Setup()
@@ -173,6 +189,14 @@ func WithCustomLabelHardware(requiredCount int, label string) ClusterE2ETestOpt 
 
 func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
 	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
+}
+
+// WithClusterName sets the name that will be used for the cluster. This will drive both the name of the eks-a
+// cluster config objects as well as the cluster config file name.
+func WithClusterName(name string) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ClusterName = name
+	}
 }
 
 func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
@@ -456,14 +480,10 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 	}
 
 	e.buildClusterConfigFile()
-	e.cleanup(func() {
-		os.Remove(e.ClusterConfigLocation)
-	})
 }
 
 func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
-	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
-	e.RunEKSA(generateClusterConfigArgs, opts...)
+	e.generateClusterConfigWithCLI()
 
 	config, err := cluster.ParseConfigFromFile(e.ClusterConfigLocation)
 	if err != nil {
@@ -487,19 +507,7 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	e.ClusterConfig.TinkerbellMachineConfigs = config.TinkerbellMachineConfigs
 	e.ClusterConfig.TinkerbellTemplateConfigs = config.TinkerbellTemplateConfigs
 
-	clusterFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+3)
-	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
-	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
-	// (@g-gaston) This is a temporary fix to avoid overloading the CI system and we should remove it once we
-	// stabilize the test runs
-	clusterFillers = append(clusterFillers,
-		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
-	)
-	clusterFillers = append(clusterFillers, e.clusterFillers...)
-	configFillers := []api.ClusterConfigFiller{api.ClusterToConfigFiller(clusterFillers...)}
-	configFillers = append(configFillers, e.Provider.ClusterConfigUpdates()...)
-
-	e.UpdateClusterConfig(configFillers...)
+	e.UpdateClusterConfig(e.baseClusterConfigUpdates()...)
 }
 
 // UpdateClusterConfig applies the cluster Config provided updates to e.ClusterConfig, marshalls its content
@@ -508,6 +516,63 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 func (e *ClusterE2ETest) UpdateClusterConfig(fillers ...api.ClusterConfigFiller) {
 	api.UpdateClusterConfig(e.ClusterConfig, fillers...)
 	e.buildClusterConfigFile()
+}
+
+func (e *ClusterE2ETest) baseClusterConfigUpdates(opts ...CommandOpt) []api.ClusterConfigFiller {
+	clusterFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+3)
+	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
+	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
+	clusterFillers = append(clusterFillers,
+		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
+	)
+	clusterFillers = append(clusterFillers, e.clusterFillers...)
+	configFillers := []api.ClusterConfigFiller{api.ClusterToConfigFiller(clusterFillers...)}
+	configFillers = append(configFillers, e.Provider.ClusterConfigUpdates()...)
+
+	return configFillers
+}
+
+func (e *ClusterE2ETest) generateClusterConfigWithCLI(opts ...CommandOpt) {
+	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
+	e.RunEKSA(generateClusterConfigArgs, opts...)
+}
+
+func (e *ClusterE2ETest) parseClusterConfigFromDisk() {
+	config, err := cluster.ParseConfigFromFile(e.ClusterConfigLocation)
+	if err != nil {
+		e.T.Fatalf("Failed parsing generated cluster config: %s", err)
+	}
+	e.ClusterConfig = config
+}
+
+func (e *ClusterE2ETest) parseClusterConfigWithDefaultsFromDisk() (*v1alpha1.Cluster, error) {
+	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
+	content, err := os.ReadFile(fullClusterConfigLocation)
+	if err != nil {
+		return nil, fmt.Errorf("reading cluster config file: %v", err)
+	}
+
+	parsedCluster := &v1alpha1.Cluster{}
+	if err := yaml.Unmarshal(content, parsedCluster); err != nil {
+		return nil, fmt.Errorf("unable to marshal cluster config file contents %v", err)
+	}
+
+	return parsedCluster, err
+}
+
+// WithClusterConfig generates a base cluster config using the CLI `generate clusterconfig` command
+// and udpates them with the provided fillers. Helpful for defining the initial Cluster config
+// before running a create operation.
+func (e *ClusterE2ETest) WithClusterConfig(fillers ...api.ClusterConfigFiller) *ClusterE2ETest {
+	e.T.Logf("Generating base config for cluster %s", e.ClusterName)
+	e.generateClusterConfigWithCLI()
+	e.parseClusterConfigFromDisk()
+	base := e.baseClusterConfigUpdates()
+	allUpdates := make([]api.ClusterConfigFiller, 0, len(base)+len(fillers))
+	allUpdates = append(allUpdates, base...)
+	allUpdates = append(allUpdates, fillers...)
+	e.UpdateClusterConfig(allUpdates...)
+	return e
 }
 
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
@@ -546,9 +611,6 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	e.RunEKSA(createClusterArgs, opts...)
-	e.cleanup(func() {
-		os.RemoveAll(e.ClusterName)
-	})
 }
 
 func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
@@ -772,6 +834,13 @@ func (e *ClusterE2ETest) cluster() *types.Cluster {
 	}
 }
 
+func (e *ClusterE2ETest) managementCluster() *types.Cluster {
+	return &types.Cluster{
+		Name:           e.ClusterConfig.Cluster.ManagedBy(),
+		KubeconfigFile: e.managementKubeconfigFilePath(),
+	}
+}
+
 func (e *ClusterE2ETest) kubeconfigFilePath() string {
 	return filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))
 }
@@ -911,6 +980,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 	if err != nil {
 		e.T.Fatalf("Error getting PackageBundle: %v", err)
 	}
+	os.Setenv("KUBECONFIG", kubeconfig)
 	if pbc.Spec.ActiveBundle != pb[0].ObjectMeta.Name {
 		e.RunEKSA([]string{
 			"upgrade", "packages",
@@ -1263,10 +1333,11 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
 
-	time.Sleep(15 * time.Second) // Add sleep to allow daemonset to be created
 	e.T.Log("Waiting for package", packageName, "daemonset to be rolled out")
-	err = e.KubectlClient.WaitForDaemonsetRolledout(ctx,
-		e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace)
+	err = retrier.New(6 * time.Minute).Retry(func() error {
+		return e.KubectlClient.WaitForDaemonsetRolledout(ctx,
+			e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace)
+	})
 	if err != nil {
 		e.T.Fatalf("waiting for adot daemonset timed out: %s", err)
 	}
@@ -1276,15 +1347,21 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 	if err != nil {
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
 	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
-	ok := strings.Contains(logs, expectedLogs)
-	if !ok {
-		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
+	err = retrier.New(5 * time.Minute).Retry(func() error {
+		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
+		if err != nil {
+			e.T.Fatalf("failure getting pod logs %s", err)
+		}
+		fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
+		ok := strings.Contains(logs, expectedLogs)
+		if !ok {
+			return fmt.Errorf("expected to find %s in the log, got %s", expectedLogs, logs)
+		}
+		return nil
+	})
+	if err != nil {
+		e.T.Fatalf("unable to finish log comparison: %s", err)
 	}
 }
 
@@ -1606,4 +1683,95 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 	}
 
 	e.T.Log("Finished scaling up machines")
+}
+
+// ValidateClusterState runs a set of validations against the cluster to identify an invalid cluster state.
+func (e *ClusterE2ETest) ValidateClusterState() {
+	e.T.Logf("Validating cluster %s", e.ClusterName)
+	ctx := context.Background()
+	err := retrier.Retry(12, 5*time.Second, func() error {
+		return e.buildClusterValidator(ctx)
+	})
+	if err != nil {
+		e.T.Fatalf("failed to build cluster validator %v", err)
+	}
+
+	if e.ClusterConfig.Cluster.IsManaged() {
+		e.clusterValidator.WithWorkloadClusterValidations()
+	}
+	if err := e.clusterValidator.Validate(ctx); err != nil {
+		e.T.Fatalf("failed to validate cluster %v", err)
+	}
+}
+
+// ValidateClusterDelete verifies the cluster has been deleted.
+func (e *ClusterE2ETest) ValidateClusterDelete() {
+	ctx := context.Background()
+	e.T.Logf("Validating cluster deletion %s", e.ClusterName)
+	if e.clusterValidator == nil {
+		return
+	}
+
+	e.clusterValidator.Reset()
+	if e.ClusterConfig.Cluster.IsManaged() {
+		e.clusterValidator.WithClusterDoesNotExist()
+	}
+	if err := e.clusterValidator.Validate(ctx); err != nil {
+		e.T.Fatalf("failed to validate cluster deletion %v", err)
+	}
+	e.clusterValidator = nil
+}
+
+func (e *ClusterE2ETest) buildClusterValidator(ctx context.Context) error {
+	mc, err := kubernetes.NewRuntimeClientFromFileName(e.managementKubeconfigFilePath())
+	if err != nil {
+		return fmt.Errorf("failed to create management cluster client: %s", err)
+	}
+	if e.ClusterConfig.Cluster.IsSelfManaged() {
+		mc = nil
+	}
+
+	c, err := kubernetes.NewRuntimeClientFromFileName(e.kubeconfigFilePath())
+	if err != nil {
+		return fmt.Errorf("failed to create cluster client: %s", err)
+	}
+
+	spec, err := e.buildClusterSpec(ctx, c, e.ClusterConfig)
+	if err != nil {
+		return fmt.Errorf("failed to build cluster spec %s", err)
+	}
+
+	e.clusterValidator = NewClusterValidator(func(cv *ClusterValidator) {
+		cv.ClusterOpts.ClusterClient = c
+		cv.ClusterOpts.ManagmentClusterClient = mc
+		cv.ClusterOpts.ClusterSpec = spec
+	})
+
+	return nil
+}
+
+func (e *ClusterE2ETest) buildClusterSpec(ctx context.Context, client client.Client, config *cluster.Config) (*cluster.Spec, error) {
+	if config.Cluster.IsManaged() {
+		spec := cluster.NewSpec(func(spec *cluster.Spec) {
+			spec.Config = config
+		})
+
+		return spec, nil
+	}
+
+	parsedCluster, err := e.parseClusterConfigWithDefaultsFromDisk()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse cluster config with defaults from disk: %v", err)
+	}
+
+	config.Cluster.Spec.BundlesRef = parsedCluster.Spec.BundlesRef
+	if config.Cluster.Namespace == "" {
+		config.Cluster.Namespace = "default"
+	}
+	spec, err := cluster.BuildSpecFromConfig(ctx, clientutil.NewKubeClient(client), config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build cluster spec from config: %s", err)
+	}
+
+	return spec, err
 }

@@ -2,6 +2,7 @@ package cluster_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -193,12 +194,84 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 			Name:      "machine-1",
 			Namespace: "default",
 		},
+		Spec: anywherev1.SnowMachineConfigSpec{
+			Network: anywherev1.SnowNetwork{
+				DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+					{
+						Index: 1,
+						IPPoolRef: &anywherev1.Ref{
+							Kind: anywherev1.SnowIPPoolKind,
+							Name: "ip-pool-1",
+						},
+						Primary: true,
+					},
+					{
+						Index: 2,
+						IPPoolRef: &anywherev1.Ref{
+							Kind: anywherev1.SnowIPPoolKind,
+							Name: "ip-pool-2",
+						},
+						Primary: false,
+					},
+					{
+						Index:   3,
+						Primary: false,
+					},
+				},
+			},
+		},
 	}
 
 	machineWorker := &anywherev1.SnowMachineConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "machine-2",
 			Namespace: "default",
+		},
+		Spec: anywherev1.SnowMachineConfigSpec{
+			Network: anywherev1.SnowNetwork{
+				DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+					{
+						Index: 1,
+						IPPoolRef: &anywherev1.Ref{
+							Kind: anywherev1.SnowIPPoolKind,
+							Name: "ip-pool-1",
+						},
+						Primary: true,
+					},
+				},
+			},
+		},
+	}
+
+	pool1 := &anywherev1.SnowIPPool{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ip-pool-1",
+		},
+		Spec: anywherev1.SnowIPPoolSpec{
+			Pools: []anywherev1.IPPool{
+				{
+					IPStart: "start-1",
+					IPEnd:   "end-1",
+					Subnet:  "subnet-1",
+					Gateway: "gateway-1",
+				},
+			},
+		},
+	}
+
+	pool2 := &anywherev1.SnowIPPool{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "ip-pool-2",
+		},
+		Spec: anywherev1.SnowIPPoolSpec{
+			Pools: []anywherev1.IPPool{
+				{
+					IPStart: "start-2",
+					IPEnd:   "end-2",
+					Subnet:  "subnet-2",
+					Gateway: "gateway-2",
+				},
+			},
 		},
 	}
 
@@ -215,6 +288,25 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
 			m := obj.(*anywherev1.SnowMachineConfig)
 			m.ObjectMeta = machineControlPlane.ObjectMeta
+			m.Spec = machineControlPlane.Spec
+			return nil
+		},
+	)
+
+	client.EXPECT().Get(ctx, "ip-pool-1", "default", &anywherev1.SnowIPPool{}).Return(nil).DoAndReturn(
+		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
+			p := obj.(*anywherev1.SnowIPPool)
+			p.ObjectMeta = pool1.ObjectMeta
+			p.Spec = pool1.Spec
+			return nil
+		},
+	)
+
+	client.EXPECT().Get(ctx, "ip-pool-2", "default", &anywherev1.SnowIPPool{}).Return(nil).DoAndReturn(
+		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
+			p := obj.(*anywherev1.SnowIPPool)
+			p.ObjectMeta = pool2.ObjectMeta
+			p.Spec = pool2.Spec
 			return nil
 		},
 	)
@@ -234,6 +326,7 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
 			m := obj.(*anywherev1.SnowMachineConfig)
 			m.ObjectMeta = machineWorker.ObjectMeta
+			m.Spec = machineWorker.Spec
 			return nil
 		},
 	)
@@ -247,6 +340,70 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 	g.Expect(config.SnowMachineConfigs["machine-1"]).To(Equal(machineControlPlane))
 	g.Expect(config.SnowMachineConfigs["machine-2"]).To(Equal(machineWorker))
 	g.Expect(config.SnowCredentialsSecret).To(Equal(secret))
+	g.Expect(config.SnowIPPools["ip-pool-1"]).To(Equal(pool1))
+	g.Expect(config.SnowIPPools["ip-pool-2"]).To(Equal(pool2))
+}
+
+func TestDefaultConfigClientBuilderSnowClusterGetIPPoolError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	b := cluster.NewDefaultConfigClientBuilder()
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClient(ctrl)
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+		},
+		Spec: anywherev1.ClusterSpec{
+			DatacenterRef: anywherev1.Ref{
+				Kind: anywherev1.SnowDatacenterKind,
+				Name: "datacenter",
+			},
+			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+				MachineGroupRef: &anywherev1.Ref{
+					Kind: anywherev1.SnowMachineConfigKind,
+					Name: "machine-1",
+				},
+			},
+		},
+	}
+
+	machineControlPlane := &anywherev1.SnowMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "machine-1",
+			Namespace: "default",
+		},
+		Spec: anywherev1.SnowMachineConfigSpec{
+			Network: anywherev1.SnowNetwork{
+				DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+					{
+						IPPoolRef: &anywherev1.Ref{
+							Kind: anywherev1.SnowIPPoolKind,
+							Name: "ip-pool-1",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	client.EXPECT().Get(ctx, "datacenter", "default", &anywherev1.SnowDatacenterConfig{}).Return(nil)
+
+	client.EXPECT().Get(ctx, "machine-1", "default", &anywherev1.SnowMachineConfig{}).Return(nil).DoAndReturn(
+		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
+			m := obj.(*anywherev1.SnowMachineConfig)
+			m.ObjectMeta = machineControlPlane.ObjectMeta
+			m.Spec = machineControlPlane.Spec
+			return nil
+		},
+	)
+
+	client.EXPECT().Get(ctx, "ip-pool-1", "default", &anywherev1.SnowIPPool{}).Return(errors.New("error get ip pool"))
+
+	config, err := b.Build(ctx, client, cluster)
+	g.Expect(err).To(MatchError(ContainSubstring("error get ip pool")))
+	g.Expect(config).To(BeNil())
 }
 
 func TestParseConfigMissingSnowDatacenter(t *testing.T) {
@@ -345,5 +502,99 @@ func TestValidateSnowMachineRefExistsError(t *testing.T) {
 	}
 	g.Expect(cluster.ValidateConfig(c)).To(
 		MatchError(ContainSubstring("unable to find SnowMachineConfig worker-not-exists")),
+	)
+}
+
+func TestValidateSnowUnstackedEtcdWithDHCPError(t *testing.T) {
+	g := NewWithT(t)
+	c := &cluster.Config{
+		Cluster: &anywherev1.Cluster{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       anywherev1.ClusterKind,
+				APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "eksa-unit-test",
+				Namespace: "ns-1",
+			},
+			Spec: anywherev1.ClusterSpec{
+				DatacenterRef: anywherev1.Ref{
+					Kind: anywherev1.SnowDatacenterKind,
+				},
+				ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
+					MachineGroupRef: &anywherev1.Ref{
+						Name: "etcd-1",
+					},
+				},
+			},
+		},
+		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
+			"etcd-1": {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "etcd-1",
+				},
+				Spec: anywherev1.SnowMachineConfigSpec{
+					Network: anywherev1.SnowNetwork{
+						DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	g.Expect(cluster.ValidateConfig(c)).To(
+		MatchError(ContainSubstring("creating unstacked etcd machine with DHCP is not supported for snow")),
+	)
+}
+
+func TestValidateSnowUnstackedEtcdMissIPPoolError(t *testing.T) {
+	g := NewWithT(t)
+	c := &cluster.Config{
+		Cluster: &anywherev1.Cluster{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       anywherev1.ClusterKind,
+				APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "eksa-unit-test",
+				Namespace: "ns-1",
+			},
+			Spec: anywherev1.ClusterSpec{
+				DatacenterRef: anywherev1.Ref{
+					Kind: anywherev1.SnowDatacenterKind,
+				},
+				ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
+					MachineGroupRef: &anywherev1.Ref{
+						Name: "etcd-1",
+					},
+				},
+			},
+		},
+		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
+			"etcd-1": {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "etcd-1",
+				},
+				Spec: anywherev1.SnowMachineConfigSpec{
+					Network: anywherev1.SnowNetwork{
+						DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    false,
+								Primary: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	g.Expect(cluster.ValidateConfig(c)).To(
+		MatchError(ContainSubstring("snow machine config ip pool must be specified when using static IP")),
 	)
 }

@@ -9,21 +9,6 @@ import (
 )
 
 const (
-	bottlerocketNetplan = `# Version is required, it will change as we support
-# additional settings
-version = 1
-
-# "eno1" is the interface name
-# Users may turn on dhcp4 and dhcp6 via boolean
-[eno1]
-dhcp4 = true
-# Define this interface as the "primary" interface
-# for the system.  This IP is what kubelet will use
-# as the node IP.  If none of the interfaces has
-# "primary" set, we choose the first interface in
-# the file
-primary = true
-`
 	bottlerocketBootconfig = `kernel {}`
 
 	cloudInit = `datasource:
@@ -61,9 +46,9 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 	case Bottlerocket:
 		diskPart = fmt.Sprintf("%s12", getDiskPart(disk))
 		defaultActions = append(defaultActions,
-			withNetplanAction(b, diskPart, osFamily),
 			withBottlerocketBootconfigAction(b, diskPart),
 			withBottlerocketUserDataAction(b, diskPart, strings.Join(metadataUrls, ",")),
+			withNetplanAction(b, diskPart, osFamily), // order matters here, this action needs to only append to an existing user-data.toml file. So must be after `withBottlerocketUserDataAction`.
 			withRebootAction(b),
 		)
 	case RedHat:
@@ -142,7 +127,8 @@ func withNetplanAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily
 		if osFamily == Bottlerocket {
 			// Bottlerocket needs to write onto the 12th partition as opposed to 2nd for non-Bottlerocket OS
 			netplanAction.Environment["DEST_PATH"] = "/net.toml"
-			netplanAction.Environment["CONTENTS"] = bottlerocketNetplan
+			netplanAction.Environment["STATIC_BOTTLEROCKET"] = "true"
+			netplanAction.Environment["IFNAME"] = "eno1"
 		} else {
 			netplanAction.Environment["STATIC_NETPLAN"] = "true"
 		}

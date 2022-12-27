@@ -39,30 +39,30 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: Cluster
    metadata:
-   name: mgmt
+      name: mgmt
    spec:
-   clusterNetwork:
-      cniConfig:
-         cilium: {}
-      pods:
-         cidrBlocks:
-         - 192.168.0.0/16
-      services:
-         cidrBlocks:
-         - 10.96.0.0/12
-   controlPlaneConfiguration:
-      count: 1
-   datacenterRef:
-      kind: DockerDatacenterConfig
-      name: mgmt
-   externalEtcdConfiguration:
-      count: 1
-   kubernetesVersion: "1.24"
-   managementCluster:
-      name: mgmt
-   workerNodeGroupConfigurations:
-   - count: 1
-      name: md-0
+      clusterNetwork:
+         cniConfig:
+            cilium: {}
+         pods:
+            cidrBlocks:
+               - 192.168.0.0/16
+         services:
+            cidrBlocks:
+               - 10.96.0.0/12
+      controlPlaneConfiguration:
+         count: 1
+      datacenterRef:
+         kind: DockerDatacenterConfig
+         name: mgmt
+      externalEtcdConfiguration:
+         count: 1
+      kubernetesVersion: "1.24"
+      managementCluster:
+         name: mgmt
+      workerNodeGroupConfigurations:
+         - count: 1
+            name: md-0
    ---
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: DockerDatacenterConfig
@@ -297,11 +297,26 @@ Follow these steps to have your management cluster create and manage separate wo
 
 1. Create a workload cluster in one of the following ways:
 
-   * **GitOps**: Recommended for more permanent cluster configurations. Be sure to:
-      * Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
-      * Make sure there is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating the management cluster with `eksctl` should create the `kustomization.yaml` file automatically.
+    * **GitOps**: Recommended for more permanent cluster configurations.
+        1. Clone your git repo and add the new cluster specification. Be sure to follow the directory structure defined on [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}):
 
-      See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for details.
+       ```
+       clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
+       ```
+
+        2. Commit the file to your git repository
+           ```bash
+           git add clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
+           git commit -m 'Creating new workload cluster'
+           git push origin main
+           ```
+
+        3. The flux controller will automatically make the required changes.
+      > **NOTE**: Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
+      >
+      > Make sure there is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating a Gitops enabled management cluster with `eksctl` should create the `kustomization.yaml` file automatically.
+
+   See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for more details.
    * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, run:
       ```bash
       eksctl anywhere create cluster \
@@ -328,6 +343,9 @@ Follow these steps to have your management cluster create and manage separate wo
       export KUBECONFIG=w01.kubeconfig
       kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
       ```
+     
+        **NOTE**: For Docker, you must modify the `server` field of the kubeconfig file by replacing the IP with `127.0.0.1` and the port with its value. 
+        The port’s value can be found by running `docker ps` and checking the workload cluster’s load balancer.
 
 1. Add more workload clusters:
 

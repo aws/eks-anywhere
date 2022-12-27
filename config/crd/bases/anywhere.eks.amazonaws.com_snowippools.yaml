@@ -1,0 +1,80 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: snowippools.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: SnowIPPool
+    listKind: SnowIPPoolList
+    plural: snowippools
+    singular: snowippool
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: SnowIPPool is the Schema for the SnowIPPools API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnowIPPoolSpec defines the desired state of SnowIPPool.
+            properties:
+              pools:
+                description: IPPools defines a list of ip pool for the DNI.
+                items:
+                  description: IPPool defines an ip pool with ip range, subnet and
+                    gateway.
+                  properties:
+                    gateway:
+                      description: Gateway is the gateway of the subnet for routing
+                        purpose.
+                      type: string
+                    ipEnd:
+                      description: IPEnd is the end address of an ip range.
+                      type: string
+                    ipStart:
+                      description: IPStart is the start address of an ip range.
+                      type: string
+                    subnet:
+                      description: Subnet is used to determine whether an ip is within
+                        subnet.
+                      type: string
+                  required:
+                  - gateway
+                  - ipEnd
+                  - ipStart
+                  - subnet
+                  type: object
+                type: array
+            type: object
+          status:
+            description: SnowIPPoolStatus defines the observed state of SnowIPPool.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

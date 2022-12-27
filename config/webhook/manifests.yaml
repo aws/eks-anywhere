@@ -294,6 +294,27 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowippool
+  failurePolicy: Fail
+  name: validation.snowippool.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snowippools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowmachineconfig
   failurePolicy: Fail
   name: validation.snowmachineconfig.anywhere.amazonaws.com

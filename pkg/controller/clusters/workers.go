@@ -21,14 +21,19 @@ import (
 // Workers represents the CAPI spec for an eks-a cluster's workers.
 type Workers struct {
 	Groups []WorkerGroup
+
+	// Other includes any other provider-specific objects that need to be reconciled
+	// as part of the worker groups.
+	Other []client.Object
 }
 
 // objects returns a list of API objects for a collection of worker groups.
 func (w *Workers) objects() []client.Object {
-	objs := make([]client.Object, 0, len(w.Groups)*3)
+	objs := make([]client.Object, 0, len(w.Groups)*3+len(w.Other))
 	for _, g := range w.Groups {
 		objs = append(objs, g.objects()...)
 	}
+	objs = append(objs, w.Other...)
 
 	return objs
 }

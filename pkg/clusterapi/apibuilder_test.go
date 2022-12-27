@@ -419,10 +419,10 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func wantMachineDeployment() clusterv1.MachineDeployment {
+func wantMachineDeployment() *clusterv1.MachineDeployment {
 	replicas := int32(3)
 	version := "v1.21.5-eks-1-21-9"
-	return clusterv1.MachineDeployment{
+	return &clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
 			Kind:       "MachineDeployment",
@@ -474,7 +474,7 @@ func TestMachineDeployment(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got := clusterapi.MachineDeployment(tt.clusterSpec, *tt.workerNodeGroupConfig, tt.kubeadmConfigTemplate, tt.providerMachineTemplate)
 
-	tt.Expect(got).To(Equal(wantMachineDeployment()))
+	tt.Expect(got).To(BeComparableTo(wantMachineDeployment()))
 }
 
 func TestClusterName(t *testing.T) {
@@ -520,9 +520,9 @@ func wantEtcdCluster() *etcdv1.EtcdadmCluster {
 		Spec: etcdv1.EtcdadmClusterSpec{
 			Replicas: &replicas,
 			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
-				EtcdadmBuiltin: true,
-				Format:         etcdbootstrapv1.Format("cloud-config"),
-				CipherSuites:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+				EtcdadmBuiltin:     true,
+				CipherSuites:       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+				PreEtcdadmCommands: []string{},
 			},
 			InfrastructureTemplate: v1.ObjectReference{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",

@@ -1286,7 +1286,7 @@ https://github.com/ProtonMail/go-crypto
 ** github.com/vmware/govmomi/vim25/xml; version v0.29.0 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.18.7 --
+** golang.org/go; version go1.18.9 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.0.0-20220622213112-05595931fe9d --

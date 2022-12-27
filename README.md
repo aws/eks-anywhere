@@ -22,6 +22,11 @@ Full documentation for releases can be found on [https://anywhere.eks.amazonaws.
 Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
 -->
 
+[<img src="docs/static/images/certified-kubernetes-1.24-pantone.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2275)
+<!-- 
+Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
+-->
+
 ## Development
 
 The EKS Anywhere is tested using

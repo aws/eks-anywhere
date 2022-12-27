@@ -105,6 +105,15 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 			},
 		},
 	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&snowv1.AWSSnowIPPool{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-ip-pool",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
 }
 
 func TestReconcilerValidateMachineConfigsInvalidWorkerMachineConfig(t *testing.T) {
@@ -296,8 +305,15 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		m.Name = "cp-machine-config"
 		m.Status.SpecValid = true
 	})
+
+	ipPool := ipPool()
 	machineConfigWN := snowMachineConfig(func(m *anywherev1.SnowMachineConfig) {
 		m.Name = "worker-machine-config"
+		m.Spec.Network.DirectNetworkInterfaces[0].DHCP = false
+		m.Spec.Network.DirectNetworkInterfaces[0].IPPoolRef = &anywherev1.Ref{
+			Name: ipPool.Name,
+			Kind: ipPool.Kind,
+		}
 		m.Status.SpecValid = true
 	})
 
@@ -365,6 +381,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			bundle,
 			test.EksdRelease(),
 			credentialsSecret,
+			ipPool,
 		},
 		cluster:                   cluster,
 		machineConfigControlPlane: machineConfigCP,
@@ -477,6 +494,15 @@ func snowMachineConfig(opts ...snowMachineOpt) *anywherev1.SnowMachineConfig {
 		Spec: anywherev1.SnowMachineConfigSpec{
 			PhysicalNetworkConnector: anywherev1.SFPPlus,
 			OSFamily:                 anywherev1.Ubuntu,
+			Network: anywherev1.SnowNetwork{
+				DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
+					{
+						Index:   1,
+						Primary: true,
+						DHCP:    true,
+					},
+				},
+			},
 		},
 	}
 
@@ -502,5 +528,28 @@ func credentialsSecret() *corev1.Secret {
 			"ca-bundle":   []byte("certs"),
 		},
 		Type: "Opaque",
+	}
+}
+
+func ipPool() *anywherev1.SnowIPPool {
+	return &anywherev1.SnowIPPool{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       anywherev1.SnowIPPoolKind,
+			APIVersion: anywherev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-ip-pool",
+			Namespace: clusterNamespace,
+		},
+		Spec: anywherev1.SnowIPPoolSpec{
+			Pools: []anywherev1.IPPool{
+				{
+					IPStart: "start",
+					IPEnd:   "end",
+					Gateway: "gateway",
+					Subnet:  "subnet",
+				},
+			},
+		},
 	}
 }

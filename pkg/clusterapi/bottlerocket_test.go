@@ -110,6 +110,7 @@ func TestSetBottlerocketInEtcdCluster(t *testing.T) {
 	g := newApiBuilerTest(t)
 	got := wantEtcdCluster()
 	want := got.DeepCopy()
+	want.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("bottlerocket")
 	want.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
 		EtcdImage:      "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
 		BootstrapImage: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",

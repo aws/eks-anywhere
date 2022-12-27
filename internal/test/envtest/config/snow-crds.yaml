@@ -10,7 +10,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.6.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws-snow
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -122,6 +122,7 @@ spec:
                 enum:
                 - SFP_PLUS
                 - QSFP
+                - RJ45
                 type: string
               region:
                 description: The AWS Region the cluster lives in.
@@ -221,7 +222,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws-snow
@@ -257,25 +258,25 @@ spec:
             description: AWSSnowIPPoolSpec defines the desired state of AWSSnowIPPool
             properties:
               pools:
-                description: IPPools is the configuration of static ips used for machine's
-                  ip.
+                description: IPPools defines a range of ip addresses for static IP
+                  configurations.
                 items:
-                  description: IPPool is the configuration of static ips used for
-                    machine's ip.
+                  description: IPPool is the configuration of static ip, it provides
+                    a range of ip addresses
                   properties:
                     gateway:
                       description: Gateway is the gateway of this subnet. Used for
                         routing purpose
                       type: string
                     ipEnd:
-                      description: IPEnd is the end of an ip range
+                      description: IPEnd is the end ip address of an ip range
                       type: string
                     ipStart:
-                      description: IPStart is the start of an ip range
+                      description: IPStart is the start ip address of an ip range
                       type: string
                     subnet:
                       description: Subnet is customers' network subnet, we can use
-                        it to determine if two ip addresses are in the same subnet.
+                        it to determine whether an ip is in this subnet
                       type: string
                   type: object
                 type: array
@@ -300,7 +301,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.6.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws-snow
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -531,74 +532,62 @@ spec:
                 description: Network is the DNI and ip address settings for this machine
                 properties:
                   directNetworkInterfaces:
-                    description: DirectNetworkInterfaces is the configuration requirements
-                      for DNIs
+                    description: DirectNetworkInterfaces is a DNI configuration list
+                      what customers want
                     items:
                       description: AWSSnowDirectNetworkInterface is configuration
                         of DNIs specified by customers.
                       properties:
                         dhcp:
-                          description: DHCP is whether we assign ip using DHCP for
-                            this DNI
+                          description: DHCP shows whether we assign ip using DHCP
+                            for this DNI If DHCP is true, CAPAS will alloacate ip
+                            address to this DNI using DHCP
                           type: boolean
                         index:
-                          description: Index is the index number of DNI
-                          maximum: 7
+                          description: Index is the index number of DNI, usually starts
+                            from 1 which can clarify DNIs in the list
+                          maximum: 8
                           minimum: 1
                           type: integer
                         ipPool:
-                          description: IPPool is the ip pool for this DNI if customers
-                            want to specify
+                          description: IPPool is an ip pool which provides a range
+                            of ip addresses If IPPool is not nil, we will allocate
+                            an ip address from this pool to this DNI
                           properties:
                             apiVersion:
-                              description: 'APIVersion defines the versioned schema
-                                of this representation of an object. Servers should
-                                convert recognized schemas to the latest internal
-                                value, and may reject unrecognized values. More info:
-                                https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                              description: API version of the referent.
+                              type: string
+                            fieldPath:
+                              description: 'If referring to a piece of an object instead
+                                of an entire object, this string should contain a
+                                valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                                For example, if the object reference is to a container
+                                within a pod, this would take on a value like: "spec.containers{name}"
+                                (where "name" refers to the name of the container
+                                that triggered the event) or if no container name
+                                is specified "spec.containers[2]" (container with
+                                index 2 in this pod). This syntax is chosen only to
+                                have some well-defined way of referencing a part of
+                                an object. TODO: this design is not final and this
+                                field is subject to change in the future.'
                               type: string
                             kind:
-                              description: 'Kind is a string value representing the
-                                REST resource this object represents. Servers may
-                                infer this from the endpoint the client submits requests
-                                to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                              description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                               type: string
-                            metadata:
-                              type: object
-                            spec:
-                              description: AWSSnowIPPoolSpec defines the desired state
-                                of AWSSnowIPPool
-                              properties:
-                                pools:
-                                  description: IPPools is the configuration of static
-                                    ips used for machine's ip.
-                                  items:
-                                    description: IPPool is the configuration of static
-                                      ips used for machine's ip.
-                                    properties:
-                                      gateway:
-                                        description: Gateway is the gateway of this
-                                          subnet. Used for routing purpose
-                                        type: string
-                                      ipEnd:
-                                        description: IPEnd is the end of an ip range
-                                        type: string
-                                      ipStart:
-                                        description: IPStart is the start of an ip
-                                          range
-                                        type: string
-                                      subnet:
-                                        description: Subnet is customers' network
-                                          subnet, we can use it to determine if two
-                                          ip addresses are in the same subnet.
-                                        type: string
-                                    type: object
-                                  type: array
-                              type: object
-                            status:
-                              description: AWSSnowIPPoolStatus defines the observed
-                                state of AWSSnowIPPool
-                              type: object
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                              type: string
+                            namespace:
+                              description: 'Namespace of the referent. More info:
+                                https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                              type: string
+                            resourceVersion:
+                              description: 'Specific resourceVersion to which this
+                                reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                              type: string
+                            uid:
+                              description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                              type: string
                           type: object
                         primary:
                           description: Primary indicates whether the DNI is primary
@@ -606,18 +595,17 @@ spec:
                           type: boolean
                         vlanID:
                           description: VlanID is the vlan ID assigned by the user
-                          format: int64
+                            to this DNI
+                          format: int32
                           maximum: 4095
                           minimum: 0
                           type: integer
                       type: object
+                    maxItems: 8
                     minItems: 1
                     type: array
-                  dns:
-                    description: DNS is just for bottlerocket static ip config
-                    items:
-                      type: string
-                    type: array
+                required:
+                - directNetworkInterfaces
                 type: object
               networkInterfaces:
                 description: NetworkInterfaces is a list of ENIs to associate with
@@ -683,6 +671,7 @@ spec:
                 enum:
                 - SFP_PLUS
                 - QSFP
+                - RJ45
                 type: string
               providerID:
                 description: ProviderID is the unique identifier as specified by the
@@ -771,6 +760,8 @@ spec:
                   built-in support for gzip-compressed user data user data stored
                   in aws secret manager is always gzip-compressed.
                 type: boolean
+            required:
+            - network
             type: object
           status:
             description: AWSSnowMachineStatus defines the observed state of AWSSnowMachine
@@ -893,7 +884,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capas-system/capas-serving-cert
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.6.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws-snow
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1142,78 +1133,70 @@ spec:
                           this machine
                         properties:
                           directNetworkInterfaces:
-                            description: DirectNetworkInterfaces is the configuration
-                              requirements for DNIs
+                            description: DirectNetworkInterfaces is a DNI configuration
+                              list what customers want
                             items:
                               description: AWSSnowDirectNetworkInterface is configuration
                                 of DNIs specified by customers.
                               properties:
                                 dhcp:
-                                  description: DHCP is whether we assign ip using
-                                    DHCP for this DNI
+                                  description: DHCP shows whether we assign ip using
+                                    DHCP for this DNI If DHCP is true, CAPAS will
+                                    alloacate ip address to this DNI using DHCP
                                   type: boolean
                                 index:
-                                  description: Index is the index number of DNI
-                                  maximum: 7
+                                  description: Index is the index number of DNI, usually
+                                    starts from 1 which can clarify DNIs in the list
+                                  maximum: 8
                                   minimum: 1
                                   type: integer
                                 ipPool:
-                                  description: IPPool is the ip pool for this DNI
-                                    if customers want to specify
+                                  description: IPPool is an ip pool which provides
+                                    a range of ip addresses If IPPool is not nil,
+                                    we will allocate an ip address from this pool
+                                    to this DNI
                                   properties:
                                     apiVersion:
-                                      description: 'APIVersion defines the versioned
-                                        schema of this representation of an object.
-                                        Servers should convert recognized schemas
-                                        to the latest internal value, and may reject
-                                        unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                                      description: API version of the referent.
+                                      type: string
+                                    fieldPath:
+                                      description: 'If referring to a piece of an
+                                        object instead of an entire object, this string
+                                        should contain a valid JSON/Go field access
+                                        statement, such as desiredState.manifest.containers[2].
+                                        For example, if the object reference is to
+                                        a container within a pod, this would take
+                                        on a value like: "spec.containers{name}" (where
+                                        "name" refers to the name of the container
+                                        that triggered the event) or if no container
+                                        name is specified "spec.containers[2]" (container
+                                        with index 2 in this pod). This syntax is
+                                        chosen only to have some well-defined way
+                                        of referencing a part of an object. TODO:
+                                        this design is not final and this field is
+                                        subject to change in the future.'
                                       type: string
                                     kind:
-                                      description: 'Kind is a string value representing
-                                        the REST resource this object represents.
-                                        Servers may infer this from the endpoint the
-                                        client submits requests to. Cannot be updated.
-                                        In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                                      description: 'Kind of the referent. More info:
+                                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                                       type: string
-                                    metadata:
-                                      type: object
-                                    spec:
-                                      description: AWSSnowIPPoolSpec defines the desired
-                                        state of AWSSnowIPPool
-                                      properties:
-                                        pools:
-                                          description: IPPools is the configuration
-                                            of static ips used for machine's ip.
-                                          items:
-                                            description: IPPool is the configuration
-                                              of static ips used for machine's ip.
-                                            properties:
-                                              gateway:
-                                                description: Gateway is the gateway
-                                                  of this subnet. Used for routing
-                                                  purpose
-                                                type: string
-                                              ipEnd:
-                                                description: IPEnd is the end of an
-                                                  ip range
-                                                type: string
-                                              ipStart:
-                                                description: IPStart is the start
-                                                  of an ip range
-                                                type: string
-                                              subnet:
-                                                description: Subnet is customers'
-                                                  network subnet, we can use it to
-                                                  determine if two ip addresses are
-                                                  in the same subnet.
-                                                type: string
-                                            type: object
-                                          type: array
-                                      type: object
-                                    status:
-                                      description: AWSSnowIPPoolStatus defines the
-                                        observed state of AWSSnowIPPool
-                                      type: object
+                                    name:
+                                      description: 'Name of the referent. More info:
+                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                                      type: string
+                                    namespace:
+                                      description: 'Namespace of the referent. More
+                                        info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                                      type: string
+                                    resourceVersion:
+                                      description: 'Specific resourceVersion to which
+                                        this reference is made, if any. More info:
+                                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                                      type: string
+                                    uid:
+                                      description: 'UID of the referent. More info:
+                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                                      type: string
                                   type: object
                                 primary:
                                   description: Primary indicates whether the DNI is
@@ -1221,19 +1204,17 @@ spec:
                                   type: boolean
                                 vlanID:
                                   description: VlanID is the vlan ID assigned by the
-                                    user
-                                  format: int64
+                                    user to this DNI
+                                  format: int32
                                   maximum: 4095
                                   minimum: 0
                                   type: integer
                               type: object
+                            maxItems: 8
                             minItems: 1
                             type: array
-                          dns:
-                            description: DNS is just for bottlerocket static ip config
-                            items:
-                              type: string
-                            type: array
+                        required:
+                        - directNetworkInterfaces
                         type: object
                       networkInterfaces:
                         description: NetworkInterfaces is a list of ENIs to associate
@@ -1300,6 +1281,7 @@ spec:
                         enum:
                         - SFP_PLUS
                         - QSFP
+                        - RJ45
                         type: string
                       providerID:
                         description: ProviderID is the unique identifier as specified
@@ -1395,6 +1377,8 @@ spec:
                           cloud-init has built-in support for gzip-compressed user
                           data user data stored in aws secret manager is always gzip-compressed.
                         type: boolean
+                    required:
+                    - network
                     type: object
                 required:
                 - spec
@@ -1542,6 +1526,18 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
+  - awssnowippools
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
   - awssnowmachines
   verbs:
   - create
@@ -1668,8 +1664,7 @@ spec:
           value: /home/.aws/credentials
         - name: AWS_CA_BUNDLE
           value: /home/.aws/ca-bundle
-        image: ${SNOW_CONTROLLER_IMAGE}
-        imagePullPolicy: IfNotPresent
+        image: .dkr.ecr.us-west-2.amazonaws.com/cluster-api-provider-aws-snow-ecr:v0.1.0
         livenessProbe:
           httpGet:
             path: /healthz

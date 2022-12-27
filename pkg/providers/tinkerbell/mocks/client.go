@@ -43,20 +43,6 @@ func (m *MockProviderKubectlClient) EXPECT() *MockProviderKubectlClientMockRecor
 	return m.recorder
 }
 
-// ApplyKubeSpec mocks base method.
-func (m *MockProviderKubectlClient) ApplyKubeSpec(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyKubeSpec", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ApplyKubeSpec indicates an expected call of ApplyKubeSpec.
-func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpec", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyKubeSpec), arg0, arg1, arg2)
-}
-
 // ApplyKubeSpecFromBytesForce mocks base method.
 func (m *MockProviderKubectlClient) ApplyKubeSpecFromBytesForce(arg0 context.Context, arg1 *types.Cluster, arg2 []byte) error {
 	m.ctrl.T.Helper()

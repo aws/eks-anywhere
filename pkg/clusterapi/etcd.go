@@ -15,16 +15,10 @@ import (
 
 // SetUbuntuConfigInEtcdCluster sets up the etcd config in EtcdadmCluster.
 func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, version string) {
+	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format("cloud-config")
 	etcd.Spec.EtcdadmConfigSpec.CloudInitConfig = &etcdbootstrapv1.CloudInitConfig{
 		Version:    version,
 		InstallDir: "/usr/bin",
-	}
-	etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = []string{
-		"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
-		"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
-		"echo \"127.0.0.1   localhost\" >>/etc/hosts",
-		"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
-		"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
 	}
 }
 
@@ -45,9 +39,10 @@ func SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplan
 	}
 
 	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
-		CAFile:   "/var/lib/kubeadm/pki/etcd/ca.crt",
-		CertFile: "/var/lib/kubeadm/pki/server-etcd-client.crt",
-		KeyFile:  "/var/lib/kubeadm/pki/apiserver-etcd-client.key",
+		Endpoints: []string{},
+		CAFile:    "/var/lib/kubeadm/pki/etcd/ca.crt",
+		CertFile:  "/var/lib/kubeadm/pki/server-etcd-client.crt",
+		KeyFile:   "/var/lib/kubeadm/pki/apiserver-etcd-client.key",
 	}
 }
 

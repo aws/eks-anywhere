@@ -22,6 +22,7 @@ import (
 const (
 	SnowClusterKind         = "AWSSnowCluster"
 	SnowMachineTemplateKind = "AWSSnowMachineTemplate"
+	SnowIPPoolKind          = "AWSSnowIPPool"
 )
 
 // CAPICluster generates the CAPICluster object for snow provider.
@@ -122,21 +123,8 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 	return kct, nil
 }
 
-func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) clusterv1.MachineDeployment {
+func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *clusterv1.MachineDeployment {
 	return clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, snowMachineTemplate)
-}
-
-func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[string]*bootstrapv1.KubeadmConfigTemplate, machineTemplates map[string]*snowv1.AWSSnowMachineTemplate) map[string]*clusterv1.MachineDeployment {
-	m := make(map[string]*clusterv1.MachineDeployment, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-
-	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		deployment := machineDeployment(clusterSpec, workerNodeGroupConfig,
-			kubeadmConfigTemplates[workerNodeGroupConfig.Name],
-			machineTemplates[workerNodeGroupConfig.Name],
-		)
-		m[workerNodeGroupConfig.Name] = &deployment
-	}
-	return m
 }
 
 // EtcdadmCluster builds an etcdadmCluster based on an eks-a cluster spec and snowMachineTemplate.
@@ -153,6 +141,9 @@ func EtcdadmCluster(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTempl
 
 	case v1alpha1.Ubuntu:
 		clusterapi.SetUbuntuConfigInEtcdCluster(etcd, clusterSpec.VersionsBundle.KubeDistro.EtcdVersion)
+		etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands = append(etcd.Spec.EtcdadmConfigSpec.PreEtcdadmCommands,
+			"/etc/eks/bootstrap.sh",
+		)
 
 	default:
 		log.Info("Warning: unsupported OS family when setting up EtcdadmCluster", "OS family", osFamily)
@@ -217,8 +208,74 @@ func EksaCredentialsSecret(datacenter *v1alpha1.SnowDatacenterConfig, credsB64, 
 	return CredentialsSecret(datacenter.Spec.IdentityRef.Name, datacenter.GetNamespace(), credsB64, certsB64)
 }
 
-func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {
+// CAPASIPPools defines a set of CAPAS AWSSnowPool objects.
+type CAPASIPPools map[string]*snowv1.AWSSnowIPPool
+
+func (p CAPASIPPools) addPools(dnis []v1alpha1.SnowDirectNetworkInterface, m map[string]*v1alpha1.SnowIPPool) {
+	for _, dni := range dnis {
+		if dni.IPPoolRef != nil {
+			p[dni.IPPoolRef.Name] = toAWSSnowIPPool(m[dni.IPPoolRef.Name])
+		}
+	}
+}
+
+func buildSnowIPPool(pool v1alpha1.IPPool) snowv1.IPPool {
+	return snowv1.IPPool{
+		IPStart: &pool.IPStart,
+		IPEnd:   &pool.IPEnd,
+		Gateway: &pool.Gateway,
+		Subnet:  &pool.Subnet,
+	}
+}
+
+func toAWSSnowIPPool(pool *v1alpha1.SnowIPPool) *snowv1.AWSSnowIPPool {
+	snowPools := make([]snowv1.IPPool, 0, len(pool.Spec.Pools))
+	for _, p := range pool.Spec.Pools {
+		snowPools = append(snowPools, buildSnowIPPool(p))
+	}
+
+	return &snowv1.AWSSnowIPPool{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: clusterapi.InfrastructureAPIVersion(),
+			Kind:       SnowIPPoolKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pool.GetName(),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: snowv1.AWSSnowIPPoolSpec{
+			IPPools: snowPools,
+		},
+	}
+}
+
+func buildDNI(dni v1alpha1.SnowDirectNetworkInterface, capasPools CAPASIPPools) snowv1.AWSSnowDirectNetworkInterface {
+	var ipPoolRef *v1.ObjectReference
+	if dni.IPPoolRef != nil {
+		ipPool := capasPools[dni.IPPoolRef.Name]
+		ipPoolRef = &v1.ObjectReference{
+			Kind: ipPool.Kind,
+			Name: ipPool.Name,
+		}
+	}
+	return snowv1.AWSSnowDirectNetworkInterface{
+		Index:   dni.Index,
+		VlanID:  dni.VlanID,
+		DHCP:    dni.DHCP,
+		Primary: dni.Primary,
+		IPPool:  ipPoolRef,
+	}
+}
+
+// MachineTemplate builds a snowMachineTemplate based on an eks-a snowMachineConfig and a capasIPPool.
+func MachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig, capasPools CAPASIPPools) *snowv1.AWSSnowMachineTemplate {
+	dnis := make([]snowv1.AWSSnowDirectNetworkInterface, 0, len(machineConfig.Spec.Network.DirectNetworkInterfaces))
+	for _, dni := range machineConfig.Spec.Network.DirectNetworkInterfaces {
+		dnis = append(dnis, buildDNI(dni, capasPools))
+	}
+
 	networkConnector := string(machineConfig.Spec.PhysicalNetworkConnector)
+
 	return &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterapi.InfrastructureAPIVersion(),
@@ -243,8 +300,10 @@ func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig)
 					PhysicalNetworkConnectorType: &networkConnector,
 					Devices:                      machineConfig.Spec.Devices,
 					ContainersVolume:             machineConfig.Spec.ContainersVolume,
-					Network:                      &machineConfig.Spec.Network,
-					OSFamily:                     (*snowv1.OSFamily)(&machineConfig.Spec.OSFamily),
+					Network: snowv1.AWSSnowNetwork{
+						DirectNetworkInterfaces: dnis,
+					},
+					OSFamily: (*snowv1.OSFamily)(&machineConfig.Spec.OSFamily),
 				},
 			},
 		},

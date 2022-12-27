@@ -15,6 +15,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -61,6 +62,69 @@ func TestControlPlaneObjects(t *testing.T) {
 	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
 }
 
+func TestControlPlaneObjectsWithIPPools(t *testing.T) {
+	g := newSnowTest(t)
+	g.clusterSpec.SnowMachineConfig("test-cp").Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+			{
+				Index: 1,
+				IPPoolRef: &anywherev1.Ref{
+					Kind: v1alpha1.SnowIPPoolKind,
+					Name: "ip-pool-1",
+				},
+				Primary: true,
+			},
+		},
+	}
+	mt := wantSnowMachineTemplate()
+	mt.Spec.Template.Spec.Network = snowv1.AWSSnowNetwork{
+		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			{
+				Index: 1,
+				IPPool: &v1.ObjectReference{
+					Kind: snow.SnowIPPoolKind,
+					Name: "ip-pool-1",
+				},
+				Primary: true,
+			},
+		},
+	}
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"snow-test",
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			return nil
+		})
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"test-cp-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			mt.DeepCopyInto(obj)
+			obj.SetName("test-cp-1")
+			obj.Spec.Template.Spec.InstanceType = "updated-instance-type"
+			return nil
+		})
+
+	wantMachineTemplateName := "test-cp-2"
+	mt.SetName(wantMachineTemplateName)
+	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
+	kcp := wantKubeadmControlPlane()
+	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
+
+	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
+	g.Expect(err).To(Succeed())
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret(), wantSnowIPPool()}))
+}
+
 func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 	g := newSnowTest(t)
 	g.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
@@ -88,8 +152,8 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 				"1.2.3.5",
 			},
 			OSFamily: anywherev1.Ubuntu,
-			Network: snowv1.AWSSnowNetwork{
-				DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			Network: anywherev1.SnowNetwork{
+				DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
 					{
 						Index:   1,
 						DHCP:    true,
@@ -333,9 +397,33 @@ func TestWorkersObjects(t *testing.T) {
 	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, wantKubeadmConfigTemplate(), mt}))
 }
 
-func TestWorkersObjectsFromBetaMachineTemplateName(t *testing.T) {
+func TestWorkersObjectsWithIPPools(t *testing.T) {
 	g := newSnowTest(t)
+	g.clusterSpec.SnowMachineConfig("test-wn").Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+			{
+				Index: 1,
+				IPPoolRef: &anywherev1.Ref{
+					Kind: v1alpha1.SnowIPPoolKind,
+					Name: "ip-pool-1",
+				},
+				Primary: true,
+			},
+		},
+	}
 	mt := wantSnowMachineTemplate()
+	mt.Spec.Template.Spec.Network = snowv1.AWSSnowNetwork{
+		DirectNetworkInterfaces: []snowv1.AWSSnowDirectNetworkInterface{
+			{
+				Index: 1,
+				IPPool: &v1.ObjectReference{
+					Kind: snow.SnowIPPoolKind,
+					Name: "ip-pool-1",
+				},
+				Primary: true,
+			},
+		},
+	}
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
@@ -345,51 +433,43 @@ func TestWorkersObjectsFromBetaMachineTemplateName(t *testing.T) {
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
-			obj.Spec.Template.Spec.InfrastructureRef.Name = "test-wn"
-			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-wn"
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
+			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			"test-wn",
+			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
 			&bootstrapv1.KubeadmConfigTemplate{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
 			wantKubeadmConfigTemplate().DeepCopyInto(obj)
-			obj.SetName("test-wn")
-			obj.Spec.Template.Spec.PreKubeadmCommands = []string{
-				"new command",
-			}
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			"test-wn",
+			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
 			&snowv1.AWSSnowMachineTemplate{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
 			mt.DeepCopyInto(obj)
-			obj.SetName("test-wn")
+			obj.SetName("snow-test-md-0-1")
 			obj.Spec.Template.Spec.InstanceType = "updated-instance-type"
 			return nil
 		})
 
-	wantMachineTemplateName := "snow-test-md-0-1"
+	wantMachineTemplateName := "snow-test-md-0-2"
 	mt.SetName(wantMachineTemplateName)
 	md := wantMachineDeployment()
 	md.Spec.Template.Spec.InfrastructureRef.Name = wantMachineTemplateName
-	kct := wantKubeadmConfigTemplate()
-	wantKctName := "snow-test-md-0-1"
-	kct.SetName(wantKctName)
-	md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = wantKctName
 
 	got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, kct, mt}))
+	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, wantKubeadmConfigTemplate(), mt, wantSnowIPPool()}))
 }
 
 func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
@@ -538,13 +618,11 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 
 	md := wantMachineDeployment()
 	md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-2"
-	md.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-2"
 	kct := wantKubeadmConfigTemplate()
 	kct.SetName("snow-test-md-0-2")
-	mt.SetName("snow-test-md-0-2")
 
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(ConsistOf([]kubernetes.Object{md, kct, mt}))
+	g.Expect(got).To(BeComparableTo([]kubernetes.Object{kct, md, mt}))
 }
 
 func TestWorkersObjectsLabelsUpdated(t *testing.T) {
@@ -690,11 +768,10 @@ func TestWorkersObjectsGetMachineTemplateError(t *testing.T) {
 	g.Expect(err).NotTo(Succeed())
 }
 
-func TestKubeadmConfigTemplatesWithRegistryMirror(t *testing.T) {
+func TestWorkersObjectsWithRegistryMirror(t *testing.T) {
 	for _, tt := range registryMirrorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newSnowTest(t)
-
 			g.kubeconfigClient.EXPECT().
 				Get(
 					g.ctx,
@@ -705,27 +782,22 @@ func TestKubeadmConfigTemplatesWithRegistryMirror(t *testing.T) {
 				Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
 			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			gotMt, gotKct, err := snow.WorkersMachineAndConfigTemplate(g.ctx, g.logger, g.kubeconfigClient, g.clusterSpec)
+
+			kct := wantKubeadmConfigTemplate()
+			kct.Spec.Template.Spec.Files = tt.wantFiles
+			kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
+
+			got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 			g.Expect(err).To(Succeed())
-			wantMt := map[string]*snowv1.AWSSnowMachineTemplate{
-				"md-0": wantSnowMachineTemplate(),
-			}
-			wantKct := map[string]*bootstrapv1.KubeadmConfigTemplate{
-				"md-0": wantKubeadmConfigTemplate(),
-			}
-			wantKct["md-0"].Spec.Template.Spec.Files = tt.wantFiles
-			wantKct["md-0"].Spec.Template.Spec.PreKubeadmCommands = append(wantKct["md-0"].Spec.Template.Spec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
-			g.Expect(gotMt).To(Equal(wantMt))
-			g.Expect(gotKct).To(Equal(wantKct))
+			g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), kct, wantSnowMachineTemplate()}))
 		})
 	}
 }
 
-func TestKubeadmConfigTemplatesWithProxyConfig(t *testing.T) {
+func TestWorkersObjectsWithProxy(t *testing.T) {
 	for _, tt := range proxyTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newSnowTest(t)
-
 			g.kubeconfigClient.EXPECT().
 				Get(
 					g.ctx,
@@ -737,96 +809,13 @@ func TestKubeadmConfigTemplatesWithProxyConfig(t *testing.T) {
 
 			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
 
-			_, got, err := snow.WorkersMachineAndConfigTemplate(g.ctx, g.logger, g.kubeconfigClient, g.clusterSpec)
-			g.Expect(err).To(Succeed())
-			want := map[string]*bootstrapv1.KubeadmConfigTemplate{
-				"md-0": wantKubeadmConfigTemplate(),
-			}
-			want["md-0"].Spec.Template.Spec.Files = tt.wantFiles
-			want["md-0"].Spec.Template.Spec.PreKubeadmCommands = append(want["md-0"].Spec.Template.Spec.PreKubeadmCommands, wantProxyConfigCommands()...)
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
+			kct := wantKubeadmConfigTemplate()
+			kct.Spec.Template.Spec.Files = tt.wantFiles
+			kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, wantProxyConfigCommands()...)
 
-func TestNewMachineTemplateName(t *testing.T) {
-	tests := []struct {
-		name     string
-		old, new *snowv1.AWSSnowMachineTemplate
-		want     string
-	}{
-		{
-			name: "remove one device",
-			old: &snowv1.AWSSnowMachineTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "old-1",
-				},
-				Spec: snowv1.AWSSnowMachineTemplateSpec{
-					Template: snowv1.AWSSnowMachineTemplateResource{
-						Spec: snowv1.AWSSnowMachineSpec{
-							Devices: []string{
-								"1",
-								"2",
-							},
-						},
-					},
-				},
-			},
-			new: &snowv1.AWSSnowMachineTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "new-1",
-				},
-				Spec: snowv1.AWSSnowMachineTemplateSpec{
-					Template: snowv1.AWSSnowMachineTemplateResource{
-						Spec: snowv1.AWSSnowMachineSpec{
-							Devices: []string{
-								"1",
-							},
-						},
-					},
-				},
-			},
-			want: "old-2",
-		},
-		{
-			name: "add one device",
-			old: &snowv1.AWSSnowMachineTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "old-1",
-				},
-				Spec: snowv1.AWSSnowMachineTemplateSpec{
-					Template: snowv1.AWSSnowMachineTemplateResource{
-						Spec: snowv1.AWSSnowMachineSpec{
-							Devices: []string{
-								"1",
-							},
-						},
-					},
-				},
-			},
-			new: &snowv1.AWSSnowMachineTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "new-1",
-				},
-				Spec: snowv1.AWSSnowMachineTemplateSpec{
-					Template: snowv1.AWSSnowMachineTemplateResource{
-						Spec: snowv1.AWSSnowMachineSpec{
-							Devices: []string{
-								"1",
-								"2",
-							},
-						},
-					},
-				},
-			},
-			want: "old-2",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newSnowTest(t)
-			name := snow.NewMachineTemplateName(tt.new, tt.old)
-			g.Expect(name).To(Equal(tt.want))
+			got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
+			g.Expect(err).To(Succeed())
+			g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), kct, wantSnowMachineTemplate()}))
 		})
 	}
 }

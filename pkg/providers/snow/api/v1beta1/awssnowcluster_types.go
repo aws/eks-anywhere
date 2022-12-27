@@ -85,7 +85,7 @@ type AWSSnowClusterSpec struct {
 	ImageLookupBaseOS string `json:"imageLookupBaseOS,omitempty"`
 
 	// PhysicalNetworkConnectorType is the physical network connector type to use for creating direct network interfaces. Valid values are a physical network connector type (SFP_PLUS or QSFP), or omitted (cluster-api selects a valid physical network interface, default is SFP_PLUS)
-	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP
+	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP;RJ45
 	// +optional
 	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
 

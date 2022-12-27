@@ -9,6 +9,7 @@ import (
 const (
 	SFPPlus PhysicalNetworkConnectorType = "SFP_PLUS"
 	QSFP    PhysicalNetworkConnectorType = "QSFP"
+	RJ45    PhysicalNetworkConnectorType = "RJ45"
 
 	SbeCLarge   SnowInstanceType = "sbe-c.large"
 	SbeCXLarge  SnowInstanceType = "sbe-c.xlarge"
@@ -35,7 +36,7 @@ type SnowMachineConfigSpec struct {
 	InstanceType SnowInstanceType `json:"instanceType,omitempty"`
 
 	// PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
-	// Valid values: "SFP_PLUS" (default) and "QSFP".
+	// Valid values: "SFP_PLUS" (default), "QSFP" and "RJ45".
 	PhysicalNetworkConnector PhysicalNetworkConnectorType `json:"physicalNetworkConnector,omitempty"`
 
 	// SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
@@ -52,7 +53,43 @@ type SnowMachineConfigSpec struct {
 	OSFamily OSFamily `json:"osFamily,omitempty"`
 
 	// Network provides the custom network setting for the machine.
-	Network snowv1.AWSSnowNetwork `json:"network,omitempty"`
+	Network SnowNetwork `json:"network"`
+}
+
+// SnowNetwork specifies the network configurations for snow.
+type SnowNetwork struct {
+	// DirectNetworkInterfaces contains a list of direct network interface (DNI) configuration.
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=8
+	DirectNetworkInterfaces []SnowDirectNetworkInterface `json:"directNetworkInterfaces,omitempty"`
+}
+
+// SnowDirectNetworkInterface defines a direct network interface (DNI) configuration.
+type SnowDirectNetworkInterface struct {
+	// Index is the index number of DNI used to clarify the position in the list. Usually starts with 1.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=8
+	// +optional
+	Index int `json:"index,omitempty"`
+
+	// VlanID is the vlan id assigned by the user for the DNI.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=4095
+	// +optional
+	VlanID *int32 `json:"vlanID,omitempty"`
+
+	// DHCP defines whether DHCP is used to assign ip for the DNI.
+	// +optional
+	DHCP bool `json:"dhcp,omitempty"`
+
+	// IPPool contains a reference to a snow ip pool which provides a range of ip addresses.
+	// When specified, an ip address selected from the pool is allocated to this DNI.
+	// +optional
+	IPPoolRef *Ref `json:"ipPoolRef,omitempty"`
+
+	// Primary indicates whether the DNI is primary or not.
+	// +optional
+	Primary bool `json:"primary,omitempty"`
 }
 
 func (s *SnowMachineConfig) SetManagedBy(clusterName string) {
@@ -111,6 +148,17 @@ func (s *SnowMachineConfig) SetEtcdAnnotation() {
 	}
 
 	s.Annotations[etcdAnnotation] = "true"
+}
+
+// IPPoolRefs returns a slice of snow IP pools that belongs to a snowMachineConfig.
+func (s *SnowMachineConfig) IPPoolRefs() []Ref {
+	ipPoolRefMap := make(refSet, 1)
+
+	for _, dni := range s.Spec.Network.DirectNetworkInterfaces {
+		ipPoolRefMap.addIfNotNil(dni.IPPoolRef)
+	}
+
+	return ipPoolRefMap.toSlice()
 }
 
 // +kubebuilder:object:generate=false

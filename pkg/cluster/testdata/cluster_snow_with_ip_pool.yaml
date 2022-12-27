@@ -1,0 +1,119 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "myHostIp"
+    machineGroupRef:
+      kind: SnowMachineConfig
+      name: eksa-unit-test-cp
+  datacenterRef:
+    kind: SnowDatacenterConfig
+    name: eksa-unit-test
+  kubernetesVersion: "1.21"
+  workerNodeGroupConfigurations:
+    - name: workers-1
+      count: 1
+      machineGroupRef:
+        kind: SnowMachineConfig
+        name: eksa-unit-test-worker-1
+    - name: workers-2
+      count: 1
+      machineGroupRef:
+        kind: SnowMachineConfig
+        name: eksa-unit-test-worker-2
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec: {}
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowMachineConfig
+metadata:
+  name: eksa-unit-test-cp
+spec:
+  amiID: eks-d-v1-21-ami
+  instanceType: sbe-c.large
+  sshKeyName: default
+  network:
+    directNetworkInterfaces:
+      - index: 1
+        ipPoolRef:
+          kind: SnowIPPool
+          name: ip-pool-1
+        primary: true
+      - index: 2
+        ipPoolRef:
+          kind: SnowIPPool
+          name: ip-pool-2
+        primary: false
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowMachineConfig
+metadata:
+  name: eksa-unit-test-worker-1
+spec:
+  amiID: eks-d-v1-21-ami
+  instanceType: sbe-c.xlarge
+  sshKeyName: default
+  network:
+    directNetworkInterfaces:
+      - index: 1
+        ipPoolRef:
+          kind: SnowIPPool
+          name: ip-pool-1
+        primary: true
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowMachineConfig
+metadata:
+  name: eksa-unit-test-worker-2
+spec:
+  amiID: eks-d-v1-21-ami
+  instanceType: sbe-c.xlarge
+  sshKeyName: default
+  network:
+    directNetworkInterfaces:
+      - index: 1
+        dhcp: true
+        primary: true
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowIPPool
+metadata:
+  name: ip-pool-1
+spec:
+  pools:
+    - ipStart: start-1
+      ipEnd: end-1
+      subnet: subnet-1
+      gateway: gateway-1
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowIPPool
+metadata:
+  name: ip-pool-2
+spec:
+  pools:
+    - ipStart: start-2
+      ipEnd: end-2
+      subnet: subnet-2
+      gateway: gateway-2

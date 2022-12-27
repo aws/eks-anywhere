@@ -227,6 +227,54 @@ func WithBottleRocket123() VSphereOpt {
 	}
 }
 
+// WithBottleRocket121 returns a cluster config filler that sets the kubernetes version of the cluster to 1.21
+// as well as the right botllerocket template and osFamily for all VSphereMachaineConfigs.
+func (v *VSphere) WithBottleRocket121() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube121)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube121)),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+	)
+}
+
+// WithBottleRocket122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
+// as well as the right botllerocket template and osFamily for all VSphereMachaineConfigs.
+func (v *VSphere) WithBottleRocket122() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube122)),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+	)
+}
+
+// WithBottleRocket123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
+// as well as the right botllerocket template and osFamily for all VSphereMachaineConfigs.
+func (v *VSphere) WithBottleRocket123() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube123)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube123)),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+	)
+}
+
+// WithBottleRocket124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
+// as well as the right botllerocket template and osFamily for all VSphereMachaineConfigs.
+func (v *VSphere) WithBottleRocket124() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube124)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube124)),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+	)
+}
+
 // WithBottleRocket124 returns br 124 var.
 func WithBottleRocket124() VSphereOpt {
 	return func(v *VSphere) {
