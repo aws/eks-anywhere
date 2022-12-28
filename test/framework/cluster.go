@@ -1534,7 +1534,7 @@ func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName string, 
 	}
 
 	svcAddress := packageName + "-node-exporter." + targetNamespace + ".svc.cluster.local" + ":9100/metrics"
-	e.T.Log("Validate content at endpoint %s", svcAddress)
+	e.T.Log("Validate content at endpoint", svcAddress)
 	expectedLogs := "HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles"
 	e.ValidateEndpointContent(svcAddress, targetNamespace, expectedLogs)
 }
@@ -1764,8 +1764,9 @@ func (e *ClusterE2ETest) CurlEndpointByBusyBox(endpoint string, namespace string
 // takes time for logs to be populated, a retrier with configurable timeout duration
 // is added.
 func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
-	targetContainerName string, expectedLogs string, timeout time.Duration) {
-	e.T.Log("Match logs for pod %s, container %s in namespace %s ", targetPodName,
+	targetContainerName string, expectedLogs string, timeout time.Duration,
+) {
+	e.T.Logf("Match logs for pod %s, container %s in namespace %s", targetPodName,
 		targetContainerName, targetNamespace)
 
 	err := retrier.New(timeout).Retry(func() error {
