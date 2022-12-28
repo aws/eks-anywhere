@@ -41,7 +41,7 @@ func TestCPackagesPrometheusVSphereKubernetes123BottleRocketSimpleFlow(t *testin
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestCPackagesPrometheusVSphereKubernetes122UbuntuSimpleFlow(t *testing.T) {
+func TestCPackagesPrometheusVSphereKubernetes122UbuntuUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
@@ -50,7 +50,7 @@ func TestCPackagesPrometheusVSphereKubernetes122UbuntuSimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+	runCuratedPackagesPrometheusUpdateFlow(test)
 }
 
 func TestCPackagesPrometheusCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
@@ -113,11 +113,36 @@ func runCuratedPackagesPrometheusInstall(test *framework.ClusterE2ETest) {
 		"--set server.persistentVolume.storageClass=local-path")
 	test.VerifyPrometheusPackageInstalled(packageFullName, packageTargetNamespace)
 	test.VerifyPrometheusNodeExporterStates(packageFullName, packageTargetNamespace)
-	test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace)
+	test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace, "deployment")
+}
+
+func runCuratedPackagesPrometheusUpdate(test *framework.ClusterE2ETest) {
+	packageFullName := packagePrefix + "-" + packageName
+
+	test.InstallLocalStorageProvisioner()
+	test.CreateNamespace(packageTargetNamespace)
+	test.SetPackageBundleActive()
+	test.InstallCuratedPackage(packageName, packageFullName,
+		kubeconfig.FromClusterName(test.ClusterName), packageTargetNamespace,
+		"--set server.persistentVolume.storageClass=local-path")
+
+	test.ApplyPrometheusPackageServerStatefulSetFile(packageFullName, packageTargetNamespace)
+	test.VerifyPrometheusPackageInstalled(packageFullName, packageTargetNamespace)
+	test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace, "statefulset")
+	test.VerifyPrometheusNodeExporterStates(packageFullName, packageTargetNamespace)
+
+	test.ApplyPrometheusPackageServerDeploymentFile(packageFullName, packageTargetNamespace)
+	test.VerifyPrometheusPackageInstalled(packageFullName, packageTargetNamespace)
+	test.VerifyPrometheusPrometheusServerStates(packageFullName, packageTargetNamespace, "deployment")
+	test.VerifyPrometheusNodeExporterStates(packageFullName, packageTargetNamespace)
 }
 
 func runCuratedPackagesPrometheusInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(runCuratedPackagesPrometheusInstall)
+}
+
+func runCuratedPackagesPrometheusUpdateFlow(test *framework.ClusterE2ETest) {
+	test.WithCluster(runCuratedPackagesPrometheusUpdate)
 }
 
 func runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
