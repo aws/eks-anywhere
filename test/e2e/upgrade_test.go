@@ -37,6 +37,15 @@ func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.DeleteCluster()
 }
 
+func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.UpgradeClusterWithKubectl(clusterOpts)
+	test.ValidateClusterState()
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts []framework.ClusterE2ETestOpt, clusterOpts2 []framework.ClusterE2ETestOpt, commandOpts []framework.CommandOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()

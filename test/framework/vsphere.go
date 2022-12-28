@@ -227,6 +227,54 @@ func WithBottleRocket123() VSphereOpt {
 	}
 }
 
+// WithUbuntu121 returns a cluster config filler that sets the kubernetes version of the cluster to 1.21
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu121() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube121)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube121)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+	)
+}
+
+// WithUbuntu122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu122() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube122)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+	)
+}
+
+// WithUbuntu123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu123() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube123)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube123)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+	)
+}
+
+// WithUbuntu124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu124() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube124)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube124)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+	)
+}
+
 // WithBottleRocket121 returns a cluster config filler that sets the kubernetes version of the cluster to 1.21
 // as well as the right botllerocket template and osFamily for all VSphereMachaineConfigs.
 func (v *VSphere) WithBottleRocket121() api.ClusterConfigFiller {
@@ -358,10 +406,10 @@ func (v *VSphere) WithProviderUpgradeGit(fillers ...api.VSphereFiller) ClusterE2
 	}
 }
 
-func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.VSphereMachineConfigFiller) ClusterE2ETestOpt {
+// WithNewVSphereWorkerNodeGroup adds a new worker node group to the cluster config.
+func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.UpdateClusterConfig(
-			api.VSphereToConfigFiller(vSphereMachineConfig(name, fillers...)),
 			api.ClusterToConfigFiller(buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
 		)
 	}
