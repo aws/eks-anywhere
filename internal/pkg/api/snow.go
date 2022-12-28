@@ -107,3 +107,12 @@ func WithOsFamilyForAllSnowMachines(value anywherev1.OSFamily) SnowFiller {
 		}
 	}
 }
+
+// WithChangeForAllSnowMachines applies the same change to all SnowMachineConfigs.
+func WithChangeForAllSnowMachines(change SnowMachineConfigFiller) SnowFiller {
+	return func(config SnowConfig) {
+		for _, m := range config.machineConfigs {
+			change(m)
+		}
+	}
+}

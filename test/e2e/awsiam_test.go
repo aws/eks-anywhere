@@ -24,7 +24,7 @@ func runUpgradeFlowWithAWSIamAuth(test *framework.ClusterE2ETest, updateVersion 
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.ValidateAWSIamAuth()
-	test.UpgradeCluster(clusterOpts)
+	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.ValidateAWSIamAuth()
 	test.StopIfFailed()

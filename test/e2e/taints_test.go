@@ -19,7 +19,7 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.CreateCluster()
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints)
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints)
-	test.UpgradeCluster(clusterOpts)
+	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints)
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints)
