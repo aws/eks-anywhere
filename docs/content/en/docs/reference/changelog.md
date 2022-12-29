@@ -6,6 +6,14 @@ weight: 35
 
 ## Unreleased
 
+## [v0.13.1](https://github.com/aws/eks-anywhere/releases/tag/v0.13.1)
+
+### Added
+- Multi-region support for all supported curated packages
+
+### Fixed
+- Fixed nil pointer in `eksctl anywhere upgrade plan` command
+
 ## [v0.13.0](https://github.com/aws/eks-anywhere/releases/tag/v0.13.0)
 ### Added
 - Workload clusters full lifecycle API support for vSphere and Docker ([#1090](https://github.com/aws/eks-anywhere/issues/1090))

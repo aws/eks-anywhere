@@ -22,7 +22,7 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		vsphere.WithBottleRocket123(),
+		vsphere.WithUbuntu123(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -35,7 +35,7 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithBottleRocket121(),
+			vsphere.WithUbuntu121(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -46,7 +46,7 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithBottleRocket122(),
+			vsphere.WithUbuntu122(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -57,7 +57,7 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithBottleRocket123(),
+			vsphere.WithUbuntu123(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -68,7 +68,7 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithBottleRocket124(),
+			vsphere.WithUbuntu124(),
 		),
 	)
 	test.CreateManagementCluster()
