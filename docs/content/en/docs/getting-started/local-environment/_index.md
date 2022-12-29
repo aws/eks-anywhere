@@ -86,6 +86,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    ```bash
    export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
    export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
+   export EKSA_AWS_REGION="us-west-2"
    ```
 
 1. Create Cluster:
@@ -245,7 +246,8 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    If you are going to use packages, set up authentication. These credentials should have [limited capabilities]({{< relref "../../tasks/packages/#setup-authentication-to-use-curated-packages" >}}):
    ```bash
    export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
-   export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
+   export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
+   export EKSA_AWS_REGION="us-west-2"
    ```
 
 1. Create cluster
