@@ -34,12 +34,12 @@ Bottlerocket vends its Baremetal variant Images using a secure distribution tool
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
 ## vSphere artifacts
@@ -54,13 +54,13 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.24 - `eksdRelease:kubernetes-1-24-eks-4`
+1.24 - `eksdRelease:kubernetes-1-24-eks-5`
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-9`
+1.23 - `eksdRelease:kubernetes-1-23-eks-10`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-14`
+1.22 - `eksdRelease:kubernetes-1-22-eks-15`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-21`
+1.21 - `eksdRelease:kubernetes-1-21-eks-22`
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
@@ -217,7 +217,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
@@ -307,7 +307,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```
 1. Get `image-builder`:
     ```bash
-    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
+    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
       sudo tar -xzC /usr/local/bin ./image-builder
     ```
 
@@ -392,7 +392,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
@@ -446,7 +446,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 1. Get `image-builder`:
    ```bash
     cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
@@ -517,7 +517,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 1. Get `image-builder`:
     ```bash
     cd /home/$USER
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/24/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
