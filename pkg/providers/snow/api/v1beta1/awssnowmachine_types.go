@@ -166,6 +166,9 @@ type AWSSnowMachineSpec struct {
 	// +kubebuilder:validation:Required
 	Network AWSSnowNetwork `json:"network"`
 
+	// PrimaryPublicIP is the primary public ip of machine
+	PrimaryPublicIP *string `json:"primaryPublicIP,omitempty"`
+
 	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
 	// TODO: Evaluate the need or remove completely.
 	// +optional
