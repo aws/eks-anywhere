@@ -64,7 +64,7 @@ func (w *writer) CleanUpTemp() {
 	}
 }
 
-// Create creates a file with the given name rooted at w's base direcftion.
+// Create creates a file with the given name rooted at w's base directory.
 func (w *writer) Create(name string, opts ...FileOptionsFunc) (_ io.WriteCloser, path string, _ error) {
 	o := buildOptions(w, opts)
 

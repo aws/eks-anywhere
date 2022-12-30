@@ -37,9 +37,9 @@ func (w *WorkloadCluster) DeleteCluster(opts ...CommandOpt) {
 func (w *WorkloadCluster) ApplyClusterManifest() {
 	ctx := context.Background()
 	w.T.Logf("Applying workload cluster %s spec located at %s", w.ClusterName, w.ClusterConfigLocation)
-	w.applyClusterManifest(ctx)
-	w.waitForKubeconfig(ctx)
-	w.ValidateClusterState()
+	if err := w.KubectlClient.ApplyManifest(ctx, w.ManagementClusterKubeconfigFile(), w.ClusterConfigLocation); err != nil {
+		w.T.Fatalf("Failed to apply workload cluster config: %s", err)
+	}
 	w.StopIfFailed()
 }
 
@@ -48,21 +48,16 @@ func (w *WorkloadCluster) DeleteClusterWithKubectl() {
 	ctx := context.Background()
 	w.T.Logf("Deleting workload cluster %s with kubectl", w.ClusterName)
 	if err := w.KubectlClient.DeleteCluster(ctx, w.managementCluster(), w.cluster()); err != nil {
-		w.T.Fatalf("failed to delete workload cluster config: %s", err)
+		w.T.Fatalf("Failed to delete workload cluster config: %s", err)
 	}
-	w.ValidateClusterDelete()
 	w.StopIfFailed()
 }
 
-func (w *WorkloadCluster) applyClusterManifest(ctx context.Context) {
-	if err := w.KubectlClient.ApplyManifest(ctx, w.ManagementClusterKubeconfigFile(), w.ClusterConfigLocation); err != nil {
-		w.T.Fatalf("Failed to apply workload cluster config: %s", err)
-	}
-}
-
-func (w *WorkloadCluster) waitForKubeconfig(ctx context.Context) {
+// WaitForKubeconfig waits for the kubeconfig for the workload cluster to be available and then writes it to disk.
+func (w *WorkloadCluster) WaitForKubeconfig() {
+	ctx := context.Background()
 	w.T.Logf("Waiting for workload cluster %s kubeconfig to be available", w.ClusterName)
-	err := retrier.Retry(12, 5*time.Second, func() error {
+	err := retrier.Retry(60, 5*time.Second, func() error {
 		return w.writeKubeconfigToDisk(ctx)
 	})
 	if err != nil {

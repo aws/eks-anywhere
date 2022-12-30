@@ -711,12 +711,23 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 func (e *ClusterE2ETest) generateClusterConfigYaml() []byte {
 	childObjs := e.ClusterConfig.ChildObjects()
 	yamlB := make([][]byte, 0, len(childObjs)+1)
+
+	// This is required because Flux requires a namespace be specified for objects
+	// to be able to reconcile right.
+	if e.ClusterConfig.Cluster.Namespace == "" {
+		e.ClusterConfig.Cluster.Namespace = "default"
+	}
 	clusterConfigB, err := yaml.Marshal(e.ClusterConfig.Cluster)
 	if err != nil {
 		e.T.Fatal(err)
 	}
 	yamlB = append(yamlB, clusterConfigB)
 	for _, o := range childObjs {
+		// This is required because Flux requires a namespace be specified for objects
+		// to be able to reconcile right.
+		if o.GetNamespace() == "" {
+			o.SetNamespace("default")
+		}
 		objB, err := yaml.Marshal(o)
 		if err != nil {
 			e.T.Fatalf("Failed marshalling %s config: %v", o.GetName(), err)
@@ -899,10 +910,6 @@ func (e *ClusterE2ETest) GetEksaVSphereMachineConfigs() []v1alpha1.VSphereMachin
 	}
 
 	return machineConfigs
-}
-
-func (e *ClusterE2ETest) getJobIdFromEnv() string {
-	return os.Getenv(JobIdVar)
 }
 
 func GetTestNameHash(name string) string {
