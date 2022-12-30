@@ -37,10 +37,9 @@ func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.DeleteCluster()
 }
 
-func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
-	test.GenerateClusterConfig()
+func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, fillers ...api.ClusterConfigFiller) {
 	test.CreateCluster()
-	test.UpgradeClusterWithKubectl(clusterOpts)
+	test.UpgradeClusterWithKubectl(fillers...)
 	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
