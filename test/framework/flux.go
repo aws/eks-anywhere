@@ -60,17 +60,21 @@ var fluxGitCreateGenerateRepoEnvVars = []string{
 	GithubTokenVar,
 }
 
+func getJobIDFromEnv() string {
+	return os.Getenv(JobIdVar)
+}
+
 func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
-		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
+		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
 		e.ClusterConfig.FluxConfig = api.NewFluxConfig(DefaultFluxConfigName,
 			api.WithGenericGitProvider(
 				api.WithStringFromEnvVarGenericGitProviderConfig(GitRepoSshUrl, api.WithGitRepositoryUrl),
 			),
 			api.WithSystemNamespace("default"),
-			api.WithClusterConfigPath(jobId),
-			api.WithBranch(jobId),
+			api.WithClusterConfigPath(jobID),
+			api.WithBranch(jobID),
 		)
 		e.clusterFillers = append(e.clusterFillers,
 			api.WithGitOpsRef(DefaultFluxConfigName, v1alpha1.FluxConfigKind),
@@ -85,8 +89,8 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 
 func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
 		fluxConfigName := fluxConfigName()
+		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
 		e.ClusterConfig.FluxConfig = api.NewFluxConfig(fluxConfigName,
 			api.WithGithubProvider(
 				api.WithPersonalGithubRepository(true),
@@ -106,8 +110,9 @@ func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		}
 		// Adding Job ID suffix to repo name
 		// e2e test jobs have Job Id with a ":", replacing with "-"
-		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
-		withFluxRepositorySuffix(jobId)(e.ClusterConfig.FluxConfig)
+		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
+		withFluxRepositorySuffix(jobID)(e.ClusterConfig.FluxConfig)
+
 		// Setting GitRepo cleanup since GitOps configured
 		e.T.Cleanup(e.CleanUpGithubRepo)
 	}
@@ -115,8 +120,8 @@ func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 
 func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
 		gitOpsConfigName := fluxConfigName()
+		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
 		e.ClusterConfig.GitOpsConfig = api.NewGitOpsConfig(gitOpsConfigName,
 			api.WithPersonalFluxRepository(true),
 			api.WithStringFromEnvVarGitOpsConfig(GitRepositoryVar, api.WithFluxRepository),
@@ -134,9 +139,48 @@ func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 		}
 		// Adding Job ID suffix to repo name
 		// e2e test jobs have Job Id with a ":", replacing with "-"
-		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
-		withFluxLegacyRepositorySuffix(jobId)(e.ClusterConfig.GitOpsConfig)
+		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
+		withFluxLegacyRepositorySuffix(jobID)(e.ClusterConfig.GitOpsConfig)
 		// Setting GitRepo cleanup since GitOps configured
+		e.T.Cleanup(e.CleanUpGithubRepo)
+	}
+}
+
+// WithFluxGithubConfig returns ClusterConfigFiller that adds FluxConfig using the Github provider to the cluster config.
+func WithFluxGithubConfig(opts ...api.FluxConfigOpt) api.ClusterConfigFiller {
+	fluxConfigName := fluxConfigName()
+	return api.JoinClusterConfigFillers(func(config *cluster.Config) {
+		config.FluxConfig = api.NewFluxConfig(fluxConfigName,
+			api.WithGithubProvider(
+				api.WithPersonalGithubRepository(true),
+				api.WithStringFromEnvVarGithubProviderConfig(GitRepositoryVar, api.WithGithubRepository),
+				api.WithStringFromEnvVarGithubProviderConfig(GithubUserVar, api.WithGithubOwner),
+			),
+			api.WithSystemNamespace("default"),
+			api.WithClusterConfigPath("path2"),
+			api.WithBranch("main"),
+		)
+		// apply the rest of the opts passed into the function
+		for _, opt := range opts {
+			opt(config.FluxConfig)
+		}
+		// Adding Job ID suffix to repo name
+		// e2e test jobs have Job Id with a ":", replacing with "-"
+		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
+		withFluxRepositorySuffix(jobID)(config.FluxConfig)
+	}, api.ClusterToConfigFiller(api.WithGitOpsRef(fluxConfigName, v1alpha1.FluxConfigKind)))
+}
+
+// WithFluxGithubEnvVarCheck returns a ClusterE2ETestOpt that checks for the required env vars.
+func WithFluxGithubEnvVarCheck() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
+	}
+}
+
+// WithFluxGithubCleanup returns a ClusterE2ETestOpt that registers the git repository cleanup operation.
+func WithFluxGithubCleanup() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		e.T.Cleanup(e.CleanUpGithubRepo)
 	}
 }
@@ -245,6 +289,123 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
 	e.GitClient = g.Client
+}
+
+func (e *ClusterE2ETest) workloadClusterConfigPath(w *WorkloadCluster) string {
+	return e.clusterConfigPathFromName(w.ClusterName)
+}
+
+func (e *ClusterE2ETest) workloadClusterConfigGitPath(w *WorkloadCluster) string {
+	return filepath.Join(e.GitWriter.Dir(), e.workloadClusterConfigPath(w))
+}
+
+func (e *ClusterE2ETest) buildWorkloadClusterConfigFileForGit(w *WorkloadCluster) {
+	b := w.generateClusterConfigYaml()
+	g := e.GitWriter
+	p := filepath.Dir(e.workloadClusterConfigGitPath(w))
+
+	if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(p, os.ModePerm)
+		if err != nil {
+			w.T.Fatalf("Creating directory [%s]: %v", g.Dir(), err)
+		}
+	}
+
+	_, err := g.Write(e.workloadClusterConfigPath(w), b, filewriter.PersistentFile)
+	if err != nil {
+		w.T.Fatalf("Error writing cluster config file to local git folder: %v", err)
+	}
+}
+
+func (e *ClusterE2ETest) addWorkloadClusterConfigToGit(ctx context.Context, w *WorkloadCluster) error {
+	p := e.workloadClusterConfigPath(w)
+	g := e.GitClient
+	if err := g.Add(p); err != nil {
+		return fmt.Errorf("adding cluster path changes at %s: %v", p, err)
+	}
+
+	if err := e.pushStagedChanges(ctx, "EKS-A E2E Flux test workload configuration changes added"); err != nil {
+		return fmt.Errorf("failed to push workload configuration changes %v", err)
+	}
+	return nil
+}
+
+func (e *ClusterE2ETest) deleteWorkloadClusterConfigFromGit(ctx context.Context, w *WorkloadCluster) error {
+	p := e.workloadClusterConfigPath(w)
+	g := e.GitClient
+	if err := g.Remove(p); err != nil {
+		return fmt.Errorf("removing cluster config at path %s: %v", p, err)
+	}
+
+	if err := e.pushStagedChanges(ctx, "EKS-A E2E Flux test workload configuration deleted"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *ClusterE2ETest) pushStagedChanges(ctx context.Context, commitMessage string) error {
+	g := e.GitClient
+	if err := g.Commit(commitMessage); err != nil {
+		return fmt.Errorf("commiting staged changes: %v", err)
+	}
+
+	repoUpToDateErr := &git.RepositoryUpToDateError{}
+	if err := g.Push(ctx); err != nil {
+		if !errors.Is(err, repoUpToDateErr) {
+			return fmt.Errorf("pushing staged changes to remote: %v", err)
+		}
+		e.T.Log(err.Error())
+	}
+	return nil
+}
+
+// PushWorkloadClusterToGit builds the workload cluster config file for git and pushing changes to git.
+func (e *ClusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...api.ClusterConfigFiller) {
+	ctx := context.Background()
+	e.initGit(ctx)
+	// Pull remote config using managment cluster
+	err := e.pullRemoteConfig(ctx)
+	if err != nil {
+		e.T.Errorf("Pulling remote configuration: %v", err)
+	}
+
+	if _, err := os.Stat(e.workloadClusterConfigGitPath(w)); err == nil {
+		// Read the cluster config we just pulled into w.ClusterConfig
+		e.T.Log("Parsing pulled config from repo into test ClusterConfig")
+		w.parseClusterConfigFromDisk(e.workloadClusterConfigGitPath(w))
+	}
+
+	// Update the cluster config with the provided api.ClusterConfigFillers
+	w.UpdateClusterConfig(opts...)
+
+	e.T.Log("Updating local config file in git repo")
+	// Marshall w.ClusterConfig and write it to the repo path
+	e.buildWorkloadClusterConfigFileForGit(w)
+	if err := e.addWorkloadClusterConfigToGit(ctx, w); err != nil {
+		e.T.Fatalf("Error pushing local changes to remote git repo: %v", err)
+	}
+	e.T.Logf("Successfully pushed version controlled cluster configuration")
+}
+
+// DeleteWorkloadClusterFromGit deletes a workload cluster config file and pushes the changes to git.
+func (e *ClusterE2ETest) DeleteWorkloadClusterFromGit(w *WorkloadCluster) {
+	ctx := context.Background()
+	e.initGit(ctx)
+
+	err := e.pullRemoteConfig(ctx)
+	if err != nil {
+		e.T.Errorf("Pulling remote configuration: %v", err)
+	}
+
+	e.T.Log("Deleting local cluster directory in git repo")
+	if err := os.Remove(e.workloadClusterConfigGitPath(w)); err != nil {
+		e.T.Fatalf("Error removing local cluster config: %v", err)
+	}
+
+	if err := e.deleteWorkloadClusterConfigFromGit(ctx, w); err != nil {
+		w.T.Fatalf("Error pushing local changes to remote git repo: %v", err)
+	}
+	w.T.Logf("Successfully deleted version controlled cluster")
 }
 
 func (e *ClusterE2ETest) parseClusterConfigFromLocalGitRepo() {
@@ -857,17 +1018,8 @@ func (e *ClusterE2ETest) pushConfigChanges(ctx context.Context) error {
 	if err := g.Add(p); err != nil {
 		return fmt.Errorf("adding cluster config changes at path %s: %v", p, err)
 	}
-
-	if err := g.Commit("EKS-A E2E Flux test configuration update"); err != nil {
-		return fmt.Errorf("commiting cluster config changes: %v", err)
-	}
-
-	repoUpToDateErr := &git.RepositoryUpToDateError{}
-	if err := g.Push(ctx); err != nil {
-		if !errors.Is(err, repoUpToDateErr) {
-			return fmt.Errorf("pushing config changes to remote: %v", err)
-		}
-		e.T.Log(err.Error())
+	if err := e.pushStagedChanges(ctx, "EKS-A E2E Flux test configuration update"); err != nil {
+		return fmt.Errorf("failed to push config changes %v", err)
 	}
 	return nil
 }
@@ -915,12 +1067,16 @@ func (e *ClusterE2ETest) gitBranch() string {
 	return e.ClusterConfig.FluxConfig.Spec.Branch
 }
 
-func (e *ClusterE2ETest) clusterConfGitPath() string {
+func (e *ClusterE2ETest) clusterConfigPathFromName(clusterName string) string {
 	p := e.ClusterConfig.FluxConfig.Spec.ClusterConfigPath
 	if len(p) == 0 {
 		p = path.Join("clusters", e.ClusterName)
 	}
-	return path.Join(p, e.ClusterName, constants.EksaSystemNamespace, eksaConfigFileName)
+	return path.Join(p, clusterName, constants.EksaSystemNamespace, eksaConfigFileName)
+}
+
+func (e *ClusterE2ETest) clusterConfGitPath() string {
+	return e.clusterConfigPathFromName(e.ClusterName)
 }
 
 func (e *ClusterE2ETest) clusterConfigGitPath() string {

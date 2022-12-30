@@ -44,7 +44,7 @@ func (c *ClusterValidator) WithWorkloadClusterValidations() {}
 func (c *ClusterValidator) WithExpectedObjectsExist() {
 	c.WithValidation(validateClusterReady, 5*time.Second, 60)
 	c.WithValidation(validateEKSAObjects, 5*time.Second, 60)
-	c.WithValidation(validateControlPlaneNodes, 5*time.Second, 60)
+	c.WithValidation(validateControlPlaneNodes, 5*time.Second, 120)
 	c.WithValidation(validateWorkerNodes, 5*time.Second, 60)
 }
 

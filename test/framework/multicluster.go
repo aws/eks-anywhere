@@ -148,3 +148,13 @@ func (m *MulticlusterE2ETest) DeleteTinkerbellManagementCluster() {
 	m.ManagementCluster.DeleteCluster()
 	m.ManagementCluster.ValidateHardwareDecommissioned()
 }
+
+// PushWorkloadClusterToGit builds the workload cluster config file for git and pushing changes to git.
+func (m *MulticlusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...api.ClusterConfigFiller) {
+	m.ManagementCluster.PushWorkloadClusterToGit(w, opts...)
+}
+
+// DeleteWorkloadClusterFromGit deletes a workload cluster config file and pushes the changes to git.
+func (m *MulticlusterE2ETest) DeleteWorkloadClusterFromGit(w *WorkloadCluster) {
+	m.ManagementCluster.DeleteWorkloadClusterFromGit(w)
+}

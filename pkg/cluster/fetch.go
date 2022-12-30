@@ -189,8 +189,7 @@ func BuildSpec(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*
 	return BuildSpecFromConfig(ctx, client, config)
 }
 
-// BuildSpecFromConfig constructs a cluster.Spec for an eks-a cluster by retrieving all
-// necessary objects from the cluster using a kubernetes client.
+// BuildSpecFromConfig constructs a cluster.Spec for an eks-a cluster config by retrieving all dependencies objects from the cluster using a kubernetes client.
 func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*Spec, error) {
 	bundlesName, bundlesNamespace := bundlesNamespacedKey(config.Cluster)
 	bundles := &v1alpha1release.Bundles{}
