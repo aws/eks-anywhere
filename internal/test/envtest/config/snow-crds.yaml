@@ -673,6 +673,9 @@ spec:
                 - QSFP
                 - RJ45
                 type: string
+              primaryPublicIP:
+                description: PrimaryPublicIP is the primary public ip of machine
+                type: string
               providerID:
                 description: ProviderID is the unique identifier as specified by the
                   cloud provider.
@@ -1282,6 +1285,9 @@ spec:
                         - SFP_PLUS
                         - QSFP
                         - RJ45
+                        type: string
+                      primaryPublicIP:
+                        description: PrimaryPublicIP is the primary public ip of machine
                         type: string
                       providerID:
                         description: ProviderID is the unique identifier as specified
