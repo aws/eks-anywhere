@@ -152,6 +152,7 @@ func (pc *PackageControllerClient) CreateRegistryMirrorCredentials(ctx context.C
 		return err
 	}
 	templateValues := map[string]interface{}{
+		"mirrorEndpoint":      pc.registryMirror.BaseRegistry,
 		"mirrorUsername":      username,
 		"mirrorPassword":      password,
 		"mirrorCACertContent": strings.Split(pc.registryMirror.CACertContent, "\n"),
