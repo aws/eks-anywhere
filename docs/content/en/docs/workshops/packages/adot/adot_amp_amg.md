@@ -179,7 +179,7 @@ Follow steps below to complete the ADOT package installation:
                     scheme: https
                     tls_config:
                       ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
+                      insecure_skip_verify: false
                   - job_name: kubernetes-nodes
                     bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
                     kubernetes_sd_configs:
@@ -197,7 +197,7 @@ Follow steps below to complete the ADOT package installation:
                     scheme: https
                     tls_config:
                       ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
+                      insecure_skip_verify: false
                   - job_name: kubernetes-nodes-cadvisor
                     bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
                     kubernetes_sd_configs:
@@ -215,7 +215,7 @@ Follow steps below to complete the ADOT package installation:
                     scheme: https
                     tls_config:
                       ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
+                      insecure_skip_verify: false
                   - job_name: kubernetes-service-endpoints
                     kubernetes_sd_configs:
                     - role: endpoints
