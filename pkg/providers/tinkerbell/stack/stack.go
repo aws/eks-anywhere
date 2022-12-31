@@ -9,6 +9,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -211,7 +212,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	}
 
 	if s.registryMirror != nil && s.registryMirror.Auth {
-		username, password, err := registrymirror.Credentials()
+		username, password, err := s.registryMirror.Credentials()
 		if err != nil {
 			return err
 		}
@@ -290,7 +291,7 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 		localRegistry := s.registryMirror.BaseRegistry
 		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
 		if s.registryMirror.Auth {
-			username, password, _ := registrymirror.Credentials()
+			username, password, _ := config.ReadCredentials()
 			bootsEnv["REGISTRY_USERNAME"] = username
 			bootsEnv["REGISTRY_PASSWORD"] = password
 		}

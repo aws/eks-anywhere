@@ -207,7 +207,7 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		}
 		if registryMirror.Auth {
 			k.execConfig.RegistryAuth = registryMirror.Auth
-			username, password, err := registrymirror.Credentials()
+			username, password, err := registryMirror.Credentials()
 			if err != nil {
 				return err
 			}

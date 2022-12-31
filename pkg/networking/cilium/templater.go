@@ -10,7 +10,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -124,7 +124,7 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 
 	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-			username, password, err := registrymirror.Credentials()
+			username, password, err := config.ReadCredentials()
 			if err != nil {
 				return nil, err
 			}

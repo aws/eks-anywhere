@@ -222,7 +222,7 @@ func buildTemplateMapCP(
 
 		if registryMirror.Auth {
 			values["registryAuth"] = registryMirror.Auth
-			username, password, _ := registrymirror.Credentials()
+			username, password, _ := registryMirror.Credentials()
 			values["registryUsername"] = username
 			values["registryPassword"] = password
 		}
@@ -345,7 +345,7 @@ func buildTemplateMapMD(
 
 		if registryMirror.Auth {
 			values["registryAuth"] = registryMirror.Auth
-			username, password, _ := registrymirror.Credentials()
+			username, password, _ := registryMirror.Credentials()
 			values["registryUsername"] = username
 			values["registryPassword"] = password
 		}

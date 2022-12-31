@@ -253,8 +253,11 @@ func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *F
 
 // dockerLogin performs a docker login with the ENV VARS.
 func dockerLogin(ctx context.Context, registry string, docker executables.DockerClient) error {
-	username, password, _ := registrymirror.Credentials()
-	err := docker.Login(ctx, registry, username, password)
+	username, password, err := config.ReadCredentials()
+	if err != nil {
+		return err
+	}
+	err = docker.Login(ctx, registry, username, password)
 	if err != nil {
 		return err
 	}
