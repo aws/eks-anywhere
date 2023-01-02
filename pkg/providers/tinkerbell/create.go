@@ -75,7 +75,7 @@ func (p *Provider) applyHardware(ctx context.Context, cluster *types.Cluster) er
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
 	if len(p.catalogue.AllBMCs()) > 0 {
-		err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		err = p.providerKubectlClient.WaitForRufioMachines(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
 		if err != nil {
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}

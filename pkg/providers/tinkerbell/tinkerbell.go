@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -70,6 +71,7 @@ type Provider struct {
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
+	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
@@ -83,9 +85,15 @@ type ProviderKubectlClient interface {
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	GetUnprovisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
 	GetProvisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
-	WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error
+	WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error
 	SearchTinkerbellMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error)
 	SearchTinkerbellDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error)
+
+	AllTinkerbellHardware(ctx context.Context, kuebconfig string) ([]tinkv1alpha1.Hardware, error)
+	AllBaseboardManagements(ctx context.Context, kubeconfig string) ([]rufiounreleased.BaseboardManagement, error)
+
+	HasCRD(ctx context.Context, kubeconfig, crd string) (bool, error)
+	DeleteCRD(ctx context.Context, kubeconfig, crd string) error
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
@@ -280,8 +288,15 @@ func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 }
 
 func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	// TODO: implement
-	return nil
+	if currentSpec.VersionsBundle.Tinkerbell.Version == newSpec.VersionsBundle.Tinkerbell.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.TinkerbellProviderName,
+		NewVersion:    newSpec.VersionsBundle.Tinkerbell.Version,
+		OldVersion:    currentSpec.VersionsBundle.Tinkerbell.Version,
+	}
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {

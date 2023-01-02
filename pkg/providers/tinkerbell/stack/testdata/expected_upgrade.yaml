@@ -1,0 +1,28 @@
+boots:
+  args:
+  - -dhcp-addr=0.0.0.0:67
+  - -osie-path-override=https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook
+  env:
+  - name: BOOTS_EXTRA_KERNEL_ARGS
+    value: tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest
+  - name: DATA_MODEL_VERSION
+    value: kubernetes
+  - name: TINKERBELL_TLS
+    value: "false"
+  - name: TINKERBELL_GRPC_AUTHORITY
+    value: 1.2.3.4:42113
+  image: public.ecr.aws/eks-anywhere/boots:latest
+createNamespace: false
+envoy:
+  image: public.ecr.aws/eks-anywhere/envoy:latest
+hegel:
+  image: public.ecr.aws/eks-anywhere/hegel:latest
+kubevip:
+  image: public.ecr.aws/eks-anywhere/kube-vip:latest
+namespace: eksa-system
+rufio:
+  image: public.ecr.aws/eks-anywhere/rufio:latest
+tinkController:
+  image: public.ecr.aws/eks-anywhere/tink-controller:latest
+tinkServer:
+  image: public.ecr.aws/eks-anywhere/tink-server:latest

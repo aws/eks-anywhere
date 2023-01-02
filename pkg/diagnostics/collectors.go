@@ -354,9 +354,9 @@ func (c *collectorFactory) snowCrdCollectors() []*Collect {
 
 func (c *collectorFactory) tinkerbellCrdCollectors() []*Collect {
 	captCrds := []string{
-		"baseboardmanagements.bmc.tinkerbell.org",
-		"bmcjobs.bmc.tinkerbell.org",
-		"bmctasks.bmc.tinkerbell.org",
+		"machines.bmc.tinkerbell.org",
+		"jobs.bmc.tinkerbell.org",
+		"tasks.bmc.tinkerbell.org",
 		"hardware.tinkerbell.org",
 		"templates.tinkerbell.org",
 		"tinkerbellclusters.infrastructure.cluster.x-k8s.io",

@@ -355,3 +355,12 @@ func (p *SnowProvider) PostMoveManagementToBootstrap(_ context.Context, _ *types
 func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
+
+// PreCoreComponentsUpgrade staisfies the Provider interface.
+func (p *SnowProvider) PreCoreComponentsUpgrade(
+	ctx context.Context,
+	cluster *types.Cluster,
+	clusterSpec *cluster.Spec,
+) error {
+	return nil
+}
