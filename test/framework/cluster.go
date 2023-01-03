@@ -1194,29 +1194,9 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *t
 	}
 
 	svcAddress := name + "." + ns + ".svc.cluster.local"
-	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomname, e.kubeconfigFilePath(), []string{"curl", svcAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
-
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", ns)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl Hello EKS Anywhere\n %s\n", logs)
-	ok := strings.Contains(logs, "Amazon EKS Anywhere")
-	if !ok {
-		e.T.Fatalf("expected Amazon EKS Anywhere, got %T", logs)
-	}
+	e.T.Log("Validate content at endpoint", svcAddress)
+	expectedLogs := "Amazon EKS Anywhere"
+	e.ValidateEndpointContent(svcAddress, ns, expectedLogs)
 }
 
 // VerifyAdotPackageInstalled is checking if the ADOT package gets installed correctly.
