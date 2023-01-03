@@ -284,7 +284,7 @@ func MachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig, cap
 
 	networkConnector := string(machineConfig.Spec.PhysicalNetworkConnector)
 
-	return &snowv1.AWSSnowMachineTemplate{
+	m := &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterapi.InfrastructureAPIVersion(),
 			Kind:       SnowMachineTemplateKind,
@@ -316,4 +316,10 @@ func MachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig, cap
 			},
 		},
 	}
+
+	if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+		m.Spec.Template.Spec.ImageLookupBaseOS = string(v1alpha1.Bottlerocket)
+	}
+
+	return m
 }
