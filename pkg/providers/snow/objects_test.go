@@ -15,7 +15,6 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -65,12 +64,12 @@ func TestControlPlaneObjects(t *testing.T) {
 
 func TestControlPlaneObjectsWithIPPools(t *testing.T) {
 	g := newSnowTest(t)
-	g.clusterSpec.SnowMachineConfig("test-cp").Spec.Network = v1alpha1.SnowNetwork{
-		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+	g.clusterSpec.SnowMachineConfig("test-cp").Spec.Network = anywherev1.SnowNetwork{
+		DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
 			{
 				Index: 1,
 				IPPoolRef: &anywherev1.Ref{
-					Kind: v1alpha1.SnowIPPoolKind,
+					Kind: anywherev1.SnowIPPoolKind,
 					Name: "ip-pool-1",
 				},
 				Primary: true,
@@ -406,12 +405,12 @@ func TestWorkersObjects(t *testing.T) {
 
 func TestWorkersObjectsWithIPPools(t *testing.T) {
 	g := newSnowTest(t)
-	g.clusterSpec.SnowMachineConfig("test-wn").Spec.Network = v1alpha1.SnowNetwork{
-		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+	g.clusterSpec.SnowMachineConfig("test-wn").Spec.Network = anywherev1.SnowNetwork{
+		DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
 			{
 				Index: 1,
 				IPPoolRef: &anywherev1.Ref{
-					Kind: v1alpha1.SnowIPPoolKind,
+					Kind: anywherev1.SnowIPPoolKind,
 					Name: "ip-pool-1",
 				},
 				Primary: true,
