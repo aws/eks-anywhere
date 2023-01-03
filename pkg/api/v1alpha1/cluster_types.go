@@ -652,6 +652,7 @@ const (
 	Kube122 KubernetesVersion = "1.22"
 	Kube123 KubernetesVersion = "1.23"
 	Kube124 KubernetesVersion = "1.24"
+	Kube125 KubernetesVersion = "1.25"
 )
 
 type CNI string
