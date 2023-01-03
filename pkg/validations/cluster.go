@@ -3,8 +3,10 @@ package validations
 import (
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -49,6 +51,16 @@ func ValidateAuthenticationForRegistryMirror(clusterSpec *cluster.Spec) error {
 		_, _, err := config.ReadCredentials()
 		if err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+// ValidateK8s125Support checks if the 1.25 feature flag is set when using k8s 1.25.
+func ValidateK8s125Support(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.K8s125Support()) {
+		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube125 {
+			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube125, features.K8s125SupportEnvVar)
 		}
 	}
 	return nil

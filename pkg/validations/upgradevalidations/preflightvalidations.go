@@ -8,6 +8,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -64,6 +65,12 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 			Name:        "validate immutable fields",
 			Remediation: "",
 			Err:         ValidateImmutableFields(ctx, k, targetCluster, u.Opts.Spec, u.Opts.Provider),
+		},
+		{
+			Name:        "validate kubernetes version 1.25 support",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s125SupportEnvVar),
+			Err:         validations.ValidateK8s125Support(u.Opts.Spec),
+			Silent:      true,
 		},
 	}
 
