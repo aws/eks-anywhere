@@ -193,7 +193,7 @@ This also may happen if the management cluster cannot communicate with the workl
 
 ### Error: the server doesn't have a resource type "packages"
 
-All packages are remotely managed by the management cluster, and packages, packagebundles packagebundlecontrollers resources are all deployed on the management cluster. Please make sure the kubeconfig is pointing to the management cluster that was used to create the workload cluster while interacting with package related resources.
+All packages are remotely managed by the management cluster, and packages, packagebundles, and packagebundlecontrollers resources are all deployed on the management cluster. Please make sure the kubeconfig is pointing to the management cluster that was used to create the workload cluster while interacting with package-related resources.
 
 ### Error: packagebundlecontrollers.packages.eks.amazonaws.com "clusterName" not found
 
