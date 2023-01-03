@@ -1,15 +1,15 @@
 
 ---
 title: "Curated Packages Troubleshooting"
-linkTitle: "Curated Packages Troubleshooting"
-weight: 50
+linkTitle: "Package Troubleshooting"
+weight: 11
 description: >
   Troubleshooting specific to curated packages
 aliases:
    - /docs/tasks/troubleshoot/_packages
 ---
 
-
+## General debugging
 The major component of Curated Packages is the package controller. If the container is not running or not running correctly, packages will not be installed. Generally it should be debugged like any other Kubernetes application. The first step is to check that the pod is running.
 ```bash
 kubectl get pods -n eksa-packages
@@ -22,12 +22,12 @@ eks-anywhere-packages-69d7bb9dd9-9d47l   1/1     Running     0          14s
 eksa-auth-refresher-w82nm                0/1     Completed   0          10s
 ```
 
-The describe command might help to get more detail on why there is a problem
+The describe command might help to get more detail on why there is a problem:
 ```bash
 kubectl describe pods -n eksa-packages
 ```
 
-Logs of the controller can be seen in a normal Kubernetes fashion
+Logs of the controller can be seen in a normal Kubernetes fashion:
 ```bash
 kubectl logs deploy/eks-anywhere-packages -n eksa-packages controller
 ```
@@ -55,18 +55,6 @@ eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/sammy    v1-2
 eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/tlhowe   v1-21-83       active       active   
 ```
 
-### Error: this command is currently not supported
-
-```
-Error: this command is currently not supported
-```
-
-Curated packages became generally available with version `v0.11.0`. Use the version command to make sure you are running version v0.11.0 or later:
-
-```bash
-eksctl anywhere version
-```
-
 ### Package controller not running
 If you do not see a pod or various resources for the package controller, it may be that it is not installed.
 
@@ -76,7 +64,27 @@ No resources found in eksa-packages namespace.
 
 Most likely the cluster was created with an older version of the EKS Anywhere CLI. Curated packages became generally available with `v0.11.0`. Use the `eksctl anywhere version` command to verify you are running a new enough release and you can use the `eksctl anywhere install packagecontroller` command to install the package controller on an older release.
 
-### Warnings during cluster creation
+### Error: this command is currently not supported
+
+```
+Error: this command is currently not supported
+```
+
+Curated packages became generally available with version `v0.11.0`. Use the version command to make sure you are running version `v0.11.0` or later:
+
+```bash
+eksctl anywhere version
+```
+
+### Error: cert-manager is not present in the cluster
+```
+Error: curated packages cannot be installed as cert-manager is not present in the cluster
+```
+This is most likely caused by an action to install curated packages at a workload cluster with `eksctl anywhere` version older than `v0.12.0`. In order to use packages on workload clusters, please upgrade `eksctl anywhere` version to `v0.12+`. The package manager will remotely manage packages on the workload cluster from the management cluster.
+
+## Package registry authentication
+
+### Warning: no AWS key/license provided during cluster creation
 
 During cluster creation, you should see messages after the cluster is created when the package controller and any packages are installed.
 
@@ -91,7 +99,7 @@ Warning: No AWS key/license provided. Please be aware this will prevent the pack
 
 If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` variables to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages. If you forgot to set those values before cluster creation, the next section describes how you would create or update the secret after creation.
 
-### ImagePullBackOff on Package or Package Controller
+### Error: ImagePullBackOff on Package or Package Controller
 
 If a package or the package controller fails to start with ImagePullBackOff
 
@@ -106,7 +114,6 @@ This is most like because the machine running kubelet in your Kubernetes cluster
 ctr image pull public.ecr.aws/eks-anywhere/eks-anywhere-packages@sha256:whateveritis
 ```
 
-### Package pod cannot pull images
 If a package pod cannot pull images, you may not have your AWS credentials set up properly. Verify that your credentials are working properly.
 
 Make sure you are authenticated with the AWS CLI. Use the credentials you set up for packages. These credentials should have [limited capabilities]({{< relref "../packages/#setup-authentication-to-use-curated-packages" >}}):
@@ -140,18 +147,16 @@ kubectl get cronjob -n eksa-packages cron-ecr-renew -o yaml | yq e '.spec.suspen
 kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
 ```
 
-### Error: cert-manager is not present in the cluster
-```
-Error: curated packages cannot be installed as cert-manager is not present in the cluster
-```
-This is most likely caused by an action to install curated packages at a workload cluster. Curated packages installation at workload cluster creation is currently not supported. The package manager will remotely manage packages on the workload cluster from the management cluster.
-
 ### Warning: not able to trigger cron job
 ```
 secret/aws-secret created
 Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.
 ```
 This is most likely caused by an action to install curated packages in a cluster that is running `Kubernetes` at version `v1.20` or below. Note curated packages only support `Kubernetes` `v1.21` and above.
+
+## Package on workload clusters
+
+Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster. While interacting with the package resources by the following commands for a workload cluster, please make sure the kubeconfig is pointing to the **management cluster** that was used to create the workload cluster.
 
 ### Package manager is not managing packages on workload cluster
 
@@ -186,9 +191,13 @@ In the example above, the secret does not exist which may be that the management
 
 This also may happen if the management cluster cannot communicate with the workload cluster or the workload cluster was deleted, although the detail would be different.
 
-### Error: Error from server (NotFound): packagebundlecontrollers.packages.eks.amazonaws.com "clusterName" not found
+### Error: the server doesn't have a resource type "packages"
 
-A package command run run on a cluster that does not seem to be managed by the management cluster. To get a list of the clusters managed by the management cluster run the following command:
+All packages are remotely managed by the management cluster, and packages, packagebundles packagebundlecontrollers resources are all deployed on the management cluster. Please make sure the kubeconfig is pointing to the management cluster that was used to create the workload cluster while interacting with package related resources.
+
+### Error: packagebundlecontrollers.packages.eks.amazonaws.com "clusterName" not found
+
+A package command run on a cluster that does not seem to be managed by the management cluster. To get a list of the clusters managed by the management cluster run the following command:
 ```
 eksctl anywhere get packagebundlecontroller
 NAME     ACTIVEBUNDLE   STATE     DETAIL
