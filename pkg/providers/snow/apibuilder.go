@@ -20,9 +20,13 @@ import (
 )
 
 const (
-	SnowClusterKind         = "AWSSnowCluster"
+	// SnowClusterKind is the kubernetes object kind for CAPAS Cluster.
+	SnowClusterKind = "AWSSnowCluster"
+	// SnowMachineTemplateKind is the kubernetes object kind for CAPAS machine template.
 	SnowMachineTemplateKind = "AWSSnowMachineTemplate"
-	SnowIPPoolKind          = "AWSSnowIPPool"
+	// SnowIPPoolKind is the kubernetes object kind for CAPAS IP pool.
+	SnowIPPoolKind                                   = "AWSSnowIPPool"
+	ignoreEtcdKubernetesManifestFolderPreflightError = "DirAvailable--etc-kubernetes-manifests"
 )
 
 // CAPICluster generates the CAPICluster object for snow provider.
@@ -74,6 +78,10 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		clusterapi.CreateContainerdConfigFileInKubeadmControlPlane(kcp, clusterSpec.Cluster)
 		clusterapi.RestartContainerdInKubeadmControlPlane(kcp, clusterSpec.Cluster)
 		clusterapi.SetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
+		kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = append(
+			kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors,
+			ignoreEtcdKubernetesManifestFolderPreflightError,
+		)
 
 	default:
 		log.Info("Warning: unsupported OS family when setting up KubeadmControlPlane", "OS family", osFamily)

@@ -134,6 +134,8 @@ spec:
       bottlerocketControl: {}
       discovery: {}
       nodeRegistration:
+        ignorePreflightErrors:
+        - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
           provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
