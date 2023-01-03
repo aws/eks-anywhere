@@ -188,13 +188,13 @@ https://gopkg.in/yaml.v2
 ** k8s.io/api; version v0.25.4 --
 https://github.com/kubernetes/api
 
-** k8s.io/apiextensions-apiserver/pkg/apis/apiextensions; version v0.25.0 --
+** k8s.io/apiextensions-apiserver/pkg/apis/apiextensions; version v0.25.2 --
 https://github.com/kubernetes/apiextensions-apiserver
 
 ** k8s.io/apimachinery/pkg; version v0.25.4 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/apiserver/pkg/apis/audit; version v0.25.0 --
+** k8s.io/apiserver/pkg/apis/audit; version v0.25.2 --
 https://github.com/kubernetes/apiserver
 
 ** k8s.io/client-go; version v0.25.4 --
