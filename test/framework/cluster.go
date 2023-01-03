@@ -680,13 +680,10 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 }
 
 // UpgradeClusterWithKubectl uses client-side logic to upgrade a cluster.
-func (e *ClusterE2ETest) UpgradeClusterWithKubectl(clusterOpts []ClusterE2ETestOpt) {
+func (e *ClusterE2ETest) UpgradeClusterWithKubectl(fillers ...api.ClusterConfigFiller) {
 	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
 	e.parseClusterConfigFromDisk(fullClusterConfigLocation)
-	for _, opt := range clusterOpts {
-		opt(e)
-	}
-	e.buildClusterConfigFile()
+	e.UpdateClusterConfig(fillers...)
 	e.ApplyClusterManifest()
 }
 
