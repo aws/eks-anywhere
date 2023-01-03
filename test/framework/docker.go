@@ -50,3 +50,9 @@ func (d *Docker) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	}
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...)}
 }
+
+// WithWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
+// a corresponding DockerMachineConfig to the cluster config.
+func (d *Docker) WithWorkerNodeGroup(workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
+	return api.ClusterToConfigFiller(workerNodeGroup.ClusterFiller())
+}
