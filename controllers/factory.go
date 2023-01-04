@@ -26,11 +26,11 @@ import (
 type Manager = manager.Manager
 
 type Factory struct {
-	buildSteps        []buildStep
-	dependencyFactory *dependencies.Factory
-	manager           Manager
-	registryBuilder   *clusters.ProviderClusterReconcilerRegistryBuilder
-	reconcilers       Reconcilers
+	buildSteps                  []buildStep
+	dependencyFactory           *dependencies.Factory
+	manager                     Manager
+	registryBuilder             *clusters.ProviderClusterReconcilerRegistryBuilder
+	reconcilers                 Reconcilers
 	tracker                     *remote.ClusterCacheTracker
 	registry                    *clusters.ProviderClusterReconcilerRegistry
 	dockerClusterReconciler     *dockerreconciler.Reconciler
@@ -286,7 +286,6 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 }
 
 func (f *Factory) withTinkerbellClusterReconciler() *Factory {
-
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tinkerbellClusterReconciler != nil {
 			return nil

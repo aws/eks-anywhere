@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
-
 // Reconciler for Tinkerbell.
 type Reconciler struct{}
 
@@ -19,6 +18,7 @@ func New() *Reconciler {
 	return &Reconciler{}
 }
 
+// Reconcile reconciles cluster to desired state.
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	// Implement reconcile all here.
 	// This would include IP validator, validating machine and datacenter configs
@@ -29,7 +29,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
 func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
-
 	// Implement reconcile control plane here
 
 	return controller.Result{}, nil
@@ -38,15 +37,14 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 // ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
 // to the desired state.
 func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-
 	// Implement reconcile worker nodes here
 
 	return controller.Result{}, nil
 }
 
+// ReconcileCNI reconciles the CNI to the desired state.
 func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
-
 	// Implement reconcile CNI here
 
-	return controller.Result{}, nil	
+	return controller.Result{}, nil
 }
