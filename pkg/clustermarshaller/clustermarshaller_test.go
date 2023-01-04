@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 )
 
 func TestWriteClusterConfigWithOIDCAndGitOps(t *testing.T) {
@@ -312,4 +313,93 @@ func TestWriteClusterConfigWithFluxConfig(t *testing.T) {
 	g.Expect(clustermarshaller.WriteClusterConfig(clusterSpec, datacenterConfig, machineConfigs, writer)).To(Succeed())
 
 	test.AssertFilesEquals(t, gotFile, "testdata/expected_marshalled_cluster_flux_config.yaml")
+}
+
+func TestWriteClusterConfigSnow(t *testing.T) {
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &v1alpha1.Cluster{
+			TypeMeta: v1.TypeMeta{
+				Kind:       v1alpha1.ClusterKind,
+				APIVersion: v1alpha1.GroupVersion.String(),
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name: "testcluster",
+			},
+			Spec: v1alpha1.ClusterSpec{
+				DatacenterRef: v1alpha1.Ref{
+					Kind: v1alpha1.SnowDatacenterKind,
+					Name: "testsnow",
+				},
+				ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+					MachineGroupRef: &v1alpha1.Ref{
+						Kind: v1alpha1.SnowMachineConfigKind,
+						Name: "testsnow",
+					},
+				},
+			},
+		}
+
+		s.SnowIPPools = map[string]*v1alpha1.SnowIPPool{
+			"ippool": {
+				TypeMeta: v1.TypeMeta{
+					Kind:       snow.SnowIPPoolKind,
+					APIVersion: v1alpha1.GroupVersion.String(),
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name: "ippool",
+				},
+				Spec: v1alpha1.SnowIPPoolSpec{
+					Pools: []v1alpha1.IPPool{
+						{
+							IPStart: "start",
+							IPEnd:   "end",
+							Gateway: "gateway",
+							Subnet:  "subnet",
+						},
+					},
+				},
+			},
+		}
+		s.Cluster.SetSelfManaged()
+	})
+
+	datacenterConfig := &v1alpha1.SnowDatacenterConfig{
+		TypeMeta: v1.TypeMeta{
+			Kind:       v1alpha1.SnowDatacenterKind,
+			APIVersion: v1alpha1.GroupVersion.String(),
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name: "testsnow",
+		},
+	}
+
+	machineConfigs := []providers.MachineConfig{
+		&v1alpha1.SnowMachineConfig{
+			TypeMeta: v1.TypeMeta{
+				Kind:       v1alpha1.SnowMachineConfigKind,
+				APIVersion: v1alpha1.GroupVersion.String(),
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name: "testsnow",
+			},
+			Spec: v1alpha1.SnowMachineConfigSpec{
+				Network: v1alpha1.SnowNetwork{
+					DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+						{
+							Index: 1,
+							IPPoolRef: &v1alpha1.Ref{
+								Kind: v1alpha1.SnowIPPoolKind,
+								Name: "ippool",
+							},
+							Primary: true,
+						},
+					},
+				},
+			},
+		},
+	}
+	g := NewWithT(t)
+	folder, writer := test.NewWriter(t)
+	g.Expect(clustermarshaller.WriteClusterConfig(clusterSpec, datacenterConfig, machineConfigs, writer)).To(Succeed())
+	test.AssertFilesEquals(t, filepath.Join(folder, "testcluster-eks-a-cluster.yaml"), "testdata/expected_marshalled_snow.yaml")
 }
