@@ -82,21 +82,23 @@ func (i *Image) Registry() string {
 }
 
 func (i *Image) Repository() string {
-	result := strings.Split(i.URI, "@")
+	rol := strings.TrimPrefix(i.URI, i.Registry()+"/")
+	result := strings.Split(rol, "@")
 	if len(result) < 2 {
-		result = strings.Split(i.URI, ":")
-		if len(result) < 2 {
+		result = strings.Split(rol, ":")
+		if len(result) < 1 {
 			return ""
 		}
-		return strings.TrimPrefix(result[0], i.Registry()+"/")
+		return result[0]
 	}
-	return strings.TrimPrefix(result[0], i.Registry()+"/")
+	return result[0]
 }
 
 func (i *Image) Version() string {
-	result := strings.Split(i.URI, "@")
+	rol := strings.TrimPrefix(i.URI, i.Registry()+"/")
+	result := strings.Split(rol, "@")
 	if len(result) < 2 {
-		result = strings.Split(i.URI, ":")
+		result = strings.Split(rol, ":")
 		if len(result) < 2 {
 			return ""
 		}
