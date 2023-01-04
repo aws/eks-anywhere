@@ -254,6 +254,10 @@ func setupSnowWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create webhook", "webhook", "SnowDatacenterConfig")
 		os.Exit(1)
 	}
+	if err := (&anywherev1.SnowIPPool{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "SnowIPPool")
+		os.Exit(1)
+	}
 }
 
 func setupChecks(setupLog logr.Logger, mgr ctrl.Manager) {
