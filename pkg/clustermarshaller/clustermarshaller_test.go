@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/providers/snow"
 )
 
 func TestWriteClusterConfigWithOIDCAndGitOps(t *testing.T) {
@@ -342,7 +341,7 @@ func TestWriteClusterConfigSnow(t *testing.T) {
 		s.SnowIPPools = map[string]*v1alpha1.SnowIPPool{
 			"ippool": {
 				TypeMeta: v1.TypeMeta{
-					Kind:       snow.SnowIPPoolKind,
+					Kind:       v1alpha1.SnowIPPoolKind,
 					APIVersion: v1alpha1.GroupVersion.String(),
 				},
 				ObjectMeta: v1.ObjectMeta{

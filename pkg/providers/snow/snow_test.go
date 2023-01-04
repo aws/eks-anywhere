@@ -923,7 +923,7 @@ func TestUpgradeNeededMachineConfigNil(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-cp",
+			gomock.Any(),
 			"test-namespace",
 			&v1alpha1.SnowMachineConfig{},
 		).
