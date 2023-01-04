@@ -146,7 +146,6 @@ spec:
                   aws snow key pairs, to attach to the instance.
                 type: string
             required:
-            - amiID
             - network
             type: object
           status:
