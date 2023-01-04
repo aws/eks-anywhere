@@ -19,9 +19,8 @@ import (
 	dockerreconciler "github.com/aws/eks-anywhere/pkg/providers/docker/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
-	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 	tinkerbellreconciler "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
-
+	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
 
 type Manager = manager.Manager
@@ -32,18 +31,17 @@ type Factory struct {
 	manager           Manager
 	registryBuilder   *clusters.ProviderClusterReconcilerRegistryBuilder
 	reconcilers       Reconcilers
-
-	tracker                  *remote.ClusterCacheTracker
-	registry                 *clusters.ProviderClusterReconcilerRegistry
-	dockerClusterReconciler  *dockerreconciler.Reconciler
-	vsphereClusterReconciler *vspherereconciler.Reconciler
+	tracker                     *remote.ClusterCacheTracker
+	registry                    *clusters.ProviderClusterReconcilerRegistry
+	dockerClusterReconciler     *dockerreconciler.Reconciler
+	vsphereClusterReconciler    *vspherereconciler.Reconciler
 	tinkerbellClusterReconciler *tinkerbellreconciler.Reconciler
-	snowClusterReconciler    *snowreconciler.Reconciler
-	cniReconciler            *cnireconciler.Reconciler
-	ipValidator              *clusters.IPValidator
-	awsIamConfigReconciler   *awsiamconfigreconciler.Reconciler
-	logger                   logr.Logger
-	deps                     *dependencies.Dependencies
+	snowClusterReconciler       *snowreconciler.Reconciler
+	cniReconciler               *cnireconciler.Reconciler
+	ipValidator                 *clusters.IPValidator
+	awsIamConfigReconciler      *awsiamconfigreconciler.Reconciler
+	logger                      logr.Logger
+	deps                        *dependencies.Dependencies
 }
 
 type Reconcilers struct {
@@ -180,9 +178,9 @@ func (f *Factory) withTracker() *Factory {
 }
 
 const (
-	dockerProviderName  = "docker"
-	snowProviderName    = "snow"
-	vSphereProviderName = "vsphere"
+	dockerProviderName     = "docker"
+	snowProviderName       = "snow"
+	vSphereProviderName    = "vsphere"
 	tinkerbellProviderName = "tinkerbell"
 )
 
@@ -288,17 +286,13 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 }
 
 func (f *Factory) withTinkerbellClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker().withIPValidator()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tinkerbellClusterReconciler != nil {
 			return nil
 		}
 
-		f.tinkerbellClusterReconciler = tinkerbellreconciler.New(
-			f.manager.GetClient(),
-			f.tracker,
-		)
+		f.tinkerbellClusterReconciler = tinkerbellreconciler.New()
 		f.registryBuilder.Add(anywherev1.TinkerbellDatacenterKind, f.tinkerbellClusterReconciler)
 
 		return nil
