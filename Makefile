@@ -569,7 +569,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=controllers/mocks/provider.go -package=mocks -source "pkg/controller/clusters/registry.go"
 	${GOPATH}/bin/mockgen -destination=pkg/controller/clusters/mocks/validations.go -package=mocks -source "pkg/controller/clusters/validations.go"
 	${GOPATH}/bin/mockgen -destination=pkg/registry/mocks/orasinterface.go -package=mocks -source "pkg/registry/orasinterface.go"
-	${GOPATH}/bin/mockgen -destination=pkg/registry/mocks/repository.go -package=mocks oras.land/oras-go/v2/registry Repository 
+	${GOPATH}/bin/mockgen -destination=pkg/registry/mocks/repository.go -package=mocks oras.land/oras-go/v2/registry Repository
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
