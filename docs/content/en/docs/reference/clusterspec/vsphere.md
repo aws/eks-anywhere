@@ -213,10 +213,11 @@ The Kubernetes version you want to use for your cluster. Supported values: `1.24
 ## VSphereDatacenterConfig Fields
 
 ### datacenter (required)
-The vSphere datacenter to deploy the EKS Anywhere cluster on. For example `SDDC-Datacenter`.
+The name of the vSphere datacenter to deploy the EKS Anywhere cluster on. For example `SDDC-Datacenter`.
 
 ### network (required)
-The VM network to deploy your EKS Anywhere cluster on.
+The path to the VM network to deploy your EKS Anywhere cluster on. For example, `/<DATACENTER>/network/<NETWORK_NAME>`.
+Use `govc find -type n` to see a list of networks.
 
 ### server (required)
 The vCenter server fully qualified domain name or IP address. If the server IP is used, the `thumbprint` must be set
@@ -315,12 +316,16 @@ The VM template to use for your EKS Anywhere cluster. This template was created 
 This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
 
 ### datastore (required)
-The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)
-to deploy your EKS Anywhere cluster on.
+The path to the vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)
+to deploy your EKS Anywhere cluster on, for example `/<DATACENTER>/datastore/<DATASTORE_NAME>`.
+Use `govc find -type s` to get a list of datastores.
 
 ### folder (required)
-The VM folder for your EKS anywhere cluster VMs. This allows you to organize your VMs. If the folder does not exist,
+The path to a VM folder for your EKS anywhere cluster VMs. This allows you to organize your VMs. If the folder does not exist,
 it will be created for you. If the folder is blank, the VMs will go in the root folder.
+For example `/<DATACENTER>/vm/<FOLDER_NAME>/...`.
+Use `govc find -type f` to get a list of existing folders.
+
 
 ### resourcePool (required)
 The vSphere [Resource pools](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.resmgmt.doc/GUID-60077B40-66FF-4625-934A-641703ED7601.html)
@@ -330,8 +335,11 @@ for your VMs in the EKS Anywhere cluster. Examples of resource pool values inclu
 * If there is a resource pool:  `/<datacenter>/host/<cluster-name>/Resources/<resource-pool-name>`
 * The wild card option `*/Resources` also often works.
 
+Use `govc find -type p` to get a list of available resource pools.
+
 ### storagePolicyName (optional)
-The storage policy name associated with your VMs.
+The storage policy name associated with your VMs. Generally this can be left blank.
+Use `govc storage.policy.ls` to get a list of available storage policies.
 
 ### tags (optional)
 Optional list of tags to attach to your cluster VMs in the URN format.
