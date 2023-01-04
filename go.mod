@@ -16,6 +16,7 @@ require (
 	github.com/aws/etcdadm-bootstrap-provider v1.0.5-rc2
 	github.com/aws/etcdadm-controller v1.0.4-rc2
 	github.com/aws/smithy-go v1.13.2
+	github.com/docker/cli v20.10.17+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
@@ -48,7 +49,6 @@ require (
 	k8s.io/apimachinery v0.25.4
 	k8s.io/apiserver v0.25.2
 	k8s.io/client-go v0.25.4
-	k8s.io/helm v2.17.0+incompatible
 	oras.land/oras-go v1.2.0
 	oras.land/oras-go/v2 v2.0.0-rc.5
 	sigs.k8s.io/cluster-api v1.2.0
@@ -97,7 +97,6 @@ require (
 	github.com/coredns/caddy v1.1.0 // indirect
 	github.com/coredns/corefile-migration v1.0.17 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/cli v20.10.17+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
