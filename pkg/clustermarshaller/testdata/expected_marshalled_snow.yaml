@@ -33,7 +33,6 @@ metadata:
   name: testsnow
   namespace: default
 spec:
-  amiID: ""
   network:
     directNetworkInterfaces:
     - index: 1
