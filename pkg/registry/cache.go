@@ -7,7 +7,7 @@ type Cache struct {
 	registries map[string]StorageClient
 }
 
-// NewCache create an OCI registry client.
+// NewCache creates an OCI registry client.
 func NewCache() *Cache {
 	return &Cache{
 		registries: make(map[string]StorageClient),
