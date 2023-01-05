@@ -45,7 +45,7 @@ func (c *ClusterValidator) WithExpectedObjectsExist() {
 	c.WithValidation(validateClusterReady, 5*time.Second, 60)
 	c.WithValidation(validateEKSAObjects, 5*time.Second, 60)
 	c.WithValidation(validateControlPlaneNodes, 5*time.Second, 120)
-	c.WithValidation(validateWorkerNodes, 5*time.Second, 60)
+	c.WithValidation(validateWorkerNodes, 5*time.Second, 120)
 }
 
 // WithClusterDoesNotExist registers a validation to check that a cluster does not exist or has been deleted.

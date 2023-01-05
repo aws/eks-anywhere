@@ -613,8 +613,7 @@ func TestSetupAndValidateDeleteClusterMDUpgradeStrategy(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("failed setup and validations: Upgrade rollout strategy customization is not supported for snow provider")))
 }
 
-// TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
-func TestGenerateCAPISpecForCreate(t *testing.T) {
+func TestGenerateCAPISpecForCreateUbuntu(t *testing.T) {
 	tt := newSnowTest(t)
 	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
 	tt.kubeconfigClient.EXPECT().
@@ -637,8 +636,38 @@ func TestGenerateCAPISpecForCreate(t *testing.T) {
 	cp, md, err := tt.provider.GenerateCAPISpecForCreate(tt.ctx, tt.cluster, tt.clusterSpec)
 
 	tt.Expect(err).To(Succeed())
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp_ubuntu.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md_ubuntu.yaml")
+}
+
+func TestGenerateCAPISpecForCreateBottlerocket(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.clusterSpec.SnowMachineConfigs["test-cp"].Spec.OSFamily = v1alpha1.Bottlerocket
+	tt.clusterSpec.SnowMachineConfigs["test-wn"].Spec.OSFamily = v1alpha1.Bottlerocket
+
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test",
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-0",
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+
+	cp, md, err := tt.provider.GenerateCAPISpecForCreate(tt.ctx, tt.cluster, tt.clusterSpec)
+
+	tt.Expect(err).To(Succeed())
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp_bottlerocket.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md_bottlerocket.yaml")
 }
 
 func TestGenerateCAPISpecForUpgrade(t *testing.T) {
@@ -708,8 +737,8 @@ func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 
 	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, tt.cluster, nil, nil, tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
-	test.AssertContentToFile(t, string(gotCp), "testdata/expected_results_main_cp.yaml")
-	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md.yaml")
+	test.AssertContentToFile(t, string(gotCp), "testdata/expected_results_main_cp_ubuntu.yaml")
+	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md_ubuntu.yaml")
 }
 
 func TestVersion(t *testing.T) {
@@ -894,7 +923,7 @@ func TestUpgradeNeededMachineConfigNil(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-cp",
+			gomock.Any(),
 			"test-namespace",
 			&v1alpha1.SnowMachineConfig{},
 		).
@@ -921,7 +950,7 @@ func TestUpgradeNeededMachineConfigError(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-cp",
+			gomock.Any(),
 			"test-namespace",
 			&v1alpha1.SnowMachineConfig{},
 		).

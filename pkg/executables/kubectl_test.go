@@ -2837,14 +2837,14 @@ func TestKubectlDeleteEksaNutanixMachineConfigError(t *testing.T) {
 	tt.Expect(tt.k.DeleteEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)).NotTo(Succeed())
 }
 
-func TestWaitForDaemonsetRolledout(t *testing.T) {
+func TestWaitForResourceRolledout(t *testing.T) {
 	tt := newKubectlTest(t)
 	timeout := "2m"
 	target := "testdaemonset"
 	var b bytes.Buffer
 	expectedParam := []string{"rollout", "status", "daemonset", target, "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-system", "--timeout", timeout}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	tt.Expect(tt.k.WaitForDaemonsetRolledout(tt.ctx, tt.cluster, timeout, target, "eksa-system")).To(Succeed())
+	tt.Expect(tt.k.WaitForResourceRolledout(tt.ctx, tt.cluster, timeout, target, "eksa-system", "daemonset")).To(Succeed())
 }
 
 func TestWaitForDaemonsetRolledoutError(t *testing.T) {
@@ -2854,7 +2854,7 @@ func TestWaitForDaemonsetRolledoutError(t *testing.T) {
 	var b bytes.Buffer
 	expectedParam := []string{"rollout", "status", "daemonset", target, "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-system", "--timeout", timeout}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, fmt.Errorf("error")).AnyTimes()
-	tt.Expect(tt.k.WaitForDaemonsetRolledout(tt.ctx, tt.cluster, timeout, target, "eksa-system")).NotTo(Succeed())
+	tt.Expect(tt.k.WaitForResourceRolledout(tt.ctx, tt.cluster, timeout, target, "eksa-system", "daemonset")).NotTo(Succeed())
 }
 
 func TestWaitForPod(t *testing.T) {

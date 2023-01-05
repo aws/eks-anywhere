@@ -14,7 +14,7 @@ import (
 )
 
 func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) ([]byte, error) {
-	marshallables := make([]v1alpha1.Marshallable, 0, 5+len(machineConfigs)+len(clusterSpec.TinkerbellTemplateConfigs))
+	marshallables := make([]v1alpha1.Marshallable, 0, 5+len(machineConfigs)+len(clusterSpec.TinkerbellTemplateConfigs)+len(clusterSpec.SnowIPPools))
 	marshallables = append(marshallables,
 		clusterSpec.Cluster.ConvertConfigToConfigGenerateStruct(),
 		datacenterConfig.Marshallable(),
@@ -42,6 +42,11 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 	}
 	if clusterSpec.TinkerbellTemplateConfigs != nil {
 		for _, t := range clusterSpec.TinkerbellTemplateConfigs {
+			marshallables = append(marshallables, t.ConvertConfigToConfigGenerateStruct())
+		}
+	}
+	if clusterSpec.SnowIPPools != nil {
+		for _, t := range clusterSpec.SnowIPPools {
 			marshallables = append(marshallables, t.ConvertConfigToConfigGenerateStruct())
 		}
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
@@ -130,4 +131,19 @@ func TestValidateAuthenticationForRegistryMirrorAuthValid(t *testing.T) {
 	t.Setenv("REGISTRY_PASSWORD", "password")
 
 	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateK8s125Support(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube125
+	tt.Expect(validations.ValidateK8s125Support(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("kubernetes version 1.25 is not enabled. Please set the env variable K8S_1_25_SUPPORT")))
+}
+
+func TestValidateK8s125SupportActive(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube125
+	features.ClearCache()
+	os.Setenv(features.K8s125SupportEnvVar, "true")
+	tt.Expect(validations.ValidateK8s125Support(tt.clusterSpec)).To(Succeed())
 }
