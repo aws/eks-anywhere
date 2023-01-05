@@ -80,6 +80,10 @@ func TestFactoryBuildClusterReconciler(t *testing.T) {
 		},
 		{
 			Type:         string(clusterctlv1.InfrastructureProviderType),
+			ProviderName: "tinkerbell",
+		},
+		{
+			Type:         string(clusterctlv1.InfrastructureProviderType),
 			ProviderName: "unknown-provider",
 		},
 	}
