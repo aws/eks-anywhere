@@ -14,16 +14,16 @@ func TestCache_Get(t *testing.T) {
 	assert.NoError(t, err)
 	ociRegistry, ok := result.(*OCIRegistryClient)
 	assert.True(t, ok)
-	assert.Equal(t, "localhost", ociRegistry.Host)
+	assert.Equal(t, "localhost", ociRegistry.GetHost())
 
 	result, err = cache.Get("localhost", "", false)
 
 	assert.NoError(t, err)
 	sameOciRegistry, ok := result.(*OCIRegistryClient)
 	assert.True(t, ok)
-	assert.Equal(t, "localhost", sameOciRegistry.Host)
-	assert.Equal(t, "", sameOciRegistry.CertFile)
-	assert.False(t, sameOciRegistry.Insecure)
+	assert.Equal(t, "localhost", sameOciRegistry.GetHost())
+	assert.Equal(t, "", sameOciRegistry.GetCertFile())
+	assert.False(t, sameOciRegistry.IsInsecure())
 	assert.Equal(t, ociRegistry, sameOciRegistry)
 
 	result, err = cache.Get("example.com", "bogus.file", true)

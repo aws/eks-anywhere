@@ -23,9 +23,9 @@ var (
 
 func TestNewOCIRegistry(t *testing.T) {
 	sut := NewOCIRegistry("localhost", "testdata/harbor.eksa.demo.crt", false)
-	assert.Equal(t, "localhost", sut.Host)
-	assert.Equal(t, "testdata/harbor.eksa.demo.crt", sut.CertFile)
-	assert.False(t, sut.Insecure)
+	assert.Equal(t, "localhost", sut.GetHost())
+	assert.Equal(t, "testdata/harbor.eksa.demo.crt", sut.GetCertFile())
+	assert.False(t, sut.IsInsecure())
 
 	err := sut.Init()
 	assert.NoError(t, err)
@@ -40,7 +40,7 @@ func TestNewOCIRegistry(t *testing.T) {
 	destination := sut.Destination(image)
 	assert.Equal(t, "localhost/owner/name:latest", destination)
 	sut.SetProject("project/")
-	assert.Equal(t, "project/", sut.Project)
+	assert.Equal(t, "project/", sut.GetProject())
 	destination = sut.Destination(image)
 	assert.Equal(t, "localhost/project/owner/name:latest", destination)
 
@@ -50,9 +50,9 @@ func TestNewOCIRegistry(t *testing.T) {
 
 func TestNewOCIRegistryNoCertFile(t *testing.T) {
 	sut := NewOCIRegistry("localhost", "", true)
-	assert.Equal(t, "localhost", sut.Host)
-	assert.Equal(t, "", sut.CertFile)
-	assert.True(t, sut.Insecure)
+	assert.Equal(t, "localhost", sut.GetHost())
+	assert.Equal(t, "", sut.GetCertFile())
+	assert.True(t, sut.IsInsecure())
 
 	err := sut.Init()
 	assert.NoError(t, err)
@@ -60,9 +60,9 @@ func TestNewOCIRegistryNoCertFile(t *testing.T) {
 
 func TestNewOCIRegistry_InitError(t *testing.T) {
 	sut := NewOCIRegistry("localhost", "bogus.crt", false)
-	assert.Equal(t, "localhost", sut.Host)
-	assert.Equal(t, "bogus.crt", sut.CertFile)
-	assert.False(t, sut.Insecure)
+	assert.Equal(t, "localhost", sut.GetHost())
+	assert.Equal(t, "bogus.crt", sut.GetCertFile())
+	assert.False(t, sut.IsInsecure())
 
 	err := sut.Init()
 	assert.EqualError(t, err, "error reading certificate file <bogus.crt>: open bogus.crt: no such file or directory")
@@ -98,7 +98,7 @@ func TestOCIRegistry_CopDryRun(t *testing.T) {
 	sut.OI = mockOI
 	err := sut.Init()
 	assert.NoError(t, err)
-	sut.DryRun = true
+	sut.SetDryRun(true)
 
 	dstRegistry := NewOCIRegistry("localhost", "", false)
 	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
