@@ -229,7 +229,7 @@ func TestImage_Version(t *testing.T) {
 		{
 			testName: "port and sha256",
 			URI:      "public.ecr.aws:8484/l0g8r8j6/kubernetes-sigs/kind/node@sha256:6165d26ef648100226c1944c6b1c83e875a4bf81bba91054a00c5121cfeff363",
-			want:     "sha256:6165d26ef648100226c1944c6b1c83e875a4bf81bba91054a00c5121cfeff363",
+			want:     "",
 		},
 		{
 			testName: "port no tag",
@@ -254,6 +254,45 @@ func TestImage_Version(t *testing.T) {
 			}
 			if got := i.Version(); got != tt.want {
 				t.Errorf("Image.Version() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestImage_Digest(t *testing.T) {
+	tests := []struct {
+		testName string
+		URI      string
+		want     string
+	}{
+		{
+			testName: "tag",
+			URI:      "public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38",
+			want:     "",
+		},
+		{
+			testName: "port and sha256",
+			URI:      "public.ecr.aws:8484/l0g8r8j6/kubernetes-sigs/kind/node@sha256:6165d26ef648100226c1944c6b1c83e875a4bf81bba91054a00c5121cfeff363",
+			want:     "sha256:6165d26ef648100226c1944c6b1c83e875a4bf81bba91054a00c5121cfeff363",
+		},
+		{
+			testName: "no tag",
+			URI:      "public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node",
+			want:     "",
+		},
+		{
+			testName: "no nothing",
+			URI:      "",
+			want:     "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			i := v1alpha1.Image{
+				URI: tt.URI,
+			}
+			if got := i.Digest(); got != tt.want {
+				t.Errorf("Image.Digest() = %v, want %v", got, tt.want)
 			}
 		})
 	}

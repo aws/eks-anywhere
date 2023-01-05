@@ -94,6 +94,15 @@ func (i *Image) Repository() string {
 	return result[0]
 }
 
+func (i *Image) Digest() string {
+	rol := strings.TrimPrefix(i.URI, i.Registry()+"/")
+	result := strings.Split(rol, "@")
+	if len(result) < 2 {
+		return ""
+	}
+	return result[1]
+}
+
 func (i *Image) Version() string {
 	rol := strings.TrimPrefix(i.URI, i.Registry()+"/")
 	result := strings.Split(rol, "@")
@@ -104,7 +113,7 @@ func (i *Image) Version() string {
 		}
 		return result[1]
 	}
-	return result[1]
+	return ""
 }
 
 type Archive struct {

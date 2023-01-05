@@ -11,16 +11,15 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/registry"
 	"github.com/aws/eks-anywhere/pkg/registry/mocks"
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 var (
 	ctx   = context.Background()
 	desc  = ocispec.Descriptor{}
 	image = registry.Artifact{
-		Image: releasev1.Image{
-			URI: "public.ecr.aws/eks-anywhere/eks-anywhere-packages:0.2.22-eks-a-24",
-		},
+		Registry:   "public.ecr.aws/",
+		Repository: "eks-anywhere/eks-anywhere-packages",
+		Tag:        "0.2.22-eks-a-24",
 	}
 )
 
@@ -38,9 +37,9 @@ func TestNewOCIRegistry(t *testing.T) {
 	assert.NoError(t, err)
 
 	image := registry.Artifact{
-		Image: releasev1.Image{
-			URI: "localhost/owner/name:latest",
-		},
+		Registry:   "localhost",
+		Repository: "owner/name",
+		Tag:        "latest",
 	}
 	destination := sut.Destination(image)
 	assert.Equal(t, "localhost/owner/name:latest", destination)

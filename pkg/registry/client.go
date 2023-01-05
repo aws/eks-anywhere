@@ -116,7 +116,7 @@ func (or *OCIRegistryClient) SetDryRun(value bool) {
 
 // Destination of this storage registry.
 func (or *OCIRegistryClient) Destination(image Artifact) string {
-	return strings.Replace(image.VersionedImage(), image.Registry()+"/", or.host+"/"+or.project, 1)
+	return strings.Replace(image.VersionedImage(), image.Registry+"/", or.host+"/"+or.project, 1)
 }
 
 // GetReference gets digest or tag version.
@@ -136,7 +136,7 @@ func (or *OCIRegistryClient) getCertificates() (certificates *x509.CertPool, err
 
 // GetStorage object based on repository.
 func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error) {
-	dstRepo := or.project + image.Repository()
+	dstRepo := or.project + image.Repository
 	repo, err = or.OI.Repository(ctx, or.registry, dstRepo)
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository %s: %v", dstRepo, err)
@@ -152,7 +152,7 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient
 	}
 
 	var desc ocispec.Descriptor
-	or.registry.Reference.Reference = image.Version()
+	or.registry.Reference.Reference = image.Digest
 	desc, err = or.OI.Resolve(ctx, srcStorage, or.registry.Reference.Reference)
 	if err != nil {
 		return fmt.Errorf("registry copy destination: %v", err)

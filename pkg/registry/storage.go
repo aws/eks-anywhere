@@ -4,13 +4,35 @@ import (
 	"context"
 
 	orasregistry "oras.land/oras-go/v2/registry"
-
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // Artifact to head release dependency.
 type Artifact struct {
-	releasev1.Image
+	Registry   string
+	Repository string
+	Tag        string
+	Digest     string
+}
+
+// NewArtifact creates a new artifact object.
+func NewArtifact(registry, repository, tag, digest string) Artifact {
+	return Artifact{
+		Registry:   registry,
+		Repository: repository,
+		Tag:        tag,
+		Digest:     digest,
+	}
+}
+
+// VersionedImage returns full URI for image.
+func (art *Artifact) VersionedImage() string {
+	var version string
+	if art.Tag != "" {
+		version = ":" + art.Tag
+	} else {
+		version = "@" + art.Digest
+	}
+	return art.Registry + "/" + art.Repository + version
 }
 
 // StorageClient interface for general image storage client.

@@ -110,7 +110,8 @@ func (c CopyPackagesCommand) copyImages(ctx context.Context, imageList []release
 			continue
 		}
 
-		err = srcRegistry.Copy(ctx, registry.Artifact{Image: image}, c.dstRegistry)
+		artifact := registry.NewArtifact(image.Registry(), image.Repository(), image.Version(), image.Digest())
+		err = srcRegistry.Copy(ctx, artifact, c.dstRegistry)
 		if err != nil {
 			return err
 		}
