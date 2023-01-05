@@ -396,7 +396,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
     wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
-    cd $HOME
+    cd -
     ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
