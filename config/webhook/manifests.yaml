@@ -336,6 +336,48 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbelldatacenterconfig
+  failurePolicy: Fail
+  name: vtinkerbelldatacenterconfig.kb.io
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - tinkerbelldatacenterconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig
+  failurePolicy: Fail
+  name: vtinkerbellmachineconfig.kb.io
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - tinkerbellmachineconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig
   failurePolicy: Fail
   name: validation.vspheredatacenterconfig.anywhere.amazonaws.com
