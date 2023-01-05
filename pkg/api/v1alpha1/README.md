@@ -15,8 +15,9 @@ Since we use a non standard (according to kubebuilder) repo structure, kubebuild
 
 Example
 ```sh
-./hack/kubebuilder.sh create webhook --group anywhere --version v1alpha1 --programmatic-validation --kind WhateverKind
+./hack/kubebuilder.sh create webhook --group anywhere --version v1alpha1 --defaulting --programmatic-validation --kind WhateverKind
 ```
+--defualting creates mutation webhooks and --programmatic-validation creates validation webhooks.
 
 ## Generate manifests
 ```sh
