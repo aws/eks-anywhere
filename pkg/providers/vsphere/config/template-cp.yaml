@@ -531,6 +531,10 @@ spec:
       caCert: |
 {{ .registryCACert | indent 8 }}
       {{- end }}
+      {{- if .registryAuth }}
+      username: {{.registryUsername}}
+      password: {{.registryPassword}}
+      {{- end }}
 {{- end }}
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
