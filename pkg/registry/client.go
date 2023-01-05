@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 
@@ -162,7 +163,7 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient
 		return fmt.Errorf("registry copy destination: %v", err)
 	}
 
-	fmt.Println(dstClient.Destination(image))
+	log.Println(dstClient.Destination(image))
 	if or.dryRun {
 		return nil
 	}

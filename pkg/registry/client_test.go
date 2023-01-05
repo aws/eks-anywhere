@@ -1,4 +1,4 @@
-package registry
+package registry_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/aws/eks-anywhere/pkg/registry"
 	"github.com/aws/eks-anywhere/pkg/registry/mocks"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -16,7 +17,7 @@ import (
 var (
 	ctx   = context.Background()
 	desc  = ocispec.Descriptor{}
-	image = Artifact{
+	image = registry.Artifact{
 		Image: releasev1.Image{
 			URI: "public.ecr.aws/eks-anywhere/eks-anywhere-packages:0.2.22-eks-a-24",
 		},
@@ -24,7 +25,7 @@ var (
 )
 
 func TestNewOCIRegistry(t *testing.T) {
-	sut := NewOCIRegistry("localhost", "testdata/harbor.eksa.demo.crt", false)
+	sut := registry.NewOCIRegistry("localhost", "testdata/harbor.eksa.demo.crt", false)
 	assert.Equal(t, "localhost", sut.GetHost())
 	assert.Equal(t, "testdata/harbor.eksa.demo.crt", sut.GetCertFile())
 	assert.False(t, sut.IsInsecure())
@@ -36,7 +37,7 @@ func TestNewOCIRegistry(t *testing.T) {
 	err = sut.Init()
 	assert.NoError(t, err)
 
-	image := Artifact{
+	image := registry.Artifact{
 		Image: releasev1.Image{
 			URI: "localhost/owner/name:latest",
 		},
@@ -53,7 +54,7 @@ func TestNewOCIRegistry(t *testing.T) {
 }
 
 func TestNewOCIRegistryNoCertFile(t *testing.T) {
-	sut := NewOCIRegistry("localhost", "", true)
+	sut := registry.NewOCIRegistry("localhost", "", true)
 	assert.Equal(t, "localhost", sut.GetHost())
 	assert.Equal(t, "", sut.GetCertFile())
 	assert.True(t, sut.IsInsecure())
@@ -63,7 +64,7 @@ func TestNewOCIRegistryNoCertFile(t *testing.T) {
 }
 
 func TestNewOCIRegistry_InitError(t *testing.T) {
-	sut := NewOCIRegistry("localhost", "bogus.crt", false)
+	sut := registry.NewOCIRegistry("localhost", "bogus.crt", false)
 	assert.Equal(t, "localhost", sut.GetHost())
 	assert.Equal(t, "bogus.crt", sut.GetCertFile())
 	assert.False(t, sut.IsInsecure())
@@ -73,7 +74,7 @@ func TestNewOCIRegistry_InitError(t *testing.T) {
 }
 
 func TestOCIRegistry_Copy(t *testing.T) {
-	sut := NewOCIRegistry("public.ecr.aws", "", true)
+	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
 	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
@@ -83,7 +84,7 @@ func TestOCIRegistry_Copy(t *testing.T) {
 	err := sut.Init()
 	assert.NoError(t, err)
 
-	dstRegistry := NewOCIRegistry("localhost", "", false)
+	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
 	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, nil)
@@ -94,7 +95,7 @@ func TestOCIRegistry_Copy(t *testing.T) {
 }
 
 func TestOCIRegistry_CopDryRun(t *testing.T) {
-	sut := NewOCIRegistry("public.ecr.aws", "", true)
+	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
 	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
@@ -104,7 +105,7 @@ func TestOCIRegistry_CopDryRun(t *testing.T) {
 	assert.NoError(t, err)
 	sut.SetDryRun(true)
 
-	dstRegistry := NewOCIRegistry("localhost", "", false)
+	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
 	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, nil)
@@ -115,7 +116,7 @@ func TestOCIRegistry_CopDryRun(t *testing.T) {
 }
 
 func TestOCIRegistry_CopyError(t *testing.T) {
-	sut := NewOCIRegistry("public.ecr.aws", "", true)
+	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
 	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
@@ -125,7 +126,7 @@ func TestOCIRegistry_CopyError(t *testing.T) {
 	err := sut.Init()
 	assert.NoError(t, err)
 
-	dstRegistry := NewOCIRegistry("localhost", "", false)
+	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
 	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, nil)
@@ -136,7 +137,7 @@ func TestOCIRegistry_CopyError(t *testing.T) {
 }
 
 func TestOCIRegistry_CopyErrorDestination(t *testing.T) {
-	sut := NewOCIRegistry("public.ecr.aws", "", true)
+	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
 	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
@@ -145,7 +146,7 @@ func TestOCIRegistry_CopyErrorDestination(t *testing.T) {
 	err := sut.Init()
 	assert.NoError(t, err)
 
-	dstRegistry := NewOCIRegistry("localhost", "", false)
+	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
 	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, fmt.Errorf("oops"))
@@ -156,7 +157,7 @@ func TestOCIRegistry_CopyErrorDestination(t *testing.T) {
 }
 
 func TestOCIRegistry_CopyErrorSource(t *testing.T) {
-	sut := NewOCIRegistry("public.ecr.aws", "", true)
+	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
 	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
@@ -165,14 +166,14 @@ func TestOCIRegistry_CopyErrorSource(t *testing.T) {
 	err := sut.Init()
 	assert.NoError(t, err)
 
-	dstRegistry := NewOCIRegistry("localhost", "", false)
+	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
 
 	err = sut.Copy(ctx, image, dstRegistry)
 	assert.EqualError(t, err, "registry copy destination: oops")
 }
 
 func TestOCIRegistry_CopyErrorSourceRepository(t *testing.T) {
-	sut := NewOCIRegistry("public.ecr.aws", "", true)
+	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
 	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
 	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, fmt.Errorf("ooops"))
@@ -180,7 +181,7 @@ func TestOCIRegistry_CopyErrorSourceRepository(t *testing.T) {
 	err := sut.Init()
 	assert.NoError(t, err)
 
-	dstRegistry := NewOCIRegistry("localhost", "", false)
+	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
 
 	err = sut.Copy(ctx, image, dstRegistry)
 	assert.EqualError(t, err, "registry copy source: error creating repository eks-anywhere/eks-anywhere-packages: ooops")
