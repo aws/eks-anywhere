@@ -1,13 +1,15 @@
-package registry
+package registry_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/aws/eks-anywhere/pkg/registry"
 )
 
 func TestCredentialStore_Init(t *testing.T) {
-	credentialStore := NewCredentialStore()
+	credentialStore := registry.NewCredentialStore()
 	credentialStore.SetDirectory("testdata")
 
 	err := credentialStore.Init()
@@ -43,7 +45,7 @@ func TestCredentialStore_Init(t *testing.T) {
 }
 
 func TestCredentialStore_InitEmpty(t *testing.T) {
-	credentialStore := NewCredentialStore()
+	credentialStore := registry.NewCredentialStore()
 	credentialStore.SetDirectory("testdata/empty")
 	err := credentialStore.Init()
 	assert.NoError(t, err)

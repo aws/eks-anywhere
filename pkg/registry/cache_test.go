@@ -1,25 +1,27 @@
-package registry
+package registry_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/aws/eks-anywhere/pkg/registry"
 )
 
 func TestCache_Get(t *testing.T) {
-	cache := NewCache()
+	cache := registry.NewCache()
 
 	result, err := cache.Get("localhost", "", false)
 
 	assert.NoError(t, err)
-	ociRegistry, ok := result.(*OCIRegistryClient)
+	ociRegistry, ok := result.(*registry.OCIRegistryClient)
 	assert.True(t, ok)
 	assert.Equal(t, "localhost", ociRegistry.GetHost())
 
 	result, err = cache.Get("localhost", "", false)
 
 	assert.NoError(t, err)
-	sameOciRegistry, ok := result.(*OCIRegistryClient)
+	sameOciRegistry, ok := result.(*registry.OCIRegistryClient)
 	assert.True(t, ok)
 	assert.Equal(t, "localhost", sameOciRegistry.GetHost())
 	assert.Equal(t, "", sameOciRegistry.GetCertFile())
@@ -29,7 +31,7 @@ func TestCache_Get(t *testing.T) {
 	result, err = cache.Get("example.com", "bogus.file", true)
 
 	assert.EqualError(t, err, "error with repository example.com: error reading certificate file <bogus.file>: open bogus.file: no such file or directory")
-	busted, ok := result.(*OCIRegistryClient)
+	busted, ok := result.(*registry.OCIRegistryClient)
 	assert.False(t, ok)
 	assert.Nil(t, busted)
 }
