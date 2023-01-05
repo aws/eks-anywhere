@@ -7,7 +7,8 @@ import (
 )
 
 func TestCredentialStore_Init(t *testing.T) {
-	credentialStore := NewCredentialStore("testdata")
+	credentialStore := NewCredentialStore()
+	credentialStore.SetDirectory("testdata")
 
 	err := credentialStore.Init()
 	assert.NoError(t, err)
@@ -42,7 +43,8 @@ func TestCredentialStore_Init(t *testing.T) {
 }
 
 func TestCredentialStore_InitEmpty(t *testing.T) {
-	credentialStore := NewCredentialStore("testdata/empty")
+	credentialStore := NewCredentialStore()
+	credentialStore.SetDirectory("testdata/empty")
 	err := credentialStore.Init()
 	assert.NoError(t, err)
 }

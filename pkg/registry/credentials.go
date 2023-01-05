@@ -14,14 +14,15 @@ type CredentialStore struct {
 }
 
 // NewCredentialStore create a create store.
-func NewCredentialStore(args ...string) CredentialStore {
-	directory := config.Dir()
-	if len(args) > 0 {
-		directory = args[0]
-	}
+func NewCredentialStore() CredentialStore {
 	return CredentialStore{
-		directory: directory,
+		directory: config.Dir(),
 	}
+}
+
+// SetDirectory override default directory.
+func (cs *CredentialStore) SetDirectory(directory string) {
+	cs.directory = directory
 }
 
 // Init initialize a credential store.
