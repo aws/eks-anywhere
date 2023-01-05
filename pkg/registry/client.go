@@ -48,7 +48,6 @@ func (or *OCIRegistryClient) Init() error {
 	if or.initialized {
 		return nil
 	}
-	or.initialized = true
 
 	credentialStore := NewCredentialStore()
 	err := credentialStore.Init()
@@ -83,6 +82,7 @@ func (or *OCIRegistryClient) Init() error {
 		return credentialStore.Credential(s)
 	}
 	or.registry.Client = authClient
+	or.initialized = true
 	return nil
 }
 
