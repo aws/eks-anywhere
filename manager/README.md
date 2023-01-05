@@ -1,18 +1,5 @@
 # eksa controller
 
-## Install kubebuilder
-```sh
-make hack/tools/bin/kubebuilder
-```
-
-## Create new webhooks with kubebuilder
-Since we use a non standard (according to kubebuilder) repo structure, kubebuilder commands won't work. For this purpose, we have a script that temporally changes our folder structure to one that kubebuilder understands and restores the original one after executing the kubebuilder command.
-
-Example
-```sh
-./hack/kubebuilder.sh create webhook --group anywhere --version v1alpha1 --programmatic-validation --kind WhateverKind
-```
-
 ## Run controller from local repo source with tilt
 When using tilt, any changes to the yaml files in `config` or `go` code in `pkg/api` and `controllers` will automatically rebuild and update your resources in the cluster.
 
