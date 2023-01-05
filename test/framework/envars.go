@@ -2,10 +2,9 @@ package framework
 
 import (
 	"os"
-	"testing"
 )
 
-func checkRequiredEnvVars(t *testing.T, requiredEnvVars []string) {
+func checkRequiredEnvVars(t T, requiredEnvVars []string) {
 	for _, eVar := range requiredEnvVars {
 		if _, ok := os.LookupEnv(eVar); !ok {
 			t.Fatalf("Required env var [%s] not present", eVar)
@@ -13,7 +12,7 @@ func checkRequiredEnvVars(t *testing.T, requiredEnvVars []string) {
 	}
 }
 
-func setKubeconfigEnvVar(t *testing.T, clusterName string) {
+func setKubeconfigEnvVar(t T, clusterName string) {
 	err := os.Setenv("KUBECONFIG", clusterName+"/"+clusterName+"-eks-a-cluster.kubeconfig")
 	if err != nil {
 		t.Fatalf("Error setting KUBECONFIG env var: %v", err)
