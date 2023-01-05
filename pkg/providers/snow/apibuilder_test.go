@@ -216,7 +216,8 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(err).To(Succeed())
 
 	want := wantKubeadmControlPlane()
-	tt.Expect(got).To(Equal(want))
+	want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
+	tt.Expect(got).To(BeComparableTo(want))
 }
 
 var registryMirrorTests = []struct {
@@ -383,7 +384,8 @@ func TestKubeadmControlPlaneWithRegistryMirrorUbuntu(t *testing.T) {
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = append(want.Spec.KubeadmConfigSpec.Files, tt.wantFiles...)
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
-			g.Expect(got).To(Equal(want))
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
+			g.Expect(got).To(BeComparableTo(want))
 		})
 	}
 }
@@ -451,7 +453,7 @@ func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.RegistryMirror = tt.wantRegistryConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.RegistryMirror = tt.wantRegistryConfig
-			g.Expect(got).To(Equal(want))
+			g.Expect(got).To(BeComparableTo(want))
 		})
 	}
 }
@@ -516,7 +518,8 @@ func TestKubeadmControlPlaneWithProxyConfigUbuntu(t *testing.T) {
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = append(want.Spec.KubeadmConfigSpec.Files, tt.wantFiles...)
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantProxyConfigCommands()...)
-			g.Expect(got).To(Equal(want))
+			want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
+			g.Expect(got).To(BeComparableTo(want))
 		})
 	}
 }

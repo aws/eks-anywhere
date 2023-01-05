@@ -406,6 +406,7 @@ func TestVSphereKubernetes123BottlerocketTo124StackedEtcdUpgrade(t *testing.T) {
 		provider.WithProviderUpgrade(provider.Bottlerocket124Template()),
 	)
 }
+
 func TestCloudStackKubernetes122RedhatTo123Upgrade(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
 	test := framework.NewClusterE2ETest(

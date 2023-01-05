@@ -122,4 +122,4 @@ export CLUSTER_NAME=nameofyourcluster
 eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.23 > packages.yaml
 ```
 
-Available curated packages are listed below.
+Available curated packages and troubleshooting guides are listed below.

@@ -1,0 +1,57 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: testcluster
+  namespace: default
+spec:
+  clusterNetwork:
+    pods: {}
+    services: {}
+  controlPlaneConfiguration:
+    machineGroupRef:
+      kind: SnowMachineConfig
+      name: testsnow
+  datacenterRef:
+    kind: SnowDatacenterConfig
+    name: testsnow
+  managementCluster:
+    name: testcluster
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowDatacenterConfig
+metadata:
+  name: testsnow
+  namespace: default
+spec:
+  identityRef: {}
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowMachineConfig
+metadata:
+  name: testsnow
+  namespace: default
+spec:
+  network:
+    directNetworkInterfaces:
+    - index: 1
+      ipPoolRef:
+        kind: SnowIPPool
+        name: ippool
+      primary: true
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowIPPool
+metadata:
+  name: ippool
+  namespace: default
+spec:
+  pools:
+  - gateway: gateway
+    ipEnd: end
+    ipStart: start
+    subnet: subnet
+
+---

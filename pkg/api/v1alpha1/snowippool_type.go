@@ -40,6 +40,35 @@ type SnowIPPool struct {
 	Status SnowIPPoolStatus `json:"status,omitempty"`
 }
 
+// ConvertConfigToConfigGenerateStruct converts a SnowIPPool to SnowIPPoolGenerate object.
+func (s *SnowIPPool) ConvertConfigToConfigGenerateStruct() *SnowIPPoolGenerate {
+	namespace := defaultEksaNamespace
+	if s.Namespace != "" {
+		namespace = s.Namespace
+	}
+	config := &SnowIPPoolGenerate{
+		TypeMeta: s.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        s.Name,
+			Annotations: s.Annotations,
+			Namespace:   namespace,
+		},
+		Spec: s.Spec,
+	}
+
+	return config
+}
+
+// +kubebuilder:object:generate=false
+
+// SnowIPPoolGenerate is same as SnowIPPool except stripped down for generation of yaml file during generate clusterconfig.
+type SnowIPPoolGenerate struct {
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      `json:"metadata,omitempty"`
+
+	Spec SnowIPPoolSpec `json:"spec,omitempty"`
+}
+
 //+kubebuilder:object:root=true
 
 // SnowIPPoolList contains a list of SnowIPPool.

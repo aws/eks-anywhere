@@ -9,7 +9,6 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	controller "github.com/aws/eks-anywhere/pkg/controller"
 	logr "github.com/go-logr/logr"
 	gomock "github.com/golang/mock/gomock"
@@ -51,21 +50,6 @@ func (m *MockProviderClusterReconciler) Reconcile(ctx context.Context, log logr.
 func (mr *MockProviderClusterReconcilerMockRecorder) Reconcile(ctx, log, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockProviderClusterReconciler)(nil).Reconcile), ctx, log, cluster)
-}
-
-// ReconcileCNI mocks base method.
-func (m *MockProviderClusterReconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReconcileCNI", ctx, log, clusterSpec)
-	ret0, _ := ret[0].(controller.Result)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReconcileCNI indicates an expected call of ReconcileCNI.
-func (mr *MockProviderClusterReconcilerMockRecorder) ReconcileCNI(ctx, log, clusterSpec interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileCNI", reflect.TypeOf((*MockProviderClusterReconciler)(nil).ReconcileCNI), ctx, log, clusterSpec)
 }
 
 // ReconcileWorkerNodes mocks base method.
