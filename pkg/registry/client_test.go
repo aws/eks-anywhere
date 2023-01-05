@@ -16,8 +16,10 @@ import (
 var (
 	ctx   = context.Background()
 	desc  = ocispec.Descriptor{}
-	image = releasev1.Image{
-		URI: "public.ecr.aws/eks-anywhere/eks-anywhere-packages:0.2.22-eks-a-24",
+	image = Artifact{
+		Image: releasev1.Image{
+			URI: "public.ecr.aws/eks-anywhere/eks-anywhere-packages:0.2.22-eks-a-24",
+		},
 	}
 )
 
@@ -34,8 +36,10 @@ func TestNewOCIRegistry(t *testing.T) {
 	err = sut.Init()
 	assert.NoError(t, err)
 
-	image := releasev1.Image{
-		URI: "localhost/owner/name:latest",
+	image := Artifact{
+		Image: releasev1.Image{
+			URI: "localhost/owner/name:latest",
+		},
 	}
 	destination := sut.Destination(image)
 	assert.Equal(t, "localhost/owner/name:latest", destination)

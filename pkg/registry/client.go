@@ -15,8 +15,6 @@ import (
 	orasregistry "oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
-
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // OCIRegistryClient storage client for an OCI registry.
@@ -117,7 +115,7 @@ func (or *OCIRegistryClient) SetDryRun(value bool) {
 }
 
 // Destination of this storage registry.
-func (or *OCIRegistryClient) Destination(image releasev1.Image) string {
+func (or *OCIRegistryClient) Destination(image Artifact) string {
 	return strings.Replace(image.VersionedImage(), image.Registry()+"/", or.host+"/"+or.project, 1)
 }
 
@@ -137,7 +135,7 @@ func (or *OCIRegistryClient) getCertificates() (certificates *x509.CertPool, err
 }
 
 // GetStorage object based on repository.
-func (or *OCIRegistryClient) GetStorage(ctx context.Context, image releasev1.Image) (repo orasregistry.Repository, err error) {
+func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error) {
 	dstRepo := or.project + image.Repository()
 	repo, err = or.OI.Repository(ctx, or.registry, dstRepo)
 	if err != nil {
@@ -147,7 +145,7 @@ func (or *OCIRegistryClient) GetStorage(ctx context.Context, image releasev1.Ima
 }
 
 // Copy a image from a source to a destination.
-func (or *OCIRegistryClient) Copy(ctx context.Context, image releasev1.Image, dstClient StorageClient) (err error) {
+func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient StorageClient) (err error) {
 	committed := &sync.Map{}
 	extendedCopyOptions := oras.DefaultExtendedCopyOptions
 	extendedCopyOptions.PostCopy = func(ctx context.Context, desc ocispec.Descriptor) error {
