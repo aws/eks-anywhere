@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
@@ -146,17 +145,6 @@ func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (re
 
 // Copy a image from a source to a destination.
 func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient StorageClient) (err error) {
-	committed := &sync.Map{}
-	extendedCopyOptions := oras.DefaultExtendedCopyOptions
-	extendedCopyOptions.PostCopy = func(ctx context.Context, desc ocispec.Descriptor) error {
-		committed.Store(desc.Digest.String(), desc.Annotations[ocispec.AnnotationTitle])
-		return nil
-	}
-	extendedCopyOptions.OnCopySkipped = func(ctx context.Context, desc ocispec.Descriptor) error {
-		committed.Store(desc.Digest.String(), desc.Annotations[ocispec.AnnotationTitle])
-		return nil
-	}
-
 	srcStorage, err := or.GetStorage(ctx, image)
 	if err != nil {
 		return fmt.Errorf("registry copy source: %v", err)
@@ -178,6 +166,7 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient
 	if or.dryRun {
 		return nil
 	}
+	extendedCopyOptions := oras.DefaultExtendedCopyOptions
 	err = or.OI.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
 	if err != nil {
 		return fmt.Errorf("registry copy: %v", err)
