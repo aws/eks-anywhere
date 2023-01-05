@@ -451,7 +451,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
     wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
-    cd $HOME
+    cd -
     ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters.
    ```json
