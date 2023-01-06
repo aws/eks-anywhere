@@ -13,6 +13,22 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
+func runWorkloadClusterUpgradeFlowAPI(test *framework.MulticlusterE2ETest, filler ...api.ClusterConfigFiller) {
+	test.CreateManagementCluster()
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		wc.UpdateClusterConfig(filler...)
+		wc.ApplyClusterManifest()
+		wc.ValidateClusterState()
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
 func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -116,27 +132,15 @@ func TestVSphereUpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
 		),
 	)
 
-	test.CreateManagementCluster()
-	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
-		wc.ApplyClusterManifest()
-		wc.WaitForKubeconfig()
-		wc.ValidateClusterState()
-		wc.UpdateClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithWorkerNodeGroup("worker-0", api.WithLabel("key1", "val1"), api.WithTaint(framework.NoExecuteTaint())),
-				api.WithWorkerNodeGroup("worker-1", api.WithLabel("key2", "val2"), api.WithTaint(framework.NoExecuteTaint())),
-				api.WithWorkerNodeGroup("worker-2", api.WithNoTaints()),
-				api.WithControlPlaneLabel("cpKey1", "cpVal1"),
-				api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-			),
-		)
-		wc.ApplyClusterManifest()
-		wc.ValidateClusterState()
-		wc.DeleteClusterWithKubectl()
-		wc.ValidateClusterDelete()
-	})
-	test.ManagementCluster.StopIfFailed()
-	test.DeleteManagementCluster()
+	runWorkloadClusterUpgradeFlowAPI(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeGroup("worker-0", api.WithLabel("key1", "val1"), api.WithTaint(framework.NoExecuteTaint())),
+			api.WithWorkerNodeGroup("worker-1", api.WithLabel("key2", "val2"), api.WithTaint(framework.NoExecuteTaint())),
+			api.WithWorkerNodeGroup("worker-2", api.WithNoTaints()),
+			api.WithControlPlaneLabel("cpKey1", "cpVal1"),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
+		),
+	)
 }
 
 func TestVSphereUpgradeScaleWorkersUbuntuAPI(t *testing.T) {
@@ -169,23 +173,11 @@ func TestVSphereUpgradeScaleWorkersUbuntuAPI(t *testing.T) {
 		),
 	)
 
-	test.CreateManagementCluster()
-	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
-		wc.ApplyClusterManifest()
-		wc.WaitForKubeconfig()
-		wc.ValidateClusterState()
-		wc.UpdateClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
-				api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
-			),
-			vsphere.WithUbuntu124(),
-		)
-		wc.ApplyClusterManifest()
-		wc.ValidateClusterState()
-		wc.DeleteClusterWithKubectl()
-		wc.ValidateClusterDelete()
-	})
-	test.ManagementCluster.StopIfFailed()
-	test.DeleteManagementCluster()
+	runWorkloadClusterUpgradeFlowAPI(test,
+		api.ClusterToConfigFiller(
+			api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
+			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
+		),
+		vsphere.WithUbuntu124(),
+	)
 }
