@@ -24,6 +24,7 @@ import (
 // log is for logging in this package.
 var tinkerbelldatacenterconfiglog = logf.Log.WithName("tinkerbelldatacenterconfig-resource")
 
+// SetupWebhookWithManager sets up TinkerbellDatacenterConfig webhook to controller manager.
 func (r *TinkerbellDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -37,7 +38,7 @@ func (r *TinkerbellDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) e
 
 var _ webhook.Validator = &TinkerbellDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *TinkerbellDatacenterConfig) ValidateCreate() error {
 	tinkerbelldatacenterconfiglog.Info("validate create", "name", r.Name)
 
@@ -45,7 +46,7 @@ func (r *TinkerbellDatacenterConfig) ValidateCreate() error {
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	tinkerbelldatacenterconfiglog.Info("validate update", "name", r.Name)
 
@@ -53,7 +54,7 @@ func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	return nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *TinkerbellDatacenterConfig) ValidateDelete() error {
 	tinkerbelldatacenterconfiglog.Info("validate delete", "name", r.Name)
 

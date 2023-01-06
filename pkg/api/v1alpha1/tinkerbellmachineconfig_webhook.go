@@ -24,6 +24,7 @@ import (
 // log is for logging in this package.
 var tinkerbellmachineconfiglog = logf.Log.WithName("tinkerbellmachineconfig-resource")
 
+// SetupWebhookWithManager sets up TinkerbellMachineConfig webhook to controller manager.
 func (r *TinkerbellMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -37,7 +38,7 @@ func (r *TinkerbellMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 
 var _ webhook.Validator = &TinkerbellMachineConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *TinkerbellMachineConfig) ValidateCreate() error {
 	tinkerbellmachineconfiglog.Info("validate create", "name", r.Name)
 
@@ -45,7 +46,7 @@ func (r *TinkerbellMachineConfig) ValidateCreate() error {
 	return nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) error {
 	tinkerbellmachineconfiglog.Info("validate update", "name", r.Name)
 
@@ -53,7 +54,7 @@ func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) error {
 	return nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *TinkerbellMachineConfig) ValidateDelete() error {
 	tinkerbellmachineconfiglog.Info("validate delete", "name", r.Name)
 
