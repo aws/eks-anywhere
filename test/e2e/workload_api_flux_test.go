@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func TestVSphereMulticlusterWorkloadClusterAPIGitHubFlux(t *testing.T) {
+func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
