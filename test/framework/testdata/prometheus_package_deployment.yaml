@@ -6,7 +6,6 @@ spec:
   packageName: prometheus
   targetNamespace: observability
   config: |
-    mode: deployment
     server:
       service:
         servicePort: 9090
