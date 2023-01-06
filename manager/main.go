@@ -198,6 +198,7 @@ func setupWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 	setupVSphereWebhooks(setupLog, mgr)
 	setupCloudstackWebhooks(setupLog, mgr)
 	setupSnowWebhooks(setupLog, mgr)
+	setupTinkerbellWebhooks(setupLog, mgr)
 }
 
 func setupCoreWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
@@ -252,6 +253,21 @@ func setupSnowWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 	}
 	if err := (&anywherev1.SnowDatacenterConfig{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "SnowDatacenterConfig")
+		os.Exit(1)
+	}
+	if err := (&anywherev1.SnowIPPool{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "SnowIPPool")
+		os.Exit(1)
+	}
+}
+
+func setupTinkerbellWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
+	if err := (&anywherev1.TinkerbellDatacenterConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.TinkerbellDatacenterKind)
+		os.Exit(1)
+	}
+	if err := (&anywherev1.TinkerbellMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.TinkerbellMachineConfigKind)
 		os.Exit(1)
 	}
 }

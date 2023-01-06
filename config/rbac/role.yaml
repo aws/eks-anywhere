@@ -41,6 +41,7 @@ rules:
   - dockerdatacenterconfigs
   - nutanixdatacenterconfigs
   - nutanixmachineconfigs
+  - snowippools
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
@@ -61,6 +62,7 @@ rules:
   - cloudstackmachineconfigs/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
+  - snowippools/finalizers
   - snowmachineconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
   - vspheremachineconfigs/finalizers
@@ -75,6 +77,7 @@ rules:
   - cloudstackmachineconfigs/status
   - clusters/status
   - dockerdatacenterconfigs/status
+  - snowippools/status
   - snowmachineconfigs/status
   - vspheredatacenterconfigs/status
   - vspheremachineconfigs/status
@@ -174,6 +177,7 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - awssnowclusters
+  - awssnowippools
   - awssnowmachinetemplates
   - dockerclusters
   - dockermachinetemplates

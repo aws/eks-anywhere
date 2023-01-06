@@ -680,13 +680,10 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 }
 
 // UpgradeClusterWithKubectl uses client-side logic to upgrade a cluster.
-func (e *ClusterE2ETest) UpgradeClusterWithKubectl(clusterOpts []ClusterE2ETestOpt) {
+func (e *ClusterE2ETest) UpgradeClusterWithKubectl(fillers ...api.ClusterConfigFiller) {
 	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
 	e.parseClusterConfigFromDisk(fullClusterConfigLocation)
-	for _, opt := range clusterOpts {
-		opt(e)
-	}
-	e.buildClusterConfigFile()
+	e.UpdateClusterConfig(fillers...)
 	e.ApplyClusterManifest()
 }
 
@@ -1201,29 +1198,9 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *t
 	}
 
 	svcAddress := name + "." + ns + ".svc.cluster.local"
-	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomname, e.kubeconfigFilePath(), []string{"curl", svcAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
-
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", ns)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl Hello EKS Anywhere\n %s\n", logs)
-	ok := strings.Contains(logs, "Amazon EKS Anywhere")
-	if !ok {
-		e.T.Fatalf("expected Amazon EKS Anywhere, got %T", logs)
-	}
+	e.T.Log("Validate content at endpoint", svcAddress)
+	expectedLogs := "Amazon EKS Anywhere"
+	e.ValidateEndpointContent(svcAddress, ns, expectedLogs)
 }
 
 // VerifyAdotPackageInstalled is checking if the ADOT package gets installed correctly.
@@ -1365,8 +1342,8 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 
 	e.T.Log("Waiting for package", packageName, "daemonset to be rolled out")
 	err = retrier.New(6 * time.Minute).Retry(func() error {
-		return e.KubectlClient.WaitForDaemonsetRolledout(ctx,
-			e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace)
+		return e.KubectlClient.WaitForResourceRolledout(ctx,
+			e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace, "daemonset")
 	})
 	if err != nil {
 		e.T.Fatalf("waiting for adot daemonset timed out: %s", err)
@@ -1505,14 +1482,16 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 }
 
 // VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.
-func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string, targetNamespace string) {
+func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string, targetNamespace string, mode string) {
 	ctx := context.Background()
 
-	e.T.Log("Waiting for package", packageName, "deployment prometheus-server to be available")
-	err := e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", fmt.Sprintf("%s-server", packageName), targetNamespace)
+	e.T.Log("Waiting for package", packageName, mode, "prometheus-server to be rolled out")
+	err := retrier.New(6 * time.Minute).Retry(func() error {
+		return e.KubectlClient.WaitForResourceRolledout(ctx,
+			e.cluster(), "5m", fmt.Sprintf("%s-server", packageName), targetNamespace, mode)
+	})
 	if err != nil {
-		e.T.Fatalf("waiting for prometheus deployment timed out: %s", err)
+		e.T.Fatalf("waiting for prometheus-server %s timed out: %s", mode, err)
 	}
 
 	e.T.Log("Reading package", packageName, "pod prometheus-server logs")
@@ -1520,16 +1499,9 @@ func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName stri
 	if err != nil {
 		e.T.Fatalf("unable to get name of the prometheus-server pod: %s", err)
 	}
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, podName, "prometheus-server", e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
+
 	expectedLogs := "Server is ready to receive web requests"
-	fmt.Printf("Logs from pod %s \n %s\n", podName, logs)
-	ok := strings.Contains(logs, expectedLogs)
-	if !ok {
-		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
-	}
+	e.MatchLogs(targetNamespace, podName, "prometheus-server", expectedLogs, 5*time.Minute)
 }
 
 // VerifyPrometheusNodeExporterStates is checking if the Prometheus package node-exporter component is functioning properly.
@@ -1537,36 +1509,36 @@ func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName string, 
 	ctx := context.Background()
 
 	e.T.Log("Waiting for package", packageName, "daemonset node-exporter to be rolled out")
-	err := e.KubectlClient.WaitForDaemonsetRolledout(ctx,
-		e.cluster(), "5m", fmt.Sprintf("%s-node-exporter", packageName), targetNamespace)
+	err := retrier.New(6 * time.Minute).Retry(func() error {
+		return e.KubectlClient.WaitForResourceRolledout(ctx,
+			e.cluster(), "5m", fmt.Sprintf("%s-node-exporter", packageName), targetNamespace, "daemonset")
+	})
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus daemonset timed out: %s", err)
 	}
 
-	e.T.Log("Launching Busybox pod to test Package", packageName, "service node-exporter")
 	svcAddress := packageName + "-node-exporter." + targetNamespace + ".svc.cluster.local" + ":9100/metrics"
-	busyBoxName := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), targetNamespace, busyBoxName, e.kubeconfigFilePath(), []string{"curl", svcAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Waiting Busybox pod", clientPod, "to be ready")
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", targetNamespace)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl node-exporter service\n %s\n", logs)
+	e.T.Log("Validate content at endpoint", svcAddress)
 	expectedLogs := "HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles"
-	ok := strings.Contains(logs, expectedLogs)
-	if !ok {
-		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
-	}
+	e.ValidateEndpointContent(svcAddress, targetNamespace, expectedLogs)
+}
+
+//go:embed testdata/prometheus_package_deployment.yaml
+var prometheusPackageDeployment []byte
+
+//go:embed testdata/prometheus_package_statefulset.yaml
+var prometheusPackageStatefulSet []byte
+
+// ApplyPrometheusPackageServerDeploymentFile is checking if deployment config changes trigger resource reloads correctly.
+func (e *ClusterE2ETest) ApplyPrometheusPackageServerDeploymentFile(packageName string, targetNamespace string) {
+	e.T.Log("Update", packageName, "to be a deployment, and scrape the api-servers")
+	e.ApplyPackageFile(packageName, targetNamespace, prometheusPackageDeployment)
+}
+
+// ApplyPrometheusPackageServerStatefulSetFile is checking if statefulset config changes trigger resource reloads correctly.
+func (e *ClusterE2ETest) ApplyPrometheusPackageServerStatefulSetFile(packageName string, targetNamespace string) {
+	e.T.Log("Update", packageName, "to be a statefulset, and scrape the api-servers")
+	e.ApplyPackageFile(packageName, targetNamespace, prometheusPackageStatefulSet)
 }
 
 // VerifyPackageControllerNotInstalled is verifying that package controller is not installed.
@@ -1734,6 +1706,75 @@ func (e *ClusterE2ETest) ValidateClusterState() {
 	if err := e.clusterValidator.Validate(ctx); err != nil {
 		e.T.Fatalf("failed to validate cluster %v", err)
 	}
+}
+
+// ApplyPackageFile is applying a package file in the cluster.
+func (e *ClusterE2ETest) ApplyPackageFile(packageName string, targetNamespace string, PackageFile []byte) {
+	ctx := context.Background()
+	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
+
+	e.T.Log("Apply changes to package", packageName)
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), PackageFile, packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("Error upgrading package: %s", err)
+		return
+	}
+	time.Sleep(30 * time.Second) // Add sleep to allow package to change state
+}
+
+// CurlEndpointByBusyBox creates a busybox pod with command to curl the target endpoint,
+// and returns the created busybox pod name.
+func (e *ClusterE2ETest) CurlEndpointByBusyBox(endpoint string, namespace string) string {
+	ctx := context.Background()
+
+	e.T.Log("Launching Busybox pod to curl endpoint", endpoint)
+	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
+	busyBoxPodName, err := e.KubectlClient.RunBusyBoxPod(context.TODO(),
+		namespace, randomname, e.kubeconfigFilePath(), []string{"curl", endpoint})
+	if err != nil {
+		e.T.Fatalf("error launching busybox pod: %s", err)
+	}
+
+	err = e.KubectlClient.WaitForPodCompleted(ctx,
+		e.cluster(), busyBoxPodName, "5m", namespace)
+	if err != nil {
+		e.T.Fatalf("waiting for busybox pod %s timed out: %s", busyBoxPodName, err)
+	}
+
+	return busyBoxPodName
+}
+
+// MatchLogs matches the log from a container to the expected content. Given it
+// takes time for logs to be populated, a retrier with configurable timeout duration
+// is added.
+func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
+	targetContainerName string, expectedLogs string, timeout time.Duration,
+) {
+	e.T.Logf("Match logs for pod %s, container %s in namespace %s", targetPodName,
+		targetContainerName, targetNamespace)
+
+	err := retrier.New(timeout).Retry(func() error {
+		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace,
+			targetPodName, targetContainerName, e.kubeconfigFilePath())
+		if err != nil {
+			return fmt.Errorf("failure getting pod logs %s", err)
+		}
+		fmt.Printf("Logs from pod\n %s\n", logs)
+		ok := strings.Contains(logs, expectedLogs)
+		if !ok {
+			return fmt.Errorf("expected to find %s in the log, got %s", expectedLogs, logs)
+		}
+		return nil
+	})
+	if err != nil {
+		e.T.Fatalf("unable to match logs: %s", err)
+	}
+}
+
+// ValidateEndpointContent validates the contents at the target endpoint.
+func (e *ClusterE2ETest) ValidateEndpointContent(endpoint string, namespace string, expectedContent string) {
+	busyBoxPodName := e.CurlEndpointByBusyBox(endpoint, namespace)
+	e.MatchLogs(namespace, busyBoxPodName, busyBoxPodName, expectedContent, 5*time.Minute)
 }
 
 // ValidateClusterDelete verifies the cluster has been deleted.

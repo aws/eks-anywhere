@@ -8,7 +8,7 @@ description: >
 ---
 
 If you have not already done so, make sure your cluster meets the [package prerequisites.]({{< relref "../prereq" >}})
-Be sure to refer to the [troubleshooting guide]({{< relref "../../troubleshoot/packages" >}}) in the event of a problem.
+Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}) in the event of a problem.
 
   {{% alert title="Important" color="warning" %}}
    * Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster.

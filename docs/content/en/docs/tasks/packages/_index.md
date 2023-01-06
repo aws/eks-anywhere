@@ -104,14 +104,16 @@ Example command output:
 Package                 Version(s)
 -------                 ----------
 hello-eks-anywhere      0.1.2-a6847010915747a9fc8a412b233a2b1ee608ae76
-adot                    0.21.1-971c31238aeea5f1bda6ec95caaf24993b304157
+adot                    0.23.0-8dcf5fb5a1502a1da44c3e4c0552a13fa125fb74
 cert-manager            1.9.1-dc0c845b5f71bea6869efccd3ca3f2dd11b5c95f
 cluster-autoscaler      9.21.0-1.23-5516c0368ff74d14c328d61fe374da9787ecf437
-harbor                  2.5.1-0d4e0476a740b48a232041597ded2031595d9409
-metallb                 0.13.5-0c9bc01066c2b8e8006c60d09f55015501ad2fc2
-metallb-crds            0.13.5-0c9bc01066c2b8e8006c60d09f55015501ad2fc2
+harbor                  2.5.1-ee7e5a6898b6c35668a1c5789aa0d654fad6c913
+metallb                 0.13.7-758df43f8c5a3c2ac693365d06e7b0feba87efd5
+metallb-crds            0.13.7-758df43f8c5a3c2ac693365d06e7b0feba87efd5
 metrics-server          0.6.1-eks-1-23-6-c94ed410f56421659f554f13b4af7a877da72bc1
-emissary                3.0.0-c5b5d47b53ae5d769cc8349f4822ce2786ad198e
+emissary                3.3.0-cbf71de34d8bb5a72083f497d599da63e8b3837b
+emissary-crds           3.3.0-cbf71de34d8bb5a72083f497d599da63e8b3837b
+prometheus              2.39.1-a5a5cc31867fdec4da73f95483e6893cf424f80f
 ```
 
 ### Generate a curated-packages config
@@ -122,4 +124,4 @@ export CLUSTER_NAME=nameofyourcluster
 eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.23 > packages.yaml
 ```
 
-Available curated packages are listed below.
+Available curated packages and troubleshooting guides are listed below.

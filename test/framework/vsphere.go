@@ -360,6 +360,20 @@ func WithVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, f
 	}
 }
 
+// WithWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
+// a corresponding VSphereMachineConfig to the cluster config.
+func (v *VSphere) WithWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.VSphereMachineConfigFiller) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.VSphereToConfigFiller(vSphereMachineConfig(name, fillers...)),
+		api.ClusterToConfigFiller(buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+	)
+}
+
+// WithWorkerNodeGroupConfiguration returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration item to the cluster config.
+func (v *VSphere) WithWorkerNodeGroupConfiguration(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
+	return api.ClusterToConfigFiller(buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+}
+
 // WithVSphereFillers adds VSphereFiller to the provider default fillers.
 func WithVSphereFillers(fillers ...api.VSphereFiller) VSphereOpt {
 	return func(v *VSphere) {

@@ -15,7 +15,6 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -56,20 +55,21 @@ func TestControlPlaneObjects(t *testing.T) {
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	kcp := wantKubeadmControlPlane()
 	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
+	g.Expect(got).To(BeComparableTo([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
 }
 
 func TestControlPlaneObjectsWithIPPools(t *testing.T) {
 	g := newSnowTest(t)
-	g.clusterSpec.SnowMachineConfig("test-cp").Spec.Network = v1alpha1.SnowNetwork{
-		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+	g.clusterSpec.SnowMachineConfig("test-cp").Spec.Network = anywherev1.SnowNetwork{
+		DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
 			{
 				Index: 1,
 				IPPoolRef: &anywherev1.Ref{
-					Kind: v1alpha1.SnowIPPoolKind,
+					Kind: anywherev1.SnowIPPoolKind,
 					Name: "ip-pool-1",
 				},
 				Primary: true,
@@ -119,10 +119,11 @@ func TestControlPlaneObjectsWithIPPools(t *testing.T) {
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	kcp := wantKubeadmControlPlane()
 	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret(), wantSnowIPPool()}))
+	g.Expect(got).To(BeComparableTo([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret(), wantSnowIPPool()}))
 }
 
 func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
@@ -219,6 +220,7 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 	mtCp.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	kcp := wantKubeadmControlPlaneUnstackedEtcd()
 	kcp.Spec.MachineTemplate.InfrastructureRef.Name = mtCpName
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	mtEtcdName := "test-etcd-2"
 	mtEtcd.SetName(mtEtcdName)
@@ -227,7 +229,7 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPIClusterUnstackedEtcd(), kcp, wantSnowCluster(), mtCp, etcdCluster, mtEtcd, wantSnowCredentialsSecret()}))
+	g.Expect(got).To(BeComparableTo([]kubernetes.Object{wantCAPIClusterUnstackedEtcd(), kcp, wantSnowCluster(), mtCp, etcdCluster, mtEtcd, wantSnowCredentialsSecret()}))
 }
 
 func TestControlPlaneObjectsCredentialsNil(t *testing.T) {
@@ -271,10 +273,12 @@ func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
 
 	mt.SetName("snow-test-control-plane-1")
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
+	kcp := wantKubeadmControlPlane()
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantKubeadmControlPlane(), wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
 }
 
 func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
@@ -302,10 +306,12 @@ func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
 
 	mt.SetName("snow-test-control-plane-1")
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
+	kcp := wantKubeadmControlPlane()
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantKubeadmControlPlane(), wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), kcp, wantSnowCluster(), mt, wantSnowCredentialsSecret()}))
 }
 
 func TestControlPlaneObjectsGetOldControlPlaneError(t *testing.T) {
@@ -399,12 +405,12 @@ func TestWorkersObjects(t *testing.T) {
 
 func TestWorkersObjectsWithIPPools(t *testing.T) {
 	g := newSnowTest(t)
-	g.clusterSpec.SnowMachineConfig("test-wn").Spec.Network = v1alpha1.SnowNetwork{
-		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+	g.clusterSpec.SnowMachineConfig("test-wn").Spec.Network = anywherev1.SnowNetwork{
+		DirectNetworkInterfaces: []anywherev1.SnowDirectNetworkInterface{
 			{
 				Index: 1,
 				IPPoolRef: &anywherev1.Ref{
-					Kind: v1alpha1.SnowIPPoolKind,
+					Kind: anywherev1.SnowIPPoolKind,
 					Name: "ip-pool-1",
 				},
 				Primary: true,

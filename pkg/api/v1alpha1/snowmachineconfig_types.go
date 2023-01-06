@@ -29,7 +29,7 @@ type SnowMachineConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// The AMI ID from which to create the machine instance.
-	AMIID string `json:"amiID"`
+	AMIID string `json:"amiID,omitempty"`
 
 	// InstanceType is the type of instance to create.
 	// Valid values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge" and "sbe-c.4xlarge".

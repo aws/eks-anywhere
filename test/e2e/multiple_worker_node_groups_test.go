@@ -53,41 +53,53 @@ func TestVSphereKubernetes124BottlerocketAndRemoveWorkerNodeGroups(t *testing.T)
 }
 
 func TestVSphereKubernetes124UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereWorkerNodeGroup(
-			"worker-1",
-			framework.WithWorkerNodeGroup("workers-1", api.WithCount(2)),
-		),
-		framework.WithVSphereWorkerNodeGroup(
-			"worker-2",
-			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
-		),
-		framework.WithUbuntu124(),
-	)
+	provider := framework.NewVSphere(t)
 	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(anywherev1.Kube124),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		provider.WithWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
+		provider.WithWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
+		provider.WithUbuntu124(),
 	)
 
 	runUpgradeFlowWithAPI(
 		test,
-		framework.WithClusterUpgrade(
-			api.RemoveWorkerNodeGroup("workers-2"),
-			api.WithWorkerNodeGroup("workers-1", api.WithCount(1)),
+		api.ClusterToConfigFiller(
+			api.RemoveWorkerNodeGroup("worker-2"),
+			api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
 		),
-		provider.WithNewVSphereWorkerNodeGroup(
-			"worker-1",
-			framework.WithWorkerNodeGroup(
-				"workers-3",
-				api.WithCount(1),
-			),
+		provider.WithWorkerNodeGroupConfiguration("worker-1", framework.WithWorkerNodeGroup("worker-3", api.WithCount(1))),
+	)
+}
+
+func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(anywherev1.Kube124),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
+		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
+	)
+
+	runUpgradeFlowWithAPI(
+		test,
+		api.ClusterToConfigFiller(
+			api.RemoveWorkerNodeGroup("worker-2"),
+			api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
+		),
+		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-3", api.WithCount(1))),
 	)
 }
 

@@ -220,6 +220,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
+   cd -
    ```
 1. Get the latest version of `govc`:
    ```bash
@@ -395,6 +396,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
     wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
+    cd -
     ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
@@ -449,6 +451,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
     wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
+    cd -
     ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters.
    ```json

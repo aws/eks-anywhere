@@ -1,0 +1,11 @@
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: generated-prometheus
+spec:
+  packageName: prometheus
+  targetNamespace: observability
+  config: |
+    server:
+      service:
+        servicePort: 9090
