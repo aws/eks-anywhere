@@ -85,9 +85,9 @@ func (m *MockKubectlRunner) GetObject(ctx context.Context, resourceType, name, n
 }
 
 // GetObject indicates an expected call of GetObject.
-func (mr *MockKubectlRunnerMockRecorder) GetObject(ctx, resourceType, name, namespece, kubeconfig, obj interface{}) *gomock.Call {
+func (mr *MockKubectlRunnerMockRecorder) GetObject(ctx, resourceType, name, namespace, kubeconfig, obj interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockKubectlRunner)(nil).GetObject), ctx, resourceType, name, namespece, kubeconfig, obj)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockKubectlRunner)(nil).GetObject), ctx, resourceType, name, namespace, kubeconfig, obj)
 }
 
 // HasResource mocks base method.

@@ -123,13 +123,17 @@ func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, nam
 	return err
 }
 
-func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error {
+// InstallChart installs a helm chart to the target cluster.
+func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, values []string) error {
 	valueArgs := GetHelmValueArgs(values)
 	params := []string{"install", chart, ociURI, "--version", version}
 	params = append(params, valueArgs...)
 	params = append(params, "--kubeconfig", kubeconfigFilePath)
 	if len(namespace) > 0 {
 		params = append(params, "--create-namespace", "--namespace", namespace)
+	}
+	if valueFilePath != "" {
+		params = append(params, "-f", valueFilePath)
 	}
 	params = h.addInsecureFlagIfProvided(params)
 

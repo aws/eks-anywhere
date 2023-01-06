@@ -3,24 +3,21 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-//go:embed config/awssecret.yaml
-var awsSecretYaml string
-
-//go:embed config/registrymirrorsecret.yaml
-var registrySecretYaml string
+//go:embed config/secrets.yaml
+var secretsValueYaml string
 
 //go:embed config/packagebundlecontroller.yaml
 var packageBundleControllerYaml string
@@ -29,6 +26,7 @@ const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
+	valueFileName     = "values.yaml"
 )
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
@@ -52,7 +50,7 @@ type PackageControllerClient struct {
 }
 
 type ChartInstaller interface {
-	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error
+	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, values []string) error
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
@@ -122,63 +120,66 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
-	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyID == "" {
+	if (pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyID == "") && pc.registryMirror == nil {
 		values = append(values, "cronjob.suspend=true")
 	}
 
-	if err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", values); err != nil {
+	writer, err := filewriter.NewWriter(pc.clusterName)
+	defer writer.CleanUpTemp()
+	if err != nil {
+		return err
+	}
+	var valueFilePath string
+	if valueFilePath, err = pc.CreateHelmOverrideValuesYaml(writer); err != nil {
 		return err
 	}
 
-	// Customers are currently requesting to show a warning in case
-	// credentials are not provided for curated packages
-	if err := pc.CreateAWSCredentials(ctx); err != nil {
-		logger.MarkWarning("  Unable to create credentials for curated packages: ", "warning", err)
-	}
-
-	if pc.registryMirror != nil {
-		if err := pc.CreateRegistryMirrorCredentials(ctx); err != nil {
-			logger.MarkWarning("  Unable to create registry mirror credentials for curated packages: ", "warning", err)
-		}
+	if err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
+		return err
 	}
 
 	return pc.waitForActiveBundle(ctx)
 }
 
-// CreateRegistryMirrorCredentials creates necessary credentials to enable the installation of curated packages.
-func (pc *PackageControllerClient) CreateRegistryMirrorCredentials(ctx context.Context) error {
-	username, password, err := pc.registryMirror.Credentials()
+// CreateHelmOverrideValuesYaml creates a temp file to override certain values in package controller helm install.
+func (pc *PackageControllerClient) CreateHelmOverrideValuesYaml(writer filewriter.FileWriter) (string, error) {
+	content, err := pc.GenerateHelmOverrideValues()
 	if err != nil {
-		return err
+		return "", err
 	}
-	templateValues := map[string]interface{}{
-		"mirrorEndpoint":      pc.registryMirror.BaseRegistry,
-		"mirrorUsername":      username,
-		"mirrorPassword":      password,
-		"mirrorCACertContent": strings.Split(pc.registryMirror.CACertContent, "\n"),
+	filePath, err := writer.Write(valueFileName, content)
+	if err != nil {
+		return "", err
 	}
-	if err := pc.ApplySecret(ctx, registrySecretYaml, templateValues); err != nil {
-		return errors.New("unable to detect registry mirror credentials for curated packages. Artifacts pull may fail due to unauthorized access to the registry mirror")
-	}
-
-	return nil
+	return filePath, nil
 }
 
-// CreateAWSCredentials creates necessary credentials to enable the installation of curated packages.
-// In order to create the credentials, there are two necessary steps:
-//   - Creating a kubernetes secret
-//   - Creating a single run of the cron job to ensure the secret is consumed
-func (pc *PackageControllerClient) CreateAWSCredentials(ctx context.Context) error {
-	templateValues := map[string]string{
+// GenerateHelmOverrideValues generates override values.
+func (pc *PackageControllerClient) GenerateHelmOverrideValues() ([]byte, error) {
+	var err error
+	endpoint, username, password, caCertContent := "", "", "", ""
+	if pc.registryMirror != nil {
+		endpoint = pc.registryMirror.BaseRegistry
+		username, password, err = pc.registryMirror.Credentials()
+		if err != nil {
+			return []byte{}, err
+		}
+		caCertContent = strings.ReplaceAll(pc.registryMirror.CACertContent, "\n", "\\n")
+	}
+	templateValues := map[string]interface{}{
 		"eksaAccessKeyId":     pc.eksaAccessKeyID,
 		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
 		"eksaRegion":          pc.eksaRegion,
+		"mirrorEndpoint":      endpoint,
+		"mirrorUsername":      username,
+		"mirrorPassword":      password,
+		"mirrorCACertContent": caCertContent,
 	}
-	if err := pc.ApplySecret(ctx, awsSecretYaml, templateValues); err != nil {
-		return errors.New("unable to detect AWS authentication credentials for curated packages. Skipping package installation. Follow documentation to set credentials after cluster creation completes")
+	result, err := templater.Execute(secretsValueYaml, templateValues)
+	if err != nil {
+		return []byte{}, err
 	}
-
-	return nil
+	return result, nil
 }
 
 // InstallPBCResources installs Curated Packages Bundle Controller Custom Resource

@@ -953,7 +953,7 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 	kubeconfig := e.kubeconfigFilePath()
 	ctx := context.Background()
 
-	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", e.HelmInstallConfig.chartValues)
+	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", "", e.HelmInstallConfig.chartValues)
 	if err != nil {
 		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
 	}
@@ -991,7 +991,7 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 		}
 	}
 	if !installed {
-		err = e.PackageConfig.HelmClient.InstallChart(ctx, e.PackageConfig.chartName, e.PackageConfig.chartURI, e.PackageConfig.chartVersion, kubeconfig, "eksa-packages", e.PackageConfig.chartValues)
+		err = e.PackageConfig.HelmClient.InstallChart(ctx, e.PackageConfig.chartName, e.PackageConfig.chartURI, e.PackageConfig.chartVersion, kubeconfig, "eksa-packages", "", e.PackageConfig.chartValues)
 		if err != nil {
 			e.T.Fatalf("Unable to install %s helm chart on the cluster: %v",
 				e.PackageConfig.chartName, err)

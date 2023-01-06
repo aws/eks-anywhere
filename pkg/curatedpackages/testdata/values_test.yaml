@@ -1,0 +1,9 @@
+registryMirrorSecret:
+  endpoint: "1.2.3.4:443"
+  username: "username"
+  password: "password"
+  cacertcontent: "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n"
+awsSecret:
+  id: "test-access-id"
+  secret: "test-access-key"
+  region: "test-region"
