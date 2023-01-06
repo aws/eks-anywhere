@@ -18,7 +18,7 @@ import (
 var copyPackagesCmd = &cobra.Command{
 	Use:          "packages",
 	Short:        "Copy curated package images and charts from a source to a destination",
-	Long:         `Copy all the EKS Anywhere package images and helm charts from a source to a destination.`,
+	Long:         `Copy all the EKS Anywhere curated package images and helm charts from a source to a destination.`,
 	SilenceUsage: true,
 	RunE:         runCopyPackages,
 	Args: func(cmd *cobra.Command, args []string) error {
