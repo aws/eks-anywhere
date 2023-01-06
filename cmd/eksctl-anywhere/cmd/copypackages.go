@@ -17,7 +17,7 @@ import (
 // copyPackagesCmd is the context for the copy packages command.
 var copyPackagesCmd = &cobra.Command{
 	Use:          "packages",
-	Short:        "Copy package images and charts from a source to a destination",
+	Short:        "Copy curated package images and charts from a source to a destination",
 	Long:         `Copy all the EKS Anywhere package images and helm charts from a source to a destination.`,
 	SilenceUsage: true,
 	RunE:         runCopyPackages,
