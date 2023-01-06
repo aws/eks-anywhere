@@ -77,6 +77,20 @@ func TestAssertDatacenterConfigValid_InvalidFails(t *testing.T) {
 	}
 }
 
+func TestAssertDatacenterConfigValidEmptyOSImageURL(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.DatacenterConfig.Spec.OSImageURL = "test"
+	g.Expect(tinkerbell.AssertDatacenterConfigValid(clusterSpec)).To(gomega.MatchError("parsing osImageOverride: parse \"test\": invalid URI for request"))
+}
+
+func TestAssertDatacenterConfigValidEmptyHookImagesURLPath(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.DatacenterConfig.Spec.HookImagesURLPath = "test"
+	g.Expect(tinkerbell.AssertDatacenterConfigValid(clusterSpec)).To(gomega.MatchError("parsing hookOverride: parse \"test\": invalid URI for request"))
+}
+
 func TestAssertMachineConfigNamespaceMatchesDatacenterConfig_Same(t *testing.T) {
 	g := gomega.NewWithT(t)
 	builder := NewDefaultValidClusterSpecBuilder()
