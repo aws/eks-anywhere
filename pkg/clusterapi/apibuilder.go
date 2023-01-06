@@ -160,7 +160,12 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: ControllerManagerArgs(clusterSpec),
+						ExtraArgs:    ControllerManagerArgs(clusterSpec),
+						ExtraVolumes: []bootstrapv1.HostPathMount{},
+					},
+					Scheduler: bootstrapv1.ControlPlaneComponent{
+						ExtraArgs:    map[string]string{},
+						ExtraVolumes: []bootstrapv1.HostPathMount{},
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{

@@ -56,6 +56,27 @@ func SetBottlerocketInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlan
 	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Pause = p
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketBootstrap = b
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = p
+
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
+		bootstrapv1.HostPathMount{
+			HostPath:  "/var/lib/kubeadm/controller-manager.conf",
+			MountPath: "/etc/kubernetes/controller-manager.conf",
+			Name:      "kubeconfig",
+			PathType:  "File",
+			ReadOnly:  true,
+		},
+	)
+
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
+		bootstrapv1.HostPathMount{
+			HostPath:  "/var/lib/kubeadm/scheduler.conf",
+			MountPath: "/etc/kubernetes/scheduler.conf",
+			Name:      "kubeconfig",
+			PathType:  "File",
+			ReadOnly:  true,
+		},
+	)
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
 }
 
 // SetBottlerocketAdminContainerImageInKubeadmControlPlane overrides the default bottlerocket admin container image metadata in kubeadmControlPlane.

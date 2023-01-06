@@ -311,7 +311,12 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: tlsCipherSuitesArgs(),
+						ExtraArgs:    tlsCipherSuitesArgs(),
+						ExtraVolumes: []bootstrapv1.HostPathMount{},
+					},
+					Scheduler: bootstrapv1.ControlPlaneComponent{
+						ExtraArgs:    map[string]string{},
+						ExtraVolumes: []bootstrapv1.HostPathMount{},
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
