@@ -201,11 +201,6 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 		if err != nil {
 			t.Errorf("Install Controller Should succeed when installation passes")
 		}
-		valuesFileContent, err := tt.command.GenerateHelmOverrideValues()
-		if err != nil {
-			t.Errorf("failed to generate values.yaml contents: %v", err)
-		}
-		test.AssertContentToFile(t, string(valuesFileContent), tt.wantValueFile)
 	}
 }
 
@@ -680,5 +675,57 @@ func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
 		time.Sleep(delay)
 		return fmt.Errorf("test error")
+	}
+}
+
+func TestGenerateHelmOverrideValues(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		valuesFileContent, err := tt.command.GenerateHelmOverrideValues()
+		if err != nil {
+			t.Errorf("failed to generate values.yaml contents: %v", err)
+		}
+		test.AssertContentToFile(t, string(valuesFileContent), tt.wantValueFile)
+	}
+}
+
+func TestGenerateHelmOverrideValuesFail(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		_, err := tt.command.GenerateHelmOverrideValues()
+		if tt.registryMirror != nil {
+			tt.Expect(err).NotTo(BeNil())
+		} else {
+			tt.Expect(err).To(BeNil())
+		}
+	}
+}
+
+func TestCreateHelmOverrideValuesYaml(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		writer, _ := filewriter.NewWriter(tt.clusterName)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		filePath, err := tt.command.CreateHelmOverrideValuesYaml(writer)
+		tt.Expect(err).To(BeNil())
+		tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		writer, _ := filewriter.NewWriter(tt.clusterName)
+		filePath, err := tt.command.CreateHelmOverrideValuesYaml(writer)
+		if tt.registryMirror != nil {
+			tt.Expect(err).NotTo(BeNil())
+			tt.Expect(filePath).To(Equal(""))
+		} else {
+			tt.Expect(err).To(BeNil())
+			tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+		}
 	}
 }
