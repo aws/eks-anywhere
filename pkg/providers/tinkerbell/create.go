@@ -3,7 +3,6 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -133,19 +132,6 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		if err := p.readCSVToCatalogue(); err != nil {
 			return err
 		}
-	}
-
-	if p.datacenterConfig.Spec.OSImageURL != "" {
-		if _, err := url.ParseRequestURI(p.datacenterConfig.Spec.OSImageURL); err != nil {
-			return fmt.Errorf("parsing osImageOverride: %v", err)
-		}
-	}
-
-	if p.datacenterConfig.Spec.HookImagesURLPath != "" {
-		if _, err := url.ParseRequestURI(p.datacenterConfig.Spec.HookImagesURLPath); err != nil {
-			return fmt.Errorf("parsing hookOverride: %v", err)
-		}
-		logger.Info("hook path override set", "path", p.datacenterConfig.Spec.HookImagesURLPath)
 	}
 
 	spec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
