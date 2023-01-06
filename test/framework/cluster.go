@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"testing"
 	"time"
 
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -65,7 +64,7 @@ var oidcRoles []byte
 var hpaBusybox []byte
 
 type ClusterE2ETest struct {
-	T                      *testing.T
+	T                      T
 	ClusterConfigLocation  string
 	ClusterConfigFolder    string
 	HardwareConfigLocation string
@@ -90,7 +89,8 @@ type ClusterE2ETest struct {
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
 
-func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOpt) *ClusterE2ETest {
+// NewClusterE2ETest is a support structure for defining an end-to-end test.
+func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *ClusterE2ETest {
 	e := &ClusterE2ETest{
 		T:                     t,
 		Provider:              provider,
@@ -916,7 +916,7 @@ func GetTestNameHash(name string) string {
 	return testNameHash[:7]
 }
 
-func getClusterName(t *testing.T) string {
+func getClusterName(t T) string {
 	value := os.Getenv(ClusterPrefixVar)
 	// Append hash to make each cluster name unique per test. Using the testname will be too long
 	// and would fail validations
@@ -1094,8 +1094,6 @@ func (e *ClusterE2ETest) CreateResource(ctx context.Context, resource string) {
 }
 
 func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...string) {
-	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
-	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"delete", "package", packagePrefix, "-v=9",
 		strings.Join(opts, " "),
