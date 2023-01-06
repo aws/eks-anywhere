@@ -338,7 +338,7 @@ webhooks:
       namespace: system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbelldatacenterconfig
   failurePolicy: Fail
-  name: vtinkerbelldatacenterconfig.kb.io
+  name: validation.tinkerbelldatacenterconfig.anywhere.amazonaws.com
   rules:
   - apiGroups:
     - anywhere.eks.amazonaws.com
@@ -359,7 +359,7 @@ webhooks:
       namespace: system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig
   failurePolicy: Fail
-  name: vtinkerbellmachineconfig.kb.io
+  name: validation.tinkerbellmachineconfig.anywhere.amazonaws.com
   rules:
   - apiGroups:
     - anywhere.eks.amazonaws.com
