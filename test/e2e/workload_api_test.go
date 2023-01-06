@@ -84,7 +84,7 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereKubernetes124LabelsTaintsUbuntuAPI(t *testing.T) {
+func TestVSphereUpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -139,7 +139,7 @@ func TestVSphereKubernetes124LabelsTaintsUbuntuAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereKubernetes124ScaleWorkersUbuntuAPI(t *testing.T) {
+func TestVSphereUpgradeScaleWorkersUbuntuAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -161,7 +161,6 @@ func TestVSphereKubernetes124ScaleWorkersUbuntuAPI(t *testing.T) {
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithExternalEtcdTopology(1),
-				api.WithKubernetesVersion(v1alpha1.Kube123),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 			),
@@ -177,10 +176,10 @@ func TestVSphereKubernetes124ScaleWorkersUbuntuAPI(t *testing.T) {
 		wc.ValidateClusterState()
 		wc.UpdateClusterConfig(
 			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube124),
 				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
 				api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
 			),
+			vsphere.WithUbuntu124(),
 		)
 		wc.ApplyClusterManifest()
 		wc.ValidateClusterState()
