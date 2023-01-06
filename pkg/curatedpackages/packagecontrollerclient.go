@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -164,16 +165,16 @@ func (pc *PackageControllerClient) GenerateHelmOverrideValues() ([]byte, error) 
 		if err != nil {
 			return []byte{}, err
 		}
-		caCertContent = strings.ReplaceAll(pc.registryMirror.CACertContent, "\n", "\\n")
+		caCertContent = pc.registryMirror.CACertContent
 	}
 	templateValues := map[string]interface{}{
-		"eksaAccessKeyId":     pc.eksaAccessKeyID,
-		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
-		"eksaRegion":          pc.eksaRegion,
-		"mirrorEndpoint":      endpoint,
-		"mirrorUsername":      username,
-		"mirrorPassword":      password,
-		"mirrorCACertContent": caCertContent,
+		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyID)),
+		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(pc.eksaSecretAccessKey)),
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(pc.eksaRegion)),
+		"mirrorEndpoint":      base64.StdEncoding.EncodeToString([]byte(endpoint)),
+		"mirrorUsername":      base64.StdEncoding.EncodeToString([]byte(username)),
+		"mirrorPassword":      base64.StdEncoding.EncodeToString([]byte(password)),
+		"mirrorCACertContent": base64.StdEncoding.EncodeToString([]byte(caCertContent)),
 	}
 	result, err := templater.Execute(secretsValueYaml, templateValues)
 	if err != nil {
