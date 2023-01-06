@@ -172,6 +172,11 @@ func (c *CloudStack) Name() string {
 
 func (c *CloudStack) Setup() {}
 
+// UpdateKubeConfig customizes generated kubeconfig for the provider.
+func (c *CloudStack) UpdateKubeConfig(content *[]byte, clusterName string) error {
+	return nil
+}
+
 // ClusterConfigUpdates satisfies the test framework Provider.
 func (c *CloudStack) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	controlPlaneIP, err := c.getControlPlaneIP()

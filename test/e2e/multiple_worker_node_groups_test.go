@@ -65,6 +65,7 @@ func TestVSphereKubernetes124UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testin
 		),
 		provider.WithWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
 		provider.WithWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
+		provider.WithWorkerNodeGroup("worker-3", framework.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithLabel("tier", "frontend"))),
 		provider.WithUbuntu124(),
 	)
 
@@ -73,8 +74,11 @@ func TestVSphereKubernetes124UbuntuUpgradeAndRemoveWorkerNodeGroupsAPI(t *testin
 		api.ClusterToConfigFiller(
 			api.RemoveWorkerNodeGroup("worker-2"),
 			api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
+			api.RemoveWorkerNodeGroup("worker-3"),
 		),
-		provider.WithWorkerNodeGroupConfiguration("worker-1", framework.WithWorkerNodeGroup("worker-3", api.WithCount(1))),
+		// Re-adding with no labels and a taint
+		provider.WithWorkerNodeGroupConfiguration("worker-3", framework.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithTaint(framework.NoScheduleTaint()))),
+		provider.WithWorkerNodeGroupConfiguration("worker-1", framework.WithWorkerNodeGroup("worker-4", api.WithCount(1))),
 	)
 }
 
@@ -91,6 +95,9 @@ func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 		),
 		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
 		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
+		provider.WithWorkerNodeGroup(
+			framework.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithLabel("tier", "frontend")),
+		),
 	)
 
 	runUpgradeFlowWithAPI(
@@ -98,8 +105,10 @@ func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 		api.ClusterToConfigFiller(
 			api.RemoveWorkerNodeGroup("worker-2"),
 			api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
+			api.RemoveWorkerNodeGroup("worker-3"),
+			api.WithWorkerNodeGroup("worker-3", api.WithCount(1),api.WithTaint(framework.NoScheduleTaint())),
 		),
-		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-3", api.WithCount(1))),
+		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-4", api.WithCount(1))),
 	)
 }
 

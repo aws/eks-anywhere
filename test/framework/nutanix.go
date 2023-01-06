@@ -135,6 +135,11 @@ func (s *Nutanix) Name() string {
 
 func (s *Nutanix) Setup() {}
 
+// UpdateKubeConfig customizes generated kubeconfig for the provider.
+func (s *Nutanix) UpdateKubeConfig(content *[]byte, clusterName string) error {
+	return nil
+}
+
 // CleanupVMs satisfies the test framework Provider.
 func (s *Nutanix) CleanupVMs(clustername string) error {
 	return cleanup.NutanixTestResourcesCleanup(context.Background(), clustername, os.Getenv(nutanixEndpoint), os.Getenv(nutanixPort), true, true)

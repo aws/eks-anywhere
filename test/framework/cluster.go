@@ -300,6 +300,7 @@ type Provider interface {
 	ClusterConfigUpdates() []api.ClusterConfigFiller
 	Setup()
 	CleanupVMs(clusterName string) error
+	UpdateKubeConfig(content *[]byte, clusterName string) error
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
