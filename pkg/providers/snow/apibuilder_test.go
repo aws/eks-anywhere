@@ -151,7 +151,12 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: tlsCipherSuitesArgs(),
+						ExtraArgs:    tlsCipherSuitesArgs(),
+						ExtraVolumes: []bootstrapv1.HostPathMount{},
+					},
+					Scheduler: bootstrapv1.ControlPlaneComponent{
+						ExtraArgs:    map[string]string{},
+						ExtraVolumes: []bootstrapv1.HostPathMount{},
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
@@ -453,6 +458,26 @@ func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.RegistryMirror = tt.wantRegistryConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.RegistryMirror = tt.wantRegistryConfig
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
+				bootstrapv1.HostPathMount{
+					HostPath:  "/var/lib/kubeadm/controller-manager.conf",
+					MountPath: "/etc/kubernetes/controller-manager.conf",
+					Name:      "kubeconfig",
+					PathType:  "File",
+					ReadOnly:  true,
+				},
+			)
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
+				bootstrapv1.HostPathMount{
+					HostPath:  "/var/lib/kubeadm/scheduler.conf",
+					MountPath: "/etc/kubernetes/scheduler.conf",
+					Name:      "kubeconfig",
+					PathType:  "File",
+					ReadOnly:  true,
+				},
+			)
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
+
 			g.Expect(got).To(BeComparableTo(want))
 		})
 	}
@@ -548,6 +573,26 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Proxy = tt.wantProxyConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Proxy = tt.wantProxyConfig
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
+				bootstrapv1.HostPathMount{
+					HostPath:  "/var/lib/kubeadm/controller-manager.conf",
+					MountPath: "/etc/kubernetes/controller-manager.conf",
+					Name:      "kubeconfig",
+					PathType:  "File",
+					ReadOnly:  true,
+				},
+			)
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
+				bootstrapv1.HostPathMount{
+					HostPath:  "/var/lib/kubeadm/scheduler.conf",
+					MountPath: "/etc/kubernetes/scheduler.conf",
+					Name:      "kubeconfig",
+					PathType:  "File",
+					ReadOnly:  true,
+				},
+			)
+			want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
+
 			g.Expect(got).To(Equal(want))
 		})
 	}
