@@ -19,6 +19,15 @@ Example
 ```
 --defualting creates mutation webhooks and --programmatic-validation creates validation webhooks.
 
+Resources:
+
+https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
+
+https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request
+
+## Change webhook marker name to under anywhere.amazonaws.com
+The defualt name in webhook marker is `v<kind>.kb.io`, we need to change it to `<validation/mutation>.<kind>.anywhere.amazonaws.com`
+
 ## Generate manifests
 ```sh
 run make release-manifests
