@@ -8,7 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
+	"net/url"
+	"path"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
@@ -116,7 +117,7 @@ func (or *OCIRegistryClient) SetDryRun(value bool) {
 
 // Destination of this storage registry.
 func (or *OCIRegistryClient) Destination(image Artifact) string {
-	return strings.Replace(image.VersionedImage(), url.JoinPath(url.PathEscape(image.Registry), url.PathEscape(or.host), url.PathEscape(or.project)), 1)
+	return path.Join(url.PathEscape(image.Registry), url.PathEscape(or.host), url.PathEscape(or.project))
 }
 
 // GetReference gets digest or tag version.
