@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"path"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -117,7 +116,7 @@ func (or *OCIRegistryClient) SetDryRun(value bool) {
 
 // Destination of this storage registry.
 func (or *OCIRegistryClient) Destination(image Artifact) string {
-	return path.Join(url.PathEscape(image.Registry), url.PathEscape(or.host), url.PathEscape(or.project))
+	return path.Join(or.host, or.project, image.Repository) + image.Version()
 }
 
 // GetReference gets digest or tag version.
@@ -145,7 +144,7 @@ func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (re
 	return repo, nil
 }
 
-// Copy a image from a source to a destination.
+// Copy an image from a source to a destination.
 func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient StorageClient) (err error) {
 	srcStorage, err := or.GetStorage(ctx, image)
 	if err != nil {
