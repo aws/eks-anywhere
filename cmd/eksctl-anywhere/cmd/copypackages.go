@@ -59,10 +59,17 @@ type CopyPackagesCommand struct {
 func runCopyPackages(_ *cobra.Command, args []string) error {
 	ctx := context.Background()
 	copyPackagesCommand.destination = args[0]
-	return copyPackagesCommand.call(ctx)
+
+	credentialStore := registry.NewCredentialStore()
+	err := credentialStore.Init()
+	if err != nil {
+		return err
+	}
+
+	return copyPackagesCommand.call(ctx, credentialStore)
 }
 
-func (c CopyPackagesCommand) call(ctx context.Context) error {
+func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.CredentialStore) error {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
@@ -79,13 +86,19 @@ func (c CopyPackagesCommand) call(ctx context.Context) error {
 
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 
+	certificates, err := registry.GetCertificates(c.dstCert)
+	if err != nil {
+		return err
+	}
+
+	dstContext := registry.NewRegistryContext(c.destination, credentialStore, certificates, c.insecure)
 	c.registryCache = registry.NewCache()
-	c.dstRegistry, err = c.registryCache.Get(c.destination, c.dstCert, c.insecure)
+	c.dstRegistry, err = c.registryCache.Get(dstContext)
 	if err != nil {
 		return fmt.Errorf("error with repository %s: %v", c.destination, err)
 	}
 
-	err = c.copyImages(ctx, imageList)
+	err = c.copyImages(ctx, credentialStore, imageList)
 	if err != nil {
 		return err
 	}
@@ -95,13 +108,20 @@ func (c CopyPackagesCommand) call(ctx context.Context) error {
 		return err
 	}
 	c.dstRegistry.SetProject("curated-packages/")
-	return c.copyImages(ctx, imageList)
+	return c.copyImages(ctx, credentialStore, imageList)
 }
 
-func (c CopyPackagesCommand) copyImages(ctx context.Context, imageList []releasev1.Image) error {
+func (c CopyPackagesCommand) copyImages(ctx context.Context, credentialStore registry.CredentialStore, imageList []releasev1.Image) error {
+	certificates, err := registry.GetCertificates(c.srcCert)
+	if err != nil {
+		return err
+	}
+
 	for _, image := range imageList {
 		host := image.Registry()
-		srcRegistry, err := c.registryCache.Get(host, c.srcCert, c.insecure)
+
+		srcContext := registry.NewRegistryContext(host, credentialStore, certificates, c.insecure)
+		srcRegistry, err := c.registryCache.Get(srcContext)
 		if err != nil {
 			return fmt.Errorf("error with repository %s: %v", host, err)
 		}

@@ -15,15 +15,15 @@ func NewCache() *Cache {
 }
 
 // Get cached registry client or make it.
-func (cache *Cache) Get(host string, certFile string, insecure bool) (StorageClient, error) {
-	aClient, found := cache.registries[host]
+func (cache *Cache) Get(context RegistryContext) (StorageClient, error) {
+	aClient, found := cache.registries[context.host]
 	if !found {
-		aClient = NewOCIRegistry(host, certFile, insecure)
+		aClient = NewOCIRegistry(context)
 		err := aClient.Init()
 		if err != nil {
-			return nil, fmt.Errorf("error with repository %s: %v", host, err)
+			return nil, fmt.Errorf("error with repository %s: %v", context.host, err)
 		}
-		cache.registries[host] = aClient
+		cache.registries[context.host] = aClient
 	}
 	return aClient, nil
 }

@@ -5,10 +5,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"path"
+	"sync"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
@@ -17,14 +17,30 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
+// RegistryContext describes aspects of a registry.
+type RegistryContext struct {
+	host            string
+	project         string
+	credentialStore CredentialStore
+	certificates    *x509.CertPool
+	insecure        bool
+}
+
+// NewOCIRegistry create an OCI registry client.
+func NewRegistryContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) RegistryContext {
+	return RegistryContext{
+		host:            host,
+		credentialStore: credentialStore,
+		certificates:    certificates,
+		insecure:        insecure,
+	}
+}
+
 // OCIRegistryClient storage client for an OCI registry.
 type OCIRegistryClient struct {
-	host        string
-	project     string
-	certFile    string
-	insecure    bool
+	RegistryContext
 	dryRun      bool
-	initialized bool
+	initialized sync.Once
 	OI          OrasInterface
 	registry    *remote.Registry
 }
@@ -32,55 +48,41 @@ type OCIRegistryClient struct {
 var _ StorageClient = (*OCIRegistryClient)(nil)
 
 // NewOCIRegistry create an OCI registry client.
-func NewOCIRegistry(host string, certFile string, insecure bool) *OCIRegistryClient {
+func NewOCIRegistry(context RegistryContext) *OCIRegistryClient {
 	return &OCIRegistryClient{
-		host:     host,
-		certFile: certFile,
-		insecure: insecure,
-		OI:       &OrasImplementation{},
+		RegistryContext: context,
+		OI:              &OrasImplementation{},
 	}
 }
 
 // Init registry configuration.
 func (or *OCIRegistryClient) Init() error {
-	if or.initialized {
-		return nil
-	}
-
-	credentialStore := NewCredentialStore()
-	err := credentialStore.Init()
-	if err != nil {
-		return err
-	}
-
-	certificates, err := or.getCertificates()
-	if err != nil {
-		return err
-	}
-
+	var err error
 	or.registry, err = remote.NewRegistry(or.host)
 	if err != nil {
 		return fmt.Errorf("NewRegistry: %v", err)
 	}
 
-	tlsConfig := &tls.Config{
-		RootCAs:            certificates,
-		InsecureSkipVerify: or.insecure,
+	onceFunc := func() {
+		tlsConfig := &tls.Config{
+			RootCAs:            or.certificates,
+			InsecureSkipVerify: or.insecure,
+		}
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = tlsConfig
+		authClient := &auth.Client{
+			Client: &http.Client{
+				Transport: transport,
+			},
+			Cache: auth.NewCache(),
+		}
+		authClient.SetUserAgent("eksa")
+		authClient.Credential = func(ctx context.Context, s string) (auth.Credential, error) {
+			return or.credentialStore.Credential(s)
+		}
+		or.registry.Client = authClient
 	}
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = tlsConfig
-	authClient := &auth.Client{
-		Client: &http.Client{
-			Transport: transport,
-		},
-		Cache: auth.NewCache(),
-	}
-	authClient.SetUserAgent("eksa")
-	authClient.Credential = func(ctx context.Context, s string) (auth.Credential, error) {
-		return credentialStore.Credential(s)
-	}
-	or.registry.Client = authClient
-	or.initialized = true
+	or.initialized.Do(onceFunc)
 	return nil
 }
 
@@ -92,11 +94,6 @@ func (or *OCIRegistryClient) GetHost() string {
 // GetProject for registry project.
 func (or *OCIRegistryClient) GetProject() string {
 	return or.project
-}
-
-// GetCertFile for registry certificate file.
-func (or *OCIRegistryClient) GetCertFile() string {
-	return or.certFile
 }
 
 // IsInsecure insecure TLS connection.
@@ -119,21 +116,6 @@ func (or *OCIRegistryClient) Destination(image Artifact) string {
 	return path.Join(or.host, or.project, image.Repository) + image.Version()
 }
 
-// GetReference gets digest or tag version.
-func (or *OCIRegistryClient) getCertificates() (certificates *x509.CertPool, err error) {
-	if len(or.certFile) < 1 {
-		return nil, nil
-	}
-	fileContents, err := ioutil.ReadFile(or.certFile)
-	if err != nil {
-		return nil, fmt.Errorf("error reading certificate file <%s>: %v", or.certFile, err)
-	}
-	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(fileContents)
-
-	return certPool, nil
-}
-
 // GetStorage object based on repository.
 func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error) {
 	dstRepo := or.project + image.Repository
@@ -153,7 +135,7 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient
 
 	var desc ocispec.Descriptor
 	or.registry.Reference.Reference = image.Digest
-	desc, err = or.OI.Resolve(ctx, srcStorage, or.registry.Reference.Reference)
+	desc, err = or.OI.Resolve(ctx, srcStorage, image.Digest)
 	if err != nil {
 		return fmt.Errorf("registry copy destination: %v", err)
 	}
