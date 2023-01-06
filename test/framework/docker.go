@@ -3,13 +3,17 @@ package framework
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/providers/docker"
 )
 
 // Docker is a Provider for running end-to-end tests.
 type Docker struct {
 	t *testing.T
+	executables.Docker
 }
 
 const dockerPodCidrVar = "T_DOCKER_POD_CIDR"
@@ -17,8 +21,10 @@ const dockerPodCidrVar = "T_DOCKER_POD_CIDR"
 // NewDocker creates a new Docker object implementing the Provider interface
 // for testing.
 func NewDocker(t *testing.T) *Docker {
+	docker := executables.BuildDockerExecutable()
 	return &Docker{
-		t: t,
+		t:      t,
+		Docker: *docker,
 	}
 }
 
@@ -33,6 +39,19 @@ func (d *Docker) Setup() {}
 // CleanupVMs implements the Provider interface.
 func (d *Docker) CleanupVMs(_ string) error {
 	return nil
+}
+
+// UpdateKubeConfig customizes generated kubeconfig by replacing the server value with correct host
+// and the docker LB port. This is required for the docker provider.
+func (d *Docker) UpdateKubeConfig(content *[]byte, clusterName string) error {
+	dockerClient := executables.BuildDockerExecutable()
+	p := docker.NewProvider(
+		nil,
+		dockerClient,
+		nil,
+		time.Now,
+	)
+	return p.UpdateKubeConfig(content, clusterName)
 }
 
 func (d *Docker) WithProviderUpgradeGit() ClusterE2ETestOpt {

@@ -63,6 +63,11 @@ func (s *Snow) Name() string {
 
 func (s *Snow) Setup() {}
 
+// UpdateKubeConfig customizes generated kubeconfig for the provider.
+func (s *Snow) UpdateKubeConfig(content *[]byte, clusterName string) error {
+	return nil
+}
+
 // ClusterConfigUpdates satisfies the test framework Provider.
 func (s *Snow) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	ip, err := GenerateUniqueIp(s.cpCidr)
