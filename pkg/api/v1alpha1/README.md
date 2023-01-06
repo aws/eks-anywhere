@@ -17,7 +17,7 @@ Example
 ```sh
 ./hack/kubebuilder.sh create webhook --group anywhere --version v1alpha1 --defaulting --programmatic-validation --kind WhateverKind
 ```
---defualting creates mutation webhooks and --programmatic-validation creates validation webhooks.
+`--defaulting` creates mutation webhooks and `--programmatic-validation` creates validation webhooks.
 
 Resources:
 
