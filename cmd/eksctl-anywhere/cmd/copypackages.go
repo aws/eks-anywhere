@@ -22,10 +22,10 @@ var copyPackagesCmd = &cobra.Command{
 	SilenceUsage: true,
 	RunE:         runCopyPackages,
 	Args: func(cmd *cobra.Command, args []string) error {
-		if err := cobra.ExactArgs(1)(cmd, args); err == nil {
-			return nil
+		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+			return fmt.Errorf("A destination must be specified as an argument")
 		}
-		return fmt.Errorf("A destination must be specified as an argument")
+		return nil
 	},
 }
 
