@@ -21,9 +21,9 @@ func TestCache_Get(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "localhost", ociRegistry.GetHost())
 
-	registryContext = registry.NewRegistryContext("", credentialStore, certificates, true)
+	registryContext = registry.NewRegistryContext("!@#$", credentialStore, certificates, true)
 	result, err = cache.Get(registryContext)
-	assert.EqualError(t, err, "error with repository example.com: error reading certificate file <bogus.file>: open bogus.file: no such file or directory")
+	assert.EqualError(t, err, "error with registry <!@#$>: invalid reference: invalid registry")
 	busted, ok := result.(*registry.OCIRegistryClient)
 	assert.False(t, ok)
 	assert.Nil(t, busted)

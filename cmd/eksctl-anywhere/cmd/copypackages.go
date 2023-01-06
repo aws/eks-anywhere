@@ -53,7 +53,6 @@ type CopyPackagesCommand struct {
 	insecure      bool
 	dryRun        bool
 	registryCache *registry.Cache
-	dstRegistry   registry.StorageClient
 }
 
 func runCopyPackages(_ *cobra.Command, args []string) error {
@@ -93,12 +92,12 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.
 
 	dstContext := registry.NewRegistryContext(c.destination, credentialStore, certificates, c.insecure)
 	c.registryCache = registry.NewCache()
-	c.dstRegistry, err = c.registryCache.Get(dstContext)
+	dstRegistry, err := c.registryCache.Get(dstContext)
 	if err != nil {
 		return fmt.Errorf("error with repository %s: %v", c.destination, err)
 	}
 
-	err = c.copyImages(ctx, credentialStore, imageList)
+	err = c.copyImages(ctx, dstRegistry, credentialStore, imageList)
 	if err != nil {
 		return err
 	}
@@ -107,11 +106,11 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.
 	if err != nil {
 		return err
 	}
-	c.dstRegistry.SetProject("curated-packages/")
-	return c.copyImages(ctx, credentialStore, imageList)
+	dstRegistry.SetProject("curated-packages/")
+	return c.copyImages(ctx, dstRegistry, credentialStore, imageList)
 }
 
-func (c CopyPackagesCommand) copyImages(ctx context.Context, credentialStore registry.CredentialStore, imageList []releasev1.Image) error {
+func (c CopyPackagesCommand) copyImages(ctx context.Context, dstRegistry registry.StorageClient, credentialStore registry.CredentialStore, imageList []releasev1.Image) error {
 	certificates, err := registry.GetCertificates(c.srcCert)
 	if err != nil {
 		return err
@@ -126,12 +125,13 @@ func (c CopyPackagesCommand) copyImages(ctx context.Context, credentialStore reg
 			return fmt.Errorf("error with repository %s: %v", host, err)
 		}
 
+		artifact := registry.NewArtifact(image.Registry(), image.Repository(), image.Version(), image.Digest())
+		log.Println(dstRegistry.Destination(artifact))
 		if c.dryRun {
 			continue
 		}
 
-		artifact := registry.NewArtifact(image.Registry(), image.Repository(), image.Version(), image.Digest())
-		err = srcRegistry.Copy(ctx, artifact, c.dstRegistry)
+		err = srcRegistry.Copy(ctx, artifact, dstRegistry)
 		if err != nil {
 			return err
 		}

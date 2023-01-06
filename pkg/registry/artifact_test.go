@@ -1,10 +1,11 @@
 package registry_test
 
 import (
-	"github.com/aws/eks-anywhere/pkg/registry"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/aws/eks-anywhere/pkg/registry"
 )
 
 func TestArtifact_VersionTag(t *testing.T) {

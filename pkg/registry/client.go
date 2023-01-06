@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"log"
 	"net/http"
 	"path"
 	"sync"
@@ -17,8 +16,8 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
-// RegistryContext describes aspects of a registry.
-type RegistryContext struct {
+// Context describes aspects of a registry.
+type Context struct {
 	host            string
 	project         string
 	credentialStore CredentialStore
@@ -26,9 +25,9 @@ type RegistryContext struct {
 	insecure        bool
 }
 
-// NewOCIRegistry create an OCI registry client.
-func NewRegistryContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) RegistryContext {
-	return RegistryContext{
+// NewRegistryContext create registry context.
+func NewRegistryContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) Context {
+	return Context{
 		host:            host,
 		credentialStore: credentialStore,
 		certificates:    certificates,
@@ -38,20 +37,17 @@ func NewRegistryContext(host string, credentialStore CredentialStore, certificat
 
 // OCIRegistryClient storage client for an OCI registry.
 type OCIRegistryClient struct {
-	RegistryContext
-	dryRun      bool
+	Context
 	initialized sync.Once
-	OI          OrasInterface
 	registry    *remote.Registry
 }
 
 var _ StorageClient = (*OCIRegistryClient)(nil)
 
 // NewOCIRegistry create an OCI registry client.
-func NewOCIRegistry(context RegistryContext) *OCIRegistryClient {
+func NewOCIRegistry(context Context) *OCIRegistryClient {
 	return &OCIRegistryClient{
-		RegistryContext: context,
-		OI:              &OrasImplementation{},
+		Context: context,
 	}
 }
 
@@ -60,7 +56,7 @@ func (or *OCIRegistryClient) Init() error {
 	var err error
 	or.registry, err = remote.NewRegistry(or.host)
 	if err != nil {
-		return fmt.Errorf("NewRegistry: %v", err)
+		return fmt.Errorf("error with registry <%s>: %v", or.host, err)
 	}
 
 	onceFunc := func() {
@@ -106,11 +102,6 @@ func (or *OCIRegistryClient) SetProject(project string) {
 	or.project = project
 }
 
-// SetDryRun dry run validates read, but not write.
-func (or *OCIRegistryClient) SetDryRun(value bool) {
-	or.dryRun = value
-}
-
 // Destination of this storage registry.
 func (or *OCIRegistryClient) Destination(image Artifact) string {
 	return path.Join(or.host, or.project, image.Repository) + image.Version()
@@ -119,7 +110,7 @@ func (or *OCIRegistryClient) Destination(image Artifact) string {
 // GetStorage object based on repository.
 func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error) {
 	dstRepo := or.project + image.Repository
-	repo, err = or.OI.Repository(ctx, or.registry, dstRepo)
+	repo, err = or.registry.Repository(ctx, dstRepo)
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository %s: %v", dstRepo, err)
 	}
@@ -133,24 +124,20 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient
 		return fmt.Errorf("registry copy source: %v", err)
 	}
 
-	var desc ocispec.Descriptor
-	or.registry.Reference.Reference = image.Digest
-	desc, err = or.OI.Resolve(ctx, srcStorage, image.Digest)
-	if err != nil {
-		return fmt.Errorf("registry copy destination: %v", err)
-	}
-
 	dstStorage, err := dstClient.GetStorage(ctx, image)
 	if err != nil {
 		return fmt.Errorf("registry copy destination: %v", err)
 	}
 
-	log.Println(dstClient.Destination(image))
-	if or.dryRun {
-		return nil
+	var desc ocispec.Descriptor
+	or.registry.Reference.Reference = image.Digest
+	desc, err = srcStorage.Resolve(ctx, image.Digest)
+	if err != nil {
+		return fmt.Errorf("registry source resolve: %v", err)
 	}
+
 	extendedCopyOptions := oras.DefaultExtendedCopyOptions
-	err = or.OI.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
+	err = oras.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
 	if err != nil {
 		return fmt.Errorf("registry copy: %v", err)
 	}

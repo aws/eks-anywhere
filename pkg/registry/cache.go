@@ -1,7 +1,5 @@
 package registry
 
-import "fmt"
-
 // Cache storage client for an OCI registry.
 type Cache struct {
 	registries map[string]StorageClient
@@ -15,13 +13,13 @@ func NewCache() *Cache {
 }
 
 // Get cached registry client or make it.
-func (cache *Cache) Get(context RegistryContext) (StorageClient, error) {
+func (cache *Cache) Get(context Context) (StorageClient, error) {
 	aClient, found := cache.registries[context.host]
 	if !found {
 		aClient = NewOCIRegistry(context)
 		err := aClient.Init()
 		if err != nil {
-			return nil, fmt.Errorf("error with repository %s: %v", context.host, err)
+			return nil, err
 		}
 		cache.registries[context.host] = aClient
 	}

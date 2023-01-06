@@ -1,15 +1,16 @@
 package registry_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/registry"
 )
 
 func TestGetCertificatesSuccess(t *testing.T) {
 	result, err := registry.GetCertificates("testdata/harbor.eksa.demo.crt")
-	assert.Nil(t, result)
+	assert.NotNil(t, result)
 	assert.NoError(t, err)
 }
 
