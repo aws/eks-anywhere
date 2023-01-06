@@ -268,23 +268,6 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 	return bool && err == nil
 }
 
-// ApplySecret installs the scret template yaml with provided values.
-func (pc *PackageControllerClient) ApplySecret(ctx context.Context, yaml string, templateValues interface{}) error {
-	result, err := templater.Execute(yaml, templateValues)
-	if err != nil {
-		return fmt.Errorf("replacing template values %v", err)
-	}
-
-	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
-	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
-	if err != nil {
-		return fmt.Errorf("creating secret %v", err)
-	}
-
-	fmt.Print(&stdOut)
-	return nil
-}
-
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.eksaAccessKeyID = eksaAccessKeyId
