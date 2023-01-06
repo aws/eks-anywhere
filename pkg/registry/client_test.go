@@ -1,19 +1,15 @@
 package registry_test
 
-//
-//import (
-//	"context"
-//	"fmt"
-//	"testing"
-//
-//	"github.com/golang/mock/gomock"
-//	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-//	"github.com/stretchr/testify/assert"
-//
-//	"github.com/aws/eks-anywhere/pkg/registry"
-//	"github.com/aws/eks-anywhere/pkg/registry/mocks"
-//)
-//
+import (
+	"context"
+	"crypto/x509"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/aws/eks-anywhere/pkg/registry"
+)
+
 //var (
 //	ctx   = context.Background()
 //	desc  = ocispec.Descriptor{}
@@ -22,37 +18,41 @@ package registry_test
 //		Repository: "eks-anywhere/eks-anywhere-packages",
 //		Tag:        "0.2.22-eks-a-24",
 //	}
+//	credentialStore = registry.NewCredentialStore()
+//	certificates    = &x509.CertPool{}
 //)
-//
-//func TestNewOCIRegistry(t *testing.T) {
-//	sut := registry.NewOCIRegistry("localhost", "testdata/harbor.eksa.demo.crt", false)
-//	assert.Equal(t, "localhost", sut.GetHost())
-//	assert.Equal(t, "testdata/harbor.eksa.demo.crt", sut.GetCertFile())
-//	assert.False(t, sut.IsInsecure())
-//
-//	err := sut.Init()
-//	assert.NoError(t, err)
-//
-//	// Does not reinitialize
-//	err = sut.Init()
-//	assert.NoError(t, err)
-//
-//	image := registry.Artifact{
-//		Registry:   "localhost",
-//		Repository: "owner/name",
-//		Tag:        "latest",
-//	}
-//	destination := sut.Destination(image)
-//	assert.Equal(t, "localhost/owner/name:latest", destination)
-//	sut.SetProject("project/")
-//	assert.Equal(t, "project/", sut.GetProject())
-//	destination = sut.Destination(image)
-//	assert.Equal(t, "localhost/project/owner/name:latest", destination)
-//
-//	_, err = sut.GetStorage(context.Background(), image)
-//	assert.NoError(t, err)
-//}
-//
+
+func TestNewOCIRegistry(t *testing.T) {
+	credentialStore := registry.NewCredentialStore()
+	certificates := &x509.CertPool{}
+	registryContext := registry.NewRegistryContext("localhost", credentialStore, certificates, false)
+	sut := registry.NewOCIRegistry(registryContext)
+	assert.Equal(t, "localhost", sut.GetHost())
+	assert.False(t, sut.IsInsecure())
+
+	err := sut.Init()
+	assert.NoError(t, err)
+
+	// Does not reinitialize
+	err = sut.Init()
+	assert.NoError(t, err)
+
+	image := registry.Artifact{
+		Registry:   "localhost",
+		Repository: "owner/name",
+		Tag:        "latest",
+	}
+	destination := sut.Destination(image)
+	assert.Equal(t, "localhost/owner/name:latest", destination)
+	sut.SetProject("project/")
+	assert.Equal(t, "project/", sut.GetProject())
+	destination = sut.Destination(image)
+	assert.Equal(t, "localhost/project/owner/name:latest", destination)
+
+	_, err = sut.GetStorage(context.Background(), image)
+	assert.NoError(t, err)
+}
+
 //
 //func TestOCIRegistry_Copy(t *testing.T) {
 //	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
@@ -64,27 +64,6 @@ package registry_test
 //	sut.OI = mockOI
 //	err := sut.Init()
 //	assert.NoError(t, err)
-//
-//	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
-//	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, nil)
-//	dstRegistry.OI = mockOI
-//
-//	err = sut.Copy(ctx, image, dstRegistry)
-//	assert.NoError(t, err)
-//}
-//
-//func TestOCIRegistry_CopDryRun(t *testing.T) {
-//	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
-//	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
-//	mockOI.EXPECT().Resolve(ctx, gomock.Any(), gomock.Any()).Return(desc, nil)
-//	sut.OI = mockOI
-//	err := sut.Init()
-//	assert.NoError(t, err)
-//	sut.SetDryRun(true)
 //
 //	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
 //	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
