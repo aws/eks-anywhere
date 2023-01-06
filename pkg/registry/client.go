@@ -116,7 +116,7 @@ func (or *OCIRegistryClient) SetDryRun(value bool) {
 
 // Destination of this storage registry.
 func (or *OCIRegistryClient) Destination(image Artifact) string {
-	return strings.Replace(image.VersionedImage(), image.Registry+"/", or.host+"/"+or.project, 1)
+	return strings.Replace(image.VersionedImage(), url.JoinPath(url.PathEscape(image.Registry), url.PathEscape(or.host), url.PathEscape(or.project)), 1)
 }
 
 // GetReference gets digest or tag version.
