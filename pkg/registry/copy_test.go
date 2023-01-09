@@ -1,6 +1,7 @@
 package registry_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -36,74 +37,63 @@ func TestCopy(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-//func TestCopyError(t *testing.T) {
-//	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
-//	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
-//	mockOI.EXPECT().Resolve(ctx, gomock.Any(), gomock.Any()).Return(desc, nil)
-//	mockOI.EXPECT().CopyGraph(ctx, &mockSrcRepo, gomock.Any(), desc, gomock.Any()).Return(fmt.Errorf("oops"))
-//	sut.OI = mockOI
-//	err := sut.Init()
-//	assert.NoError(t, err)
-//
-//	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
-//	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, nil)
-//	dstRegistry.OI = mockOI
-//
-//	err = sut.Copy(ctx, image, dstRegistry)
-//	assert.EqualError(t, err, "registry copy: oops")
-//}
-//
-//func TestCopyErrorDestination(t *testing.T) {
-//	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
-//	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
-//	mockOI.EXPECT().Resolve(ctx, gomock.Any(), gomock.Any()).Return(desc, nil)
-//	sut.OI = mockOI
-//	err := sut.Init()
-//	assert.NoError(t, err)
-//
-//	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
-//	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, fmt.Errorf("oops"))
-//	dstRegistry.OI = mockOI
-//
-//	err = sut.Copy(ctx, image, dstRegistry)
-//	assert.EqualError(t, err, "registry copy destination: error creating repository eks-anywhere/eks-anywhere-packages: oops")
-//}
-//
-//func TestCopyErrorSource(t *testing.T) {
-//	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
-//	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
-//	mockOI.EXPECT().Resolve(ctx, gomock.Any(), gomock.Any()).Return(desc, fmt.Errorf("oops"))
-//	sut.OI = mockOI
-//	err := sut.Init()
-//	assert.NoError(t, err)
-//
-//	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
-//
-//	err = sut.Copy(ctx, image, dstRegistry)
-//	assert.EqualError(t, err, "registry copy destination: oops")
-//}
-//
-//func TestOCIRegistry_CopyErrorSourceRepository(t *testing.T) {
-//	sut := registry.NewOCIRegistry("public.ecr.aws", "", true)
-//	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
-//	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
-//	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, fmt.Errorf("ooops"))
-//	sut.OI = mockOI
-//	err := sut.Init()
-//	assert.NoError(t, err)
-//
-//	dstRegistry := registry.NewOCIRegistry("localhost", "", false)
-//
-//	err = sut.Copy(ctx, image, dstRegistry)
-//	assert.EqualError(t, err, "registry copy source: error creating repository eks-anywhere/eks-anywhere-packages: ooops")
-//}
+func TestCopyCopyGraphError(t *testing.T) {
+	srcClient := mocks.NewMockStorageClient(gomock.NewController(t))
+	dstClient := mocks.NewMockStorageClient(gomock.NewController(t))
+
+	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
+	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
+
+	srcClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockSrcRepo, nil)
+	dstClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockDstRepo, nil)
+	var desc ocispec.Descriptor
+	expectedImage := srcArtifact.VersionedImage()
+	srcClient.EXPECT().Resolve(ctx, &mockSrcRepo, expectedImage).Return(desc, nil)
+	srcClient.EXPECT().CopyGraph(ctx, &mockSrcRepo, &mockDstRepo, desc).Return(fmt.Errorf("oops"))
+
+	err := registry.Copy(ctx, srcClient, dstClient, srcArtifact)
+	assert.EqualError(t, err, "registry copy: oops")
+}
+
+func TestCopyResolveError(t *testing.T) {
+	srcClient := mocks.NewMockStorageClient(gomock.NewController(t))
+	dstClient := mocks.NewMockStorageClient(gomock.NewController(t))
+
+	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
+	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
+
+	srcClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockSrcRepo, nil)
+	dstClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockDstRepo, nil)
+	var desc ocispec.Descriptor
+	expectedImage := srcArtifact.VersionedImage()
+	srcClient.EXPECT().Resolve(ctx, &mockSrcRepo, expectedImage).Return(desc, fmt.Errorf("oops"))
+
+	err := registry.Copy(ctx, srcClient, dstClient, srcArtifact)
+	assert.EqualError(t, err, "registry source resolve: oops")
+}
+
+func TestCopyDstGetStorageError(t *testing.T) {
+	srcClient := mocks.NewMockStorageClient(gomock.NewController(t))
+	dstClient := mocks.NewMockStorageClient(gomock.NewController(t))
+
+	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
+	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
+
+	srcClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockSrcRepo, nil)
+	dstClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockDstRepo, fmt.Errorf("oops"))
+
+	err := registry.Copy(ctx, srcClient, dstClient, srcArtifact)
+	assert.EqualError(t, err, "repository destination: oops")
+}
+
+func TestCopySrcGetStorageError(t *testing.T) {
+	srcClient := mocks.NewMockStorageClient(gomock.NewController(t))
+	dstClient := mocks.NewMockStorageClient(gomock.NewController(t))
+
+	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
+
+	srcClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockSrcRepo, fmt.Errorf("oops"))
+
+	err := registry.Copy(ctx, srcClient, dstClient, srcArtifact)
+	assert.EqualError(t, err, "repository source: oops")
+}
