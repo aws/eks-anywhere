@@ -16,8 +16,8 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
-// Context describes aspects of a registry.
-type Context struct {
+// RegistryContext describes aspects of a registry.
+type RegistryContext struct {
 	host            string
 	project         string
 	credentialStore CredentialStore
@@ -26,8 +26,8 @@ type Context struct {
 }
 
 // NewRegistryContext create registry context.
-func NewRegistryContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) Context {
-	return Context{
+func NewRegistryContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) RegistryContext {
+	return RegistryContext{
 		host:            host,
 		credentialStore: credentialStore,
 		certificates:    certificates,
@@ -37,7 +37,7 @@ func NewRegistryContext(host string, credentialStore CredentialStore, certificat
 
 // OCIRegistryClient storage client for an OCI registry.
 type OCIRegistryClient struct {
-	Context
+	RegistryContext
 	initialized sync.Once
 	registry    *remote.Registry
 }
@@ -45,9 +45,9 @@ type OCIRegistryClient struct {
 var _ StorageClient = (*OCIRegistryClient)(nil)
 
 // NewOCIRegistry create an OCI registry client.
-func NewOCIRegistry(context Context) *OCIRegistryClient {
+func NewOCIRegistry(context RegistryContext) *OCIRegistryClient {
 	return &OCIRegistryClient{
-		Context: context,
+		RegistryContext: context,
 	}
 }
 
@@ -130,8 +130,8 @@ func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient
 	}
 
 	var desc ocispec.Descriptor
-	or.registry.Reference.Reference = image.Digest
-	desc, err = srcStorage.Resolve(ctx, image.Digest)
+	or.registry.Reference.Reference = image.VersionedImage()
+	desc, err = srcStorage.Resolve(ctx, or.registry.Reference.Reference)
 	if err != nil {
 		return fmt.Errorf("registry source resolve: %v", err)
 	}

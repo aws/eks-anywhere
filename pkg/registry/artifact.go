@@ -20,10 +20,10 @@ func NewArtifact(registry, repository, tag, digest string) Artifact {
 
 // Version returns tag or digest.
 func (art *Artifact) Version() string {
-	if art.Tag != "" {
-		return ":" + art.Tag
+	if art.Digest != "" {
+		return "@" + art.Digest
 	}
-	return "@" + art.Digest
+	return ":" + art.Tag
 }
 
 // VersionedImage returns full URI for image.
