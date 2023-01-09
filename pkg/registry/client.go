@@ -67,16 +67,6 @@ func (or *OCIRegistryClient) GetHost() string {
 	return or.host
 }
 
-// GetProject for registry project.
-func (or *OCIRegistryClient) GetProject() string {
-	return or.project
-}
-
-// IsInsecure insecure TLS connection.
-func (or *OCIRegistryClient) IsInsecure() bool {
-	return or.insecure
-}
-
 // SetProject for registry destination.
 func (or *OCIRegistryClient) SetProject(project string) {
 	or.project = project

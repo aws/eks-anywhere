@@ -25,8 +25,6 @@ var (
 
 func TestOCIRegistryClient_Init(t *testing.T) {
 	sut := registry.NewOCIRegistry(registryContext)
-	assert.Equal(t, "localhost", sut.GetHost())
-	assert.False(t, sut.IsInsecure())
 
 	err := sut.Init()
 	assert.NoError(t, err)
@@ -41,7 +39,6 @@ func TestOCIRegistryClient_Destination(t *testing.T) {
 	destination := sut.Destination(image)
 	assert.Equal(t, "localhost/eks-anywhere/eks-anywhere-packages@sha256:6efe21500abbfbb6b3e37b80dd5dea0b11a0d1b145e84298fee5d7784a77e967", destination)
 	sut.SetProject("project/")
-	assert.Equal(t, "project/", sut.GetProject())
 	destination = sut.Destination(image)
 	assert.Equal(t, "localhost/project/eks-anywhere/eks-anywhere-packages@sha256:6efe21500abbfbb6b3e37b80dd5dea0b11a0d1b145e84298fee5d7784a77e967", destination)
 }
