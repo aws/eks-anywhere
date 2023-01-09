@@ -182,7 +182,7 @@ func TestVSphereUpgradeScaleWorkersUbuntuAPI(t *testing.T) {
 	)
 }
 
-func TestDockerUpgradeKubernetes123to124WorkloadClusterScaleWorkerNodesAPI(t *testing.T) {
+func TestDockerUpgradeKubernetes123to124WorkloadClusterScaleupAPI(t *testing.T) {
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider,
@@ -204,8 +204,7 @@ func TestDockerUpgradeKubernetes123to124WorkloadClusterScaleWorkerNodesAPI(t *te
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithControlPlaneCount(1),
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-				api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
-				api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
+				api.WithWorkerNodeGroup("worker-0", api.WithCount(1)),
 				api.WithStackedEtcdTopology(),
 			),
 		),
@@ -215,8 +214,7 @@ func TestDockerUpgradeKubernetes123to124WorkloadClusterScaleWorkerNodesAPI(t *te
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube124),
 			api.WithControlPlaneCount(3),
-			api.WithWorkerNodeGroup("worker-0", api.WithCount(1)),
-			api.WithWorkerNodeGroup("worker-1", api.WithCount(2)),
+			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
 		),
 	)
 }
@@ -259,6 +257,47 @@ func TestDockerUpgradeWorkloadClusterLabelsAndTaintsAPI(t *testing.T) {
 			api.WithWorkerNodeGroup("worker-0", api.WithCount(1), api.WithLabel("key1", "val1"), api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup("worker-1", api.WithLabel("key2", "val2"), api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup("worker-2", api.WithNoTaints()),
+		),
+	)
+}
+
+func TestDockerUpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsAPI(t *testing.T) {
+	provider := framework.NewDocker(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube124),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
+				api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
+				api.WithWorkerNodeGroup("worker-2", api.WithCount(1)),
+				api.WithExternalEtcdTopology(1),
+			),
+		),
+	)
+	runWorkloadClusterUpgradeFlowAPI(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeGroup("worker-0", api.WithCount(1)),
+			api.WithWorkerNodeGroup("worker-1", api.WithCount(2)),
+			api.RemoveWorkerNodeGroup("worker-2"),
+			api.WithWorkerNodeGroup("worker-3", api.WithCount(1)),
 		),
 	)
 }
