@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"testing"
 	"time"
 
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -65,7 +64,7 @@ var oidcRoles []byte
 var hpaBusybox []byte
 
 type ClusterE2ETest struct {
-	T                      *testing.T
+	T                      T
 	ClusterConfigLocation  string
 	ClusterConfigFolder    string
 	HardwareConfigLocation string
@@ -90,7 +89,8 @@ type ClusterE2ETest struct {
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
 
-func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOpt) *ClusterE2ETest {
+// NewClusterE2ETest is a support structure for defining an end-to-end test.
+func NewClusterE2ETest(t T, provider Provider, opts ...ClusterE2ETestOpt) *ClusterE2ETest {
 	e := &ClusterE2ETest{
 		T:                     t,
 		Provider:              provider,
@@ -300,6 +300,7 @@ type Provider interface {
 	ClusterConfigUpdates() []api.ClusterConfigFiller
 	Setup()
 	CleanupVMs(clusterName string) error
+	UpdateKubeConfig(content *[]byte, clusterName string) error
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
@@ -916,7 +917,7 @@ func GetTestNameHash(name string) string {
 	return testNameHash[:7]
 }
 
-func getClusterName(t *testing.T) string {
+func getClusterName(t T) string {
 	value := os.Getenv(ClusterPrefixVar)
 	// Append hash to make each cluster name unique per test. Using the testname will be too long
 	// and would fail validations
@@ -1094,8 +1095,6 @@ func (e *ClusterE2ETest) CreateResource(ctx context.Context, resource string) {
 }
 
 func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...string) {
-	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
-	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"delete", "package", packagePrefix, "-v=9",
 		strings.Join(opts, " "),
@@ -1227,43 +1226,17 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 	if err != nil {
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	ok := strings.Contains(logs, "Everything is ready")
-	if !ok {
-		e.T.Fatalf("expected to find 'Everything is ready' in the log, got %s", logs)
-	}
+	expectedLogs := "Everything is ready"
+	e.MatchLogs(targetNamespace, adotPodName, "aws-otel-collector", expectedLogs, 5*time.Minute)
 
-	e.T.Log("Launching Busybox pod to test Package", packageName)
 	podIPAddress, err := e.KubectlClient.GetPodIP(context.TODO(), targetNamespace, adotPodName, e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("unable to get ip of the aws-otel-collector pod: %s", err)
 	}
 	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
-	busyBoxName := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), targetNamespace, busyBoxName, e.kubeconfigFilePath(), []string{"curl", podFullIPAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Waiting Busybox pod", clientPod, "to be ready")
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", targetNamespace)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl adot\n %s\n", logs)
-	ok = strings.Contains(logs, "otelcol_exporter")
-	if !ok {
-		e.T.Fatalf("expected to find otelcol_exporter in the log, got %s", logs)
-	}
+	e.T.Log("Validate content at endpoint", podFullIPAddress)
+	expectedLogs = "otelcol_exporter"
+	e.ValidateEndpointContent(podFullIPAddress, targetNamespace, expectedLogs)
 }
 
 //go:embed testdata/adot_package_deployment.yaml
@@ -1397,29 +1370,9 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(name string, mgmtCluster
 		e.T.Fatalf("waiting for emissary deployment timed out: %s", err)
 	}
 	svcAddress := name + "-admin." + ns + ".svc.cluster.local" + ":8877/ambassador/v0/check_alive"
-	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomname, e.kubeconfigFilePath(), []string{"curl", svcAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
-
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", ns)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl emissary\n %s\n", logs)
-	ok := strings.Contains(logs, "Ambassador is alive and well")
-	if !ok {
-		e.T.Fatalf("expected Ambassador is alive and well, got %s", logs)
-	}
+	e.T.Log("Validate content at endpoint", svcAddress)
+	expectedLogs := "Ambassador is alive and well"
+	e.ValidateEndpointContent(svcAddress, ns, expectedLogs)
 }
 
 // TestEmissaryPackageRouting is checking if emissary is able to create Ingress, host, and mapping that function correctly.
@@ -1445,27 +1398,9 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *ty
 
 	// Functional testing of Emissary Ingress
 	ingresssvcAddress := name + "." + ns + ".svc.cluster.local" + "/backend/"
-	randomnameIng := fmt.Sprintf("%s-%s", "busybox-test-ing", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomnameIng, e.kubeconfigFilePath(), []string{"curl", ingresssvcAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", ns)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl emissary\n %s\n", logs)
-	ok := strings.Contains(logs, "quote")
-	if !ok {
-		e.T.Fatalf("expected quote, got %s", logs)
-	}
+	e.T.Log("Validate content at endpoint", ingresssvcAddress)
+	expectedLogs := "quote"
+	e.ValidateEndpointContent(ingresssvcAddress, ns, expectedLogs)
 }
 
 // VerifyPrometheusPackageInstalled is checking if the Prometheus package gets installed correctly.

@@ -389,6 +389,11 @@ func (v *VSphere) Name() string {
 // Setup does nothing. It satisfies the test framework Provider.
 func (v *VSphere) Setup() {}
 
+// UpdateKubeConfig customizes generated kubeconfig for the provider.
+func (v *VSphere) UpdateKubeConfig(content *[]byte, clusterName string) error {
+	return nil
+}
+
 // ClusterConfigUpdates satisfies the test framework Provider.
 func (v *VSphere) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	clusterIP, err := GetIP(v.cidr, ClusterIPPoolEnvVar)

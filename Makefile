@@ -355,6 +355,11 @@ generate-attribution:
 update-attribution-files: generate-attribution
 	scripts/create_pr.sh
 
+.PHONY: update-golden-files
+update-golden-files:
+	make -C release update-bundle-golden-files
+	scripts/golden_create_pr.sh
+
 .PHONY: generate-checksums
 generate-checksums:
 	scripts/generate_checksum.sh

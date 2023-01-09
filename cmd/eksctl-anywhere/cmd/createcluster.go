@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -134,10 +133,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 	defer close(ctx, deps)
-
-	if !features.IsActive(features.SnowProvider()) && deps.Provider.Name() == constants.SnowProviderName {
-		return fmt.Errorf("provider snow is not supported in this release")
-	}
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,

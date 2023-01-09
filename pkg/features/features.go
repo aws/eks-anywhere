@@ -42,13 +42,6 @@ func CloudStackKubeVipDisabled() Feature {
 	}
 }
 
-func SnowProvider() Feature {
-	return Feature{
-		Name:     "Snow provider support",
-		IsActive: globalFeatures.isActiveForEnvVar(SnowProviderEnvVar),
-	}
-}
-
 func CheckpointEnabled() Feature {
 	return Feature{
 		Name:     "Checkpoint to rerun commands enabled",

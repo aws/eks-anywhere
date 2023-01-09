@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"testing"
 	"time"
 
 	v1 "k8s.io/api/storage/v1"
@@ -51,7 +50,7 @@ func (e *ClusterE2ETest) ValidateVSphereCSI(installed bool) {
 	}
 }
 
-func handleError(t *testing.T, installed bool, err error) {
+func handleError(t T, installed bool, err error) {
 	if installed || !strings.Contains(err.Error(), "not found") {
 		t.Fatal(err)
 	}

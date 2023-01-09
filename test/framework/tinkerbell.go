@@ -107,6 +107,11 @@ func (t *Tinkerbell) Name() string {
 
 func (t *Tinkerbell) Setup() {}
 
+// UpdateKubeConfig customizes generated kubeconfig for the provider.
+func (t *Tinkerbell) UpdateKubeConfig(content *[]byte, clusterName string) error {
+	return nil
+}
+
 // ClusterConfigUpdates satisfies the test framework Provider.
 func (t *Tinkerbell) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	clusterIP, err := GetIP(t.cidr, ClusterIPPoolEnvVar)

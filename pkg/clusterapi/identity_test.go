@@ -107,7 +107,12 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 								},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: tlsCipherSuitesArgs(),
+								ExtraArgs:    tlsCipherSuitesArgs(),
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
+							},
+							Scheduler: bootstrapv1.ControlPlaneComponent{
+								ExtraArgs:    map[string]string{},
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
 							},
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
@@ -299,7 +304,12 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 								},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: tlsCipherSuitesArgs(),
+								ExtraArgs:    tlsCipherSuitesArgs(),
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
+							},
+							Scheduler: bootstrapv1.ControlPlaneComponent{
+								ExtraArgs:    map[string]string{},
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
 							},
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
@@ -418,7 +428,12 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 								},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: tlsCipherSuitesArgs(),
+								ExtraArgs:    tlsCipherSuitesArgs(),
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
+							},
+							Scheduler: bootstrapv1.ControlPlaneComponent{
+								ExtraArgs:    map[string]string{},
+								ExtraVolumes: []bootstrapv1.HostPathMount{},
 							},
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
