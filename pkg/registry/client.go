@@ -34,12 +34,13 @@ func NewOCIRegistry(context StorageContext) *OCIRegistryClient {
 // Init registry configuration.
 func (or *OCIRegistryClient) Init() error {
 	var err error
-	or.registry, err = remote.NewRegistry(or.host)
-	if err != nil {
-		return fmt.Errorf("error with registry <%s>: %v", or.host, err)
-	}
-
 	onceFunc := func() {
+		or.registry, err = remote.NewRegistry(or.host)
+		if err != nil {
+			err = fmt.Errorf("error with registry <%s>: %v", or.host, err)
+			return
+		}
+
 		tlsConfig := &tls.Config{
 			RootCAs:            or.certificates,
 			InsecureSkipVerify: or.insecure,
@@ -59,7 +60,7 @@ func (or *OCIRegistryClient) Init() error {
 		or.registry.Client = authClient
 	}
 	or.initialized.Do(onceFunc)
-	return nil
+	return err
 }
 
 // GetHost for registry host.
