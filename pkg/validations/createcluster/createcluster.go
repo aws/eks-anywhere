@@ -9,7 +9,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -64,13 +63,6 @@ func (v *ValidationManager) generateCreateValidations(ctx context.Context) []val
 			return &validations.ValidationResult{
 				Name:   "validate cluster",
 				Err:    cluster.ValidateConfig(v.clusterSpec.Config),
-				Silent: true,
-			}
-		},
-		func() *validations.ValidationResult {
-			return &validations.ValidationResult{
-				Name:   "validate supported provider",
-				Err:    validator.ValidateSupportedProviderCreate(v.provider),
 				Silent: true,
 			}
 		},
