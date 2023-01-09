@@ -568,6 +568,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/awsiamauth/mock_test.go -package=awsiamauth_test -source "pkg/awsiamauth/installer.go"
 	${GOPATH}/bin/mockgen -destination=controllers/mocks/provider.go -package=mocks -source "pkg/controller/clusters/registry.go"
 	${GOPATH}/bin/mockgen -destination=pkg/controller/clusters/mocks/validations.go -package=mocks -source "pkg/controller/clusters/validations.go"
+	${GOPATH}/bin/mockgen -destination=pkg/registry/mocks/client.go -package=mocks -source "pkg/registry/client.go" OCIRegistryClient
 	${GOPATH}/bin/mockgen -destination=pkg/registry/mocks/oras.go -package=mocks oras.land/oras-go/v2 CopyGraph
 
 .PHONY: verify-mocks

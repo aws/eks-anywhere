@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"oras.land/oras-go/v2"
 	orasregistry "oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -117,30 +116,11 @@ func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (re
 	return repo, nil
 }
 
-// Copy an image from a source to a destination.
-func (or *OCIRegistryClient) Copy(ctx context.Context, image Artifact, dstClient StorageClient) (err error) {
-	srcStorage, err := or.GetStorage(ctx, image)
-	if err != nil {
-		return fmt.Errorf("registry copy source: %v", err)
-	}
-
-	dstStorage, err := dstClient.GetStorage(ctx, image)
-	if err != nil {
-		return fmt.Errorf("registry copy destination: %v", err)
-	}
-
-	var desc ocispec.Descriptor
-	or.registry.Reference.Reference = image.VersionedImage()
+func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistry.Repository, versionedImage string) (desc ocispec.Descriptor, err error) {
+	or.registry.Reference.Reference = versionedImage
 	desc, err = srcStorage.Resolve(ctx, or.registry.Reference.Reference)
 	if err != nil {
-		return fmt.Errorf("registry source resolve: %v", err)
+		return desc, err
 	}
-
-	extendedCopyOptions := oras.DefaultExtendedCopyOptions
-	err = oras.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
-	if err != nil {
-		return fmt.Errorf("registry copy: %v", err)
-	}
-
-	return nil
+	return desc, nil
 }

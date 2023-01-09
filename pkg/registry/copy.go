@@ -3,12 +3,11 @@ package registry
 import (
 	"context"
 	"fmt"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
 )
 
 // Copy an image from a source to a destination.
-func Copy(ctx context.Context, srcClient *OCIRegistryClient, dstClient StorageClient, image Artifact) (err error) {
+func Copy(ctx context.Context, srcClient StorageClient, dstClient StorageClient, image Artifact) (err error) {
 	srcStorage, err := srcClient.GetStorage(ctx, image)
 	if err != nil {
 		return fmt.Errorf("registry copy source: %v", err)
@@ -19,9 +18,7 @@ func Copy(ctx context.Context, srcClient *OCIRegistryClient, dstClient StorageCl
 		return fmt.Errorf("registry copy destination: %v", err)
 	}
 
-	var desc ocispec.Descriptor
-	srcClient.registry.Reference.Reference = image.VersionedImage()
-	desc, err = srcStorage.Resolve(ctx, srcClient.registry.Reference.Reference)
+	desc, err := srcClient.Resolve(ctx, srcStorage, image.VersionedImage())
 	if err != nil {
 		return fmt.Errorf("registry source resolve: %v", err)
 	}
