@@ -18,7 +18,7 @@ func WithSnowMachineDefaultValues() SnowMachineConfigFiller {
 	return func(m *anywherev1.SnowMachineConfig) {
 		m.Spec.InstanceType = anywherev1.DefaultSnowInstanceType
 		m.Spec.PhysicalNetworkConnector = anywherev1.DefaultSnowPhysicalNetworkConnectorType
-		m.Spec.SshKeyName = anywherev1.DefaultSnowSshKeyName
+		m.Spec.SshKeyName = anywherev1.DefaultSnowSSHKeyName
 	}
 }
 
