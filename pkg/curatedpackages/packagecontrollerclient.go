@@ -9,6 +9,7 @@ import (
 	"time"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -48,6 +49,7 @@ type PackageControllerClient struct {
 	registryMirror        *registrymirror.RegistryMirror
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
+	valuesFileWriter    filewriter.FileWriter
 }
 
 type ChartInstaller interface {
@@ -125,13 +127,9 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		values = append(values, "cronjob.suspend=true")
 	}
 
-	writer, err := filewriter.NewWriter(pc.clusterName)
-	defer writer.CleanUpTemp()
-	if err != nil {
-		return err
-	}
+	var err error
 	var valueFilePath string
-	if valueFilePath, err = pc.CreateHelmOverrideValuesYaml(writer); err != nil {
+	if valueFilePath, _, err = pc.CreateHelmOverrideValuesYaml(); err != nil {
 		return err
 	}
 
@@ -143,25 +141,27 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 }
 
 // CreateHelmOverrideValuesYaml creates a temp file to override certain values in package controller helm install.
-func (pc *PackageControllerClient) CreateHelmOverrideValuesYaml(writer filewriter.FileWriter) (string, error) {
-	content, err := pc.GenerateHelmOverrideValues()
+func (pc *PackageControllerClient) CreateHelmOverrideValuesYaml() (string, []byte, error) {
+	content, err := pc.generateHelmOverrideValues()
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	filePath, err := writer.Write(valueFileName, content)
+	if pc.valuesFileWriter == nil {
+		return "", content, fmt.Errorf("valuesFileWriter is nil")
+	}
+	filePath, err := pc.valuesFileWriter.Write(valueFileName, content)
 	if err != nil {
-		return "", err
+		return "", content, err
 	}
-	return filePath, nil
+	return filePath, content, nil
 }
 
-// GenerateHelmOverrideValues generates override values.
-func (pc *PackageControllerClient) GenerateHelmOverrideValues() ([]byte, error) {
+func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) {
 	var err error
 	endpoint, username, password, caCertContent := "", "", "", ""
 	if pc.registryMirror != nil {
 		endpoint = pc.registryMirror.BaseRegistry
-		username, password, err = pc.registryMirror.Credentials()
+		username, password, err = config.ReadCredentials()
 		if err != nil {
 			return []byte{}, err
 		}
@@ -320,5 +320,13 @@ func WithNoProxy(noProxy []string) func(client *PackageControllerClient) {
 func WithManagementClusterName(managementClusterName string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.managementClusterName = managementClusterName
+	}
+}
+
+// WithValuesFileWriter sets up a writer to generate temporary values.yaml to
+// override some values in package controller helm chart.
+func WithValuesFileWriter(writer filewriter.FileWriter) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.valuesFileWriter = writer
 	}
 }

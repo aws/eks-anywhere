@@ -154,6 +154,21 @@ func TestHelmInstallChartSuccess(t *testing.T) {
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", "", values)).To(Succeed())
 }
 
+func TestHelmInstallChartSuccessWithValuesFile(t *testing.T) {
+	tt := newHelmTest(t)
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	values := []string{"key1=value1"}
+	valuesFileName := "values.yaml"
+	expectCommand(
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", valuesFileName, values)).To(Succeed())
+}
+
 func TestHelmInstallChartSuccessWithInsecure(t *testing.T) {
 	tt := newHelmTest(t, executables.WithInsecure())
 	chart := "chart"
@@ -166,6 +181,21 @@ func TestHelmInstallChartSuccessWithInsecure(t *testing.T) {
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", "", values)).To(Succeed())
+}
+
+func TestHelmInstallChartSuccessWithInsecureAndValuesFile(t *testing.T) {
+	tt := newHelmTest(t, executables.WithInsecure())
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	values := []string{"key1=value1"}
+	valuesFileName := "values.yaml"
+	expectCommand(
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName, "--insecure-skip-tls-verify",
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", valuesFileName, values)).To(Succeed())
 }
 
 func TestHelmGetValueArgs(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -529,7 +530,10 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 
 	if registryMirror.Auth {
 		values["registryAuth"] = registryMirror.Auth
-		username, password, _ := registryMirror.Credentials()
+		username, password, err := config.ReadCredentials()
+		if err != nil {
+			return nil
+		}
 		values["registryUsername"] = username
 		values["registryPassword"] = password
 	}

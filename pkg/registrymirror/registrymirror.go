@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -76,15 +75,6 @@ func (r *RegistryMirror) CoreEKSAMirror() string {
 // CuratedPackagesMirror returns the mirror for curated packages.
 func (r *RegistryMirror) CuratedPackagesMirror() string {
 	return r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistryRegex]
-}
-
-// Credentials returns the credential for the registry mirror.
-func (r *RegistryMirror) Credentials() (string, string, error) {
-	username, password, err := config.ReadCredentials()
-	if err != nil {
-		return "", "", err
-	}
-	return username, password, nil
 }
 
 // ReplaceRegistry replaces the host in a url with corresponding registry mirror

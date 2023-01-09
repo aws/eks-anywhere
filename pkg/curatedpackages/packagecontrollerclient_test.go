@@ -45,6 +45,7 @@ type packageControllerTest struct {
 	httpsProxy     string
 	noProxy        []string
 	registryMirror *registrymirror.RegistryMirror
+	writer         filewriter.FileWriter
 	wantValueFile  string
 }
 
@@ -70,6 +71,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 		Auth:          true,
 		CACertContent: "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
 	}
+	writer, _ := filewriter.NewWriter(clusterName)
 	return []*packageControllerTest{
 		{
 			WithT:          NewWithT(t),
@@ -82,6 +84,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 				curatedpackages.WithEksaRegion(eksaRegion),
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
 				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -93,6 +96,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
 			registryMirror: registryMirror,
+			writer:         writer,
 			wantValueFile:  "testdata/values_test.yaml",
 		},
 		{
@@ -107,6 +111,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 				curatedpackages.WithEksaRegion(eksaRegion),
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
 				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -118,6 +123,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
 			registryMirror: nil,
+			writer:         writer,
 			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
 		},
 		{
@@ -128,6 +134,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			command: curatedpackages.NewPackageControllerClient(
 				ci, k, clusterName, kubeConfig, chart, registryMirror,
 				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -139,6 +146,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
 			registryMirror: registryMirror,
+			writer:         writer,
 			wantValueFile:  "testdata/values_empty_awssecret.yaml",
 		},
 		{
@@ -149,6 +157,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			command: curatedpackages.NewPackageControllerClient(
 				ci, k, clusterName, kubeConfig, chart, nil,
 				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -160,6 +169,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
 			registryMirror: nil,
+			writer:         writer,
 			wantValueFile:  "testdata/values_empty.yaml",
 		},
 	}
@@ -250,6 +260,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			curatedpackages.WithHTTPSProxy(tt.httpsProxy),
 			curatedpackages.WithNoProxy(tt.noProxy),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
@@ -307,6 +318,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			curatedpackages.WithHTTPSProxy(""),
 			curatedpackages.WithNoProxy(nil),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
@@ -521,6 +533,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 			curatedpackages.WithActiveBundleTimeout(time.Second),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
@@ -628,6 +641,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 			curatedpackages.WithActiveBundleTimeout(time.Millisecond),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
@@ -678,54 +692,53 @@ func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string
 	}
 }
 
-func TestGenerateHelmOverrideValues(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		if tt.registryMirror != nil {
-			t.Setenv("REGISTRY_USERNAME", "username")
-			t.Setenv("REGISTRY_PASSWORD", "password")
-		}
-		valuesFileContent, err := tt.command.GenerateHelmOverrideValues()
-		if err != nil {
-			t.Errorf("failed to generate values.yaml contents: %v", err)
-		}
-		test.AssertContentToFile(t, string(valuesFileContent), tt.wantValueFile)
-	}
-}
-
-func TestGenerateHelmOverrideValuesFail(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		_, err := tt.command.GenerateHelmOverrideValues()
-		if tt.registryMirror != nil {
-			tt.Expect(err).NotTo(BeNil())
-		} else {
-			tt.Expect(err).To(BeNil())
-		}
-	}
-}
-
 func TestCreateHelmOverrideValuesYaml(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		writer, _ := filewriter.NewWriter(tt.clusterName)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
 		}
-		filePath, err := tt.command.CreateHelmOverrideValuesYaml(writer)
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
 		tt.Expect(err).To(BeNil())
 		tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+		test.AssertContentToFile(t, string(content), tt.wantValueFile)
 	}
 }
 
 func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		writer, _ := filewriter.NewWriter(tt.clusterName)
-		filePath, err := tt.command.CreateHelmOverrideValuesYaml(writer)
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
 		if tt.registryMirror != nil {
 			tt.Expect(err).NotTo(BeNil())
 			tt.Expect(filePath).To(Equal(""))
 		} else {
 			tt.Expect(err).To(BeNil())
 			tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+			test.AssertContentToFile(t, string(content), tt.wantValueFile)
+		}
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithActiveBundleTimeout(time.Second),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+		)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+
+		err := tt.command.EnableCuratedPackages(tt.ctx)
+		expectedErr := fmt.Errorf("valuesFileWriter is nil")
+		if err.Error() != expectedErr.Error() {
+			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
 	}
 }

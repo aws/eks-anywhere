@@ -212,7 +212,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	}
 
 	if s.registryMirror != nil && s.registryMirror.Auth {
-		username, password, err := s.registryMirror.Credentials()
+		username, password, err := config.ReadCredentials()
 		if err != nil {
 			return err
 		}

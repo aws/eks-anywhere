@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -207,7 +208,7 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		}
 		if registryMirror.Auth {
 			k.execConfig.RegistryAuth = registryMirror.Auth
-			username, password, err := registryMirror.Credentials()
+			username, password, err := config.ReadCredentials()
 			if err != nil {
 				return err
 			}
