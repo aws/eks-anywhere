@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -116,9 +115,6 @@ func generateClusterConfig(clusterName string) error {
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 	case constants.SnowProviderName:
-		if !features.IsActive(features.SnowProvider()) {
-			return fmt.Errorf("the snow infrastructure provider is still under development")
-		}
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
 		datacenterConfig := v1alpha1.NewSnowDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
