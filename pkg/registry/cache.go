@@ -13,7 +13,7 @@ func NewCache() *Cache {
 }
 
 // Get cached registry client or make it.
-func (cache *Cache) Get(context RegistryContext) (StorageClient, error) {
+func (cache *Cache) Get(context StorageContext) (StorageClient, error) {
 	aClient, found := cache.registries[context.host]
 	if !found {
 		aClient = NewOCIRegistry(context)

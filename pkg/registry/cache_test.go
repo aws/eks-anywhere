@@ -14,14 +14,14 @@ func TestCache_Get(t *testing.T) {
 	credentialStore := registry.NewCredentialStore()
 	certificates := &x509.CertPool{}
 
-	registryContext := registry.NewRegistryContext("localhost", credentialStore, certificates, false)
+	registryContext := registry.NewStorageContext("localhost", credentialStore, certificates, false)
 	result, err := cache.Get(registryContext)
 	assert.NoError(t, err)
 	ociRegistry, ok := result.(*registry.OCIRegistryClient)
 	assert.True(t, ok)
 	assert.Equal(t, "localhost", ociRegistry.GetHost())
 
-	registryContext = registry.NewRegistryContext("!@#$", credentialStore, certificates, true)
+	registryContext = registry.NewStorageContext("!@#$", credentialStore, certificates, true)
 	result, err = cache.Get(registryContext)
 	assert.EqualError(t, err, "error with registry <!@#$>: invalid reference: invalid registry")
 	busted, ok := result.(*registry.OCIRegistryClient)

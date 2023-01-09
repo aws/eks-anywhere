@@ -90,7 +90,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.
 		return err
 	}
 
-	dstContext := registry.NewRegistryContext(c.destination, credentialStore, certificates, c.insecure)
+	dstContext := registry.NewStorageContext(c.destination, credentialStore, certificates, c.insecure)
 	c.registryCache = registry.NewCache()
 	dstRegistry, err := c.registryCache.Get(dstContext)
 	if err != nil {
@@ -119,7 +119,7 @@ func (c CopyPackagesCommand) copyImages(ctx context.Context, dstRegistry registr
 	for _, image := range imageList {
 		host := image.Registry()
 
-		srcContext := registry.NewRegistryContext(host, credentialStore, certificates, c.insecure)
+		srcContext := registry.NewStorageContext(host, credentialStore, certificates, c.insecure)
 		srcRegistry, err := c.registryCache.Get(srcContext)
 		if err != nil {
 			return fmt.Errorf("error with repository %s: %v", host, err)

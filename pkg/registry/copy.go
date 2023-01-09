@@ -3,7 +3,6 @@ package registry
 import (
 	"context"
 	"fmt"
-	"oras.land/oras-go/v2"
 )
 
 // Copy an image from a source to a destination.
@@ -23,8 +22,7 @@ func Copy(ctx context.Context, srcClient StorageClient, dstClient StorageClient,
 		return fmt.Errorf("registry source resolve: %v", err)
 	}
 
-	extendedCopyOptions := oras.DefaultExtendedCopyOptions
-	err = oras.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
+	err = srcClient.CopyGraph(ctx, srcStorage, dstStorage, desc)
 	if err != nil {
 		return fmt.Errorf("registry copy: %v", err)
 	}

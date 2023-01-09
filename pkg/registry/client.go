@@ -3,40 +3,21 @@ package registry
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"net/http"
 	"path"
 	"sync"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"oras.land/oras-go/v2"
 	orasregistry "oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
-// RegistryContext describes aspects of a registry.
-type RegistryContext struct {
-	host            string
-	project         string
-	credentialStore CredentialStore
-	certificates    *x509.CertPool
-	insecure        bool
-}
-
-// NewRegistryContext create registry context.
-func NewRegistryContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) RegistryContext {
-	return RegistryContext{
-		host:            host,
-		credentialStore: credentialStore,
-		certificates:    certificates,
-		insecure:        insecure,
-	}
-}
-
 // OCIRegistryClient storage client for an OCI registry.
 type OCIRegistryClient struct {
-	RegistryContext
+	StorageContext
 	initialized sync.Once
 	registry    *remote.Registry
 }
@@ -44,9 +25,9 @@ type OCIRegistryClient struct {
 var _ StorageClient = (*OCIRegistryClient)(nil)
 
 // NewOCIRegistry create an OCI registry client.
-func NewOCIRegistry(context RegistryContext) *OCIRegistryClient {
+func NewOCIRegistry(context StorageContext) *OCIRegistryClient {
 	return &OCIRegistryClient{
-		RegistryContext: context,
+		StorageContext: context,
 	}
 }
 
@@ -116,11 +97,14 @@ func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (re
 	return repo, nil
 }
 
+// Resolve the location of the source repository given the image.
 func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistry.Repository, versionedImage string) (desc ocispec.Descriptor, err error) {
 	or.registry.Reference.Reference = versionedImage
-	desc, err = srcStorage.Resolve(ctx, or.registry.Reference.Reference)
-	if err != nil {
-		return desc, err
-	}
-	return desc, nil
+	return srcStorage.Resolve(ctx, or.registry.Reference.Reference)
+}
+
+// CopyGraph copy manifest and all blobs to destination.
+func (or *OCIRegistryClient) CopyGraph(ctx context.Context, srcStorage orasregistry.Repository, dstStorage orasregistry.Repository, desc ocispec.Descriptor) error {
+	extendedCopyOptions := oras.DefaultExtendedCopyOptions
+	return oras.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
 }

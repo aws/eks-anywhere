@@ -1,33 +1,38 @@
 package registry_test
 
 import (
-	"github.com/golang/mock/gomock"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/registry"
+	"github.com/aws/eks-anywhere/pkg/registry/mocks"
 )
 
+var srcArtifact = registry.Artifact{
+	Registry:   "public.ecr.aws",
+	Repository: "l0g8r8j6/kube-vip/kube-vip",
+	Tag:        "v0.5.5-eks-a-v0.0.0-dev-build.4452",
+	Digest:     "sha256:6efe21500abbfbb6b3e37b80dd5dea0b11a0d1b145e84298fee5d7784a77e967",
+}
+
 func TestCopy(t *testing.T) {
-	registryContext := registry.NewRegistryContext("public.ecr.aws", credentialStore, certificates, false)
-	srcRegistry := registry.NewOCIRegistry(registryContext)
-	assert.NoError(t, srcRegistry.Init())
-	mockOI := mocks.NewMockOrasInterface(gomock.NewController(t))
+	srcClient := mocks.NewMockStorageClient(gomock.NewController(t))
+	dstClient := mocks.NewMockStorageClient(gomock.NewController(t))
+
 	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
-	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockSrcRepo, nil)
-	mockOI.EXPECT().Resolve(ctx, gomock.Any(), gomock.Any()).Return(desc, nil)
-	mockOI.EXPECT().CopyGraph(ctx, &mockSrcRepo, gomock.Any(), desc, gomock.Any()).Return(nil)
-
-	registryContext = registry.NewRegistryContext("localhost", credentialStore, certificates, false)
-	dstRegistry := registry.NewOCIRegistry(registryContext)
-	assert.NoError(t, dstRegistry.Init())
-	mockOI = mocks.NewMockOrasInterface(gomock.NewController(t))
 	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
-	mockOI.EXPECT().Repository(ctx, gomock.Any(), "eks-anywhere/eks-anywhere-packages").Return(&mockDstRepo, nil)
-	dstRegistry.OI = mockOI
 
-	err := registry.Copy(ctx, srcRegistry, dstRegistry, image)
+	srcClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockSrcRepo, nil)
+	dstClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockDstRepo, nil)
+	var desc ocispec.Descriptor
+	expectedImage := srcArtifact.VersionedImage()
+	srcClient.EXPECT().Resolve(ctx, &mockSrcRepo, expectedImage).Return(desc, nil)
+	srcClient.EXPECT().CopyGraph(ctx, &mockSrcRepo, &mockDstRepo, desc).Return(nil)
+
+	err := registry.Copy(ctx, srcClient, dstClient, srcArtifact)
 	assert.NoError(t, err)
 }
 

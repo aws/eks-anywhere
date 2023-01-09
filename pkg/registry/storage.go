@@ -2,10 +2,30 @@ package registry
 
 import (
 	"context"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"crypto/x509"
 
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	orasregistry "oras.land/oras-go/v2/registry"
 )
+
+// StorageContext describes aspects of a registry.
+type StorageContext struct {
+	host            string
+	project         string
+	credentialStore CredentialStore
+	certificates    *x509.CertPool
+	insecure        bool
+}
+
+// NewStorageContext create registry context.
+func NewStorageContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) StorageContext {
+	return StorageContext{
+		host:            host,
+		credentialStore: credentialStore,
+		certificates:    certificates,
+		insecure:        insecure,
+	}
+}
 
 // StorageClient interface for general image storage client.
 type StorageClient interface {
@@ -14,4 +34,5 @@ type StorageClient interface {
 	GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error)
 	SetProject(project string)
 	Destination(image Artifact) string
+	CopyGraph(ctx context.Context, srcStorage orasregistry.Repository, dstStorage orasregistry.Repository, desc ocispec.Descriptor) error
 }
