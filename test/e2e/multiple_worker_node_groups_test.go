@@ -106,7 +106,7 @@ func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 			api.RemoveWorkerNodeGroup("worker-2"),
 			api.WithWorkerNodeGroup("worker-1", api.WithCount(1)),
 			api.RemoveWorkerNodeGroup("worker-3"),
-			api.WithWorkerNodeGroup("worker-3", api.WithCount(1),api.WithTaint(framework.NoScheduleTaint())),
+			api.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithTaint(framework.NoScheduleTaint())),
 		),
 		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-4", api.WithCount(1))),
 	)

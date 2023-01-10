@@ -23,8 +23,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // log is for logging in this package.
@@ -70,9 +68,6 @@ func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	if r.IsReconcilePaused() {
 		vspheredatacenterconfiglog.Info("VSphereDatacenterConfig is paused, so allowing create", "name", r.Name)
 		return nil
-	}
-	if !features.IsActive(features.FullLifecycleAPI()) {
-		return apierrors.NewBadRequest("Creating new VSphereDatacenterConfig on existing cluster is not supported")
 	}
 
 	return nil

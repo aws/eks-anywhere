@@ -135,7 +135,7 @@ func WaitForPackageToBeInstalled(
 		test,
 		ctx,
 		"package/"+packageName,
-		EksaPackagesNamespace,
+		fmt.Sprintf("%s-%s", EksaPackagesNamespace, test.ClusterName),
 		"{.status.state}",
 		timeout,
 		NoErrorPredicate,
@@ -144,7 +144,7 @@ func WaitForPackageToBeInstalled(
 }
 
 func UpgradePackages(test *framework.ClusterE2ETest, bundleVersion string) {
-	test.RunEKSA([]string{"upgrade", "packages", "--bundle-version=" + bundleVersion})
+	test.RunEKSA([]string{"upgrade", "packages", "--bundle-version=" + bundleVersion, "--cluster=" + test.ClusterName})
 }
 
 func GetLatestBundleFromCluster(test *framework.ClusterE2ETest) (string, error) {

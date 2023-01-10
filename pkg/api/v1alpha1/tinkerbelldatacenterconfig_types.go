@@ -65,6 +65,11 @@ func (t *TinkerbellDatacenterConfig) ClearPauseAnnotation() {
 	}
 }
 
+// Validate validates the Tinkerbell datacenter config.
+func (t *TinkerbellDatacenterConfig) Validate() error {
+	return validateDatacenterConfig(t)
+}
+
 func (t *TinkerbellDatacenterConfig) ConvertConfigToConfigGenerateStruct() *TinkerbellDatacenterConfigGenerate {
 	namespace := defaultEksaNamespace
 	if t.Namespace != "" {
