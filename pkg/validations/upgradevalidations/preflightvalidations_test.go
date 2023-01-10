@@ -456,16 +456,18 @@ func newProvider(datacenterConfig v1alpha1.TinkerbellDatacenterConfig, machineCo
 
 func TestPreflightValidationsVsphere(t *testing.T) {
 	tests := []struct {
-		name               string
-		clusterVersion     string
-		upgradeVersion     string
-		getClusterResponse []types.CAPICluster
-		cpResponse         error
-		workerResponse     error
-		nodeResponse       error
-		crdResponse        error
-		wantErr            error
-		modifyFunc         func(s *cluster.Spec)
+		name                   string
+		clusterVersion         string
+		upgradeVersion         string
+		getClusterResponse     []types.CAPICluster
+		cpResponse             error
+		workerResponse         error
+		nodeResponse           error
+		crdResponse            error
+		wantErr                error
+		modifyExistingSpecFunc func(s *cluster.Spec)
+		modifyDefaultSpecFunc  func(s *cluster.Spec)
+		additionalKubectlMocks func(k *mocks.MockKubectlClient)
 	}{
 		{
 			name:               "ValidationSucceeds",
@@ -587,7 +589,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.externalEtcdConfiguration.count is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration.Count++
 			},
 		},
@@ -601,7 +603,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.controlPlaneConfiguration.endpoint is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "2.3.4.5"
 			},
 		},
@@ -615,7 +617,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.AWSIamConfig.Spec.AWSRegion = "us-east-2"
 			},
 		},
@@ -629,7 +631,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.AWSIamConfig.Spec.BackendMode = append(s.AWSIamConfig.Spec.BackendMode, "us-east-2")
 			},
 		},
@@ -643,7 +645,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.AWSIamConfig.Spec.Partition = "partition2"
 			},
 		},
@@ -657,7 +659,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
 					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "aws-iam2",
@@ -674,7 +676,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.IdentityProviderRefs[0] = v1alpha1.Ref{
 					Kind: v1alpha1.OIDCConfigKind,
 					Name: "oidc",
@@ -691,7 +693,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
 					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "aws-iam",
@@ -712,7 +714,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps spec.flux.github.fluxSystemNamespace is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace = "new-namespace"
 			},
 		},
@@ -726,7 +728,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps spec.flux.github.branch is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Branch = "new-branch"
 			},
 		},
@@ -740,7 +742,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps spec.flux.github.owner is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Owner = "new-owner"
 			},
 		},
@@ -754,7 +756,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps spec.flux.github.repository is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Repository = "new-repository"
 			},
 		},
@@ -768,7 +770,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps spec.flux.github.clusterConfigPath is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath = "new-path"
 			},
 		},
@@ -782,7 +784,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps spec.flux.github.personal is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Personal = !s.GitOpsConfig.Spec.Flux.Github.Personal
 			},
 		},
@@ -796,7 +798,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.OIDCConfig.Spec.ClientId = "new-client-id"
 			},
 		},
@@ -810,7 +812,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.OIDCConfig.Spec.GroupsClaim = "new-groups-claim"
 			},
 		},
@@ -824,7 +826,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.OIDCConfig.Spec.GroupsPrefix = "new-groups-prefix"
 			},
 		},
@@ -838,7 +840,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.OIDCConfig.Spec.IssuerUrl = "new-issuer-url"
 			},
 		},
@@ -852,7 +854,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.OIDCConfig.Spec.UsernameClaim = "new-username-claim"
 			},
 		},
@@ -866,7 +868,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.OIDCConfig.Spec.UsernamePrefix = "new-username-prefix"
 			},
 		},
@@ -880,7 +882,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            nil,
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.OIDCConfig.Spec.RequiredClaims[0].Claim = "new-groups-claim"
 			},
 		},
@@ -894,7 +896,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.Pods is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ClusterNetwork.Pods = v1alpha1.Pods{}
 			},
 		},
@@ -908,7 +910,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.Services is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ClusterNetwork.Services = v1alpha1.Services{}
 			},
 		},
@@ -922,7 +924,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.clusterNetwork.DNS is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{}
 			},
 		},
@@ -936,7 +938,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.proxyConfiguration is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
 					HttpProxy:  "httpproxy2",
 					HttpsProxy: "httpsproxy2",
@@ -956,7 +958,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("spec.externalEtcdConfiguration.count is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration.Count += 1
 				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
 					Kind: v1alpha1.VSphereDatacenterKind,
@@ -974,7 +976,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("adding or removing external etcd during upgrade is not supported"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration = nil
 				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
 					Kind: v1alpha1.VSphereDatacenterKind,
@@ -992,8 +994,25 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			nodeResponse:       nil,
 			crdResponse:        nil,
 			wantErr:            composeError("management flag is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
 				s.Cluster.SetManagedBy(fmt.Sprintf("%s-1", s.Cluster.ManagedBy()))
+			},
+		},
+		{
+			name:               "ValidationManagementClusterNameImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("management cluster name is immutable"),
+			modifyExistingSpecFunc: func(s *cluster.Spec) {
+				s.Cluster.Spec.ManagementCluster.Name = fmt.Sprintf("%s-1", s.Cluster.ManagedBy())
+			},
+			modifyDefaultSpecFunc: func(s *cluster.Spec) {
+				s.Cluster.Spec.ManagementCluster.Name = fmt.Sprintf("%s-2", s.Cluster.ManagedBy())
 			},
 		},
 	}
@@ -1071,7 +1090,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 	}
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+	defaultClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = testclustername
 		s.Cluster.Spec.ControlPlaneConfiguration = defaultControlPlane
 		s.Cluster.Spec.ExternalEtcdConfiguration = defaultETCD
@@ -1133,6 +1152,11 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
+
+			clusterSpec := defaultClusterSpec.DeepCopy()
+			if tc.modifyDefaultSpecFunc != nil {
+				tc.modifyDefaultSpecFunc(clusterSpec)
+			}
 			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
@@ -1143,10 +1167,10 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
-			existingClusterSpec := clusterSpec.DeepCopy()
+			existingClusterSpec := defaultClusterSpec.DeepCopy()
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
-			if tc.modifyFunc != nil {
-				tc.modifyFunc(existingClusterSpec)
+			if tc.modifyExistingSpecFunc != nil {
+				tc.modifyExistingSpecFunc(existingClusterSpec)
 			}
 			versionResponse := &executables.VersionResponse{
 				ServerVersion: version.Info{

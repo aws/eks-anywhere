@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -56,10 +57,21 @@ func TestPreFlightValidationsGitProvider(t *testing.T) {
 func TestPreFlightValidationsWorkloadCluster(t *testing.T) {
 	tt := newPreflightValidationsTest(t)
 	tt.c.Opts.Spec.Cluster.SetManagedBy("mgmt-cluster")
+	tt.c.Opts.Spec.Cluster.Spec.ManagementCluster.Name = "mgmt-cluster"
 
 	tt.k.EXPECT().GetClusters(tt.ctx, tt.c.Opts.WorkloadCluster).Return(nil, nil)
 	tt.k.EXPECT().ValidateClustersCRD(tt.ctx, tt.c.Opts.WorkloadCluster).Return(nil)
 	tt.k.EXPECT().ValidateEKSAClustersCRD(tt.ctx, tt.c.Opts.WorkloadCluster).Return(nil)
+	tt.k.EXPECT().GetEksaCluster(tt.ctx, tt.c.Opts.ManagementCluster, "mgmt-cluster").Return(&v1alpha1.Cluster{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "mgmt-cluster",
+		},
+		Spec: v1alpha1.ClusterSpec{
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "mgmt-cluster",
+			},
+		},
+	}, nil)
 
 	tt.Expect(tt.c.PreflightValidations(tt.ctx)).To(Succeed())
 }
