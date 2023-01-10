@@ -7,7 +7,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
@@ -53,14 +52,12 @@ func validateDatacenterConfig(config *TinkerbellDatacenterConfig) error {
 		if _, err := url.ParseRequestURI(config.Spec.OSImageURL); err != nil {
 			return fmt.Errorf("parsing osImageOverride: %v", err)
 		}
-		logger.Info("OS image path override set", "path", config.Spec.OSImageURL)
 	}
 
 	if config.Spec.HookImagesURLPath != "" {
 		if _, err := url.ParseRequestURI(config.Spec.HookImagesURLPath); err != nil {
 			return fmt.Errorf("parsing hookOverride: %v", err)
 		}
-		logger.Info("hook path override set", "path", config.Spec.HookImagesURLPath)
 	}
 
 	if err := validateObjectMeta(config.ObjectMeta); err != nil {
