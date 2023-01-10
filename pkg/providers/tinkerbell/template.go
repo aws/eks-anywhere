@@ -532,7 +532,7 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 		values["registryAuth"] = registryMirror.Auth
 		username, password, err := config.ReadCredentials()
 		if err != nil {
-			return nil
+			return values
 		}
 		values["registryUsername"] = username
 		values["registryPassword"] = password

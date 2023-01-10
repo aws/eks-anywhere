@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	artifactsv1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -740,5 +741,27 @@ func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
 		if err.Error() != expectedErr.Error() {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	writer := writermocks.NewMockFileWriter(ctrl)
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithValuesFileWriter(writer),
+		)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		writer.EXPECT().Write(gomock.Any(), gomock.Any()).Return("", errors.New("writer errors out"))
+
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
+		tt.Expect(filePath).To(Equal(""))
+		tt.Expect(content).NotTo(BeNil())
+		tt.Expect(err).NotTo(BeNil())
 	}
 }

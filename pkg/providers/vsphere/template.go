@@ -224,7 +224,7 @@ func buildTemplateMapCP(
 			values["registryAuth"] = registryMirror.Auth
 			username, password, err := config.ReadCredentials()
 			if err != nil {
-				return nil, err
+				return values, err
 			}
 			values["registryUsername"] = username
 			values["registryPassword"] = password
@@ -350,7 +350,7 @@ func buildTemplateMapMD(
 			values["registryAuth"] = registryMirror.Auth
 			username, password, err := config.ReadCredentials()
 			if err != nil {
-				return nil, err
+				return values, err
 			}
 			values["registryUsername"] = username
 			values["registryPassword"] = password
