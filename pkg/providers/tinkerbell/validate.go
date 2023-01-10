@@ -3,46 +3,15 @@ package tinkerbell
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
-
-func validateDatacenterConfig(config *v1alpha1.TinkerbellDatacenterConfig) error {
-	if config.Spec.OSImageURL != "" {
-		if _, err := url.ParseRequestURI(config.Spec.OSImageURL); err != nil {
-			return fmt.Errorf("parsing osImageOverride: %v", err)
-		}
-	}
-
-	if config.Spec.HookImagesURLPath != "" {
-		if _, err := url.ParseRequestURI(config.Spec.HookImagesURLPath); err != nil {
-			return fmt.Errorf("parsing hookOverride: %v", err)
-		}
-		logger.Info("hook path override set", "path", config.Spec.HookImagesURLPath)
-	}
-
-	if err := validateObjectMeta(config.ObjectMeta); err != nil {
-		return fmt.Errorf("TinkerbellDatacenterConfig: %v", err)
-	}
-
-	if config.Spec.TinkerbellIP == "" {
-		return errors.New("TinkerbellDatacenterConfig: missing spec.tinkerbellIP field")
-	}
-
-	if err := networkutils.ValidateIP(config.Spec.TinkerbellIP); err != nil {
-		return fmt.Errorf("TinkerbellDatacenterConfig: invalid tinkerbell ip: %v", err)
-	}
-
-	return nil
-}
 
 func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 	if err := validateObjectMeta(config.ObjectMeta); err != nil {

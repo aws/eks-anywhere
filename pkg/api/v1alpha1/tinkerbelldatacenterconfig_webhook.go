@@ -15,7 +15,11 @@
 package v1alpha1
 
 import (
+	"fmt"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -42,7 +46,21 @@ var _ webhook.Validator = &TinkerbellDatacenterConfig{}
 func (r *TinkerbellDatacenterConfig) ValidateCreate() error {
 	tinkerbelldatacenterconfiglog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(),
+			r.Name,
+			field.ErrorList{
+				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+			},
+		)
+	}
+
+	if r.IsReconcilePaused() {
+		tinkerbelldatacenterconfiglog.Info("TinkerbellDatacenterConfig is paused, so allowing create", "name", r.Name)
+		return nil
+	}
+
 	return nil
 }
 
@@ -50,7 +68,27 @@ func (r *TinkerbellDatacenterConfig) ValidateCreate() error {
 func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	tinkerbelldatacenterconfiglog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
+	oldTinkerbellDatacenterConfig, ok := old.(*TinkerbellDatacenterConfig)
+	if !ok {
+		return apierrors.NewBadRequest(fmt.Sprintf("expected a TinkerbellDatacenterConfig but got a %T", old))
+	}
+
+	var allErrs field.ErrorList
+
+	allErrs = append(allErrs, validateImmutableFieldsTinkerbellDatacenterConfig(r, oldTinkerbellDatacenterConfig)...)
+
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
+	}
+
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
+	}
+
 	return nil
 }
 
@@ -60,4 +98,18 @@ func (r *TinkerbellDatacenterConfig) ValidateDelete() error {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
+}
+
+func validateImmutableFieldsTinkerbellDatacenterConfig(new, old *TinkerbellDatacenterConfig) field.ErrorList {
+	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
+
+	if new.Spec.TinkerbellIP != old.Spec.TinkerbellIP {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("tinkerbellIP"), "field is immutable"),
+		)
+	}
+
+	return allErrs
 }
