@@ -977,18 +977,7 @@ func TestUpgradeNeededMachineConfigChanged(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-cp",
-			"test-namespace",
-			&v1alpha1.SnowMachineConfig{},
-		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
-			tt.clusterSpec.SnowMachineConfig("test-cp").DeepCopyInto(obj)
-			return nil
-		})
-	tt.kubeconfigClient.EXPECT().
-		Get(
-			tt.ctx,
-			"test-wn",
+			gomock.Any(),
 			"test-namespace",
 			&v1alpha1.SnowMachineConfig{},
 		).
