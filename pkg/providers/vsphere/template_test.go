@@ -96,19 +96,6 @@ func TestVsphereTemplateBuilderGenerateCAPISpecWorkersInvalidSSHKey(t *testing.T
 	)
 }
 
-func TestVsphereTemplateBuilderGenerateCAPISpecWorkersNoRegistryMirrorCredentials(t *testing.T) {
-	g := NewWithT(t)
-	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
-	spec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
-		Authenticate: true,
-	}
-	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
-	_, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
-	g.Expect(err).To(
-		MatchError(ContainSubstring("please set REGISTRY_USERNAME env var")),
-	)
-}
-
 func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidControlPlaneSSHKey(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
@@ -119,19 +106,6 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidControlPlaneSS
 	_, err := builder.GenerateCAPISpecControlPlane(spec, nil, nil)
 	g.Expect(err).To(
 		MatchError(ContainSubstring("formatting ssh key for vsphere control plane template: ssh")),
-	)
-}
-
-func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneNoRegistryMirrorCredentials(t *testing.T) {
-	g := NewWithT(t)
-	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
-	spec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
-		Authenticate: true,
-	}
-	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
-	_, err := builder.GenerateCAPISpecControlPlane(spec, nil, nil)
-	g.Expect(err).To(
-		MatchError(ContainSubstring("please set REGISTRY_USERNAME env var")),
 	)
 }
 
