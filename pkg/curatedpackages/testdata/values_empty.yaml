@@ -1,0 +1,9 @@
+registryMirrorSecret:
+  endpoint: ""
+  username: ""
+  password: ""
+  cacertcontent: ""
+awsSecret:
+  id: ""
+  secret: ""
+  region: ""

@@ -985,6 +985,10 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		writer, err := filewriter.NewWriter(spec.Cluster.Name)
+		if err != nil {
+			return err
+		}
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
@@ -999,6 +1003,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),
 			curatedpackages.WithManagementClusterName(managementClusterName),
+			curatedpackages.WithValuesFileWriter(writer),
 		)
 		return nil
 	})

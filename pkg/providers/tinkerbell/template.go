@@ -524,13 +524,16 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
 	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
-	if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
-		values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
+	if len(registryMirror.CACertContent) > 0 {
+		values["registryCACert"] = registryMirror.CACertContent
 	}
 
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-		values["registryAuth"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
-		username, password, _ := config.ReadCredentials()
+	if registryMirror.Auth {
+		values["registryAuth"] = registryMirror.Auth
+		username, password, err := config.ReadCredentials()
+		if err != nil {
+			return values
+		}
 		values["registryUsername"] = username
 		values["registryPassword"] = password
 	}

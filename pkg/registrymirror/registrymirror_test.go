@@ -85,6 +85,27 @@ func TestFromCluster(t *testing.T) {
 			},
 		},
 		{
+			name: "with registry mirror ca and auth",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					RegistryMirrorConfiguration: &v1alpha1.RegistryMirrorConfiguration{
+						Endpoint:      "1.2.3.4",
+						Port:          "443",
+						Authenticate:  true,
+						CACertContent: "xyz",
+					},
+				},
+			},
+			want: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443",
+				},
+				Auth:          true,
+				CACertContent: "xyz",
+			},
+		},
+		{
 			name:    "without registry mirror",
 			cluster: &v1alpha1.Cluster{},
 			want:    nil,
