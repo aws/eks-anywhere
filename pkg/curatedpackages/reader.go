@@ -3,12 +3,14 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registry"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -28,16 +30,25 @@ type ManifestReader interface {
 
 type PackageReader struct {
 	ManifestReader
+	AllImages     bool
+	storageClient registry.StorageClient
 }
+
+var _ ManifestReader = (*PackageReader)(nil)
 
 func NewPackageReader(mr ManifestReader) *PackageReader {
 	return &PackageReader{
 		ManifestReader: mr,
+		AllImages:      true,
 	}
 }
 
 func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
-	images, err := r.ManifestReader.ReadImagesFromBundles(ctx, b)
+	var err error
+	var images []releasev1.Image
+	if r.AllImages {
+		images, err = r.ManifestReader.ReadImagesFromBundles(ctx, b)
+	}
 
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
@@ -53,29 +64,46 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 		images = append(images, packageImages...)
 	}
 
-	return images, err
+	return removeDuplicateImages(images), err
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
-	images := r.ManifestReader.ReadChartsFromBundles(ctx, b)
+	var images []releasev1.Image
+	eksaCharts := append(images, r.ManifestReader.ReadChartsFromBundles(ctx, b)...)
+	if r.AllImages {
+		images = append(images, eksaCharts...)
+	}
+
+	// Generate bundle repository
+	for _, chart := range eksaCharts {
+		if strings.Contains(chart.Repository(), "eks-anywhere-packages") {
+			var bundleRepository releasev1.Image
+			chart.DeepCopyInto(&bundleRepository)
+			bundleRepository.URI = strings.Replace(bundleRepository.URI, "eks-anywhere-packages", "eks-anywhere-packages-bundles", 1)
+			bundleRepository.URI = strings.Replace(bundleRepository.URI, bundleRepository.Version(), "v1-24-latest", 1)
+			bundleRepository.ImageDigest = ""
+			images = append(images, bundleRepository)
+		}
+	}
+
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packagesHelmChart, err := fetchPackagesHelmChart(ctx, vb, artifact)
+		packagesHelmChart, err := r.fetchPackagesHelmChart(ctx, vb, artifact)
 		if err != nil {
 			logger.Info("Warning: Failed extracting packages", "error", err)
 			continue
 		}
 		images = append(images, packagesHelmChart...)
 	}
-	return images
+	return removeDuplicateImages(images)
 }
 
-func fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
-	data, err := PullLatestBundle(ctx, artifact)
+func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
+	data, err := r.storageClient.PullBytes(ctx, registry.NewArtifactFromURI(artifact))
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +120,8 @@ func fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.Versio
 			Description: p.Name,
 			OS:          ctrl.OS,
 			OSName:      ctrl.OSName,
-			URI:         fmt.Sprintf("%s/%s:%s", GetRegistry(ctrl.URI), p.Source.Repository, p.Source.Versions[0].Name),
+			URI:         fmt.Sprintf("%s/%s@%s", GetRegistry(ctrl.URI), p.Source.Repository, p.Source.Versions[0].Digest),
+			ImageDigest: p.Source.Versions[0].Digest,
 		}
 		images = append(images, pHC)
 	}
@@ -100,7 +129,7 @@ func fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.Versio
 }
 
 func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
-	data, err := PullLatestBundle(ctx, artifact)
+	data, err := r.storageClient.PullBytes(ctx, registry.NewArtifactFromURI(artifact))
 	if err != nil {
 		return nil, err
 	}
@@ -122,11 +151,27 @@ func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundl
 				OS:          ctrl.OS,
 				OSName:      ctrl.OSName,
 				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(ctrl.URI), version.Repository, version.Digest),
+				ImageDigest: version.Digest,
 			}
 			images = append(images, image)
 		}
 	}
 	return images, nil
+}
+
+func removeDuplicateImages(strSlice []releasev1.Image) []releasev1.Image {
+	allKeys := make(map[string]releasev1.Image)
+	var list []releasev1.Image
+	for _, item := range strSlice {
+		if _, value := allKeys[item.VersionedImage()]; !value {
+			allKeys[item.VersionedImage()] = item
+			list = append(list, item)
+		}
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].VersionedImage() < list[j].VersionedImage()
+	})
+	return list
 }
 
 func getRegistry(uri string) string {
