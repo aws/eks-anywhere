@@ -16,6 +16,7 @@ require (
 	github.com/aws/etcdadm-bootstrap-provider v1.0.5-rc2
 	github.com/aws/etcdadm-controller v1.0.4-rc2
 	github.com/aws/smithy-go v1.13.2
+	github.com/docker/cli v20.10.17+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
@@ -26,6 +27,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/nutanix-cloud-native/prism-go-client v0.3.0
 	github.com/onsi/gomega v1.20.1
+	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
@@ -48,6 +50,7 @@ require (
 	k8s.io/apiserver v0.25.2
 	k8s.io/client-go v0.25.4
 	oras.land/oras-go v1.2.0
+	oras.land/oras-go/v2 v2.0.0-rc.5
 	sigs.k8s.io/cluster-api v1.2.0
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
@@ -94,7 +97,6 @@ require (
 	github.com/coredns/caddy v1.1.0 // indirect
 	github.com/coredns/corefile-migration v1.0.17 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/cli v20.10.17+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
@@ -153,7 +155,6 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

@@ -47,13 +47,13 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
       namespace: eksa-packages-<cluster-name>
     spec:
       packageName: prometheus
-      # disable prometheus-server
-      server:
-        enabled: false
-      # or disable node-exporter
-      # nodeExporter:
-      #   enabled: false
-      
+      config: |
+        # disable prometheus-server
+        server:
+          enabled: false
+        # or disable node-exporter
+        # nodeExporter:
+        #   enabled: false
    ```
 
    Example package file with prometheus-server deployed as a statefulSet with replicaCount 2, and set scrape config to collect Prometheus-server's own metrics only:
@@ -66,7 +66,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
     spec:
       packageName: prometheus
       targetNamespace: observability
-      config: | 
+      config: |
         server:
           replicaCount: 2
           statefulSet:

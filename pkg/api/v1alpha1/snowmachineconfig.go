@@ -7,20 +7,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
-	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 const (
 	SnowMachineConfigKind                   = "SnowMachineConfig"
-	DefaultSnowSshKeyName                   = "default"
+	DefaultSnowSSHKeyName                   = ""
 	DefaultSnowInstanceType                 = SbeCLarge
 	DefaultSnowPhysicalNetworkConnectorType = SFPPlus
-	DefaultOSFamily                         = Bottlerocket
+	DefaultOSFamily                         = Ubuntu
 	MinimumContainerVolumeSizeUbuntu        = 8
 	MinimumContainerVolumeSizeBottlerocket  = 25
 )
 
-// Used for generating yaml for generate clusterconfig command.
+// NewSnowMachineConfigGenerate generates snowMachineConfig example for generate clusterconfig command.
 func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 	return &SnowMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
@@ -32,8 +31,9 @@ func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 		},
 		Spec: SnowMachineConfigSpec{
 			AMIID:                    "",
+			Devices:                  []string{""},
 			InstanceType:             DefaultSnowInstanceType,
-			SshKeyName:               DefaultSnowSshKeyName,
+			SshKeyName:               DefaultSnowSSHKeyName,
 			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 			OSFamily:                 DefaultOSFamily,
 			Network: SnowNetwork{
@@ -44,9 +44,6 @@ func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 						Primary: true,
 					},
 				},
-			},
-			ContainersVolume: &snowv1.Volume{
-				Size: 25,
 			},
 		},
 	}
