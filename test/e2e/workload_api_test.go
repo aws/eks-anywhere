@@ -100,7 +100,7 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereUpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
+func TestVSphereUpgradeLabelsTaintsBottleRocketAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -111,7 +111,7 @@ func TestVSphereUpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		vsphere.WithUbuntu124(),
+		vsphere.WithBottleRocket124(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -128,7 +128,7 @@ func TestVSphereUpgradeLabelsTaintsUbuntuAPI(t *testing.T) {
 			vsphere.WithWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(2), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoScheduleTaint()))),
 			vsphere.WithWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
 			vsphere.WithWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1), api.WithLabel("key2", "val2"), api.WithTaint(framework.PreferNoScheduleTaint()))),
-			vsphere.WithUbuntu124(),
+			vsphere.WithBottleRocket124(),
 		),
 	)
 
