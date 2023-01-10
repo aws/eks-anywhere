@@ -141,9 +141,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc3-eks-a-v0.0.0-dev-release-0.13-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:cefafbebf46668a36a690e076d25a35f6d24ff3f-eks-a-v0.0.0-dev-release-0.13-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -163,8 +163,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-release-0.13-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/metadata.yaml
-      version: v0.4.9-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/metadata.yaml
+      version: cefafbebf46668a36a690e076d25a35f6d24ff3f+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
@@ -916,9 +916,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc3-eks-a-v0.0.0-dev-release-0.13-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:cefafbebf46668a36a690e076d25a35f6d24ff3f-eks-a-v0.0.0-dev-release-0.13-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -938,8 +938,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-release-0.13-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/metadata.yaml
-      version: v0.4.9-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/metadata.yaml
+      version: cefafbebf46668a36a690e076d25a35f6d24ff3f+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
@@ -1691,9 +1691,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc3-eks-a-v0.0.0-dev-release-0.13-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:cefafbebf46668a36a690e076d25a35f6d24ff3f-eks-a-v0.0.0-dev-release-0.13-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -1713,8 +1713,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-release-0.13-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/metadata.yaml
-      version: v0.4.9-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/metadata.yaml
+      version: cefafbebf46668a36a690e076d25a35f6d24ff3f+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
@@ -2466,9 +2466,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc3-eks-a-v0.0.0-dev-release-0.13-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:cefafbebf46668a36a690e076d25a35f6d24ff3f-eks-a-v0.0.0-dev-release-0.13-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -2488,8 +2488,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-release-0.13-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc3/metadata.yaml
-      version: v0.4.9-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/cefafbebf46668a36a690e076d25a35f6d24ff3f/metadata.yaml
+      version: cefafbebf46668a36a690e076d25a35f6d24ff3f+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.13-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
