@@ -20,7 +20,7 @@ type WorkerNodeValidation func(configuration v1alpha1.WorkerNodeGroupConfigurati
 // and for each configuration/node pair executes the provided validation functions.
 func (e *ClusterE2ETest) ValidateWorkerNodes(workerNodeValidations ...WorkerNodeValidation) {
 	ctx := context.Background()
-	nodes, err := e.KubectlClient.GetNodes(ctx, e.cluster().KubeconfigFile)
+	nodes, err := e.KubectlClient.GetNodes(ctx, e.Cluster().KubeconfigFile)
 	if err != nil {
 		e.T.Fatal(err)
 	}
@@ -30,11 +30,11 @@ func (e *ClusterE2ETest) ValidateWorkerNodes(workerNodeValidations ...WorkerNode
 	// deduce the worker node group configuration to node mapping via the machine deployment and machine set
 	for _, w := range wn {
 		mdName := fmt.Sprintf("%v-%v", e.ClusterName, w.Name)
-		md, err := e.KubectlClient.GetMachineDeployment(ctx, mdName, executables.WithKubeconfig(e.cluster().KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
+		md, err := e.KubectlClient.GetMachineDeployment(ctx, mdName, executables.WithKubeconfig(e.Cluster().KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			e.T.Fatal(fmt.Errorf("failed to get machine deployment for worker node %s when validating taints: %v", w.Name, err))
 		}
-		ms, err := e.KubectlClient.GetMachineSets(ctx, md.Name, e.cluster())
+		ms, err := e.KubectlClient.GetMachineSets(ctx, md.Name, e.Cluster())
 		if err != nil {
 			e.T.Fatal(fmt.Errorf("failed to get machine sets when validating taints: %v", err))
 		}

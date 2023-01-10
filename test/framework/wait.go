@@ -10,7 +10,7 @@ import (
 func (e *ClusterE2ETest) WaitForControlPlaneReady() {
 	e.T.Log("Waiting for control plane to be ready")
 	err := retrier.New(5 * time.Minute).Retry(func() error {
-		return e.KubectlClient.ValidateControlPlaneNodes(context.Background(), e.cluster(), e.ClusterName)
+		return e.KubectlClient.ValidateControlPlaneNodes(context.Background(), e.Cluster(), e.ClusterName)
 	})
 	if err != nil {
 		e.T.Fatal(err)
