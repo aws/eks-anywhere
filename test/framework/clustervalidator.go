@@ -173,7 +173,7 @@ func validateWorkerNodes(ctx context.Context, vc ClusterValidatorConfig) error {
 	// deduce the worker node group configuration to node mapping via the machine deployment and machine set
 	for _, w := range wn {
 		workerGroupCount := 0
-		ms, err := GetWorkerNodeMachineSets(ctx, vc, w)
+		ms, err := getWorkerNodeMachineSets(ctx, vc, w)
 		if err != nil {
 			return fmt.Errorf("failed to get machine sets when validating worker node: %v", err)
 		}
@@ -226,8 +226,8 @@ func validateClusterDoesNotExist(ctx context.Context, vc ClusterValidatorConfig)
 	return nil
 }
 
-// GetWorkerNodeMachineSets gets a list of MachineSets corresponding the provided WorkerNodeGroupConfiguration from the management cluster.
-func GetWorkerNodeMachineSets(ctx context.Context, vc ClusterValidatorConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
+// getWorkerNodeMachineSets gets a list of MachineSets corresponding the provided WorkerNodeGroupConfiguration from the management cluster.
+func getWorkerNodeMachineSets(ctx context.Context, vc ClusterValidatorConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
 	md := &v1beta1.MachineDeployment{}
 	mdName := fmt.Sprintf("%s-%s", vc.ClusterSpec.Cluster.Name, w.Name)
 	key := types.NamespacedName{Name: mdName, Namespace: constants.EksaSystemNamespace}
