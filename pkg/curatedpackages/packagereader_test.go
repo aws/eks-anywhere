@@ -2,6 +2,7 @@ package curatedpackages_test
 
 import (
 	"context"
+	_ "embed"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -9,14 +10,19 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+	registrymocks "github.com/aws/eks-anywhere/pkg/registry/mocks"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+//go:embed testdata/bundle.yaml
+var bundleData []byte
 
 type packageReaderTest struct {
 	*WithT
 	ctx            context.Context
 	command        *curatedpackages.PackageReader
 	manifestReader *mocks.MockManifestReader
+	storageClient  *registrymocks.MockStorageClient
 	registry       string
 }
 
@@ -24,18 +30,19 @@ func newPackageReaderTest(t *testing.T) *packageReaderTest {
 	ctrl := gomock.NewController(t)
 	r := mocks.NewMockManifestReader(ctrl)
 	registry := "public.ecr.aws/l0g8r8j6"
+	sc := registrymocks.NewMockStorageClient(ctrl)
 
 	return &packageReaderTest{
 		WithT:          NewWithT(t),
 		ctx:            context.Background(),
 		registry:       registry,
 		manifestReader: r,
-		command:        curatedpackages.NewPackageReader(r),
+		storageClient:  sc,
+		command:        curatedpackages.NewPackageReader(r, sc),
 	}
 }
 
 func TestPackageReaderReadImagesFromBundlesSuccess(t *testing.T) {
-	t.Skip("Test consistently fails locally as it attempts to download unreachable artifacts (https://github.com/aws/eks-anywhere/issues/3881)")
 	tt := newPackageReaderTest(t)
 	bundles := &releasev1.Bundles{
 		Spec: releasev1.BundlesSpec{
@@ -53,6 +60,7 @@ func TestPackageReaderReadImagesFromBundlesSuccess(t *testing.T) {
 		},
 	}
 	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+	tt.storageClient.EXPECT().PullBytes(tt.ctx, gomock.Any()).Return(bundleData, nil)
 
 	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
 
@@ -103,6 +111,7 @@ func TestPackageReaderReadImagesFromBundlesFailWhenWrongBundle(t *testing.T) {
 		},
 	}
 	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+	tt.storageClient.EXPECT().PullBytes(tt.ctx, gomock.Any()).Return([]byte{}, nil)
 
 	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
 
@@ -111,7 +120,6 @@ func TestPackageReaderReadImagesFromBundlesFailWhenWrongBundle(t *testing.T) {
 }
 
 func TestPackageReaderReadChartsFromBundlesSuccess(t *testing.T) {
-	t.Skip("Test consistently fails locally as it attempts to download unreachable artifacts (https://github.com/aws/eks-anywhere/issues/3881)")
 	tt := newPackageReaderTest(t)
 	bundles := &releasev1.Bundles{
 		Spec: releasev1.BundlesSpec{
@@ -129,6 +137,7 @@ func TestPackageReaderReadChartsFromBundlesSuccess(t *testing.T) {
 		},
 	}
 	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+	tt.storageClient.EXPECT().PullBytes(tt.ctx, gomock.Any()).Return(bundleData, nil)
 
 	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
 
@@ -177,6 +186,7 @@ func TestPackageReaderReadChartsFromBundlesFailWhenWrongURI(t *testing.T) {
 		},
 	}
 	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+	tt.storageClient.EXPECT().PullBytes(tt.ctx, gomock.Any()).Return([]byte{}, nil)
 
 	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
 

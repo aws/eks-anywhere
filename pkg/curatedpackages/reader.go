@@ -36,9 +36,10 @@ type PackageReader struct {
 
 var _ ManifestReader = (*PackageReader)(nil)
 
-func NewPackageReader(mr ManifestReader) *PackageReader {
+func NewPackageReader(mr ManifestReader, sc registry.StorageClient) *PackageReader {
 	return &PackageReader{
 		ManifestReader: mr,
+		storageClient:  sc,
 		AllImages:      true,
 	}
 }
