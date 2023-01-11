@@ -707,8 +707,8 @@ func TestCreateHelmOverrideValuesYaml(t *testing.T) {
 }
 
 func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
-	t.Setenv("REGISTRY_USERNAME", "")
-	t.Setenv("REGISTRY_PASSWORD", "")
+	t.Setenv("REGISTRY_USERNAME", "connor")
+	t.Setenv("REGISTRY_PASSWORD", "mcdavid")
 	for _, tt := range newPackageControllerTests(t) {
 		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
 		if tt.registryMirror != nil {
