@@ -1701,6 +1701,11 @@ func (e *ClusterE2ETest) ValidateClusterState() {
 	}
 	e.clusterValidator.WithExpectedObjectsExist()
 
+	if e.Provider.Name() == "vsphere" {
+		e.T.Logf("validating vSphere cluster")
+		e.clusterValidator.withVSphereValidations()
+	}
+
 	if err := e.clusterValidator.Validate(ctx); err != nil {
 		e.T.Fatalf("failed to validate cluster %v", err)
 	}
