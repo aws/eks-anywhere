@@ -248,15 +248,15 @@ func getWorkerNodeMachineSets(ctx context.Context, vc ClusterValidatorConfig, w 
 	return ms.Items, nil
 }
 
-func validateCilium(ctx context.Context, validateOpts clusterOpts) error {
-	clusterClient := validateOpts.ClusterClient
-	if validateOpts.ClusterSpec.Cluster.IsManaged() {
-		clusterClient = validateOpts.ManagementClusterClient
+func validateCilium(ctx context.Context, vc ClusterValidatorConfig) error {
+	clusterClient := vc.ClusterClient
+	if vc.ClusterSpec.Cluster.IsManaged() {
+		clusterClient = vc.ManagementClusterClient
 	}
 
-	yaml := validateOpts.ClusterSpec.Cluster
+	yaml := vc.ClusterSpec.Cluster
 	cluster := &v1alpha1.Cluster{}
-	key := types.NamespacedName{Namespace: validateOpts.ClusterSpec.Cluster.Namespace, Name: validateOpts.ClusterSpec.Cluster.Name}
+	key := types.NamespacedName{Namespace: vc.ClusterSpec.Cluster.Namespace, Name: vc.ClusterSpec.Cluster.Name}
 	err := clusterClient.Get(ctx, key, cluster)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve cluster %s", err)
@@ -275,15 +275,15 @@ func (c *ClusterValidator) withVSphereValidations() {
 	c.WithValidation(validateCSI, 5*time.Second, 30)
 }
 
-func validateCSI(ctx context.Context, validateOpts clusterOpts) error {
-	clusterClient := validateOpts.ClusterClient
-	if validateOpts.ClusterSpec.Cluster.IsManaged() {
-		clusterClient = validateOpts.ManagementClusterClient
+func validateCSI(ctx context.Context, vc ClusterValidatorConfig) error {
+	clusterClient := vc.ClusterClient
+	if vc.ClusterSpec.Cluster.IsManaged() {
+		clusterClient = vc.ManagementClusterClient
 	}
 
-	yaml := validateOpts.ClusterSpec.Config.VSphereDatacenter
+	yaml := vc.ClusterSpec.Config.VSphereDatacenter
 	datacenter := &v1alpha1.VSphereDatacenterConfig{}
-	key := types.NamespacedName{Namespace: validateOpts.ClusterSpec.Cluster.Namespace, Name: validateOpts.ClusterSpec.Cluster.Name}
+	key := types.NamespacedName{Namespace: vc.ClusterSpec.Cluster.Namespace, Name: vc.ClusterSpec.Cluster.Name}
 	err := clusterClient.Get(ctx, key, datacenter)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve cluster %s", err)
