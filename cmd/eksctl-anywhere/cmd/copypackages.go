@@ -72,6 +72,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
+		WithStorageClient(c.insecure).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -81,7 +82,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.
 	if err != nil {
 		return err
 	}
-	bundleReader := curatedpackages.NewPackageReader(deps.ManifestReader)
+	bundleReader := curatedpackages.NewPackageReader(deps.ManifestReader, deps.StorageClient)
 
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 

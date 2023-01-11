@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/aws/eks-anywhere/pkg/registry"
 	"log"
 	"path/filepath"
 	"strings"
@@ -63,6 +64,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	}
 	deps, err := factory.
 		WithManifestReader().
+		WithStorageClient(c.insecure).
 		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
@@ -76,7 +78,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	downloadArtifacts := artifacts.Download{
-		Reader: fetchReader(deps.ManifestReader, c.includePackages),
+		Reader: fetchReader(deps.ManifestReader, deps.StorageClient, c.includePackages),
 		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, imagesFile),
@@ -109,9 +111,9 @@ func packagerForFile(file string) packager {
 	}
 }
 
-func fetchReader(reader *manifests.Reader, includePackages bool) artifacts.Reader {
+func fetchReader(reader *manifests.Reader, storageClient registry.StorageClient, includePackages bool) artifacts.Reader {
 	if includePackages {
-		return curatedpackages.NewPackageReader(reader)
+		return curatedpackages.NewPackageReader(reader, storageClient)
 	}
 	return reader
 }

@@ -49,6 +49,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/registry"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -99,6 +100,7 @@ type Dependencies struct {
 	NutanixPrismClient          *v3.Client
 	SnowValidator               *snow.AwsClientValidator
 	IPValidator                 *validator.IPValidator
+	StorageClient               registry.StorageClient
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -1273,4 +1275,16 @@ func getManagementClusterName(clusterSpec *cluster.Spec) string {
 		return clusterSpec.Cluster.Spec.ManagementCluster.Name
 	}
 	return clusterSpec.Cluster.Name
+}
+
+// WithStorageClient add storage client dependency.
+func (f *Factory) WithStorageClient(insecure bool) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		host := "public.ecr.aws"
+		credentialStore := registry.NewCredentialStore()
+		storageContext := registry.NewStorageContext(host, credentialStore, nil, insecure)
+		f.dependencies.StorageClient = registry.NewOCIRegistry(storageContext)
+		return nil
+	})
+	return f
 }

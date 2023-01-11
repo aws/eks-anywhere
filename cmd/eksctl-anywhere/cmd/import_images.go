@@ -123,6 +123,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		}).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
 		WithHelm(helmOpts...).
+		WithStorageClient(c.insecure).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -131,7 +132,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
 	importArtifacts := artifacts.Import{
-		Reader:  fetchReader(deps.ManifestReader, c.includePackages),
+		Reader:  fetchReader(deps.ManifestReader, deps.StorageClient, c.includePackages),
 		Bundles: bundle,
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, imagesFile),

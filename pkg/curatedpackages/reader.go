@@ -36,6 +36,7 @@ type PackageReader struct {
 
 var _ ManifestReader = (*PackageReader)(nil)
 
+// NewPackageReader create a new packacge reader with storage client.
 func NewPackageReader(mr ManifestReader, sc registry.StorageClient) *PackageReader {
 	return &PackageReader{
 		ManifestReader: mr,
