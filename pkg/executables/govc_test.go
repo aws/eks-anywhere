@@ -3,6 +3,7 @@ package executables_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -11,12 +12,12 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -81,6 +82,8 @@ type deployTemplateTest struct {
 	deployFolder             string
 	templateInLibraryPathAbs string
 	templateName             string
+	diskName                 string
+	diskSize                 int
 	resizeDisk2              bool
 	ctx                      context.Context
 	fakeExecResponse         *bytes.Buffer
@@ -107,20 +110,8 @@ func newDeployTemplateTest(t *testing.T) *deployTemplateTest {
 		ctx:                      context.Background(),
 		fakeExecResponse:         bytes.NewBufferString("dummy"),
 		expectations:             make([]*gomock.Call, 0),
-	}
-}
-
-func newMachineConfig(t *testing.T) *v1alpha1.VSphereMachineConfig {
-	return &v1alpha1.VSphereMachineConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind: v1alpha1.VSphereMachineConfigKind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "eksa-unit-test",
-		},
-		Spec: v1alpha1.VSphereMachineConfigSpec{
-			Template: "/SDDC-Datacenter/vm/Templates/ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64",
-		},
+		diskName:                 "disk-31000-1",
+		diskSize:                 20,
 	}
 }
 
@@ -135,6 +126,20 @@ func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
 		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-ds", dt.datastore, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
+	)
+}
+
+func (dt *deployTemplateTest) expectDevicesInfoToReturn(err error) {
+	dt.expectations = append(
+		dt.expectations,
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "device.info", "-dc", dt.datacenter, "-vm", dt.templateName, "-json").Return(*dt.fakeExecResponse, err),
+	)
+}
+
+func (dt *deployTemplateTest) expectResizeDiskToReturn(err error) {
+	dt.expectations = append(
+		dt.expectations,
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "vm.disk.change", "-dc", dt.datacenter, "-vm", dt.templateName, "-disk.name", dt.diskName, "-size", strconv.Itoa(dt.diskSize)+"G").Return(*dt.fakeExecResponse, err),
 	)
 }
 
@@ -391,6 +396,42 @@ func TestDeployTemplateFromLibrarySuccess(t *testing.T) {
 	tt := newDeployTemplateTest(t)
 	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(nil)
+	tt.expectCreateSnapshotToReturn(nil)
+	tt.expectMarkAsTemplateToReturn(nil)
+
+	tt.assertDeployTemplateSuccess(t)
+	tt.assertDeployOptsMatches(t)
+}
+
+func TestDeployTemplateFromLibraryResizeBRSuccess(t *testing.T) {
+	tt := newDeployTemplateTest(t)
+	tt.resizeDisk2 = true
+	response := map[string][]interface{}{
+		"Devices": {
+			map[string]interface{}{
+				"Name": "disk-31000-0",
+				"DeviceInfo": map[string]string{
+					"Label": "Hard disk 1",
+				},
+			},
+			map[string]interface{}{
+				"Name": "disk-31000-1",
+				"DeviceInfo": map[string]string{
+					"Label": "Hard disk 2",
+				},
+			},
+		},
+	}
+	mashaledResponse, err := json.Marshal(response)
+	if err != nil {
+		t.Fatalf("failed to marshal response: %v", err)
+	}
+	responseBytes := bytes.NewBuffer(mashaledResponse)
+	tt.fakeExecResponse = responseBytes
+	tt.expectFolderInfoToReturn(nil)
+	tt.expectDeployToReturn(nil)
+	tt.expectDevicesInfoToReturn(nil)
+	tt.expectResizeDiskToReturn(nil)
 	tt.expectCreateSnapshotToReturn(nil)
 	tt.expectMarkAsTemplateToReturn(nil)
 
