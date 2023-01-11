@@ -1760,11 +1760,10 @@ func (e *ClusterE2ETest) buildClusterValidator(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create management cluster client: %s", err)
 	}
-	if e.ClusterConfig.Cluster.IsSelfManaged() {
-		mc = nil
+	c := mc
+	if e.managementKubeconfigFilePath() != e.kubeconfigFilePath() {
+		c, err = kubernetes.NewRuntimeClientFromFileName(e.kubeconfigFilePath())
 	}
-
-	c, err := kubernetes.NewRuntimeClientFromFileName(e.kubeconfigFilePath())
 	if err != nil {
 		return fmt.Errorf("failed to create cluster client: %s", err)
 	}
@@ -1775,9 +1774,9 @@ func (e *ClusterE2ETest) buildClusterValidator(ctx context.Context) error {
 	}
 
 	e.clusterValidator = NewClusterValidator(func(cv *ClusterValidator) {
-		cv.ClusterOpts.ClusterClient = c
-		cv.ClusterOpts.ManagementClusterClient = mc
-		cv.ClusterOpts.ClusterSpec = spec
+		cv.Config.ClusterClient = c
+		cv.Config.ManagementClusterClient = mc
+		cv.Config.ClusterSpec = spec
 	})
 
 	return nil
