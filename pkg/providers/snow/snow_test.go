@@ -989,6 +989,40 @@ func TestUpgradeNeededMachineConfigChanged(t *testing.T) {
 	tt.Expect(got).To(Equal(true))
 }
 
+func TestUpgradeNeededMachineConfigRemoveDevice(t *testing.T) {
+	tt := newSnowTest(t)
+	delete(tt.clusterSpec.SnowMachineConfigs, "test-wn")
+
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient).Times(2)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test",
+			"test-namespace",
+			&v1alpha1.SnowDatacenterConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowDatacenterConfig) error {
+			tt.clusterSpec.SnowDatacenter.DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-cp",
+			"test-namespace",
+			&v1alpha1.SnowMachineConfig{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
+			tt.clusterSpec.SnowMachineConfig("test-cp").DeepCopyInto(obj)
+			obj.Spec.Devices = []string{"1.2.3.4"}
+			return nil
+		})
+
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(true))
+}
+
 func TestUpgradeNeededBundle(t *testing.T) {
 	tests := []struct {
 		name   string
