@@ -482,6 +482,22 @@ func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
 	tt.Expect(deps.CNIInstaller).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithStorageClient(t *testing.T) {
+	tt := newTest(t, vsphere)
+	tt.clusterSpec.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+		Kindnetd: &anywherev1.KindnetdConfig{},
+	}
+
+	factory := dependencies.NewFactory()
+	deps, err := factory.
+		WithStorageClient(true).
+		Build(tt.ctx)
+	tt.Expect(err).To(BeNil())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.StorageClient).NotTo(BeNil())
+}
+
 type dummyDockerClient struct{}
 
 func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {

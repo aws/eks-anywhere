@@ -78,6 +78,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 
 	// Generate bundle repository
 	for _, chart := range eksaCharts {
+		fmt.Println(chart.Repository())
 		if strings.Contains(chart.Repository(), "eks-anywhere-packages") {
 			var bundleRepository releasev1.Image
 			chart.DeepCopyInto(&bundleRepository)
