@@ -49,12 +49,20 @@ var _ webhook.Validator = &SnowMachineConfig{}
 func (r *SnowMachineConfig) ValidateCreate() error {
 	snowmachineconfiglog.Info("validate create", "name", r.Name)
 
+	if err := r.ValidateHasSSHKeyName(); err != nil {
+		return err
+	}
+
 	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *SnowMachineConfig) ValidateUpdate(old runtime.Object) error {
 	snowmachineconfiglog.Info("validate update", "name", r.Name)
+
+	if err := r.ValidateHasSSHKeyName(); err != nil {
+		return err
+	}
 
 	return r.Validate()
 }
