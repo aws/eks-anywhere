@@ -1006,7 +1006,7 @@ data:
           serviceAccountName: vsphere-csi-controller
           tolerations:
           - effect: NoSchedule
-            key: node-role.kubernetes.io/master
+            key: node-role.kubernetes.io/control-plane
             operator: Exists
 {{- if .controlPlaneTaints }}
 {{- range .controlPlaneTaints}}
@@ -1269,7 +1269,7 @@ data:
             key: node.cloudprovider.kubernetes.io/uninitialized
             value: "true"
           - effect: NoSchedule
-            key: node-role.kubernetes.io/master
+            key: node-role.kubernetes.io/control-plane
           - effect: NoSchedule
             key: node.kubernetes.io/not-ready
 {{- if .controlPlaneTaints }}
