@@ -97,6 +97,9 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	if spec.Cluster.IsSelfManaged() != prevSpec.IsSelfManaged() {
 		return fmt.Errorf("management flag is immutable")
 	}
+	if oSpec.ManagementCluster.Name != nSpec.ManagementCluster.Name {
+		return fmt.Errorf("management cluster name is immutable")
+	}
 
 	return provider.ValidateNewSpec(ctx, cluster, spec)
 }
