@@ -161,11 +161,11 @@ func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundl
 }
 
 func removeDuplicateImages(images []releasev1.Image) []releasev1.Image {
-	uniqueImages := make(map[string]releasev1.Image)
+	uniqueImages := make(map[string]struct{})
 	var list []releasev1.Image
 	for _, item := range images {
 		if _, value := uniqueImages[item.VersionedImage()]; !value {
-			uniqueImages[item.VersionedImage()] = item
+			uniqueImages[item.VersionedImage()] = struct{}{}
 			list = append(list, item)
 		}
 	}
