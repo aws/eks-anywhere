@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/registry"
 	"log"
 	"path/filepath"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/registry"
 	"github.com/aws/eks-anywhere/pkg/tar"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
