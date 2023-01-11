@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -23,7 +25,7 @@ import (
 // TODO: Move ClusterValidator to a separate package
 
 // ClusterValidation defines a validation that can be registered to the ClusterValidator.
-type ClusterValidation = func(ctx context.Context, vc ClusterValidatorConfig) error
+type ClusterValidation = func(ctx context.Context, vc *ClusterValidatorConfig) error
 
 type retriableValidation struct {
 	validation    ClusterValidation // the validation to run against the cluster.
@@ -33,7 +35,7 @@ type retriableValidation struct {
 
 // ClusterValidator is responsible for checking if a cluster is valid against the spec that is provided.
 type ClusterValidator struct {
-	Config      ClusterValidatorConfig
+	Config      *ClusterValidatorConfig
 	validations []retriableValidation
 }
 
@@ -41,9 +43,6 @@ type ClusterValidator struct {
 func (c *ClusterValidator) WithValidation(validation ClusterValidation, backoffPeriod time.Duration, maxRetries int) {
 	c.validations = append(c.validations, retriableValidation{validation, backoffPeriod, maxRetries})
 }
-
-// WithWorkloadClusterValidations registers a validation set for a workload cluster.
-func (c *ClusterValidator) WithWorkloadClusterValidations() {}
 
 // WithExpectedObjectsExist registers a set of validations for the existence of various cluster objects.
 func (c *ClusterValidator) WithExpectedObjectsExist() {
@@ -83,7 +82,7 @@ type ClusterValidatorOpt = func(cv *ClusterValidator)
 // NewClusterValidator returns a cluster validator which can be configured by passing ClusterValidatorOpt arguments.
 func NewClusterValidator(opts ...ClusterValidatorOpt) *ClusterValidator {
 	cv := ClusterValidator{
-		Config:      ClusterValidatorConfig{},
+		Config:      &ClusterValidatorConfig{},
 		validations: []retriableValidation{},
 	}
 
@@ -98,11 +97,12 @@ type ClusterValidatorConfig struct {
 	ClusterClient           client.Client // the client for the cluster
 	ManagementClusterClient client.Client // the client for the management cluster
 	ClusterSpec             *cluster.Spec // the cluster spec
+	OldClusterSpec          *cluster.Spec // the old cluster spec
 }
 
 // TODO: Move Validations to separate package
 
-func validateEKSAObjects(ctx context.Context, vc ClusterValidatorConfig) error {
+func validateEKSAObjects(ctx context.Context, vc *ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	mgmtClusterClient := vc.ManagementClusterClient
 	for _, obj := range vc.ClusterSpec.ChildObjects() {
@@ -122,7 +122,7 @@ func validateEKSAObjects(ctx context.Context, vc ClusterValidatorConfig) error {
 	return nil
 }
 
-func validateClusterReady(ctx context.Context, vc ClusterValidatorConfig) error {
+func validateClusterReady(ctx context.Context, vc *ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	mgmtClusterClient := vc.ManagementClusterClient
 	capiCluster, err := controller.GetCAPICluster(ctx, mgmtClusterClient, clus)
@@ -141,7 +141,7 @@ func validateClusterReady(ctx context.Context, vc ClusterValidatorConfig) error 
 	return nil
 }
 
-func validateControlPlaneNodes(ctx context.Context, vc ClusterValidatorConfig) error {
+func validateControlPlaneNodes(ctx context.Context, vc *ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	cpNodes := &corev1.NodeList{}
 	if err := vc.ClusterClient.List(ctx, cpNodes, client.MatchingLabels{"node-role.kubernetes.io/control-plane": ""}); err != nil {
@@ -150,19 +150,29 @@ func validateControlPlaneNodes(ctx context.Context, vc ClusterValidatorConfig) e
 
 	cpConfig := clus.Spec.ControlPlaneConfiguration
 	if len(cpNodes.Items) != cpConfig.Count {
-		return fmt.Errorf("control plane node count does not match expected: %v of %v", len(cpNodes.Items), cpConfig.Count)
+		return fmt.Errorf("control plane node count does not match expected: %d of %d", len(cpNodes.Items), cpConfig.Count)
 	}
 
+	previousCPLabels := map[string]string{}
+	if vc.OldClusterSpec != nil {
+		previousCPLabels = vc.OldClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Labels
+	}
 	for _, node := range cpNodes.Items {
 		if err := validateNodeReady(node, clus.Spec.KubernetesVersion); err != nil {
 			return fmt.Errorf("failed to validate controlplane %s", err)
+		}
+		if err := validateNodeLabels(node, cpConfig.Labels, previousCPLabels); err != nil {
+			return fmt.Errorf("failed to validate controlplane node labels %s", err)
+		}
+		if err := ValidateControlPlaneTaints(cpConfig, node); err != nil {
+			return fmt.Errorf("failed to validate controlplane node taints %s", err)
 		}
 	}
 	logger.V(4).Info("Control plane nodes validated", "cluster", clus.Name)
 	return nil
 }
 
-func validateWorkerNodes(ctx context.Context, vc ClusterValidatorConfig) error {
+func validateWorkerNodes(ctx context.Context, vc *ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	clusterName := clus.Name
 	nodes := &corev1.NodeList{}
@@ -188,6 +198,13 @@ func validateWorkerNodes(ctx context.Context, vc ClusterValidatorConfig) error {
 						if err := validateNodeReady(node, vc.ClusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
 							return fmt.Errorf("failed to validate worker node ready %v", err)
 						}
+						previousLabels := getWorkerNodeConfigLabels(w.Name, vc.OldClusterSpec)
+						if err := validateNodeLabels(node, w.Labels, previousLabels); err != nil {
+							return fmt.Errorf("failed to validate controlplane node labels %s", err)
+						}
+						if err := ValidateWorkerNodeTaints(w, node); err != nil {
+							return fmt.Errorf("failed to validate worker node taints %s", err)
+						}
 					}
 				}
 			}
@@ -198,6 +215,18 @@ func validateWorkerNodes(ctx context.Context, vc ClusterValidatorConfig) error {
 	}
 	logger.V(4).Info("Worker nodes validated", "cluster", clusterName)
 	return nil
+}
+
+func getWorkerNodeConfigLabels(wnConfigName string, clusterSpec *cluster.Spec) map[string]string {
+	if clusterSpec == nil {
+		return map[string]string{}
+	}
+	for _, wnConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if wnConfig.Name == wnConfigName {
+			return wnConfig.Labels
+		}
+	}
+	return map[string]string{}
 }
 
 func validateNodeReady(node corev1.Node, kubeVersion v1alpha1.KubernetesVersion) error {
@@ -213,7 +242,57 @@ func validateNodeReady(node corev1.Node, kubeVersion v1alpha1.KubernetesVersion)
 	return nil
 }
 
-func validateClusterDoesNotExist(ctx context.Context, vc ClusterValidatorConfig) error {
+func validateNodeLabels(node corev1.Node, expectedLabels map[string]string, previousLabels map[string]string) error {
+	nodeLabelBytes, _ := json.Marshal(node.Labels)
+	expectedLabelBytes, _ := json.Marshal(expectedLabels)
+	previousLabelBytes, _ := json.Marshal(previousLabels)
+	logger.V(4).Info("validating node labels", "node", node.Name, "node labels", string(nodeLabelBytes), "expected labels", string(expectedLabelBytes), "previous labels", string(previousLabelBytes))
+	addedLabels := collection.MapDiff(expectedLabels, previousLabels)
+	if len(addedLabels) != 0 {
+		if err := validateNodeLabelsAdded(node, addedLabels); err != nil {
+			return fmt.Errorf("validating node labels added: %v", err)
+		}
+		addedLabelBytes, _ := json.Marshal(addedLabels)
+		logger.V(4).Info("labels were added to the node", "node", node.Name, "added labels", string(addedLabelBytes))
+	}
+	removedLabels := collection.MapDiff(previousLabels, expectedLabels)
+	if len(removedLabels) != 0 {
+		if err := validateNodeLabelsRemoved(node, removedLabels); err != nil {
+			return fmt.Errorf("validating node labels removed: %v", err)
+		}
+		removedLabelBytes, _ := json.Marshal(removedLabels)
+		logger.V(4).Info("labels removed from the node as expected", "node", node.Name, "removed labels", string(removedLabelBytes))
+	}
+	return nil
+}
+
+func validateNodeLabelsAdded(node corev1.Node, addedLabels map[string]string) error {
+	for key, val := range addedLabels {
+		v, ok := node.Labels[key]
+		if !ok || val != v {
+			nodeLabelBytes, _ := json.Marshal(node.Labels)
+			addedLabelBytes, _ := json.Marshal(addedLabels)
+			return fmt.Errorf("labels not added to node %v; added labels: %v; node labels: %v",
+				node.Name, string(addedLabelBytes), string(nodeLabelBytes))
+		}
+	}
+	return nil
+}
+
+func validateNodeLabelsRemoved(node corev1.Node, removedLabels map[string]string) error {
+	for key := range removedLabels {
+		_, ok := node.Labels[key]
+		if ok {
+			nodeLabelBytes, _ := json.Marshal(node.Labels)
+			removedLabelBytes, _ := json.Marshal(removedLabels)
+			return fmt.Errorf("labels not removed from node %v; removed labels: %v; node labels: %v",
+				node.Name, string(removedLabelBytes), string(nodeLabelBytes))
+		}
+	}
+	return nil
+}
+
+func validateClusterDoesNotExist(ctx context.Context, vc *ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	capiCluster, err := controller.GetCAPICluster(ctx, vc.ManagementClusterClient, clus)
 	if err != nil {
@@ -227,7 +306,7 @@ func validateClusterDoesNotExist(ctx context.Context, vc ClusterValidatorConfig)
 }
 
 // getWorkerNodeMachineSets gets a list of MachineSets corresponding the provided WorkerNodeGroupConfiguration from the management cluster.
-func getWorkerNodeMachineSets(ctx context.Context, vc ClusterValidatorConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
+func getWorkerNodeMachineSets(ctx context.Context, vc *ClusterValidatorConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
 	md := &v1beta1.MachineDeployment{}
 	mdName := fmt.Sprintf("%s-%s", vc.ClusterSpec.Cluster.Name, w.Name)
 	key := types.NamespacedName{Name: mdName, Namespace: constants.EksaSystemNamespace}

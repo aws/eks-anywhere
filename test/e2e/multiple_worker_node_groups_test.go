@@ -93,7 +93,14 @@ func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
+		provider.WithWorkerNodeGroup(
+			framework.WithWorkerNodeGroup(
+				"worker-1",
+				api.WithCount(2),
+				api.WithLabel("tier", "frontend"),
+				api.WithTaint(framework.NoScheduleTaint()),
+			),
+		),
 		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
 		provider.WithWorkerNodeGroup(
 			framework.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithLabel("tier", "frontend")),

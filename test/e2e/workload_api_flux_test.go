@@ -53,6 +53,7 @@ func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	test.RunInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		test.PushWorkloadClusterToGit(wc)
 		wc.WaitForKubeconfig()
+		wc.InitClusterValidator()
 		wc.ValidateClusterState()
 		test.DeleteWorkloadClusterFromGit(wc)
 		wc.ValidateClusterDelete()

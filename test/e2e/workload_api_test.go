@@ -18,6 +18,7 @@ func runWorkloadClusterUpgradeFlowAPI(test *framework.MulticlusterE2ETest, fille
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.ApplyClusterManifest()
 		wc.WaitForKubeconfig()
+		wc.InitClusterValidator()
 		wc.ValidateClusterState()
 		wc.UpdateClusterConfig(filler...)
 		wc.ApplyClusterManifest()

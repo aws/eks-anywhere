@@ -40,6 +40,9 @@ func (w *WorkloadCluster) ApplyClusterManifest() {
 	if err := w.KubectlClient.ApplyManifest(ctx, w.ManagementClusterKubeconfigFile(), w.ClusterConfigLocation); err != nil {
 		w.T.Fatalf("Failed to apply workload cluster config: %s", err)
 	}
+	if w.clusterValidator != nil {
+		w.updateClusterValidatorConfig()
+	}
 	w.StopIfFailed()
 }
 
@@ -63,6 +66,42 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 	if err != nil {
 		w.T.Fatalf("Failed waiting for cluster kubeconfig: %s", err)
 	}
+	w.initClusterValidator(ctx)
+}
+
+// ValidateClusterDelete verifies the cluster has been deleted.
+func (w *WorkloadCluster) ValidateClusterDelete() {
+	ctx := context.Background()
+	w.T.Logf("Validating cluster deletion %s", w.ClusterName)
+	if w.clusterValidator == nil {
+		return
+	}
+	w.clusterValidator.WithClusterDoesNotExist()
+	if err := w.clusterValidator.Validate(ctx); err != nil {
+		w.T.Fatalf("failed to validate cluster deletion %v", err)
+	}
+	w.clusterValidator = nil
+}
+
+func (w *WorkloadCluster) initClusterValidator(ctx context.Context) {
+	clusterClient, err := buildClusterClient(w.kubeconfigFilePath())
+	if err != nil {
+		w.T.Fatalf("failed to create cluster client: %s", err)
+	}
+	managementClusterClient, err := buildClusterClient(w.managementKubeconfigFilePath())
+	if err != nil {
+		w.T.Fatalf("failed to create management cluster client: %s", err)
+	}
+	spec, err := buildClusterSpec(ctx, managementClusterClient, w.ClusterConfig)
+	if err != nil {
+		w.T.Fatalf("failed to build cluster spec with kubeconfig %s: %v", w.managementKubeconfigFilePath(), err)
+	}
+	w.clusterValidator = NewClusterValidator(func(cv *ClusterValidator) {
+		cv.Config.ClusterClient = clusterClient
+		cv.Config.ManagementClusterClient = managementClusterClient
+		cv.Config.ClusterSpec = spec
+		cv.Config.OldClusterSpec = nil
+	})
 }
 
 func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context) error {

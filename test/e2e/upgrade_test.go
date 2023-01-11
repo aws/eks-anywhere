@@ -39,6 +39,7 @@ func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 
 func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, fillers ...api.ClusterConfigFiller) {
 	test.CreateCluster()
+	test.InitClusterValidator()
 	test.UpgradeClusterWithKubectl(fillers...)
 	test.ValidateClusterState()
 	test.StopIfFailed()
