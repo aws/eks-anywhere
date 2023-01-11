@@ -361,7 +361,7 @@ spec:
       version: v1.0.5-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -370,7 +370,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -381,8 +381,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/metadata.yaml
-      version: v1.0.4-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/metadata.yaml
+      version: v1.0.4-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -498,7 +498,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-21-23-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -516,10 +516,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.20-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/metadata.yaml
-      version: v0.1.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/metadata.yaml
+      version: v0.1.20+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -1136,7 +1136,7 @@ spec:
       version: v1.0.5-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1145,7 +1145,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1156,8 +1156,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/metadata.yaml
-      version: v1.0.4-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/metadata.yaml
+      version: v1.0.4-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -1273,7 +1273,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-22-16-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1291,10 +1291,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.20-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/metadata.yaml
-      version: v0.1.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/metadata.yaml
+      version: v0.1.20+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -1911,7 +1911,7 @@ spec:
       version: v1.0.5-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1920,7 +1920,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1931,8 +1931,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/metadata.yaml
-      version: v1.0.4-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/metadata.yaml
+      version: v1.0.4-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -2048,7 +2048,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-23-11-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2066,10 +2066,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.20-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/metadata.yaml
-      version: v0.1.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/metadata.yaml
+      version: v0.1.20+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -2668,7 +2668,7 @@ spec:
       version: v1.0.5-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -2677,7 +2677,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2688,8 +2688,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/metadata.yaml
-      version: v1.0.4-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/metadata.yaml
+      version: v1.0.4-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -2805,7 +2805,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-24-6-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2823,10 +2823,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.20-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/metadata.yaml
-      version: v0.1.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/metadata.yaml
+      version: v0.1.20+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -3425,7 +3425,7 @@ spec:
       version: v1.0.5-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -3434,7 +3434,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.4-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3445,8 +3445,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc2/metadata.yaml
-      version: v1.0.4-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.4-rc4/metadata.yaml
+      version: v1.0.4-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -3562,7 +3562,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-25-1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3580,10 +3580,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.20-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.17/metadata.yaml
-      version: v0.1.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.20/metadata.yaml
+      version: v0.1.20+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:

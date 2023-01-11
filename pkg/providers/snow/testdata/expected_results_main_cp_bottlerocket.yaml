@@ -59,9 +59,16 @@ spec:
         imageTag: v1-20-22-eks-a-v0.0.0-dev-build.4984
         mode: always
         name: bottlerocket-bootstrap-snow
+      certificatesDir: /var/lib/kubeadm/pki
       controllerManager:
         extraArgs:
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/controller-manager.conf
+          mountPath: /etc/kubernetes/controller-manager.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.4-eks-1-21-9
@@ -80,7 +87,13 @@ spec:
         imageTag: 0.0.1
       proxy: {}
       registryMirror: {}
-      scheduler: {}
+      scheduler:
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/scheduler.conf
+          mountPath: /etc/kubernetes/scheduler.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
     files:
     - content: |
         apiVersion: v1

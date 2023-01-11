@@ -85,6 +85,14 @@ func (v *CreateValidations) BuildValidations(ctx context.Context) []validations.
 					Err:         ValidateManagementCluster(ctx, k, targetCluster),
 				}
 			},
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name: "validate management cluster name is valid",
+					Remediation: "Specify a valid management cluster in the cluster spec. This cannot be a workload cluster that is managed by a different " +
+						"management cluster.",
+					Err: validations.ValidateManagementClusterName(ctx, k, v.Opts.ManagementCluster, v.Opts.Spec.Cluster.Spec.ManagementCluster.Name),
+				}
+			},
 		)
 	}
 

@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -14,9 +15,12 @@ import (
 	. "github.com/onsi/gomega"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
+	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	artifactsv1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -24,14 +28,7 @@ import (
 //go:embed testdata/packagebundlectrl_test.yaml
 var packageBundleControllerTest string
 
-//go:embed testdata/awssecret_test.yaml
-var awsSecretTest []byte
-
-//go:embed testdata/awssecret_test_empty.yaml
-var awsSecretTestEmpty []byte
-
-//go:embed testdata/awssecret_defaultregion.yaml
-var awsSecretDefaultRegion []byte
+const valueFileName = "values.yaml"
 
 type packageControllerTest struct {
 	*WithT
@@ -49,6 +46,8 @@ type packageControllerTest struct {
 	httpsProxy     string
 	noProxy        []string
 	registryMirror *registrymirror.RegistryMirror
+	writer         filewriter.FileWriter
+	wantValueFile  string
 }
 
 func newPackageControllerTests(t *testing.T) []*packageControllerTest {
@@ -64,13 +63,16 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 	eksaAccessKey := "test-access-key"
 	eksaRegion := "test-region"
 	clusterName := "billy"
-	registyMirror := &registrymirror.RegistryMirror{
+	registryMirror := &registrymirror.RegistryMirror{
 		BaseRegistry: "1.2.3.4:443",
 		NamespacedRegistryMap: map[string]string{
 			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
 			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
 		},
+		Auth:          true,
+		CACertContent: "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
 	}
+	writer, _ := filewriter.NewWriter(clusterName)
 	return []*packageControllerTest{
 		{
 			WithT:          NewWithT(t),
@@ -78,11 +80,12 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, kubeConfig, chart, registyMirror,
+				ci, k, clusterName, kubeConfig, chart, registryMirror,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
 				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -93,7 +96,9 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpProxy:      "1.1.1.1",
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
-			registryMirror: registyMirror,
+			registryMirror: registryMirror,
+			writer:         writer,
+			wantValueFile:  "testdata/values_test.yaml",
 		},
 		{
 			WithT:          NewWithT(t),
@@ -107,6 +112,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 				curatedpackages.WithEksaRegion(eksaRegion),
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
 				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -118,17 +124,67 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
 			registryMirror: nil,
+			writer:         writer,
+			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
+		},
+		{
+			WithT:          NewWithT(t),
+			ctx:            context.Background(),
+			kubectl:        k,
+			chartInstaller: ci,
+			command: curatedpackages.NewPackageControllerClient(
+				ci, k, clusterName, kubeConfig, chart, registryMirror,
+				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
+			),
+			clusterName:    clusterName,
+			kubeConfig:     kubeConfig,
+			chart:          chart,
+			eksaAccessID:   "",
+			eksaAccessKey:  "",
+			eksaRegion:     "",
+			httpProxy:      "1.1.1.1",
+			httpsProxy:     "1.1.1.1",
+			noProxy:        []string{"1.1.1.1/24"},
+			registryMirror: registryMirror,
+			writer:         writer,
+			wantValueFile:  "testdata/values_empty_awssecret.yaml",
+		},
+		{
+			WithT:          NewWithT(t),
+			ctx:            context.Background(),
+			kubectl:        k,
+			chartInstaller: ci,
+			command: curatedpackages.NewPackageControllerClient(
+				ci, k, clusterName, kubeConfig, chart, nil,
+				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
+			),
+			clusterName:    clusterName,
+			kubeConfig:     kubeConfig,
+			chart:          chart,
+			eksaAccessID:   "",
+			eksaAccessKey:  "",
+			eksaRegion:     "",
+			httpProxy:      "1.1.1.1",
+			httpsProxy:     "1.1.1.1",
+			noProxy:        []string{"1.1.1.1/24"},
+			registryMirror: nil,
+			writer:         writer,
+			wantValueFile:  "testdata/values_empty.yaml",
 		},
 	}
 }
 
 func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -142,52 +198,10 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
-		any := gomock.Any()
-		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
-			DoAndReturn(getPBCSuccess(t)).
-			AnyTimes()
-
-		err := tt.command.EnableCuratedPackages(tt.ctx)
-		if err != nil {
-			t.Errorf("Install Controller Should succeed when installation passes")
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
 		}
-	}
-}
-
-func TestEnableCuratedPackagesNoCronjob(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
-			tt.registryMirror,
-			curatedpackages.WithEksaSecretAccessKey(""),
-			curatedpackages.WithEksaRegion(tt.eksaRegion),
-			curatedpackages.WithEksaAccessKeyId(""),
-			curatedpackages.WithManagementClusterName(tt.clusterName),
-		)
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTestEmpty, params).Return(bytes.Buffer{}, fmt.Errorf("boom"))
-		var values []string
-		clusterName := fmt.Sprintf("clusterName=%s", "billy")
-		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		if tt.registryMirror != nil {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName, "cronjob.suspend=true"}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName, "cronjob.suspend=true"}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName, "cronjob.suspend=true"}
-		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -247,14 +261,18 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			curatedpackages.WithHTTPSProxy(tt.httpsProxy),
 			curatedpackages.WithNoProxy(tt.noProxy),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		httpProxy := fmt.Sprintf("proxy.HTTP_PROXY=%s", tt.httpProxy)
 		httpsProxy := fmt.Sprintf("proxy.HTTPS_PROXY=%s", tt.httpsProxy)
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(tt.noProxy, "\\,"))
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -265,12 +283,17 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			region := tt.eksaRegion
+			if region == "" {
+				region = "us-west-2"
+			}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -296,11 +319,15 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			curatedpackages.WithHTTPSProxy(""),
 			curatedpackages.WithNoProxy(nil),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -311,12 +338,17 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			region := tt.eksaRegion
+			if region == "" {
+				region = "us-west-2"
+			}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -334,8 +366,11 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -349,7 +384,10 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(errors.New("login failed"))
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(errors.New("login failed"))
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -367,8 +405,11 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -382,9 +423,10 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -394,41 +436,6 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		err := tt.command.EnableCuratedPackages(tt.ctx)
 		if err == nil {
 			t.Errorf("expected error, got nil")
-		}
-	}
-}
-
-func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		var values []string
-		clusterName := fmt.Sprintf("clusterName=%s", "billy")
-		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		if tt.registryMirror != nil {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
-		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, errors.New("failed applying secrets"))
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
-		any := gomock.Any()
-		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
-			DoAndReturn(getPBCSuccess(t)).
-			AnyTimes()
-
-		err := tt.command.EnableCuratedPackages(tt.ctx)
-		if err != nil {
-			t.Errorf("Install Controller Should succeed when secret creation fails")
 		}
 	}
 }
@@ -458,8 +465,11 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -473,9 +483,10 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -513,49 +524,6 @@ func TestIsInstalledFalse(t *testing.T) {
 	}
 }
 
-func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		var values []string
-		clusterName := fmt.Sprintf("clusterName=%s", "billy")
-		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		if tt.registryMirror != nil {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", "us-west-2"))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
-		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretDefaultRegion, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
-		any := gomock.Any()
-		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
-			DoAndReturn(getPBCSuccess(t)).
-			AnyTimes()
-
-		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
-			tt.registryMirror,
-			curatedpackages.WithEksaRegion(""),
-			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
-			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
-			curatedpackages.WithManagementClusterName(tt.clusterName),
-		)
-		err := tt.command.EnableCuratedPackages(tt.ctx)
-		if err != nil {
-			t.Errorf("Install Controller Should succeed when cron job fails")
-		}
-	}
-}
-
 func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
@@ -566,11 +534,15 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 			curatedpackages.WithActiveBundleTimeout(time.Second),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -581,12 +553,17 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			region := tt.eksaRegion
+			if region == "" {
+				region = "us-west-2"
+			}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -604,8 +581,11 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -619,9 +599,10 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -661,11 +642,15 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 			curatedpackages.WithActiveBundleTimeout(time.Millisecond),
 			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
 		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
 		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
 			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
@@ -676,12 +661,17 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			}
 		} else {
 			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			region := tt.eksaRegion
+			if region == "" {
+				region = "us-west-2"
+			}
+			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
 			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, awsSecretTest, params).Return(bytes.Buffer{}, nil)
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", values).Return(nil)
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -700,5 +690,78 @@ func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
 		time.Sleep(delay)
 		return fmt.Errorf("test error")
+	}
+}
+
+func TestCreateHelmOverrideValuesYaml(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
+		tt.Expect(err).To(BeNil())
+		tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+		test.AssertContentToFile(t, string(content), tt.wantValueFile)
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
+		if tt.registryMirror != nil {
+			tt.Expect(err).NotTo(BeNil())
+			tt.Expect(filePath).To(Equal(""))
+		} else {
+			tt.Expect(err).To(BeNil())
+			tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+			test.AssertContentToFile(t, string(content), tt.wantValueFile)
+		}
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithActiveBundleTimeout(time.Second),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+		)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+
+		err := tt.command.EnableCuratedPackages(tt.ctx)
+		expectedErr := fmt.Errorf("valuesFileWriter is nil")
+		if err.Error() != expectedErr.Error() {
+			t.Errorf("expected %v, got %v", expectedErr, err)
+		}
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	writer := writermocks.NewMockFileWriter(ctrl)
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithValuesFileWriter(writer),
+		)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		writer.EXPECT().Write(gomock.Any(), gomock.Any()).Return("", errors.New("writer errors out"))
+
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
+		tt.Expect(filePath).To(Equal(""))
+		tt.Expect(content).NotTo(BeNil())
+		tt.Expect(err).NotTo(BeNil())
 	}
 }

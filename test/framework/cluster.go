@@ -176,7 +176,11 @@ func ExpectFailure(expected bool) ClusterE2ETestOpt {
 }
 
 func WithControlPlaneHardware(requiredCount int) ClusterE2ETestOpt {
-	return withHardware(requiredCount, api.ControlPlane, map[string]string{api.HardwareLabelTypeKeyName: api.ControlPlane})
+	return withHardware(
+		requiredCount,
+		api.ControlPlane,
+		map[string]string{api.HardwareLabelTypeKeyName: api.ControlPlane},
+	)
 }
 
 func WithWorkerHardware(requiredCount int) ClusterE2ETestOpt {
@@ -188,7 +192,11 @@ func WithCustomLabelHardware(requiredCount int, label string) ClusterE2ETestOpt 
 }
 
 func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
-	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
+	return withHardware(
+		requiredCount,
+		api.ExternalEtcd,
+		map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd},
+	)
 }
 
 // WithClusterName sets the name that will be used for the cluster. This will drive both the name of the eks-a
@@ -300,6 +308,7 @@ type Provider interface {
 	ClusterConfigUpdates() []api.ClusterConfigFiller
 	Setup()
 	CleanupVMs(clusterName string) error
+	UpdateKubeConfig(content *[]byte, clusterName string) error
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
@@ -414,11 +423,22 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 			time.Sleep(5 * time.Second)
 			timeout = timeout - 5
 			powerState, err = bmcClient.GetPowerState(ctx)
-			e.T.Logf("hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s", h.MACAddress, h.Hostname, h.BMCIPAddress, powerState)
+			e.T.Logf(
+				"hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s",
+				h.MACAddress,
+				h.Hostname,
+				h.BMCIPAddress,
+				powerState,
+			)
 		}
 
 		if !strings.EqualFold(powerState, string(rapi.Off)) {
-			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+			e.T.Logf(
+				"failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s",
+				h.MACAddress,
+				h.Hostname,
+				h.BMCIPAddress,
+			)
 			failedToDecomm = append(failedToDecomm, h)
 		} else {
 			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
@@ -617,7 +637,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	e.T.Log("Validating cluster node status")
 	r := retrier.New(10 * time.Minute)
 	err := r.Retry(func() error {
-		err := e.KubectlClient.ValidateNodes(ctx, e.cluster().KubeconfigFile)
+		err := e.KubectlClient.ValidateNodes(ctx, e.Cluster().KubeconfigFile)
 		if err != nil {
 			return fmt.Errorf("validating nodes status: %v", err)
 		}
@@ -628,7 +648,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	}
 	e.T.Log("Validating cluster node version")
 	err = retrier.Retry(180, 1*time.Second, func() error {
-		if err = e.KubectlClient.ValidateNodesVersion(ctx, e.cluster().KubeconfigFile, kubeVersion); err != nil {
+		if err = e.KubectlClient.ValidateNodesVersion(ctx, e.Cluster().KubeconfigFile, kubeVersion); err != nil {
 			return fmt.Errorf("validating nodes version: %v", err)
 		}
 		return nil
@@ -641,7 +661,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 func (e *ClusterE2ETest) WaitForMachineDeploymentReady(machineDeploymentName string) {
 	ctx := context.Background()
 	e.T.Logf("Waiting for machine deployment %s to be ready for cluster %s", machineDeploymentName, e.ClusterName)
-	err := e.KubectlClient.WaitForMachineDeploymentReady(ctx, e.cluster(), "5m", machineDeploymentName)
+	err := e.KubectlClient.WaitForMachineDeploymentReady(ctx, e.Cluster(), "5m", machineDeploymentName)
 	if err != nil {
 		e.T.Fatal(err)
 	}
@@ -649,7 +669,7 @@ func (e *ClusterE2ETest) WaitForMachineDeploymentReady(machineDeploymentName str
 
 func (e *ClusterE2ETest) GetCapiMachinesForCluster(clusterName string) map[string]types.Machine {
 	ctx := context.Background()
-	capiMachines, err := e.KubectlClient.GetMachines(ctx, e.cluster(), clusterName)
+	capiMachines, err := e.KubectlClient.GetMachines(ctx, e.Cluster(), clusterName)
 	if err != nil {
 		e.T.Fatal(err)
 	}
@@ -858,7 +878,8 @@ func (e *ClusterE2ETest) cleanup(f func()) {
 	})
 }
 
-func (e *ClusterE2ETest) cluster() *types.Cluster {
+// Cluster builds a cluster obj using the ClusterE2ETest name and kubeconfig.
+func (e *ClusterE2ETest) Cluster() *types.Cluster {
 	return &types.Cluster{
 		Name:           e.ClusterName,
 		KubeconfigFile: e.kubeconfigFilePath(),
@@ -940,7 +961,11 @@ func setEksctlVersionEnvVar() error {
 	if eksctlVersionEnv == "" {
 		err := os.Setenv(eksctlVersionEnvVar, eksctlVersionEnvVarDummyVal)
 		if err != nil {
-			return fmt.Errorf("couldn't set eksctl version env var %s to value %s", eksctlVersionEnvVar, eksctlVersionEnvVarDummyVal)
+			return fmt.Errorf(
+				"couldn't set eksctl version env var %s to value %s",
+				eksctlVersionEnvVar,
+				eksctlVersionEnvVarDummyVal,
+			)
 		}
 	}
 	return nil
@@ -950,7 +975,7 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 	kubeconfig := e.kubeconfigFilePath()
 	ctx := context.Background()
 
-	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", e.HelmInstallConfig.chartValues)
+	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", "", e.HelmInstallConfig.chartValues)
 	if err != nil {
 		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
 	}
@@ -988,7 +1013,7 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 		}
 	}
 	if !installed {
-		err = e.PackageConfig.HelmClient.InstallChart(ctx, e.PackageConfig.chartName, e.PackageConfig.chartURI, e.PackageConfig.chartVersion, kubeconfig, "eksa-packages", e.PackageConfig.chartValues)
+		err = e.PackageConfig.HelmClient.InstallChart(ctx, e.PackageConfig.chartName, e.PackageConfig.chartURI, e.PackageConfig.chartVersion, kubeconfig, "eksa-packages", "", e.PackageConfig.chartValues)
 		if err != nil {
 			e.T.Fatalf("Unable to install %s helm chart on the cluster: %v",
 				e.PackageConfig.chartName, err)
@@ -1018,7 +1043,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 }
 
 // InstallCuratedPackage will install a curated package in the desired namespace.
-func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubeconfig, namespace string, opts ...string) {
+func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubeconfig string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
 	os.Setenv("KUBECONFIG", kubeconfig)
@@ -1087,7 +1112,7 @@ func (e *ClusterE2ETest) BuildPackageConfigFile(packageName, prefix, ns string) 
 }
 
 func (e *ClusterE2ETest) CreateResource(ctx context.Context, resource string) {
-	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.cluster(), []byte(resource))
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), []byte(resource))
 	if err != nil {
 		e.T.Fatalf("Failed to create required resource (%s): %v", resource, err)
 	}
@@ -1096,6 +1121,7 @@ func (e *ClusterE2ETest) CreateResource(ctx context.Context, resource string) {
 func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...string) {
 	e.RunEKSA([]string{
 		"delete", "package", packagePrefix, "-v=9",
+		"--cluster=" + e.ClusterName,
 		strings.Join(opts, " "),
 	})
 }
@@ -1147,7 +1173,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string, namespace s
 		go func(name string) {
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
-				e.cluster(), "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), namespace)
+				e.Cluster(), "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), namespace)
 			if err != nil {
 				errCh <- err
 			}
@@ -1190,7 +1216,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string, mgmtCluster *t
 
 	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", "hello-eks-anywhere", ns)
+		e.Cluster(), "5m", "Available", "hello-eks-anywhere", ns)
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere deployment timed out: %s", err)
 	}
@@ -1208,14 +1234,14 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "10m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot package install timed out: %s", err)
 	}
 
 	e.T.Log("Waiting for package", packageName, "deployment to be available")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
+		e.Cluster(), "5m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
@@ -1225,43 +1251,17 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 	if err != nil {
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	ok := strings.Contains(logs, "Everything is ready")
-	if !ok {
-		e.T.Fatalf("expected to find 'Everything is ready' in the log, got %s", logs)
-	}
+	expectedLogs := "Everything is ready"
+	e.MatchLogs(targetNamespace, adotPodName, "aws-otel-collector", expectedLogs, 5*time.Minute)
 
-	e.T.Log("Launching Busybox pod to test Package", packageName)
 	podIPAddress, err := e.KubectlClient.GetPodIP(context.TODO(), targetNamespace, adotPodName, e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("unable to get ip of the aws-otel-collector pod: %s", err)
 	}
 	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
-	busyBoxName := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), targetNamespace, busyBoxName, e.kubeconfigFilePath(), []string{"curl", podFullIPAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Waiting Busybox pod", clientPod, "to be ready")
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", targetNamespace)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err = e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl adot\n %s\n", logs)
-	ok = strings.Contains(logs, "otelcol_exporter")
-	if !ok {
-		e.T.Fatalf("expected to find otelcol_exporter in the log, got %s", logs)
-	}
+	e.T.Log("Validate content at endpoint", podFullIPAddress)
+	expectedLogs = "otelcol_exporter"
+	e.ValidateEndpointContent(podFullIPAddress, targetNamespace, expectedLogs)
 }
 
 //go:embed testdata/adot_package_deployment.yaml
@@ -1278,7 +1278,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 	// Deploy ADOT as a deployment and scrape the apiservers
 	e.T.Log("Apply changes to package", packageName)
 	e.T.Log("This will update", packageName, "to be a deployment, and scrape the apiservers")
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDeployment, packageMetadatNamespace)
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDeployment, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
@@ -1287,14 +1287,14 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 
 	e.T.Log("Waiting for package", packageName, "to be updated")
 	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "10m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
 
 	e.T.Log("Waiting for package", packageName, "deployment to be available")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
+		e.Cluster(), "5m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
@@ -1324,7 +1324,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 	// Deploy ADOT as a daemonset and scrape the node
 	e.T.Log("Apply changes to package", packageName)
 	e.T.Log("This will update", packageName, "to be a daemonset, and scrape the node")
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), adotPackageDaemonset, packageMetadatNamespace)
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDaemonset, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
@@ -1333,7 +1333,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 
 	e.T.Log("Waiting for package", packageName, "to be updated")
 	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "10m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
@@ -1341,7 +1341,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 	e.T.Log("Waiting for package", packageName, "daemonset to be rolled out")
 	err = retrier.New(6 * time.Minute).Retry(func() error {
 		return e.KubectlClient.WaitForResourceRolledout(ctx,
-			e.cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace, "daemonset")
+			e.Cluster(), "5m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace, "daemonset")
 	})
 	if err != nil {
 		e.T.Fatalf("waiting for adot daemonset timed out: %s", err)
@@ -1390,41 +1390,21 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(name string, mgmtCluster
 
 	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", name, ns)
+		e.Cluster(), "5m", "Available", name, ns)
 	if err != nil {
 		e.T.Fatalf("waiting for emissary deployment timed out: %s", err)
 	}
 	svcAddress := name + "-admin." + ns + ".svc.cluster.local" + ":8877/ambassador/v0/check_alive"
-	randomname := fmt.Sprintf("%s-%s", "busybox-test", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomname, e.kubeconfigFilePath(), []string{"curl", svcAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
-
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", ns)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl emissary\n %s\n", logs)
-	ok := strings.Contains(logs, "Ambassador is alive and well")
-	if !ok {
-		e.T.Fatalf("expected Ambassador is alive and well, got %s", logs)
-	}
+	e.T.Log("Validate content at endpoint", svcAddress)
+	expectedLogs := "Ambassador is alive and well"
+	e.ValidateEndpointContent(svcAddress, ns, expectedLogs)
 }
 
 // TestEmissaryPackageRouting is checking if emissary is able to create Ingress, host, and mapping that function correctly.
 func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	ns := constants.EksaPackagesName
-	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.cluster(), emisarryPackage)
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), emisarryPackage)
 	if err != nil {
 		e.T.Errorf("Error upgrading emissary package: %v", err)
 		return
@@ -1435,7 +1415,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *ty
 	if err != nil {
 		e.T.Fatalf("waiting for emissary package upgrade timed out: %s", err)
 	}
-	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.cluster(), emisarryListener)
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), emisarryListener)
 	if err != nil {
 		e.T.Errorf("Error applying roles for oids: %v", err)
 		return
@@ -1443,27 +1423,9 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(name string, mgmtCluster *ty
 
 	// Functional testing of Emissary Ingress
 	ingresssvcAddress := name + "." + ns + ".svc.cluster.local" + "/backend/"
-	randomnameIng := fmt.Sprintf("%s-%s", "busybox-test-ing", utilrand.String(7))
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, randomnameIng, e.kubeconfigFilePath(), []string{"curl", ingresssvcAddress})
-	if err != nil {
-		e.T.Fatalf("error launching busybox pod: %s", err)
-	}
-	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
-	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), clientPod, "5m", ns)
-	if err != nil {
-		e.T.Fatalf("waiting for busybox pod timed out: %s", err)
-	}
-	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
-	if err != nil {
-		e.T.Fatalf("failure getting pod logs %s", err)
-	}
-	fmt.Printf("Logs from curl emissary\n %s\n", logs)
-	ok := strings.Contains(logs, "quote")
-	if !ok {
-		e.T.Fatalf("expected quote, got %s", logs)
-	}
+	e.T.Log("Validate content at endpoint", ingresssvcAddress)
+	expectedLogs := "quote"
+	e.ValidateEndpointContent(ingresssvcAddress, ns, expectedLogs)
 }
 
 // VerifyPrometheusPackageInstalled is checking if the Prometheus package gets installed correctly.
@@ -1473,7 +1435,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "10m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
 	}
@@ -1486,7 +1448,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName stri
 	e.T.Log("Waiting for package", packageName, mode, "prometheus-server to be rolled out")
 	err := retrier.New(6 * time.Minute).Retry(func() error {
 		return e.KubectlClient.WaitForResourceRolledout(ctx,
-			e.cluster(), "5m", fmt.Sprintf("%s-server", packageName), targetNamespace, mode)
+			e.Cluster(), "5m", fmt.Sprintf("%s-server", packageName), targetNamespace, mode)
 	})
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus-server %s timed out: %s", mode, err)
@@ -1509,7 +1471,7 @@ func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName string, 
 	e.T.Log("Waiting for package", packageName, "daemonset node-exporter to be rolled out")
 	err := retrier.New(6 * time.Minute).Retry(func() error {
 		return e.KubectlClient.WaitForResourceRolledout(ctx,
-			e.cluster(), "5m", fmt.Sprintf("%s-node-exporter", packageName), targetNamespace, "daemonset")
+			e.Cluster(), "5m", fmt.Sprintf("%s-node-exporter", packageName), targetNamespace, "daemonset")
 	})
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus daemonset timed out: %s", err)
@@ -1546,7 +1508,7 @@ func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
 	ns := constants.EksaPackagesName
 	packageDeployment := "eks-anywhere-packages"
 
-	_, err := e.KubectlClient.GetDeployment(ctx, packageDeployment, ns, e.cluster().KubeconfigFile)
+	_, err := e.KubectlClient.GetDeployment(ctx, packageDeployment, ns, e.Cluster().KubeconfigFile)
 
 	if !apierrors.IsNotFound(err) {
 		e.T.Fatalf("found deployment for package controller in workload cluster %s : %s", e.ClusterName, err)
@@ -1567,7 +1529,7 @@ func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(name string, targetNam
 
 	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", deploymentName, targetNamespace)
+		e.Cluster(), "5m", "Available", deploymentName, targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for cluster-autoscaler deployment timed out: %s", err)
 	}
@@ -1587,7 +1549,7 @@ func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(name string, targetN
 
 	e.T.Log("Waiting for Package", name, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", deploymentName, targetNamespace)
+		e.Cluster(), "5m", "Available", deploymentName, targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for Metric Server deployment timed out: %s", err)
 	}
@@ -1605,7 +1567,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 	packageInstallNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 	data := map[string]interface{}{
 		"targetNamespace": targetNamespace,
-		"clusterName":     e.cluster().Name,
+		"clusterName":     e.Cluster().Name,
 	}
 
 	metricsServerPackageDeployment, err := templater.Execute(metricsServerPackageDeploymentTemplate, data)
@@ -1613,7 +1575,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 		e.T.Fatalf("Failed creating metrics-erver Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), metricsServerPackageDeployment,
+	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), metricsServerPackageDeployment,
 		packageInstallNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing metrics-sserver pacakge: %s", err)
@@ -1624,7 +1586,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 		e.T.Fatalf("Failed creating autoscaler Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), autoscalerPackageDeployment,
+	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), autoscalerPackageDeployment,
 		packageInstallNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cluster autoscaler pacakge: %s", err)
@@ -1651,7 +1613,7 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 	e.T.Log("Deploying test workload")
 
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", name, ns)
+		e.Cluster(), "5m", "Available", name, ns)
 	if err != nil {
 		e.T.Fatalf("Failed waiting for test workload deployent %s", err)
 	}
@@ -1717,7 +1679,7 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName string, targetNamespace st
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 
 	e.T.Log("Apply changes to package", packageName)
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.cluster(), PackageFile, packageMetadatNamespace)
+	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), PackageFile, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading package: %s", err)
 		return
@@ -1739,7 +1701,7 @@ func (e *ClusterE2ETest) CurlEndpointByBusyBox(endpoint string, namespace string
 	}
 
 	err = e.KubectlClient.WaitForPodCompleted(ctx,
-		e.cluster(), busyBoxPodName, "5m", namespace)
+		e.Cluster(), busyBoxPodName, "5m", namespace)
 	if err != nil {
 		e.T.Fatalf("waiting for busybox pod %s timed out: %s", busyBoxPodName, err)
 	}
@@ -1803,11 +1765,10 @@ func (e *ClusterE2ETest) buildClusterValidator(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create management cluster client: %s", err)
 	}
-	if e.ClusterConfig.Cluster.IsSelfManaged() {
-		mc = nil
+	c := mc
+	if e.managementKubeconfigFilePath() != e.kubeconfigFilePath() {
+		c, err = kubernetes.NewRuntimeClientFromFileName(e.kubeconfigFilePath())
 	}
-
-	c, err := kubernetes.NewRuntimeClientFromFileName(e.kubeconfigFilePath())
 	if err != nil {
 		return fmt.Errorf("failed to create cluster client: %s", err)
 	}
@@ -1818,9 +1779,9 @@ func (e *ClusterE2ETest) buildClusterValidator(ctx context.Context) error {
 	}
 
 	e.clusterValidator = NewClusterValidator(func(cv *ClusterValidator) {
-		cv.ClusterOpts.ClusterClient = c
-		cv.ClusterOpts.ManagementClusterClient = mc
-		cv.ClusterOpts.ClusterSpec = spec
+		cv.Config.ClusterClient = c
+		cv.Config.ManagementClusterClient = mc
+		cv.Config.ClusterSpec = spec
 	})
 
 	return nil

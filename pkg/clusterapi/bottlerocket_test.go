@@ -47,6 +47,25 @@ func TestSetBottlerocketInKubeadmControlPlane(t *testing.T) {
 	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Pause = pause
 	want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketBootstrap = bootstrap
 	want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
+		bootstrapv1.HostPathMount{
+			HostPath:  "/var/lib/kubeadm/controller-manager.conf",
+			MountPath: "/etc/kubernetes/controller-manager.conf",
+			Name:      "kubeconfig",
+			PathType:  "File",
+			ReadOnly:  true,
+		},
+	)
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
+		bootstrapv1.HostPathMount{
+			HostPath:  "/var/lib/kubeadm/scheduler.conf",
+			MountPath: "/etc/kubernetes/scheduler.conf",
+			Name:      "kubeconfig",
+			PathType:  "File",
+			ReadOnly:  true,
+		},
+	)
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
 
 	clusterapi.SetBottlerocketInKubeadmControlPlane(got, g.clusterSpec.VersionsBundle)
 	g.Expect(got).To(Equal(want))

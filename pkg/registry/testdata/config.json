@@ -1,0 +1,13 @@
+{
+    "auths": {
+        "localhost": {
+            "auth": "dXNlcjpwYXNz"
+        },
+        "harbor.eksa.demo:30003": {
+            "auth": "Y2FwdGFpbjpoYWRkb2Nr"
+        }
+    },
+    "credHelpers": {
+        "5551212.dkr.ecr.us-west-2.amazonaws.com": "bogus"
+    }
+}

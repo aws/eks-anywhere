@@ -279,7 +279,7 @@ func (p *SnowProvider) machineConfigsChanged(ctx context.Context, cluster *types
 			return false, err
 		}
 
-		if !equality.Semantic.DeepDerivative(new.Spec, old.Spec) {
+		if len(new.Spec.Devices) != len(old.Spec.Devices) || !equality.Semantic.DeepDerivative(new.Spec, old.Spec) {
 			return true, nil
 		}
 	}

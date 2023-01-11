@@ -13,22 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
-func validateDatacenterConfig(config *v1alpha1.TinkerbellDatacenterConfig) error {
-	if err := validateObjectMeta(config.ObjectMeta); err != nil {
-		return fmt.Errorf("TinkerbellDatacenterConfig: %v", err)
-	}
-
-	if config.Spec.TinkerbellIP == "" {
-		return errors.New("TinkerbellDatacenterConfig: missing spec.tinkerbellIP field")
-	}
-
-	if err := networkutils.ValidateIP(config.Spec.TinkerbellIP); err != nil {
-		return fmt.Errorf("TinkerbellDatacenterConfig: invalid tinkerbell ip: %v", err)
-	}
-
-	return nil
-}
-
 func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 	if err := validateObjectMeta(config.ObjectMeta); err != nil {
 		return fmt.Errorf("TinkerbellMachineConfig: %v", err)

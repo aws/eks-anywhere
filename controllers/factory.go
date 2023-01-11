@@ -45,10 +45,11 @@ type Factory struct {
 }
 
 type Reconcilers struct {
-	ClusterReconciler           *ClusterReconciler
-	DockerDatacenterReconciler  *DockerDatacenterReconciler
-	VSphereDatacenterReconciler *VSphereDatacenterReconciler
-	SnowMachineConfigReconciler *SnowMachineConfigReconciler
+	ClusterReconciler              *ClusterReconciler
+	DockerDatacenterReconciler     *DockerDatacenterReconciler
+	VSphereDatacenterReconciler    *VSphereDatacenterReconciler
+	SnowMachineConfigReconciler    *SnowMachineConfigReconciler
+	TinkerbellDatacenterReconciler *TinkerbellDatacenterReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -147,6 +148,22 @@ func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
 			client,
 			snow.NewValidator(snowreconciler.NewAwsClientBuilder(client)),
 		)
+		return nil
+	})
+	return f
+}
+
+// WithTinkerbellDatacenterReconciler adds the TinkerbellDatacenterReconciler to the controller factory.
+func (f *Factory) WithTinkerbellDatacenterReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.TinkerbellDatacenterReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.TinkerbellDatacenterReconciler = NewTinkerbellDatacenterReconciler(
+			f.manager.GetClient(),
+		)
+
 		return nil
 	})
 	return f

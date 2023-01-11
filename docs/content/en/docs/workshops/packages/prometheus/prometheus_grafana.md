@@ -48,11 +48,12 @@ metadata:
   namespace: eksa-packages-<cluster-name>
 spec:
   packageName: prometheus
-  server:
-    global:
-      evaluation_interval: "30s"
-      scrape_interval: "30s"
-      scrape_timeout: "15s"
+  config: |
+    server:
+      global:
+        evaluation_interval: "30s"
+        scrape_interval: "30s"
+        scrape_timeout: "15s"
 ```
 
 #### Run prometheus-server as statefulSets
@@ -68,10 +69,11 @@ metadata:
   namespace: eksa-packages-<cluster-name>
 spec:
   packageName: prometheus
-  server:
-    replicaCount: 2
-    statefulSet:
-      enabled: true
+  config: |
+    server:
+      replicaCount: 2
+      statefulSet:
+        enabled: true
 ```
 
 #### Disable prometheus-server and use node-exporter only
@@ -89,8 +91,9 @@ The following config allows the user to do such customization:
       namespace: eksa-packages-<cluster-name>
     spec:
       packageName: prometheus
-      server:
-        enabled: false
+      config: |
+        server:
+          enabled: false
 ```
 
 #### Disable node-exporter and use prometheus-server only
@@ -108,8 +111,9 @@ The following config allows the user to do such customization:
       namespace: eksa-packages-<cluster-name>
     spec:
       packageName: prometheus
-      nodeExporter:
-        enabled: false
+      config: |
+        nodeExporter:
+          enabled: false
 ```
 
 ### Prometheus Package Test

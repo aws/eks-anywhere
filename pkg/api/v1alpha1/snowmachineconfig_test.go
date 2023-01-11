@@ -427,8 +427,9 @@ func TestNewSnowMachineConfigGenerate(t *testing.T) {
 		},
 		Spec: SnowMachineConfigSpec{
 			AMIID:                    "",
+			Devices:                  []string{""},
 			InstanceType:             DefaultSnowInstanceType,
-			SshKeyName:               DefaultSnowSshKeyName,
+			SshKeyName:               DefaultSnowSSHKeyName,
 			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 			OSFamily:                 DefaultOSFamily,
 			Network: SnowNetwork{
@@ -439,9 +440,6 @@ func TestNewSnowMachineConfigGenerate(t *testing.T) {
 						Primary: true,
 					},
 				},
-			},
-			ContainersVolume: &snowv1.Volume{
-				Size: 25,
 			},
 		},
 	}

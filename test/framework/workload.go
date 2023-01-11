@@ -47,7 +47,7 @@ func (w *WorkloadCluster) ApplyClusterManifest() {
 func (w *WorkloadCluster) DeleteClusterWithKubectl() {
 	ctx := context.Background()
 	w.T.Logf("Deleting workload cluster %s with kubectl", w.ClusterName)
-	if err := w.KubectlClient.DeleteCluster(ctx, w.managementCluster(), w.cluster()); err != nil {
+	if err := w.KubectlClient.DeleteCluster(ctx, w.managementCluster(), w.Cluster()); err != nil {
 		w.T.Fatalf("Failed to delete workload cluster config: %s", err)
 	}
 	w.StopIfFailed()
@@ -71,6 +71,9 @@ func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context) error {
 		return fmt.Errorf("failed to get kubeconfig for cluster: %s", err)
 	}
 	kubeconfig := secret.Data["value"]
+	if err := w.Provider.UpdateKubeConfig(&kubeconfig, w.ClusterName); err != nil {
+		return fmt.Errorf("failed to update kubeconfig for cluster: %s", err)
+	}
 	writer, err := filewriter.NewWriter(w.ClusterConfigFolder)
 	if err != nil {
 		return fmt.Errorf("failed to write kubeconfig to disk: %v", err)

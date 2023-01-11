@@ -137,7 +137,7 @@ https://github.com/nutanix-cloud-native/prism-go-client
 ** github.com/opencontainers/go-digest; version v1.0.0 --
 https://github.com/opencontainers/go-digest
 
-** github.com/opencontainers/image-spec/specs-go; version v1.0.3-0.20211202183452-c5a74bcca799 --
+** github.com/opencontainers/image-spec/specs-go; version v1.1.0-rc2 --
 https://github.com/opencontainers/image-spec
 
 ** github.com/prometheus/client_golang/prometheus; version v1.12.2 --
@@ -219,6 +219,9 @@ https://github.com/kubernetes/kube-openapi
 https://github.com/kubernetes/utils
 
 ** oras.land/oras-go/pkg; version v1.2.0 --
+https://github.com/oras-project/oras-go
+
+** oras.land/oras-go/v2; version v2.0.0-rc.5 --
 https://github.com/oras-project/oras-go
 
 ** github.com/abhay-krishna/cluster-api; version v1.2.0-custom.rc5 --

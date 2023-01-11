@@ -1,6 +1,7 @@
 package validations
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -8,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsValidator) error {
@@ -52,6 +54,18 @@ func ValidateAuthenticationForRegistryMirror(clusterSpec *cluster.Spec) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// ValidateManagementClusterName checks if the management cluster specified in the workload cluster spec is valid.
+func ValidateManagementClusterName(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, mgmtClusterName string) error {
+	cluster, err := k.GetEksaCluster(ctx, mgmtCluster, mgmtClusterName)
+	if err != nil {
+		return err
+	}
+	if cluster.Name != cluster.Spec.ManagementCluster.Name {
+		return fmt.Errorf("%s is not a valid management cluster", mgmtClusterName)
 	}
 	return nil
 }

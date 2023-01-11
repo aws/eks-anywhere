@@ -49,7 +49,7 @@ func WithOIDC() ClusterE2ETestOpt {
 
 func (e *ClusterE2ETest) ValidateOIDC() {
 	ctx := context.Background()
-	cluster := e.cluster()
+	cluster := e.Cluster()
 	e.T.Log("Creating roles for OIDC")
 	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, oidcRoles)
 	if err != nil {

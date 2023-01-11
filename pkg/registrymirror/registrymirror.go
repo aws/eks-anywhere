@@ -19,6 +19,12 @@ type RegistryMirror struct {
 	NamespacedRegistryMap map[string]string
 	// Auth should be marked as true if authentication is required for the registry mirror
 	Auth bool
+	// CACertContent defines the contents registry mirror CA certificate
+	CACertContent string
+	// InsecureSkipVerify skips the registry certificate verification.
+	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
+	// Currently only supported for snow provider
+	InsecureSkipVerify bool
 }
 
 var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
@@ -56,6 +62,8 @@ func FromClusterRegistryMirrorConfiguration(config *v1alpha1.RegistryMirrorConfi
 		BaseRegistry:          base,
 		NamespacedRegistryMap: registryMap,
 		Auth:                  config.Authenticate,
+		CACertContent:         config.CACertContent,
+		InsecureSkipVerify:    config.InsecureSkipVerify,
 	}
 }
 

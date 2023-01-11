@@ -196,17 +196,17 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		k.execConfig.MirrorBase = registryMirror.BaseRegistry
 		k.execConfig.RegistryMirrorMap = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
-		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent != "" {
+		if registryMirror.CACertContent != "" {
 			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", registryMirror.BaseRegistry)
 			if err := os.MkdirAll(path, os.ModePerm); err != nil {
 				return err
 			}
-			if err := ioutil.WriteFile(filepath.Join(path, "ca.crt"), []byte(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent), 0o644); err != nil {
+			if err := ioutil.WriteFile(filepath.Join(path, "ca.crt"), []byte(registryMirror.CACertContent), 0o644); err != nil {
 				return errors.New("error writing the registry certification file")
 			}
 			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
 		}
-		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+		if registryMirror.Auth {
 			k.execConfig.RegistryAuth = registryMirror.Auth
 			username, password, err := config.ReadCredentials()
 			if err != nil {

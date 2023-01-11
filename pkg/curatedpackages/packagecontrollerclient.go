@@ -3,21 +3,23 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
-	"errors"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-//go:embed config/awssecret.yaml
-var awsSecretYaml string
+//go:embed config/secrets.yaml
+var secretsValueYaml string
 
 //go:embed config/packagebundlecontroller.yaml
 var packageBundleControllerYaml string
@@ -26,6 +28,7 @@ const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
+	valueFileName     = "values.yaml"
 )
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
@@ -46,10 +49,11 @@ type PackageControllerClient struct {
 	registryMirror        *registrymirror.RegistryMirror
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
+	valuesFileWriter    filewriter.FileWriter
 }
 
 type ChartInstaller interface {
-	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error
+	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, values []string) error
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
@@ -119,34 +123,64 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
-	if pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyID == "" {
+	if (pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyID == "") && pc.registryMirror == nil {
 		values = append(values, "cronjob.suspend=true")
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", values)
-	if err != nil {
+	var err error
+	var valueFilePath string
+	if valueFilePath, _, err = pc.CreateHelmOverrideValuesYaml(); err != nil {
 		return err
 	}
 
-	// Customers are currently requesting to show a warning in case
-	// credentials are not provided for curated packages
-	if err = pc.CreateCredentials(ctx); err != nil {
-		logger.MarkWarning("  Unable to create credentials for curated packages: ", "warning", err)
+	if err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
+		return err
 	}
 
 	return pc.waitForActiveBundle(ctx)
 }
 
-// CreateCredentials creates necessary credentials to enable the installation of curated packages.
-// In order to create the credentials, there are two necessary steps:
-//   - Creating a kubernetes secret
-//   - Creating a single run of the cron job to ensure the secret is consumed
-func (pc *PackageControllerClient) CreateCredentials(ctx context.Context) error {
-	if err := pc.ApplySecret(ctx); err != nil {
-		return errors.New("unable to detect AWS authentication credentials for curated packages. Skipping package installation. Follow documentation to set credentials after cluster creation completes")
+// CreateHelmOverrideValuesYaml creates a temp file to override certain values in package controller helm install.
+func (pc *PackageControllerClient) CreateHelmOverrideValuesYaml() (string, []byte, error) {
+	content, err := pc.generateHelmOverrideValues()
+	if err != nil {
+		return "", nil, err
 	}
+	if pc.valuesFileWriter == nil {
+		return "", content, fmt.Errorf("valuesFileWriter is nil")
+	}
+	filePath, err := pc.valuesFileWriter.Write(valueFileName, content)
+	if err != nil {
+		return "", content, err
+	}
+	return filePath, content, nil
+}
 
-	return nil
+func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) {
+	var err error
+	endpoint, username, password, caCertContent := "", "", "", ""
+	if pc.registryMirror != nil {
+		endpoint = pc.registryMirror.BaseRegistry
+		username, password, err = config.ReadCredentials()
+		if err != nil {
+			return []byte{}, err
+		}
+		caCertContent = pc.registryMirror.CACertContent
+	}
+	templateValues := map[string]interface{}{
+		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyID)),
+		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(pc.eksaSecretAccessKey)),
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(pc.eksaRegion)),
+		"mirrorEndpoint":      base64.StdEncoding.EncodeToString([]byte(endpoint)),
+		"mirrorUsername":      base64.StdEncoding.EncodeToString([]byte(username)),
+		"mirrorPassword":      base64.StdEncoding.EncodeToString([]byte(password)),
+		"mirrorCACertContent": base64.StdEncoding.EncodeToString([]byte(caCertContent)),
+	}
+	result, err := templater.Execute(secretsValueYaml, templateValues)
+	if err != nil {
+		return []byte{}, err
+	}
+	return result, nil
 }
 
 // InstallPBCResources installs Curated Packages Bundle Controller Custom Resource
@@ -235,28 +269,6 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 	return bool && err == nil
 }
 
-func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
-	templateValues := map[string]string{
-		"eksaAccessKeyId":     pc.eksaAccessKeyID,
-		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
-		"eksaRegion":          pc.eksaRegion,
-	}
-
-	result, err := templater.Execute(awsSecretYaml, templateValues)
-	if err != nil {
-		return fmt.Errorf("replacing template values %v", err)
-	}
-
-	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
-	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
-	if err != nil {
-		return fmt.Errorf("creating secret %v", err)
-	}
-
-	fmt.Print(&stdOut)
-	return nil
-}
-
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.eksaAccessKeyID = eksaAccessKeyId
@@ -308,5 +320,13 @@ func WithNoProxy(noProxy []string) func(client *PackageControllerClient) {
 func WithManagementClusterName(managementClusterName string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.managementClusterName = managementClusterName
+	}
+}
+
+// WithValuesFileWriter sets up a writer to generate temporary values.yaml to
+// override some values in package controller helm chart.
+func WithValuesFileWriter(writer filewriter.FileWriter) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.valuesFileWriter = writer
 	}
 }

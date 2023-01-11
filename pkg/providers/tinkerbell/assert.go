@@ -24,7 +24,7 @@ func AssertMachineConfigsValid(spec *ClusterSpec) error {
 
 // AssertDatacenterConfigValid asserts the DatacenterConfig in spec is valid.
 func AssertDatacenterConfigValid(spec *ClusterSpec) error {
-	return validateDatacenterConfig(spec.DatacenterConfig)
+	return spec.DatacenterConfig.Validate()
 }
 
 // AssertMachineConfigNamespaceMatchesDatacenterConfig ensures all machine configuration instances
