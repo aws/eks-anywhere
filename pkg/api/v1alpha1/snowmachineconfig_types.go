@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
@@ -132,6 +133,16 @@ func (s *SnowMachineConfig) SetDefaults() {
 
 func (s *SnowMachineConfig) Validate() error {
 	return validateSnowMachineConfig(s)
+}
+
+// ValidateHasSSHKeyName verifies a SnowMachineConfig object must have a SshKeyName.
+// This validation only runs in SnowMachineConfig validation webhook, as we support
+// auto-generate and import ssh key when creating a cluster via CLI.
+func (s *SnowMachineConfig) ValidateHasSSHKeyName() error {
+	if len(s.Spec.SshKeyName) <= 0 {
+		return errors.New("SnowMachineConfig SshKeyName must not be empty")
+	}
+	return nil
 }
 
 func (s *SnowMachineConfig) SetControlPlaneAnnotation() {
