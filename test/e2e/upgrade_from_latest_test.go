@@ -24,18 +24,15 @@ func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *re
 	test.DeleteCluster()
 }
 
-func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, opts ...framework.ClusterE2ETestOpt) {
-	test.CreateManagementClusterForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, opts ...framework.ClusterE2ETestOpt) {
+	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.ApplyClusterManifest()
 		wc.WaitForKubeconfig()
 		wc.ValidateClusterState()
 	})
-	// Adding this manual wait because old versions of the cli don't wait long enough
-	// after creation, which makes the upgrade preflight validations fail
-	test.ManagementCluster.WaitForControlPlaneReady()
 	test.ManagementCluster.UpgradeCluster(opts)
-	test.ManagementCluster.ValidateCluster(wantVersion)
+	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	test.ManagementCluster.StopIfFailed()
 	cluster := test.ManagementCluster.GetEKSACluster()
 	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.

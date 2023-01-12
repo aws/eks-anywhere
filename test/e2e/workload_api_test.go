@@ -306,10 +306,12 @@ func TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		t, provider,
 	)
+	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	managementCluster.UpdateClusterConfig(api.ClusterToConfigFiller(
+		api.WithKubernetesVersion(v1alpha1.Kube123),
+	))
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
 		framework.NewClusterE2ETest(
@@ -325,11 +327,9 @@ func TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 		),
 	)
 
-	wantVersion := v1alpha1.Kube124
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,
 		release,
-		wantVersion,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(wantVersion)),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
 	)
 }
