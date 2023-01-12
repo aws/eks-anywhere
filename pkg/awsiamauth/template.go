@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -45,8 +46,13 @@ func (t *TemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, clusterID 
 		"clusterID":          clusterIDValue,
 		"backendMode":        strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
 		"partition":          clusterSpec.AWSIamConfig.Spec.Partition,
-		"kubeVersion124":     clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube124,
 	}
+
+	nodeSelector, err := t.setControlPlaneNodeSelector(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, fmt.Errorf("setting control plane node selector: %v", err)
+	}
+	data["cpNodeSelector"] = nodeSelector
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints != nil {
 		data["controlPlaneTaints"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints
@@ -95,6 +101,25 @@ func (t *TemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (string, error) 
 	s = strings.TrimSuffix(s, "\n")
 
 	return s, nil
+}
+
+func (t *TemplateBuilder) setControlPlaneNodeSelector(kubeVersion v1alpha1.KubernetesVersion) (string, error) {
+	var nodeSelector string
+	clusterKubeVersionSemver, err := semver.KubeVersionToValidSemver(kubeVersion)
+	if err != nil {
+		return "", fmt.Errorf("converting kubeVersion %v to semver %v", kubeVersion, err)
+	}
+	kube124Semver, err := semver.KubeVersionToValidSemver(v1alpha1.Kube124)
+	if err != nil {
+		return "", fmt.Errorf("converting kubeVersion %v to semver %v", v1alpha1.Kube124, err)
+	}
+	if clusterKubeVersionSemver.Compare(kube124Semver) != -1 {
+		nodeSelector = `node-role.kubernetes.io/control-plane: ""`
+	} else {
+		nodeSelector = `node-role.kubernetes.io/master: ""`
+	}
+
+	return nodeSelector, nil
 }
 
 // GenerateCertKeyPairSecret generates a YAML Kubernetes Secret for deploying the AWS IAM Authenticator.
