@@ -48,7 +48,7 @@ func init() {
 		log.Fatalf("Cannot mark 'bundles' as required: %s", err)
 	}
 	importImagesCmd.Flags().BoolVar(&importImagesCommand.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in imported images")
-	importImagesCmd.Flag("include-packages").Deprecated = "Use copy packages command"
+	importImagesCmd.Flag("include-packages").Deprecated = "use copy packages command"
 	importImagesCmd.Flags().BoolVar(&importImagesCommand.insecure, "insecure", false, "Flag to indicate skipping TLS verification while pushing helm charts")
 }
 
