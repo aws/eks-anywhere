@@ -105,7 +105,7 @@ func (r *PackageReader) fetchPackagesHelmChart(bundleURI string, bundle *package
 		pHC := releasev1.Image{
 			Name:        p.Name,
 			Description: p.Name,
-			URI:         fmt.Sprintf("%s/%s@%s", registry.NewArtifactFromURI(bundleURI).Registry, p.Source.Repository, p.Source.Versions[0].Digest),
+			URI:         fmt.Sprintf("%s/%s@%s", getChartRegistry(bundleURI), p.Source.Repository, p.Source.Versions[0].Digest),
 			ImageDigest: p.Source.Versions[0].Digest,
 		}
 		images = append(images, pHC)
@@ -121,7 +121,7 @@ func (r *PackageReader) fetchImagesFromBundle(bundleURI string, bundle *packages
 			image := releasev1.Image{
 				Name:        version.Repository,
 				Description: version.Repository,
-				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(bundleURI), version.Repository, version.Digest),
+				URI:         fmt.Sprintf("%s/%s@%s", getImageRegistry(bundleURI), version.Repository, version.Digest),
 				ImageDigest: version.Digest,
 			}
 			images = append(images, image)
@@ -145,7 +145,12 @@ func removeDuplicateImages(images []releasev1.Image) []releasev1.Image {
 	return list
 }
 
-func getRegistry(uri string) string {
+func getChartRegistry(_ string) string {
+	// For now, we only support prod as a source
+	return publicProdECR
+}
+
+func getImageRegistry(uri string) string {
 	if strings.Contains(uri, publicProdECR) {
 		return packageProdDomain
 	}
