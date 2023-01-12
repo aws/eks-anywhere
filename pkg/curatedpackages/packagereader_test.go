@@ -16,7 +16,7 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-//go:embed testdata/packsages-bundle.yaml
+//go:embed testdata/packages-bundle.yaml
 var bundleData []byte
 
 type packageReaderTest struct {
