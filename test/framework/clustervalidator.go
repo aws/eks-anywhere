@@ -42,6 +42,13 @@ func (c *ClusterValidator) WithValidation(validation ClusterValidation, backoffP
 	c.validations = append(c.validations, retriableValidation{validation, backoffPeriod, maxRetries})
 }
 
+// WithValidation registers a validation to the ClusterValidator that will be run when Validate is called.
+func (c *ClusterValidator) WithValidations(validation ...ClusterValidation) {
+	for _, v := range validation {
+		c.validations = append(c.validations, retriableValidation{v, 5 * time.Second, 30})
+	}
+}
+
 // WithWorkloadClusterValidations registers a validation set for a workload cluster.
 func (c *ClusterValidator) WithWorkloadClusterValidations() {}
 
@@ -266,33 +273,6 @@ func validateCilium(ctx context.Context, vc ClusterValidatorConfig) error {
 	yamlCilium := yaml.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
 	if clusterCilium != yamlCilium {
 		return fmt.Errorf("cilium config does not match. %s and %s", clusterCilium, yamlCilium)
-	}
-
-	return nil
-}
-
-func (c *ClusterValidator) withVSphereValidations() {
-	c.WithValidation(validateCSI, 5*time.Second, 30)
-}
-
-func validateCSI(ctx context.Context, vc ClusterValidatorConfig) error {
-	clusterClient := vc.ClusterClient
-	if vc.ClusterSpec.Cluster.IsManaged() {
-		clusterClient = vc.ManagementClusterClient
-	}
-
-	yaml := vc.ClusterSpec.Config.VSphereDatacenter
-	datacenter := &v1alpha1.VSphereDatacenterConfig{}
-	key := types.NamespacedName{Namespace: vc.ClusterSpec.Cluster.Namespace, Name: vc.ClusterSpec.Cluster.Name}
-	err := clusterClient.Get(ctx, key, datacenter)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve cluster %s", err)
-	}
-
-	disableCSI := datacenter.Spec.DisableCSI
-	yamlCSI := yaml.Spec.DisableCSI
-	if disableCSI != yamlCSI {
-		return fmt.Errorf("cilium config does not match. %t and %t", disableCSI, yamlCSI)
 	}
 
 	return nil

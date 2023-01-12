@@ -75,3 +75,7 @@ func (d *Docker) ClusterConfigUpdates() []api.ClusterConfigFiller {
 func (d *Docker) WithWorkerNodeGroup(workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
 	return api.ClusterToConfigFiller(workerNodeGroup.ClusterFiller())
 }
+
+func (d *Docker) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

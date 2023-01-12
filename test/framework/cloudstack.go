@@ -260,3 +260,7 @@ func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, worke
 	workerNodeGroup.MachineConfigName = machineConfigName
 	return workerNodeGroup.ClusterFiller()
 }
+
+func (c *CloudStack) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

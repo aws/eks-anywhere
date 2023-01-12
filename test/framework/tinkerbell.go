@@ -233,3 +233,7 @@ func WithCustomTinkerbellMachineConfig(selector string) TinkerbellOpt {
 		t.fillers = append([]api.TinkerbellFiller{api.WithCustomTinkerbellMachineConfig(selector)}, t.fillers...)
 	}
 }
+
+func (t *Tinkerbell) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

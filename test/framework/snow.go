@@ -173,3 +173,7 @@ func UpdateSnowUbuntuTemplate122Var() api.SnowFiller {
 func UpdateSnowUbuntuTemplate123Var() api.SnowFiller {
 	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines)
 }
+
+func (s *Snow) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

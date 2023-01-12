@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -653,4 +655,33 @@ func readVSphereConfig() (vsphereConfig, error) {
 		TLSThumbprint:     os.Getenv(vsphereTlsThumbprintVar),
 		TemplatesFolder:   os.Getenv(vsphereTemplatesFolder),
 	}, nil
+}
+
+func (v *VSphere) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{
+		validateCSI,
+	}
+}
+
+func validateCSI(ctx context.Context, vc ClusterValidatorConfig) error {
+	clusterClient := vc.ClusterClient
+	if vc.ClusterSpec.Cluster.IsManaged() {
+		clusterClient = vc.ManagementClusterClient
+	}
+
+	yaml := vc.ClusterSpec.Config.VSphereDatacenter
+	datacenter := &anywherev1.VSphereDatacenterConfig{}
+	key := types.NamespacedName{Namespace: vc.ClusterSpec.Cluster.Namespace, Name: vc.ClusterSpec.Cluster.Name}
+	err := clusterClient.Get(ctx, key, datacenter)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve cluster %s", err)
+	}
+
+	disableCSI := datacenter.Spec.DisableCSI
+	yamlCSI := yaml.Spec.DisableCSI
+	if disableCSI != yamlCSI {
+		return fmt.Errorf("cilium config does not match. %t and %t", disableCSI, yamlCSI)
+	}
+
+	return nil
 }

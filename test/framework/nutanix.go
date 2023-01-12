@@ -305,3 +305,7 @@ func UpdateNutanixUbuntuTemplate123Var() api.NutanixFiller {
 func UpdateNutanixUbuntuTemplate124Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName)
 }
+
+func (s *Nutanix) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

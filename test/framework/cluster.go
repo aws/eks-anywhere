@@ -309,6 +309,7 @@ type Provider interface {
 	Setup()
 	CleanupVMs(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
+	ClusterValidations() []ClusterValidation
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
@@ -1663,10 +1664,8 @@ func (e *ClusterE2ETest) ValidateClusterState() {
 	}
 	e.clusterValidator.WithExpectedObjectsExist()
 
-	if e.Provider.Name() == "vsphere" {
-		e.T.Logf("validating vSphere cluster")
-		e.clusterValidator.withVSphereValidations()
-	}
+	providerValidations := e.Provider.ClusterValidations()
+	e.clusterValidator.WithValidations(providerValidations...)
 
 	if err := e.clusterValidator.Validate(ctx); err != nil {
 		e.T.Fatalf("failed to validate cluster %v", err)
