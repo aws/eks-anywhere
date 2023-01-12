@@ -667,6 +667,16 @@ func (e *ClusterE2ETest) WaitForMachineDeploymentReady(machineDeploymentName str
 	}
 }
 
+// GetEKSACluster retrieves the EKSA cluster from the runtime environment using kubectl.
+func (e *ClusterE2ETest) GetEKSACluster() *v1alpha1.Cluster {
+	ctx := context.Background()
+	clus, err := e.KubectlClient.GetEksaCluster(ctx, e.Cluster(), e.ClusterName)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	return clus
+}
+
 func (e *ClusterE2ETest) GetCapiMachinesForCluster(clusterName string) map[string]types.Machine {
 	ctx := context.Background()
 	capiMachines, err := e.KubectlClient.GetMachines(ctx, e.Cluster(), clusterName)
