@@ -3,9 +3,11 @@ package snow_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -26,6 +28,9 @@ type configManagerTest struct {
 	defaulters              *snow.Defaulters
 	machineConfigDefaulters *snow.MachineConfigDefaulters
 	machineConfig           *v1alpha1.SnowMachineConfig
+	uuid                    uuid.UUID
+	clusterName             string
+	defaultKeyName          string
 }
 
 func newConfigManagerTest(t *testing.T) *configManagerTest {
@@ -55,7 +60,8 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 	}
 	_, writer := test.NewWriter(t)
 	validators := snow.NewValidator(mockClientRegistry)
-	defaulters := snow.NewDefaulters(mockClientRegistry, writer, snow.WithKeyGenerator(mockKeyGenerator))
+	uuid := uuid.New()
+	defaulters := snow.NewDefaulters(mockClientRegistry, writer, snow.WithKeyGenerator(mockKeyGenerator), snow.WithUUID(uuid))
 	return &configManagerTest{
 		WithT:                   NewWithT(t),
 		ctx:                     ctx,
@@ -66,6 +72,9 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 		defaulters:              defaulters,
 		machineConfigDefaulters: snow.NewMachineConfigDefaulters(defaulters),
 		machineConfig:           m,
+		uuid:                    uuid,
+		clusterName:             "test-snow",
+		defaultKeyName:          fmt.Sprintf("eksa-default-test-snow-%s", uuid),
 	}
 }
 
