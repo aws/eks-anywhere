@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"path"
@@ -10,6 +11,7 @@ import (
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content"
 	orasregistry "oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -99,17 +101,26 @@ func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistr
 func (or *OCIRegistryClient) PullBytes(ctx context.Context, artifact Artifact) (data []byte, err error) {
 	srcStorage, err := or.GetStorage(ctx, artifact)
 	if err != nil {
-		return []byte{}, fmt.Errorf("repository source: %v", err)
+		return nil, fmt.Errorf("repository source: %v", err)
 	}
 
-	_, err = or.Resolve(ctx, srcStorage, artifact.VersionedImage())
+	_, data, err = oras.FetchBytes(ctx, srcStorage, artifact.VersionedImage(), oras.DefaultFetchBytesOptions)
 	if err != nil {
-		return []byte{}, fmt.Errorf("registry source resolve: %v", err)
+		return nil, fmt.Errorf("fetch manifest: %v", err)
 	}
 
-	opts := oras.FetchBytesOptions{}
-	dstRepo := artifact.VersionedImage()
-	_, data, err = oras.FetchBytes(ctx, srcStorage, dstRepo, opts)
+	var mani ocispec.Manifest
+	if err := json.Unmarshal(data, &mani); err != nil {
+		return nil, fmt.Errorf("unmarshal manifest: %v", err)
+	}
+	if len(mani.Layers) < 1 {
+		return nil, fmt.Errorf("missing layer")
+	}
+
+	data, err = content.FetchAll(ctx, srcStorage, mani.Layers[0])
+	if err != nil {
+		return nil, fmt.Errorf("fetch blob: %v", err)
+	}
 	return data, err
 }
 
