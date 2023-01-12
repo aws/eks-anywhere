@@ -19,12 +19,6 @@ import (
 //go:embed testdata/packsages-bundle.yaml
 var bundleData []byte
 
-var bundleOnly = []releasev1.Image{
-	{
-		URI: "public.ecr.aws/l0g8r8j6/eks-anywhere-packages-bundles:v1-21-latest",
-	},
-}
-
 type packageReaderTest struct {
 	*WithT
 	ctx            context.Context
@@ -110,6 +104,17 @@ func TestPackageReader_ReadChartsFromBundles(t *testing.T) {
 	tt.Expect(images).NotTo(BeEmpty())
 }
 
+func TestPackageReader_ReadChartsFromBundlesProduction(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	artifact := registry.NewArtifactFromURI("public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-21-latest")
+	tt.storageClient.EXPECT().PullBytes(tt.ctx, artifact).Return(bundleData, nil)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = tt.registryName + "/eks-anywhere/ctrl:v1"
+
+	images := tt.command.ReadChartsFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(images).NotTo(BeEmpty())
+}
+
 func TestPackageReader_ReadChartsFromBundlesBadKubeVersion(t *testing.T) {
 	tt := newPackageReaderTest(t)
 	bundles := tt.bundles.DeepCopy()
@@ -126,5 +131,5 @@ func TestPackageReader_ReadChartsFromBundlesBundlePullError(t *testing.T) {
 
 	images := tt.command.ReadChartsFromBundles(tt.ctx, tt.bundles)
 
-	tt.Expect(images).To(Equal(bundleOnly))
+	tt.Expect(images).To(BeEmpty())
 }
