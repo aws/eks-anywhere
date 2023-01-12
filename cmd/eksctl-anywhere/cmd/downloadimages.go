@@ -41,7 +41,7 @@ func init() {
 		log.Fatalf("Cannot mark 'output' flag as required: %s", err)
 	}
 
-	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "Flag no long works, use copy packages")
+	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "this flag no longer works, use copy packages instead")
 	downloadImagesCmd.Flag("include-packages").Deprecated = "use copy packages command"
 	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.insecure, "insecure", false, "Flag to indicate skipping TLS verification while downloading helm charts")
 }
