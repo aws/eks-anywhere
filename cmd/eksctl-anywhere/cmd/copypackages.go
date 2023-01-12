@@ -68,7 +68,7 @@ func runCopyPackages(_ *cobra.Command, args []string) error {
 	return copyPackagesCommand.call(ctx, credentialStore)
 }
 
-func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.CredentialStore) error {
+func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry.CredentialStore) error {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
@@ -83,7 +83,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.
 	}
 
 	c.registryCache = registry.NewCache()
-	bundleReader := curatedpackages.NewPackageReader(deps.ManifestReader, c.registryCache)
+	bundleReader := curatedpackages.NewPackageReader(deps.ManifestReader, c.registryCache, credentialStore)
 
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 
@@ -111,7 +111,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore registry.
 	return c.copyImages(ctx, dstRegistry, credentialStore, imageList)
 }
 
-func (c CopyPackagesCommand) copyImages(ctx context.Context, dstRegistry registry.StorageClient, credentialStore registry.CredentialStore, imageList []releasev1.Image) error {
+func (c CopyPackagesCommand) copyImages(ctx context.Context, dstRegistry registry.StorageClient, credentialStore *registry.CredentialStore, imageList []releasev1.Image) error {
 	certificates, err := registry.GetCertificates(c.srcCert)
 	if err != nil {
 		return err

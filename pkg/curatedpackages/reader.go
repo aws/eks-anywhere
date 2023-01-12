@@ -30,14 +30,16 @@ type ManifestReader interface {
 
 type PackageReader struct {
 	ManifestReader
-	cache *registry.Cache
+	cache           *registry.Cache
+	credentialStore *registry.CredentialStore
 }
 
 // NewPackageReader create a new package reader with storage client.
-func NewPackageReader(mr ManifestReader, cache *registry.Cache) *PackageReader {
+func NewPackageReader(mr ManifestReader, cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
 	return &PackageReader{
-		ManifestReader: mr,
-		cache:          cache,
+		ManifestReader:  mr,
+		cache:           cache,
+		credentialStore: credentialStore,
 	}
 }
 
@@ -47,7 +49,7 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 	for _, vb := range b.Spec.VersionsBundles {
 		bundleURI, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
-			logger.Info("Warning: Failed getting bundle reference", "error", err)
+			logger.Info("Warning: Failed getting image reference", "error", err)
 			continue
 		}
 		images = append(images, releasev1.Image{URI: bundleURI})
@@ -63,7 +65,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 	for _, vb := range b.Spec.VersionsBundles {
 		bundleRegistry, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
-			logger.Info("Warning: Failed getting bundle reference", "error", err)
+			logger.Info("Warning: Failed getting chart reference", "error", err)
 			continue
 		}
 		images = append(images, releasev1.Image{URI: bundleRegistry})
@@ -80,7 +82,7 @@ func (r *PackageReader) getBundle(ctx context.Context, vb releasev1.VersionsBund
 	}
 
 	artifact := registry.NewArtifactFromURI(bundleURI)
-	sc, err := r.cache.Get(registry.NewDefaultStorageContext(artifact.Registry))
+	sc, err := r.cache.Get(registry.NewStorageContext(artifact.Registry, r.credentialStore, nil, false))
 	if err != nil {
 		return "", nil, err
 	}

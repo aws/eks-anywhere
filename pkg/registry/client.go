@@ -97,13 +97,18 @@ func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistr
 
 // PullBytes a resource from the registry.
 func (or *OCIRegistryClient) PullBytes(ctx context.Context, artifact Artifact) (data []byte, err error) {
-	dstRepo := path.Join(or.project, artifact.Repository)
-	opts := oras.FetchBytesOptions{}
 	srcStorage, err := or.GetStorage(ctx, artifact)
 	if err != nil {
-		return nil, fmt.Errorf("registry copy source: %v", err)
+		return []byte{}, fmt.Errorf("repository source: %v", err)
 	}
 
+	_, err = or.Resolve(ctx, srcStorage, artifact.VersionedImage())
+	if err != nil {
+		return []byte{}, fmt.Errorf("registry source resolve: %v", err)
+	}
+
+	opts := oras.FetchBytesOptions{}
+	dstRepo := artifact.VersionedImage()
 	_, data, err = oras.FetchBytes(ctx, srcStorage, dstRepo, opts)
 	return data, err
 }

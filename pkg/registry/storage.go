@@ -12,23 +12,13 @@ import (
 type StorageContext struct {
 	host            string
 	project         string
-	credentialStore CredentialStore
+	credentialStore *CredentialStore
 	certificates    *x509.CertPool
 	insecure        bool
 }
 
-// NewDefaultStorageContext create registry context with defaults.
-func NewDefaultStorageContext(host string) StorageContext {
-	return StorageContext{
-		host:            host,
-		credentialStore: CredentialStore{},
-		certificates:    nil,
-		insecure:        false,
-	}
-}
-
 // NewStorageContext create registry context.
-func NewStorageContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) StorageContext {
+func NewStorageContext(host string, credentialStore *CredentialStore, certificates *x509.CertPool, insecure bool) StorageContext {
 	return StorageContext{
 		host:            host,
 		credentialStore: credentialStore,

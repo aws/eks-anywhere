@@ -36,6 +36,7 @@ func newPackageReaderTest(t *testing.T) *packageReaderTest {
 	sc := registrymocks.NewMockStorageClient(ctrl)
 	cache := registry.NewCache()
 	cache.Set(registryName, sc)
+	credentialStore := registry.NewCredentialStore()
 	bundles := releasev1.Bundles{
 		Spec: releasev1.BundlesSpec{
 			VersionsBundles: []releasev1.VersionsBundle{
@@ -59,7 +60,7 @@ func newPackageReaderTest(t *testing.T) *packageReaderTest {
 		manifestReader: r,
 		storageClient:  sc,
 		bundles:        &bundles,
-		command:        curatedpackages.NewPackageReader(r, cache),
+		command:        curatedpackages.NewPackageReader(r, cache, credentialStore),
 	}
 }
 
