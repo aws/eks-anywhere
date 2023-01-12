@@ -202,9 +202,6 @@ func validateWorkerNodes(ctx context.Context, vc *ClusterValidatorConfig) error 
 						if err := validateNodeLabels(node, w.Labels, previousLabels); err != nil {
 							return fmt.Errorf("failed to validate controlplane node labels %s", err)
 						}
-						if err := ValidateWorkerNodeTaints(w, node); err != nil {
-							return fmt.Errorf("failed to validate worker node taints %s", err)
-						}
 					}
 				}
 			}

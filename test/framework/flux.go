@@ -377,7 +377,7 @@ func (e *ClusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...ap
 
 	// Update the cluster config with the provided api.ClusterConfigFillers
 	w.UpdateClusterConfig(opts...)
-	if w.clusterValidator != nil {
+	if w.clusterValidatorConfig != nil {
 		w.updateClusterValidatorConfig()
 	}
 

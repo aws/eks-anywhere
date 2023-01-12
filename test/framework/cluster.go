@@ -75,7 +75,7 @@ type ClusterE2ETest struct {
 	WithNoPowerActions     bool
 	ClusterName            string
 	ClusterConfig          *cluster.Config
-	clusterValidator       *ClusterValidator
+	clusterValidatorConfig *ClusterValidatorConfig
 	Provider               Provider
 	clusterFillers         []api.ClusterFiller
 	KubectlClient          *executables.Kubectl
@@ -681,15 +681,16 @@ func (e *ClusterE2ETest) applyClusterManifest(ctx context.Context) {
 }
 
 func (e *ClusterE2ETest) updateClusterValidatorConfig() {
-	if e.clusterValidator.Config != nil {
-		e.clusterValidator.Config.OldClusterSpec = e.clusterValidator.Config.ClusterSpec.DeepCopy()
+	if e.clusterValidatorConfig == nil {
+		e.T.Fatalf("Cluster validator config not intialized.")
 	}
+	e.clusterValidatorConfig.OldClusterSpec = e.clusterValidatorConfig.ClusterSpec.DeepCopy()
 	ctx := context.Background()
-	spec, err := buildClusterSpec(ctx, e.clusterValidator.Config.ManagementClusterClient, e.ClusterConfig)
+	spec, err := buildClusterSpec(ctx, e.clusterValidatorConfig.ManagementClusterClient, e.ClusterConfig)
 	if err != nil {
 		e.T.Fatal("Failed to build cluster spec %v", err)
 	}
-	e.clusterValidator.Config.ClusterSpec = spec
+	e.clusterValidatorConfig.ClusterSpec = spec
 }
 
 func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
@@ -700,6 +701,10 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 
 // UpgradeClusterWithKubectl uses client-side logic to upgrade a cluster.
 func (e *ClusterE2ETest) UpgradeClusterWithKubectl(fillers ...api.ClusterConfigFiller) {
+	if e.clusterValidatorConfig == nil {
+		ctx := context.Background()
+		e.initClusterValidatorConfig(ctx)
+	}
 	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
 	e.parseClusterConfigFromDisk(fullClusterConfigLocation)
 	e.UpdateClusterConfig(fillers...)
@@ -1650,8 +1655,9 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 func (e *ClusterE2ETest) ValidateClusterState() {
 	e.T.Logf("Validating cluster %s", e.ClusterName)
 	ctx := context.Background()
-	e.clusterValidator.WithExpectedObjectsExist()
-	if err := e.clusterValidator.Validate(ctx); err != nil {
+	clusterValidator := newClusterValidator(e.clusterValidatorConfig)
+	clusterValidator.WithExpectedObjectsExist()
+	if err := clusterValidator.Validate(ctx); err != nil {
 		e.T.Fatalf("failed to validate cluster %v", err)
 	}
 }
@@ -1725,13 +1731,7 @@ func (e *ClusterE2ETest) ValidateEndpointContent(endpoint string, namespace stri
 	e.MatchLogs(namespace, busyBoxPodName, busyBoxPodName, expectedContent, 5*time.Minute)
 }
 
-// InitClusterValidator initializes the clusterValidator.
-func (e *ClusterE2ETest) InitClusterValidator() {
-	ctx := context.Background()
-	e.initClusterValidator(ctx)
-}
-
-func (e *ClusterE2ETest) initClusterValidator(ctx context.Context) {
+func (e *ClusterE2ETest) initClusterValidatorConfig(ctx context.Context) {
 	clusterClient, err := buildClusterClient(e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("failed to create cluster client: %s", err)
@@ -1740,11 +1740,17 @@ func (e *ClusterE2ETest) initClusterValidator(ctx context.Context) {
 	if err != nil {
 		e.T.Fatalf("failed to build cluster spec with kubeconfig %s: %v", e.kubeconfigFilePath(), err)
 	}
-	e.clusterValidator = NewClusterValidator(func(cv *ClusterValidator) {
-		cv.Config.ClusterClient = clusterClient
-		cv.Config.ManagementClusterClient = clusterClient
-		cv.Config.ClusterSpec = spec
-		cv.Config.OldClusterSpec = nil
+	e.clusterValidatorConfig = &ClusterValidatorConfig{
+		ClusterClient:           clusterClient,
+		ManagementClusterClient: clusterClient,
+		ClusterSpec:             spec,
+		OldClusterSpec:          nil,
+	}
+}
+
+func newClusterValidator(config *ClusterValidatorConfig) *ClusterValidator {
+	return NewClusterValidator(func(cv *ClusterValidator) {
+		cv.Config = config
 	})
 }
 
