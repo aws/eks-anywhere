@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/registry"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+	"github.com/aws/eks-anywhere/pkg/registry"
 	registrymocks "github.com/aws/eks-anywhere/pkg/registry/mocks"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -38,7 +38,7 @@ type packageReaderTest struct {
 func newPackageReaderTest(t *testing.T) *packageReaderTest {
 	ctrl := gomock.NewController(t)
 	r := mocks.NewMockManifestReader(ctrl)
-	registryName := "public.ecr.aws/l0g8r8j6"
+	registryName := "public.ecr.aws"
 	sc := registrymocks.NewMockStorageClient(ctrl)
 	cache := registry.NewCache()
 	cache.Set(registryName, sc)
@@ -50,7 +50,7 @@ func newPackageReaderTest(t *testing.T) *packageReaderTest {
 					PackageController: releasev1.PackageBundle{
 						Version: "test-version",
 						Controller: releasev1.Image{
-							URI: registryName + "/ctrl:v1",
+							URI: registryName + "/l0g8r8j6/ctrl:v1",
 						},
 					},
 				},

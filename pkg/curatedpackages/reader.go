@@ -73,20 +73,19 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		//artifact = path.Join(vb.PackageController.Controller.Registry(), artifact)
 		images = append(images, releasev1.Image{URI: artifact})
 		packagesHelmChart, err := r.fetchPackagesHelmChart(ctx, artifact)
 		if err != nil {
 			logger.Info("Warning: Failed extracting packages", "error", err)
-			panic("<<<<<<<" + artifact + ">>>>>>>>>>>>>" + err.Error())
+			continue
 		}
 		images = append(images, packagesHelmChart...)
 	}
 	return removeDuplicateImages(images)
 }
 
-func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, bundleUri string) ([]releasev1.Image, error) {
-	artifact := registry.NewArtifactFromURI(bundleUri)
+func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, bundleURI string) ([]releasev1.Image, error) {
+	artifact := registry.NewArtifactFromURI(bundleURI)
 	sc, err := r.cache.Get(registry.NewDefaultStorageContext(artifact.Registry))
 	if err != nil {
 		return nil, err
@@ -114,8 +113,8 @@ func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, bundleUri st
 	return images, nil
 }
 
-func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, bundleUri string) ([]releasev1.Image, error) {
-	artifact := registry.NewArtifactFromURI(bundleUri)
+func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, bundleURI string) ([]releasev1.Image, error) {
+	artifact := registry.NewArtifactFromURI(bundleURI)
 	sc, err := r.cache.Get(registry.NewDefaultStorageContext(artifact.Registry))
 	if err != nil {
 		return nil, err
