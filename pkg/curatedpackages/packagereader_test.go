@@ -73,12 +73,34 @@ func TestPackageReader_ReadImagesFromBundles(t *testing.T) {
 	tt.Expect(images).NotTo(BeEmpty())
 }
 
+func TestPackageReader_ReadImagesFromBundlesProduction(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	artifact := registry.NewArtifactFromURI("public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-21-latest")
+	tt.storageClient.EXPECT().PullBytes(tt.ctx, artifact).Return(bundleData, nil)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = tt.registryName + "/eks-anywhere/ctrl:v1"
+
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).NotTo(BeEmpty())
+}
+
 func TestPackageReader_ReadImagesFromBundlesBadKubeVersion(t *testing.T) {
 	tt := newPackageReaderTest(t)
 	bundles := tt.bundles.DeepCopy()
 	bundles.Spec.VersionsBundles[0].KubeVersion = "1"
 
 	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).To(BeEmpty())
+}
+
+func TestPackageReader_ReadImagesFromBundlesBadData(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	tt.storageClient.EXPECT().PullBytes(tt.ctx, gomock.Any()).Return([]byte("wot?"), nil)
+
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(images).To(BeEmpty())

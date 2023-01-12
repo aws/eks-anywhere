@@ -47,13 +47,13 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 	var err error
 	var images []releasev1.Image
 	for _, vb := range b.Spec.VersionsBundles {
-		bundleRegistry, bundle, err := r.getBundle(ctx, vb)
+		bundleURI, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		images = append(images, releasev1.Image{URI: bundleRegistry})
-		packageImages := r.fetchImagesFromBundle(bundleRegistry, bundle)
+		images = append(images, releasev1.Image{URI: bundleURI})
+		packageImages := r.fetchImagesFromBundle(bundleURI, bundle)
 		images = append(images, packageImages...)
 	}
 
@@ -96,16 +96,16 @@ func (r *PackageReader) getBundle(ctx context.Context, vb releasev1.VersionsBund
 	if err != nil {
 		return "", nil, err
 	}
-	return artifact.Registry, &bundle, nil
+	return artifact.VersionedImage(), &bundle, nil
 }
 
-func (r *PackageReader) fetchPackagesHelmChart(bundleRegistry string, bundle *packagesv1.PackageBundle) []releasev1.Image {
+func (r *PackageReader) fetchPackagesHelmChart(bundleURI string, bundle *packagesv1.PackageBundle) []releasev1.Image {
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
 	for _, p := range bundle.Spec.Packages {
 		pHC := releasev1.Image{
 			Name:        p.Name,
 			Description: p.Name,
-			URI:         fmt.Sprintf("%s/%s@%s", bundleRegistry, p.Source.Repository, p.Source.Versions[0].Digest),
+			URI:         fmt.Sprintf("%s/%s@%s", registry.NewArtifactFromURI(bundleURI).Registry, p.Source.Repository, p.Source.Versions[0].Digest),
 			ImageDigest: p.Source.Versions[0].Digest,
 		}
 		images = append(images, pHC)
@@ -113,7 +113,7 @@ func (r *PackageReader) fetchPackagesHelmChart(bundleRegistry string, bundle *pa
 	return images
 }
 
-func (r *PackageReader) fetchImagesFromBundle(bundleRegistry string, bundle *packagesv1.PackageBundle) []releasev1.Image {
+func (r *PackageReader) fetchImagesFromBundle(bundleURI string, bundle *packagesv1.PackageBundle) []releasev1.Image {
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
 	for _, p := range bundle.Spec.Packages {
 		// each package will have at least one version
@@ -121,7 +121,7 @@ func (r *PackageReader) fetchImagesFromBundle(bundleRegistry string, bundle *pac
 			image := releasev1.Image{
 				Name:        version.Repository,
 				Description: version.Repository,
-				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(bundleRegistry), version.Repository, version.Digest),
+				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(bundleURI), version.Repository, version.Digest),
 				ImageDigest: version.Digest,
 			}
 			images = append(images, image)
