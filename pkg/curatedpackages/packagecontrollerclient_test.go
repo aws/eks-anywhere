@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -14,9 +15,11 @@ import (
 	. "github.com/onsi/gomega"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	artifactsv1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -700,5 +703,80 @@ func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
 		time.Sleep(delay)
 		return fmt.Errorf("test error")
+	}
+}
+
+func TestCreateHelmOverrideValuesYaml(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
+		tt.Expect(err).To(BeNil())
+		tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+		test.AssertContentToFile(t, string(content), tt.wantValueFile)
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
+	t.Setenv("REGISTRY_USERNAME", "connor")
+	t.Setenv("REGISTRY_PASSWORD", "mcdavid")
+	for _, tt := range newPackageControllerTests(t) {
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
+		if tt.registryMirror != nil {
+			tt.Expect(err).To(BeNil())
+			tt.Expect(filePath).To(Equal("billy/generated/values.yaml"))
+		} else {
+			tt.Expect(err).To(BeNil())
+			tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
+			test.AssertContentToFile(t, string(content), tt.wantValueFile)
+		}
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithActiveBundleTimeout(time.Second),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+		)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+
+		err := tt.command.EnableCuratedPackages(tt.ctx)
+		expectedErr := fmt.Errorf("valuesFileWriter is nil")
+		if err.Error() != expectedErr.Error() {
+			t.Errorf("expected %v, got %v", expectedErr, err)
+		}
+	}
+}
+
+func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	writer := writermocks.NewMockFileWriter(ctrl)
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithValuesFileWriter(writer),
+		)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		writer.EXPECT().Write(gomock.Any(), gomock.Any()).Return("", errors.New("writer errors out"))
+
+		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
+		tt.Expect(filePath).To(Equal(""))
+		tt.Expect(content).NotTo(BeNil())
+		tt.Expect(err).NotTo(BeNil())
 	}
 }

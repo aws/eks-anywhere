@@ -94,6 +94,21 @@ func (mr *MockStorageClientMockRecorder) Init() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Init", reflect.TypeOf((*MockStorageClient)(nil).Init))
 }
 
+// PullBytes mocks base method.
+func (m *MockStorageClient) PullBytes(ctx context.Context, artifact registry.Artifact) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PullBytes", ctx, artifact)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PullBytes indicates an expected call of PullBytes.
+func (mr *MockStorageClientMockRecorder) PullBytes(ctx, artifact interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullBytes", reflect.TypeOf((*MockStorageClient)(nil).PullBytes), ctx, artifact)
+}
+
 // Resolve mocks base method.
 func (m *MockStorageClient) Resolve(ctx context.Context, srcStorage registry0.Repository, versionedImage string) (v1.Descriptor, error) {
 	m.ctrl.T.Helper()

@@ -1,5 +1,7 @@
 package registry
 
+import releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+
 // Artifact to head release dependency.
 type Artifact struct {
 	Registry   string
@@ -15,6 +17,19 @@ func NewArtifact(registry, repository, tag, digest string) Artifact {
 		Repository: repository,
 		Tag:        tag,
 		Digest:     digest,
+	}
+}
+
+// NewArtifactFromURI creates a new artifact object from a URI.
+func NewArtifactFromURI(uri string) Artifact {
+	image := releasev1.Image{
+		URI: uri,
+	}
+	return Artifact{
+		Registry:   image.Registry(),
+		Repository: image.Repository(),
+		Tag:        image.Tag(),
+		Digest:     image.Digest(),
 	}
 }
 
