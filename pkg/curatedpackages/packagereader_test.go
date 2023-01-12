@@ -96,6 +96,16 @@ func TestPackageReader_ReadImagesFromBundlesBadKubeVersion(t *testing.T) {
 	tt.Expect(images).To(BeEmpty())
 }
 
+func TestPackageReader_ReadImagesFromBundlesBadRegistry(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = "!@#$/eks-anywhere/ctrl:v1"
+
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).To(BeEmpty())
+}
+
 func TestPackageReader_ReadImagesFromBundlesBadData(t *testing.T) {
 	tt := newPackageReaderTest(t)
 	tt.storageClient.EXPECT().PullBytes(tt.ctx, gomock.Any()).Return([]byte("wot?"), nil)

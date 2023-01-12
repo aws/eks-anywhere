@@ -27,4 +27,8 @@ func TestCache_Get(t *testing.T) {
 	busted, ok := result.(*registry.OCIRegistryClient)
 	assert.False(t, ok)
 	assert.Nil(t, busted)
+
+	_ = registry.NewDefaultStorageContext("localhost/owner/name:latest")
+
+	cache.Set("localhost", result)
 }
