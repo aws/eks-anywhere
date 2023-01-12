@@ -143,10 +143,6 @@ func WaitForPackageToBeInstalled(
 	)
 }
 
-func UpgradePackages(test *framework.ClusterE2ETest, bundleVersion string) {
-	test.RunEKSA([]string{"upgrade", "packages", "--bundle-version=" + bundleVersion, "--cluster=" + test.ClusterName})
-}
-
 func GetLatestBundleFromCluster(test *framework.ClusterE2ETest) (string, error) {
 	bundleBytes, err := test.KubectlClient.ExecuteCommand(
 		context.Background(),
