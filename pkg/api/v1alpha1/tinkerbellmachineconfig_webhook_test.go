@@ -14,7 +14,7 @@ func TestTinkerbellMachineConfig_ValidateCreateSuccess(t *testing.T) {
 }
 
 func TestTinkerbellMachineConfig_ValidateCreateFail(t *testing.T) {
-	machineConfig := createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+	machineConfig := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 		mc.Spec.HardwareSelector = nil
 	})
 
@@ -32,7 +32,7 @@ func TestTinkerbellMachineConfig_ValidateUpdateSucceed(t *testing.T) {
 
 func TestTinkerbellMachineConfig_ValidateUpdateFailOSFamily(t *testing.T) {
 	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 		mc.Spec.OSFamily = Bottlerocket
 	})
 
@@ -42,7 +42,7 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailOSFamily(t *testing.T) {
 
 func TestTinkerbellMachineConfig_ValidateUpdateFailSshAuthorizedKeys(t *testing.T) {
 	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 		mc.Spec.Users = []UserConfiguration{{
 			Name:              "mySshUsername",
 			SshAuthorizedKeys: []string{"mySshAuthorizedKey1"},
@@ -55,7 +55,7 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailSshAuthorizedKeys(t *testing.
 
 func TestTinkerbellMachineConfig_ValidateUpdateFailUsers(t *testing.T) {
 	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 		mc.Spec.Users = []UserConfiguration{{
 			Name:              "mySshUsername1",
 			SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -68,7 +68,7 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailUsers(t *testing.T) {
 
 func TestTinkerbellMachineConfig_ValidateUpdateFailHardwareSelector(t *testing.T) {
 	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 		mc.Spec.HardwareSelector = map[string]string{
 			"type2": "cp2",
 		}

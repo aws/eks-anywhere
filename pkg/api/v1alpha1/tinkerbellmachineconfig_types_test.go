@@ -22,35 +22,35 @@ func TestTinkerbellMachineConfigValidateFail(t *testing.T) {
 	}{
 		{
 			name: "Invalid object meta",
-			machineConfig: createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.ObjectMeta.Name = ""
 			}),
 			expectedErr: "TinkerbellMachineConfig: missing name",
 		},
 		{
 			name: "Empty hardware selector",
-			machineConfig: createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.HardwareSelector = nil
 			}),
 			expectedErr: "TinkerbellMachineConfig: missing spec.hardwareSelector",
 		},
 		{
 			name: "Multiple hardware selectors",
-			machineConfig: createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.HardwareSelector["type2"] = "cp2"
 			}),
 			expectedErr: "TinkerbellMachineConfig: spec.hardwareSelector must contain only 1 key-value pair",
 		},
 		{
 			name: "Empty OS family",
-			machineConfig: createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.OSFamily = ""
 			}),
 			expectedErr: "TinkerbellMachineConfig: missing spec.osFamily",
 		},
 		{
 			name: "Invalid OS family",
-			machineConfig: createTinkerbellMachineConfigWithOptions(func(mc *TinkerbellMachineConfig) {
+			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.OSFamily = "invalid OS"
 			}),
 			expectedErr: "unsupported spec.osFamily (invalid OS); Please use one of the following",
@@ -63,14 +63,6 @@ func TestTinkerbellMachineConfigValidateFail(t *testing.T) {
 			g.Expect(tc.machineConfig.Validate()).To(MatchError(ContainSubstring(tc.expectedErr)))
 		})
 	}
-}
-
-func createTinkerbellMachineConfigWithOptions(options ...func(config *TinkerbellMachineConfig)) *TinkerbellMachineConfig {
-	machineConfig := createTinkerbellMachineConfig()
-	for _, opt := range options {
-		opt(machineConfig)
-	}
-	return machineConfig
 }
 
 type tinkerbellMachineConfigOpt func(mc *TinkerbellMachineConfig)
