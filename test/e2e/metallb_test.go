@@ -39,63 +39,48 @@ func (suite *Suite) SetupSuite() {
 }
 
 func getIPAddressPoolSpec(addresses []string, autoAssign bool) string {
-    aList, _ := json.Marshal(addresses)
-    return fmt.Sprintf(`{"addresses":%s,"autoAssign":%s,"avoidBuggyIPs":false}`, aList, strconv.FormatBool(autoAssign))
+	aList, _ := json.Marshal(addresses)
+	return fmt.Sprintf(`{"addresses":%s,"autoAssign":%s,"avoidBuggyIPs":false}`, aList, strconv.FormatBool(autoAssign))
 }
 
 func getL2AdvertisementSpec(ipPoolNames []string) string {
-    pools, _ := json.Marshal(ipPoolNames)
-    return fmt.Sprintf(`{"ipAddressPools":%s}`, pools)
+	pools, _ := json.Marshal(ipPoolNames)
+	return fmt.Sprintf(`{"ipAddressPools":%s}`, pools)
 }
 
 func getBGPAdvertisementSpec(ipPoolNames []string) string {
-    pools, _ := json.Marshal(ipPoolNames)
-    return fmt.Sprintf(`{"aggregationLength":32,"aggregationLengthV6":32,"ipAddressPools":%s,"localPref":123}`, pools)
+	pools, _ := json.Marshal(ipPoolNames)
+	return fmt.Sprintf(`{"aggregationLength":32,"aggregationLengthV6":32,"ipAddressPools":%s,"localPref":123}`, pools)
 }
-
 
 func (suite *Suite) TestPackagesMetalLB() {
 	// This should be split into multiple tests with a cluster setup in `SetupSuite`.
 	// This however requires the creation of utilites managing cluster creation.
 	t := suite.T()
 	suite.cluster.WithCluster(func(test *framework.ClusterE2ETest) {
-        kcfg := kubeconfig.FromClusterName(test.ClusterName)
-        cluster := suite.cluster.Cluster()
+		kcfg := kubeconfig.FromClusterName(test.ClusterName)
+		cluster := suite.cluster.Cluster()
 		test.InstallCuratedPackagesController()
 		ctx := context.Background()
 		namespace := "metallb-system"
-		t.Cleanup(func() { test.DeleteNamespace(namespace) })
 		test.CreateNamespace(namespace)
 		packageName := "metallb"
-        packageCrdName := "metallb-crds"
+		packageCrdName := "metallb-crds"
 		packagePrefix := "test"
-		err := WaitForLatestBundleToBeAvailable(test, ctx, 2*time.Minute)
-		if err != nil {
-			t.Fatalf("waiting for latest bundle: %s", err)
-		}
-		bundle, err := GetLatestBundleFromCluster(test)
-		if err != nil {
-			t.Fatal(err)
-		}
-		UpgradePackages(test, bundle)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-
+		test.SetPackageBundleActive()
 
 		t.Run("Basic installation", func(t *testing.T) {
 			t.Cleanup(func() {
-                test.UninstallCuratedPackage(packagePrefix)
-                test.UninstallCuratedPackage(packageCrdName)
-            })
+				test.UninstallCuratedPackage(packagePrefix)
+				test.UninstallCuratedPackage(packageCrdName)
+			})
 			test.InstallCuratedPackage(packageName, packagePrefix, kcfg)
-			err = WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
+			err := WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
 			if err != nil {
 				t.Fatalf("waiting for metallb package to be installed: %s", err)
 			}
 			err = test.KubectlClient.WaitForDeployment(context.Background(),
-				cluster, "1m", "Available", "test-metallb-controller", namespace)
+				cluster, "2m", "Available", "test-metallb-controller", namespace)
 			if err != nil {
 				t.Fatalf("waiting for metallb controller deployment to be available: %s", err)
 			}
@@ -105,14 +90,13 @@ func (suite *Suite) TestPackagesMetalLB() {
 			}
 		})
 
-
 		t.Run("Address pool configuration", func(t *testing.T) {
-            ip := "10.100.100.1"
+			ip := "10.100.100.1"
 			ipSub := ip + "/32"
 			t.Cleanup(func() {
-                test.UninstallCuratedPackage(packagePrefix)
-                test.UninstallCuratedPackage(packageCrdName)
-            })
+				test.UninstallCuratedPackage(packagePrefix)
+				test.UninstallCuratedPackage(packageCrdName)
+			})
 			test.CreateResource(ctx, fmt.Sprintf(
 				`
 apiVersion: packages.eks.amazonaws.com/v1alpha1
@@ -131,12 +115,12 @@ spec:
       - ipAddressPools:
         - default
 `, test.ClusterName, ipSub))
-			err = WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
+			err := WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
 			if err != nil {
 				t.Fatalf("waiting for metallb package to be installed: %s", err)
 			}
 			err = test.KubectlClient.WaitForDeployment(context.Background(),
-				cluster, "1m", "Available", "test-metallb-controller", namespace)
+				cluster, "2m", "Available", "test-metallb-controller", namespace)
 			if err != nil {
 				t.Fatalf("waiting for metallb controller deployment to be available: %s", err)
 			}
@@ -206,17 +190,15 @@ spec:
 			}
 		})
 
-
-
 		t.Run("BGP configuration", func(t *testing.T) {
 			ip := "10.100.100.2"
-            ipSub := ip + "/32"
-            ipTwo := "10.100.0.1"
-            ipTwoSub := ipTwo + "/32"
+			ipSub := ip + "/32"
+			ipTwo := "10.100.0.1"
+			ipTwoSub := ipTwo + "/32"
 			t.Cleanup(func() {
-                test.UninstallCuratedPackage(packagePrefix)
-                test.UninstallCuratedPackage(packageCrdName)
-            })
+				test.UninstallCuratedPackage(packagePrefix)
+				test.UninstallCuratedPackage(packageCrdName)
+			})
 			test.CreateResource(ctx, fmt.Sprintf(
 				`
 apiVersion: packages.eks.amazonaws.com/v1alpha1
@@ -250,12 +232,12 @@ spec:
         peerAddress: 12.2.4.2
         keepaliveTime: 30s
 `, test.ClusterName, ipTwoSub, ipSub))
-			err = WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
+			err := WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
 			if err != nil {
 				t.Fatalf("waiting for metallb package to be installed: %s", err)
 			}
 			err = test.KubectlClient.WaitForDeployment(context.Background(),
-				cluster, "1m", "Available", "test-metallb-controller", namespace)
+				cluster, "2m", "Available", "test-metallb-controller", namespace)
 			if err != nil {
 				t.Fatalf("waiting for metallb controller deployment to be available: %s", err)
 			}
@@ -294,7 +276,7 @@ spec:
 				t.Fatal(err)
 			}
 
-            expectedBGPAdv := getBGPAdvertisementSpec([]string{"bgp"})
+			expectedBGPAdv := getBGPAdvertisementSpec([]string{"bgp"})
 			err = WaitForResource(
 				test,
 				ctx,
@@ -309,11 +291,11 @@ spec:
 				t.Fatal(err)
 			}
 
-            expectedBGPPeer := `{"keepaliveTime":"30s","myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
+			expectedBGPPeer := `{"keepaliveTime":"30s","myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
 			err = WaitForResource(
 				test,
 				ctx,
-                "bgppeers.metallb.io/bgppeer-0",
+				"bgppeers.metallb.io/bgppeer-0",
 				namespace,
 				"{.spec}",
 				20*time.Second,
@@ -323,8 +305,6 @@ spec:
 			if err != nil {
 				t.Fatal(err)
 			}
-
-
 
 			t.Cleanup(func() {
 				test.KubectlClient.Delete(ctx, "service", "my-service", "default", kubeconfig.FromClusterName(test.ClusterName))

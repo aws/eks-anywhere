@@ -1042,7 +1042,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 	}
 }
 
-// InstallCuratedPackage will install a curated package in the desired namespace.
+// InstallCuratedPackage will install a curated package.
 func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubeconfig string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
