@@ -30,8 +30,7 @@ type ManifestReader interface {
 
 type PackageReader struct {
 	ManifestReader
-	AllImages bool
-	cache     *registry.Cache
+	cache *registry.Cache
 }
 
 // NewPackageReader create a new package reader with storage client.
@@ -39,7 +38,6 @@ func NewPackageReader(mr ManifestReader, cache *registry.Cache) *PackageReader {
 	return &PackageReader{
 		ManifestReader: mr,
 		cache:          cache,
-		AllImages:      true,
 	}
 }
 
