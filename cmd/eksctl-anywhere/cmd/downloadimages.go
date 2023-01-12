@@ -9,14 +9,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
-	"github.com/aws/eks-anywhere/pkg/manifests"
-	"github.com/aws/eks-anywhere/pkg/registry"
 	"github.com/aws/eks-anywhere/pkg/tar"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -44,7 +41,8 @@ func init() {
 		log.Fatalf("Cannot mark 'output' flag as required: %s", err)
 	}
 
-	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in downloaded images")
+	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "Flag no long works, use copy packages")
+	downloadImagesCmd.Flag("include-packages").Deprecated = "use copy packages command"
 	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.insecure, "insecure", false, "Flag to indicate skipping TLS verification while downloading helm charts")
 }
 
@@ -64,7 +62,6 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	}
 	deps, err := factory.
 		WithManifestReader().
-		WithStorageClient(c.insecure).
 		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
@@ -78,7 +75,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	downloadArtifacts := artifacts.Download{
-		Reader: fetchReader(deps.ManifestReader, deps.StorageClient, c.includePackages),
+		Reader: deps.ManifestReader,
 		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, imagesFile),
@@ -109,11 +106,4 @@ func packagerForFile(file string) packager {
 	} else {
 		return tar.NewPackager()
 	}
-}
-
-func fetchReader(reader *manifests.Reader, storageClient registry.StorageClient, includePackages bool) artifacts.Reader {
-	if includePackages {
-		return curatedpackages.NewPackageReader(reader, storageClient)
-	}
-	return reader
 }

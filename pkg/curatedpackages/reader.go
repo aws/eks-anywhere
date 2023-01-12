@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 
@@ -30,17 +31,15 @@ type ManifestReader interface {
 
 type PackageReader struct {
 	ManifestReader
-	AllImages     bool
-	storageClient registry.StorageClient
+	AllImages bool
+	cache     *registry.Cache
 }
 
-var _ ManifestReader = (*PackageReader)(nil)
-
-// NewPackageReader create a new packacge reader with storage client.
-func NewPackageReader(mr ManifestReader, sc registry.StorageClient) *PackageReader {
+// NewPackageReader create a new package reader with storage client.
+func NewPackageReader(mr ManifestReader, cache *registry.Cache) *PackageReader {
 	return &PackageReader{
 		ManifestReader: mr,
-		storageClient:  sc,
+		cache:          cache,
 		AllImages:      true,
 	}
 }
@@ -48,17 +47,14 @@ func NewPackageReader(mr ManifestReader, sc registry.StorageClient) *PackageRead
 func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
 	var err error
 	var images []releasev1.Image
-	if r.AllImages {
-		images, err = r.ManifestReader.ReadImagesFromBundles(ctx, b)
-	}
-
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packageImages, err := r.fetchImagesFromBundle(ctx, vb, artifact)
+		artifact = path.Join(vb.PackageController.Controller.Registry(), artifact)
+		packageImages, err := r.fetchImagesFromBundle(ctx, artifact)
 		if err != nil {
 			logger.Info("Warning: Failed extracting packages", "error", err)
 			continue
@@ -71,46 +67,35 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
 	var images []releasev1.Image
-	eksaCharts := append(images, r.ManifestReader.ReadChartsFromBundles(ctx, b)...)
-	if r.AllImages {
-		images = append(images, eksaCharts...)
-	}
-
-	// Generate bundle repository
-	for _, chart := range eksaCharts {
-		fmt.Println(chart.Repository())
-		if strings.Contains(chart.Repository(), "eks-anywhere-packages") {
-			var bundleRepository releasev1.Image
-			chart.DeepCopyInto(&bundleRepository)
-			bundleRepository.URI = strings.Replace(bundleRepository.URI, "eks-anywhere-packages", "eks-anywhere-packages-bundles", 1)
-			bundleRepository.URI = strings.Replace(bundleRepository.URI, bundleRepository.Version(), "v1-24-latest", 1)
-			bundleRepository.ImageDigest = ""
-			images = append(images, bundleRepository)
-		}
-	}
-
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packagesHelmChart, err := r.fetchPackagesHelmChart(ctx, vb, artifact)
+		//artifact = path.Join(vb.PackageController.Controller.Registry(), artifact)
+		images = append(images, releasev1.Image{URI: artifact})
+		packagesHelmChart, err := r.fetchPackagesHelmChart(ctx, artifact)
 		if err != nil {
 			logger.Info("Warning: Failed extracting packages", "error", err)
-			continue
+			panic("<<<<<<<" + artifact + ">>>>>>>>>>>>>" + err.Error())
 		}
 		images = append(images, packagesHelmChart...)
 	}
 	return removeDuplicateImages(images)
 }
 
-func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
-	data, err := r.storageClient.PullBytes(ctx, registry.NewArtifactFromURI(artifact))
+func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, bundleUri string) ([]releasev1.Image, error) {
+	artifact := registry.NewArtifactFromURI(bundleUri)
+	sc, err := r.cache.Get(registry.NewDefaultStorageContext(artifact.Registry))
 	if err != nil {
 		return nil, err
 	}
-	ctrl := versionsBundle.PackageController.Controller
+
+	data, err := sc.PullBytes(ctx, artifact)
+	if err != nil {
+		return nil, err
+	}
 	bundle := &packagesv1.PackageBundle{}
 	err = yaml.Unmarshal(data, bundle)
 	if err != nil {
@@ -121,9 +106,7 @@ func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, versionsBund
 		pHC := releasev1.Image{
 			Name:        p.Name,
 			Description: p.Name,
-			OS:          ctrl.OS,
-			OSName:      ctrl.OSName,
-			URI:         fmt.Sprintf("%s/%s@%s", GetRegistry(ctrl.URI), p.Source.Repository, p.Source.Versions[0].Digest),
+			URI:         fmt.Sprintf("%s/%s@%s", artifact.Registry, p.Source.Repository, p.Source.Versions[0].Digest),
 			ImageDigest: p.Source.Versions[0].Digest,
 		}
 		images = append(images, pHC)
@@ -131,8 +114,14 @@ func (r *PackageReader) fetchPackagesHelmChart(ctx context.Context, versionsBund
 	return images, nil
 }
 
-func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
-	data, err := r.storageClient.PullBytes(ctx, registry.NewArtifactFromURI(artifact))
+func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, bundleUri string) ([]releasev1.Image, error) {
+	artifact := registry.NewArtifactFromURI(bundleUri)
+	sc, err := r.cache.Get(registry.NewDefaultStorageContext(artifact.Registry))
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := sc.PullBytes(ctx, artifact)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +131,6 @@ func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundl
 		return nil, err
 	}
 
-	ctrl := versionsBundle.PackageController.Controller
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
 
 	for _, p := range bundle.Spec.Packages {
@@ -151,9 +139,7 @@ func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundl
 			image := releasev1.Image{
 				Name:        version.Repository,
 				Description: version.Repository,
-				OS:          ctrl.OS,
-				OSName:      ctrl.OSName,
-				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(ctrl.URI), version.Repository, version.Digest),
+				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(artifact.Registry), version.Repository, version.Digest),
 				ImageDigest: version.Digest,
 			}
 			images = append(images, image)

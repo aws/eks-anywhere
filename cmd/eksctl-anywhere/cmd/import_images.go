@@ -48,6 +48,7 @@ func init() {
 		log.Fatalf("Cannot mark 'bundles' as required: %s", err)
 	}
 	importImagesCmd.Flags().BoolVar(&importImagesCommand.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in imported images")
+	importImagesCmd.Flag("include-packages").Deprecated = "Use copy packages command"
 	importImagesCmd.Flags().BoolVar(&importImagesCommand.insecure, "insecure", false, "Flag to indicate skipping TLS verification while pushing helm charts")
 }
 
@@ -123,7 +124,6 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		}).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
 		WithHelm(helmOpts...).
-		WithStorageClient(c.insecure).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
 	importArtifacts := artifacts.Import{
-		Reader:  fetchReader(deps.ManifestReader, deps.StorageClient, c.includePackages),
+		Reader:  deps.ManifestReader,
 		Bundles: bundle,
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, imagesFile),
