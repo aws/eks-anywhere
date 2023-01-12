@@ -29,6 +29,8 @@ func TestCache_Get(t *testing.T) {
 	assert.Nil(t, busted)
 
 	_ = registry.NewDefaultStorageContext("localhost/owner/name:latest")
-
+	artifact := registry.NewArtifactFromURI("localhost/owner/name:latest")
+	assert.Equal(t, "localhost", artifact.Registry)
+	
 	cache.Set("localhost", result)
 }
