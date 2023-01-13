@@ -10,6 +10,7 @@ import (
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content"
 	orasregistry "oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -95,17 +96,14 @@ func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistr
 	return srcStorage.Resolve(ctx, or.registry.Reference.Reference)
 }
 
-// PullBytes a resource from the registry.
-func (or *OCIRegistryClient) PullBytes(ctx context.Context, artifact Artifact) (data []byte, err error) {
-	dstRepo := path.Join(or.project, artifact.Repository)
-	opts := oras.FetchBytesOptions{}
-	srcStorage, err := or.GetStorage(ctx, artifact)
-	if err != nil {
-		return nil, fmt.Errorf("registry copy source: %v", err)
-	}
+// FetchBytes a resource from the registry.
+func (or *OCIRegistryClient) FetchBytes(ctx context.Context, srcStorage orasregistry.Repository, artifact Artifact) (ocispec.Descriptor, []byte, error) {
+	return oras.FetchBytes(ctx, srcStorage, artifact.VersionedImage(), oras.DefaultFetchBytesOptions)
+}
 
-	_, data, err = oras.FetchBytes(ctx, srcStorage, dstRepo, opts)
-	return data, err
+// FetchBlob get named blob.
+func (or *OCIRegistryClient) FetchBlob(ctx context.Context, srcStorage orasregistry.Repository, descriptor ocispec.Descriptor) ([]byte, error) {
+	return content.FetchAll(ctx, srcStorage, descriptor)
 }
 
 // CopyGraph copy manifest and all blobs to destination.

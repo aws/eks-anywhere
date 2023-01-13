@@ -65,6 +65,37 @@ func (mr *MockStorageClientMockRecorder) Destination(image interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Destination", reflect.TypeOf((*MockStorageClient)(nil).Destination), image)
 }
 
+// FetchBlob mocks base method.
+func (m *MockStorageClient) FetchBlob(ctx context.Context, srcStorage registry0.Repository, descriptor v1.Descriptor) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchBlob", ctx, srcStorage, descriptor)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchBlob indicates an expected call of FetchBlob.
+func (mr *MockStorageClientMockRecorder) FetchBlob(ctx, srcStorage, descriptor interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchBlob", reflect.TypeOf((*MockStorageClient)(nil).FetchBlob), ctx, srcStorage, descriptor)
+}
+
+// FetchBytes mocks base method.
+func (m *MockStorageClient) FetchBytes(ctx context.Context, srcStorage registry0.Repository, artifact registry.Artifact) (v1.Descriptor, []byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchBytes", ctx, srcStorage, artifact)
+	ret0, _ := ret[0].(v1.Descriptor)
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// FetchBytes indicates an expected call of FetchBytes.
+func (mr *MockStorageClientMockRecorder) FetchBytes(ctx, srcStorage, artifact interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchBytes", reflect.TypeOf((*MockStorageClient)(nil).FetchBytes), ctx, srcStorage, artifact)
+}
+
 // GetStorage mocks base method.
 func (m *MockStorageClient) GetStorage(ctx context.Context, image registry.Artifact) (registry0.Repository, error) {
 	m.ctrl.T.Helper()
@@ -92,21 +123,6 @@ func (m *MockStorageClient) Init() error {
 func (mr *MockStorageClientMockRecorder) Init() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Init", reflect.TypeOf((*MockStorageClient)(nil).Init))
-}
-
-// PullBytes mocks base method.
-func (m *MockStorageClient) PullBytes(ctx context.Context, artifact registry.Artifact) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PullBytes", ctx, artifact)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PullBytes indicates an expected call of PullBytes.
-func (mr *MockStorageClientMockRecorder) PullBytes(ctx, artifact interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullBytes", reflect.TypeOf((*MockStorageClient)(nil).PullBytes), ctx, artifact)
 }
 
 // Resolve mocks base method.
