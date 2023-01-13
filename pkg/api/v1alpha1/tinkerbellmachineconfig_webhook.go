@@ -15,7 +15,12 @@
 package v1alpha1
 
 import (
+	"fmt"
+	"reflect"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -42,7 +47,21 @@ var _ webhook.Validator = &TinkerbellMachineConfig{}
 func (r *TinkerbellMachineConfig) ValidateCreate() error {
 	tinkerbellmachineconfiglog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(),
+			r.Name,
+			field.ErrorList{
+				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+			},
+		)
+	}
+
+	if r.IsReconcilePaused() {
+		tinkerbellmachineconfiglog.Info("TinkerbellMachineConfig is paused, so allowing create", "name", r.Name)
+		return nil
+	}
+
 	return nil
 }
 
@@ -50,7 +69,26 @@ func (r *TinkerbellMachineConfig) ValidateCreate() error {
 func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) error {
 	tinkerbellmachineconfiglog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
+	oldTinkerbellMachineConfig, ok := old.(*TinkerbellMachineConfig)
+	if !ok {
+		return apierrors.NewBadRequest(fmt.Sprintf("expected a TinkerbellMachineConfig but got a %T", old))
+	}
+
+	var allErrs field.ErrorList
+
+	allErrs = append(allErrs, validateImmutableFieldsTinkerbellMachineConfig(r, oldTinkerbellMachineConfig)...)
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
+	}
+
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
+	}
+
 	return nil
 }
 
@@ -60,4 +98,27 @@ func (r *TinkerbellMachineConfig) ValidateDelete() error {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
+}
+
+func validateImmutableFieldsTinkerbellMachineConfig(new, old *TinkerbellMachineConfig) field.ErrorList {
+	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
+
+	if new.Spec.OSFamily != old.Spec.OSFamily {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("OSFamily"), "field is immutable"))
+	}
+
+	if new.Spec.Users[0].SshAuthorizedKeys[0] != old.Spec.Users[0].SshAuthorizedKeys[0] {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users[0].SshAuthorizedKeys[0]"), "field is immutable"))
+	}
+
+	if new.Spec.Users[0].Name != old.Spec.Users[0].Name {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users[0].Name"), "field is immutable"))
+	}
+
+	if !reflect.DeepEqual(new.Spec.HardwareSelector, old.Spec.HardwareSelector) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("HardwareSelector"), "field is immutable"))
+	}
+
+	return allErrs
 }

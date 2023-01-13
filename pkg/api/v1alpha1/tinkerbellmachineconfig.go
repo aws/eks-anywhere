@@ -88,3 +88,36 @@ func WithTemplateRef(ref ProviderRefAccessor) TinkerbellMachineConfigGenerateOpt
 		}
 	}
 }
+
+func validateTinkerbellMachineConfig(config *TinkerbellMachineConfig) error {
+	if err := validateObjectMeta(config.ObjectMeta); err != nil {
+		return fmt.Errorf("TinkerbellMachineConfig: %v", err)
+	}
+
+	if len(config.Spec.HardwareSelector) == 0 {
+		return fmt.Errorf("TinkerbellMachineConfig: missing spec.hardwareSelector: %s", config.Name)
+	}
+
+	if len(config.Spec.HardwareSelector) != 1 {
+		return fmt.Errorf(
+			"TinkerbellMachineConfig: spec.hardwareSelector must contain only 1 key-value pair: %s",
+			config.Name,
+		)
+	}
+
+	if config.Spec.OSFamily == "" {
+		return fmt.Errorf("TinkerbellMachineConfig: missing spec.osFamily: %s", config.Name)
+	}
+
+	if config.Spec.OSFamily != Ubuntu && config.Spec.OSFamily != Bottlerocket && config.Spec.OSFamily != RedHat {
+		return fmt.Errorf(
+			"TinkerbellMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s, %s",
+			config.Spec.OSFamily,
+			Ubuntu,
+			RedHat,
+			Bottlerocket,
+		)
+	}
+
+	return nil
+}

@@ -1,50 +1,15 @@
 package tinkerbell
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
-
-func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
-	if err := validateObjectMeta(config.ObjectMeta); err != nil {
-		return fmt.Errorf("TinkerbellMachineConfig: %v", err)
-	}
-
-	if len(config.Spec.HardwareSelector) == 0 {
-		return fmt.Errorf("TinkerbellMachineConfig: missing spec.hardwareSelector: %v", config.Name)
-	}
-
-	if len(config.Spec.HardwareSelector) != 1 {
-		return fmt.Errorf(
-			"TinkerbellMachineConfig: spec.hardwareSelector must contain only 1 key-value pair: %v",
-			config.Name,
-		)
-	}
-
-	if config.Spec.OSFamily == "" {
-		return fmt.Errorf("TinkerbellMachineConfig: missing spec.osFamily: %v", config.Name)
-	}
-
-	if config.Spec.OSFamily != v1alpha1.Ubuntu && config.Spec.OSFamily != v1alpha1.Bottlerocket && config.Spec.OSFamily != v1alpha1.RedHat {
-		return fmt.Errorf(
-			"TinkerbellMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s, %s",
-			config.Spec.OSFamily,
-			v1alpha1.Ubuntu,
-			v1alpha1.RedHat,
-			v1alpha1.Bottlerocket,
-		)
-	}
-
-	return nil
-}
 
 func validateOsFamily(spec *ClusterSpec) error {
 	controlPlaneRef := spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef
@@ -67,14 +32,6 @@ func validateOsFamily(spec *ClusterSpec) error {
 	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" {
 		return fmt.Errorf("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
 	}
-	return nil
-}
-
-func validateObjectMeta(meta metav1.ObjectMeta) error {
-	if meta.Name == "" {
-		return errors.New("missing name")
-	}
-
 	return nil
 }
 

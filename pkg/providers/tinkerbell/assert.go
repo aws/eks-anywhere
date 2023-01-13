@@ -15,7 +15,7 @@ import (
 // AssertMachineConfigsValid iterates over all machine configs in calling validateMachineConfig.
 func AssertMachineConfigsValid(spec *ClusterSpec) error {
 	for _, config := range spec.MachineConfigs {
-		if err := validateMachineConfig(config); err != nil {
+		if err := config.Validate(); err != nil {
 			return err
 		}
 	}
