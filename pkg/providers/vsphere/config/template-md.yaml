@@ -29,10 +29,6 @@ spec:
           caCert: |
 {{ .registryCACert | indent 12 }}
           {{- end }}
-         {{- if .registryAuth }}
-          username: {{.registryUsername}}
-          password: {{.registryPassword}}
-         {{- end }}
 {{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
