@@ -820,7 +820,7 @@ func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, k
 
 func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfig string) (ready, total int, err error) {
 	logger.V(6).Info("counting ready machine deployment replicas", "cluster", clusterName)
-	deployments, err := k.GetMachineDeployments(ctx, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
+	deployments, err := k.GetMachineDeploymentsForCluster(ctx, clusterName, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return 0, 0, err
 	}
