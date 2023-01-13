@@ -174,7 +174,7 @@ func UpdateSnowUbuntuTemplate123Var() api.SnowFiller {
 	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines)
 }
 
-// ClusterValidations returns a list of provider specific validations
+// ClusterValidations returns a list of provider specific validations.
 func (s *Snow) ClusterValidations() []ClusterValidation {
 	return []ClusterValidation{}
 }

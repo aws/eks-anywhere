@@ -78,6 +78,22 @@ func (e *ClusterE2ETest) DeleteVSphereCSI() {
 	}
 }
 
+func (w *WorkloadCluster) DeleteWorkloadVsphereCSI() {
+	ctx := context.Background()
+	err := w.KubectlClient.Delete(ctx, "deployment", csiDeployment, kubeSystemNameSpace, w.Cluster().KubeconfigFile)
+	if err != nil {
+		w.T.Fatal(err)
+	}
+	err = w.KubectlClient.Delete(ctx, "daemonset", csiDaemonSet, kubeSystemNameSpace, w.Cluster().KubeconfigFile)
+	if err != nil {
+		w.T.Fatal(err)
+	}
+	err = w.KubectlClient.DeleteClusterObject(ctx, "storageclass", csiStorageClassName, w.Cluster().KubeconfigFile)
+	if err != nil {
+		w.T.Fatal(err)
+	}
+}
+
 func (e *ClusterE2ETest) getDeployment(ctx context.Context, retries int) error {
 	return retrier.Retry(retries, time.Second*5, func() error {
 		_, err := e.KubectlClient.GetDeployment(ctx, csiDeployment, kubeSystemNameSpace, e.Cluster().KubeconfigFile)

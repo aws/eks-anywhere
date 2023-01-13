@@ -257,9 +257,6 @@ func getWorkerNodeMachineSets(ctx context.Context, vc ClusterValidatorConfig, w 
 
 func validateCilium(ctx context.Context, vc ClusterValidatorConfig) error {
 	clusterClient := vc.ClusterClient
-	if vc.ClusterSpec.Cluster.IsManaged() {
-		clusterClient = vc.ManagementClusterClient
-	}
 
 	yaml := vc.ClusterSpec.Cluster
 	cm := &corev1.ConfigMap{}

@@ -658,7 +658,7 @@ func readVSphereConfig() (vsphereConfig, error) {
 	}, nil
 }
 
-// ClusterValidations returns a list of provider specific validations
+// ClusterValidations returns a list of provider specific validations.
 func (v *VSphere) ClusterValidations() []ClusterValidation {
 	return []ClusterValidation{
 		validateCSI,
@@ -667,9 +667,6 @@ func (v *VSphere) ClusterValidations() []ClusterValidation {
 
 func validateCSI(ctx context.Context, vc ClusterValidatorConfig) error {
 	clusterClient := vc.ClusterClient
-	if vc.ClusterSpec.Cluster.IsManaged() {
-		clusterClient = vc.ManagementClusterClient
-	}
 
 	yaml := vc.ClusterSpec.Config.VSphereDatacenter
 	yamlCSI := yaml.Spec.DisableCSI

@@ -306,7 +306,7 @@ func UpdateNutanixUbuntuTemplate124Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName)
 }
 
-// ClusterValidations returns a list of provider specific validations
+// ClusterValidations returns a list of provider specific validations.
 func (s *Nutanix) ClusterValidations() []ClusterValidation {
 	return []ClusterValidation{}
 }

@@ -213,13 +213,24 @@ func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuAPI(t *testing.T) {
 		),
 	)
 
-	runWorkloadClusterUpgradeFlowAPI(test,
-		api.ClusterToConfigFiller(
-			api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
-		),
-		api.VSphereToConfigFiller(api.WithDisableCSI(true)),
-		vsphere.WithUbuntu124(),
-	)
+	test.CreateManagementCluster()
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		wc.UpdateClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
+			),
+			api.VSphereToConfigFiller(api.WithDisableCSI(true)),
+			vsphere.WithUbuntu124(),
+		)
+		wc.ApplyClusterManifest()
+		wc.DeleteWorkloadVsphereCSI()
+		wc.ValidateClusterState()
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
 }
 
 func TestDockerUpgradeKubernetes123to124WorkloadClusterScaleupAPI(t *testing.T) {
