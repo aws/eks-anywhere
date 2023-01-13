@@ -78,6 +78,7 @@ func (e *ClusterE2ETest) DeleteVSphereCSI() {
 	}
 }
 
+// DeleteWorkloadVsphereCSI removes the vsphere CSI from a workload cluster
 func (w *WorkloadCluster) DeleteWorkloadVsphereCSI() {
 	ctx := context.Background()
 	err := w.KubectlClient.Delete(ctx, "deployment", csiDeployment, kubeSystemNameSpace, w.Cluster().KubeconfigFile)
