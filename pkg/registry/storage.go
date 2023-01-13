@@ -34,6 +34,7 @@ type StorageClient interface {
 	GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error)
 	SetProject(project string)
 	Destination(image Artifact) string
-	PullBytes(ctx context.Context, artifact Artifact) (data []byte, err error)
+	FetchBytes(ctx context.Context, srcStorage orasregistry.Repository, artifact Artifact) (ocispec.Descriptor, []byte, error)
+	FetchBlob(ctx context.Context, srcStorage orasregistry.Repository, descriptor ocispec.Descriptor) ([]byte, error)
 	CopyGraph(ctx context.Context, srcStorage orasregistry.Repository, dstStorage orasregistry.Repository, desc ocispec.Descriptor) error
 }
