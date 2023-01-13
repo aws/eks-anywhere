@@ -18,6 +18,7 @@ import (
 // This is because there is no mechanism to extract these values as of now.
 const (
 	publicProdECR     = "public.ecr.aws/eks-anywhere"
+	publicDevECR      = "public.ecr.aws/l0g8r8j6"
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
@@ -30,14 +31,16 @@ type ManifestReader interface {
 
 type PackageReader struct {
 	ManifestReader
-	cache *registry.Cache
+	cache           *registry.Cache
+	credentialStore *registry.CredentialStore
 }
 
 // NewPackageReader create a new package reader with storage client.
-func NewPackageReader(mr ManifestReader, cache *registry.Cache) *PackageReader {
+func NewPackageReader(mr ManifestReader, cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
 	return &PackageReader{
-		ManifestReader: mr,
-		cache:          cache,
+		ManifestReader:  mr,
+		cache:           cache,
+		credentialStore: credentialStore,
 	}
 }
 
@@ -80,12 +83,12 @@ func (r *PackageReader) getBundle(ctx context.Context, vb releasev1.VersionsBund
 	}
 
 	artifact := registry.NewArtifactFromURI(bundleURI)
-	sc, err := r.cache.Get(registry.NewDefaultStorageContext(artifact.Registry))
+	sc, err := r.cache.Get(registry.NewStorageContext(artifact.Registry, r.credentialStore, nil, false))
 	if err != nil {
 		return "", nil, err
 	}
 
-	data, err := sc.PullBytes(ctx, artifact)
+	data, err := registry.PullBytes(ctx, sc, artifact)
 	if err != nil {
 		return "", nil, err
 	}
@@ -103,7 +106,7 @@ func (r *PackageReader) fetchPackagesHelmChart(bundleURI string, bundle *package
 		pHC := releasev1.Image{
 			Name:        p.Name,
 			Description: p.Name,
-			URI:         fmt.Sprintf("%s/%s@%s", registry.NewArtifactFromURI(bundleURI).Registry, p.Source.Repository, p.Source.Versions[0].Digest),
+			URI:         fmt.Sprintf("%s/%s@%s", getChartRegistry(bundleURI), p.Source.Repository, p.Source.Versions[0].Digest),
 			ImageDigest: p.Source.Versions[0].Digest,
 		}
 		images = append(images, pHC)
@@ -119,7 +122,7 @@ func (r *PackageReader) fetchImagesFromBundle(bundleURI string, bundle *packages
 			image := releasev1.Image{
 				Name:        version.Repository,
 				Description: version.Repository,
-				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(bundleURI), version.Repository, version.Digest),
+				URI:         fmt.Sprintf("%s/%s@%s", getImageRegistry(bundleURI), version.Repository, version.Digest),
 				ImageDigest: version.Digest,
 			}
 			images = append(images, image)
@@ -143,7 +146,14 @@ func removeDuplicateImages(images []releasev1.Image) []releasev1.Image {
 	return list
 }
 
-func getRegistry(uri string) string {
+func getChartRegistry(uri string) string {
+	if strings.Contains(uri, publicProdECR) {
+		return publicProdECR
+	}
+	return publicDevECR
+}
+
+func getImageRegistry(uri string) string {
 	if strings.Contains(uri, publicProdECR) {
 		return packageProdDomain
 	}
