@@ -92,22 +92,16 @@ spec:
       # run on the host network (don't depend on CNI)
       hostNetwork: true
 
-      # run on each master node
+      # run on each control plane node
       nodeSelector:
-{{- if .kubeVersion124 }}
-        node-role.kubernetes.io/control-plane: ""
-{{- else }}
-        node-role.kubernetes.io/master: ""
-{{- end }}
+      {{ .cpNodeSelector | indent 2 }}
       tolerations:
       - effect: NoSchedule 
         key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
       - key: CriticalAddonsOnly
         operator: Exists
-{{- if .kubeVersion124 }}
-      - effect: NoSchedule 
-        key: node-role.kubernetes.io/control-plane
-{{- end }}
 {{- if .controlPlaneTaints }}
 {{- range .controlPlaneTaints }}
       - key: {{ .Key }}

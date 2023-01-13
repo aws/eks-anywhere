@@ -707,11 +707,13 @@ func TestCreateHelmOverrideValuesYaml(t *testing.T) {
 }
 
 func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
+	t.Setenv("REGISTRY_USERNAME", "connor")
+	t.Setenv("REGISTRY_PASSWORD", "mcdavid")
 	for _, tt := range newPackageControllerTests(t) {
 		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
 		if tt.registryMirror != nil {
-			tt.Expect(err).NotTo(BeNil())
-			tt.Expect(filePath).To(Equal(""))
+			tt.Expect(err).To(BeNil())
+			tt.Expect(filePath).To(Equal("billy/generated/values.yaml"))
 		} else {
 			tt.Expect(err).To(BeNil())
 			tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))

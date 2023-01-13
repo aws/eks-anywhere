@@ -41,12 +41,13 @@ func (or *OCIRegistryClient) Init() error {
 			return
 		}
 
-		tlsConfig := &tls.Config{
-			RootCAs:            or.certificates,
-			InsecureSkipVerify: or.insecure,
-		}
 		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.TLSClientConfig = tlsConfig
+		{ // #nosec G402
+			transport.TLSClientConfig = &tls.Config{
+				RootCAs:            or.certificates,
+				InsecureSkipVerify: or.insecure,
+			}
+		}
 		authClient := &auth.Client{
 			Client: &http.Client{
 				Transport: transport,
@@ -79,8 +80,8 @@ func (or *OCIRegistryClient) Destination(image Artifact) string {
 }
 
 // GetStorage object based on repository.
-func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error) {
-	dstRepo := or.project + image.Repository
+func (or *OCIRegistryClient) GetStorage(ctx context.Context, artifact Artifact) (repo orasregistry.Repository, err error) {
+	dstRepo := path.Join(or.project, artifact.Repository)
 	repo, err = or.registry.Repository(ctx, dstRepo)
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository %s: %v", dstRepo, err)
@@ -92,6 +93,19 @@ func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (re
 func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistry.Repository, versionedImage string) (desc ocispec.Descriptor, err error) {
 	or.registry.Reference.Reference = versionedImage
 	return srcStorage.Resolve(ctx, or.registry.Reference.Reference)
+}
+
+// PullBytes a resource from the registry.
+func (or *OCIRegistryClient) PullBytes(ctx context.Context, artifact Artifact) (data []byte, err error) {
+	dstRepo := path.Join(or.project, artifact.Repository)
+	opts := oras.FetchBytesOptions{}
+	srcStorage, err := or.GetStorage(ctx, artifact)
+	if err != nil {
+		return nil, fmt.Errorf("registry copy source: %v", err)
+	}
+
+	_, data, err = oras.FetchBytes(ctx, srcStorage, dstRepo, opts)
+	return data, err
 }
 
 // CopyGraph copy manifest and all blobs to destination.

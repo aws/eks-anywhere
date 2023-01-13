@@ -52,6 +52,9 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: v1alpha1.Kube124,
+				},
 			},
 		},
 		VersionsBundle: &cluster.VersionsBundle{
@@ -154,6 +157,9 @@ func TestInstallAWSIAMAuthErrors(t *testing.T) {
 					Cluster: &v1alpha1.Cluster{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "test-cluster",
+						},
+						Spec: v1alpha1.ClusterSpec{
+							KubernetesVersion: v1alpha1.Kube124,
 						},
 					},
 				},
@@ -308,6 +314,9 @@ func TestUpgradeAWSIAMAuth(t *testing.T) {
 			Cluster: &v1alpha1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
+				},
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: v1alpha1.Kube123,
 				},
 			},
 		},

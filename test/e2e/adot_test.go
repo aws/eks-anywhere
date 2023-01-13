@@ -107,7 +107,7 @@ func runCuratedPackagesAdotInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
 	test.CreateNamespace(adotTargetNamespace)
 	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
-		kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
+		kubeconfig.FromClusterName(test.ClusterName),
 		"--set mode=deployment")
 	test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 }
@@ -116,7 +116,7 @@ func runCuratedPackagesAdotInstallWithUpdate(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
 	test.CreateNamespace(adotTargetNamespace)
 	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
-		kubeconfig.FromClusterName(test.ClusterName), adotTargetNamespace,
+		kubeconfig.FromClusterName(test.ClusterName),
 		"--set mode=deployment")
 	test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 	test.VerifyAdotPackageDeploymentUpdated(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)

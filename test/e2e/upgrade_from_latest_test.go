@@ -24,6 +24,32 @@ func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *re
 	test.DeleteCluster()
 }
 
+func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, opts ...framework.ClusterE2ETestOpt) {
+	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+	})
+	test.ManagementCluster.UpgradeCluster(opts)
+	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
+	test.ManagementCluster.StopIfFailed()
+	cluster := test.ManagementCluster.GetEKSACluster()
+	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.UpdateClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithBundlesRef(cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace, cluster.Spec.BundlesRef.APIVersion),
+			),
+		)
+		wc.ApplyClusterManifest()
+		wc.ValidateClusterState()
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+	test.DeleteManagementCluster()
+}
+
 func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
