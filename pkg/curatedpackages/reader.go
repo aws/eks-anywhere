@@ -49,7 +49,7 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 	for _, vb := range b.Spec.VersionsBundles {
 		bundleURI, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
-			logger.Info("Warning: Failed getting image reference", "error", err)
+			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
 		images = append(images, releasev1.Image{URI: bundleURI})
@@ -65,7 +65,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 	for _, vb := range b.Spec.VersionsBundles {
 		bundleRegistry, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
-			logger.Info("Warning: Failed getting chart reference", "error", err)
+			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
 		images = append(images, releasev1.Image{URI: bundleRegistry})
@@ -87,7 +87,7 @@ func (r *PackageReader) getBundle(ctx context.Context, vb releasev1.VersionsBund
 		return "", nil, err
 	}
 
-	data, err := sc.PullBytes(ctx, artifact)
+	data, err := registry.PullBytes(ctx, sc, artifact)
 	if err != nil {
 		return "", nil, err
 	}

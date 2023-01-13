@@ -3,7 +3,6 @@ package registry
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"path"
@@ -97,31 +96,14 @@ func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistr
 	return srcStorage.Resolve(ctx, or.registry.Reference.Reference)
 }
 
-// PullBytes a resource from the registry.
-func (or *OCIRegistryClient) PullBytes(ctx context.Context, artifact Artifact) (data []byte, err error) {
-	srcStorage, err := or.GetStorage(ctx, artifact)
-	if err != nil {
-		return nil, fmt.Errorf("repository source: %v", err)
-	}
+// FetchBytes a resource from the registry.
+func (or *OCIRegistryClient) FetchBytes(ctx context.Context, srcStorage orasregistry.Repository, artifact Artifact) (ocispec.Descriptor, []byte, error) {
+	return oras.FetchBytes(ctx, srcStorage, artifact.VersionedImage(), oras.DefaultFetchBytesOptions)
+}
 
-	_, data, err = oras.FetchBytes(ctx, srcStorage, artifact.VersionedImage(), oras.DefaultFetchBytesOptions)
-	if err != nil {
-		return nil, fmt.Errorf("fetch manifest: %v", err)
-	}
-
-	var mani ocispec.Manifest
-	if err := json.Unmarshal(data, &mani); err != nil {
-		return nil, fmt.Errorf("unmarshal manifest: %v", err)
-	}
-	if len(mani.Layers) < 1 {
-		return nil, fmt.Errorf("missing layer")
-	}
-
-	data, err = content.FetchAll(ctx, srcStorage, mani.Layers[0])
-	if err != nil {
-		return nil, fmt.Errorf("fetch blob: %v", err)
-	}
-	return data, err
+// FetchBlob get named blob.
+func (or *OCIRegistryClient) FetchBlob(ctx context.Context, srcStorage orasregistry.Repository, descriptor ocispec.Descriptor) ([]byte, error) {
+	return content.FetchAll(ctx, srcStorage, descriptor)
 }
 
 // CopyGraph copy manifest and all blobs to destination.
