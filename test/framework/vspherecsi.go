@@ -59,6 +59,21 @@ func handleError(t T, installed bool, err error) {
 // DeleteVSphereCSI removes the vsphere csi from the cluster.
 func (e *ClusterE2ETest) DeleteVSphereCSI() {
 	ctx := context.Background()
+	e.deleteVsphereCSIResources(ctx)
+	csiClusterResourceSetName := fmt.Sprintf("%s-csi", e.ClusterName)
+	err := e.KubectlClient.Delete(ctx, "clusterresourceset", csiClusterResourceSetName, constants.EksaSystemNamespace, e.Cluster().KubeconfigFile)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+}
+
+// DeleteWorkloadVsphereCSI removes the vsphere CSI from a workload cluster.
+func (w *WorkloadCluster) DeleteWorkloadVsphereCSI() {
+	ctx := context.Background()
+	w.deleteVsphereCSIResources(ctx)
+}
+
+func (e *ClusterE2ETest) deleteVsphereCSIResources(ctx context.Context) {
 	err := e.KubectlClient.Delete(ctx, "deployment", csiDeployment, kubeSystemNameSpace, e.Cluster().KubeconfigFile)
 	if err != nil {
 		e.T.Fatal(err)
@@ -70,28 +85,6 @@ func (e *ClusterE2ETest) DeleteVSphereCSI() {
 	err = e.KubectlClient.DeleteClusterObject(ctx, "storageclass", csiStorageClassName, e.Cluster().KubeconfigFile)
 	if err != nil {
 		e.T.Fatal(err)
-	}
-	csiClusterResourceSetName := fmt.Sprintf("%s-csi", e.ClusterName)
-	err = e.KubectlClient.Delete(ctx, "clusterresourceset", csiClusterResourceSetName, constants.EksaSystemNamespace, e.Cluster().KubeconfigFile)
-	if err != nil {
-		e.T.Fatal(err)
-	}
-}
-
-// DeleteWorkloadVsphereCSI removes the vsphere CSI from a workload cluster.
-func (w *WorkloadCluster) DeleteWorkloadVsphereCSI() {
-	ctx := context.Background()
-	err := w.KubectlClient.Delete(ctx, "deployment", csiDeployment, kubeSystemNameSpace, w.Cluster().KubeconfigFile)
-	if err != nil {
-		w.T.Fatal(err)
-	}
-	err = w.KubectlClient.Delete(ctx, "daemonset", csiDaemonSet, kubeSystemNameSpace, w.Cluster().KubeconfigFile)
-	if err != nil {
-		w.T.Fatal(err)
-	}
-	err = w.KubectlClient.DeleteClusterObject(ctx, "storageclass", csiStorageClassName, w.Cluster().KubeconfigFile)
-	if err != nil {
-		w.T.Fatal(err)
 	}
 }
 
