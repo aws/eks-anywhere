@@ -30,6 +30,14 @@ func TestTinkerbellMachineConfig_ValidateUpdateSucceed(t *testing.T) {
 	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).To(Succeed())
 }
 
+func TestTinkerbellMachineConfig_ValidateUpdateFailOldMachineConfig(t *testing.T) {
+	machineConfigOld := &TinkerbellDatacenterConfig{}
+	machineConfigNew := createTinkerbellMachineConfig()
+
+	g := NewWithT(t)
+	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).To(MatchError(ContainSubstring("expected a TinkerbellMachineConfig but got a *v1alpha1.TinkerbellDatacenterConfig")))
+}
+
 func TestTinkerbellMachineConfig_ValidateUpdateFailOSFamily(t *testing.T) {
 	machineConfigOld := createTinkerbellMachineConfig()
 	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
@@ -37,7 +45,9 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailOSFamily(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).NotTo(Succeed())
+	err := machineConfigNew.ValidateUpdate(machineConfigOld)
+	g.Expect(err).NotTo(BeNil())
+	g.Expect(HaveField("spec.OSFamily", err))
 }
 
 func TestTinkerbellMachineConfig_ValidateUpdateFailSshAuthorizedKeys(t *testing.T) {
@@ -50,7 +60,9 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailSshAuthorizedKeys(t *testing.
 	})
 
 	g := NewWithT(t)
-	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).NotTo(Succeed())
+	err := machineConfigNew.ValidateUpdate(machineConfigOld)
+	g.Expect(err).NotTo(BeNil())
+	g.Expect(HaveField("Users[0].SshAuthorizedKeys[0]", err))
 }
 
 func TestTinkerbellMachineConfig_ValidateUpdateFailUsers(t *testing.T) {
@@ -63,7 +75,9 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailUsers(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).NotTo(Succeed())
+	err := machineConfigNew.ValidateUpdate(machineConfigOld)
+	g.Expect(err).NotTo(BeNil())
+	g.Expect(HaveField("Users[0].Name", err))
 }
 
 func TestTinkerbellMachineConfig_ValidateUpdateFailHardwareSelector(t *testing.T) {
@@ -75,5 +89,7 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailHardwareSelector(t *testing.T
 	})
 
 	g := NewWithT(t)
-	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).NotTo(Succeed())
+	err := machineConfigNew.ValidateUpdate(machineConfigOld)
+	g.Expect(err).NotTo(BeNil())
+	g.Expect(HaveField("HardwareSelector", err))
 }

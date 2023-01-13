@@ -30,6 +30,7 @@ type PackageReader struct {
 	ManifestReader
 }
 
+// NewPackageReader returns a new package reader.
 func NewPackageReader(mr ManifestReader) *PackageReader {
 	return &PackageReader{
 		ManifestReader: mr,
