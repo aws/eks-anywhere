@@ -1730,10 +1730,26 @@ func TestKubectlCountMachineDeploymentReplicasReady(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			tt := newKubectlTest(t)
 			if tc.returnError {
-				e.EXPECT().Execute(ctx, []string{"get", "machinedeployments.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "eksa-system"}).Return(*bytes.NewBufferString(""), errors.New(""))
+				e.EXPECT().
+					Execute(ctx, []string{
+						"get", "machinedeployments.cluster.x-k8s.io",
+						"-o", "json",
+						"--kubeconfig", cluster.KubeconfigFile,
+						"--namespace", "eksa-system",
+						"--selector=cluster.x-k8s.io/cluster-name=test-cluster",
+					}).
+					Return(*bytes.NewBufferString(""), errors.New(""))
 			} else {
 				fileContent := test.ReadFile(t, tc.jsonResponseFile)
-				e.EXPECT().Execute(ctx, []string{"get", "machinedeployments.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "eksa-system"}).Return(*bytes.NewBufferString(fileContent), nil)
+				e.EXPECT().
+					Execute(ctx, []string{
+						"get", "machinedeployments.cluster.x-k8s.io",
+						"-o", "json",
+						"--kubeconfig", cluster.KubeconfigFile,
+						"--namespace", "eksa-system",
+						"--selector=cluster.x-k8s.io/cluster-name=test-cluster",
+					}).
+					Return(*bytes.NewBufferString(fileContent), nil)
 			}
 
 			ready, total, err := k.CountMachineDeploymentReplicasReady(ctx, cluster.Name, cluster.KubeconfigFile)
@@ -1781,7 +1797,15 @@ func TestKubectlValidateWorkerNodes(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			tt := newKubectlTest(t)
 			fileContent := test.ReadFile(t, tc.jsonResponseFile)
-			e.EXPECT().Execute(ctx, []string{"get", "machinedeployments.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "eksa-system"}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().
+				Execute(ctx, []string{
+					"get", "machinedeployments.cluster.x-k8s.io",
+					"-o", "json",
+					"--kubeconfig", cluster.KubeconfigFile,
+					"--namespace", "eksa-system",
+					"--selector=cluster.x-k8s.io/cluster-name=test-cluster",
+				}).
+				Return(*bytes.NewBufferString(fileContent), nil)
 
 			err := k.ValidateWorkerNodes(ctx, cluster.Name, cluster.KubeconfigFile)
 			if tc.wantError {
