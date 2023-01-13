@@ -18,6 +18,7 @@ import (
 // This is because there is no mechanism to extract these values as of now.
 const (
 	publicProdECR     = "public.ecr.aws/eks-anywhere"
+	publicDevECR      = "public.ecr.aws/l0g8r8j6"
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
@@ -145,9 +146,11 @@ func removeDuplicateImages(images []releasev1.Image) []releasev1.Image {
 	return list
 }
 
-func getChartRegistry(_ string) string {
-	// For now, we only support prod as a source
-	return publicProdECR
+func getChartRegistry(uri string) string {
+	if strings.Contains(uri, publicProdECR) {
+		return publicProdECR
+	}
+	return publicDevECR
 }
 
 func getImageRegistry(uri string) string {
