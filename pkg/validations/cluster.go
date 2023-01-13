@@ -64,7 +64,7 @@ func ValidateManagementClusterName(ctx context.Context, k KubectlClient, mgmtClu
 	if err != nil {
 		return err
 	}
-	if cluster.Name != cluster.Spec.ManagementCluster.Name {
+	if cluster.IsManaged() {
 		return fmt.Errorf("%s is not a valid management cluster", mgmtClusterName)
 	}
 	return nil
