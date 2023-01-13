@@ -33,7 +33,6 @@ type PackageReader struct {
 	cache *registry.Cache
 }
 
-
 // NewPackageReader create a new package reader with storage client.
 func NewPackageReader(mr ManifestReader, cache *registry.Cache) *PackageReader {
 	return &PackageReader{
