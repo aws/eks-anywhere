@@ -133,10 +133,6 @@ spec:
         caCert: |
 {{ .registryCACert | indent 10 }}
         {{- end }}
-        {{- if .registryAuth }}
-        username: {{.registryUsername}}
-        password: {{.registryPassword}}
-        {{- end }}
 {{- end }}
       apiServer:
         extraArgs:
@@ -382,10 +378,6 @@ spec:
         caCert: |
 {{ .registryCACert | indent 10 }}
         {{- end }}
-        {{- if .registryAuth }}
-        username: {{.registryUsername}}
-        password: {{.registryPassword}}
-        {{- end }}
 {{- end }}
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -531,10 +523,6 @@ spec:
       caCert: |
 {{ .registryCACert | indent 8 }}
       {{- end }}
-      {{- if .registryAuth }}
-      username: {{.registryUsername}}
-      password: {{.registryPassword}}
-      {{- end }}
 {{- end }}
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -583,6 +571,19 @@ stringData:
   username: "{{.eksaVsphereUsername}}"
   password: "{{.eksaVspherePassword}}"
 ---
+{{- if .registryAuth }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "{{.registryUsername}}"
+  password: "{{.registryPassword}}"
+---
+{{- end }}
 {{- if not .disableCSI }}
 apiVersion: v1
 kind: Secret

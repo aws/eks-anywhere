@@ -67,6 +67,14 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
+{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
+      registryMirror:
+        endpoint: {{ .publicMirror }}
+        {{- if .registryCACert }}
+        caCert: |
+{{ .registryCACert | indent 10 }}
+        {{- end }}
+{{- end }}
 {{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
@@ -121,10 +129,6 @@ spec:
         {{- if .registryCACert }}
         caCert: |
 {{ .registryCACert | indent 10 }}
-        {{- end }}
-        {{- if .registryAuth }}
-        username: {{.registryUsername}}
-        password: {{.registryPassword}}
         {{- end }}
 {{- end }}
       nodeRegistration:
@@ -343,10 +347,6 @@ spec:
       caCert: |
 {{ .registryCACert | indent 8 }}
       {{- end }}
-      {{- if .registryAuth }}
-      username: {{.registryUsername}}
-      password: {{.registryPassword}}
-      {{- end }}
 {{- end }}
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -406,3 +406,16 @@ metadata:
 spec:
   imageLookupFormat: {{.osDistro}}-{{.osVersion}}-kube-{{.kubernetesVersion}}.raw.gz
   imageLookupBaseRegistry: {{.baseRegistry}}/
+{{- if .registryAuth }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "{{.registryUsername}}"
+  password: "{{.registryPassword}}"
+{{- end }}
