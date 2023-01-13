@@ -113,7 +113,7 @@ type validation struct {
 
 func (c *createClusterValidationTest) expectBuildValidations() *validation {
 	v := &validation{}
-	c.createValidations.EXPECT().BuildValidations(c.ctx).Return(
+	c.createValidations.EXPECT().PreflightValidations(c.ctx).Return(
 		[]validations.Validation{
 			func() *validations.ValidationResult {
 				v.run = true

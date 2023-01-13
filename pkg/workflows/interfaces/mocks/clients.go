@@ -617,10 +617,10 @@ func (m *MockValidator) EXPECT() *MockValidatorMockRecorder {
 }
 
 // PreflightValidations mocks base method.
-func (m *MockValidator) PreflightValidations(arg0 context.Context) error {
+func (m *MockValidator) PreflightValidations(arg0 context.Context) []validations.Validation {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PreflightValidations", arg0)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].([]validations.Validation)
 	return ret0
 }
 

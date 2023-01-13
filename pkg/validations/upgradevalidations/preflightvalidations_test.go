@@ -415,7 +415,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
-			err := upgradeValidations.PreflightValidations(ctx)
+			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%s want err=%v\n got err=%v\n", tc.name, tc.wantErr, err)
 			}
@@ -1192,7 +1192,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
-			err := upgradeValidations.PreflightValidations(ctx)
+			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%s want err=%v\n got err=%v\n", tc.name, tc.wantErr, err)
 			}
@@ -1426,7 +1426,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
-			err := upgradeValidations.PreflightValidations(ctx)
+			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%s want err=%v\n got err=%v\n", tc.name, tc.wantErr, err)
 			}
