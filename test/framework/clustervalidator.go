@@ -42,7 +42,7 @@ func (c *ClusterValidator) WithValidation(validation ClusterValidation, backoffP
 	c.validations = append(c.validations, retriableValidation{validation, backoffPeriod, maxRetries})
 }
 
-// WithValidation registers a validation to the ClusterValidator that will be run when Validate is called.
+// WithValidations registers multiple validations to the ClusterValidator that will be run when Validate is called.
 func (c *ClusterValidator) WithValidations(validation ...ClusterValidation) {
 	for _, v := range validation {
 		c.validations = append(c.validations, retriableValidation{v, 5 * time.Second, 30})
@@ -262,17 +262,20 @@ func validateCilium(ctx context.Context, vc ClusterValidatorConfig) error {
 	}
 
 	yaml := vc.ClusterSpec.Cluster
-	cluster := &v1alpha1.Cluster{}
-	key := types.NamespacedName{Namespace: vc.ClusterSpec.Cluster.Namespace, Name: vc.ClusterSpec.Cluster.Name}
-	err := clusterClient.Get(ctx, key, cluster)
+	cm := &corev1.ConfigMap{}
+	key := types.NamespacedName{Namespace: "kube-system", Name: "cilium-config"}
+	err := clusterClient.Get(ctx, key, cm)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve cluster %s", err)
+		return fmt.Errorf("failed to retrieve configmap %s", err)
 	}
 
-	clusterCilium := cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
-	yamlCilium := yaml.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
+	clusterCilium := cm.Data["enable-policy"]
+	yamlCilium := string(yaml.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode)
+	if yamlCilium == "" && clusterCilium == "default" {
+		return nil
+	}
 	if clusterCilium != yamlCilium {
-		return fmt.Errorf("cilium config does not match. %s and %s", clusterCilium, yamlCilium)
+		return fmt.Errorf("cilium policy does not match. ConfigMap: %s, YAML: %s", clusterCilium, yamlCilium)
 	}
 
 	return nil
