@@ -8,6 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -653,4 +656,44 @@ func readVSphereConfig() (vsphereConfig, error) {
 		TLSThumbprint:     os.Getenv(vsphereTlsThumbprintVar),
 		TemplatesFolder:   os.Getenv(vsphereTemplatesFolder),
 	}, nil
+}
+
+// ClusterValidations returns a list of provider specific validations.
+func (v *VSphere) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{
+		validateCSI,
+	}
+}
+
+func validateCSI(ctx context.Context, vc ClusterValidatorConfig) error {
+	clusterClient := vc.ClusterClient
+
+	yaml := vc.ClusterSpec.Config.VSphereDatacenter
+	yamlCSI := yaml.Spec.DisableCSI
+
+	deployment := &v1.Deployment{}
+	deployKey := types.NamespacedName{Namespace: "kube-system", Name: "vsphere-csi-controller"}
+	deployErr := clusterClient.Get(ctx, deployKey, deployment)
+	deployRes := handleCSIError(deployErr, yamlCSI)
+	if deployRes != nil {
+		return deployRes
+	}
+
+	ds := &v1.DaemonSet{}
+	dsKey := types.NamespacedName{Namespace: "kube-system", Name: "vsphere-csi-node"}
+	dsErr := clusterClient.Get(ctx, dsKey, ds)
+	dsRes := handleCSIError(dsErr, yamlCSI)
+	if dsRes != nil {
+		return dsRes
+	}
+
+	return nil
+}
+
+func handleCSIError(err error, disabled bool) error {
+	if (disabled && err == nil) || (!disabled && err != nil) {
+		return fmt.Errorf("CSI state does not match disableCSI %t, %v", disabled, err)
+	}
+
+	return nil
 }

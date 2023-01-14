@@ -233,3 +233,8 @@ func WithCustomTinkerbellMachineConfig(selector string) TinkerbellOpt {
 		t.fillers = append([]api.TinkerbellFiller{api.WithCustomTinkerbellMachineConfig(selector)}, t.fillers...)
 	}
 }
+
+// ClusterValidations returns a list of provider specific validations.
+func (t *Tinkerbell) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

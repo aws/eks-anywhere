@@ -309,6 +309,7 @@ type Provider interface {
 	Setup()
 	CleanupVMs(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
+	ClusterValidations() []ClusterValidation
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
@@ -1672,6 +1673,9 @@ func (e *ClusterE2ETest) ValidateClusterState() {
 		e.clusterValidator.WithWorkloadClusterValidations()
 	}
 	e.clusterValidator.WithExpectedObjectsExist()
+
+	providerValidations := e.Provider.ClusterValidations()
+	e.clusterValidator.WithValidations(providerValidations...)
 
 	if err := e.clusterValidator.Validate(ctx); err != nil {
 		e.T.Fatalf("failed to validate cluster %v", err)

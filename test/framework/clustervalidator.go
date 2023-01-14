@@ -42,6 +42,13 @@ func (c *ClusterValidator) WithValidation(validation ClusterValidation, backoffP
 	c.validations = append(c.validations, retriableValidation{validation, backoffPeriod, maxRetries})
 }
 
+// WithValidations registers multiple validations to the ClusterValidator that will be run when Validate is called.
+func (c *ClusterValidator) WithValidations(validation ...ClusterValidation) {
+	for _, v := range validation {
+		c.validations = append(c.validations, retriableValidation{v, 5 * time.Second, 30})
+	}
+}
+
 // WithWorkloadClusterValidations registers a validation set for a workload cluster.
 func (c *ClusterValidator) WithWorkloadClusterValidations() {}
 
@@ -51,6 +58,7 @@ func (c *ClusterValidator) WithExpectedObjectsExist() {
 	c.WithValidation(validateEKSAObjects, 5*time.Second, 60)
 	c.WithValidation(validateControlPlaneNodes, 5*time.Second, 120)
 	c.WithValidation(validateWorkerNodes, 5*time.Second, 120)
+	c.WithValidation(validateCilium, 5*time.Second, 60)
 }
 
 // WithClusterDoesNotExist registers a validation to check that a cluster does not exist or has been deleted.
@@ -245,4 +253,27 @@ func getWorkerNodeMachineSets(ctx context.Context, vc ClusterValidatorConfig, w 
 		return nil, fmt.Errorf("invalid number of machine sets associated with worker node configuration %s", w.Name)
 	}
 	return ms.Items, nil
+}
+
+func validateCilium(ctx context.Context, vc ClusterValidatorConfig) error {
+	clusterClient := vc.ClusterClient
+
+	yaml := vc.ClusterSpec.Cluster
+	cm := &corev1.ConfigMap{}
+	key := types.NamespacedName{Namespace: "kube-system", Name: "cilium-config"}
+	err := clusterClient.Get(ctx, key, cm)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve configmap %s", err)
+	}
+
+	clusterCilium := cm.Data["enable-policy"]
+	yamlCilium := string(yaml.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode)
+	if yamlCilium == "" && clusterCilium == "default" {
+		return nil
+	}
+	if clusterCilium != yamlCilium {
+		return fmt.Errorf("cilium policy does not match. ConfigMap: %s, YAML: %s", clusterCilium, yamlCilium)
+	}
+
+	return nil
 }
