@@ -5440,6 +5440,13 @@ spec:
           spec:
             description: VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig.
             properties:
+              cloneMode:
+                description: CloneMode describes the clone mode to be used when cloning
+                  vSphere VMs.
+                enum:
+                - fullClone
+                - linkedClone
+                type: string
               datastore:
                 type: string
               diskGiB:

@@ -203,6 +203,8 @@ func buildTemplateMapCP(
 		"eksaCSIUsername":                      vuc.EksaVsphereCSIUsername,
 		"eksaCSIPassword":                      vuc.EksaVsphereCSIPassword,
 		"disableCSI":                           datacenterSpec.DisableCSI,
+		"controlPlaneCloneMode":                controlPlaneMachineSpec.CloneMode,
+		"etcdCloneMode":                        etcdMachineSpec.CloneMode,
 	}
 
 	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
@@ -335,6 +337,7 @@ func buildTemplateMapMD(
 		"workerNodeGroupName":            fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":          workerNodeGroupConfiguration.Taints,
 		"autoscalingConfig":              workerNodeGroupConfiguration.AutoScalingConfiguration,
+		"workerCloneMode":                workerNodeGroupMachineSpec.CloneMode,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {

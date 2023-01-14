@@ -383,6 +383,7 @@ clean: ## Clean up resources created by make targets
 	rm -rf ./pkg/executables/cluster-name/
 	rm -rf ./pkg/executables/TestDeployTemplate*
 	rm -rf ./pkg/providers/vsphere/test/
+	rm -rf ./pkg/providers/vsphere/Test*
 	rm -rf ./pkg/providers/tinkerbell/stack/TestTinkerbellStackInstall*
 ifeq ($(UNAME), Darwin)
 	  find -E . -depth -type d -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
