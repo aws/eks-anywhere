@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -85,5 +84,28 @@ func getTinkerbellDatacenter(ctx context.Context, client Client, c *Config) erro
 	}
 
 	c.TinkerbellDatacenter = datacenter
+	return nil
+}
+
+func getTinkerbellMachineConfigs(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.TinkerbellDatacenterKind {
+		return nil
+	}
+
+	if c.TinkerbellMachineConfigs == nil {
+		c.TinkerbellMachineConfigs = map[string]*anywherev1.TinkerbellMachineConfig{}
+	}
+	for _, machineRef := range c.Cluster.MachineConfigRefs() {
+		if machineRef.Kind != anywherev1.TinkerbellMachineConfigKind {
+			continue
+		}
+
+		machineConfig := &anywherev1.TinkerbellMachineConfig{}
+		if err := client.Get(ctx, machineRef.Name, c.Cluster.Namespace, machineConfig); err != nil {
+			return err
+		}
+
+		c.TinkerbellMachineConfigs[machineConfig.Name] = machineConfig
+	}
 	return nil
 }
