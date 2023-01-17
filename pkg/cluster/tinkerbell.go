@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"context"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 // tinkerbellEntry is unimplemented. Its boiler plate to mute warnings that could confuse the customer until we
 // get round to implementing it.
@@ -68,4 +72,18 @@ func processTinkerbellMachineConfig(c *Config, objects ObjectLookup, machineRef 
 	}
 
 	c.TinkerbellMachineConfigs[m.GetName()] = m.(*anywherev1.TinkerbellMachineConfig)
+}
+
+func getTinkerbellDatacenter(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.TinkerbellDatacenterKind {
+		return nil
+	}
+
+	datacenter := &anywherev1.TinkerbellDatacenterConfig{}
+	if err := client.Get(ctx, c.Cluster.Spec.DatacenterRef.Name, c.Cluster.Namespace, datacenter); err != nil {
+		return err
+	}
+
+	c.TinkerbellDatacenter = datacenter
+	return nil
 }
