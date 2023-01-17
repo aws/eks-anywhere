@@ -381,6 +381,7 @@ update-brew-formula:
 clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
 	rm -rf ./pkg/executables/cluster-name/
+	rm -rf ./pkg/executables/TestDeployTemplate*
 	rm -rf ./pkg/providers/vsphere/test/
 	rm -rf ./pkg/providers/tinkerbell/stack/TestTinkerbellStackInstall*
 ifeq ($(UNAME), Darwin)
