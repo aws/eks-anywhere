@@ -536,6 +536,17 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: registry-credentials
+  namespace: eksa-system
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "username"
+  password: "password"
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: test-vsphere-csi-controller
   namespace: eksa-system
 stringData:
