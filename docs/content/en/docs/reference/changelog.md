@@ -6,7 +6,7 @@ weight: 35
 
 ## Unreleased
 
-## [v0.14.0](https://github.com/aws/eks-anywhere/releases/tag/v0.13.0)
+## [v0.14.0](https://github.com/aws/eks-anywhere/releases/tag/v0.14.0)
 
 ### Added
 - Add support for EKS Anywhere on AWS Snow ([#1042](https://github.com/aws/eks-anywhere/issues/1042))
