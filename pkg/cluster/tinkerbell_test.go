@@ -186,11 +186,23 @@ func TestDefaultConfigClientBuilderTinkerbellCluster(t *testing.T) {
 				Name: "datacenter",
 			},
 			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
-				Count: 1,
+				MachineGroupRef: &anywherev1.Ref{
+					Kind: anywherev1.TinkerbellMachineConfigKind,
+					Name: "machine-1",
+				},
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
-					Name: "md-0",
+					MachineGroupRef: &anywherev1.Ref{
+						Kind: anywherev1.TinkerbellMachineConfigKind,
+						Name: "machine-2",
+					},
+				},
+				{
+					MachineGroupRef: &anywherev1.Ref{
+						Kind: anywherev1.CloudStackMachineConfigKind, // Should not process this one
+						Name: "machine-3",
+					},
 				},
 			},
 		},
@@ -198,6 +210,18 @@ func TestDefaultConfigClientBuilderTinkerbellCluster(t *testing.T) {
 	datacenter := &anywherev1.TinkerbellDatacenterConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "datacenter",
+			Namespace: "default",
+		},
+	}
+	machineControlPlane := &anywherev1.TinkerbellMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "machine-1",
+			Namespace: "default",
+		},
+	}
+	machineWorker := &anywherev1.TinkerbellMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "machine-2",
 			Namespace: "default",
 		},
 	}
@@ -209,10 +233,27 @@ func TestDefaultConfigClientBuilderTinkerbellCluster(t *testing.T) {
 			return nil
 		},
 	)
+	client.EXPECT().Get(ctx, "machine-1", "default", &anywherev1.TinkerbellMachineConfig{}).Return(nil).DoAndReturn(
+		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
+			m := obj.(*anywherev1.TinkerbellMachineConfig)
+			m.ObjectMeta = machineControlPlane.ObjectMeta
+			return nil
+		},
+	)
+	client.EXPECT().Get(ctx, "machine-2", "default", &anywherev1.TinkerbellMachineConfig{}).Return(nil).DoAndReturn(
+		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
+			m := obj.(*anywherev1.TinkerbellMachineConfig)
+			m.ObjectMeta = machineWorker.ObjectMeta
+			return nil
+		},
+	)
 
 	config, err := b.Build(ctx, client, cluster)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(config).NotTo(BeNil())
 	g.Expect(config.Cluster).To(Equal(cluster))
 	g.Expect(config.TinkerbellDatacenter).To(Equal(datacenter))
+	g.Expect(len(config.TinkerbellMachineConfigs)).To(Equal(2))
+	g.Expect(config.TinkerbellMachineConfigs["machine-1"]).To(Equal(machineControlPlane))
+	g.Expect(config.TinkerbellMachineConfigs["machine-2"]).To(Equal(machineWorker))
 }
