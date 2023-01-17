@@ -706,6 +706,26 @@ func TestTinkerbellKubernetes124UbuntuWorkerNodeUpgrade(t *testing.T) {
 	)
 }
 
+func TestTinkerbellKubernetes125UbuntuWorkerNodeUpgrade(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(2),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube125,
+		framework.WithClusterUpgrade(api.WithWorkerNodeCount(2)),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
+	)
+}
+
 func TestTinkerbellKubernetes123UbuntuControlPlaneUpgrade(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell())
 	test := framework.NewClusterE2ETest(
