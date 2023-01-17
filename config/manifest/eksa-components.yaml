@@ -5603,6 +5603,8 @@ rules:
   - nutanixmachineconfigs
   - snowippools
   - snowmachineconfigs
+  - tinkerbelldatacenterconfigs
+  - tinkerbellmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
   verbs:

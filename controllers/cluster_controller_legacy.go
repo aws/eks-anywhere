@@ -43,7 +43,7 @@ func NewClusterReconcilerLegacy(client client.Client, log logr.Logger, scheme *r
 	}
 }
 
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;snowmachineconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;dockerdatacenterconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;snowmachineconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;dockerdatacenterconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;tinkerbellmachineconfigs;tinkerbelldatacenterconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=oidcconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;snowmachineconfigs/status;snowippools/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;cloudstackdatacenterconfigs/status;cloudstackmachineconfigs/status;dockerdatacenterconfigs/status;bundles/status;awsiamconfigs/status,verbs=get;update;patch

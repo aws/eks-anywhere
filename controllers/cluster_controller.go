@@ -101,11 +101,23 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 			&source.Kind{Type: &anywherev1.SnowMachineConfig{}},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
+		Watches(
+			&source.Kind{Type: &anywherev1.TinkerbellDatacenterConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.TinkerbellMachineConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.DockerDatacenterConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
 		Complete(r)
 }
 
 // Reconcile reconciles a cluster object.
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;snowmachineconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;snowmachineconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelldatacenterconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=oidcconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;snowmachineconfigs/status;snowippools/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;bundles/status;awsiamconfigs/status,verbs=;get;list;watch;create;update;patch;delete
