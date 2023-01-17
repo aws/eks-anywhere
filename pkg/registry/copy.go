@@ -17,12 +17,7 @@ func Copy(ctx context.Context, srcClient StorageClient, dstClient StorageClient,
 		return fmt.Errorf("repository destination: %v", err)
 	}
 
-	desc, err := srcClient.Resolve(ctx, srcStorage, image.VersionedImage())
-	if err != nil {
-		return fmt.Errorf("registry source resolve: %v", err)
-	}
-
-	err = srcClient.CopyGraph(ctx, srcStorage, dstStorage, desc)
+	err = srcClient.CopyGraph(ctx, srcStorage, image.VersionedImage(), dstStorage, dstClient.Destination(image))
 	if err != nil {
 		return fmt.Errorf("registry copy: %v", err)
 	}
