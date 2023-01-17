@@ -138,3 +138,18 @@ func TestFactoryBuildAllSnowReconciler(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(reconcilers.SnowMachineConfigReconciler).NotTo(BeNil())
 }
+
+func TestFactoryClose(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager)
+	_, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(f.Close(ctx)).To(Succeed())
+}

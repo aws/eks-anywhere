@@ -82,6 +82,11 @@ func (f *Factory) Build(ctx context.Context) (*Reconcilers, error) {
 	return &f.reconcilers, nil
 }
 
+// Close cleans up any open resources from the created dependencies.
+func (f *Factory) Close(ctx context.Context) error {
+	return f.deps.Close(ctx)
+}
+
 func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
 	f.dependencyFactory.WithGovc()
 	f.withTracker().WithProviderClusterReconcilerRegistry(capiProviders).withAWSIamConfigReconciler()
