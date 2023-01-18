@@ -8,6 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -152,6 +155,17 @@ func WithRedHat123VSphere() VSphereOpt {
 		v.fillers = append(v.fillers,
 			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube123)),
 			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithUbuntu125 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.25
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu125() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube125)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
 }
@@ -454,6 +468,11 @@ func (v *VSphere) Ubuntu124Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube124))
 }
 
+// Ubuntu125Template returns vsphere filler for 1.25 Ubuntu.
+func (v *VSphere) Ubuntu125Template() api.VSphereFiller {
+	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube125))
+}
+
 // Bottlerocket121Template returns vsphere filler for 1.21 BR.
 func (v *VSphere) Bottlerocket121Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube121))
@@ -605,6 +624,12 @@ func WithBottlerocketFromRelease(release *releasev1.EksARelease, kubeVersion any
 	return optionToSetTemplateForRelease(anywherev1.Bottlerocket, release, kubeVersion)
 }
 
+func (v *VSphere) WithBottleRocketForRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+	return api.VSphereToConfigFiller(
+		api.WithTemplateForAllMachines(v.templateForRelease(anywherev1.Bottlerocket, release, kubeVersion)),
+	)
+}
+
 func optionToSetTemplateForRelease(osFamily anywherev1.OSFamily, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
@@ -653,4 +678,44 @@ func readVSphereConfig() (vsphereConfig, error) {
 		TLSThumbprint:     os.Getenv(vsphereTlsThumbprintVar),
 		TemplatesFolder:   os.Getenv(vsphereTemplatesFolder),
 	}, nil
+}
+
+// ClusterValidations returns a list of provider specific validations.
+func (v *VSphere) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{
+		validateCSI,
+	}
+}
+
+func validateCSI(ctx context.Context, vc ClusterValidatorConfig) error {
+	clusterClient := vc.ClusterClient
+
+	yaml := vc.ClusterSpec.Config.VSphereDatacenter
+	yamlCSI := yaml.Spec.DisableCSI
+
+	deployment := &v1.Deployment{}
+	deployKey := types.NamespacedName{Namespace: "kube-system", Name: "vsphere-csi-controller"}
+	deployErr := clusterClient.Get(ctx, deployKey, deployment)
+	deployRes := handleCSIError(deployErr, yamlCSI)
+	if deployRes != nil {
+		return deployRes
+	}
+
+	ds := &v1.DaemonSet{}
+	dsKey := types.NamespacedName{Namespace: "kube-system", Name: "vsphere-csi-node"}
+	dsErr := clusterClient.Get(ctx, dsKey, ds)
+	dsRes := handleCSIError(dsErr, yamlCSI)
+	if dsRes != nil {
+		return dsRes
+	}
+
+	return nil
+}
+
+func handleCSIError(err error, disabled bool) error {
+	if (disabled && err == nil) || (!disabled && err != nil) {
+		return fmt.Errorf("CSI state does not match disableCSI %t, %v", disabled, err)
+	}
+
+	return nil
 }

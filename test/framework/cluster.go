@@ -310,6 +310,7 @@ type Provider interface {
 	Setup()
 	CleanupVMs(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
+	ClusterValidations() []ClusterValidation
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
@@ -651,6 +652,16 @@ func (e *ClusterE2ETest) WaitForMachineDeploymentReady(machineDeploymentName str
 	if err != nil {
 		e.T.Fatal(err)
 	}
+}
+
+// GetEKSACluster retrieves the EKSA cluster from the runtime environment using kubectl.
+func (e *ClusterE2ETest) GetEKSACluster() *v1alpha1.Cluster {
+	ctx := context.Background()
+	clus, err := e.KubectlClient.GetEksaCluster(ctx, e.Cluster(), e.ClusterName)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	return clus
 }
 
 func (e *ClusterE2ETest) GetCapiMachinesForCluster(clusterName string) map[string]types.Machine {
@@ -1046,7 +1057,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 	}
 }
 
-// InstallCuratedPackage will install a curated package in the desired namespace.
+// InstallCuratedPackage will install a curated package.
 func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubeconfig string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
@@ -1657,6 +1668,8 @@ func (e *ClusterE2ETest) ValidateClusterState() {
 	ctx := context.Background()
 	clusterValidator := newClusterValidator(e.clusterValidatorConfig)
 	clusterValidator.WithExpectedObjectsExist()
+	providerValidations := e.Provider.ClusterValidations()
+	clusterValidator.WithValidations(providerValidations...)
 	if err := clusterValidator.Validate(ctx); err != nil {
 		e.T.Fatalf("failed to validate cluster %v", err)
 	}
@@ -1750,7 +1763,7 @@ func (e *ClusterE2ETest) initClusterValidatorConfig(ctx context.Context) {
 
 func newClusterValidator(config *ClusterValidatorConfig) *ClusterValidator {
 	return NewClusterValidator(func(cv *ClusterValidator) {
-		cv.Config = config
+		cv.Config = *config
 	})
 }
 

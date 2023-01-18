@@ -1,6 +1,9 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"context"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 // tinkerbellEntry is unimplemented. Its boiler plate to mute warnings that could confuse the customer until we
 // get round to implementing it.
@@ -68,4 +71,41 @@ func processTinkerbellMachineConfig(c *Config, objects ObjectLookup, machineRef 
 	}
 
 	c.TinkerbellMachineConfigs[m.GetName()] = m.(*anywherev1.TinkerbellMachineConfig)
+}
+
+func getTinkerbellDatacenter(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.TinkerbellDatacenterKind {
+		return nil
+	}
+
+	datacenter := &anywherev1.TinkerbellDatacenterConfig{}
+	if err := client.Get(ctx, c.Cluster.Spec.DatacenterRef.Name, c.Cluster.Namespace, datacenter); err != nil {
+		return err
+	}
+
+	c.TinkerbellDatacenter = datacenter
+	return nil
+}
+
+func getTinkerbellMachineConfigs(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.TinkerbellDatacenterKind {
+		return nil
+	}
+
+	if c.TinkerbellMachineConfigs == nil {
+		c.TinkerbellMachineConfigs = map[string]*anywherev1.TinkerbellMachineConfig{}
+	}
+	for _, machineRef := range c.Cluster.MachineConfigRefs() {
+		if machineRef.Kind != anywherev1.TinkerbellMachineConfigKind {
+			continue
+		}
+
+		machineConfig := &anywherev1.TinkerbellMachineConfig{}
+		if err := client.Get(ctx, machineRef.Name, c.Cluster.Namespace, machineConfig); err != nil {
+			return err
+		}
+
+		c.TinkerbellMachineConfigs[machineConfig.Name] = machineConfig
+	}
+	return nil
 }

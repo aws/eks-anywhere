@@ -272,6 +272,15 @@ $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_CONFIG)
 vulncheck: $(GO_VULNCHECK)
 	$(GO_VULNCHECK) ./...
 
+LS_FILES_CMD = git ls-files --exclude-standard | grep '\.go$$' | grep -v '/mocks/\|zz_generated\.'
+
+$(TOOLS_BIN_DIR)/gci:
+	GOBIN=$(TOOLS_BIN_DIR) $(GO) install github.com/daixiang0/gci@v0.8.0
+
+.PHONY: run-gci
+run-gci: $(TOOLS_BIN_DIR)/gci ## Run gci against code.
+	$(LS_FILES_CMD) | xargs $(TOOLS_BIN_DIR)/gci write --skip-generated -s standard,default -s "prefix($(shell go list -m))"
+
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
 
@@ -372,6 +381,7 @@ update-brew-formula:
 clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
 	rm -rf ./pkg/executables/cluster-name/
+	rm -rf ./pkg/executables/TestDeployTemplate*
 	rm -rf ./pkg/providers/vsphere/test/
 	rm -rf ./pkg/providers/tinkerbell/stack/TestTinkerbellStackInstall*
 ifeq ($(UNAME), Darwin)

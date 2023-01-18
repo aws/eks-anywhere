@@ -12,13 +12,13 @@ import (
 type StorageContext struct {
 	host            string
 	project         string
-	credentialStore CredentialStore
+	credentialStore *CredentialStore
 	certificates    *x509.CertPool
 	insecure        bool
 }
 
 // NewStorageContext create registry context.
-func NewStorageContext(host string, credentialStore CredentialStore, certificates *x509.CertPool, insecure bool) StorageContext {
+func NewStorageContext(host string, credentialStore *CredentialStore, certificates *x509.CertPool, insecure bool) StorageContext {
 	return StorageContext{
 		host:            host,
 		credentialStore: credentialStore,
@@ -34,5 +34,7 @@ type StorageClient interface {
 	GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error)
 	SetProject(project string)
 	Destination(image Artifact) string
-	CopyGraph(ctx context.Context, srcStorage orasregistry.Repository, dstStorage orasregistry.Repository, desc ocispec.Descriptor) error
+	FetchBytes(ctx context.Context, srcStorage orasregistry.Repository, artifact Artifact) (ocispec.Descriptor, []byte, error)
+	FetchBlob(ctx context.Context, srcStorage orasregistry.Repository, descriptor ocispec.Descriptor) ([]byte, error)
+	CopyGraph(ctx context.Context, srcStorage orasregistry.Repository, srcRef string, dstStorage orasregistry.Repository, dstRef string) error
 }

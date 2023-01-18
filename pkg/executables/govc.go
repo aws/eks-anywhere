@@ -227,18 +227,34 @@ func (g *Govc) ResizeDisk(ctx context.Context, datacenter, template, diskName st
 	return nil
 }
 
-func (g *Govc) DevicesInfo(ctx context.Context, datacenter, template string) (interface{}, error) {
+type deviceInfoResponse struct {
+	Devices []VirtualDevice
+}
+
+// VirtualDevice describes a virtual device for a VM.
+type VirtualDevice struct {
+	Name         string
+	DeviceInfo   deviceInfo
+	CapacityInKB float64
+}
+
+type deviceInfo struct {
+	Label string
+}
+
+// DevicesInfo returns device info for the provided virtual machine.
+func (g *Govc) DevicesInfo(ctx context.Context, datacenter, template string) ([]VirtualDevice, error) {
 	response, err := g.exec(ctx, "device.info", "-dc", datacenter, "-vm", template, "-json")
 	if err != nil {
 		return nil, fmt.Errorf("getting template device information: %v", err)
 	}
 
-	var devicesInfo map[string]interface{}
+	var devicesInfo deviceInfoResponse
 	err = yaml.Unmarshal(response.Bytes(), &devicesInfo)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling devices info: %v", err)
 	}
-	return devicesInfo["Devices"], nil
+	return devicesInfo.Devices, nil
 }
 
 func (g *Govc) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {
@@ -315,14 +331,13 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 		// checks based on the label.
 		disk1 := ""
 		disk2 := ""
-		for _, deviceInfo := range devicesInfo.([]interface{}) {
-			deviceMetadata := deviceInfo.(map[string]interface{})["DeviceInfo"]
-			deviceLabel := deviceMetadata.(map[string]interface{})["Label"].(string)
+		for _, device := range devicesInfo {
+			deviceLabel := device.DeviceInfo.Label
 			// Get the name of the hard disk and resize the disk to 20G
 			if strings.EqualFold(deviceLabel, "Hard disk 1") {
-				disk1 = deviceInfo.(map[string]interface{})["Name"].(string)
+				disk1 = device.Name
 			} else if strings.EqualFold(deviceLabel, "Hard disk 2") {
-				disk2 = deviceInfo.(map[string]interface{})["Name"].(string)
+				disk2 = device.Name
 				break
 			}
 		}
@@ -342,7 +357,7 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 
 		err = g.ResizeDisk(ctx, datacenter, templateName, diskName, diskSizeInGB)
 		if err != nil {
-			return fmt.Errorf("resizing disk %v to 20G: %v", diskName, err)
+			return fmt.Errorf("resizing disk %v to %dG: %v", diskName, diskSizeInGB, err)
 		}
 	}
 

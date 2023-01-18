@@ -571,6 +571,19 @@ stringData:
   username: "{{.eksaVsphereUsername}}"
   password: "{{.eksaVspherePassword}}"
 ---
+{{- if .registryAuth }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "{{.registryUsername}}"
+  password: "{{.registryPassword}}"
+---
+{{- end }}
 {{- if not .disableCSI }}
 apiVersion: v1
 kind: Secret
@@ -1008,6 +1021,9 @@ data:
           - effect: NoSchedule
             key: node-role.kubernetes.io/master
             operator: Exists
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/control-plane
+            operator: Exists
 {{- if .controlPlaneTaints }}
 {{- range .controlPlaneTaints}}
           - key: {{ .Key }}
@@ -1270,6 +1286,8 @@ data:
             value: "true"
           - effect: NoSchedule
             key: node-role.kubernetes.io/master
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/control-plane
           - effect: NoSchedule
             key: node.kubernetes.io/not-ready
 {{- if .controlPlaneTaints }}

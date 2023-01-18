@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -143,7 +144,47 @@ func TestVSphereUpgradeLabelsTaintsBottleRocketAPI(t *testing.T) {
 	)
 }
 
-func TestVSphereUpgradeScaleWorkersUbuntuAPI(t *testing.T) {
+func TestVSphereUpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
+	vsphere := framework.NewVSphere(t)
+
+	managementCluster := framework.NewClusterE2ETest(
+		t, vsphere,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		vsphere.WithUbuntu124(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			),
+			vsphere.WithWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
+			vsphere.WithWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
+			vsphere.WithUbuntu124(),
+		),
+	)
+
+	runWorkloadClusterUpgradeFlowAPI(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
+			api.RemoveWorkerNodeGroup("worker-1"),
+		),
+		vsphere.WithWorkerNodeGroupConfiguration("worker-1", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
+	)
+}
+
+func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -173,12 +214,65 @@ func TestVSphereUpgradeScaleWorkersUbuntuAPI(t *testing.T) {
 		),
 	)
 
-	runWorkloadClusterUpgradeFlowAPI(test,
+	test.CreateManagementCluster()
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		wc.UpdateClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
+			),
+			api.VSphereToConfigFiller(api.WithDisableCSI(true)),
+			vsphere.WithUbuntu124(),
+		)
+		wc.ApplyClusterManifest()
+		wc.DeleteWorkloadVsphereCSI()
+		wc.ValidateClusterState()
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+}
+
+func TestVSphereKubernetes123to124UpgradeFromLatestMinorReleaseBottleRocketAPI(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider,
+	)
+	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	managementCluster.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
-			api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
-			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
+			api.WithKubernetesVersion(anywherev1.Kube123),
 		),
-		vsphere.WithUbuntu124(),
+		api.VSphereToConfigFiller(
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+		provider.WithBottleRocketForRelease(release, anywherev1.Kube123),
+	)
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube123),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+			api.VSphereToConfigFiller(
+				api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+			),
+			provider.WithBottleRocketForRelease(release, anywherev1.Kube123),
+		),
+	)
+
+	runMulticlusterUpgradeFromReleaseFlowAPI(
+		test,
+		release,
+		provider.WithBottleRocket124(),
+		api.VSphereToConfigFiller(
+			provider.Bottlerocket124Template(), // Set the template so it doesn't get autoimported
+		),
 	)
 }
 
@@ -299,5 +393,37 @@ func TestDockerUpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsAPI(t *testin
 			api.RemoveWorkerNodeGroup("worker-2"),
 			api.WithWorkerNodeGroup("worker-3", api.WithCount(1)),
 		),
+	)
+}
+
+func TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewDocker(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider,
+	)
+	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	managementCluster.UpdateClusterConfig(api.ClusterToConfigFiller(
+		api.WithKubernetesVersion(v1alpha1.Kube123),
+	))
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube123),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+
+	runMulticlusterUpgradeFromReleaseFlowAPI(
+		test,
+		release,
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 	)
 }

@@ -75,3 +75,8 @@ func (d *Docker) ClusterConfigUpdates() []api.ClusterConfigFiller {
 func (d *Docker) WithWorkerNodeGroup(workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
 	return api.ClusterToConfigFiller(workerNodeGroup.ClusterFiller())
 }
+
+// ClusterValidations returns a list of provider specific validations.
+func (d *Docker) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

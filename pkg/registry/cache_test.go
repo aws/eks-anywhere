@@ -27,4 +27,9 @@ func TestCache_Get(t *testing.T) {
 	busted, ok := result.(*registry.OCIRegistryClient)
 	assert.False(t, ok)
 	assert.Nil(t, busted)
+
+	artifact := registry.NewArtifactFromURI("localhost/owner/name:latest")
+	assert.Equal(t, "localhost", artifact.Registry)
+
+	cache.Set("localhost", result)
 }

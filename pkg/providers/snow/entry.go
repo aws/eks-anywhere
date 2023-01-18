@@ -39,7 +39,7 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 	return &cluster.ConfigManagerEntry{
 		Defaulters: []cluster.Defaulter{
 			func(c *cluster.Config) error {
-				return cm.defaulters.GenerateDefaultSshKeys(ctx, c.SnowMachineConfigs)
+				return cm.defaulters.GenerateDefaultSSHKeys(ctx, c.SnowMachineConfigs, c.Cluster.Name)
 			},
 			func(c *cluster.Config) error {
 				return SetupEksaCredentialsSecret(c)

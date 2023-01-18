@@ -2,82 +2,110 @@ package curatedpackages_test
 
 import (
 	"context"
+	_ "embed"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/stretchr/testify/assert"
+	"oras.land/oras-go/v2/registry/remote"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+	"github.com/aws/eks-anywhere/pkg/registry"
+	registrymocks "github.com/aws/eks-anywhere/pkg/registry/mocks"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+//go:embed testdata/image-manifest.json
+var imageManifest []byte
+
+//go:embed testdata/package-bundle.yaml
+var packageBundle []byte
+
+var desc = ocispec.Descriptor{}
 
 type packageReaderTest struct {
 	*WithT
 	ctx            context.Context
 	command        *curatedpackages.PackageReader
 	manifestReader *mocks.MockManifestReader
-	registry       string
+	storageClient  *registrymocks.MockStorageClient
+	registryName   string
+	bundles        *releasev1.Bundles
 }
 
 func newPackageReaderTest(t *testing.T) *packageReaderTest {
 	ctrl := gomock.NewController(t)
 	r := mocks.NewMockManifestReader(ctrl)
-	registry := "public.ecr.aws/l0g8r8j6"
+	registryName := "public.ecr.aws"
+	sc := registrymocks.NewMockStorageClient(ctrl)
+	cache := registry.NewCache()
+	cache.Set(registryName, sc)
+	credentialStore := registry.NewCredentialStore()
+	bundles := releasev1.Bundles{
+		Spec: releasev1.BundlesSpec{
+			VersionsBundles: []releasev1.VersionsBundle{
+				{
+					KubeVersion: "1.21",
+					PackageController: releasev1.PackageBundle{
+						Version: "test-version",
+						Controller: releasev1.Image{
+							URI: registryName + "/l0g8r8j6/ctrl:v1",
+						},
+					},
+				},
+			},
+		},
+	}
 
 	return &packageReaderTest{
 		WithT:          NewWithT(t),
 		ctx:            context.Background(),
-		registry:       registry,
+		registryName:   registryName,
 		manifestReader: r,
-		command:        curatedpackages.NewPackageReader(r),
+		storageClient:  sc,
+		bundles:        &bundles,
+		command:        curatedpackages.NewPackageReader(r, cache, credentialStore),
 	}
 }
 
-func TestPackageReaderReadImagesFromBundlesSuccess(t *testing.T) {
-	t.Skip("Test consistently fails locally as it attempts to download unreachable artifacts (https://github.com/aws/eks-anywhere/issues/3881)")
+func TestPackageReader_ReadImagesFromBundles(t *testing.T) {
 	tt := newPackageReaderTest(t)
-	bundles := &releasev1.Bundles{
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "1.21",
-					PackageController: releasev1.PackageBundle{
-						Version: "test-version",
-						Controller: releasev1.Image{
-							URI: tt.registry + "/ctrl:v1",
-						},
-					},
-				},
-			},
-		},
-	}
-	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), gomock.Any()).Return(desc, imageManifest, nil)
+	tt.storageClient.EXPECT().FetchBlob(tt.ctx, gomock.Any(), gomock.Any()).Return(packageBundle, nil)
 
-	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(images).NotTo(BeEmpty())
 }
 
-func TestPackageReaderReadImagesFromBundlesFail(t *testing.T) {
+func TestPackageReader_ReadImagesFromBundlesProduction(t *testing.T) {
 	tt := newPackageReaderTest(t)
-	bundles := &releasev1.Bundles{
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "1",
-					PackageController: releasev1.PackageBundle{
-						Version: "test-version",
-						Controller: releasev1.Image{
-							URI: tt.registry + "/ctrl:v1",
-						},
-					},
-				},
-			},
-		},
-	}
-	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+	artifact := registry.NewArtifactFromURI("public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-21-latest")
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), artifact).Return(desc, imageManifest, nil)
+	tt.storageClient.EXPECT().FetchBlob(tt.ctx, gomock.Any(), gomock.Any()).Return(packageBundle, nil)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = tt.registryName + "/eks-anywhere/ctrl:v1"
+
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).NotTo(BeEmpty())
+}
+
+func TestPackageReader_ReadImagesFromBundlesBadKubeVersion(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	bundles := tt.bundles.DeepCopy()
+	bundles.Spec.VersionsBundles[0].KubeVersion = "1"
 
 	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
 
@@ -85,100 +113,89 @@ func TestPackageReaderReadImagesFromBundlesFail(t *testing.T) {
 	tt.Expect(images).To(BeEmpty())
 }
 
-func TestPackageReaderReadImagesFromBundlesFailWhenWrongBundle(t *testing.T) {
+func TestPackageReader_ReadImagesFromBundlesBadRegistry(t *testing.T) {
 	tt := newPackageReaderTest(t)
-	bundles := &releasev1.Bundles{
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "1.21",
-					PackageController: releasev1.PackageBundle{
-						Version: "test-version",
-						Controller: releasev1.Image{
-							URI: "fake_registry/fake_env/ctrl:v1",
-						},
-					},
-				},
-			},
-		},
-	}
-	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = "!@#$/eks-anywhere/ctrl:v1"
 
-	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(images).To(BeEmpty())
 }
 
-func TestPackageReaderReadChartsFromBundlesSuccess(t *testing.T) {
-	t.Skip("Test consistently fails locally as it attempts to download unreachable artifacts (https://github.com/aws/eks-anywhere/issues/3881)")
+func TestPackageReader_ReadImagesFromBundlesBadData(t *testing.T) {
 	tt := newPackageReaderTest(t)
-	bundles := &releasev1.Bundles{
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "1.21",
-					PackageController: releasev1.PackageBundle{
-						Version: "test-version",
-						Controller: releasev1.Image{
-							URI: tt.registry + "/ctrl:v1",
-						},
-					},
-				},
-			},
-		},
-	}
-	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), gomock.Any()).Return(desc, []byte("wot?"), nil)
 
-	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).To(BeEmpty())
+}
+
+func TestPackageReader_ReadImagesFromBundlesBundlePullError(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), gomock.Any()).Return(desc, []byte{}, fmt.Errorf("oops"))
+
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).To(BeEmpty())
+}
+
+func TestPackageReader_ReadChartsFromBundles(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	artifact := registry.NewArtifactFromURI("public.ecr.aws/l0g8r8j6/eks-anywhere-packages-bundles:v1-21-latest")
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), artifact).Return(desc, imageManifest, nil)
+	tt.storageClient.EXPECT().FetchBlob(tt.ctx, gomock.Any(), gomock.Any()).Return(packageBundle, nil)
+
+	images := tt.command.ReadChartsFromBundles(tt.ctx, tt.bundles)
 
 	tt.Expect(images).NotTo(BeEmpty())
 }
 
-func TestPackageReaderReadChartsFromBundlesFail(t *testing.T) {
+func TestPackageReader_ReadChartsFromBundlesProduction(t *testing.T) {
 	tt := newPackageReaderTest(t)
-	bundles := &releasev1.Bundles{
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "1",
-					PackageController: releasev1.PackageBundle{
-						Version: "test-version",
-						Controller: releasev1.Image{
-							URI: tt.registry + "/ctrl:v1",
-						},
-					},
-				},
-			},
-		},
-	}
-	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+	artifact := registry.NewArtifactFromURI("public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-21-latest")
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), artifact).Return(desc, imageManifest, nil)
+	tt.storageClient.EXPECT().FetchBlob(tt.ctx, gomock.Any(), gomock.Any()).Return(packageBundle, nil)
+	tt.bundles.Spec.VersionsBundles[0].PackageController.Controller.URI = tt.registryName + "/eks-anywhere/ctrl:v1"
+
+	images := tt.command.ReadChartsFromBundles(tt.ctx, tt.bundles)
+
+	tt.Expect(images).NotTo(BeEmpty())
+}
+
+func TestPackageReader_ReadChartsFromBundlesBadKubeVersion(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	bundles := tt.bundles.DeepCopy()
+	bundles.Spec.VersionsBundles[0].KubeVersion = "1"
 
 	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
 
 	tt.Expect(images).To(BeEmpty())
 }
 
-func TestPackageReaderReadChartsFromBundlesFailWhenWrongURI(t *testing.T) {
+func TestPackageReader_ReadChartsFromBundlesBundlePullError(t *testing.T) {
 	tt := newPackageReaderTest(t)
-	bundles := &releasev1.Bundles{
-		Spec: releasev1.BundlesSpec{
-			VersionsBundles: []releasev1.VersionsBundle{
-				{
-					KubeVersion: "1.21",
-					PackageController: releasev1.PackageBundle{
-						Version: "test-version",
-						Controller: releasev1.Image{
-							URI: "fake_registry/fake_env/ctrl:v1",
-						},
-					},
-				},
-			},
-		},
-	}
-	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+	repo, err := remote.NewRepository("owner/name")
+	assert.NoError(t, err)
+	tt.storageClient.EXPECT().GetStorage(tt.ctx, gomock.Any()).Return(repo, nil)
+	tt.storageClient.EXPECT().FetchBytes(tt.ctx, gomock.Any(), gomock.Any()).Return(desc, []byte{}, fmt.Errorf("oops"))
 
-	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
+	images := tt.command.ReadChartsFromBundles(tt.ctx, tt.bundles)
 
 	tt.Expect(images).To(BeEmpty())
 }

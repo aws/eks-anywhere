@@ -25,3 +25,8 @@ func (cache *Cache) Get(context StorageContext) (StorageClient, error) {
 	}
 	return aClient, nil
 }
+
+// Set a client in the cache.
+func (cache *Cache) Set(registryName string, client StorageClient) {
+	cache.registries[registryName] = client
+}

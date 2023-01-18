@@ -37,7 +37,10 @@ func TestCredentialStore_Init(t *testing.T) {
 	assert.Equal(t, "", result.RefreshToken)
 
 	result, err = credentialStore.Credential("5551212.dkr.ecr.us-west-2.amazonaws.com")
-	assert.EqualError(t, err, "error getting credentials - err: exec: \"docker-credential-bogus\": executable file not found in $PATH, out: ``")
+	// This is a generic error, so using errors.Is won't work, and this is as
+	// much of the string as we can reliably match against in a cross-platform
+	// fashion. Until they change it, then everything will break.
+	assert.ErrorContains(t, err, "error getting credentials - err")
 	assert.Equal(t, "", result.Username)
 	assert.Equal(t, "", result.Password)
 	assert.Equal(t, "", result.AccessToken)

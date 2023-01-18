@@ -10,6 +10,7 @@ import (
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content"
 	orasregistry "oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -41,12 +42,13 @@ func (or *OCIRegistryClient) Init() error {
 			return
 		}
 
-		tlsConfig := &tls.Config{
-			RootCAs:            or.certificates,
-			InsecureSkipVerify: or.insecure,
-		}
 		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.TLSClientConfig = tlsConfig
+		{ // #nosec G402
+			transport.TLSClientConfig = &tls.Config{
+				RootCAs:            or.certificates,
+				InsecureSkipVerify: or.insecure,
+			}
+		}
 		authClient := &auth.Client{
 			Client: &http.Client{
 				Transport: transport,
@@ -79,8 +81,8 @@ func (or *OCIRegistryClient) Destination(image Artifact) string {
 }
 
 // GetStorage object based on repository.
-func (or *OCIRegistryClient) GetStorage(ctx context.Context, image Artifact) (repo orasregistry.Repository, err error) {
-	dstRepo := or.project + image.Repository
+func (or *OCIRegistryClient) GetStorage(ctx context.Context, artifact Artifact) (repo orasregistry.Repository, err error) {
+	dstRepo := path.Join(or.project, artifact.Repository)
 	repo, err = or.registry.Repository(ctx, dstRepo)
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository %s: %v", dstRepo, err)
@@ -94,8 +96,19 @@ func (or *OCIRegistryClient) Resolve(ctx context.Context, srcStorage orasregistr
 	return srcStorage.Resolve(ctx, or.registry.Reference.Reference)
 }
 
+// FetchBytes a resource from the registry.
+func (or *OCIRegistryClient) FetchBytes(ctx context.Context, srcStorage orasregistry.Repository, artifact Artifact) (ocispec.Descriptor, []byte, error) {
+	return oras.FetchBytes(ctx, srcStorage, artifact.VersionedImage(), oras.DefaultFetchBytesOptions)
+}
+
+// FetchBlob get named blob.
+func (or *OCIRegistryClient) FetchBlob(ctx context.Context, srcStorage orasregistry.Repository, descriptor ocispec.Descriptor) ([]byte, error) {
+	return content.FetchAll(ctx, srcStorage, descriptor)
+}
+
 // CopyGraph copy manifest and all blobs to destination.
-func (or *OCIRegistryClient) CopyGraph(ctx context.Context, srcStorage orasregistry.Repository, dstStorage orasregistry.Repository, desc ocispec.Descriptor) error {
-	extendedCopyOptions := oras.DefaultExtendedCopyOptions
-	return oras.CopyGraph(ctx, srcStorage, dstStorage, desc, extendedCopyOptions.CopyGraphOptions)
+func (or *OCIRegistryClient) CopyGraph(ctx context.Context, srcStorage orasregistry.Repository, srcRef string, dstStorage orasregistry.Repository, dstRef string) error {
+	copyOptions := oras.CopyOptions{}
+	_, err := oras.Copy(ctx, srcStorage, srcRef, dstStorage, dstRef, copyOptions)
+	return err
 }

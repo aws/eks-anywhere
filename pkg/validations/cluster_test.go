@@ -162,6 +162,19 @@ func TestValidateManagementClusterNameValid(t *testing.T) {
 	tt.Expect(validations.ValidateManagementClusterName(ctx, tt.kubectl, managementCluster(mgmtName), mgmtName)).To(Succeed())
 }
 
+func TestValidateManagementClusterNameEmptyValid(t *testing.T) {
+	mgmtName := "test"
+	tt := newTest(t, withKubectl())
+	tt.clusterSpec.Cluster.Spec.ManagementCluster.Name = mgmtName
+
+	ctx := context.Background()
+	mgmtCluster := anywhereCluster(mgmtName)
+	mgmtCluster.Spec.ManagementCluster.Name = ""
+	tt.kubectl.EXPECT().GetEksaCluster(ctx, managementCluster(mgmtName), mgmtName).Return(anywhereCluster(mgmtName), nil)
+
+	tt.Expect(validations.ValidateManagementClusterName(ctx, tt.kubectl, managementCluster(mgmtName), mgmtName)).To(Succeed())
+}
+
 func TestValidateManagementClusterNameNotExist(t *testing.T) {
 	mgmtName := "test"
 	tt := newTest(t, withKubectl())

@@ -25,7 +25,7 @@ import (
 // TODO: Move ClusterValidator to a separate package
 
 // ClusterValidation defines a validation that can be registered to the ClusterValidator.
-type ClusterValidation = func(ctx context.Context, vc *ClusterValidatorConfig) error
+type ClusterValidation = func(ctx context.Context, vc ClusterValidatorConfig) error
 
 type retriableValidation struct {
 	validation    ClusterValidation // the validation to run against the cluster.
@@ -35,7 +35,7 @@ type retriableValidation struct {
 
 // ClusterValidator is responsible for checking if a cluster is valid against the spec that is provided.
 type ClusterValidator struct {
-	Config      *ClusterValidatorConfig
+	Config      ClusterValidatorConfig
 	validations []retriableValidation
 }
 
@@ -44,12 +44,23 @@ func (c *ClusterValidator) WithValidation(validation ClusterValidation, backoffP
 	c.validations = append(c.validations, retriableValidation{validation, backoffPeriod, maxRetries})
 }
 
+// WithValidations registers multiple validations to the ClusterValidator that will be run when Validate is called.
+func (c *ClusterValidator) WithValidations(validation ...ClusterValidation) {
+	for _, v := range validation {
+		c.validations = append(c.validations, retriableValidation{v, 5 * time.Second, 30})
+	}
+}
+
+// WithWorkloadClusterValidations registers a validation set for a workload cluster.
+func (c *ClusterValidator) WithWorkloadClusterValidations() {}
+
 // WithExpectedObjectsExist registers a set of validations for the existence of various cluster objects.
 func (c *ClusterValidator) WithExpectedObjectsExist() {
 	c.WithValidation(validateClusterReady, 5*time.Second, 60)
 	c.WithValidation(validateEKSAObjects, 5*time.Second, 60)
 	c.WithValidation(validateControlPlaneNodes, 5*time.Second, 120)
 	c.WithValidation(validateWorkerNodes, 5*time.Second, 120)
+	c.WithValidation(validateCilium, 5*time.Second, 60)
 }
 
 // WithClusterDoesNotExist registers a validation to check that a cluster does not exist or has been deleted.
@@ -82,7 +93,7 @@ type ClusterValidatorOpt = func(cv *ClusterValidator)
 // NewClusterValidator returns a cluster validator which can be configured by passing ClusterValidatorOpt arguments.
 func NewClusterValidator(opts ...ClusterValidatorOpt) *ClusterValidator {
 	cv := ClusterValidator{
-		Config:      &ClusterValidatorConfig{},
+		Config:      ClusterValidatorConfig{},
 		validations: []retriableValidation{},
 	}
 
@@ -102,7 +113,7 @@ type ClusterValidatorConfig struct {
 
 // TODO: Move Validations to separate package
 
-func validateEKSAObjects(ctx context.Context, vc *ClusterValidatorConfig) error {
+func validateEKSAObjects(ctx context.Context, vc ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	mgmtClusterClient := vc.ManagementClusterClient
 	for _, obj := range vc.ClusterSpec.ChildObjects() {
@@ -122,7 +133,7 @@ func validateEKSAObjects(ctx context.Context, vc *ClusterValidatorConfig) error 
 	return nil
 }
 
-func validateClusterReady(ctx context.Context, vc *ClusterValidatorConfig) error {
+func validateClusterReady(ctx context.Context, vc ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	mgmtClusterClient := vc.ManagementClusterClient
 	capiCluster, err := controller.GetCAPICluster(ctx, mgmtClusterClient, clus)
@@ -141,7 +152,7 @@ func validateClusterReady(ctx context.Context, vc *ClusterValidatorConfig) error
 	return nil
 }
 
-func validateControlPlaneNodes(ctx context.Context, vc *ClusterValidatorConfig) error {
+func validateControlPlaneNodes(ctx context.Context, vc ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	cpNodes := &corev1.NodeList{}
 	if err := vc.ClusterClient.List(ctx, cpNodes, client.MatchingLabels{"node-role.kubernetes.io/control-plane": ""}); err != nil {
@@ -172,7 +183,7 @@ func validateControlPlaneNodes(ctx context.Context, vc *ClusterValidatorConfig) 
 	return nil
 }
 
-func validateWorkerNodes(ctx context.Context, vc *ClusterValidatorConfig) error {
+func validateWorkerNodes(ctx context.Context, vc ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	clusterName := clus.Name
 	nodes := &corev1.NodeList{}
@@ -289,7 +300,7 @@ func validateNodeLabelsRemoved(node corev1.Node, removedLabels map[string]string
 	return nil
 }
 
-func validateClusterDoesNotExist(ctx context.Context, vc *ClusterValidatorConfig) error {
+func validateClusterDoesNotExist(ctx context.Context, vc ClusterValidatorConfig) error {
 	clus := vc.ClusterSpec.Cluster
 	capiCluster, err := controller.GetCAPICluster(ctx, vc.ManagementClusterClient, clus)
 	if err != nil {
@@ -303,7 +314,7 @@ func validateClusterDoesNotExist(ctx context.Context, vc *ClusterValidatorConfig
 }
 
 // getWorkerNodeMachineSets gets a list of MachineSets corresponding the provided WorkerNodeGroupConfiguration from the management cluster.
-func getWorkerNodeMachineSets(ctx context.Context, vc *ClusterValidatorConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
+func getWorkerNodeMachineSets(ctx context.Context, vc ClusterValidatorConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
 	md := &v1beta1.MachineDeployment{}
 	mdName := fmt.Sprintf("%s-%s", vc.ClusterSpec.Cluster.Name, w.Name)
 	key := types.NamespacedName{Name: mdName, Namespace: constants.EksaSystemNamespace}
@@ -321,4 +332,27 @@ func getWorkerNodeMachineSets(ctx context.Context, vc *ClusterValidatorConfig, w
 		return nil, fmt.Errorf("invalid number of machine sets associated with worker node configuration %s", w.Name)
 	}
 	return ms.Items, nil
+}
+
+func validateCilium(ctx context.Context, vc ClusterValidatorConfig) error {
+	clusterClient := vc.ClusterClient
+
+	yaml := vc.ClusterSpec.Cluster
+	cm := &corev1.ConfigMap{}
+	key := types.NamespacedName{Namespace: "kube-system", Name: "cilium-config"}
+	err := clusterClient.Get(ctx, key, cm)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve configmap %s", err)
+	}
+
+	clusterCilium := cm.Data["enable-policy"]
+	yamlCilium := string(yaml.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode)
+	if yamlCilium == "" && clusterCilium == "default" {
+		return nil
+	}
+	if clusterCilium != yamlCilium {
+		return fmt.Errorf("cilium policy does not match. ConfigMap: %s, YAML: %s", clusterCilium, yamlCilium)
+	}
+
+	return nil
 }

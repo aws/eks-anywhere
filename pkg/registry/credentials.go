@@ -13,9 +13,9 @@ type CredentialStore struct {
 	configFile *configfile.ConfigFile
 }
 
-// NewCredentialStore create a create store.
-func NewCredentialStore() CredentialStore {
-	return CredentialStore{
+// NewCredentialStore create a credential store.
+func NewCredentialStore() *CredentialStore {
+	return &CredentialStore{
 		directory: config.Dir(),
 	}
 }

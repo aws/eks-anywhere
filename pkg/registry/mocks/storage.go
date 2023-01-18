@@ -38,17 +38,17 @@ func (m *MockStorageClient) EXPECT() *MockStorageClientMockRecorder {
 }
 
 // CopyGraph mocks base method.
-func (m *MockStorageClient) CopyGraph(ctx context.Context, srcStorage, dstStorage registry0.Repository, desc v1.Descriptor) error {
+func (m *MockStorageClient) CopyGraph(ctx context.Context, srcStorage registry0.Repository, srcRef string, dstStorage registry0.Repository, dstRef string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CopyGraph", ctx, srcStorage, dstStorage, desc)
+	ret := m.ctrl.Call(m, "CopyGraph", ctx, srcStorage, srcRef, dstStorage, dstRef)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CopyGraph indicates an expected call of CopyGraph.
-func (mr *MockStorageClientMockRecorder) CopyGraph(ctx, srcStorage, dstStorage, desc interface{}) *gomock.Call {
+func (mr *MockStorageClientMockRecorder) CopyGraph(ctx, srcStorage, srcRef, dstStorage, dstRef interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyGraph", reflect.TypeOf((*MockStorageClient)(nil).CopyGraph), ctx, srcStorage, dstStorage, desc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyGraph", reflect.TypeOf((*MockStorageClient)(nil).CopyGraph), ctx, srcStorage, srcRef, dstStorage, dstRef)
 }
 
 // Destination mocks base method.
@@ -63,6 +63,37 @@ func (m *MockStorageClient) Destination(image registry.Artifact) string {
 func (mr *MockStorageClientMockRecorder) Destination(image interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Destination", reflect.TypeOf((*MockStorageClient)(nil).Destination), image)
+}
+
+// FetchBlob mocks base method.
+func (m *MockStorageClient) FetchBlob(ctx context.Context, srcStorage registry0.Repository, descriptor v1.Descriptor) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchBlob", ctx, srcStorage, descriptor)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchBlob indicates an expected call of FetchBlob.
+func (mr *MockStorageClientMockRecorder) FetchBlob(ctx, srcStorage, descriptor interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchBlob", reflect.TypeOf((*MockStorageClient)(nil).FetchBlob), ctx, srcStorage, descriptor)
+}
+
+// FetchBytes mocks base method.
+func (m *MockStorageClient) FetchBytes(ctx context.Context, srcStorage registry0.Repository, artifact registry.Artifact) (v1.Descriptor, []byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchBytes", ctx, srcStorage, artifact)
+	ret0, _ := ret[0].(v1.Descriptor)
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// FetchBytes indicates an expected call of FetchBytes.
+func (mr *MockStorageClientMockRecorder) FetchBytes(ctx, srcStorage, artifact interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchBytes", reflect.TypeOf((*MockStorageClient)(nil).FetchBytes), ctx, srcStorage, artifact)
 }
 
 // GetStorage mocks base method.

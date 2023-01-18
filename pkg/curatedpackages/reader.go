@@ -3,12 +3,14 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/registry"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -16,6 +18,7 @@ import (
 // This is because there is no mechanism to extract these values as of now.
 const (
 	publicProdECR     = "public.ecr.aws/eks-anywhere"
+	publicDevECR      = "public.ecr.aws/l0g8r8j6"
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
@@ -28,108 +31,129 @@ type ManifestReader interface {
 
 type PackageReader struct {
 	ManifestReader
+	cache           *registry.Cache
+	credentialStore *registry.CredentialStore
 }
 
-func NewPackageReader(mr ManifestReader) *PackageReader {
+// NewPackageReader create a new package reader with storage client.
+func NewPackageReader(mr ManifestReader, cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
 	return &PackageReader{
-		ManifestReader: mr,
+		ManifestReader:  mr,
+		cache:           cache,
+		credentialStore: credentialStore,
 	}
 }
 
 func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
-	images, err := r.ManifestReader.ReadImagesFromBundles(ctx, b)
-
+	var err error
+	var images []releasev1.Image
 	for _, vb := range b.Spec.VersionsBundles {
-		artifact, err := GetPackageBundleRef(vb)
+		bundleURI, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packageImages, err := r.fetchImagesFromBundle(ctx, vb, artifact)
-		if err != nil {
-			logger.Info("Warning: Failed extracting packages", "error", err)
-			continue
-		}
+		images = append(images, releasev1.Image{URI: bundleURI})
+		packageImages := r.fetchImagesFromBundle(bundleURI, bundle)
 		images = append(images, packageImages...)
 	}
 
-	return images, err
+	return removeDuplicateImages(images), err
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
-	images := r.ManifestReader.ReadChartsFromBundles(ctx, b)
+	var images []releasev1.Image
 	for _, vb := range b.Spec.VersionsBundles {
-		artifact, err := GetPackageBundleRef(vb)
+		bundleRegistry, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packagesHelmChart, err := fetchPackagesHelmChart(ctx, vb, artifact)
-		if err != nil {
-			logger.Info("Warning: Failed extracting packages", "error", err)
-			continue
-		}
+		images = append(images, releasev1.Image{URI: bundleRegistry})
+		packagesHelmChart := r.fetchPackagesHelmChart(bundleRegistry, bundle)
 		images = append(images, packagesHelmChart...)
 	}
-	return images
+	return removeDuplicateImages(images)
 }
 
-func fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
-	data, err := PullLatestBundle(ctx, artifact)
+func (r *PackageReader) getBundle(ctx context.Context, vb releasev1.VersionsBundle) (string, *packagesv1.PackageBundle, error) {
+	bundleURI, err := GetPackageBundleRef(vb)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	ctrl := versionsBundle.PackageController.Controller
-	bundle := &packagesv1.PackageBundle{}
-	err = yaml.Unmarshal(data, bundle)
+
+	artifact := registry.NewArtifactFromURI(bundleURI)
+	sc, err := r.cache.Get(registry.NewStorageContext(artifact.Registry, r.credentialStore, nil, false))
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
+
+	data, err := registry.PullBytes(ctx, sc, artifact)
+	if err != nil {
+		return "", nil, err
+	}
+	bundle := packagesv1.PackageBundle{}
+	err = yaml.Unmarshal(data, &bundle)
+	if err != nil {
+		return "", nil, err
+	}
+	return artifact.VersionedImage(), &bundle, nil
+}
+
+func (r *PackageReader) fetchPackagesHelmChart(bundleURI string, bundle *packagesv1.PackageBundle) []releasev1.Image {
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
 	for _, p := range bundle.Spec.Packages {
 		pHC := releasev1.Image{
 			Name:        p.Name,
 			Description: p.Name,
-			OS:          ctrl.OS,
-			OSName:      ctrl.OSName,
-			URI:         fmt.Sprintf("%s/%s:%s", GetRegistry(ctrl.URI), p.Source.Repository, p.Source.Versions[0].Name),
+			URI:         fmt.Sprintf("%s/%s@%s", getChartRegistry(bundleURI), p.Source.Repository, p.Source.Versions[0].Digest),
+			ImageDigest: p.Source.Versions[0].Digest,
 		}
 		images = append(images, pHC)
 	}
-	return images, nil
+	return images
 }
 
-func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
-	data, err := PullLatestBundle(ctx, artifact)
-	if err != nil {
-		return nil, err
-	}
-	bundle := &packagesv1.PackageBundle{}
-	err = yaml.Unmarshal(data, bundle)
-	if err != nil {
-		return nil, err
-	}
-
-	ctrl := versionsBundle.PackageController.Controller
+func (r *PackageReader) fetchImagesFromBundle(bundleURI string, bundle *packagesv1.PackageBundle) []releasev1.Image {
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
-
 	for _, p := range bundle.Spec.Packages {
 		// each package will have at least one version
 		for _, version := range p.Source.Versions[0].Images {
 			image := releasev1.Image{
 				Name:        version.Repository,
 				Description: version.Repository,
-				OS:          ctrl.OS,
-				OSName:      ctrl.OSName,
-				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(ctrl.URI), version.Repository, version.Digest),
+				URI:         fmt.Sprintf("%s/%s@%s", getImageRegistry(bundleURI), version.Repository, version.Digest),
+				ImageDigest: version.Digest,
 			}
 			images = append(images, image)
 		}
 	}
-	return images, nil
+	return images
 }
 
-func getRegistry(uri string) string {
+func removeDuplicateImages(images []releasev1.Image) []releasev1.Image {
+	uniqueImages := make(map[string]struct{})
+	var list []releasev1.Image
+	for _, item := range images {
+		if _, value := uniqueImages[item.VersionedImage()]; !value {
+			uniqueImages[item.VersionedImage()] = struct{}{}
+			list = append(list, item)
+		}
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].VersionedImage() < list[j].VersionedImage()
+	})
+	return list
+}
+
+func getChartRegistry(uri string) string {
+	if strings.Contains(uri, publicProdECR) {
+		return publicProdECR
+	}
+	return publicDevECR
+}
+
+func getImageRegistry(uri string) string {
 	if strings.Contains(uri, publicProdECR) {
 		return packageProdDomain
 	}

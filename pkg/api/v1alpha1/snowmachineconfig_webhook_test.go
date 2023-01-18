@@ -24,6 +24,7 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
+	sOld.Spec.SshKeyName = "testKey"
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sOld.Spec.Devices = []string{"1.2.3.4"}
@@ -48,9 +49,29 @@ func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
+	sOld.Spec.SshKeyName = "testKey"
 	sOld.Spec.InstanceType = "invalid-instance-type"
 
 	g.Expect(sOld.ValidateCreate()).To(MatchError(ContainSubstring("SnowMachineConfig InstanceType invalid-instance-type is not supported")))
+}
+
+func TestSnowMachineConfigValidateCreateEmptySSHKeyName(t *testing.T) {
+	g := NewWithT(t)
+	s := snowMachineConfig()
+	s.Spec.InstanceType = v1alpha1.SbeCLarge
+	s.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
+	s.Spec.Devices = []string{"1.2.3.4"}
+	s.Spec.OSFamily = v1alpha1.Ubuntu
+	s.Spec.Network = v1alpha1.SnowNetwork{
+		DirectNetworkInterfaces: []v1alpha1.SnowDirectNetworkInterface{
+			{
+				Index:   1,
+				DHCP:    true,
+				Primary: true,
+			},
+		},
+	}
+	g.Expect(s.ValidateCreate()).To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
 }
 
 func TestSnowMachineConfigValidateCreate(t *testing.T) {
@@ -58,6 +79,7 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 
 	sOld := snowMachineConfig()
 	sOld.Spec.AMIID = "testAMI"
+	sOld.Spec.SshKeyName = "testKey"
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sOld.Spec.Devices = []string{"1.2.3.4"}
@@ -84,6 +106,7 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	sOld := snowMachineConfig()
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
+	sNew.Spec.SshKeyName = "testKey"
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.Devices = []string{"1.2.3.4"}
@@ -110,11 +133,25 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sOld := snowMachineConfig()
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
+	sNew.Spec.SshKeyName = "testKey"
 	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
 	g.Expect(sNew.ValidateUpdate(&sOld)).To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
+}
+
+func TestSnowMachineConfigValidateUpdateEmptySSHKeyName(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := snowMachineConfig()
+	sNew := sOld.DeepCopy()
+	sNew.Spec.AMIID = "testAMI"
+	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
+	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
+
+	g.Expect(sNew.ValidateUpdate(&sOld)).To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
 }
 
 // Unit test to pass the code coverage job.

@@ -157,7 +157,6 @@ func WithFluxGithubConfig(opts ...api.FluxConfigOpt) api.ClusterConfigFiller {
 				api.WithStringFromEnvVarGithubProviderConfig(GithubUserVar, api.WithGithubOwner),
 			),
 			api.WithSystemNamespace("default"),
-			api.WithClusterConfigPath("path2"),
 			api.WithBranch("main"),
 		)
 		// apply the rest of the opts passed into the function

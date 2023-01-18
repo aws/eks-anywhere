@@ -41,7 +41,7 @@ func runHarborInstallSimpleFlowLocalStorageProvisioner(test *framework.ClusterE2
 		packagePrefix := "test"
 		installNs := "harbor"
 		test.CreateNamespace(installNs)
-		test.InstallCuratedPackage("harbor", packagePrefix, kubeconfig.FromClusterName(test.ClusterName), installNs,
+		test.InstallCuratedPackage("harbor", packagePrefix, kubeconfig.FromClusterName(test.ClusterName),
 			"--set secretKey=use-a-secret-key",
 			"--set expose.tls.certSource=auto",
 			"--set expose.tls.auto.commonName=localhost",

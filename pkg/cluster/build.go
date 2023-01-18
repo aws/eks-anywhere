@@ -4,6 +4,8 @@ package cluster
 // default processors to build a Config.
 func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 	return NewConfigClientBuilder().Register(
+		getTinkerbellMachineConfigs,
+		getTinkerbellDatacenter,
 		getDockerDatacenter,
 		getVSphereDatacenter,
 		getVSphereMachineConfigs,

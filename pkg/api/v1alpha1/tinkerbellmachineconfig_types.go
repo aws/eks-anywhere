@@ -128,6 +128,11 @@ func (c *TinkerbellMachineConfig) Marshallable() Marshallable {
 	return c.ConvertConfigToConfigGenerateStruct()
 }
 
+// Validate performs light and fast Tinkerbell machine config validation.
+func (c *TinkerbellMachineConfig) Validate() error {
+	return validateTinkerbellMachineConfig(c)
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as TinkerbellMachineConfig except stripped down for generation of yaml file during generate clusterconfig.

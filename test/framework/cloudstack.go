@@ -260,3 +260,8 @@ func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, worke
 	workerNodeGroup.MachineConfigName = machineConfigName
 	return workerNodeGroup.ClusterFiller()
 }
+
+// ClusterValidations returns a list of provider specific validations.
+func (c *CloudStack) ClusterValidations() []ClusterValidation {
+	return []ClusterValidation{}
+}

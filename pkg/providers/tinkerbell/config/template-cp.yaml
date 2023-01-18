@@ -67,6 +67,14 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
+{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
+      registryMirror:
+        endpoint: {{ .publicMirror }}
+        {{- if .registryCACert }}
+        caCert: |
+{{ .registryCACert | indent 10 }}
+        {{- end }}
+{{- end }}
 {{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
@@ -398,3 +406,16 @@ metadata:
 spec:
   imageLookupFormat: {{.osDistro}}-{{.osVersion}}-kube-{{.kubernetesVersion}}.raw.gz
   imageLookupBaseRegistry: {{.baseRegistry}}/
+{{- if .registryAuth }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "{{.registryUsername}}"
+  password: "{{.registryPassword}}"
+{{- end }}

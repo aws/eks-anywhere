@@ -24,3 +24,4 @@ docs/.hugo_build.lock
 *-logs
 *-artifacts
 *.log
+pkg/executables/TestDeployTemplate*
