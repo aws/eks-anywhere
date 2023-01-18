@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 
@@ -125,8 +126,10 @@ func buildTemplateMapCP(
 ) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig)
 
 	values := map[string]interface{}{
+		"apiServerExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
 		"clusterName":                  clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":         clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
