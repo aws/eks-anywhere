@@ -12,6 +12,9 @@ weight: 35
 - Add support for EKS Anywhere on AWS Snow ([#1042](https://github.com/aws/eks-anywhere/issues/1042))
 - Static IP support for BottleRocket ([#4359](https://github.com/aws/eks-anywhere/pull/4359))
 
+### Fixed
+- Improve management cluster name validation for workload clusters
+
 ## [v0.13.1](https://github.com/aws/eks-anywhere/releases/tag/v0.13.1)
 
 ### Added
