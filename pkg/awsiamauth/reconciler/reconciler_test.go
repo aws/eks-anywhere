@@ -188,7 +188,7 @@ func TestReconcileCAPIClusterNotFound(t *testing.T) {
 			Namespace: "eksa-system",
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.20",
+			KubernetesVersion: "1.22",
 			BundlesRef: &anywherev1.BundlesRef{
 				Name:       bundle.Name,
 				Namespace:  bundle.Namespace,
@@ -219,7 +219,7 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 			Namespace: "eksa-system",
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.20",
+			KubernetesVersion: "1.22",
 			BundlesRef: &anywherev1.BundlesRef{
 				Name:       bundle.Name,
 				Namespace:  bundle.Namespace,
@@ -269,7 +269,7 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 			Namespace: "eksa-system",
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.20",
+			KubernetesVersion: "1.22",
 			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
 				Endpoint: &anywherev1.Endpoint{
 					Host: "1.2.3.4",

@@ -556,7 +556,7 @@ func vsphereCluster(opts ...clusterOpt) *anywherev1.Cluster {
 			Namespace: clusterNamespace,
 		},
 		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.20",
+			KubernetesVersion: "1.22",
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				Pods: anywherev1.Pods{
 					CidrBlocks: []string{"0.0.0.0"},
