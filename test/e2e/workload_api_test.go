@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -233,6 +234,48 @@ func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuAPI(t *testing.T) {
 	})
 }
 
+func TestVSphereKubernetes123to124UpgradeFromLatestMinorReleaseBottleRocketAPI(t *testing.T) {
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider,
+	)
+	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	managementCluster.UpdateClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(anywherev1.Kube123),
+		),
+		api.VSphereToConfigFiller(
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+		provider.WithBottleRocketForRelease(release, anywherev1.Kube123),
+	)
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube123),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+			api.VSphereToConfigFiller(
+				api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+			),
+			provider.WithBottleRocketForRelease(release, anywherev1.Kube123),
+		),
+	)
+
+	runMulticlusterUpgradeFromReleaseFlowAPI(
+		test,
+		release,
+		provider.WithBottleRocket124(),
+		api.VSphereToConfigFiller(
+			provider.Bottlerocket124Template(), // Set the template so it doesn't get autoimported
+		),
+	)
+}
+
 func TestDockerUpgradeKubernetes123to124WorkloadClusterScaleupAPI(t *testing.T) {
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -381,6 +424,6 @@ func TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,
 		release,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 	)
 }

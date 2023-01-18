@@ -24,14 +24,15 @@ func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *re
 	test.DeleteCluster()
 }
 
-func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, opts ...framework.ClusterE2ETestOpt) {
+func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, filler ...api.ClusterConfigFiller) {
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.ApplyClusterManifest()
 		wc.WaitForKubeconfig()
 		wc.ValidateClusterState()
 	})
-	test.ManagementCluster.UpgradeCluster(opts)
+	test.ManagementCluster.UpdateClusterConfig(filler...)
+	test.ManagementCluster.UpgradeCluster([]framework.ClusterE2ETestOpt{})
 	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	test.ManagementCluster.StopIfFailed()
 	cluster := test.ManagementCluster.GetEKSACluster()
