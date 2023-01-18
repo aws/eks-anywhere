@@ -20,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
-
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
