@@ -290,7 +290,6 @@ func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 					AllowPxe:        true,
 					AlwaysPxe:       true,
 				},
-				State: "provisioning",
 			},
 			Interfaces: []tinkv1alpha1.Interface{
 				{
