@@ -18,8 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
-const Provisioning = "provisioning"
-
 // Indexer provides indexing behavior for objects.
 type Indexer interface {
 	// Lookup retrieves objects associated with the index => value pair.
