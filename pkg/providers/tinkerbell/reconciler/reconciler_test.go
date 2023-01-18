@@ -11,10 +11,11 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -91,6 +92,43 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
+	tt := newReconcilerTest(t)
+
+	logger := test.NewNullLogger()
+
+	tt.cluster.Name = "invalidCluster"
+	tt.cluster.Spec.KubernetesVersion = "1.22"
+	tt.datacenterConfig.Spec.TinkerbellIP = ""
+
+	tt.withFakeClient()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("missing spec.tinkerbellIP field"))
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+}
+
+func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
+	tt := newReconcilerTest(t)
+
+	logger := test.NewNullLogger()
+
+	tt.cluster.Name = "invalidCluster"
+	tt.machineConfigWorker.Spec.OSFamily = "invalidOS"
+
+	tt.withFakeClient()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("unsupported spec.osFamily (invalidOS); Please use one of the following: ubuntu, redhat, bottlerocket"))
+}
+
 func (tt *reconcilerTest) withFakeClient() {
 	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
 }
@@ -125,12 +163,12 @@ type reconcilerTest struct {
 	*WithT
 	*envtest.APIExpecter
 	ctx                       context.Context
-	cluster                   *anywherev1.Cluster
+	cluster                   *v1alpha1.Cluster
 	client                    client.Client
 	eksaSupportObjs           []client.Object
-	datacenterConfig          *anywherev1.TinkerbellDatacenterConfig
-	machineConfigControlPlane *anywherev1.TinkerbellMachineConfig
-	machineConfigWorker       *anywherev1.TinkerbellMachineConfig
+	datacenterConfig          *v1alpha1.TinkerbellDatacenterConfig
+	machineConfigControlPlane *v1alpha1.TinkerbellMachineConfig
+	machineConfigWorker       *v1alpha1.TinkerbellMachineConfig
 	ipValidator               *tinkerbellreconcilermocks.MockIPValidator
 	cniReconciler             *tinkerbellreconcilermocks.MockCNIReconciler
 	remoteClientRegistry      *tinkerbellreconcilermocks.MockRemoteClientRegistry
@@ -146,57 +184,57 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	bundle := test.Bundle()
 
-	managementCluster := tinkerbellCluster(func(c *anywherev1.Cluster) {
+	managementCluster := tinkerbellCluster(func(c *v1alpha1.Cluster) {
 		c.Name = "management-cluster"
-		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
+		c.Spec.ManagementCluster = v1alpha1.ManagementCluster{
 			Name: c.Name,
 		}
-		c.Spec.BundlesRef = &anywherev1.BundlesRef{
+		c.Spec.BundlesRef = &v1alpha1.BundlesRef{
 			Name:       bundle.Name,
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
 	})
 
-	machineConfigCP := machineConfig(func(m *anywherev1.TinkerbellMachineConfig) {
+	machineConfigCP := machineConfig(func(m *v1alpha1.TinkerbellMachineConfig) {
 		m.Name = "cp-machine-config"
 	})
-	machineConfigWN := machineConfig(func(m *anywherev1.TinkerbellMachineConfig) {
+	machineConfigWN := machineConfig(func(m *v1alpha1.TinkerbellMachineConfig) {
 		m.Name = "worker-machine-config"
 	})
 
-	workloadClusterDatacenter := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {})
+	workloadClusterDatacenter := dataCenter(func(d *v1alpha1.TinkerbellDatacenterConfig) {})
 
-	cluster := tinkerbellCluster(func(c *anywherev1.Cluster) {
+	cluster := tinkerbellCluster(func(c *v1alpha1.Cluster) {
 		c.Name = "workload-cluster"
-		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
+		c.Spec.ManagementCluster = v1alpha1.ManagementCluster{
 			Name: managementCluster.Name,
 		}
-		c.Spec.BundlesRef = &anywherev1.BundlesRef{
+		c.Spec.BundlesRef = &v1alpha1.BundlesRef{
 			Name:       bundle.Name,
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
 		}
-		c.Spec.ControlPlaneConfiguration = anywherev1.ControlPlaneConfiguration{
+		c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 			Count: 1,
-			Endpoint: &anywherev1.Endpoint{
+			Endpoint: &v1alpha1.Endpoint{
 				Host: "1.1.1.1",
 			},
-			MachineGroupRef: &anywherev1.Ref{
-				Kind: anywherev1.TinkerbellMachineConfigKind,
+			MachineGroupRef: &v1alpha1.Ref{
+				Kind: v1alpha1.TinkerbellMachineConfigKind,
 				Name: machineConfigCP.Name,
 			},
 		}
-		c.Spec.DatacenterRef = anywherev1.Ref{
-			Kind: anywherev1.TinkerbellDatacenterKind,
+		c.Spec.DatacenterRef = v1alpha1.Ref{
+			Kind: v1alpha1.TinkerbellDatacenterKind,
 			Name: workloadClusterDatacenter.Name,
 		}
 
 		c.Spec.WorkerNodeGroupConfigurations = append(c.Spec.WorkerNodeGroupConfigurations,
-			anywherev1.WorkerNodeGroupConfiguration{
+			v1alpha1.WorkerNodeGroupConfiguration{
 				Count: ptr.Int(1),
-				MachineGroupRef: &anywherev1.Ref{
-					Kind: anywherev1.TinkerbellMachineConfigKind,
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: v1alpha1.TinkerbellMachineConfigKind,
 					Name: machineConfigWN.Name,
 				},
 				Name:   "md-0",
@@ -231,24 +269,24 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	return tt
 }
 
-type clusterOpt func(*anywherev1.Cluster)
+type clusterOpt func(*v1alpha1.Cluster)
 
-func tinkerbellCluster(opts ...clusterOpt) *anywherev1.Cluster {
-	c := &anywherev1.Cluster{
+func tinkerbellCluster(opts ...clusterOpt) *v1alpha1.Cluster {
+	c := &v1alpha1.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
+			Kind:       v1alpha1.ClusterKind,
+			APIVersion: v1alpha1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: clusterNamespace,
 		},
-		Spec: anywherev1.ClusterSpec{
-			KubernetesVersion: "1.20",
-			ClusterNetwork: anywherev1.ClusterNetwork{
-				Pods: anywherev1.Pods{
+		Spec: v1alpha1.ClusterSpec{
+			KubernetesVersion: "1.22",
+			ClusterNetwork: v1alpha1.ClusterNetwork{
+				Pods: v1alpha1.Pods{
 					CidrBlocks: []string{"0.0.0.0"},
 				},
-				Services: anywherev1.Services{
+				Services: v1alpha1.Services{
 					CidrBlocks: []string{"0.0.0.0"},
 				},
 			},
@@ -262,17 +300,20 @@ func tinkerbellCluster(opts ...clusterOpt) *anywherev1.Cluster {
 	return c
 }
 
-type datacenterOpt func(config *anywherev1.TinkerbellDatacenterConfig)
+type datacenterOpt func(config *v1alpha1.TinkerbellDatacenterConfig)
 
-func dataCenter(opts ...datacenterOpt) *anywherev1.TinkerbellDatacenterConfig {
-	d := &anywherev1.TinkerbellDatacenterConfig{
+func dataCenter(opts ...datacenterOpt) *v1alpha1.TinkerbellDatacenterConfig {
+	d := &v1alpha1.TinkerbellDatacenterConfig{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.TinkerbellDatacenterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
+			Kind:       v1alpha1.TinkerbellDatacenterKind,
+			APIVersion: v1alpha1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "datacenter",
 			Namespace: clusterNamespace,
+		},
+		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
+			TinkerbellIP: "2.2.2.2",
 		},
 	}
 
@@ -283,24 +324,26 @@ func dataCenter(opts ...datacenterOpt) *anywherev1.TinkerbellDatacenterConfig {
 	return d
 }
 
-type tinkerbellMachineOpt func(config *anywherev1.TinkerbellMachineConfig)
+type tinkerbellMachineOpt func(config *v1alpha1.TinkerbellMachineConfig)
 
-func machineConfig(opts ...tinkerbellMachineOpt) *anywherev1.TinkerbellMachineConfig {
-	m := &anywherev1.TinkerbellMachineConfig{
+func machineConfig(opts ...tinkerbellMachineOpt) *v1alpha1.TinkerbellMachineConfig {
+	m := &v1alpha1.TinkerbellMachineConfig{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.TinkerbellMachineConfigKind,
-			APIVersion: anywherev1.GroupVersion.String(),
+			Kind:       v1alpha1.TinkerbellMachineConfigKind,
+			APIVersion: v1alpha1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: clusterNamespace,
 		},
-		Spec: anywherev1.TinkerbellMachineConfigSpec{
-			OSFamily:         "ubuntu",
-			HardwareSelector: anywherev1.HardwareSelector{},
-			Users: []anywherev1.UserConfiguration{
+		Spec: v1alpha1.TinkerbellMachineConfigSpec{
+			OSFamily: "bottlerocket",
+			HardwareSelector: v1alpha1.HardwareSelector{
+				"key": "cp",
+			},
+			Users: []v1alpha1.UserConfiguration{
 				{
 					Name:              "user",
-					SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZ ubuntu@ip-10-2-0-6"},
+					SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZ bottlerocket@ip-10-2-0-6"},
 				},
 			},
 		},

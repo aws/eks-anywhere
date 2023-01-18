@@ -93,7 +93,7 @@ func (v *ClusterSpecValidator) Validate(spec *ClusterSpec) error {
 	return nil
 }
 
-// NewClusterSpecValidator creates a ClusterSpecValidator instance with a set of default asseritons.
+// NewClusterSpecValidator creates a ClusterSpecValidator instance with a set of default assertions.
 // Any assertions passed will be registered in addition to the default assertions.
 func NewClusterSpecValidator(assertions ...ClusterSpecAssertion) *ClusterSpecValidator {
 	var v ClusterSpecValidator
