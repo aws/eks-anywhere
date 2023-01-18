@@ -144,5 +144,5 @@ func TestNutanixTemplateBuilderGenerateCAPISpecForCreateWithAutoscalingConfigura
 	assert.NoError(t, err)
 	expectedWorkerSpec, err := os.ReadFile("testdata/expected_results_autoscaling_md.yaml")
 	require.NoError(t, err)
-	assert.Equal(t, workerSpec, expectedWorkerSpec)
+	assert.Equal(t, string(workerSpec), string(expectedWorkerSpec))
 }
