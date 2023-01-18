@@ -84,21 +84,6 @@ This is most likely caused by an action to install curated packages at a workloa
 
 ## Package registry authentication
 
-### Warning: no AWS key/license provided during cluster creation
-
-During cluster creation, you should see messages after the cluster is created when the package controller and any packages are installed.
-
-```
-🎉 Cluster created!
-----------------------------------------------------------------------------------------------------------------
-The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription.
-----------------------------------------------------------------------------------------------------------------
-Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.0-eks-a-v0.0.0-dev-build.3842"}
-Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.
-```
-
-If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` variables to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages. If you forgot to set those values before cluster creation, the next section describes how you would create or update the secret after creation.
-
 ### Error: ImagePullBackOff on Package or Package Controller
 
 If a package or the package controller fails to start with ImagePullBackOff
