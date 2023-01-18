@@ -34,10 +34,10 @@ func New(client client.Client, ipValidator IPValidator) *Reconciler {
 // Reconcile reconciles cluster to desired state.
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	// Implement reconcile all here.
-	// This would include IP validator, validating machine and datacenter configs
+	// This would include validating machine and datacenter configs
 	// and reconciling cp and worker nodes.
 
-	log = log.WithValues("provider", "vsphere")
+	log = log.WithValues("provider", "tinkerbell")
 	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
 	if err != nil {
 		return controller.Result{}, err
