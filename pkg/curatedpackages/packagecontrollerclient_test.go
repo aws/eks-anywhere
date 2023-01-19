@@ -72,8 +72,19 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
 			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
 		},
-		Auth:          true,
-		CACertContent: "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
+		Auth:               true,
+		CACertContent:      "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
+		InsecureSkipVerify: false,
+	}
+	registryMirrorInsecure := &registrymirror.RegistryMirror{
+		BaseRegistry: "1.2.3.4:8443",
+		NamespacedRegistryMap: map[string]string{
+			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
+			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
+		},
+		Auth:               true,
+		CACertContent:      "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
+		InsecureSkipVerify: true,
 	}
 	writer, _ := filewriter.NewWriter(clusterName)
 	return []*packageControllerTest{
@@ -136,7 +147,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, kubeConfig, chart, registryMirror,
+				ci, k, clusterName, kubeConfig, chart, registryMirrorInsecure,
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
 			),
@@ -149,7 +160,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpProxy:      "1.1.1.1",
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
-			registryMirror: registryMirror,
+			registryMirror: registryMirrorInsecure,
 			writer:         writer,
 			wantValueFile:  "testdata/values_empty_awssecret.yaml",
 		},
