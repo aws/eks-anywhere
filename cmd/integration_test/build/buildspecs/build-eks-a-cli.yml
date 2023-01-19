@@ -4,7 +4,23 @@ phases:
   build:
     commands:
     - make e2e
+    - |
+      for provider_test_file in test/e2e/*_test.go; do
+        provider=$(echo $(basename $provider_test_file) | cut -d_ -f1)
+        make e2e-tests-binary E2E_TAGS="e2e $provider" E2E_OUTPUT_FILE=bin/$provider/e2e.test
+      done
     - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" >> bin/githash
+    - >
+      ./cmd/integration_test/build/script/upload_artifacts.sh
+      $ARTIFACTS_BUCKET
+      $CODEBUILD_SRC_DIR
+      "eks-a-cli"
+      $CODEBUILD_BUILD_NUMBER
+      $$CODEBUILD_RESOLVED_SOURCE_VERSION
+      "linux,darwin"
+      "amd64"
+      $BRANCH_NAME
+      false
 
 artifacts:
   files:

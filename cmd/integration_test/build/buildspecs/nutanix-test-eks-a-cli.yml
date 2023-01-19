@@ -1,0 +1,81 @@
+version: 0.2
+
+env:
+  variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: 180
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
+    EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
+    EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
+    INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
+    T_NUTANIX_MACHINE_VCPU_PER_SOCKET: 1
+    T_NUTANIX_MACHINE_VCPU_SOCKET: 2
+    T_NUTANIX_MACHINE_MEMORY_SIZE: "4Gi"
+    T_NUTANIX_SYSTEMDISK_SIZE: "40Gi"
+    T_NUTANIX_INSECURE: true
+  secrets-manager:
+    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
+    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
+    EKSA_AWS_REGION: "packages_ci_beta:aws_region"
+    EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
+    T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
+    T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
+    T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
+    T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+    EKSA_NUTANIX_USERNAME: "nutanix_ci:nutanix_user"
+    EKSA_NUTANIX_PASSWORD: "nutanix_ci:nutanix_password"
+    T_NUTANIX_ENDPOINT: "nutanix_ci:nutanix_pc_endpoint"
+    T_NUTANIX_PORT: "nutanix_ci:nutanix_port"
+    T_NUTANIX_MACHINE_BOOT_TYPE: "nutanix_ci:nutanix_machine_boot_type"
+    T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME: "nutanix_ci:nutanix_prism_element_cluster_name"
+    T_NUTANIX_PRISM_ELEMENT_CLUSTER_UUID: "nutanix_ci:nutanix_prism_element_cluster_uuid"
+    T_NUTANIX_SSH_AUTHORIZED_KEY: "nutanix_ci:nutanix_ssh_authorized_key"
+    T_NUTANIX_SUBNET_NAME: "nutanix_ci:nutanix_subnet_name"
+    T_NUTANIX_SUBNET_UUID: "nutanix_ci:nutanix_subnet_uuid"
+    T_NUTANIX_CONTROL_PLANE_CIDR: "nutanix_ci:nutanix_control_plane_cidr"
+    T_NUTANIX_POD_CIDR: "nutanix_ci:nutanix_pod_cidr"
+    T_NUTANIX_SERVICE_CIDR: "nutanix_ci:nutanix_service_cidr"
+    T_NUTANIX_ADDITIONAL_TRUST_BUNDLE: "nutanix_ci:nutanix_additional_trust_bundle"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_21: "nutanix_ci:nutanix_template_ubuntu_1_21"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_22: "nutanix_ci:nutanix_template_ubuntu_1_22"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23: "nutanix_ci:nutanix_template_ubuntu_1_23"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24: "nutanix_ci:nutanix_template_ubuntu_1_24"
+    T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_21: "nutanix_ci:nutanix_template_uuid_ubuntu_1_21"
+    T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_22: "nutanix_ci:nutanix_template_uuid_ubuntu_1_22"
+    T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_23: "nutanix_ci:nutanix_template_uuid_ubuntu_1_23"
+    T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_24: "nutanix_ci:nutanix_template_uuid_ubuntu_1_24"
+phases:
+  pre_build:
+    commands:
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
+      - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+  build:
+    commands:
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - BUNDLES_OVERRIDE=false
+      - |
+        if [ -f ./bin/local-bundle-release.yaml ]; then
+          BUNDLES_OVERRIDE=true
+        fi
+      - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
+      - mv bin/nutanix/e2e.test bin/e2e.test
+      - >
+        ./bin/test e2e run
+        -c ${INTEGRATION_TEST_INFRA_CONFIG}
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -j ${JOB_ID}
+        -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
+        -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
+        -r 'Test'
+        -v 4
+        --skip ${SKIPPED_TESTS}
+        --bundles-override=${BUNDLES_OVERRIDE}
+        --test-report-folder=reports
+        --branch-name=${BRANCH_NAME}
+        --baremetal-branch=${BAREMETAL_BRANCH}
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"
