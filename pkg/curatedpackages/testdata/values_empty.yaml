@@ -3,6 +3,7 @@ registryMirrorSecret:
   username: ""
   password: ""
   cacertcontent: ""
+  insecure: "ZmFsc2U="
 awsSecret:
   id: ""
   secret: ""
