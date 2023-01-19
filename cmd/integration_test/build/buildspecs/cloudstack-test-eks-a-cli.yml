@@ -1,0 +1,86 @@
+version: 0.2
+
+env:
+  variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: 180
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
+    T_CLOUDSTACK_CIDR: "10.11.248.0/21"
+    CLOUDSTACK_PROVIDER: true
+    EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
+    EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
+    TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
+    TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
+    INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
+  secrets-manager:
+    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
+    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
+    EKSA_AWS_REGION: "packages_ci_beta:aws_region"
+    EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
+    T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
+    T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
+    T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
+    T_HTTP_PROXY_CLOUDSTACK: "proxy-config-data:httpProxyCloudStack"
+    T_HTTPS_PROXY_CLOUDSTACK: "proxy-config-data:httpsProxyCloudStack"
+    T_NO_PROXY_CLOUDSTACK: "proxy-config-data:noProxyCloudStack"
+    T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
+    T_REGISTRY_MIRROR_PORT: "harbor-registry-data:port"
+    T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:username"
+    T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
+    T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
+    T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+    T_CLOUDSTACK_DOMAIN: "cloudstack_ci_beta_connection:domain"
+    T_CLOUDSTACK_CREDENTIALS: "cloudstack_ci_beta_connection:credentials"
+    T_CLOUDSTACK_CREDENTIALS_2: "cloudstack_ci_beta_connection:credentials_2"
+    T_CLOUDSTACK_ZONE: "cloudstack_ci_beta_connection:zone"
+    T_CLOUDSTACK_ZONE_2: "cloudstack_ci_beta_connection:zone_2"
+    T_CLOUDSTACK_ACCOUNT: "cloudstack_ci_beta_connection:account"
+    T_CLOUDSTACK_NETWORK: "cloudstack_ci_beta_connection:network"
+    T_CLOUDSTACK_NETWORK_2: "cloudstack_ci_beta_connection:network_2"
+    T_CLOUDSTACK_MANAGEMENT_SERVER: "cloudstack_ci_beta_connection:management_server"
+    T_CLOUDSTACK_MANAGEMENT_SERVER_2: "cloudstack_ci_beta_connection:management_server_2"
+    T_CLOUDSTACK_TEMPLATE_REDHAT_1_21: "cloudstack_ci_beta_connection:template_redhat_1_21"
+    T_CLOUDSTACK_TEMPLATE_REDHAT_1_22: "cloudstack_ci_beta_connection:template_redhat_1_22"
+    T_CLOUDSTACK_TEMPLATE_REDHAT_1_23: "cloudstack_ci_beta_connection:template_redhat_1_23"
+    T_CLOUDSTACK_COMPUTE_OFFERING_LARGE: "cloudstack_ci_beta_connection:compute_offering_large"
+    T_CLOUDSTACK_COMPUTE_OFFERING_LARGER: "cloudstack_ci_beta_connection:compute_offering_larger"
+    T_CLOUDSTACK_TLS_INSECURE: "cloudstack_ci_beta_connection:tls_insecure"
+    EKSA_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
+    T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
+    T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
+    T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+phases:
+  pre_build:
+    commands:
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
+      - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+  build:
+    commands:
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - BUNDLES_OVERRIDE=false
+      - |
+        if [ -f ./bin/local-bundle-release.yaml ]; then
+          BUNDLES_OVERRIDE=true
+        fi
+      - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
+      - mv bin/cloudstack/e2e.test bin/e2e.test
+      - >
+        ./bin/test e2e run
+        -c ${INTEGRATION_TEST_INFRA_CONFIG}
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -j ${JOB_ID}
+        -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
+        -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
+        -r 'Test'
+        -v 4
+        --skip ${SKIPPED_TESTS}
+        --bundles-override=${BUNDLES_OVERRIDE}
+        --test-report-folder=reports
+        --branch-name=${BRANCH_NAME}
+        --baremetal-branch=${BAREMETAL_BRANCH}
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"

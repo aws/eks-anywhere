@@ -467,6 +467,7 @@ coverage-view-patch:
 
 .PHONY: local-e2e
 local-e2e: e2e ## Run e2e test's locally
+	$(MAKE) e2e-tests-binary E2E_TAGS="e2e all_providers"
 	./bin/e2e.test -test.v -test.run $(LOCAL_E2E_TESTS) $(GO_TEST_FLAGS)
 
 .PHONY: capd-test
@@ -475,6 +476,7 @@ capd-test: ## Run default e2e capd test locally
 
 .PHONY: docker-e2e-test
 docker-e2e-test: release-cluster-controller e2e ## Run docker integration test in new ec2 instance
+	$(MAKE) e2e-tests-binary E2E_TAGS="e2e docker"
 	scripts/e2e_test_docker.sh $(DOCKER_E2E_TEST) $(BRANCH_NAME)
 
 .PHONY: e2e-cleanup
@@ -486,14 +488,16 @@ capd-test-all: capd-test capd-test-120
 
 .PHONY: capd-test-%
 capd-test-%: e2e ## Run CAPD tests
+	$(MAKE) e2e-tests-binary E2E_TAGS="e2e docker"
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
 
-PACKAGES_E2E_TESTS ?= TestCPackagesDockerKubernetes121SimpleFlow
+PACKAGES_E2E_TESTS ?= TestDockerKubernetes121CuratedPackagesSimpleFlow
 ifeq ($(PACKAGES_E2E_TESTS),all)
-PACKAGES_E2E_TESTS='TestCPackages.*'
+PACKAGES_E2E_TESTS='Test.*CuratedPackages'
 endif
 packages-e2e-test: e2e ## Run Curated Packages tests
+	$(MAKE) e2e-tests-binary E2E_TAGS="e2e all_providers"
 	./bin/e2e.test -test.v -test.run $(PACKAGES_E2E_TESTS)
 
 .PHONY: mocks
@@ -601,7 +605,6 @@ e2e-cross-platform-%:
 
 .PHONY: e2e
 e2e: eks-a-e2e integration-test-binary ## Build integration tests
-	$(MAKE) e2e-tests-binary E2E_TAGS=e2e
 
 .PHONY: eks-a-e2e
 eks-a-e2e:
@@ -620,9 +623,10 @@ eks-a-e2e:
 	fi
 
 .PHONY: e2e-tests-binary
+e2e-tests-binary: E2E_TAGS ?= e2e
 e2e-tests-binary: E2E_OUTPUT_FILE ?= bin/e2e.test
 e2e-tests-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o "$(E2E_OUTPUT_FILE)" -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: integration-test-binary
 integration-test-binary:
