@@ -1,4 +1,4 @@
 {
-  "Subject": "Update me on release branch after cutting a release",
-  "Message": "Update me on release branch after cutting a release. Changes made to this file on main branch will not trigger SNS"
+  "Subject": "Amazon EKS Anywhere v0.14.0 is now available",
+  "Message": "This release includes support for AWS Snow. Please refer https://anywhere.eks.amazonaws.com/ for documentation and artifacts."
 }
