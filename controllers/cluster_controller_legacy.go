@@ -130,6 +130,8 @@ func (r *ClusterReconcilerLegacy) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&source.Kind{Type: &anywherev1.VSphereMachineConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.CloudStackDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.CloudStackMachineConfig{}}, &handler.EnqueueRequestForObject{}).
+		Watches(&source.Kind{Type: &anywherev1.TinkerbellDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
+		Watches(&source.Kind{Type: &anywherev1.TinkerbellMachineConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.DockerDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.AWSIamConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.OIDCConfig{}}, &handler.EnqueueRequestForObject{}).
