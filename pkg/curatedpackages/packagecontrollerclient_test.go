@@ -28,6 +28,9 @@ import (
 //go:embed testdata/packagebundlectrl_test.yaml
 var packageBundleControllerTest string
 
+//go:embed testdata/packagebundlectrl_registrymirror.yaml
+var packageBundleControllerTestWithMirror string
+
 const valueFileName = "values.yaml"
 
 type packageControllerTest struct {
@@ -178,26 +181,18 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 
 func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -221,10 +216,15 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 			tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithManagementClusterName("mgmt"),
+			curatedpackages.WithEksaRegion("us-west-2"),
 		)
 
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
+		if tt.registryMirror != nil {
+			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTestWithMirror), params).Return(bytes.Buffer{}, nil)
+		} else {
+			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
+		}
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
 		tt.Expect(err).To(BeNil())
@@ -263,33 +263,26 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			curatedpackages.WithManagementClusterName(tt.clusterName),
 			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		httpProxy := fmt.Sprintf("proxy.HTTP_PROXY=%s", tt.httpProxy)
 		httpsProxy := fmt.Sprintf("proxy.HTTPS_PROXY=%s", tt.httpsProxy)
 		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(tt.noProxy, "\\,"))
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName, httpProxy, httpsProxy, noProxy}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
-			}
 		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			region := tt.eksaRegion
-			if region == "" {
-				region = "us-west-2"
+			if tt.eksaRegion == "" {
+				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
+			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -321,30 +314,23 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			curatedpackages.WithManagementClusterName(tt.clusterName),
 			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
 		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			region := tt.eksaRegion
-			if region == "" {
-				region = "us-west-2"
+			if tt.eksaRegion == "" {
+				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
+			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -364,26 +350,18 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 
 func TestEnableCuratedPackagesFail(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -403,26 +381,18 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 
 func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -442,47 +412,72 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 
 func TestPbcCreationSuccess(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
+		tt.eksaRegion = "us-west-2"
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
+		)
 
+		_, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
 		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
 
-		err := tt.command.InstallPBCResources(tt.ctx)
+		if tt.registryMirror != nil {
+			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTestWithMirror), params).Return(bytes.Buffer{}, nil)
+		} else {
+			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
+		}
+
+		err := tt.command.InstallPBCResources(tt.ctx, defaultRegistry, defaultImageRegistry)
 		tt.Expect(err).To(BeNil())
 	}
 }
 
 func TestPbcCreationFail(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-		tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, errors.New("creating pbc"))
+		tt.eksaRegion = "us-west-2"
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
+		)
 
-		err := tt.command.InstallPBCResources(tt.ctx)
+		_, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+
+		if tt.registryMirror != nil {
+			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTestWithMirror), params).Return(bytes.Buffer{}, errors.New("creating pbc"))
+		} else {
+			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, errors.New("creating pbc"))
+		}
+
+		err := tt.command.InstallPBCResources(tt.ctx, defaultRegistry, defaultImageRegistry)
 		tt.Expect(err).NotTo(BeNil())
 	}
 }
 
 func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -536,30 +531,23 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			curatedpackages.WithManagementClusterName(tt.clusterName),
 			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
 		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			region := tt.eksaRegion
-			if region == "" {
-				region = "us-west-2"
+			if tt.eksaRegion == "" {
+				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
+			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -579,26 +567,18 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 
 func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
-		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -644,30 +624,23 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			curatedpackages.WithManagementClusterName(tt.clusterName),
 			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
-		var values []string
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
 			t.Setenv("REGISTRY_USERNAME", "username")
 			t.Setenv("REGISTRY_PASSWORD", "password")
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			defaultRegistry := fmt.Sprintf("defaultRegistry=%s/eks-anywhere", tt.registryMirror.CoreEKSAMirror())
-			if gatedOCINamespace := tt.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-				values = []string{sourceRegistry, defaultRegistry, clusterName}
-			} else {
-				defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-				values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-			}
 		} else {
-			sourceRegistry := fmt.Sprintf("sourceRegistry=%s", curatedpackages.GetRegistry(tt.chart.Image()))
-			region := tt.eksaRegion
-			if region == "" {
-				region = "us-west-2"
+			if tt.eksaRegion == "" {
+				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", region))
-			values = []string{sourceRegistry, defaultImageRegistry, clusterName}
+			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
@@ -707,13 +680,11 @@ func TestCreateHelmOverrideValuesYaml(t *testing.T) {
 }
 
 func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
-	t.Setenv("REGISTRY_USERNAME", "connor")
-	t.Setenv("REGISTRY_PASSWORD", "mcdavid")
 	for _, tt := range newPackageControllerTests(t) {
 		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
 		if tt.registryMirror != nil {
-			tt.Expect(err).To(BeNil())
-			tt.Expect(filePath).To(Equal("billy/generated/values.yaml"))
+			tt.Expect(err).NotTo(BeNil())
+			tt.Expect(filePath).To(Equal(""))
 		} else {
 			tt.Expect(err).To(BeNil())
 			tt.Expect(filePath).To(Equal(filepath.Join(tt.clusterName, filewriter.DefaultTmpFolder, "values.yaml")))
