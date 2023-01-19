@@ -139,7 +139,7 @@ kubectl describe network-attachment-definitions ipvlan-conf
 1. Create a sample application 2 (app2) with the network annotation created in the previous step:
 
     ```bash
-    cat <<EOF | kubectl apply -f - kube
+    cat <<EOF | kubectl apply -f -
     apiVersion: v1
     kind: Pod
     metadata:
