@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -276,8 +275,6 @@ func TestSnowKubernetes121UbuntuAWSIamAuth(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu121()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -289,8 +286,6 @@ func TestSnowKubernetes122To123AWSIamAuthUpgrade(t *testing.T) {
 		provider,
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runUpgradeFlowWithAWSIamAuth(
 		test,

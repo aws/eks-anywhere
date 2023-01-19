@@ -10,7 +10,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -138,8 +137,6 @@ func TestSnowKubernetes123TaintsUbuntu(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(),
 		),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -151,8 +148,6 @@ func TestSnowKubernetes123TaintsUbuntu(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 }
 
