@@ -53,7 +53,6 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		images = append(images, releasev1.Image{URI: bundleURI})
 		packageImages := r.fetchImagesFromBundle(bundleURI, bundle)
 		images = append(images, packageImages...)
 	}
