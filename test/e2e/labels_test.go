@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -138,8 +137,6 @@ func TestSnowKubernetes123LabelsUbuntu(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(),
 		),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -150,8 +147,6 @@ func TestSnowKubernetes123LabelsUbuntu(t *testing.T) {
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val1)),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 }
 

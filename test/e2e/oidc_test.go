@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -99,8 +98,6 @@ func TestSnowKubernetes121OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }

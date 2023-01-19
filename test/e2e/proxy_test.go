@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -68,8 +67,6 @@ func TestSnowKubernetes121UbuntuProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		// TODO: provide separate Proxy Env Vars for Snow provider. Leaving VSphere for backwards compatibility
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }

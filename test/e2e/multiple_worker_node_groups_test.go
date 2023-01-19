@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -172,8 +171,6 @@ func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(),
 		),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 
 	runSimpleUpgradeFlow(
@@ -190,7 +187,5 @@ func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 				api.WithCount(1),
 			),
 		),
-		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
-		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 }
