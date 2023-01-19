@@ -38,11 +38,12 @@ func (m *MockStorageClient) EXPECT() *MockStorageClientMockRecorder {
 }
 
 // CopyGraph mocks base method.
-func (m *MockStorageClient) CopyGraph(ctx context.Context, srcStorage registry0.Repository, srcRef string, dstStorage registry0.Repository, dstRef string) error {
+func (m *MockStorageClient) CopyGraph(ctx context.Context, srcStorage registry0.Repository, srcRef string, dstStorage registry0.Repository, dstRef string) (v1.Descriptor, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CopyGraph", ctx, srcStorage, srcRef, dstStorage, dstRef)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(v1.Descriptor)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CopyGraph indicates an expected call of CopyGraph.
@@ -150,4 +151,18 @@ func (m *MockStorageClient) SetProject(project string) {
 func (mr *MockStorageClientMockRecorder) SetProject(project interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProject", reflect.TypeOf((*MockStorageClient)(nil).SetProject), project)
+}
+
+// Tag mocks base method.
+func (m *MockStorageClient) Tag(ctx context.Context, dstStorage registry0.Repository, desc v1.Descriptor, tag string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Tag", ctx, dstStorage, desc, tag)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Tag indicates an expected call of Tag.
+func (mr *MockStorageClientMockRecorder) Tag(ctx, dstStorage, desc, tag interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Tag", reflect.TypeOf((*MockStorageClient)(nil).Tag), ctx, dstStorage, desc, tag)
 }
