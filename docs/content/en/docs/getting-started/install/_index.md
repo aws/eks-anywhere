@@ -62,7 +62,7 @@ sudo mv /tmp/eksctl /usr/local/bin/
 Install the `eksctl-anywhere` plugin.
 
 ```bash
-export EKSA_RELEASE="0.13.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=26
+export EKSA_RELEASE="0.14.0" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=27
 curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
     --silent --location \
     | tar xz ./eksctl-anywhere
