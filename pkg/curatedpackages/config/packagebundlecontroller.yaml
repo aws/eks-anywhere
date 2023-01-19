@@ -5,3 +5,5 @@ metadata:
   namespace: {{.namespace}}
 spec:
   logLevel: 4
+  defaultRegistry: {{.defaultRegistry}}
+  defaultImageRegistry: {{.defaultImageRegistry}}

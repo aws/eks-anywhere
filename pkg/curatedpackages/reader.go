@@ -17,8 +17,10 @@ import (
 // Temporary: Curated packages dev and prod accounts are currently hard coded
 // This is because there is no mechanism to extract these values as of now.
 const (
-	publicProdECR     = "public.ecr.aws/eks-anywhere"
-	publicDevECR      = "public.ecr.aws/l0g8r8j6"
+	prodAccount       = "eks-anywhere"
+	devAccount        = "l0g8r8j6"
+	publicProdECR     = "public.ecr.aws/" + prodAccount
+	publicDevECR      = "public.ecr.aws/" + devAccount
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
