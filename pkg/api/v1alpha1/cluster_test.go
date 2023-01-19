@@ -93,6 +93,49 @@ func TestClusterNameLength(t *testing.T) {
 	}
 }
 
+func TestUnsupportedFeatures(t *testing.T) {
+	tests := []struct {
+		name        string
+		wantCluster *Cluster
+		wantErr     error
+	}{
+		{
+			name: "SuccessTinkerbellDatacenter",
+			wantCluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "FailureTinkerbellExternalEtcd",
+			wantCluster: &Cluster{
+				Spec: ClusterSpec{
+					ExternalEtcdConfiguration: &ExternalEtcdConfiguration{Count: 1},
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+				},
+			},
+			wantErr: errors.New("tinkerbell external etcd configuration is unsupported"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			got := validateUnsupportedFeatures(tc.wantCluster)
+			if !reflect.DeepEqual(tc.wantErr, got) {
+				t.Errorf("%v got = %v, want %v", tc.name, got, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestGetAndValidateClusterConfig(t *testing.T) {
 	tests := []struct {
 		testName    string
