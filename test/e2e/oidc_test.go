@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -73,6 +74,16 @@ func TestDockerKubernetes124OIDC(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+	)
+	runOIDCFlow(test)
+}
+
+func TestDockerKubernetes125OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }
@@ -154,22 +165,37 @@ func TestVSphereKubernetes124OIDC(t *testing.T) {
 	runOIDCFlow(test)
 }
 
-func TestVSphereKubernetes123To124OIDCUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu123())
+func TestVSphereKubernetes125OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
+	)
+	runOIDCFlow(test)
+}
+
+func TestVSphereKubernetes124To125OIDCUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu124())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runUpgradeFlowWithOIDC(
 		test,
-		v1alpha1.Kube124,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		provider.WithProviderUpgrade(provider.Ubuntu124Template()),
+		v1alpha1.Kube125,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 

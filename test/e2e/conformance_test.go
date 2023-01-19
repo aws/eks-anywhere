@@ -70,6 +70,17 @@ func TestDockerKubernetes124ThreeWorkersConformanceFlow(t *testing.T) {
 	runConformanceFlow(test)
 }
 
+func TestDockerKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
+	)
+	runConformanceFlow(test)
+}
+
 func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -106,6 +117,17 @@ func TestVSphereKubernetes124ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu124()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestVSphereKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
