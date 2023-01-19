@@ -83,36 +83,20 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 // In case the cluster is a workload cluster, it performs the following actions:
 //   - Creation of package bundle controller (PBC) custom resource in management cluster
 func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) error {
+	sourceRegistry, defaultRegistry, defaultImageRegistry := pc.GetCuratedPackagesRegistries()
 	// When the management cluster name and current cluster name are different,
 	// it indicates that we are trying to install the controller on a workload cluster.
 	// Instead of installing the controller, install packagebundlecontroller resource.
 	if pc.managementClusterName != pc.clusterName {
-		return pc.InstallPBCResources(ctx)
+		return pc.InstallPBCResources(ctx, defaultRegistry, defaultImageRegistry)
 	}
+
 	ociURI := fmt.Sprintf("%s%s", "oci://", pc.registryMirror.ReplaceRegistry(pc.chart.Image()))
-	var values []string
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	if pc.registryMirror != nil {
-		// account is added as part of registry name in package controller helm chart
-		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
-		accountName := "eks-anywhere"
-		if strings.Contains(ociURI, "l0g8r8j6") {
-			accountName = "l0g8r8j6"
-		}
-		sourceRegistry := fmt.Sprintf("sourceRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
-		defaultRegistry := fmt.Sprintf("defaultRegistry=%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
-		if gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror(); gatedOCINamespace == "" {
-			// no registry mirror for curated packages
-			values = []string{sourceRegistry, defaultRegistry, clusterName}
-		} else {
-			defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", gatedOCINamespace)
-			values = []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-		}
-	} else {
-		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.chart.Image()))
-		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", pc.eksaRegion))
-		values = []string{sourceRegistry, defaultImageRegistry, clusterName}
-	}
+	sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+	defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+	defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
+	values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 
 	// Provide proxy details for curated packages helm chart when proxy details provided
 	if pc.httpProxy != "" {
@@ -138,6 +122,32 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	}
 
 	return pc.waitForActiveBundle(ctx)
+}
+
+// GetCuratedPackagesRegistries gets value for configurable registries from PBC.
+func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistry, defaultRegistry, defaultImageRegistry string) {
+	sourceRegistry = publicProdECR
+	defaultImageRegistry = packageProdDomain
+	accountName := prodAccount
+	if strings.Contains(pc.chart.Image(), devAccount) {
+		accountName = devAccount
+		defaultImageRegistry = packageDevDomain
+		sourceRegistry = publicDevECR
+	}
+	defaultRegistry = sourceRegistry
+
+	if pc.registryMirror != nil {
+		// account is added as part of registry name in package controller helm chart
+		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
+		sourceRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
+		defaultRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), accountName)
+		if gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror(); gatedOCINamespace != "" {
+			defaultImageRegistry = gatedOCINamespace
+		}
+	} else {
+		defaultImageRegistry = strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", pc.eksaRegion)
+	}
+	return sourceRegistry, defaultRegistry, defaultImageRegistry
 }
 
 // CreateHelmOverrideValuesYaml creates a temp file to override certain values in package controller helm install.
@@ -186,10 +196,12 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 // InstallPBCResources installs Curated Packages Bundle Controller Custom Resource
 // This method is used only for Workload clusters
 // Please refer to this documentation: https://github.com/aws/eks-anywhere-packages/blob/main/docs/design/remote-management.md
-func (pc *PackageControllerClient) InstallPBCResources(ctx context.Context) error {
+func (pc *PackageControllerClient) InstallPBCResources(ctx context.Context, defaultRegistry, defaultImageRegistry string) error {
 	templateValues := map[string]string{
-		"clusterName": pc.clusterName,
-		"namespace":   constants.EksaPackagesName,
+		"clusterName":          pc.clusterName,
+		"namespace":            constants.EksaPackagesName,
+		"defaultRegistry":      defaultRegistry,
+		"defaultImageRegistry": defaultImageRegistry,
 	}
 
 	result, err := templater.Execute(packageBundleControllerYaml, templateValues)
