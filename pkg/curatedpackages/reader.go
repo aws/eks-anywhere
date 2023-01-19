@@ -25,22 +25,14 @@ const (
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
 
-type ManifestReader interface {
-	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
-	ReadImagesFromBundles(ctx context.Context, bundles *releasev1.Bundles) ([]releasev1.Image, error)
-	ReadChartsFromBundles(ctx context.Context, bundles *releasev1.Bundles) []releasev1.Image
-}
-
 type PackageReader struct {
-	ManifestReader
 	cache           *registry.Cache
 	credentialStore *registry.CredentialStore
 }
 
 // NewPackageReader create a new package reader with storage client.
-func NewPackageReader(mr ManifestReader, cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
+func NewPackageReader(cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
 	return &PackageReader{
-		ManifestReader:  mr,
 		cache:           cache,
 		credentialStore: credentialStore,
 	}
