@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/aws/aws-sdk-go v1.42.23
-	github.com/aws/aws-sdk-go-v2 v1.16.14
+	github.com/aws/aws-sdk-go-v2 v1.17.3
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
 	github.com/aws/aws-sdk-go-v2/credentials v1.11.2
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
@@ -15,7 +15,7 @@ require (
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/aws/etcdadm-bootstrap-provider v1.0.5-rc2
 	github.com/aws/etcdadm-controller v1.0.4-rc2
-	github.com/aws/smithy-go v1.13.2
+	github.com/aws/smithy-go v1.13.5
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
