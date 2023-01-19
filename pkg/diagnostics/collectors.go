@@ -10,25 +10,36 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
-type collectorFactory struct {
-	DiagnosticCollectorImage string
+// FileReader reads files from local disk or http urls.
+type FileReader interface {
+	ReadFile(url string) ([]byte, error)
 }
 
-func NewCollectorFactory(diagnosticCollectorImage string) *collectorFactory {
-	return &collectorFactory{
+// EKSACollectorFactory generates support-bundle collectors for eks-a clusters.
+type EKSACollectorFactory struct {
+	DiagnosticCollectorImage string
+	reader                   FileReader
+}
+
+// NewCollectorFactory builds a collector factory.
+func NewCollectorFactory(diagnosticCollectorImage string, reader FileReader) *EKSACollectorFactory {
+	return &EKSACollectorFactory{
 		DiagnosticCollectorImage: diagnosticCollectorImage,
+		reader:                   reader,
 	}
 }
 
-func NewDefaultCollectorFactory() *collectorFactory {
-	return &collectorFactory{}
+// NewDefaultCollectorFactory builds a collector factory that will use the default
+// diagnostic collector image.
+func NewDefaultCollectorFactory(reader FileReader) *EKSACollectorFactory {
+	return NewCollectorFactory("", reader)
 }
 
-func (c *collectorFactory) DefaultCollectors() []*Collect {
+// DefaultCollectors returns the collectors that apply to all clusters.
+func (c *EKSACollectorFactory) DefaultCollectors() []*Collect {
 	collectors := []*Collect{
 		{
 			ClusterInfo: &clusterInfo{},
@@ -49,7 +60,8 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 	return collectors
 }
 
-func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
+// EksaHostCollectors returns the collectors that interact with the kubernetes node machine hosts.
+func (c *EKSACollectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
 	var collectors []*Collect
 	collectorsMap := c.getCollectorsMap()
 
@@ -64,7 +76,8 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 	return collectors
 }
 
-func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*Collect {
+// DataCenterConfigCollectors returns the collectors for the provider datacenter config in the cluster spec.
+func (c *EKSACollectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*Collect {
 	switch datacenter.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		return c.eksaVsphereCollectors(spec)
@@ -83,7 +96,7 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, s
 	}
 }
 
-func (c *collectorFactory) eksaNutanixCollectors() []*Collect {
+func (c *EKSACollectorFactory) eksaNutanixCollectors() []*Collect {
 	nutanixLogs := []*Collect{
 		{
 			Logs: &logs{
@@ -95,7 +108,7 @@ func (c *collectorFactory) eksaNutanixCollectors() []*Collect {
 	return append(nutanixLogs, c.nutanixCrdCollectors()...)
 }
 
-func (c *collectorFactory) eksaSnowCollectors() []*Collect {
+func (c *EKSACollectorFactory) eksaSnowCollectors() []*Collect {
 	snowLogs := []*Collect{
 		{
 			Logs: &logs{
@@ -107,7 +120,7 @@ func (c *collectorFactory) eksaSnowCollectors() []*Collect {
 	return append(snowLogs, c.snowCrdCollectors()...)
 }
 
-func (c *collectorFactory) eksaTinkerbellCollectors() []*Collect {
+func (c *EKSACollectorFactory) eksaTinkerbellCollectors() []*Collect {
 	tinkerbellLogs := []*Collect{
 		{
 			Logs: &logs{
@@ -119,7 +132,7 @@ func (c *collectorFactory) eksaTinkerbellCollectors() []*Collect {
 	return append(tinkerbellLogs, c.tinkerbellCrdCollectors()...)
 }
 
-func (c *collectorFactory) eksaVsphereCollectors(spec *cluster.Spec) []*Collect {
+func (c *EKSACollectorFactory) eksaVsphereCollectors(spec *cluster.Spec) []*Collect {
 	var collectors []*Collect
 	vsphereLogs := []*Collect{
 		{
@@ -136,7 +149,7 @@ func (c *collectorFactory) eksaVsphereCollectors(spec *cluster.Spec) []*Collect 
 	return collectors
 }
 
-func (c *collectorFactory) eksaCloudstackCollectors() []*Collect {
+func (c *EKSACollectorFactory) eksaCloudstackCollectors() []*Collect {
 	cloudstackLogs := []*Collect{
 		{
 			Logs: &logs{
@@ -148,7 +161,7 @@ func (c *collectorFactory) eksaCloudstackCollectors() []*Collect {
 	return append(cloudstackLogs, c.cloudstackCrdCollectors()...)
 }
 
-func (c *collectorFactory) eksaDockerCollectors() []*Collect {
+func (c *EKSACollectorFactory) eksaDockerCollectors() []*Collect {
 	return []*Collect{
 		{
 			Logs: &logs{
@@ -159,26 +172,28 @@ func (c *collectorFactory) eksaDockerCollectors() []*Collect {
 	}
 }
 
-func (c *collectorFactory) ManagementClusterCollectors() []*Collect {
+// ManagementClusterCollectors returns the collectors that only apply to management clusters.
+func (c *EKSACollectorFactory) ManagementClusterCollectors() []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.managementClusterCrdCollectors()...)
 	collectors = append(collectors, c.managementClusterLogCollectors()...)
 	return collectors
 }
 
-func (c *collectorFactory) PackagesCollectors() []*Collect {
+// PackagesCollectors returns the collectors that read information for curated packages.
+func (c *EKSACollectorFactory) PackagesCollectors() []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.packagesCrdCollectors()...)
 	collectors = append(collectors, c.packagesLogCollectors()...)
 	return collectors
 }
 
-func (c *collectorFactory) FileCollectors(paths []string) []*Collect {
+// FileCollectors returns the collectors that interact with files.
+func (c *EKSACollectorFactory) FileCollectors(paths []string) []*Collect {
 	collectors := []*Collect{}
 
 	for _, path := range paths {
-		r := files.NewReader()
-		content, err := r.ReadFile(path)
+		content, err := c.reader.ReadFile(path)
 		if err != nil {
 			content = []byte(fmt.Sprintf("Failed to retrieve file %s for collection: %s", path, err))
 		}
@@ -194,18 +209,18 @@ func (c *collectorFactory) FileCollectors(paths []string) []*Collect {
 	return collectors
 }
 
-func (c *collectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
+func (c *EKSACollectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
 	return map[v1alpha1.OSFamily][]*Collect{
 		v1alpha1.Ubuntu:       c.ubuntuHostCollectors(),
 		v1alpha1.Bottlerocket: c.bottleRocketHostCollectors(),
 	}
 }
 
-func (c *collectorFactory) bottleRocketHostCollectors() []*Collect {
+func (c *EKSACollectorFactory) bottleRocketHostCollectors() []*Collect {
 	return []*Collect{}
 }
 
-func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
+func (c *EKSACollectorFactory) ubuntuHostCollectors() []*Collect {
 	return []*Collect{
 		{
 			CopyFromHost: &copyFromHost{
@@ -235,7 +250,7 @@ func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
 	}
 }
 
-func (c *collectorFactory) defaultLogCollectors() []*Collect {
+func (c *EKSACollectorFactory) defaultLogCollectors() []*Collect {
 	return []*Collect{
 		{
 			Logs: &logs{
@@ -270,7 +285,7 @@ func (c *collectorFactory) defaultLogCollectors() []*Collect {
 	}
 }
 
-func (c *collectorFactory) packagesLogCollectors() []*Collect {
+func (c *EKSACollectorFactory) packagesLogCollectors() []*Collect {
 	return []*Collect{
 		{
 			Logs: &logs{
@@ -281,7 +296,7 @@ func (c *collectorFactory) packagesLogCollectors() []*Collect {
 	}
 }
 
-func (c *collectorFactory) managementClusterLogCollectors() []*Collect {
+func (c *EKSACollectorFactory) managementClusterLogCollectors() []*Collect {
 	return []*Collect{
 		{
 			Logs: &logs{
@@ -328,7 +343,7 @@ func (c *collectorFactory) managementClusterLogCollectors() []*Collect {
 	}
 }
 
-func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
+func (c *EKSACollectorFactory) managementClusterCrdCollectors() []*Collect {
 	mgmtCrds := []string{
 		"clusters.anywhere.eks.amazonaws.com",
 		"bundles.anywhere.eks.amazonaws.com",
@@ -341,7 +356,7 @@ func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(mgmtCrds)
 }
 
-func (c *collectorFactory) snowCrdCollectors() []*Collect {
+func (c *EKSACollectorFactory) snowCrdCollectors() []*Collect {
 	capasCrds := []string{
 		"awssnowclusters.infrastructure.cluster.x-k8s.io",
 		"awssnowmachines.infrastructure.cluster.x-k8s.io",
@@ -352,7 +367,7 @@ func (c *collectorFactory) snowCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(capasCrds)
 }
 
-func (c *collectorFactory) tinkerbellCrdCollectors() []*Collect {
+func (c *EKSACollectorFactory) tinkerbellCrdCollectors() []*Collect {
 	captCrds := []string{
 		"machines.bmc.tinkerbell.org",
 		"jobs.bmc.tinkerbell.org",
@@ -370,7 +385,7 @@ func (c *collectorFactory) tinkerbellCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(captCrds)
 }
 
-func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
+func (c *EKSACollectorFactory) vsphereCrdCollectors() []*Collect {
 	capvCrds := []string{
 		"vsphereclusteridentities.infrastructure.cluster.x-k8s.io",
 		"vsphereclusters.infrastructure.cluster.x-k8s.io",
@@ -383,7 +398,7 @@ func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(capvCrds)
 }
 
-func (c *collectorFactory) cloudstackCrdCollectors() []*Collect {
+func (c *EKSACollectorFactory) cloudstackCrdCollectors() []*Collect {
 	crds := []string{
 		"cloudstackaffinitygroups.infrastructure.cluster.x-k8s.io",
 		"cloudstackclusters.infrastructure.cluster.x-k8s.io",
@@ -398,7 +413,7 @@ func (c *collectorFactory) cloudstackCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(crds)
 }
 
-func (c *collectorFactory) packagesCrdCollectors() []*Collect {
+func (c *EKSACollectorFactory) packagesCrdCollectors() []*Collect {
 	packageCrds := []string{
 		"packagebundlecontrollers.packages.eks.amazonaws.com",
 		"packagebundles.packages.eks.amazonaws.com",
@@ -408,7 +423,7 @@ func (c *collectorFactory) packagesCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(packageCrds)
 }
 
-func (c *collectorFactory) nutanixCrdCollectors() []*Collect {
+func (c *EKSACollectorFactory) nutanixCrdCollectors() []*Collect {
 	capxCrds := []string{
 		"nutanixclusters.infrastructure.cluster.x-k8s.io",
 		"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com",
@@ -419,7 +434,7 @@ func (c *collectorFactory) nutanixCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(capxCrds)
 }
 
-func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
+func (c *EKSACollectorFactory) generateCrdCollectors(crds []string) []*Collect {
 	var crdCollectors []*Collect
 	for _, d := range crds {
 		crdCollectors = append(crdCollectors, c.crdCollector(d))
@@ -427,7 +442,7 @@ func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
 	return crdCollectors
 }
 
-func (c *collectorFactory) crdCollector(crdType string) *Collect {
+func (c *EKSACollectorFactory) crdCollector(crdType string) *Collect {
 	command := []string{"kubectl"}
 	args := []string{"get", crdType, "-o", "json", "--all-namespaces"}
 	collectorPath := crdPath(crdType)
@@ -461,13 +476,13 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 }
 
 // apiServerCollectors collect connection info when running a pod on an existing cluster.
-func (c *collectorFactory) apiServerCollectors(controlPlaneIP string) []*Collect {
+func (c *EKSACollectorFactory) apiServerCollectors(controlPlaneIP string) []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.controlPlaneNetworkPathCollector(controlPlaneIP)...)
 	return collectors
 }
 
-func (c *collectorFactory) controlPlaneNetworkPathCollector(controlPlaneIP string) []*Collect {
+func (c *EKSACollectorFactory) controlPlaneNetworkPathCollector(controlPlaneIP string) []*Collect {
 	ports := []string{"6443", "22"}
 	var collectors []*Collect
 	collectors = append(collectors, c.hostPortCollector(ports, controlPlaneIP))
@@ -475,7 +490,7 @@ func (c *collectorFactory) controlPlaneNetworkPathCollector(controlPlaneIP strin
 	return collectors
 }
 
-func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Collect {
+func (c *EKSACollectorFactory) hostPortCollector(ports []string, hostIP string) *Collect {
 	apiServerPort := ports[0]
 	port := ports[1]
 	tempIPRequest := fmt.Sprintf("for port in %s %s; do nc -z -v -w5 %s $port; done", apiServerPort, port, hostIP)
@@ -497,7 +512,7 @@ func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Col
 	}
 }
 
-func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
+func (c *EKSACollectorFactory) pingHostCollector(hostIP string) *Collect {
 	tempPingRequest := fmt.Sprintf("ping -w10 -c5 %s; echo exit code: $?", hostIP)
 	argsPing := []string{tempPingRequest}
 	return &Collect{
@@ -519,7 +534,7 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 
 // vmsAccessCollector will connect to API server first, then collect vsphere-cloud-controller-manager logs
 // on control plane node.
-func (c *collectorFactory) vmsAccessCollector(controlPlaneConfiguration v1alpha1.ControlPlaneConfiguration) *Collect {
+func (c *EKSACollectorFactory) vmsAccessCollector(controlPlaneConfiguration v1alpha1.ControlPlaneConfiguration) *Collect {
 	controlPlaneEndpointHost := controlPlaneConfiguration.Endpoint.Host
 	taints := controlPlaneConfiguration.Taints
 	tolerations := makeTolerations(taints)
