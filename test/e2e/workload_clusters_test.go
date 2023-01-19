@@ -101,7 +101,7 @@ func runWorkloadClusterUpgradeFlowCheckWorkloadRollingUpgrade(test *framework.Mu
 		test.ManagementCluster.WaitForMachineDeploymentReady(mdName)
 		preUpgradeMachines[key] = test.ManagementCluster.GetCapiMachinesForCluster(workloadCluster.ClusterName)
 	}
-	test.ManagementCluster.UpgradeCluster(clusterOpts)
+	test.ManagementCluster.UpgradeClusterWithNewConfig(clusterOpts)
 	test.T.Logf("Waiting for EKS-A controller to reconcile clusters")
 	time.Sleep(2 * time.Minute) // Time for new eks-a controller to kick in and potentially trigger rolling upgrade
 	for key, workloadCluster := range test.WorkloadClusters {

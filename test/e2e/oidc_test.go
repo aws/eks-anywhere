@@ -35,7 +35,7 @@ func runUpgradeFlowWithOIDC(test *framework.ClusterE2ETest, updateVersion v1alph
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.ValidateOIDC()
-	test.UpgradeCluster(clusterOpts)
+	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.ValidateOIDC()
 	test.StopIfFailed()

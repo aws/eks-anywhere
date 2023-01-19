@@ -31,7 +31,7 @@ const (
 func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
-	test.UpgradeCluster(clusterOpts)
+	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -48,8 +48,8 @@ func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, fillers ...api.Cluste
 func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts []framework.ClusterE2ETestOpt, clusterOpts2 []framework.ClusterE2ETestOpt, commandOpts []framework.CommandOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
-	test.UpgradeCluster(clusterOpts, commandOpts...)
-	test.UpgradeCluster(clusterOpts2)
+	test.UpgradeClusterWithNewConfig(clusterOpts, commandOpts...)
+	test.UpgradeClusterWithNewConfig(clusterOpts2)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -60,7 +60,7 @@ func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVers
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.UpgradeCluster(clusterOpts)
+	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -504,13 +504,13 @@ func TestCloudStackKubernetes121AddRemoveAz(t *testing.T) {
 	)
 	test.GenerateClusterConfig()
 	test.CreateCluster()
-	test.UpgradeCluster([]framework.ClusterE2ETestOpt{
+	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{
 		provider.WithProviderUpgrade(
 			framework.UpdateAddCloudStackAz2(),
 		),
 	})
 	test.StopIfFailed()
-	test.UpgradeCluster([]framework.ClusterE2ETestOpt{
+	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{
 		provider.WithProviderUpgrade(
 			framework.RemoveAllCloudStackAzs(),
 			framework.UpdateAddCloudStackAz1(),

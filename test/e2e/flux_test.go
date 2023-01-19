@@ -20,7 +20,7 @@ const (
 func runUpgradeFlowWithFlux(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
-	test.UpgradeCluster(clusterOpts)
+	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.ValidateFlux()
 	test.StopIfFailed()
