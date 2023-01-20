@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
 	github.com/aws/eks-anywhere-packages v0.2.8
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
-	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
+	github.com/aws/eks-anywhere/release v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/aws/etcdadm-bootstrap-provider v1.0.5-rc2
 	github.com/aws/etcdadm-controller v1.0.4-rc2
@@ -22,11 +22,11 @@ require (
 	github.com/go-logr/zapr v1.2.3
 	github.com/gocarina/gocsv v0.0.0-20220304222734-caabc5f00d30
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
 	github.com/nutanix-cloud-native/prism-go-client v0.3.0
-	github.com/onsi/gomega v1.20.1
+	github.com/onsi/gomega v1.23.0
 	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
@@ -35,20 +35,24 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
 	github.com/tinkerbell/tink v0.7.1-0.20221004171112-6deeea887dac
+	github.com/vmware/govmomi v0.29.0
 	go.uber.org/zap v1.22.0
-	golang.org/x/crypto v0.4.0
+	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
-	golang.org/x/sys v0.3.0
-	golang.org/x/text v0.5.0
+	golang.org/x/sys v0.4.0
+	golang.org/x/text v0.6.0
 	gopkg.in/ini.v1 v1.66.4
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.25.4
-	k8s.io/apimachinery v0.25.4
-	k8s.io/apiserver v0.25.2
-	k8s.io/client-go v0.25.4
+	k8s.io/api v0.26.0
+	k8s.io/apimachinery v0.26.0
+	k8s.io/apiserver v0.26.0
+	k8s.io/client-go v0.26.0
+	k8s.io/component-base v0.26.0
+	k8s.io/klog/v2 v2.80.1
+	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0
 	sigs.k8s.io/cluster-api v1.2.0
@@ -75,8 +79,6 @@ require (
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/ReneKroon/ttlcache v1.7.0 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/apache/cloudstack-go/v2 v2.13.0 // indirect
@@ -93,7 +95,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bmc-toolbox/bmclib v0.5.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/containerd/containerd v1.6.12 // indirect
+	github.com/containerd/containerd v1.6.15 // indirect
 	github.com/coredns/caddy v1.1.0 // indirect
 	github.com/coredns/corefile-migration v1.0.17 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -103,15 +105,15 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
@@ -127,7 +129,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/itchyny/gojq v0.12.6 // indirect
@@ -158,10 +160,10 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.12.2 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.32.1 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/prometheus/client_golang v1.14.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
+	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -170,28 +172,24 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stmcginnis/gofish v0.12.1-0.20220311113027-6072260f4c8d // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
-	github.com/vmware/govmomi v0.29.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
-	google.golang.org/grpc v1.48.0 // indirect
+	google.golang.org/grpc v1.49.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	k8s.io/apiextensions-apiserver v0.25.2 // indirect
+	k8s.io/apiextensions-apiserver v0.26.0 // indirect
 	k8s.io/cluster-bootstrap v0.24.0 // indirect
-	k8s.io/component-base v0.25.4
-	k8s.io/klog/v2 v2.70.1
-	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
-	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
+	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
@@ -207,6 +205,12 @@ replace (
 	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
+
+	// These 3 are needed because v0.26.0 needs go 1.19 and controller-runtime v0.14
+	// Once we update to go 1.19, remove these replaces and bump controller-runtime
+	k8s.io/apimachinery => k8s.io/apimachinery v0.25.6
+	k8s.io/client-go => k8s.io/client-go v0.25.0
+	k8s.io/component-base => k8s.io/component-base v0.25.6
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc5
