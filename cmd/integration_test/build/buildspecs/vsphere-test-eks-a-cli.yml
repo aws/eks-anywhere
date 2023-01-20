@@ -6,6 +6,7 @@ env:
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
+    INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
     T_VSPHERE_TEMPLATE_FOLDER: "/SDDC-Datacenter/vm/Templates"
     T_VSPHERE_TEMPLATE_UBUNTU_1_21: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-21"
     T_VSPHERE_TEMPLATE_UBUNTU_1_22: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-22"
