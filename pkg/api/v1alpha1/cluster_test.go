@@ -131,7 +131,7 @@ func TestValidateExternalEtcdSupport(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			got := validateExternalEtcdSupport(tc.wantCluster)
 			if tc.wantErr {
-				g.Expect(got).To(MatchError(ContainSubstring("unsupported")))
+				g.Expect(got).To(MatchError(ContainSubstring("external etcd configuration is unsupported")))
 			} else {
 				g.Expect(got).To(Succeed())
 			}
