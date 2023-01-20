@@ -18,7 +18,7 @@ const (
 	adotTargetNamespace = "observability"
 )
 
-func TestCPackagesAdotDockerKubernetes124SimpleFlow(t *testing.T) {
+func TestCuratedPackagesAdotDockerKubernetes124SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
@@ -29,7 +29,7 @@ func TestCPackagesAdotDockerKubernetes124SimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
 
-func TestCPackagesAdotVSphereKubernetes122BottleRocketUpdateFlow(t *testing.T) {
+func TestCuratedPackagesAdotVSphereKubernetes122BottleRocketUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
@@ -41,7 +41,7 @@ func TestCPackagesAdotVSphereKubernetes122BottleRocketUpdateFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestCPackagesAdotVSphereKubernetes123UbuntuUpdateFlow(t *testing.T) {
+func TestCuratedPackagesAdotVSphereKubernetes123UbuntuUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu123()),
@@ -53,7 +53,7 @@ func TestCPackagesAdotVSphereKubernetes123UbuntuUpdateFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestCPackagesAdotCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+func TestCuratedPackagesAdotCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
@@ -65,7 +65,7 @@ func TestCPackagesAdotCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
 
-func TestCPackagesAdotNutanixKubernetes122UpdateFlow(t *testing.T) {
+func TestCuratedPackagesAdotNutanixKubernetes122UpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
@@ -77,7 +77,7 @@ func TestCPackagesAdotNutanixKubernetes122UpdateFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
 
-func TestCPackagesAdotTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T) {
+func TestCuratedPackagesAdotTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
@@ -90,7 +90,7 @@ func TestCPackagesAdotTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
 
-func TestCPackagesAdotTinkerbellBottleRocketKubernetes123SimpleFlow(t *testing.T) {
+func TestCuratedPackagesAdotTinkerbellBottleRocketKubernetes123SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),

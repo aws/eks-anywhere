@@ -61,7 +61,7 @@ func runCuratedPackageEmissaryInstallSimpleFlow(test *framework.ClusterE2ETest) 
 	test.WithCluster(runCuratedPackageEmissaryInstall)
 }
 
-func TestCPackagesEmissaryDockerKubernetes122SimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryDockerKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -73,7 +73,7 @@ func TestCPackagesEmissaryDockerKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryVSphereKubernetes122SimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryVSphereKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
@@ -85,7 +85,7 @@ func TestCPackagesEmissaryVSphereKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
@@ -97,14 +97,14 @@ func TestCPackagesEmissaryVSphereKubernetes122BottleRocketSimpleFlow(t *testing.
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryCloudStackRedhatKubernetes121WorkloadCluster(t *testing.T) {
+func TestCuratedPackagesEmissaryCloudStackRedhatKubernetes121WorkloadCluster(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121()) // Only 1.20/1.21 is supported at the moment for Redhat.
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
 	runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -117,14 +117,14 @@ func TestCPackagesEmissaryCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) 
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryVSphereKubernetes122UbuntuWorkloadCluster(t *testing.T) {
+func TestCuratedPackagesEmissaryVSphereKubernetes122UbuntuWorkloadCluster(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithUbuntu122())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
 	runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube122),
@@ -136,7 +136,7 @@ func TestCPackagesEmissaryTinkerbellUbuntuKubernetes122SingleNodeFlow(t *testing
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestCPackagesEmissaryTinkerbellBottleRocketKubernetes122SingleNodeFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryTinkerbellBottleRocketKubernetes122SingleNodeFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube122),
@@ -148,14 +148,14 @@ func TestCPackagesEmissaryTinkerbellBottleRocketKubernetes122SingleNodeFlow(t *t
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
 
-func TestCPackagesEmissaryVSphereKubernetes122BottleRocketWorkloadCluster(t *testing.T) {
+func TestCuratedPackagesEmissaryVSphereKubernetes122BottleRocketWorkloadCluster(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
 	runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryNutanixKubernetes121SimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryNutanixKubernetes121SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu121Nutanix()),
@@ -167,7 +167,7 @@ func TestCPackagesEmissaryNutanixKubernetes121SimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryNutanixKubernetes122SimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryNutanixKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
@@ -179,7 +179,7 @@ func TestCPackagesEmissaryNutanixKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryNutanixKubernetes123SimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryNutanixKubernetes123SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
@@ -191,7 +191,7 @@ func TestCPackagesEmissaryNutanixKubernetes123SimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestCPackagesEmissaryNutanixKubernetes124SimpleFlow(t *testing.T) {
+func TestCuratedPackagesEmissaryNutanixKubernetes124SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),

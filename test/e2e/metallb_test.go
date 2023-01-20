@@ -23,7 +23,7 @@ type Suite struct {
 	cluster *framework.ClusterE2ETest
 }
 
-func TestCPackagesMetalLB(t *testing.T) {
+func TestCuratedPackagesMetalLB(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
 

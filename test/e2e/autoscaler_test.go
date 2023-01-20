@@ -11,7 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func TestCPackagesClusterAutoscalerCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+func TestCuratedPackagesClusterAutoscalerCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)
@@ -26,7 +26,7 @@ func TestCPackagesClusterAutoscalerCloudStackRedhatKubernetes121SimpleFlow(t *te
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
 
-func TestCPackagesClusterAutoscalerVSphereKubernetes122UbuntuSimpleFlow(t *testing.T) {
+func TestCuratedPackagesClusterAutoscalerVSphereKubernetes122UbuntuSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)
@@ -40,7 +40,7 @@ func TestCPackagesClusterAutoscalerVSphereKubernetes122UbuntuSimpleFlow(t *testi
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
 
-func TestCPackagesClusterAutoscalerVSphereKubernetes123BottleRocketSimpleFlow(t *testing.T) {
+func TestCuratedPackagesClusterAutoscalerVSphereKubernetes123BottleRocketSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)
@@ -54,7 +54,7 @@ func TestCPackagesClusterAutoscalerVSphereKubernetes123BottleRocketSimpleFlow(t 
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
 
-func TestCPackagesClusterAutoscalerNutanixKubernetes124UbuntuSimpleFlow(t *testing.T) {
+func TestCuratedPackagesClusterAutoscalerNutanixKubernetes124UbuntuSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)

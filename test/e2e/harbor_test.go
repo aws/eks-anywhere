@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func TestCPackagesHarborInstallSimpleFlow(t *testing.T) {
+func TestCuratedPackagesHarborInstallSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithPackageConfig(t, EksaPackageBundleURI,
@@ -22,7 +22,7 @@ func TestCPackagesHarborInstallSimpleFlow(t *testing.T) {
 	runHarborInstallSimpleFlowLocalStorageProvisioner(test) // other args as necessary
 }
 
-func TestCPackagesHarborNutanixKubernetes123SimpleFlow(t *testing.T) {
+func TestCuratedPackagesHarborNutanixKubernetes123SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),

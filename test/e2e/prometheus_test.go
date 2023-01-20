@@ -18,7 +18,7 @@ const (
 	packageTargetNamespace = "observability"
 )
 
-func TestCPackagesPrometheusDockerKubernetes124SimpleFlow(t *testing.T) {
+func TestCuratedPackagesPrometheusDockerKubernetes124SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
@@ -29,7 +29,7 @@ func TestCPackagesPrometheusDockerKubernetes124SimpleFlow(t *testing.T) {
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestCPackagesPrometheusVSphereKubernetes123BottleRocketSimpleFlow(t *testing.T) {
+func TestCuratedPackagesPrometheusVSphereKubernetes123BottleRocketSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket123()),
@@ -41,7 +41,7 @@ func TestCPackagesPrometheusVSphereKubernetes123BottleRocketSimpleFlow(t *testin
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestCPackagesPrometheusVSphereKubernetes122UbuntuUpdateFlow(t *testing.T) {
+func TestCuratedPackagesPrometheusVSphereKubernetes122UbuntuUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
@@ -53,7 +53,7 @@ func TestCPackagesPrometheusVSphereKubernetes122UbuntuUpdateFlow(t *testing.T) {
 	runCuratedPackagesPrometheusUpdateFlow(test)
 }
 
-func TestCPackagesPrometheusCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+func TestCuratedPackagesPrometheusCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
@@ -65,7 +65,7 @@ func TestCPackagesPrometheusCloudStackRedhatKubernetes121SimpleFlow(t *testing.T
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestCPackagesPrometheusNutanixKubernetes122SimpleFlow(t *testing.T) {
+func TestCuratedPackagesPrometheusNutanixKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
@@ -77,7 +77,7 @@ func TestCPackagesPrometheusNutanixKubernetes122SimpleFlow(t *testing.T) {
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestCPackagesPrometheusTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T) {
+func TestCuratedPackagesPrometheusTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
@@ -90,7 +90,7 @@ func TestCPackagesPrometheusTinkerbellUbuntuKubernetes122SimpleFlow(t *testing.T
 	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
 }
 
-func TestCPackagesPrometheusTinkerbellBottleRocketKubernetes123SimpleFlow(t *testing.T) {
+func TestCuratedPackagesPrometheusTinkerbellBottleRocketKubernetes123SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
