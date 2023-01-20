@@ -9,6 +9,8 @@ weight: 35
 ### Added
 - Add support for EKS Anywhere on AWS Snow ([#1042](https://github.com/aws/eks-anywhere/issues/1042))
 - Static IP support for BottleRocket ([#4359](https://github.com/aws/eks-anywhere/pull/4359))
+- Add registry mirror support for curated packages
+- Add copy packages command ([#4420](https://github.com/aws/eks-anywhere/pull/4420))
 
 ### Fixed
 - Improve management cluster name validation for workload clusters
