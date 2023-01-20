@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	packagesRegex = `^.*CPackages.*$`
+	packagesRegex = `^.*CuratedPackages.*$`
 )
 
 func (e *E2ESession) setupPackagesEnv(testRegex string) error {
