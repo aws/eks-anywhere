@@ -83,7 +83,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry
 	}
 
 	c.registryCache = registry.NewCache()
-	bundleReader := curatedpackages.NewPackageReader(deps.ManifestReader, c.registryCache, credentialStore)
+	bundleReader := curatedpackages.NewPackageReader(c.registryCache, credentialStore)
 
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 
