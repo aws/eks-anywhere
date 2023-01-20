@@ -78,6 +78,8 @@ metadata:
 spec:
   template:
     spec:
+      preKubeadmCommands:
+        - hostnamectl set-hostname "{{`{{ ds.meta_data.hostname }}`}}"
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
