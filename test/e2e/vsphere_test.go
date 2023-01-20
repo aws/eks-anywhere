@@ -427,7 +427,7 @@ func TestVSphereKubernetes123BottleRocketCuratedPackagesClusterAutoscalerSimpleF
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122UbuntuCPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes122UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
@@ -439,7 +439,7 @@ func TestVSphereKubernetes122UbuntuCPackagesPrometheusSimpleFlow(t *testing.T) {
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes123BottleRocketCPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes123BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket123()),

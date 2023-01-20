@@ -156,7 +156,7 @@ func TestDockerKubernetes122CuratedPackagesSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestDockerHarborInstallSimpleFlow(t *testing.T) {
+func TestDockerKubernetesCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithPackageConfig(t, EksaPackageBundleURI,
