@@ -581,7 +581,7 @@ func TestVSphereKubernetes125ThreeReplicasThreeWorkersFluxLegacy(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes124GitopsOptionsFluxLegacy(t *testing.T) {
+func TestVSphereKubernetes125GitopsOptionsFluxLegacy(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu125()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
@@ -617,7 +617,7 @@ func TestVSphereKubernetes124To125FluxUpgradeLegacy(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes123To124GitFluxUpgrade(t *testing.T) {
+func TestVSphereKubernetes124To125GitFluxUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu124())
 	test := framework.NewClusterE2ETest(t,
 		provider,
@@ -1012,7 +1012,7 @@ func TestVSphereKubernetes125SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu125()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar("K8S_1_25_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -1273,8 +1273,8 @@ func TestVSphereKubernetes124UbuntuTo125Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar("K8S_1_25_SUPPORT", "true"),
 		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
