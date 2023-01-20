@@ -187,6 +187,7 @@ func NewCluster(clusterName string) *Cluster {
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
 	validateControlPlaneEndpoint,
+	validateExternalEtcdSupport,
 	validateMachineGroupRefs,
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
@@ -360,6 +361,16 @@ func validateClusterConfigName(clusterConfig *Cluster) error {
 	if err != nil {
 		return fmt.Errorf("failed to validate cluster config name: %v", err)
 	}
+	return nil
+}
+
+func validateExternalEtcdSupport(cluster *Cluster) error {
+	if cluster.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
+		if cluster.Spec.ExternalEtcdConfiguration != nil {
+			return errors.New("tinkerbell external etcd configuration is unsupported")
+		}
+	}
+
 	return nil
 }
 

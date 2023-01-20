@@ -93,6 +93,52 @@ func TestClusterNameLength(t *testing.T) {
 	}
 }
 
+func TestValidateExternalEtcdSupport(t *testing.T) {
+	g := NewWithT(t)
+	tests := []struct {
+		name        string
+		wantCluster *Cluster
+		wantErr     bool
+	}{
+		{
+			name: "tinkerbell config without external etcd",
+			wantCluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "tinkerbell config with external etcd",
+			wantCluster: &Cluster{
+				Spec: ClusterSpec{
+					ExternalEtcdConfiguration: &ExternalEtcdConfiguration{Count: 1},
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			got := validateExternalEtcdSupport(tc.wantCluster)
+			if tc.wantErr {
+				g.Expect(got).To(MatchError(ContainSubstring("external etcd configuration is unsupported")))
+			} else {
+				g.Expect(got).To(Succeed())
+			}
+		})
+	}
+}
+
 func TestGetAndValidateClusterConfig(t *testing.T) {
 	tests := []struct {
 		testName    string
