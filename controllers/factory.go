@@ -308,7 +308,10 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 			return nil
 		}
 
-		f.tinkerbellClusterReconciler = tinkerbellreconciler.New()
+		f.tinkerbellClusterReconciler = tinkerbellreconciler.New(
+			f.manager.GetClient(),
+			f.ipValidator,
+		)
 		f.registryBuilder.Add(anywherev1.TinkerbellDatacenterKind, f.tinkerbellClusterReconciler)
 
 		return nil
