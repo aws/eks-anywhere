@@ -13,7 +13,6 @@ import (
 	"oras.land/oras-go/v2/registry/remote"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
 	"github.com/aws/eks-anywhere/pkg/registry"
 	registrymocks "github.com/aws/eks-anywhere/pkg/registry/mocks"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -29,17 +28,15 @@ var desc = ocispec.Descriptor{}
 
 type packageReaderTest struct {
 	*WithT
-	ctx            context.Context
-	command        *curatedpackages.PackageReader
-	manifestReader *mocks.MockManifestReader
-	storageClient  *registrymocks.MockStorageClient
-	registryName   string
-	bundles        *releasev1.Bundles
+	ctx           context.Context
+	command       *curatedpackages.PackageReader
+	storageClient *registrymocks.MockStorageClient
+	registryName  string
+	bundles       *releasev1.Bundles
 }
 
 func newPackageReaderTest(t *testing.T) *packageReaderTest {
 	ctrl := gomock.NewController(t)
-	r := mocks.NewMockManifestReader(ctrl)
 	registryName := "public.ecr.aws"
 	sc := registrymocks.NewMockStorageClient(ctrl)
 	cache := registry.NewCache()
@@ -62,13 +59,12 @@ func newPackageReaderTest(t *testing.T) *packageReaderTest {
 	}
 
 	return &packageReaderTest{
-		WithT:          NewWithT(t),
-		ctx:            context.Background(),
-		registryName:   registryName,
-		manifestReader: r,
-		storageClient:  sc,
-		bundles:        &bundles,
-		command:        curatedpackages.NewPackageReader(r, cache, credentialStore),
+		WithT:         NewWithT(t),
+		ctx:           context.Background(),
+		registryName:  registryName,
+		storageClient: sc,
+		bundles:       &bundles,
+		command:       curatedpackages.NewPackageReader(cache, credentialStore),
 	}
 }
 
