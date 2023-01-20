@@ -158,9 +158,10 @@ spec:
         sshAuthorizedKeys:
           - "{{.controlPlaneSshAuthorizedKey}}"
     preKubeadmCommands:
+      - hostnamectl set-hostname "{{`{{ ds.meta_data.hostname }}`}}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   $(hostname)" >> /etc/hosts
+      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >> /etc/hosts
       # This section should be removed once these packages are added to the image builder process
       - apt update
       - apt install -y nfs-common open-iscsi
