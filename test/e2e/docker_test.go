@@ -78,7 +78,7 @@ func TestDockerKubernetes125GitFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestDockerKubernetes124GitopsOptionsFluxLegacy(t *testing.T) {
+func TestDockerKubernetes125GitopsOptionsFluxLegacy(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
@@ -418,7 +418,7 @@ func TestDockerKubernetes125SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar("K8S_1_25_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -447,6 +447,7 @@ func TestDockerKubernetes125Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
 			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
 		),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -458,7 +459,6 @@ func TestDockerKubernetes125Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
