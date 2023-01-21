@@ -240,6 +240,17 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
     eksD:
+      ami:
+        bottlerocket:
+          arch:
+          - amd64
+          description: Bottlerocket Ami image for EKS-D 1-21-24 release
+          name: bottlerocket-v1.21.14-eks-d-1-21-24-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-21/1-21-24/bottlerocket-v1.21.14-eks-d-1-21-24-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:
@@ -1015,6 +1026,17 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
     eksD:
+      ami:
+        bottlerocket:
+          arch:
+          - amd64
+          description: Bottlerocket Ami image for EKS-D 1-22-17 release
+          name: bottlerocket-v1.22.17-eks-d-1-22-17-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-22/1-22-17/bottlerocket-v1.22.17-eks-d-1-22-17-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:
@@ -1790,6 +1812,17 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
     eksD:
+      ami:
+        bottlerocket:
+          arch:
+          - amd64
+          description: Bottlerocket Ami image for EKS-D 1-23-12 release
+          name: bottlerocket-v1.23.15-eks-d-1-23-12-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-23/1-23-12/bottlerocket-v1.23.15-eks-d-1-23-12-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-23
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:
@@ -2565,6 +2598,17 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
     eksD:
+      ami:
+        bottlerocket:
+          arch:
+          - amd64
+          description: Bottlerocket Ami image for EKS-D 1-24-7 release
+          name: bottlerocket-v1.24.9-eks-d-1-24-7-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-24/1-24-7/bottlerocket-v1.24.9-eks-d-1-24-7-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-24
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:
@@ -2608,9 +2652,27 @@ spec:
       manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-24/kubernetes-1-24-eks-7.yaml
       name: kubernetes-1-24-eks-7
       ova:
-        bottlerocket: {}
+        bottlerocket:
+          arch:
+          - amd64
+          description: Bottlerocket Ova image for EKS-D 1-24-7 release
+          name: bottlerocket-v1.24.9-eks-d-1-24-7-eks-a-v0.0.0-dev-build.0-amd64.ova
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-24/1-24-7/bottlerocket-v1.24.9-eks-d-1-24-7-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
-        bottlerocket: {}
+        bottlerocket:
+          arch:
+          - amd64
+          description: Bottlerocket Raw image for EKS-D 1-24-7 release
+          name: bottlerocket-v1.24.9-eks-d-1-24-7-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-24/1-24-7/bottlerocket-v1.24.9-eks-d-1-24-7-eks-a-v0.0.0-dev-build.0-amd64.img.gz
     eksa:
       cliTools:
         arch:
@@ -3322,6 +3384,8 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.2.0/metadata.yaml
       version: v1.2.0+abcdef1
     eksD:
+      ami:
+        bottlerocket: {}
       channel: 1-25
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:

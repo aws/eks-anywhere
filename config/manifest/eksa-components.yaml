@@ -1106,6 +1106,45 @@ spec:
                       type: object
                     eksD:
                       properties:
+                        ami:
+                          description: Ami points to a collection of AMIs built with
+                            this eks-d version
+                          properties:
+                            bottlerocket:
+                              properties:
+                                arch:
+                                  description: Architectures of the asset
+                                  items:
+                                    type: string
+                                  type: array
+                                description:
+                                  type: string
+                                name:
+                                  description: The asset name
+                                  type: string
+                                os:
+                                  description: Operating system of the asset
+                                  enum:
+                                  - linux
+                                  - darwin
+                                  - windows
+                                  type: string
+                                osName:
+                                  description: Name of the OS like ubuntu, bottlerocket
+                                  type: string
+                                sha256:
+                                  description: The sha256 of the asset, only applies
+                                    for 'file' store
+                                  type: string
+                                sha512:
+                                  description: The sha512 of the asset, only applies
+                                    for 'file' store
+                                  type: string
+                                uri:
+                                  description: The URI where the asset is located
+                                  type: string
+                              type: object
+                          type: object
                         channel:
                           description: Release branch of the EKS-D release like 1-19,
                             1-20
@@ -1267,7 +1306,7 @@ spec:
                         name:
                           type: string
                         ova:
-                          description: Ova points to a collection of Ovas built with
+                          description: Ova points to a collection of OVAs built with
                             this eks-d version
                           properties:
                             bottlerocket:

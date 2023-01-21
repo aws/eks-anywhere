@@ -42,11 +42,12 @@ func EksDistroArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assett
 	}
 
 	imageExtensions := map[string]string{
+		"ami": "gz",
 		"ova": "ova",
 		"raw": "gz",
 	}
 	imageExtension := imageExtensions[archive.Format]
-	if archive.OSName == "bottlerocket" && archive.Format == "raw" {
+	if archive.OSName == "bottlerocket" && (archive.Format == "ami" || archive.Format == "raw") {
 		imageExtension = "img.gz"
 	}
 

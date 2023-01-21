@@ -109,7 +109,10 @@ type EksDRelease struct {
 	// KindNode points to a kind image built with this eks-d version
 	KindNode Image `json:"kindNode,omitempty"`
 
-	// Ova points to a collection of Ovas built with this eks-d version
+	// Ami points to a collection of AMIs built with this eks-d version
+	Ami OSImageBundle `json:"ami,omitempty"`
+
+	// Ova points to a collection of OVAs built with this eks-d version
 	Ova OSImageBundle `json:"ova,omitempty"`
 
 	// Raw points to a collection of Raw images built with this eks-d version
