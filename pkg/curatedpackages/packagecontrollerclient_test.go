@@ -264,9 +264,8 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
 		tt.kubectl.EXPECT().
@@ -380,9 +379,8 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
 		tt.kubectl.EXPECT().
@@ -432,9 +430,8 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
 		tt.kubectl.EXPECT().
@@ -467,9 +464,8 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(errors.New("login failed"))
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
 
@@ -498,9 +494,8 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCFail(t)).
 			AnyTimes()
 
@@ -529,9 +524,8 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
 		tt.kubectl.EXPECT().
@@ -603,9 +597,8 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
 		tt.kubectl.EXPECT().
@@ -638,9 +631,8 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCLoops(t, 3)).
 			AnyTimes()
 		tt.kubectl.EXPECT().
@@ -704,9 +696,8 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		any := gomock.Any()
 		tt.kubectl.EXPECT().
-			GetObject(any, any, any, any, any, any).
+			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCDelay(t, time.Second)).
 			AnyTimes()
 
