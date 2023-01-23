@@ -1480,3 +1480,81 @@ func TestGovcSetGroupRoleOnObject(t *testing.T) {
 		}
 	}
 }
+
+func TestGovcGetVMDiskSizeInGB(t *testing.T) {
+	datacenter := "SDDC-Datacenter"
+	template := "bottlerocket-kube-v1.24.6"
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	response := map[string][]interface{}{
+		"Devices": {
+			map[string]interface{}{
+				"Name": "disk-31000-0",
+				"DeviceInfo": map[string]string{
+					"Label": "Hard disk 1",
+				},
+				"CapacityInKB": 25 * 1024 * 1024, // 25GB in KB
+			},
+		},
+	}
+
+	mashaledResponse, err := json.Marshal(response)
+	if err != nil {
+		t.Fatalf("failed to marshal response: %v", err)
+	}
+	responseBytes := bytes.NewBuffer(mashaledResponse)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "device.info", "-dc", datacenter, "-vm", template, "-json", "disk-*").Return(*responseBytes, nil)
+
+	size, err := g.GetVMDiskSizeInGB(ctx, template, datacenter)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(size).To(Equal(25))
+}
+
+func TestGovcGetVMDiskSizeInGBError(t *testing.T) {
+	datacenter := "SDDC-Datacenter"
+	template := "bottlerocket-kube-v1.24.6"
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	govcErr := errors.New("error DevicesInfo()")
+
+	tests := []struct {
+		testName string
+		response map[string][]interface{}
+		govcErr  error
+		wantErr  error
+	}{
+		{
+			testName: "devices_info_govc_error",
+			response: nil,
+			govcErr:  govcErr,
+			wantErr:  fmt.Errorf("getting disk size for vm %s: getting template device information: %v", template, govcErr),
+		},
+		{
+			testName: "devices_info_no_devices",
+			response: map[string][]interface{}{
+				"Devices": {},
+			},
+			govcErr: nil,
+			wantErr: fmt.Errorf("no disks found for vm %s", template),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			gt := NewWithT(t)
+			mashaledResponse, err := json.Marshal(tt.response)
+			if err != nil {
+				t.Fatalf("failed to marshal response: %v", err)
+			}
+			responseBytes := bytes.NewBuffer(mashaledResponse)
+
+			executable.EXPECT().ExecuteWithEnv(ctx, env, "device.info", "-dc", datacenter, "-vm", template, "-json", "disk-*").Return(*responseBytes, tt.govcErr)
+
+			_, err = g.GetVMDiskSizeInGB(ctx, template, datacenter)
+			gt.Expect(err.Error()).To(Equal(tt.wantErr.Error()))
+		})
+	}
+}

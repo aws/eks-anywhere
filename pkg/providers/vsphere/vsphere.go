@@ -98,6 +98,7 @@ type ProviderGovcClient interface {
 	CreateLibrary(ctx context.Context, datastore, library string) error
 	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
+	GetVMDiskSizeInGB(ctx context.Context, vm, datacenter string) (int, error)
 	GetTags(ctx context.Context, path string) (tags []string, err error)
 	ListTags(ctx context.Context) ([]executables.Tag, error)
 	CreateTag(ctx context.Context, tag, category string) error

@@ -68,7 +68,7 @@ func NewDummyProviderGovcClient() *DummyProviderGovcClient {
 }
 
 func (pc *DummyProviderGovcClient) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {
-	return false, nil
+	return true, nil
 }
 
 func (pc *DummyProviderGovcClient) GetWorkloadAvailableSpace(ctx context.Context, datastore string) (float64, error) {
@@ -141,6 +141,10 @@ func (pc *DummyProviderGovcClient) ResizeDisk(ctx context.Context, template, dis
 
 func (pc *DummyProviderGovcClient) ImportTemplate(ctx context.Context, library, ovaURL, name string) error {
 	return nil
+}
+
+func (pc *DummyProviderGovcClient) GetVMDiskSizeInGB(ctx context.Context, vm, datacenter string) (int, error) {
+	return 25, nil
 }
 
 func (pc *DummyProviderGovcClient) GetTags(ctx context.Context, path string) (tags []string, err error) {
@@ -332,8 +336,9 @@ func newProviderTest(t *testing.T) *providerTest {
 	return p
 }
 
-func (tt *providerTest) setExpectationsForDefaultDiskGovcCalls() {
+func (tt *providerTest) setExpectationsForDefaultDiskAndCloneModeGovcCalls() {
 	for _, m := range tt.machineConfigs {
+		tt.govc.EXPECT().GetVMDiskSizeInGB(tt.ctx, m.Spec.Template, tt.datacenterConfig.Spec.Datacenter).Return(25, nil)
 		tt.govc.EXPECT().TemplateHasSnapshot(tt.ctx, m.Spec.Template).Return(true, nil)
 	}
 }
@@ -2035,6 +2040,170 @@ func TestSetupAndValidateCreateClusterUsedIp(t *testing.T) {
 	thenErrorExpected(t, ipInUseError, err)
 }
 
+func TestSetupAndValidateCreateClusterNoCloneModeDefaultToLinkedClone(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	govc := NewDummyProviderGovcClient()
+	provider := newProviderWithGovc(t,
+		clusterSpec.VSphereDatacenter,
+		clusterSpec.Cluster,
+		govc,
+	)
+	provider.providerGovcClient = govc
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.CloneMode = ""
+	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.CloneMode = ""
+	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.CloneMode = ""
+	setupContext(t)
+
+	mockCtrl := gomock.NewController(t)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider.ipValidator = ipValidator
+	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.NoError(t, err, "No error expected for provider.SetupAndValidateCreateCluster()")
+
+	for _, m := range clusterSpec.VSphereMachineConfigs {
+		assert.Equal(t, m.Spec.CloneMode, v1alpha1.LinkedClone)
+	}
+}
+
+func TestSetupAndValidateCreateClusterNoCloneModeDefaultToFullClone(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	govc := NewDummyProviderGovcClient()
+	provider := newProviderWithGovc(t,
+		clusterSpec.VSphereDatacenter,
+		clusterSpec.Cluster,
+		govc,
+	)
+	provider.providerGovcClient = govc
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.CloneMode = ""
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.DiskGiB = 100
+	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.CloneMode = ""
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.DiskGiB = 100
+	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.CloneMode = ""
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.DiskGiB = 100
+	setupContext(t)
+
+	mockCtrl := gomock.NewController(t)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider.ipValidator = ipValidator
+	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.NoError(t, err, "No error expected for provider.SetupAndValidateCreateCluster()")
+
+	for _, m := range clusterSpec.VSphereMachineConfigs {
+		assert.Equal(t, m.Spec.CloneMode, v1alpha1.FullClone)
+	}
+}
+
+func TestSetupAndValidateCreateClusterFullCloneDiskGiBLessThan20(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	govc := NewDummyProviderGovcClient()
+	provider := newProviderWithGovc(t,
+		clusterSpec.VSphereDatacenter,
+		clusterSpec.Cluster,
+		govc,
+	)
+	provider.providerGovcClient = govc
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.CloneMode = v1alpha1.FullClone
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.DiskGiB = 10
+	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.CloneMode = v1alpha1.FullClone
+	clusterSpec.VSphereMachineConfigs[workerNodeMachineConfigName].Spec.DiskGiB = 10
+	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.CloneMode = v1alpha1.FullClone
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.DiskGiB = 10
+	setupContext(t)
+
+	mockCtrl := gomock.NewController(t)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	provider.ipValidator = ipValidator
+	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.NoError(t, err, "No error expected for provider.SetupAndValidateCreateCluster()")
+
+	for _, m := range clusterSpec.VSphereMachineConfigs {
+		assert.Equalf(t, m.Spec.DiskGiB, 20, "DiskGiB mismatch for VSphereMachineConfig %s", m.Name)
+	}
+}
+
+func TestSetupAndValidateCreateClusterLinkedCloneErrorDiskSize(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	govc := NewDummyProviderGovcClient()
+	provider := newProviderWithGovc(t,
+		clusterSpec.VSphereDatacenter,
+		clusterSpec.Cluster,
+		govc,
+	)
+	provider.providerGovcClient = govc
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.DiskGiB = 100
+	setupContext(t)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.ErrorContains(t, err, fmt.Sprintf(
+		"diskGiB cannot be customized for VSphereMachineConfig '%s' when using 'linkedClone'; change the cloneMode to 'fullClone' or the diskGiB to match the template's (%s) disk size of 25 GiB",
+		controlPlaneMachineConfigName, clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template,
+	))
+}
+
+func TestSetupAndValidateCreateClusterLinkedCloneErrorNoSnapshots(t *testing.T) {
+	tt := newProviderTest(t)
+	controlPlaneMachineConfigName := tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+
+	tt.setExpectationForSetup()
+	tt.setExpectationForVCenterValidation()
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template).Return(tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template, nil)
+	tt.govc.EXPECT().GetVMDiskSizeInGB(tt.ctx, tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template, tt.clusterSpec.VSphereDatacenter.Spec.Datacenter)
+	tt.govc.EXPECT().TemplateHasSnapshot(tt.ctx, tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template).Return(false, nil)
+
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	assert.Regexp(t,
+		"cannot use 'linkedClone' for VSphereMachineConfig '.*' because its template (.*) has no snapshots; create snapshots or change the cloneMode to 'fullClone",
+		err.Error(),
+	)
+}
+
+func TestSetupAndValidateCreateClusterInvalidCloneMode(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	govc := NewDummyProviderGovcClient()
+	provider := newProviderWithGovc(t,
+		clusterSpec.VSphereDatacenter,
+		clusterSpec.Cluster,
+		govc,
+	)
+	provider.providerGovcClient = govc
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	invalidClone := "invalidClone"
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.CloneMode = v1alpha1.CloneMode(invalidClone)
+	setupContext(t)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.ErrorContains(t, err,
+		fmt.Sprintf(
+			"cloneMode %s is not supported for VSphereMachineConfig %s. Supported clone modes: [%s, %s]",
+			invalidClone,
+			controlPlaneMachineConfigName,
+			v1alpha1.LinkedClone,
+			v1alpha1.FullClone,
+		),
+	)
+}
+
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
 	if testing.Short() {
 		t.Skip("too slow for testing.Short")
@@ -2384,7 +2553,7 @@ func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.setExpectationForSetup()
-	tt.setExpectationsForDefaultDiskGovcCalls()
+	tt.setExpectationsForDefaultDiskAndCloneModeGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
 
@@ -2410,7 +2579,7 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 	controlPlaneMachineConfig := tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName]
 
 	tt.setExpectationForSetup()
-	tt.setExpectationsForDefaultDiskGovcCalls()
+	tt.setExpectationsForDefaultDiskAndCloneModeGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
 	for _, mc := range tt.machineConfigs {
