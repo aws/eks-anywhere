@@ -38,9 +38,10 @@ func NewPackageReader(cache *registry.Cache, credentialStore *registry.Credentia
 	}
 }
 
-func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
+// ReadImagesFromBundles and return a list of image artifacts.
+func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]registry.Artifact, error) {
 	var err error
-	var images []releasev1.Image
+	var images []registry.Artifact
 	for _, vb := range b.Spec.VersionsBundles {
 		bundleURI, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
@@ -54,16 +55,18 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 	return removeDuplicateImages(images), err
 }
 
-func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
-	var images []releasev1.Image
+// ReadChartsFromBundles and return a list of chart artifacts.
+func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []registry.Artifact {
+	var images []registry.Artifact
 	for _, vb := range b.Spec.VersionsBundles {
-		bundleRegistry, bundle, err := r.getBundle(ctx, vb)
+		bundleURI, bundle, err := r.getBundle(ctx, vb)
 		if err != nil {
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		images = append(images, releasev1.Image{URI: bundleRegistry})
-		packagesHelmChart := r.fetchPackagesHelmChart(bundleRegistry, bundle)
+		bundleArtifact := registry.NewArtifactFromURI(bundleURI)
+		images = append(images, bundleArtifact)
+		packagesHelmChart := r.fetchPackagesHelmChart(bundleURI, bundle)
 		images = append(images, packagesHelmChart...)
 	}
 	return removeDuplicateImages(images)
@@ -93,40 +96,36 @@ func (r *PackageReader) getBundle(ctx context.Context, vb releasev1.VersionsBund
 	return artifact.VersionedImage(), &bundle, nil
 }
 
-func (r *PackageReader) fetchPackagesHelmChart(bundleURI string, bundle *packagesv1.PackageBundle) []releasev1.Image {
-	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
+func (r *PackageReader) fetchPackagesHelmChart(bundleURI string, bundle *packagesv1.PackageBundle) []registry.Artifact {
+	images := make([]registry.Artifact, 0, len(bundle.Spec.Packages))
+	bundleRegistry := getChartRegistry(bundleURI)
 	for _, p := range bundle.Spec.Packages {
-		pHC := releasev1.Image{
-			Name:        p.Name,
-			Description: p.Name,
-			URI:         fmt.Sprintf("%s/%s@%s", getChartRegistry(bundleURI), p.Source.Repository, p.Source.Versions[0].Digest),
-			ImageDigest: p.Source.Versions[0].Digest,
-		}
+		chartURI := fmt.Sprintf("%s/%s@%s", bundleRegistry, p.Source.Repository, p.Source.Versions[0].Digest)
+		pHC := registry.NewArtifactFromURI(chartURI)
+		pHC.Tag = p.Source.Versions[0].Name
 		images = append(images, pHC)
 	}
 	return images
 }
 
-func (r *PackageReader) fetchImagesFromBundle(bundleURI string, bundle *packagesv1.PackageBundle) []releasev1.Image {
-	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
+func (r *PackageReader) fetchImagesFromBundle(bundleURI string, bundle *packagesv1.PackageBundle) []registry.Artifact {
+	images := make([]registry.Artifact, 0, len(bundle.Spec.Packages))
+	bundleRegistry := getImageRegistry(bundleURI)
 	for _, p := range bundle.Spec.Packages {
 		// each package will have at least one version
 		for _, version := range p.Source.Versions[0].Images {
-			image := releasev1.Image{
-				Name:        version.Repository,
-				Description: version.Repository,
-				URI:         fmt.Sprintf("%s/%s@%s", getImageRegistry(bundleURI), version.Repository, version.Digest),
-				ImageDigest: version.Digest,
-			}
+			imageURI := fmt.Sprintf("%s/%s@%s", bundleRegistry, version.Repository, version.Digest)
+			image := registry.NewArtifactFromURI(imageURI)
+			image.Tag = "" // We do not have the tag right now
 			images = append(images, image)
 		}
 	}
 	return images
 }
 
-func removeDuplicateImages(images []releasev1.Image) []releasev1.Image {
+func removeDuplicateImages(images []registry.Artifact) []registry.Artifact {
 	uniqueImages := make(map[string]struct{})
-	var list []releasev1.Image
+	var list []registry.Artifact
 	for _, item := range images {
 		if _, value := uniqueImages[item.VersionedImage()]; !value {
 			uniqueImages[item.VersionedImage()] = struct{}{}
