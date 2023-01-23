@@ -56,6 +56,8 @@ const (
 	DefaultEtcdWait = 60 * time.Minute
 	// DefaultUnhealthyMachineTimeout is the default timeout for an unhealthy machine health check.
 	DefaultUnhealthyMachineTimeout = 5 * time.Minute
+	// DefaultNodeStartupTimeout is the default timeout for a machine without a node to be considered to have failed machine health check.
+	DefaultNodeStartupTimeout = 10 * time.Minute
 )
 
 var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
@@ -74,6 +76,7 @@ type ClusterManager struct {
 	controlPlaneWaitTimeout time.Duration
 	externalEtcdWaitTimeout time.Duration
 	unhealthyMachineTimeout time.Duration
+	nodeStartupTimeout      time.Duration
 }
 
 type ClusterClient interface {
@@ -164,6 +167,7 @@ func New(clusterClient *RetrierClient, networking Networking, writer filewriter.
 		controlPlaneWaitTimeout: DefaultControlPlaneWait,
 		externalEtcdWaitTimeout: DefaultEtcdWait,
 		unhealthyMachineTimeout: DefaultUnhealthyMachineTimeout,
+		nodeStartupTimeout:      DefaultNodeStartupTimeout,
 	}
 
 	for _, o := range opts {
@@ -207,6 +211,13 @@ func WithMachineMinWait(machineMinWait time.Duration) ClusterManagerOpt {
 func WithUnhealthyMachineTimeout(timeout time.Duration) ClusterManagerOpt {
 	return func(c *ClusterManager) {
 		c.unhealthyMachineTimeout = timeout
+	}
+}
+
+// WithNodeStartupTimeout sets the timeout of a machine without a node to be considered to have failed machine health check.
+func WithNodeStartupTimeout(timeout time.Duration) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.nodeStartupTimeout = timeout
 	}
 }
 
@@ -700,7 +711,7 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 }
 
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
-	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec, c.unhealthyMachineTimeout)...)
+	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec, c.unhealthyMachineTimeout, c.nodeStartupTimeout)...)
 	if err != nil {
 		return err
 	}
