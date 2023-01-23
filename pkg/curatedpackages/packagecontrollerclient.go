@@ -145,7 +145,7 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistr
 			defaultImageRegistry = gatedOCINamespace
 		}
 	} else {
-		defaultImageRegistry = strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", pc.eksaRegion)
+		defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", pc.eksaRegion)
 	}
 	return sourceRegistry, defaultRegistry, defaultImageRegistry
 }
