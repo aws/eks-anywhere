@@ -39,11 +39,13 @@ const (
 	nutanixTemplateNameUbuntu122Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_22"
 	nutanixTemplateNameUbuntu123Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23"
 	nutanixTemplateNameUbuntu124Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24"
+	nutanixTemplateNameUbuntu125Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25"
 
 	nutanixTemplateUUIDUbuntu121Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_21"
 	nutanixTemplateUUIDUbuntu122Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_22"
 	nutanixTemplateUUIDUbuntu123Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_23"
 	nutanixTemplateUUIDUbuntu124Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_24"
+	nutanixTemplateUUIDUbuntu125Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_25"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -68,10 +70,12 @@ var requiredNutanixEnvVars = []string{
 	nutanixTemplateNameUbuntu122Var,
 	nutanixTemplateNameUbuntu123Var,
 	nutanixTemplateNameUbuntu124Var,
+	nutanixTemplateNameUbuntu125Var,
 	nutanixTemplateUUIDUbuntu121Var,
 	nutanixTemplateUUIDUbuntu122Var,
 	nutanixTemplateUUIDUbuntu123Var,
 	nutanixTemplateUUIDUbuntu124Var,
+	nutanixTemplateUUIDUbuntu125Var,
 	nutanixInsecure,
 }
 
@@ -220,6 +224,17 @@ func WithUbuntu124Nutanix() NutanixOpt {
 	}
 }
 
+// WithUbuntu125Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template for k8s 1.25
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu125Nutanix() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu125Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
 // WithUbuntu121NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.21
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu121NutanixUUID() NutanixOpt {
@@ -259,6 +274,17 @@ func WithUbuntu124NutanixUUID() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
 			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu124Var, api.WithNutanixMachineTemplateImageUUID),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithUbuntu125NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.25
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu125NutanixUUID() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu125Var, api.WithNutanixMachineTemplateImageUUID),
 			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -304,6 +330,12 @@ func UpdateNutanixUbuntuTemplate123Var() api.NutanixFiller {
 // image name parameter in the spec.
 func UpdateNutanixUbuntuTemplate124Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu124Var, api.WithNutanixMachineTemplateImageName)
+}
+
+// UpdateNutanixUbuntuTemplate125Var returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
+func UpdateNutanixUbuntuTemplate125Var() api.NutanixFiller {
+	return api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu125Var, api.WithNutanixMachineTemplateImageName)
 }
 
 // ClusterValidations returns a list of provider specific validations.
