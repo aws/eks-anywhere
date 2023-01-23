@@ -7,6 +7,7 @@ const (
 	externalEtcdWaitTimeoutFlag = "external-etcd-wait-timeout"
 	perMachineWaitTimeoutFlag   = "per-machine-wait-timeout"
 	unhealthyMachineTimeoutFlag = "unhealthy-machine-timeout"
+	nodeStartupTimeoutFlag      = "node-startup-timeout"
 )
 
 type Operation int
