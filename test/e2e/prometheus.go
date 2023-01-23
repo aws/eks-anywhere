@@ -20,7 +20,7 @@ func runCuratedPackagesPrometheusInstall(test *framework.ClusterE2ETest) {
 	test.CreateNamespace(prometheusPackageTargetNamespace)
 	test.SetPackageBundleActive()
 	test.InstallCuratedPackage(prometheusPackageName, packageFullName,
-		kubeconfig.FromClusterName(test.ClusterName), prometheusPackageTargetNamespace,
+		kubeconfig.FromClusterName(test.ClusterName),
 		"--set server.persistentVolume.storageClass=local-path")
 	test.VerifyPrometheusPackageInstalled(packageFullName, prometheusPackageTargetNamespace)
 	test.VerifyPrometheusNodeExporterStates(packageFullName, prometheusPackageTargetNamespace)
@@ -34,7 +34,7 @@ func runCuratedPackagesPrometheusUpdate(test *framework.ClusterE2ETest) {
 	test.CreateNamespace(prometheusPackageTargetNamespace)
 	test.SetPackageBundleActive()
 	test.InstallCuratedPackage(prometheusPackageName, packageFullName,
-		kubeconfig.FromClusterName(test.ClusterName), prometheusPackageTargetNamespace,
+		kubeconfig.FromClusterName(test.ClusterName),
 		"--set server.persistentVolume.storageClass=local-path")
 
 	test.ApplyPrometheusPackageServerStatefulSetFile(packageFullName, prometheusPackageTargetNamespace)
