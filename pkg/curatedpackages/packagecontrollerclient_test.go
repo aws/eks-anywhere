@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -680,6 +681,8 @@ func TestCreateHelmOverrideValuesYaml(t *testing.T) {
 }
 
 func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
+	os.Unsetenv("REGISTRY_USERNAME")
+	os.Unsetenv("REGISTRY_PASSWORD")
 	for _, tt := range newPackageControllerTests(t) {
 		filePath, content, err := tt.command.CreateHelmOverrideValuesYaml()
 		if tt.registryMirror != nil {
