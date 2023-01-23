@@ -21,6 +21,7 @@ const (
 	devAccount        = "l0g8r8j6"
 	publicProdECR     = "public.ecr.aws/" + prodAccount
 	publicDevECR      = "public.ecr.aws/" + devAccount
+	defaultRegion     = "us-west-2"
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
