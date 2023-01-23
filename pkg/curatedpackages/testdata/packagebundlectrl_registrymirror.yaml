@@ -1,9 +1,0 @@
-apiVersion: packages.eks.amazonaws.com/v1alpha1
-kind: PackageBundleController
-metadata:
-  name: billy
-  namespace: eksa-packages
-spec:
-  logLevel: 4
-  defaultRegistry: 1.2.3.4:443/public/eks-anywhere
-  defaultImageRegistry: 1.2.3.4:443/private
