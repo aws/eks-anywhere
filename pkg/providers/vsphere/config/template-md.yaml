@@ -156,7 +156,7 @@ metadata:
 spec:
   template:
     spec:
-      cloneMode: linkedClone
+      cloneMode: {{.workerCloneMode}}
       datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.workerVsphereDatastore}}
       diskGiB: {{.workloadDiskGiB}}

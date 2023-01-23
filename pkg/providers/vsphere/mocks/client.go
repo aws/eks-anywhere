@@ -255,6 +255,21 @@ func (mr *MockProviderGovcClientMockRecorder) GetTags(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTags", reflect.TypeOf((*MockProviderGovcClient)(nil).GetTags), arg0, arg1)
 }
 
+// GetVMDiskSizeInGB mocks base method.
+func (m *MockProviderGovcClient) GetVMDiskSizeInGB(arg0 context.Context, arg1, arg2 string) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVMDiskSizeInGB", arg0, arg1, arg2)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVMDiskSizeInGB indicates an expected call of GetVMDiskSizeInGB.
+func (mr *MockProviderGovcClientMockRecorder) GetVMDiskSizeInGB(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVMDiskSizeInGB", reflect.TypeOf((*MockProviderGovcClient)(nil).GetVMDiskSizeInGB), arg0, arg1, arg2)
+}
+
 // GetWorkloadAvailableSpace mocks base method.
 func (m *MockProviderGovcClient) GetWorkloadAvailableSpace(arg0 context.Context, arg1 string) (float64, error) {
 	m.ctrl.T.Helper()

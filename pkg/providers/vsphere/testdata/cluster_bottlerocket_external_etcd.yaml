@@ -45,6 +45,7 @@ metadata:
   namespace: test-namespace
 spec:
   diskGiB: 25
+  cloneMode: linkedClone
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
   folder: "/SDDC-Datacenter/vm"
   osFamily: bottlerocket
@@ -63,6 +64,7 @@ metadata:
   namespace: test-namespace
 spec:
   diskGiB: 25
+  cloneMode: linkedClone
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
   folder: "/SDDC-Datacenter/vm"
   osFamily: bottlerocket
@@ -81,6 +83,7 @@ metadata:
   namespace: test-namespace
 spec:
   diskGiB: 25
+  cloneMode: linkedClone
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
   folder: "/SDDC-Datacenter/vm"
   osFamily: bottlerocket
