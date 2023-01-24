@@ -79,7 +79,7 @@ See EKS Anywhere [Baremetal]({{< relref "../baremetal" >}}), [CloudStack]({{< re
 
 [Amazon ECS Anywhere](https://aws.amazon.com/ecs/anywhere/) is an option for [Amazon Elastic Container Service (ECS)](https://aws.amazon.com/ecs/) to run containers on your on-premises infrastructure.
 The ECS Anywhere Control Plane runs in an AWS region and allows you to install the ECS agent on worker nodes that run outside of an AWS region.
-Workloads that run on ECS Anywhere nodes are scheduled with ECS.
+Workloads that run on ECS Anywhere nodes are scheduled by ECS.
 You are not responsible for running, managing, or upgrading the ECS Control Plane.
 
 EKS Anywhere runs the Kubernetes Control Plane and worker nodes on your infrastructure.
