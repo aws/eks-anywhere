@@ -252,6 +252,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"--network", "host",
 		"-e", fmt.Sprintf("PUBLIC_IP=%s", tinkServerIP),
 		"-e", fmt.Sprintf("PUBLIC_SYSLOG_IP=%s", tinkServerIP),
+		"-e", fmt.Sprintf("BOOTS_KUBE_NAMESPACE=%v", s.namespace),
 	}
 
 	for name, value := range s.getBootsEnv(bundle, tinkServerIP) {
