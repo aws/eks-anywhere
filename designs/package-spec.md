@@ -4,16 +4,17 @@
 
 **Problem:** currently the ability to configure the package controller is very limited and requires code changes
 
-Code changes currently have to be made to configure the package controller during cluster creation or using the install command. Changes need to be coordinated between the CLI and the package controller helm chart to alter configuration. This makes it more difficult to support things like various private registry configurations.
+The preference in the CLI is to validate the values passed to the package controller, so the EKS Anywhere cluster specification will include all the necessary configuration values for the controller.
 
 ### Tenets
 
-* ***Flexible:*** reduce dependency of the CLI on helm chart.
+* ***Validation:*** allow the customer the flexibility to configure the package controller and validate those values.
 
 ### Goals and Objectives
 
 As an EKS-A cluster administrator I want to configure the package controller for:
 
+* Allow packages only to be configured from a private registry
 * Harbor using proxy cache
 * Harbor using replication
 * Harbor as a private registry using the import images command
@@ -40,7 +41,7 @@ Add a section to the cluster specification to enable/disable the package control
 
 ## Solution Details
 
-Add a packageController section to the cluster specification for example to use development/staging builds:
+A sample package controller section in the cluster specification. The values specified here:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
@@ -49,29 +50,49 @@ metadata:
 spec:
   packageController:
     enable: true
-    values: |-
-      defaultRegistry: public.ecr.aws/l0g8r8j6
-      defaultImageRegistry: 857151390494.dkr.ecr.us-west-2.amazonaws.com
+    # -- defaultRegistry for all package helm charts.
+    defaultRegistry: public.ecr.aws/eks-anywhere
+    # -- defaultImageRegistry for all package images.
+    defaultImageRegistry: 783794618700.dkr.ecr.us-west-2.amazonaws.com
+    controller:
+      # -- Controller repository name.
+      repository: "eks-anywhere-packages"
+      # -- Controller image tag
+      tag: "{{eks-anywhere-packages-tag}}"
+      # -- Controller image digest
+      digest: "{{eks-anywhere-packages}}"
+      # -- Whether to turn on Webhooks for the controller image
+      enableWebhooks: "true"
+      # -- Additional environment variables for the controller pod.
+      # - name: EKSA_PUBLIC_KEY
+      #   value: ""
+      env:
+        - name: EKSA_PUBLIC_KEY
+          value: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEnP0Yo+ZxzPUEfohcG3bbJ8987UT4f0tj+XVBjS/s35wkfjrxTKrVZQpz3ta3zi5ZlgXzd7a20B1U1Py/TtPsxw=="
+      resources:
+        requests:
+          cpu: 100m
+          memory: 50Mi
+        limits:
+          cpu: 750m
+          memory: 450Mi
+    # Additional Variables to configure cronjob
+    cronjob:
+      name: ecr-refresher
+      # -- ECR refresher repository name.
+      repository: "ecr-token-refresher"
+      # -- ECR refresher tag
+      tag: "{{ecr-token-refresher-tag}}"
+      # -- ECR refresher digest
+      digest: "{{ecr-token-refresher}}"
+      suspend: false
+    registryMirrorSecret:
+      endpoint: ""
+      cacertcontent: ""
+      insecure: "ZmFsc2UK"
 ```
 
-These values will be passed to the helm chart during installation just like `--set defaultRegistry=public.ecr.aws/l0g8r8j6` for example.
-
-## Implementation
-
-The proposed design:
-```
-// PackageController defines configuration of the package controller.
-type PackageController struct {
-    // +kubebuilder:validation:Optional
-    // +kubebuilder:default:="true"
-    // Enable installation of the package controller.
-    Enable bool `json:"enable,omitempty"`
-
-    // +kubebuilder:validation:Optional
-    // Values to pass into package controller installation.
-    Values string `json:"values,omitempty"`
-}
-```
+These values will be passed to the helm chart during installation using a values.yaml file to protect the secrets.
 
 ## Testing
 
