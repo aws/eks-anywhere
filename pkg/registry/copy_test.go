@@ -42,6 +42,23 @@ func TestCopy(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestCopyTagError(t *testing.T) {
+	srcClient := mocks.NewMockStorageClient(gomock.NewController(t))
+	dstClient := mocks.NewMockStorageClient(gomock.NewController(t))
+
+	mockSrcRepo := *mocks.NewMockRepository(gomock.NewController(t))
+	mockDstRepo := *mocks.NewMockRepository(gomock.NewController(t))
+
+	srcClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockSrcRepo, nil)
+	dstClient.EXPECT().GetStorage(ctx, srcArtifact).Return(&mockDstRepo, nil)
+	dstClient.EXPECT().Destination(srcArtifact).Return(expectedSrcRef)
+	srcClient.EXPECT().CopyGraph(ctx, &mockSrcRepo, expectedSrcRef, &mockDstRepo, expectedSrcRef).Return(desc, nil)
+	dstClient.EXPECT().Tag(ctx, &mockDstRepo, desc, srcArtifact.Tag).Return(fmt.Errorf("oops"))
+
+	err := registry.Copy(ctx, srcClient, dstClient, srcArtifact)
+	assert.EqualError(t, err, "image tag: oops")
+}
+
 func TestCopyCopyGraphError(t *testing.T) {
 	srcClient := mocks.NewMockStorageClient(gomock.NewController(t))
 	dstClient := mocks.NewMockStorageClient(gomock.NewController(t))
