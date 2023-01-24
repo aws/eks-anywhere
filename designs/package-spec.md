@@ -48,7 +48,7 @@ metadata:
   name: billy
 spec:
   packageController:
-    enable: true
+    disable: false
     # -- defaultRegistry for all package helm charts.
     defaultRegistry: public.ecr.aws/eks-anywhere
     # -- defaultImageRegistry for all package images.
