@@ -81,8 +81,8 @@ Here is an example:
 ```
 export CLUSTER_NAME=vsphere01
 eksctl anywhere generate support-bundle --bundle-config ${CLUSTER_NAME}_bundle_config.yaml \
-   -w KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig \
-   --since 2h -f ${CLUSTER_NAME}_bundle.yaml
+   -w ${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig \
+   --since 2h -f ${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.yaml
 ```
 
 The example just shown:
