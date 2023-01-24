@@ -83,7 +83,7 @@ Workloads that run on ECS Anywhere nodes are scheduled by ECS.
 You are not responsible for running, managing, or upgrading the ECS Control Plane.
 
 EKS Anywhere runs the Kubernetes Control Plane and worker nodes on your infrastructure.
-You are responsible for the EKS Anywhere Control Plane and worker nodes.
+You are responsible for managing the EKS Anywhere Control Plane and worker nodes.
 There is no requirement to have an AWS account to run EKS Anywhere.
 
 If you'd like to see how EKS Anywhere compares to EKS please see the [information here.]({{< relref "../../concepts/eksafeatures.md" >}})
