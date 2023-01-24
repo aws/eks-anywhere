@@ -166,9 +166,11 @@ require (
 replace (
 	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
-	
-	// These 2 are needed because v0.26.0 needs go 1.19 and controller-runtime v0.14
-	// Once we update to go 1.19, remove these replaces and bump controller-runtime
-	k8s.io/client-go => k8s.io/client-go v0.25.0
+
+	// These 2 replaces are needed because v0.26.0 needs controller-runtime v0.14
+	// Once the rest of dependencies we have that use controller-runtime
+	// move to v0.14, remove these replaces and bump controller-runtime
+	// This will be possible once capi v1.4 is released.
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.25.6
+	k8s.io/client-go => k8s.io/client-go v0.25.0
 )
