@@ -23,7 +23,6 @@ As an EKS-A cluster administrator I want to configure the package controller for
 * Support proxy configuration
 * Support package controller installation from alternate registries
 * Disable installation of package controller
-* Allow for future configuration options
 
 ### Statement of Scope
 
