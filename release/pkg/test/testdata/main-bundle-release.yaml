@@ -618,7 +618,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:d095de63d358b91592dfc2bd03bb10082f72d290-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -1393,7 +1393,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:d095de63d358b91592dfc2bd03bb10082f72d290-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -2168,7 +2168,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:d095de63d358b91592dfc2bd03bb10082f72d290-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -2925,7 +2925,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:d095de63d358b91592dfc2bd03bb10082f72d290-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -3682,7 +3682,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:d095de63d358b91592dfc2bd03bb10082f72d290-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
