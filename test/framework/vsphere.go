@@ -18,6 +18,7 @@ import (
 	filereader "github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
+	anywheretypes "github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -353,6 +354,33 @@ func WithPrivateNetwork() VSphereOpt {
 			api.WithVSphereStringFromEnvVar(vspherePrivateNetworkVar, api.WithNetwork),
 		)
 		v.cidr = os.Getenv(privateNetworkCidrVar)
+	}
+}
+
+// WithLinkedCloneMode sets clone mode to LinkedClone for all the machine.
+func WithLinkedCloneMode() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithCloneModeForAllMachines(anywherev1.LinkedClone),
+		)
+	}
+}
+
+// WithFullCloneMode sets clone mode to FullClone for all the machine.
+func WithFullCloneMode() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithCloneModeForAllMachines(anywherev1.FullClone),
+		)
+	}
+}
+
+// WithDiskGiBForAllMachines sets diskGiB for all the machines.
+func WithDiskGiBForAllMachines(value int) VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithDiskGiBForAllMachines(value),
+		)
 	}
 }
 
@@ -717,5 +745,23 @@ func handleCSIError(err error, disabled bool) error {
 		return fmt.Errorf("CSI state does not match disableCSI %t, %v", disabled, err)
 	}
 
+	return nil
+}
+
+// ValidateNodesDiskGiB validates DiskGiB for all the machines.
+func (v *VSphere) ValidateNodesDiskGiB(machines map[string]anywheretypes.Machine, expectedDiskSize int) error {
+	v.t.Log("===================== Disk Size Validation Task =====================")
+	for _, m := range machines {
+		v.t.Log("Verifying disk size for VM", "Virtual Machine", m.Metadata.Name)
+		diskSize, err := v.GovcClient.GetVMDiskSizeInGB(context.Background(), m.Metadata.Name, v.testsConfig.Datacenter)
+		if err != nil {
+			v.t.Fatalf("validating disk size: %v", err)
+		}
+
+		v.t.Log("Disk Size in GiB", "Expected", expectedDiskSize, "Actual", diskSize)
+		if diskSize != expectedDiskSize {
+			v.t.Fatalf("diskGib for node %s did not match the expected disk size. Expected=%dGiB, Actual=%dGiB", m.Metadata.Name, expectedDiskSize, diskSize)
+		}
+	}
 	return nil
 }

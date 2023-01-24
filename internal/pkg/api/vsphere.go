@@ -171,6 +171,15 @@ func WithDisableCSI(value bool) VSphereFiller {
 	}
 }
 
+// WithCloneModeForAllMachines sets the CloneMode for all VSphereMachineConfigs.
+func WithCloneModeForAllMachines(value anywherev1.CloneMode) VSphereFiller {
+	return func(config VSphereConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.CloneMode = value
+		}
+	}
+}
+
 func WithVSphereStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar))
 }
