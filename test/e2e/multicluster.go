@@ -13,7 +13,7 @@ import (
 )
 
 func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
-	test.CreateManagementCluster()
+	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
 		w.CreateCluster()
@@ -24,7 +24,7 @@ func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 }
 
 func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
-	test.CreateManagementCluster()
+	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
 		w.CreateCluster()

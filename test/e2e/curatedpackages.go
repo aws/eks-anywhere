@@ -33,7 +33,7 @@ func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 }
 
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
-	test.CreateManagementCluster()
+	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
 		e.GenerateClusterConfig()
 		e.CreateCluster()
