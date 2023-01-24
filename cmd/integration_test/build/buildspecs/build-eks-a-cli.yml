@@ -3,7 +3,7 @@ version: 0.2
 phases:
   build:
     commands:
-    - make e2e
+    - make build-eks-a-for-e2e build-integration-test-binary
     - |
       for provider_test_file in test/e2e/*_test.go; do
         provider=$(echo $(basename $provider_test_file) | cut -d_ -f1)
