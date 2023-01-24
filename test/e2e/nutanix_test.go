@@ -143,7 +143,6 @@ func TestNutanixKubernetes125CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-
 func TestNutanixKubernetes122UbuntuCuratedPackagesAdotUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,

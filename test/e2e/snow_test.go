@@ -7,10 +7,11 @@ package e2e
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // AWS IAM Auth
