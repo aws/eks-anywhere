@@ -74,7 +74,7 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, c
 	clusterSpecValidator := tinkerbell.NewClusterSpecValidator()
 
 	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
-		log.Error(err, "Invalid Tinkerbell MachineConfig")
+		log.Error(err, "Invalid Tinkerbell Cluster spec")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 		return controller.ResultWithReturn(), nil
