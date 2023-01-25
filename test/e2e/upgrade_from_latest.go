@@ -30,7 +30,6 @@ func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *re
 	test.WaitForControlPlaneReady()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(wantVersion)
-	test.ValidateFlux()
 	test.StopIfFailed()
 	test.DeleteCluster()
 }

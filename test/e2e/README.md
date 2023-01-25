@@ -2,7 +2,7 @@
 
 ## How to run tests
 ```sh
-make e2e
+make build-all-test-binaries
 ./bin/e2e.test -test.v -test.run [test name regex]
 ```
 or
@@ -17,7 +17,7 @@ make local-e2e
 ```
 or
 ```sh
-go test -tags e2e -run [test name regex]
+go test -tags "e2e all_providers" -run [test name regex]
 ```
 
 ### Using bundle overrides

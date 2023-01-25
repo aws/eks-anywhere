@@ -445,11 +445,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -460,8 +460,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
-      version: v1.1.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
+      version: v1.1.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -618,7 +618,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:79b1d9acb65dfd0527b44800eddbdcf6b751c8d8-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -637,7 +637,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -646,18 +646,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -666,18 +666,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -1220,11 +1220,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1235,8 +1235,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
-      version: v1.1.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
+      version: v1.1.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -1393,7 +1393,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:79b1d9acb65dfd0527b44800eddbdcf6b751c8d8-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -1412,7 +1412,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -1421,18 +1421,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -1441,18 +1441,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -1995,11 +1995,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2010,8 +2010,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
-      version: v1.1.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
+      version: v1.1.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -2168,7 +2168,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:79b1d9acb65dfd0527b44800eddbdcf6b751c8d8-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -2187,7 +2187,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -2196,18 +2196,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -2216,18 +2216,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -2752,11 +2752,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2767,8 +2767,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
-      version: v1.1.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
+      version: v1.1.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -2925,7 +2925,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:79b1d9acb65dfd0527b44800eddbdcf6b751c8d8-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -2944,7 +2944,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -2953,18 +2953,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -2973,18 +2973,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-aarch64
         rufio:
           arch:
           - amd64
@@ -3509,11 +3509,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3524,8 +3524,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
-      version: v1.1.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
+      version: v1.1.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -3682,7 +3682,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: boots
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:79b1d9acb65dfd0527b44800eddbdcf6b751c8d8-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:8fd5c38ddd4089430f8257ee73a8dd79484ea5e0-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -3701,7 +3701,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-bootkit:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           docker:
             arch:
             - amd64
@@ -3710,18 +3710,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-docker:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           initramfs:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: initramfs-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/initramfs-aarch64
           kernel:
             arch:
             - amd64
@@ -3730,18 +3730,18 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hook-kernel:ad7836d56d9a3152439daa3085b233ee4e13d886-eks-a-v0.0.0-dev-build.1
           vmlinuz:
             amd:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-x86_64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-x86_64
             arm:
               description: Tinkerbell operating system installation environment (osie)
                 component
               name: vmlinuz-aarch64
-              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-aarch64
+              uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/ad7836d56d9a3152439daa3085b233ee4e13d886/vmlinuz-aarch64
         rufio:
           arch:
           - amd64

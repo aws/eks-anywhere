@@ -17,6 +17,7 @@ type VSphereMachineConfigSpec struct {
 	Template          string              `json:"template,omitempty"`
 	Users             []UserConfiguration `json:"users,omitempty"`
 	TagIDs            []string            `json:"tags,omitempty"`
+	CloneMode         CloneMode           `json:"cloneMode,omitempty"`
 }
 
 func (c *VSphereMachineConfig) PauseReconcile() {

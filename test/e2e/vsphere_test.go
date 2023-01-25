@@ -427,7 +427,7 @@ func TestVSphereKubernetes123BottleRocketCuratedPackagesClusterAutoscalerSimpleF
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122UbuntuCPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes122UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
@@ -439,7 +439,7 @@ func TestVSphereKubernetes122UbuntuCPackagesPrometheusSimpleFlow(t *testing.T) {
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes123BottleRocketCPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes123BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket123()),
@@ -581,7 +581,7 @@ func TestVSphereKubernetes125ThreeReplicasThreeWorkersFluxLegacy(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes124GitopsOptionsFluxLegacy(t *testing.T) {
+func TestVSphereKubernetes125GitopsOptionsFluxLegacy(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu125()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
@@ -617,7 +617,7 @@ func TestVSphereKubernetes124To125FluxUpgradeLegacy(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes123To124GitFluxUpgrade(t *testing.T) {
+func TestVSphereKubernetes124To125GitFluxUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu124())
 	test := framework.NewClusterE2ETest(t,
 		provider,
@@ -980,6 +980,84 @@ func TestVSphereKubernetes122SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes125FullClone(t *testing.T) {
+	diskSize := 30
+	vsphere := framework.NewVSphere(t,
+		framework.WithUbuntu125(),
+		framework.WithFullCloneMode(),
+		framework.WithDiskGiBForAllMachines(diskSize),
+	)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		vsphere,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
+	)
+	runVSphereCloneModeFlow(test, vsphere, diskSize)
+}
+
+func TestVSphereKubernetes125LinkedClone(t *testing.T) {
+	diskSize := 20
+	vsphere := framework.NewVSphere(t,
+		framework.WithUbuntu125(),
+		framework.WithLinkedCloneMode(),
+		framework.WithDiskGiBForAllMachines(diskSize),
+	)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		vsphere,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
+	)
+	runVSphereCloneModeFlow(test, vsphere, diskSize)
+}
+
+func TestVSphereKubernetes124BottlerocketFullClone(t *testing.T) {
+	diskSize := 30
+	vsphere := framework.NewVSphere(t,
+		framework.WithBottleRocket124(),
+		framework.WithFullCloneMode(),
+		framework.WithDiskGiBForAllMachines(diskSize),
+	)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		vsphere,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+	)
+	runVSphereCloneModeFlow(test, vsphere, diskSize)
+}
+
+func TestVSphereKubernetes124BottlerocketLinkedClone(t *testing.T) {
+	diskSize := 22
+	vsphere := framework.NewVSphere(t,
+		framework.WithBottleRocket124(),
+		framework.WithLinkedCloneMode(),
+		framework.WithDiskGiBForAllMachines(diskSize),
+	)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		vsphere,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+	)
+	runVSphereCloneModeFlow(test, vsphere, diskSize)
+}
+
 func TestVSphereKubernetes122SimpleFlowWithTags(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1012,7 +1090,7 @@ func TestVSphereKubernetes125SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu125()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar("K8S_1_25_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -1273,8 +1351,8 @@ func TestVSphereKubernetes124UbuntuTo125Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar("K8S_1_25_SUPPORT", "true"),
 		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -2133,6 +2211,145 @@ func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuAPI(t *testing.T) {
 		wc.DeleteClusterWithKubectl()
 		wc.ValidateClusterDelete()
 	})
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
+func TestVSphereUpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *testing.T) {
+	vsphere := framework.NewVSphere(t)
+
+	managementCluster := framework.NewClusterE2ETest(
+		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		vsphere.WithBottleRocket124(),
+		framework.WithFluxGithubConfig(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			),
+			vsphere.WithWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(2), api.WithLabel("key1", "val2"), api.WithTaint(framework.NoScheduleTaint()))),
+			vsphere.WithWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
+			vsphere.WithWorkerNodeGroup("worker-2", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1), api.WithLabel("key2", "val2"), api.WithTaint(framework.PreferNoScheduleTaint()))),
+			vsphere.WithBottleRocket124(),
+		),
+	)
+
+	runWorkloadClusterUpgradeFlowAPIWithFlux(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeGroup("worker-0", api.WithLabel("key1", "val1"), api.WithTaint(framework.NoExecuteTaint())),
+			api.WithWorkerNodeGroup("worker-1", api.WithLabel("key2", "val2"), api.WithTaint(framework.NoExecuteTaint())),
+			api.WithWorkerNodeGroup("worker-2", api.WithNoTaints()),
+			api.WithControlPlaneLabel("cpKey1", "cpVal1"),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
+		),
+	)
+}
+
+func TestVSphereUpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
+	vsphere := framework.NewVSphere(t)
+
+	managementCluster := framework.NewClusterE2ETest(
+		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		vsphere.WithUbuntu124(),
+		framework.WithFluxGithubConfig(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			),
+			vsphere.WithWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
+			vsphere.WithWorkerNodeGroup("worker-1", framework.WithWorkerNodeGroup("worker-1", api.WithCount(1))),
+			vsphere.WithUbuntu124(),
+		),
+	)
+
+	runWorkloadClusterUpgradeFlowAPIWithFlux(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
+			api.RemoveWorkerNodeGroup("worker-1"),
+		),
+		vsphere.WithWorkerNodeGroupConfiguration("worker-1", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
+	)
+}
+
+func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuGitHubFluxAPI(t *testing.T) {
+	vsphere := framework.NewVSphere(t)
+
+	managementCluster := framework.NewClusterE2ETest(
+		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		vsphere.WithUbuntu124(),
+		framework.WithFluxGithubConfig(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			),
+			vsphere.WithWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
+			vsphere.WithUbuntu123(),
+		),
+	)
+
+	test.CreateManagementCluster()
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		test.PushWorkloadClusterToGit(wc)
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		test.PushWorkloadClusterToGit(wc,
+			api.ClusterToConfigFiller(
+				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
+			),
+			api.VSphereToConfigFiller(api.WithDisableCSI(true)),
+			vsphere.WithUbuntu124(),
+		)
+		wc.DeleteWorkloadVsphereCSI()
+		wc.ValidateClusterState()
+		test.DeleteWorkloadClusterFromGit(wc)
+		wc.ValidateClusterDelete()
+	})
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
 }
 
 func ubuntu125ProviderWithLabels(t *testing.T) *framework.VSphere {
@@ -2209,4 +2426,11 @@ func bottlerocket124ProviderWithTaints(t *testing.T) *framework.VSphere {
 		),
 		framework.WithBottleRocket124(),
 	)
+}
+
+func runVSphereCloneModeFlow(test *framework.ClusterE2ETest, vsphere *framework.VSphere, diskSize int) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	vsphere.ValidateNodesDiskGiB(test.GetCapiMachinesForCluster(test.ClusterName), diskSize)
+	test.DeleteCluster()
 }

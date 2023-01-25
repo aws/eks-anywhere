@@ -62,6 +62,7 @@ metadata:
   name: test-cp
 spec:
   diskGiB: 25
+  cloneMode: linkedClone
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
   folder: "/SDDC-Datacenter/vm"
   memoryMiB: 8192
@@ -81,6 +82,7 @@ metadata:
   name: test-wn
 spec:
   diskGiB: 25
+  cloneMode: linkedClone
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
   folder: "/SDDC-Datacenter/vm"
   memoryMiB: 4096
@@ -100,6 +102,7 @@ metadata:
   name: test-etcd
 spec:
   diskGiB: 25
+  cloneMode: linkedClone
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
   folder: "/SDDC-Datacenter/vm"
   memoryMiB: 4096

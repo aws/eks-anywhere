@@ -17,28 +17,23 @@ import (
 // Temporary: Curated packages dev and prod accounts are currently hard coded
 // This is because there is no mechanism to extract these values as of now.
 const (
-	publicProdECR     = "public.ecr.aws/eks-anywhere"
-	publicDevECR      = "public.ecr.aws/l0g8r8j6"
+	prodAccount       = "eks-anywhere"
+	devAccount        = "l0g8r8j6"
+	publicProdECR     = "public.ecr.aws/" + prodAccount
+	publicDevECR      = "public.ecr.aws/" + devAccount
+	defaultRegion     = "us-west-2"
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
 
-type ManifestReader interface {
-	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
-	ReadImagesFromBundles(ctx context.Context, bundles *releasev1.Bundles) ([]releasev1.Image, error)
-	ReadChartsFromBundles(ctx context.Context, bundles *releasev1.Bundles) []releasev1.Image
-}
-
 type PackageReader struct {
-	ManifestReader
 	cache           *registry.Cache
 	credentialStore *registry.CredentialStore
 }
 
 // NewPackageReader create a new package reader with storage client.
-func NewPackageReader(mr ManifestReader, cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
+func NewPackageReader(cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
 	return &PackageReader{
-		ManifestReader:  mr,
 		cache:           cache,
 		credentialStore: credentialStore,
 	}

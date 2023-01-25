@@ -242,9 +242,11 @@ type deviceInfo struct {
 	Label string
 }
 
-// DevicesInfo returns device info for the provided virtual machine.
-func (g *Govc) DevicesInfo(ctx context.Context, datacenter, template string) ([]VirtualDevice, error) {
-	response, err := g.exec(ctx, "device.info", "-dc", datacenter, "-vm", template, "-json")
+// DevicesInfo returns the device info for te provided virtual machine.
+func (g *Govc) DevicesInfo(ctx context.Context, datacenter, template string, args ...string) ([]VirtualDevice, error) {
+	params := []string{"device.info", "-dc", datacenter, "-vm", template, "-json"}
+	params = append(params, args...)
+	response, err := g.exec(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("getting template device information: %v", err)
 	}
@@ -255,6 +257,20 @@ func (g *Govc) DevicesInfo(ctx context.Context, datacenter, template string) ([]
 		return nil, fmt.Errorf("unmarshalling devices info: %v", err)
 	}
 	return devicesInfo.Devices, nil
+}
+
+// GetVMDiskSizeInGB returns the size of the first disk on the VM in GB.
+func (g *Govc) GetVMDiskSizeInGB(ctx context.Context, vm, datacenter string) (int, error) {
+	devicesInfo, err := g.DevicesInfo(ctx, datacenter, vm, "disk-*")
+	if err != nil {
+		return 0, fmt.Errorf("getting disk size for vm %s: %v", vm, err)
+	}
+
+	if len(devicesInfo) == 0 {
+		return 0, fmt.Errorf("no disks found for vm %s", vm)
+	}
+
+	return int(devicesInfo[0].CapacityInKB / 1024 / 1024), nil
 }
 
 func (g *Govc) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {

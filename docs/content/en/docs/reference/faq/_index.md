@@ -30,11 +30,20 @@ Yes, you can install the [aws-iam-authenticator](https://github.com/kubernetes-s
 
 ## Miscellaneous
 
+### How much does EKS Anywhere cost?
+
+EKS Anywhere is free, open source software that you can download, install on your existing hardware, and run in your own data centers.
+It includes management and CLI tooling for all supported [cluster topologies]({{< relref "../../concepts/cluster-topologies.md" >}}) on all supported [providers]({{< relref "../../concepts/clusterworkflow.md#providers" >}}).
+You are responsible for providing infrastructure where EKS Anywhere runs (e.g. VMware, bare metal), and some providers require third party hardware and software contracts.
+
+The [EKS Anywhere Enterprise Subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/) provides access to curated packages and enterprise support.
+This is an optional—but recommended—cost based on how many clusters and how many years of support you need.
+
 ### Can I connect my EKS Anywhere cluster to EKS?
 
 Yes, you can install EKS Connector to connect your EKS Anywhere cluster to AWS EKS.
 EKS Connector is a software agent that you can install on the EKS Anywhere cluster that enables the cluster to communicate back to AWS.
-Once connected, you can immediately see the EKS Anywhere cluster with workload and cluster configuration information on the EKS console, alongside your EKS clusters. 
+Once connected, you can immediately see a read-only view of the EKS Anywhere cluster with workload and cluster configuration information on the EKS console, alongside your EKS clusters.
 
 #### How does the EKS Connector authenticate with AWS?
 
@@ -43,7 +52,7 @@ It also registers with AWS using the public key and the activation details from 
 The EKS Connector needs AWS credentials to receive commands from AWS and to send the response back.
 Whenever it requires AWS credentials, it uses its private key to sign the request and invokes AWS APIs to request the credentials.
 
-#### How does the EKS Connector authenticate  with my Kubernetes cluster?
+#### How does the EKS Connector authenticate with my Kubernetes cluster?
 
 The EKS Connector acts as a proxy and forwards the EKS console requests to the Kubernetes API server on your cluster.
 In the initial release, the connector uses [impersonation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#user-impersonation) with its service account secrets to interact with the API server.
@@ -65,6 +74,19 @@ Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises t
 
 EKS Anywhere can be installed on any infrastructure with the required Bare Metal, Cloudstack, or VMware vSphere components.
 See EKS Anywhere [Baremetal]({{< relref "../baremetal" >}}), [CloudStack]({{< relref "../cloudstack" >}}), or [vSphere]({{< relref "../vsphere" >}}) documentation.
+
+### How is EKS Anywhere different from ECS Anywhere?
+
+[Amazon ECS Anywhere](https://aws.amazon.com/ecs/anywhere/) is an option for [Amazon Elastic Container Service (ECS)](https://aws.amazon.com/ecs/) to run containers on your on-premises infrastructure.
+The ECS Anywhere Control Plane runs in an AWS region and allows you to install the ECS agent on worker nodes that run outside of an AWS region.
+Workloads that run on ECS Anywhere nodes are scheduled by ECS.
+You are not responsible for running, managing, or upgrading the ECS Control Plane.
+
+EKS Anywhere runs the Kubernetes Control Plane and worker nodes on your infrastructure.
+You are responsible for managing the EKS Anywhere Control Plane and worker nodes.
+There is no requirement to have an AWS account to run EKS Anywhere.
+
+If you'd like to see how EKS Anywhere compares to EKS please see the [information here.]({{< relref "../../concepts/eksafeatures.md" >}})
 
 ### How can I manage EKS Anywhere at scale?
 
