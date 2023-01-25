@@ -376,6 +376,9 @@ func (e *ClusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...ap
 
 	// Update the cluster config with the provided api.ClusterConfigFillers
 	w.UpdateClusterConfig(opts...)
+	if w.clusterValidatorConfig != nil {
+		w.updateClusterValidatorConfig()
+	}
 
 	e.T.Log("Updating local config file in git repo")
 	// Marshall w.ClusterConfig and write it to the repo path
