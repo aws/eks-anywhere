@@ -241,7 +241,7 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		values = append(values, "workloadOnly=true")
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
 		any := gomock.Any()
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
@@ -431,7 +431,6 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		}
 	}
 }
-
 
 func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
