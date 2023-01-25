@@ -1673,7 +1673,7 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 func (e *ClusterE2ETest) ValidateClusterState() {
 	e.T.Logf("Validating cluster %s", e.ClusterName)
 	ctx := context.Background()
-	err := retrier.Retry(12, 5*time.Second, func() error {
+	err := retrier.Retry(60, 5*time.Second, func() error {
 		return e.buildClusterValidator(ctx)
 	})
 	if err != nil {
