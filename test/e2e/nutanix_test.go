@@ -1033,8 +1033,8 @@ func TestNutanixKubernetes121OIDC(t *testing.T) {
 		framework.NewNutanix(t, framework.WithUbuntu121Nutanix()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
 }
@@ -1045,8 +1045,8 @@ func TestNutanixKubernetes122OIDC(t *testing.T) {
 		framework.NewNutanix(t, framework.WithUbuntu122Nutanix()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
 }
@@ -1057,8 +1057,8 @@ func TestNutanixKubernetes123OIDC(t *testing.T) {
 		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
 }
@@ -1069,8 +1069,8 @@ func TestNutanixKubernetes124OIDC(t *testing.T) {
 		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
 }
@@ -1081,8 +1081,8 @@ func TestNutanixKubernetes125OIDC(t *testing.T) {
 		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
