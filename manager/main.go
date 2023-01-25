@@ -123,7 +123,13 @@ func main() {
 	// Setup the context that's going to be used in controllers and for the manager.
 	ctx := ctrl.SetupSignalHandler()
 
-	setupReconcilers(ctx, setupLog, mgr)
+	closer := setupReconcilers(ctx, setupLog, mgr)
+	defer func() {
+		setupLog.Info("Closing reconciler dependencies")
+		if err := closer.Close(ctx); err != nil {
+			setupLog.Error(err, "Failed closing reconciler dependencies")
+		}
+	}()
 	setupWebhooks(setupLog, mgr)
 	setupChecks(setupLog, mgr)
 	//+kubebuilder:scaffold:builder
@@ -135,16 +141,27 @@ func main() {
 	}
 }
 
-func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manager) {
-	if features.IsActive(features.FullLifecycleAPI()) {
-		setupFullLifecycleReconcilers(ctx, setupLog, mgr)
-	} else {
-		setupLog.Info("Setting up legacy cluster controller")
-		setupLegacyClusterReconciler(setupLog, mgr)
-	}
+type closable interface {
+	Close(ctx context.Context) error
 }
 
-func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manager) {
+type noOpCloser struct{}
+
+func (c noOpCloser) Close(ctx context.Context) error {
+	return nil
+}
+
+func setupReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manager) closable {
+	if features.IsActive(features.FullLifecycleAPI()) {
+		return setupFullLifecycleReconcilers(ctx, setupLog, mgr)
+	}
+
+	setupLog.Info("Setting up legacy cluster controller")
+	setupLegacyClusterReconciler(setupLog, mgr)
+	return noOpCloser{}
+}
+
+func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mgr ctrl.Manager) closable {
 	setupLog.Info("Reading CAPI providers")
 	providers, err := clusterapi.GetProviders(ctx, mgr.GetAPIReader())
 	if err != nil {
@@ -163,23 +180,33 @@ func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mg
 		os.Exit(1)
 	}
 
+	failed := false
 	setupLog.Info("Setting up cluster controller")
 	if err := (reconcilers.ClusterReconciler).SetupWithManager(mgr, setupLog); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", anywherev1.ClusterKind)
-		os.Exit(1)
+		failed = true
 	}
 
 	setupLog.Info("Setting up vspheredatacenter controller")
 	if err := (reconcilers.VSphereDatacenterReconciler).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereDatacenterKind)
-		os.Exit(1)
+		failed = true
 	}
 
 	setupLog.Info("Setting up snowmachineconfig controller")
 	if err := (reconcilers.SnowMachineConfigReconciler).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", anywherev1.SnowMachineConfigKind)
+		failed = true
+	}
+
+	if failed {
+		if err := factory.Close(ctx); err != nil {
+			setupLog.Error(err, "Failed closing controller factory")
+		}
 		os.Exit(1)
 	}
+
+	return factory
 }
 
 func setupLegacyClusterReconciler(setupLog logr.Logger, mgr ctrl.Manager) {
