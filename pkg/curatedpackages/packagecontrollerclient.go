@@ -100,9 +100,6 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 	if (pc.eksaSecretAccessKey == "" || pc.eksaAccessKeyID == "") && pc.registryMirror == nil {
 		values = append(values, "cronjob.suspend=true")
 	}
-	if pc.managementClusterName != pc.clusterName {
-		values = append(values, "workloadOnly=true")
-	}
 
 	var err error
 	var valueFilePath string
@@ -110,7 +107,13 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return err
 	}
 
-	if err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
+	chartName := pc.chart.Name
+	if pc.managementClusterName != pc.clusterName {
+		values = append(values, "workloadOnly=true")
+		chartName = chartName + "-" + pc.clusterName
+	}
+
+	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
 		return err
 	}
 
