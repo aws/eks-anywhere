@@ -34,10 +34,10 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.4.0
-	github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
+	github.com/tinkerbell/rufio v0.1.0
 	github.com/tinkerbell/tink v0.8.0
 	github.com/vmware/govmomi v0.29.0
-	go.uber.org/zap v1.22.0
+	go.uber.org/zap v1.23.0
 	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
@@ -56,15 +56,13 @@ require (
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0
-	sigs.k8s.io/cluster-api v1.2.0
+	sigs.k8s.io/cluster-api v1.2.4
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.0.0
 	sigs.k8s.io/controller-runtime v0.13.1
 	sigs.k8s.io/yaml v1.3.0
 )
-
-require github.com/blang/semver/v4 v4.0.0 // indirect
 
 require (
 	cloud.google.com/go/compute v1.7.0 // indirect
@@ -117,7 +115,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
-	github.com/go-openapi/swag v0.19.15 // indirect
+	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/gobuffalo/flect v0.2.5 // indirect
@@ -134,7 +132,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
-	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/itchyny/gojq v0.12.6 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
@@ -182,10 +179,10 @@ require (
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
-	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
+	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
+	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf // indirect
 	google.golang.org/grpc v1.49.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
@@ -214,6 +211,7 @@ replace (
 	k8s.io/apimachinery => k8s.io/apimachinery v0.25.6
 	k8s.io/client-go => k8s.io/client-go v0.25.0
 	k8s.io/component-base => k8s.io/component-base v0.25.6
+	github.com/tinkerbell/rufio v0.1.0 => github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc5
