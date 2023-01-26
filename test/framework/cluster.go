@@ -655,15 +655,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	e.T.Logf("Creating cluster %s", e.ClusterName)
 	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
 
-	file, err := os.Open(e.ClusterConfigLocation)
-	if err != nil {
-		e.T.Fatal(err)
-	}
-	b, err := io.ReadAll(file)
-	if err != nil {
-		e.T.Fatal(err)
-	}
-	e.T.Log("Create cluster from file:\n", string(b))
+	dumpFile("Create cluster from file:", e.ClusterConfigLocation, e.T)
 
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
@@ -671,6 +663,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 
 	if e.Provider.Name() == TinkerbellProviderName {
 		createClusterArgs = append(createClusterArgs, "-z", e.HardwareCsvLocation)
+		dumpFile("Hardware csv file:", e.HardwareCsvLocation, e.T)
 		tinkBootstrapIP := os.Getenv(tinkerbellBootstrapIPEnvVar)
 		e.T.Logf("tinkBootstrapIP: %s", tinkBootstrapIP)
 		if tinkBootstrapIP != "" {
@@ -1969,4 +1962,12 @@ func (e *ClusterE2ETest) AssertAirgappedNetwork() {
 	if err == nil {
 		e.T.Fatalf("Airgap user is not airgapped")
 	}
+}
+
+func dumpFile(description string, path string, t T) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%s:\n%s\n", description, string(b))
 }

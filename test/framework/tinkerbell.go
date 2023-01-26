@@ -236,3 +236,21 @@ func WithCustomTinkerbellMachineConfig(selector string) TinkerbellOpt {
 func (t *Tinkerbell) ClusterStateValidations() []clusterf.StateValidation {
 	return []clusterf.StateValidation{}
 }
+
+// WithOSImageURL Modify OS Image url.
+func WithOSImageURL(url string) TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithTinkerbellOSImageURL(url),
+		)
+	}
+}
+
+// WithHookImagesURLPath Modify Hook OS Image url.
+func WithHookImagesURLPath(url string) TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithHookImagesURLPath(url),
+		)
+	}
+}

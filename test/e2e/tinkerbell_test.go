@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -1252,4 +1253,29 @@ func TestTinkerbellKubernetes124UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
+}
+
+func TestTinkerbellAirgappedKubernetes124BottleRocketRegistryMirror(t *testing.T) {
+	localIp, err := networkutils.GetLocalIP()
+	if err != nil {
+		t.Fatalf("Cannot get admin machine local IP: %v", err)
+	}
+	t.Logf("Admin machine's IP is: %s", localIp)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t,
+			framework.WithBottleRocketTinkerbell(),
+			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
+			framework.WithOSImageURL("http://"+localIp.String()+":8080/"+bottlerocketOSFileName),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
+	)
+
+	runTinkerbellAirgapConfigFlow(test, "10.80.0.0/16")
 }
