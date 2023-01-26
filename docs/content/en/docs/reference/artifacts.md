@@ -34,12 +34,12 @@ Bottlerocket vends its Baremetal variant Images using a secure distribution tool
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
 ```
 
 ## vSphere artifacts
@@ -217,7 +217,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    cd -
@@ -308,7 +308,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```
 1. Get `image-builder`:
     ```bash
-    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
+    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
       sudo tar -xzC /usr/local/bin ./image-builder
     ```
 
@@ -393,7 +393,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     cd -
@@ -448,7 +448,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 1. Get `image-builder`:
    ```bash
     cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     cd -
@@ -520,7 +520,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 1. Get `image-builder`:
     ```bash
     cd /home/$USER
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/25/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
