@@ -11,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/registry"
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // copyPackagesCmd is the context for the copy packages command.
@@ -83,7 +82,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry
 	}
 
 	c.registryCache = registry.NewCache()
-	bundleReader := curatedpackages.NewPackageReader(deps.ManifestReader, c.registryCache, credentialStore)
+	bundleReader := curatedpackages.NewPackageReader(c.registryCache, credentialStore)
 
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 
@@ -111,14 +110,14 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry
 	return c.copyImages(ctx, dstRegistry, credentialStore, imageList)
 }
 
-func (c CopyPackagesCommand) copyImages(ctx context.Context, dstRegistry registry.StorageClient, credentialStore *registry.CredentialStore, imageList []releasev1.Image) error {
+func (c CopyPackagesCommand) copyImages(ctx context.Context, dstRegistry registry.StorageClient, credentialStore *registry.CredentialStore, imageList []registry.Artifact) error {
 	certificates, err := registry.GetCertificates(c.srcCert)
 	if err != nil {
 		return err
 	}
 
 	for _, image := range imageList {
-		host := image.Registry()
+		host := image.Registry
 
 		srcContext := registry.NewStorageContext(host, credentialStore, certificates, c.insecure)
 		srcRegistry, err := c.registryCache.Get(srcContext)
@@ -126,7 +125,7 @@ func (c CopyPackagesCommand) copyImages(ctx context.Context, dstRegistry registr
 			return fmt.Errorf("error with repository %s: %v", host, err)
 		}
 
-		artifact := registry.NewArtifact(image.Registry(), image.Repository(), image.Version(), image.Digest())
+		artifact := registry.NewArtifact(image.Registry, image.Repository, image.Tag, image.Digest)
 		log.Println(dstRegistry.Destination(artifact))
 		if c.dryRun {
 			continue

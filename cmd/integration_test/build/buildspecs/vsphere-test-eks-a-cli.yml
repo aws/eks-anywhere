@@ -1,0 +1,109 @@
+version: 0.2
+
+env:
+  variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: 180
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
+    EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
+    EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
+    INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
+    T_VSPHERE_TEMPLATE_FOLDER: "/SDDC-Datacenter/vm/Templates"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_21: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-21"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_22: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-22"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_23: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-23"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_24: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-24"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_25: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-25"
+    T_VSPHERE_TEMPLATE_BR_1_21: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-21"
+    T_VSPHERE_TEMPLATE_BR_1_22: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22"
+    T_VSPHERE_TEMPLATE_BR_1_23: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-23"
+    T_VSPHERE_TEMPLATE_BR_1_24: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-24"
+    T_VSPHERE_TEMPLATE_REDHAT_1_21: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-21"
+    T_VSPHERE_TEMPLATE_REDHAT_1_22: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-22"
+    T_VSPHERE_TEMPLATE_REDHAT_1_23: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-23"
+    T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_21_EKS_18: "/SDDC-Datacenter/vm/Templates/kubernetes-1-21-eks-18-3269b26c66-bottlerocket"
+    T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_22_EKS_10: "/SDDC-Datacenter/vm/Templates/kubernetes-1-22-eks-10-79708da478-bottlerocket"
+    T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_23_EKS_5: "/SDDC-Datacenter/vm/Templates/kubernetes-1-23-eks-5-9fd2167080-bottlerocket"
+  secrets-manager:
+    EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
+    EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
+    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
+    EKSA_AWS_REGION: "packages_ci_beta:aws_region"
+    VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
+    GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
+    GOVC_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
+    T_VSPHERE_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
+    T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
+    T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
+    T_VSPHERE_NETWORK: "vsphere_ci_beta_connection:network"
+    T_VSPHERE_PRIVATE_NETWORK: "vsphere_ci_beta_connection:private_network"
+    T_VSPHERE_CIDR: "vsphere_ci_beta_connection:vsphere_cidr"
+    T_VSPHERE_PRIVATE_NETWORK_CIDR: "vsphere_ci_beta_connection:vsphere_private_network_cidr"
+    T_VSPHERE_RESOURCE_POOL: "vsphere_ci_beta_connection:resource_pool"
+    T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
+    T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
+    T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
+    T_VSPHERE_TAG: "vsphere_ci_beta_connection:vm_test_tag"
+    EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
+    T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
+    T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
+    T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
+    T_HTTP_PROXY_VSPHERE: "proxy-config-data:httpProxyVSphere"
+    T_HTTPS_PROXY_VSPHERE: "proxy-config-data:httpsProxyVSphere"
+    T_NO_PROXY_VSPHERE: "proxy-config-data:noProxyVSphere"
+    T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
+    T_REGISTRY_MIRROR_PORT: "harbor-registry-data:port"
+    T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:username"
+    T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
+    T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
+    T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+phases:
+  pre_build:
+    commands:
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
+      - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+  build:
+    commands:
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - BUNDLES_OVERRIDE=false
+      - |
+        if [ -f ./bin/local-bundle-release.yaml ]; then
+          BUNDLES_OVERRIDE=true
+        fi
+      - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
+      - mv bin/vsphere/e2e.test bin/e2e.test
+      - >
+        ./bin/test e2e run
+        -c ${INTEGRATION_TEST_INFRA_CONFIG}
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -j ${JOB_ID}
+        -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
+        -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
+        -r 'Test'
+        -v 4
+        --skip ${SKIPPED_TESTS}
+        --bundles-override=${BUNDLES_OVERRIDE}
+        --cleanup-vms=true
+        --test-report-folder=reports
+        --branch-name=${BRANCH_NAME}
+        --baremetal-branch=${BAREMETAL_BRANCH}
+  post_build:
+    commands:
+      - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"

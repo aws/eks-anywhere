@@ -21,7 +21,7 @@ func TestMachineHealthCheckForControlPlane(t *testing.T) {
 	for _, timeout := range timeouts {
 		tt := newApiBuilerTest(t)
 		want := expectedMachineHealthCheckForControlPlane(timeout)
-		got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout)
+		got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout, timeout)
 		tt.Expect(got).To(Equal(want))
 	}
 }
@@ -44,7 +44,8 @@ func expectedMachineHealthCheckForControlPlane(timeout time.Duration) *clusterv1
 					"cluster.x-k8s.io/control-plane": "",
 				},
 			},
-			MaxUnhealthy: &maxUnhealthy,
+			MaxUnhealthy:       &maxUnhealthy,
+			NodeStartupTimeout: &metav1.Duration{Duration: timeout},
 			UnhealthyConditions: []clusterv1.UnhealthyCondition{
 				{
 					Type:    corev1.NodeReady,
@@ -67,7 +68,7 @@ func TestMachineHealthCheckForWorkers(t *testing.T) {
 		tt := newApiBuilerTest(t)
 		tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
 		want := expectedMachineHealthCheckForWorkers(timeout)
-		got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout)
+		got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout, timeout)
 		tt.Expect(got).To(Equal(want))
 	}
 }
@@ -91,7 +92,8 @@ func expectedMachineHealthCheckForWorkers(timeout time.Duration) []*clusterv1.Ma
 						"cluster.x-k8s.io/deployment-name": "test-cluster-wng-1",
 					},
 				},
-				MaxUnhealthy: &maxUnhealthy,
+				MaxUnhealthy:       &maxUnhealthy,
+				NodeStartupTimeout: &metav1.Duration{Duration: timeout},
 				UnhealthyConditions: []clusterv1.UnhealthyCondition{
 					{
 						Type:    corev1.NodeReady,
@@ -114,9 +116,9 @@ func TestMachineHealthCheckObjects(t *testing.T) {
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
 	timeout := 5 * time.Minute
 
-	wantWN := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout)
-	wantCP := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout)
+	wantWN := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec, timeout, timeout)
+	wantCP := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout, timeout)
 
-	got := clusterapi.MachineHealthCheckObjects(tt.clusterSpec, timeout)
+	got := clusterapi.MachineHealthCheckObjects(tt.clusterSpec, timeout, timeout)
 	tt.Expect(got).To(Equal([]runtime.Object{wantWN[0], wantCP}))
 }

@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
 	github.com/aws/eks-anywhere-packages v0.2.8
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
-	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
+	github.com/aws/eks-anywhere/release v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/aws/etcdadm-bootstrap-provider v1.0.5-rc2
 	github.com/aws/etcdadm-controller v1.0.4-rc2
@@ -34,10 +34,10 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.4.0
-	github.com/tinkerbell/rufio v0.1.0
+	github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
 	github.com/tinkerbell/tink v0.8.0
 	github.com/vmware/govmomi v0.29.0
-	go.uber.org/zap v1.23.0
+	go.uber.org/zap v1.22.0
 	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
@@ -56,7 +56,7 @@ require (
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0
-	sigs.k8s.io/cluster-api v1.2.4
+	sigs.k8s.io/cluster-api v1.2.0
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.0.0
@@ -98,7 +98,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bmc-toolbox/bmclib v0.5.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/containerd/containerd v1.6.12 // indirect
+	github.com/containerd/containerd v1.6.15 // indirect
 	github.com/coredns/caddy v1.1.0 // indirect
 	github.com/coredns/corefile-migration v1.0.17 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -117,7 +117,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
-	github.com/go-openapi/swag v0.22.3 // indirect
+	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/gobuffalo/flect v0.2.5 // indirect
@@ -134,6 +134,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
+	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/itchyny/gojq v0.12.6 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
@@ -181,38 +182,38 @@ require (
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
-	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
+	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf // indirect
+	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	google.golang.org/grpc v1.49.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	k8s.io/apiextensions-apiserver v0.25.2 // indirect
+	k8s.io/apiextensions-apiserver v0.26.0 // indirect
 	k8s.io/cluster-bootstrap v0.24.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-// TODO: Once the repo is public, remove this so we use a versioned module
 replace (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/internal/configsources => ./internal/aws-sdk-go-v2/internal/configsources
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/internal/endpoints/v2 => ./internal/aws-sdk-go-v2/internal/endpoints/v2
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice => ./internal/aws-sdk-go-v2/service/snowballdevice
 	github.com/aws/eks-anywhere/release => ./release
-	github.com/containerd/containerd => github.com/containerd/containerd v1.5.13
 	// Fixing GMS-2022-20): this dependency comes from the cluster-api module.
 	// It has already been patched upstream (https://github.com/kubernetes-sigs/cluster-api/pull/6199)
 	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
-	github.com/tinkerbell/rufio v0.1.0 => github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
-	k8s.io/apimachinery v0.26.0 => k8s.io/apimachinery v0.25.4
-	k8s.io/client-go v0.26.0 => k8s.io/client-go v0.25.4
+	// These 3 are needed because v0.26.0 needs go 1.19 and controller-runtime v0.14
+	// Once we update to go 1.19, remove these replaces and bump controller-runtime
+	k8s.io/apimachinery => k8s.io/apimachinery v0.25.6
+	k8s.io/client-go => k8s.io/client-go v0.25.0
+	k8s.io/component-base => k8s.io/component-base v0.25.6
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc5

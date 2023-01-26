@@ -144,5 +144,41 @@ func TestNutanixTemplateBuilderGenerateCAPISpecForCreateWithAutoscalingConfigura
 	assert.NoError(t, err)
 	expectedWorkerSpec, err := os.ReadFile("testdata/expected_results_autoscaling_md.yaml")
 	require.NoError(t, err)
-	assert.Equal(t, workerSpec, expectedWorkerSpec)
+	assert.Equal(t, string(workerSpec), string(expectedWorkerSpec))
+}
+
+func TestNewNutanixTemplateBuilderOIDCConfig(t *testing.T) {
+	clusterConf := &anywherev1.Cluster{}
+	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
+	require.NoError(t, err)
+
+	dcConf := &anywherev1.NutanixDatacenterConfig{}
+	err = yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)
+	require.NoError(t, err)
+
+	machineConf := &anywherev1.NutanixMachineConfig{}
+	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConf)
+	require.NoError(t, err)
+
+	workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
+		"eksa-unit-test": machineConf.Spec,
+	}
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	v := version.Info{GitVersion: "v0.0.1"}
+	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster-oidc.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
+	assert.NoError(t, err)
+
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	expectedControlPlaneSpec, err := os.ReadFile("testdata/expected_results_oidc.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedControlPlaneSpec, cpSpec)
 }

@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint
 package snow
 
 import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"

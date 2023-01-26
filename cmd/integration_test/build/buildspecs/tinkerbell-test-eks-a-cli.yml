@@ -1,0 +1,120 @@
+version: 0.2
+
+env:
+  variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: 180
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
+    EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
+    EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
+    T_TINKERBELL_MAX_HARDWARE_PER_TEST: 4
+    T_TINKERBELL_INVENTORY_CSV: "hardware-manifests/inventory.csv"
+    T_TINKERBELL_BOOTSTRAP_INTERFACE: "ens192"
+    TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
+    TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
+    INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
+  secrets-manager:
+    EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
+    EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
+    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
+    EKSA_AWS_REGION: "packages_ci_beta:aws_region"
+    VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
+    GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
+    GOVC_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
+    EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
+    T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
+    T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
+    T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
+    T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL: "harbor-registry-data:tinkerbell_endpoint"
+    T_REGISTRY_MIRROR_PORT_TINKERBELL: "harbor-registry-data:tinkerbell_port"
+    T_REGISTRY_MIRROR_USERNAME_TINKERBELL: "harbor-registry-data:tinkerbell_username"
+    T_REGISTRY_MIRROR_PASSWORD_TINKERBELL: "harbor-registry-data:tinkerbell_password"
+    T_REGISTRY_MIRROR_CA_CERT_TINKERBELL: "harbor-registry-data:tinkerbell_caCert"
+    T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+    T_TINKERBELL_IMAGE_UBUNTU_1_21: "tinkerbell_ci:image_ubuntu_1_21"
+    T_TINKERBELL_IMAGE_UBUNTU_1_22: "tinkerbell_ci:image_ubuntu_1_22"
+    T_TINKERBELL_IMAGE_UBUNTU_1_23: "tinkerbell_ci:image_ubuntu_1_23"
+    T_TINKERBELL_IMAGE_UBUNTU_1_24: "tinkerbell_ci:image_ubuntu_1_24"
+    T_TINKERBELL_IMAGE_UBUNTU_1_25: "tinkerbell_ci:image_ubuntu_1_25"
+    T_TINKERBELL_IMAGE_REDHAT_1_21: "tinkerbell_ci:image_redhat_1_21"
+    T_TINKERBELL_IMAGE_REDHAT_1_22: "tinkerbell_ci:image_redhat_1_22"
+    T_TINKERBELL_IMAGE_REDHAT_1_23: "tinkerbell_ci:image_redhat_1_23"
+    T_TINKERBELL_IMAGE_REDHAT_1_24: "tinkerbell_ci:image_redhat_1_24"
+    T_TINKERBELL_IMAGE_REDHAT_1_25: "tinkerbell_ci:image_redhat_1_25"
+    T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
+    T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
+    BAREMETAL_BRANCH: "tinkerbell_ci:baremetal_branch"
+    TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
+    TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci:govc_password"
+    TEST_RUNNER_GOVC_URL: "tinkerbell_ci:govc_url"
+    TEST_RUNNER_GOVC_DATACENTER: "tinkerbell_ci:govc_datacenter"
+    TEST_RUNNER_GOVC_DATASTORE: "tinkerbell_ci:govc_datastore"
+    TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
+    TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
+    TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
+phases:
+  pre_build:
+    commands:
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
+      - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+  build:
+    commands:
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - BUNDLES_OVERRIDE=false
+      - |
+        if [ -f ./bin/local-bundle-release.yaml ]; then
+          BUNDLES_OVERRIDE=true
+        fi
+      - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
+      - mv bin/tinkerbell/e2e.test bin/e2e.test
+      - >
+        ./bin/test e2e run
+        -c ${INTEGRATION_TEST_INFRA_CONFIG}
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -j ${JOB_ID}
+        -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
+        -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
+        -r 'Test'
+        -v 4
+        --skip ${SKIPPED_TESTS}
+        --bundles-override=${BUNDLES_OVERRIDE}
+        --cleanup-vms=true
+        --test-report-folder=reports
+        --branch-name=${BRANCH_NAME}
+        --baremetal-branch=${BAREMETAL_BRANCH}
+  post_build:
+    commands:
+      - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      # Clean up test runner instances in EKS-A Baremetal lab
+      - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
+      - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
+      - export VSPHERE_SERVER=${TEST_RUNNER_GOVC_URL}
+      - export GOVC_DATACENTER=${TEST_RUNNER_GOVC_DATACENTER}
+      - export NODE_PREFIX=eksa-e2e-$CODEBUILD_BUILD_ID
+      - >
+        if [[ ${#NODE_PREFIX} -gt 80 ]] ; then
+          echo "Truncating node prefix to 80 chars for vsphere test runner nodes"
+          START="$((${#NODE_PREFIX}-79))"
+          export NODE_PREFIX=$(echo "${NODE_PREFIX}" | cut -c $START-)
+        fi
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${NODE_PREFIX}
+        -v 4
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"

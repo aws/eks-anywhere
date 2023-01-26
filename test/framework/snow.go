@@ -1,7 +1,9 @@
 package framework
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -12,6 +14,8 @@ const (
 	snowAMIIDUbuntu121   = "T_SNOW_AMIID_UBUNTU_1_21"
 	snowAMIIDUbuntu122   = "T_SNOW_AMIID_UBUNTU_1_22"
 	snowAMIIDUbuntu123   = "T_SNOW_AMIID_UBUNTU_1_23"
+	snowAMIIDUbuntu124   = "T_SNOW_AMIID_UBUNTU_1_24"
+	snowAMIIDUbuntu125   = "T_SNOW_AMIID_UBUNTU_1_25"
 	snowDevices          = "T_SNOW_DEVICES"
 	snowControlPlaneCidr = "T_SNOW_CONTROL_PLANE_CIDR"
 	snowPodCidr          = "T_SNOW_POD_CIDR"
@@ -20,9 +24,7 @@ const (
 )
 
 var requiredSnowEnvVars = []string{
-	snowAMIIDUbuntu121,
-	snowAMIIDUbuntu122,
-	snowAMIIDUbuntu123,
+	snowDevices,
 	snowControlPlaneCidr,
 	snowCredentialsFile,
 	snowCertificatesFile,
@@ -42,9 +44,6 @@ func NewSnow(t *testing.T, opts ...SnowOpt) *Snow {
 	checkRequiredEnvVars(t, requiredSnowEnvVars)
 	s := &Snow{
 		t: t,
-		fillers: []api.SnowFiller{
-			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu121, api.WithSnowAMIIDForAllMachines),
-		},
 	}
 
 	s.cpCidr = os.Getenv(snowControlPlaneCidr)
@@ -70,10 +69,13 @@ func (s *Snow) UpdateKubeConfig(content *[]byte, clusterName string) error {
 
 // ClusterConfigUpdates satisfies the test framework Provider.
 func (s *Snow) ClusterConfigUpdates() []api.ClusterConfigFiller {
+	s.t.Logf("Searching for free IP for Snow Control Plane in CIDR %s", s.cpCidr)
 	ip, err := GenerateUniqueIp(s.cpCidr)
 	if err != nil {
 		s.t.Fatalf("failed to generate control plane ip for snow [cidr=%s]: %v", s.cpCidr, err)
 	}
+	s.t.Logf("Selected IP %s for Snow Control Plane", ip)
+
 	f := make([]api.ClusterFiller, 0, len(s.clusterFillers)+2)
 	f = append(f, s.clusterFillers...)
 	f = append(f, api.WithControlPlaneEndpointIP(ip))
@@ -94,6 +96,112 @@ func (s *Snow) WithProviderUpgrade(fillers ...api.SnowFiller) ClusterE2ETestOpt 
 	return func(e *ClusterE2ETest) {
 		e.UpdateClusterConfig(api.SnowToConfigFiller(fillers...))
 	}
+}
+
+// WithBottlerocket121 returns a cluster config filler that sets the kubernetes version of the cluster to 1.21
+// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
+// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithBottlerocket121() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withBottlerocketForKubeVersion(anywherev1.Kube121)
+}
+
+// WithBottlerocket122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
+// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
+// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithBottlerocket122() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withBottlerocketForKubeVersion(anywherev1.Kube122)
+}
+
+// WithBottlerocket123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
+// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
+// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithBottlerocket123() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withBottlerocketForKubeVersion(anywherev1.Kube123)
+}
+
+// WithBottlerocket124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
+// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
+// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithBottlerocket124() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withBottlerocketForKubeVersion(anywherev1.Kube124)
+}
+
+// WithUbuntu121 returns a cluster config filler that sets the kubernetes version of the cluster to 1.21
+// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithUbuntu121() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withKubeVersionAndOS(anywherev1.Kube121, anywherev1.Ubuntu)
+}
+
+// WithUbuntu122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
+// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithUbuntu122() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withKubeVersionAndOS(anywherev1.Kube122, anywherev1.Ubuntu)
+}
+
+// WithUbuntu123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
+// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithUbuntu123() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withKubeVersionAndOS(anywherev1.Kube123, anywherev1.Ubuntu)
+}
+
+// WithUbuntu124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
+// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithUbuntu124() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withKubeVersionAndOS(anywherev1.Kube124, anywherev1.Ubuntu)
+}
+
+// WithUbuntu125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
+// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithUbuntu125() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withKubeVersionAndOS(anywherev1.Kube125, anywherev1.Ubuntu)
+}
+
+func (s *Snow) withBottlerocketForKubeVersion(kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		s.withKubeVersionAndOS(kubeVersion, anywherev1.Bottlerocket),
+		api.SnowToConfigFiller(api.WithChangeForAllSnowMachines(api.WithSnowContainersVolumeSize(100))),
+	)
+}
+
+func (s *Snow) withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, osFamily anywherev1.OSFamily) api.ClusterConfigFiller {
+	envar := fmt.Sprintf("T_SNOW_AMIID_%s_%s", strings.ToUpper(string(osFamily)), strings.ReplaceAll(string(kubeVersion), ".", "_"))
+
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
+		api.SnowToConfigFiller(
+			s.withAMIIDFromEnvVar(envar),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(osFamily),
+		),
+	)
+}
+
+func (s *Snow) withAMIIDFromEnvVar(envvar string) api.SnowFiller {
+	val, ok := os.LookupEnv(envvar)
+	if !ok {
+		s.t.Log("% for Snow AMI ID is not set, leaving amiID empty which will let CAPAS select the right AMI from the ones available in the device", envvar)
+		val = ""
+	}
+
+	return api.WithSnowAMIIDForAllMachines(val)
 }
 
 func WithSnowUbuntu121() SnowOpt {
@@ -126,12 +234,49 @@ func WithSnowUbuntu123() SnowOpt {
 	}
 }
 
+// WithSnowUbuntu124 returns SnowOpt that sets the right devices and osFamily for all SnowMachineConfigs.
+// If the env var is set, this will also set the AMI ID.
+// Otherwise, it will leave it empty and let CAPAS select one.
+func WithSnowUbuntu124() SnowOpt {
+	return func(s *Snow) {
+		s.fillers = append(s.fillers,
+			s.withAMIIDFromEnvVar(snowAMIIDUbuntu124),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithSnowUbuntu125 returns SnowOpt that sets the right devices and osFamily for all SnowMachineConfigs.
+// If the env var is set, this will also set the AMI ID.
+// Otherwise, it will leave it empty and let CAPAS select one.
+func WithSnowUbuntu125() SnowOpt {
+	return func(s *Snow) {
+		s.fillers = append(s.fillers,
+			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu125, api.WithSnowAMIIDForAllMachines),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithSnowWorkerNodeGroup stores the necessary fillers to update/create the provided worker node group with its corresponding SnowMachineConfig
+// and apply the given changes to that machine config.
 func WithSnowWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.SnowMachineConfigFiller) SnowOpt {
 	return func(s *Snow) {
 		s.fillers = append(s.fillers, snowMachineConfig(name, fillers...))
 
 		s.clusterFillers = append(s.clusterFillers, buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup))
 	}
+}
+
+// WithWorkerNodeGroup returns a filler that updates/creates the provided worker node group with its corresponding SnowMachineConfig
+// and applies the given changes to that machine config.
+func (s *Snow) WithWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.SnowMachineConfigFiller) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+		api.SnowToConfigFiller(snowMachineConfig(name, fillers...)),
+	)
 }
 
 // WithNewSnowWorkerNodeGroup updates the test cluster Config with the fillers for an specific snow worker node group.

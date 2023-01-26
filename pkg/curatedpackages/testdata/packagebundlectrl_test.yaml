@@ -5,3 +5,5 @@ metadata:
   namespace: eksa-packages
 spec:
   logLevel: 4
+  defaultRegistry: public.ecr.aws/eks-anywhere
+  defaultImageRegistry: 783794618700.dkr.ecr.us-west-2.amazonaws.com

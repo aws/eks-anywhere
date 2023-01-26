@@ -534,7 +534,9 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 // to yaml and writes it to a file on disk configured by e.ClusterConfigLocation. Call this method when you want
 // make changes to the eks-a cluster definition before running a CLI command or API operation.
 func (e *ClusterE2ETest) UpdateClusterConfig(fillers ...api.ClusterConfigFiller) {
+	e.T.Log("Updating cluster config")
 	api.UpdateClusterConfig(e.ClusterConfig, fillers...)
+	e.T.Logf("Writing cluster config to file: %s", e.ClusterConfigLocation)
 	e.buildClusterConfigFile()
 }
 
@@ -555,9 +557,11 @@ func (e *ClusterE2ETest) baseClusterConfigUpdates(opts ...CommandOpt) []api.Clus
 func (e *ClusterE2ETest) generateClusterConfigWithCLI(opts ...CommandOpt) {
 	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
 	e.RunEKSA(generateClusterConfigArgs, opts...)
+	e.T.Log("Cluster config generated with CLI")
 }
 
 func (e *ClusterE2ETest) parseClusterConfigFromDisk(file string) {
+	e.T.Logf("Parsing cluster config from disk: %s", file)
 	config, err := cluster.ParseConfigFromFile(file)
 	if err != nil {
 		e.T.Fatalf("Failed parsing generated cluster config: %s", err)
@@ -718,7 +722,8 @@ func (e *ClusterE2ETest) UpgradeClusterWithKubectl(fillers ...api.ClusterConfigF
 	e.ApplyClusterManifest()
 }
 
-func (e *ClusterE2ETest) UpgradeCluster(clusterOpts []ClusterE2ETestOpt, commandOpts ...CommandOpt) {
+// UpgradeClusterWithNewConfig applies the test options, re-generates the cluster config file and runs the CLI upgrade command.
+func (e *ClusterE2ETest) UpgradeClusterWithNewConfig(clusterOpts []ClusterE2ETestOpt, commandOpts ...CommandOpt) {
 	e.upgradeCluster(clusterOpts, commandOpts...)
 }
 
@@ -728,6 +733,11 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 	}
 	e.buildClusterConfigFile()
 
+	e.UpgradeCluster(commandOpts...)
+}
+
+// UpgradeCluster runs the CLI upgrade command.
+func (e *ClusterE2ETest) UpgradeCluster(commandOpts ...CommandOpt) {
 	upgradeClusterArgs := []string{"upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {
 		upgradeClusterArgs = append(upgradeClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
@@ -838,6 +848,7 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutAndErr)
 
 	if err = cmd.Run(); err != nil {
+		e.T.Log("Command failed, scanning output for error")
 		scanner := bufio.NewScanner(&stdoutAndErr)
 		var errorMessage string
 		// Look for the last line of the out put that starts with 'Error:'
@@ -1662,7 +1673,7 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 func (e *ClusterE2ETest) ValidateClusterState() {
 	e.T.Logf("Validating cluster %s", e.ClusterName)
 	ctx := context.Background()
-	err := retrier.Retry(12, 5*time.Second, func() error {
+	err := retrier.Retry(60, 5*time.Second, func() error {
 		return e.buildClusterValidator(ctx)
 	})
 	if err != nil {
