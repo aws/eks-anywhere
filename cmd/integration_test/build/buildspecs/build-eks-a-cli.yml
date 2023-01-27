@@ -16,7 +16,7 @@ phases:
       $CODEBUILD_SRC_DIR
       "eks-a-cli"
       $CODEBUILD_BUILD_NUMBER
-      $$CODEBUILD_RESOLVED_SOURCE_VERSION
+      $CODEBUILD_RESOLVED_SOURCE_VERSION
       "linux,darwin"
       "amd64,arm64"
       $BRANCH_NAME
