@@ -38,8 +38,10 @@ for releasetype in bundle eks-a; do
 done
 
 for os in darwin linux; do
-    EKSA_CLI_URI=$(yq e ".spec.releases[0].eksABinary.$os.uri" $ARTIFACTS_DIR/$DATE_YYYYMMDD-eks-a-release.yaml)
-    wget $EKSA_CLI_URI -O $ARTIFACTS_DIR/$(basename $EKSA_CLI_URI)
+    for arch in amd64 arm64; do
+        EKSA_CLI_URI=$(yq e ".spec.releases[0].eksABinary.$os.$arch.uri" $ARTIFACTS_DIR/$DATE_YYYYMMDD-eks-a-release.yaml)
+        wget $EKSA_CLI_URI -O $ARTIFACTS_DIR/$(basename $EKSA_CLI_URI)
+    done
 done
 
 IMAGE_BUILDER_CLI_URI=$(yq e ".spec.versionsBundles[0].eksD.imagebuilder.uri" $ARTIFACTS_DIR/$DATE_YYYYMMDD-bundle-release.yaml)

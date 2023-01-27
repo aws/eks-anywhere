@@ -18,7 +18,7 @@ phases:
       $CODEBUILD_BUILD_NUMBER
       $$CODEBUILD_RESOLVED_SOURCE_VERSION
       "linux,darwin"
-      "amd64"
+      "amd64,arm64"
       $BRANCH_NAME
       false
 
