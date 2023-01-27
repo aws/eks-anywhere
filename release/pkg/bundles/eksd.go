@@ -128,6 +128,9 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 		Etcdadm:        bundleArchiveArtifacts["etcdadm"],
 		Crictl:         bundleArchiveArtifacts["cri-tools"],
 		ImageBuilder:   bundleArchiveArtifacts["image-builder"],
+		Ami: anywherev1alpha1.OSImageBundle{
+			Bottlerocket: bundleArchiveArtifacts["bottlerocket-ami"],
+		},
 		Ova: anywherev1alpha1.OSImageBundle{
 			Bottlerocket: bundleArchiveArtifacts["bottlerocket-ova"],
 		},

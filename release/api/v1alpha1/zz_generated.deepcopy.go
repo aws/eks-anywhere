@@ -334,6 +334,7 @@ func (in *EksARelease) DeepCopy() *EksARelease {
 func (in *EksDRelease) DeepCopyInto(out *EksDRelease) {
 	*out = *in
 	in.KindNode.DeepCopyInto(&out.KindNode)
+	in.Ami.DeepCopyInto(&out.Ami)
 	in.Ova.DeepCopyInto(&out.Ova)
 	in.Raw.DeepCopyInto(&out.Raw)
 	in.Etcdadm.DeepCopyInto(&out.Etcdadm)
