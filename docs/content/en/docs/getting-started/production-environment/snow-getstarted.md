@@ -15,8 +15,9 @@ See [Cluster topologies]({{< relref "../../concepts/cluster-topologies" >}}) for
 
 EKS Anywhere on Snow needs:
 
-* EKS Anywhere enabled Snowball devices. See [Ordering EKS anywhere enabled Snow Devices](https://docs.aws.amazon.com/snowball/latest/ug/whatissnowball.html) for ordering experience through the AWS Snow Family console.
-* To be run on an Admin instance in a Snowball Edge device. See [Initial Device Setup](https://docs.aws.amazon.com/snowball/latest/ug/whatissnowball.html) for setting up the devices, launching the Admin instance, fetching and copying the device credentials to the Admin instance for `eksctl` CLI to consume.
+* Certain pre-steps to complete before interacting with a Snowball device. See [Actions to complete before ordering a Snowball Edge device for Amazon EKS Anywhere](https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html).
+* EKS Anywhere enabled Snowball devices. See [Ordering a Snowball Edge device for use with Amazon EKS Anywhere](https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html) for ordering experience through the AWS Snow Family console.
+* To be run on an Admin instance in a Snowball Edge device. See [Configuring and starting Amazon EKS Anywhere on Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html) for setting up the devices, launching the Admin instance, fetching and copying the device credentials to the Admin instance for `eksctl` CLI to consume.
 
 Also, see the [Ports and protocols]({{< relref "/docs/reference/ports.md" >}}) page for information on ports that need to be accessible from control plane, worker, and Admin machines.
 
@@ -48,7 +49,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    
    This optional step imports EKS Anywhere artifacts and release bundle to a local registry. This is required for air-gapped installation.
    
-   * [Configure Private Registry on Snowball](https://docs.aws.amazon.com/snowball/latest/ug/whatissnowball.html) shows an AWS sample of selecting and building a private registry in a Snowball Edge device.
+   * [Configuring Amazon EKS Anywhere for disconnected operation](https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html) shows AWS examples of selecting and building a private registry in a Snowball Edge device.
    * For air-gapped scenario, run the `import images` with `--input` and `--bundles` arguments pointing to the artifacts and bundle release files that pre-exist in the Admin instance.
    * Refer to the [Registry Mirror configuration]({{< relref "../../reference/clusterspec/optional/registrymirror" >}}) for more information about using private registry.
 
