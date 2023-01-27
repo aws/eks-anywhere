@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,36 +36,13 @@ func TestControlPlaneObjects(t *testing.T) {
 					KubeadmControlPlane:         kubeadmControlPlane(),
 					ControlPlaneMachineTemplate: tinkerbellMachineTemplate("controlplane-machinetemplate"),
 				},
-				Secrets: []*corev1.Secret{secret()},
+				Secrets: secret(),
 			},
 			expected: []kubernetes.Object{
 				capiCluster(),
 				tinkerbellCluster(),
 				kubeadmControlPlane(),
 				tinkerbellMachineTemplate("controlplane-machinetemplate"),
-				secret(),
-			},
-		},
-		{
-			name: "unstacked etcd",
-			controlPlane: &ControlPlane{
-				BaseControlPlane: BaseControlPlane{
-					Cluster:                     capiCluster(),
-					ProviderCluster:             tinkerbellCluster(),
-					KubeadmControlPlane:         kubeadmControlPlane(),
-					ControlPlaneMachineTemplate: tinkerbellMachineTemplate("controlPlane-machineTemplate"),
-					EtcdCluster:                 etcdCluster(),
-					EtcdMachineTemplate:         tinkerbellMachineTemplate("etcd-machineTemplate"),
-				},
-				Secrets: []*corev1.Secret{secret()},
-			},
-			expected: []kubernetes.Object{
-				capiCluster(),
-				tinkerbellCluster(),
-				kubeadmControlPlane(),
-				tinkerbellMachineTemplate("controlPlane-machineTemplate"),
-				etcdCluster(),
-				tinkerbellMachineTemplate("etcd-machineTemplate"),
 				secret(),
 			},
 		},
@@ -422,41 +398,4 @@ func secret() *corev1.Secret {
 			"password": []byte("test"),
 		},
 	}
-}
-
-func etcdCluster() *etcdv1.EtcdadmCluster {
-	var etcdCluster *etcdv1.EtcdadmCluster
-	b := []byte(`kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
-metadata:
-  name: test-etcd
-  namespace: eksa-system
-spec:
-  replicas: 3
-  etcdadmConfigSpec:
-    etcdadmBuiltin: true
-    format: cloud-config
-    cloudInitConfig:
-      version: 3.4.14
-      installDir: "/usr/bin"
-    preEtcdadmCommands:
-      - hostname "{{ ds.meta_data.hostname }}"
-      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
-      - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
-    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-    users:
-      - name: capv
-        sshAuthorizedKeys:
-          - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
-        sudo: ALL=(ALL) NOPASSWD:ALL
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: TinkerbellMachineTemplate
-    name: test-etcd-1`)
-	if err := yaml.UnmarshalStrict(b, &etcdCluster); err != nil {
-		return nil
-	}
-	return etcdCluster
 }
