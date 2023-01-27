@@ -89,18 +89,6 @@ The following table displays ports that need to be accessible from the Nutanix p
 | TCP      | Inbound   | 2379        | Manager                 | Etcd API endpoint          |
 | TCP      | Inbound   | 2380        | Manager                 | Etcd API endpoint          |
 
-## Snow provider
-
-In addition to the [Ports Required to Use AWS Services on an AWS Snowball Edge Device](https://docs.aws.amazon.com/snowball/latest/developer-guide/port-requirements.html), the following table displays ports that need to be accessible from the Snow provider running EKS Anywhere:
-
-| Protocol | Direction | Port Range  | Purpose                 | Used By                           |
-|----------|-----------|-------------|-------------------------|-----------------------------------|
-| TCP      | Inbound   | 9092        | Device Controller       | EKS Anywhere and CAPAS controller |
-| TCP      | Inbound   | 8242        | EC2 HTTPS endpoint      | EKS Anywhere and CAPAS controller |
-| TCP      | Inbound   | 6443        | Kubernetes API server   | Kubernetes API endpoint           |
-| TCP      | Inbound   | 2379        | Manager                 | Etcd API endpoint                 |
-| TCP      | Inbound   | 2380        | Manager                 | Etcd API endpoint                 |
-
 ## Control plane management tools
 
 A variety of control plane management tools are available to use with EKS Anywhere.
