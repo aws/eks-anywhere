@@ -33,9 +33,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.1
-	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.4.0
-	github.com/tinkerbell/rufio v0.1.0
-	github.com/tinkerbell/tink v0.8.0
+	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.1-0.20220615214617-9e9c2a397288
+	github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
+	github.com/tinkerbell/tink v0.7.1-0.20221004171112-6deeea887dac
 	github.com/vmware/govmomi v0.29.0
 	go.uber.org/zap v1.23.0
 	golang.org/x/crypto v0.5.0
@@ -211,7 +211,6 @@ replace (
 	k8s.io/apimachinery => k8s.io/apimachinery v0.25.6
 	k8s.io/client-go => k8s.io/client-go v0.25.0
 	k8s.io/component-base => k8s.io/component-base v0.25.6
-	github.com/tinkerbell/rufio v0.1.0 => github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.2.0-custom.rc5

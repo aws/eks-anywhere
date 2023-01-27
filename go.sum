@@ -1256,12 +1256,16 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/tchap/go-patricia v2.2.6+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
+github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.1-0.20220615214617-9e9c2a397288 h1:HkBPnM4/DdLKJvcUNsFePYuTAFOHPMSzr3DvH7ZKBds=
+github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.1-0.20220615214617-9e9c2a397288/go.mod h1:IjRbGnQtoplJEW5UgKHsCp1WukkAyjhIdDBsxjYq2dM=
 github.com/tinkerbell/cluster-api-provider-tinkerbell v0.4.0 h1:qGEBxugz4SWwmOH2nKQvm9Qq7mI7zTnv6JgCvqIZLSE=
 github.com/tinkerbell/cluster-api-provider-tinkerbell v0.4.0/go.mod h1:8Dak8sbAW1Ct9yIFBwzzMqgw+LKxtZfcheMcJQaQ/uo=
 github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc h1:aiF/Ieu+HblpMQtHL4mQUbc9VvdIP/i5Ud6kISZjflk=
 github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc/go.mod h1:2b7/OCatuqXr3SR7lns/7iKoV4XiXYdUnqwqiUGOsr0=
 github.com/tinkerbell/rufio v0.1.0 h1:EqDJZfPVrkd2f55P0ckSj3uGK07WUpAQonOBtpQUue4=
 github.com/tinkerbell/rufio v0.1.0/go.mod h1:2b7/OCatuqXr3SR7lns/7iKoV4XiXYdUnqwqiUGOsr0=
+github.com/tinkerbell/tink v0.7.1-0.20221004171112-6deeea887dac h1:3VYTNuPZLheD2KhtKcMrde0NywazHIy17qVJ7WqCDto=
+github.com/tinkerbell/tink v0.7.1-0.20221004171112-6deeea887dac/go.mod h1:bfAkSH7J/QQYIyqZRR6IQp8w78aac6l8Z2Lws5uXz6A=
 github.com/tinkerbell/tink v0.8.0 h1:qgl/rglpO5Rvq6UKZd29O6X9mDgZZYgf841+Y0IYWak=
 github.com/tinkerbell/tink v0.8.0/go.mod h1:bfAkSH7J/QQYIyqZRR6IQp8w78aac6l8Z2Lws5uXz6A=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
