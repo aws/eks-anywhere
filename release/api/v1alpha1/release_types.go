@@ -92,9 +92,14 @@ type EksARelease struct {
 type BinaryBundle struct {
 	// +kubebuilder:validation:Required
 	// EKS Anywhere Linux binary
-	LinuxBinary Archive `json:"linux"`
+	LinuxBinary ArchitectureBundle `json:"linux"`
 
 	// +kubebuilder:validation:Required
 	// EKS Anywhere Darwin binary
-	DarwinBinary Archive `json:"darwin"`
+	DarwinBinary ArchitectureBundle `json:"darwin"`
+}
+
+type ArchitectureBundle struct {
+	Amd64 Archive `json:"amd64"`
+	Arm64 Archive `json:"arm64"`
 }

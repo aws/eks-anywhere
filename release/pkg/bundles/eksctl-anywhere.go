@@ -31,52 +31,54 @@ import (
 // GetCliArtifacts returns the artifacts for eksctl-anywhere cli.
 func GetEksACliArtifacts(r *releasetypes.ReleaseConfig) ([]releasetypes.Artifact, error) {
 	osList := []string{"linux", "darwin"}
-	arch := "amd64"
+	archList := []string{"amd64", "arm64"}
 
 	artifacts := []releasetypes.Artifact{}
 	for _, os := range osList {
-		releaseName := fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
-		releaseName = strings.ReplaceAll(releaseName, "+", "-")
+		for _, arch := range archList {
+			releaseName := fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
+			releaseName = strings.ReplaceAll(releaseName, "+", "-")
 
-		var sourceS3Key string
-		var sourceS3Prefix string
-		var releaseS3Path string
-		sourcedFromBranch := r.CliRepoBranchName
-		latestPath := artifactutils.GetLatestUploadDestination(sourcedFromBranch)
-		if r.DevRelease {
-			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
-			sourceS3Prefix = fmt.Sprintf("eks-a-cli/%s/%s/%s", latestPath, os, arch)
-		} else if r.ReleaseEnvironment == "development" {
-			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
-			sourceS3Prefix = fmt.Sprintf("eks-a-cli/staging/%s/%s/%s/", latestPath, os, arch)
-		} else {
-			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
-			sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
+			var sourceS3Key string
+			var sourceS3Prefix string
+			var releaseS3Path string
+			sourcedFromBranch := r.CliRepoBranchName
+			latestPath := artifactutils.GetLatestUploadDestination(sourcedFromBranch)
+			if r.DevRelease {
+				sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
+				sourceS3Prefix = fmt.Sprintf("eks-a-cli/%s/%s/%s", latestPath, os, arch)
+			} else if r.ReleaseEnvironment == "development" {
+				sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
+				sourceS3Prefix = fmt.Sprintf("eks-a-cli/staging/%s/%s/%s/", latestPath, os, arch)
+			} else {
+				sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
+				sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
+			}
+
+			if r.DevRelease {
+				releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s/%s", r.DevReleaseUriVersion, os, arch)
+			} else {
+				releaseS3Path = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
+			}
+
+			cdnURI, err := artifactutils.GetURI(r.CDN, filepath.Join(releaseS3Path, releaseName))
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+
+			archiveArtifact := &releasetypes.ArchiveArtifact{
+				SourceS3Key:    sourceS3Key,
+				SourceS3Prefix: sourceS3Prefix,
+				ArtifactPath:   filepath.Join(r.ArtifactDir, "eks-a", r.CliRepoHead),
+				ReleaseName:    releaseName,
+				ReleaseS3Path:  releaseS3Path,
+				ReleaseCdnURI:  cdnURI,
+				OS:             os,
+				Arch:           []string{arch},
+			}
+
+			artifacts = append(artifacts, releasetypes.Artifact{Archive: archiveArtifact})
 		}
-
-		if r.DevRelease {
-			releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s/%s", r.DevReleaseUriVersion, os, arch)
-		} else {
-			releaseS3Path = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
-		}
-
-		cdnURI, err := artifactutils.GetURI(r.CDN, filepath.Join(releaseS3Path, releaseName))
-		if err != nil {
-			return nil, errors.Cause(err)
-		}
-
-		archiveArtifact := &releasetypes.ArchiveArtifact{
-			SourceS3Key:    sourceS3Key,
-			SourceS3Prefix: sourceS3Prefix,
-			ArtifactPath:   filepath.Join(r.ArtifactDir, "eks-a", r.CliRepoHead),
-			ReleaseName:    releaseName,
-			ReleaseS3Path:  releaseS3Path,
-			ReleaseCdnURI:  cdnURI,
-			OS:             os,
-			Arch:           []string{arch},
-		}
-
-		artifacts = append(artifacts, releasetypes.Artifact{Archive: archiveArtifact})
 	}
 	return artifacts, nil
 }
@@ -114,7 +116,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 			SHA512:      sha512,
 		}
 
-		bundleArchiveArtifacts[fmt.Sprintf("eksctl-anywhere-%s", archiveArtifact.OS)] = bundleArchiveArtifact
+		bundleArchiveArtifacts[fmt.Sprintf("eksctl-anywhere-%s-%s", archiveArtifact.OS, archiveArtifact.Arch)] = bundleArchiveArtifact
 	}
 
 	eksARelease := anywherev1alpha1.EksARelease{
@@ -124,8 +126,14 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 		GitCommit: r.CliRepoHead,
 		GitTag:    r.ReleaseVersion,
 		EksABinary: anywherev1alpha1.BinaryBundle{
-			LinuxBinary:  bundleArchiveArtifacts["eksctl-anywhere-linux"],
-			DarwinBinary: bundleArchiveArtifacts["eksctl-anywhere-darwin"],
+			LinuxBinary: anywherev1alpha1.ArchitectureBundle{
+				Amd64: bundleArchiveArtifacts["eksctl-anywhere-linux-amd64"],
+				Arm64: bundleArchiveArtifacts["eksctl-anywhere-linux-arm64"],
+			},
+			DarwinBinary: anywherev1alpha1.ArchitectureBundle{
+				Amd64: bundleArchiveArtifacts["eksctl-anywhere-darwin-amd64"],
+				Arm64: bundleArchiveArtifacts["eksctl-anywhere-darwin-arm64"],
+			},
 		},
 		BundleManifestUrl: bundleManifestUrl,
 	}
