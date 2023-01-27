@@ -8,8 +8,8 @@ description: >
 
 EKS Anywhere supports three different node operating systems:
 
-* Bottlerocket: For vSphere, Bare Metal and Snow providers
-* Ubuntu: For vSphere, Bare Metal, Nutanix, and Snow providers
+* Bottlerocket: For vSphere and Bare Metal providers
+* Ubuntu: For vSphere, Bare Metal, and Nutanix providers
 * Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, and Bare Metal providers
 
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
@@ -120,7 +120,7 @@ When you run `image-builder` it will pull in all components needed to create ima
 With this tool, when you build an image you get to choose:
 
 * Operating system type (for example, ubuntu)
-* Provider (vsphere, cloudstack, baremetal, ami, nutanix, snow)
+* Provider (vsphere, cloudstack, baremetal, ami, nutanix)
 * Release channel for EKS Distro (generally aligning with Kubernetes releases)
 * vSphere only: configuration file providing information needed to access your vSphere setup
 * CloudStack only: configuration file providing information needed to access your Cloudstack setup
@@ -128,7 +128,7 @@ With this tool, when you build an image you get to choose:
 * Nutanix only: configuration file providing information needed to access Prism Central
 
 Because `image-builder` creates images in the same way that the EKS Anywhere project does for their own testing, images built with that tool are supported.
-The following procedure describes how to use `image-builder` to build images for EKS Anywhere on a vSphere, Bare Metal, Nutanix, or Snow provider.
+The following procedure describes how to use `image-builder` to build images for EKS Anywhere on a vSphere, Bare Metal, or Nutanix provider.
 
 ### Prerequisites
 
@@ -423,9 +423,9 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
 
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing Cloudstack]({{< relref "./cloudstack/cloudstack-preparation.md" >}}).
 
-### Build Snow node images
+### Building AMI node images
 
-These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes for Snow.
+These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes.
 
 1. Create a linux user for running image-builder.
    ```bash
