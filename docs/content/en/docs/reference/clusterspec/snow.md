@@ -12,8 +12,8 @@ The following additional optional configuration can also be included:
 * [CNI]({{< relref "optional/cni.md" >}})
 * [IAM Authenticator]({{< relref "optional/iamauth.md" >}})
 * [OIDC]({{< relref "optional/oidc.md" >}})
-* [gitops]({{< relref "optional/gitops.md" >}})
-* [proxy]({{< relref "optional/proxy.md" >}})
+* [GitOps]({{< relref "optional/gitops.md" >}})
+* [Proxy]({{< relref "optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "optional/registrymirror.md" >}})
 
 ```yaml
