@@ -107,8 +107,8 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 		}
 
 		bundleArchiveArtifact := anywherev1alpha1.Archive{
-			Name:        fmt.Sprintf("eksctl-anywhere-%s", archiveArtifact.OS),
-			Description: fmt.Sprintf("EKS Anywhere %s CLI", strings.Title(archiveArtifact.OS)),
+			Name:        fmt.Sprintf("eksctl-anywhere-%s-%s", archiveArtifact.OS, archiveArtifact.Arch[0]),
+			Description: fmt.Sprintf("EKS Anywhere %s %s CLI", strings.Title(archiveArtifact.OS), archiveArtifact.Arch[0]),
 			OS:          archiveArtifact.OS,
 			Arch:        archiveArtifact.Arch,
 			URI:         archiveArtifact.ReleaseCdnURI,
@@ -116,7 +116,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 			SHA512:      sha512,
 		}
 
-		bundleArchiveArtifacts[fmt.Sprintf("eksctl-anywhere-%s-%s", archiveArtifact.OS, archiveArtifact.Arch)] = bundleArchiveArtifact
+		bundleArchiveArtifacts[fmt.Sprintf("eksctl-anywhere-%s-%s", archiveArtifact.OS, archiveArtifact.Arch[0])] = bundleArchiveArtifact
 	}
 
 	eksARelease := anywherev1alpha1.EksARelease{
