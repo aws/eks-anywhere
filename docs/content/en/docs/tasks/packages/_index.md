@@ -104,7 +104,7 @@ Example command output:
 Package                 Version(s)
 -------                 ----------
 hello-eks-anywhere      0.1.2-a6847010915747a9fc8a412b233a2b1ee608ae76
-adot                    0.23.0-8dcf5fb5a1502a1da44c3e4c0552a13fa125fb74
+adot                    0.25.0-c26690f90d38811dbb0e3dad5aea77d1efa52c7b
 cert-manager            1.9.1-dc0c845b5f71bea6869efccd3ca3f2dd11b5c95f
 cluster-autoscaler      9.21.0-1.23-5516c0368ff74d14c328d61fe374da9787ecf437
 harbor                  2.5.1-ee7e5a6898b6c35668a1c5789aa0d654fad6c913

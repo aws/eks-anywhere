@@ -10,7 +10,7 @@ description: >
 
 | Name                       | Description                | Versions                  | GitHub                      |
 |----------------------------|----------------------------|---------------------------|-----------------------------|
-| [ADOT]({{< relref "./adot" >}}) | ADOT Collector is an AWS distribution of the OpenTelemetry Collector, which provides a vendor-agnostic solution to receive, process and export telemetry data. | [v0.23.0]({{< relref "./adot/v0.23.0.md" >}}) | https://github.com/aws-observability/aws-otel-collector |
+| [ADOT]({{< relref "./adot" >}}) | ADOT Collector is an AWS distribution of the OpenTelemetry Collector, which provides a vendor-agnostic solution to receive, process and export telemetry data. | [v0.25.0]({{< relref "./adot/v0.25.0.md" >}}) | https://github.com/aws-observability/aws-otel-collector |
 | [Cert-manager]({{< relref "./cert-manager" >}}) | Cert-manager is a certificate manager for Kubernetes clusters. | [v1.9.1]({{< relref "./cert-manager/v1.9.1.md" >}}) | https://github.com/cert-manager/cert-manager |
 | [Cluster Autoscaler]({{< relref "./cluster-autoscaler" >}}) | Cluster Autoscaler is a component that automatically adjusts the size of a Kubernetes Cluster so that all pods have a place to run and there are no unneeded nodes. | [v9.21.0]({{< relref "./cluster-autoscaler/v9.21.0.md" >}}) | https://github.com/kubernetes/autoscaler |
 | [Emissary Ingress]({{< relref "./emissary" >}}) | Emissary Ingress is an open source `Ingress` supporting API Gateway + Layer 7 load balancer built on Envoy Proxy. | [v3.3.0]({{< relref "./emissary/v3.3.0.md" >}}) | https://github.com/emissary-ingress/emissary/ |
