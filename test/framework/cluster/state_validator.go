@@ -37,8 +37,7 @@ func (c *StateValidator) WithValidations(validations ...StateValidation) {
 // Validate runs through the set registered validations and returns an error if any of them fail after a number of retries.
 func (c *StateValidator) Validate(ctx context.Context) error {
 	errList := make([]error, 0)
-	for _, validation := range c.validations {
-		validate := validation
+	for _, validate := range c.validations {
 		err := validate(ctx, c.Config)
 		if err != nil {
 			errList = append(errList, err)
