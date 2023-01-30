@@ -308,6 +308,8 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 }
 
 func (f *Factory) withTinkerbellClusterReconciler() *Factory {
+	f.withCNIReconciler().withTracker()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tinkerbellClusterReconciler != nil {
 			return nil
@@ -315,6 +317,8 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 
 		f.tinkerbellClusterReconciler = tinkerbellreconciler.New(
 			f.manager.GetClient(),
+			f.cniReconciler,
+			f.tracker,
 			f.ipValidator,
 		)
 		f.registryBuilder.Add(anywherev1.TinkerbellDatacenterKind, f.tinkerbellClusterReconciler)
