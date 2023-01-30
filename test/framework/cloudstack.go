@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
 const (
@@ -261,7 +262,7 @@ func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, worke
 	return workerNodeGroup.ClusterFiller()
 }
 
-// ClusterValidations returns a list of provider specific validations.
-func (c *CloudStack) ClusterValidations() []ClusterValidation {
-	return []ClusterValidation{}
+// ClusterStateValidations returns a list of provider specific validations.
+func (c *CloudStack) ClusterStateValidations() []clusterf.StateValidation {
+	return []clusterf.StateValidation{}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
 const (
@@ -338,7 +339,7 @@ func UpdateNutanixUbuntuTemplate125Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu125Var, api.WithNutanixMachineTemplateImageName)
 }
 
-// ClusterValidations returns a list of provider specific validations.
-func (s *Nutanix) ClusterValidations() []ClusterValidation {
-	return []ClusterValidation{}
+// ClusterStateValidations returns a list of provider specific ClusterStateValidations.
+func (s *Nutanix) ClusterStateValidations() []clusterf.StateValidation {
+	return []clusterf.StateValidation{}
 }
