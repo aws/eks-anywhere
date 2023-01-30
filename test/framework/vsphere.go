@@ -7,9 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	v1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
@@ -18,8 +16,11 @@ import (
 	filereader "github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	anywheretypes "github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
+	"github.com/aws/eks-anywhere/test/framework/cluster/validations"
 )
 
 const (
@@ -708,44 +709,14 @@ func readVSphereConfig() (vsphereConfig, error) {
 	}, nil
 }
 
-// ClusterValidations returns a list of provider specific validations.
-func (v *VSphere) ClusterValidations() []ClusterValidation {
-	return []ClusterValidation{
-		validateCSI,
+// ClusterStateValidations returns a list of provider specific validations.
+func (v *VSphere) ClusterStateValidations() []clusterf.StateValidation {
+	return []clusterf.StateValidation{
+		clusterf.RetriableStateValidation(
+			retrier.NewWithMaxRetries(60, 5*time.Second),
+			validations.ValidateCSI,
+		),
 	}
-}
-
-func validateCSI(ctx context.Context, vc ClusterValidatorConfig) error {
-	clusterClient := vc.ClusterClient
-
-	yaml := vc.ClusterSpec.Config.VSphereDatacenter
-	yamlCSI := yaml.Spec.DisableCSI
-
-	deployment := &v1.Deployment{}
-	deployKey := types.NamespacedName{Namespace: "kube-system", Name: "vsphere-csi-controller"}
-	deployErr := clusterClient.Get(ctx, deployKey, deployment)
-	deployRes := handleCSIError(deployErr, yamlCSI)
-	if deployRes != nil {
-		return deployRes
-	}
-
-	ds := &v1.DaemonSet{}
-	dsKey := types.NamespacedName{Namespace: "kube-system", Name: "vsphere-csi-node"}
-	dsErr := clusterClient.Get(ctx, dsKey, ds)
-	dsRes := handleCSIError(dsErr, yamlCSI)
-	if dsRes != nil {
-		return dsRes
-	}
-
-	return nil
-}
-
-func handleCSIError(err error, disabled bool) error {
-	if (disabled && err == nil) || (!disabled && err != nil) {
-		return fmt.Errorf("CSI state does not match disableCSI %t, %v", disabled, err)
-	}
-
-	return nil
 }
 
 // ValidateNodesDiskGiB validates DiskGiB for all the machines.
