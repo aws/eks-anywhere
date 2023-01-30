@@ -21,7 +21,7 @@ type ValidationManager struct {
 }
 
 type Validator interface {
-	BuildValidations(ctx context.Context) []validations.Validation
+	PreflightValidations(ctx context.Context) []validations.Validation
 }
 
 func NewValidations(clusterSpec *cluster.Spec, provider providers.Provider, gitOpsFlux *flux.Flux, createValidations Validator, dockerExec validations.DockerExecutable) *ValidationManager {
@@ -74,7 +74,7 @@ func (v *ValidationManager) generateCreateValidations(ctx context.Context) []val
 		},
 	}
 
-	vs = append(vs, v.createValidations.BuildValidations(ctx)...)
+	vs = append(vs, v.createValidations.PreflightValidations(ctx)...)
 
 	return vs
 }
