@@ -5,8 +5,10 @@ import (
 	_ "embed"
 	"fmt"
 	"strings"
+	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -538,4 +540,77 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 		values["registryPassword"] = password
 	}
 	return values
+}
+
+func getControlPlaneMachineSpec(clusterSpec *cluster.Spec, diskExtractor *hardware.DiskExtractor) (*v1alpha1.TinkerbellMachineConfigSpec, error) {
+	var controlPlaneMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && clusterSpec.TinkerbellMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
+		controlPlaneMachineSpec = &clusterSpec.TinkerbellMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
+		err := diskExtractor.Register(controlPlaneMachineSpec.HardwareSelector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return controlPlaneMachineSpec, nil
+}
+
+func getWorkerNodeGroupMachineSpec(clusterSpec *cluster.Spec, diskExtractor *hardware.DiskExtractor) (map[string]v1alpha1.TinkerbellMachineConfigSpec, error) {
+	var workerNodeGroupMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
+	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(clusterSpec.TinkerbellMachineConfigs))
+	for _, wnConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if wnConfig.MachineGroupRef != nil && clusterSpec.TinkerbellMachineConfigs[wnConfig.MachineGroupRef.Name] != nil {
+			workerNodeGroupMachineSpec = &clusterSpec.TinkerbellMachineConfigs[wnConfig.MachineGroupRef.Name].Spec
+			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
+			err := diskExtractor.Register(workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name].HardwareSelector)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return workerNodeGroupMachineSpecs, nil
+}
+
+func getEtcdMachineSpec(clusterSpec *cluster.Spec, diskExtractor *hardware.DiskExtractor) (*v1alpha1.TinkerbellMachineConfigSpec, error) {
+	var etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && clusterSpec.TinkerbellMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
+			etcdMachineSpec = &clusterSpec.TinkerbellMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
+			err := diskExtractor.Register(etcdMachineSpec.HardwareSelector)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return etcdMachineSpec, nil
+}
+
+func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuilder, error) {
+	diskExtractor := hardware.NewDiskExtractor()
+
+	controlPlaneMachineSpec, err := getControlPlaneMachineSpec(clusterSpec, diskExtractor)
+	if err != nil {
+		return nil, errors.Wrap(err, "generating control plane machine spec")
+	}
+
+	workerNodeGroupMachineSpecs, err := getWorkerNodeGroupMachineSpec(clusterSpec, diskExtractor)
+	if err != nil {
+		return nil, errors.Wrap(err, "generating worker node group machine specs")
+	}
+
+	etcdMachineSpec, err := getEtcdMachineSpec(clusterSpec, diskExtractor)
+	if err != nil {
+		return nil, errors.Wrap(err, "generating etcd machine spec")
+	}
+
+	templateBuilder := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec,
+		controlPlaneMachineSpec,
+		etcdMachineSpec,
+		diskExtractor,
+		workerNodeGroupMachineSpecs,
+		clusterSpec.TinkerbellDatacenter.Spec.TinkerbellIP,
+		time.Now)
+	return templateBuilder, nil
 }

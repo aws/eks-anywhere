@@ -11,6 +11,7 @@ import (
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -60,6 +61,7 @@ func init() {
 	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(snowv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(addonsv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(tinkerbellv1.AddToScheme(scheme.Scheme))
 }
 
 var packages = []moduleWithCRD{
