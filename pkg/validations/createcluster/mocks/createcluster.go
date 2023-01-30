@@ -35,16 +35,16 @@ func (m *MockValidator) EXPECT() *MockValidatorMockRecorder {
 	return m.recorder
 }
 
-// BuildValidations mocks base method.
-func (m *MockValidator) BuildValidations(ctx context.Context) []validations.Validation {
+// PreflightValidations mocks base method.
+func (m *MockValidator) PreflightValidations(ctx context.Context) []validations.Validation {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BuildValidations", ctx)
+	ret := m.ctrl.Call(m, "PreflightValidations", ctx)
 	ret0, _ := ret[0].([]validations.Validation)
 	return ret0
 }
 
-// BuildValidations indicates an expected call of BuildValidations.
-func (mr *MockValidatorMockRecorder) BuildValidations(ctx interface{}) *gomock.Call {
+// PreflightValidations indicates an expected call of PreflightValidations.
+func (mr *MockValidatorMockRecorder) PreflightValidations(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildValidations", reflect.TypeOf((*MockValidator)(nil).BuildValidations), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreflightValidations", reflect.TypeOf((*MockValidator)(nil).PreflightValidations), ctx)
 }
