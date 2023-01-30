@@ -2,6 +2,7 @@ package reconciler_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -9,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
@@ -36,8 +38,14 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
+	remoteClient := env.Client()
 
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
@@ -45,8 +53,50 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcileCNISuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	remoteClient := fake.NewClientBuilder().Build()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcileCNIErrorClientRegistry(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(nil, errors.New("building client"))
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func (tt *reconcilerTest) withFakeClient() {
+	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
+}
+
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
-	return reconciler.New(tt.client, tt.ipValidator)
+	return reconciler.New(tt.client, tt.cniReconciler, tt.remoteClientRegistry, tt.ipValidator)
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {
@@ -82,12 +132,16 @@ type reconcilerTest struct {
 	machineConfigControlPlane *anywherev1.TinkerbellMachineConfig
 	machineConfigWorker       *anywherev1.TinkerbellMachineConfig
 	ipValidator               *tinkerbellreconcilermocks.MockIPValidator
+	cniReconciler             *tinkerbellreconcilermocks.MockCNIReconciler
+	remoteClientRegistry      *tinkerbellreconcilermocks.MockRemoteClientRegistry
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ctrl := gomock.NewController(t)
 	c := env.Client()
 
+	cniReconciler := tinkerbellreconcilermocks.NewMockCNIReconciler(ctrl)
+	remoteClientRegistry := tinkerbellreconcilermocks.NewMockRemoteClientRegistry(ctrl)
 	ipValidator := tinkerbellreconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
@@ -152,13 +206,14 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 
 	tt := &reconcilerTest{
-		t:           t,
-		WithT:       NewWithT(t),
-		APIExpecter: envtest.NewAPIExpecter(t, c),
-		ctx:         context.Background(),
-		ipValidator: ipValidator,
-
-		client: c,
+		t:                    t,
+		WithT:                NewWithT(t),
+		APIExpecter:          envtest.NewAPIExpecter(t, c),
+		ctx:                  context.Background(),
+		ipValidator:          ipValidator,
+		cniReconciler:        cniReconciler,
+		remoteClientRegistry: remoteClientRegistry,
+		client:               c,
 		eksaSupportObjs: []client.Object{
 			test.Namespace(clusterNamespace),
 			test.Namespace(constants.EksaSystemNamespace),

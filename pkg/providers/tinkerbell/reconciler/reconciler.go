@@ -12,6 +12,16 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 )
 
+// CNIReconciler is an interface for reconciling CNI in the Tinkerbell cluster reconciler.
+type CNIReconciler interface {
+	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *c.Spec) (controller.Result, error)
+}
+
+// RemoteClientRegistry is an interface that defines methods for remote clients.
+type RemoteClientRegistry interface {
+	GetClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error)
+}
+
 // IPValidator is an interface that defines methods to validate the control plane IP.
 type IPValidator interface {
 	ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error)
@@ -19,15 +29,19 @@ type IPValidator interface {
 
 // Reconciler for Tinkerbell.
 type Reconciler struct {
-	client      client.Client
-	ipValidator IPValidator
+	client               client.Client
+	cniReconciler        CNIReconciler
+	remoteClientRegistry RemoteClientRegistry
+	ipValidator          IPValidator
 }
 
 // New defines a new Tinkerbell reconciler.
-func New(client client.Client, ipValidator IPValidator) *Reconciler {
+func New(client client.Client, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry, ipValidator IPValidator) *Reconciler {
 	return &Reconciler{
-		client:      client,
-		ipValidator: ipValidator,
+		client:               client,
+		cniReconciler:        cniReconciler,
+		remoteClientRegistry: remoteClientRegistry,
+		ipValidator:          ipValidator,
 	}
 }
 
@@ -45,6 +59,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 
 	return controller.NewPhaseRunner().Register(
 		r.ipValidator.ValidateControlPlaneIP,
+		r.ReconcileCNI,
 	).Run(ctx, log, clusterSpec)
 }
 
@@ -65,7 +80,12 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 
 // ReconcileCNI reconciles the CNI to the desired state.
 func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
-	// Implement reconcile CNI here
+	log = log.WithValues("phase", "reconcileCNI")
 
-	return controller.Result{}, nil
+	client, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
 }
