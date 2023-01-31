@@ -82,6 +82,11 @@ func (f *Factory) Build(ctx context.Context) (*Reconcilers, error) {
 	return &f.reconcilers, nil
 }
 
+// Close cleans up any open resources from the created dependencies.
+func (f *Factory) Close(ctx context.Context) error {
+	return f.deps.Close(ctx)
+}
+
 func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
 	f.dependencyFactory.WithGovc()
 	f.withTracker().WithProviderClusterReconcilerRegistry(capiProviders).withAWSIamConfigReconciler()
@@ -303,6 +308,8 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 }
 
 func (f *Factory) withTinkerbellClusterReconciler() *Factory {
+	f.withCNIReconciler().withTracker()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tinkerbellClusterReconciler != nil {
 			return nil
@@ -310,6 +317,8 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 
 		f.tinkerbellClusterReconciler = tinkerbellreconciler.New(
 			f.manager.GetClient(),
+			f.cniReconciler,
+			f.tracker,
 			f.ipValidator,
 		)
 		f.registryBuilder.Add(anywherev1.TinkerbellDatacenterKind, f.tinkerbellClusterReconciler)

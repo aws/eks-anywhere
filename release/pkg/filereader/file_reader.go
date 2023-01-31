@@ -126,19 +126,12 @@ func GetSupportedK8sVersions(r *releasetypes.ReleaseConfig) ([]string, error) {
 
 func GetBottlerocketSupportedK8sVersionsByFormat(r *releasetypes.ReleaseConfig, imageFormat string) ([]string, error) {
 	if r.DryRun {
-		if imageFormat == "ova" {
-			return []string{"1-20", "1-21", "1-22", "1-23"}, nil
-		} else if imageFormat == "raw" {
-			return []string{"1-21", "1-22", "1-23"}, nil
-		}
+		return []string{"1-21", "1-22", "1-23", "1-24"}, nil
 	}
 	// Read the eks-d latest release file to get all the releases
 	var bottlerocketReleaseMap map[string]interface{}
 	var bottlerocketSupportedK8sVersions []string
 	bottlerocketReleasesFilename := "BOTTLEROCKET_RELEASES"
-	if r.BuildRepoBranchName == "release-0.9" {
-		bottlerocketReleasesFilename = "BOTTLEROCKET_OVA_RELEASES"
-	}
 	bottlerocketReleasesFilePath := filepath.Join(r.BuildRepoSource, constants.ImageBuilderProjectPath, bottlerocketReleasesFilename)
 
 	bottlerocketReleasesFileContents, err := ioutil.ReadFile(bottlerocketReleasesFilePath)
@@ -155,12 +148,6 @@ func GetBottlerocketSupportedK8sVersionsByFormat(r *releasetypes.ReleaseConfig, 
 		releaseVersionByFormat := bottlerocketReleaseMap[channel].(map[string]interface{})[fmt.Sprintf("%s-release-version", imageFormat)]
 		if releaseVersionByFormat != nil {
 			bottlerocketSupportedK8sVersions = append(bottlerocketSupportedK8sVersions, channel)
-		} else if releaseVersionByFormat == nil && imageFormat == "ova" {
-			// old format for BR releases file for backward compatibility
-			releaseVersionByFormat = bottlerocketReleaseMap[channel].(map[string]interface{})["releaseVersion"]
-			if releaseVersionByFormat != nil {
-				bottlerocketSupportedK8sVersions = append(bottlerocketSupportedK8sVersions, channel)
-			}
 		}
 	}
 

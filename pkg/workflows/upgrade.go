@@ -125,7 +125,8 @@ func (s *setupAndValidateTasks) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.CurrentClusterSpec = currentSpec
 	runner := validations.NewRunner()
-	runner.Register(s.validations(ctx, commandContext)...)
+	runner.Register(s.providerValidation(ctx, commandContext)...)
+	runner.Register(commandContext.Validations.PreflightValidations(ctx)...)
 
 	err = runner.Run()
 	if err != nil {
@@ -136,18 +137,12 @@ func (s *setupAndValidateTasks) Run(ctx context.Context, commandContext *task.Co
 	return &updateSecrets{}
 }
 
-func (s *setupAndValidateTasks) validations(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
+func (s *setupAndValidateTasks) providerValidation(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
 	return []validations.Validation{
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name: fmt.Sprintf("%s provider validation", commandContext.Provider.Name()),
 				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.CurrentClusterSpec),
-			}
-		},
-		func() *validations.ValidationResult {
-			return &validations.ValidationResult{
-				Name: "upgrade preflight validations pass",
-				Err:  commandContext.Validations.PreflightValidations(ctx),
 			}
 		},
 	}

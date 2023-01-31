@@ -772,18 +772,6 @@ func TestNeedsNewControlPlaneTemplate(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name: "control plane config endpoint changed",
-			newClusterSpec: func(spec cluster.Spec) cluster.Spec {
-				s := spec.DeepCopy()
-				s.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "anotherprism.nutanix.com"
-				return *s
-			},
-			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
-				return spec
-			},
-			expectedResult: true,
-		},
-		{
 			name: "bundle spec number changed",
 			newClusterSpec: func(spec cluster.Spec) cluster.Spec {
 				s := spec.DeepCopy()

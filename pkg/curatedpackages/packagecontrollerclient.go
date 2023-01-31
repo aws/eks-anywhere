@@ -168,7 +168,7 @@ func (pc *PackageControllerClient) CreateHelmOverrideValuesYaml() (string, []byt
 
 func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) {
 	var err error
-	endpoint, username, password, caCertContent := "", "", "", ""
+	endpoint, username, password, caCertContent, insecureSkipVerify := "", "", "", "", "false"
 	if pc.registryMirror != nil {
 		endpoint = pc.registryMirror.BaseRegistry
 		username, password, err = config.ReadCredentials()
@@ -176,6 +176,9 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 			return []byte{}, err
 		}
 		caCertContent = pc.registryMirror.CACertContent
+		if pc.registryMirror.InsecureSkipVerify {
+			insecureSkipVerify = "true"
+		}
 	}
 	templateValues := map[string]interface{}{
 		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyID)),
@@ -185,6 +188,7 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 		"mirrorUsername":      base64.StdEncoding.EncodeToString([]byte(username)),
 		"mirrorPassword":      base64.StdEncoding.EncodeToString([]byte(password)),
 		"mirrorCACertContent": base64.StdEncoding.EncodeToString([]byte(caCertContent)),
+		"insecureSkipVerify":  base64.StdEncoding.EncodeToString([]byte(insecureSkipVerify)),
 	}
 	result, err := templater.Execute(secretsValueYaml, templateValues)
 	if err != nil {

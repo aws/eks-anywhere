@@ -8,12 +8,15 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
 const (
 	snowAMIIDUbuntu121   = "T_SNOW_AMIID_UBUNTU_1_21"
 	snowAMIIDUbuntu122   = "T_SNOW_AMIID_UBUNTU_1_22"
 	snowAMIIDUbuntu123   = "T_SNOW_AMIID_UBUNTU_1_23"
+	snowAMIIDUbuntu124   = "T_SNOW_AMIID_UBUNTU_1_24"
+	snowAMIIDUbuntu125   = "T_SNOW_AMIID_UBUNTU_1_25"
 	snowDevices          = "T_SNOW_DEVICES"
 	snowControlPlaneCidr = "T_SNOW_CONTROL_PLANE_CIDR"
 	snowPodCidr          = "T_SNOW_POD_CIDR"
@@ -164,6 +167,14 @@ func (s *Snow) WithUbuntu124() api.ClusterConfigFiller {
 	return s.withKubeVersionAndOS(anywherev1.Kube124, anywherev1.Ubuntu)
 }
 
+// WithUbuntu125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
+// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
+// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
+func (s *Snow) WithUbuntu125() api.ClusterConfigFiller {
+	s.t.Helper()
+	return s.withKubeVersionAndOS(anywherev1.Kube125, anywherev1.Ubuntu)
+}
+
 func (s *Snow) withBottlerocketForKubeVersion(kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		s.withKubeVersionAndOS(kubeVersion, anywherev1.Bottlerocket),
@@ -218,6 +229,32 @@ func WithSnowUbuntu123() SnowOpt {
 	return func(s *Snow) {
 		s.fillers = append(s.fillers,
 			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithSnowUbuntu124 returns SnowOpt that sets the right devices and osFamily for all SnowMachineConfigs.
+// If the env var is set, this will also set the AMI ID.
+// Otherwise, it will leave it empty and let CAPAS select one.
+func WithSnowUbuntu124() SnowOpt {
+	return func(s *Snow) {
+		s.fillers = append(s.fillers,
+			s.withAMIIDFromEnvVar(snowAMIIDUbuntu124),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithSnowUbuntu125 returns SnowOpt that sets the right devices and osFamily for all SnowMachineConfigs.
+// If the env var is set, this will also set the AMI ID.
+// Otherwise, it will leave it empty and let CAPAS select one.
+func WithSnowUbuntu125() SnowOpt {
+	return func(s *Snow) {
+		s.fillers = append(s.fillers,
+			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu125, api.WithSnowAMIIDForAllMachines),
 			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
 			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
 		)
@@ -283,7 +320,7 @@ func UpdateSnowUbuntuTemplate123Var() api.SnowFiller {
 	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines)
 }
 
-// ClusterValidations returns a list of provider specific validations.
-func (s *Snow) ClusterValidations() []ClusterValidation {
-	return []ClusterValidation{}
+// ClusterStateValidations returns a list of provider specific validations.
+func (s *Snow) ClusterStateValidations() []clusterf.StateValidation {
+	return []clusterf.StateValidation{}
 }

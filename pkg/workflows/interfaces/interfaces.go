@@ -56,7 +56,7 @@ type GitOpsManager interface {
 }
 
 type Validator interface {
-	PreflightValidations(ctx context.Context) error
+	PreflightValidations(ctx context.Context) []validations.Validation
 }
 
 type CAPIManager interface {

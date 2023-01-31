@@ -51,7 +51,7 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 
 func TestPreFlightValidationsGitProvider(t *testing.T) {
 	tt := newPreflightValidationsTest(t)
-	tt.Expect(tt.c.PreflightValidations(tt.ctx)).To(Succeed())
+	tt.Expect(validations.ProcessValidationResults(tt.c.PreflightValidations(tt.ctx))).To(Succeed())
 }
 
 func TestPreFlightValidationsWorkloadCluster(t *testing.T) {
@@ -73,5 +73,5 @@ func TestPreFlightValidationsWorkloadCluster(t *testing.T) {
 		},
 	}, nil)
 
-	tt.Expect(tt.c.PreflightValidations(tt.ctx)).To(Succeed())
+	tt.Expect(validations.ProcessValidationResults(tt.c.PreflightValidations(tt.ctx))).To(Succeed())
 }

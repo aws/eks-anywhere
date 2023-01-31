@@ -65,6 +65,10 @@ spec:
           - localhost
           - 127.0.0.1
           - 0.0.0.0
+{{- if .apiServerExtraArgs }}
+        extraArgs:
+{{ .apiServerExtraArgs.ToYaml | indent 10 }}
+{{- end }}
       controllerManager:
         extraArgs:
           enable-hostpath-provisioner: "true"

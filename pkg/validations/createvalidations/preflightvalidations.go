@@ -11,17 +11,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-func (v *CreateValidations) PreflightValidations(ctx context.Context) (err error) {
-	vs := v.BuildValidations(ctx)
-	results := make([]validations.ValidationResult, 0, len(vs))
-	for _, validation := range vs {
-		results = append(results, *validation())
-	}
-
-	return validations.ProcessValidationResults(results)
-}
-
-func (v *CreateValidations) BuildValidations(ctx context.Context) []validations.Validation {
+// PreflightValidations returns the validations required before creating a cluster.
+func (v *CreateValidations) PreflightValidations(ctx context.Context) []validations.Validation {
 	k := v.Opts.Kubectl
 
 	targetCluster := &types.Cluster{

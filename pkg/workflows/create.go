@@ -172,7 +172,7 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 	runner := validations.NewRunner()
 	runner.Register(s.providerValidation(ctx, commandContext)...)
 	runner.Register(commandContext.GitOpsManager.Validations(ctx, commandContext.ClusterSpec)...)
-	runner.Register(s.validations(ctx, commandContext)...)
+	runner.Register(commandContext.Validations.PreflightValidations(ctx)...)
 
 	err := runner.Run()
 	if err != nil {
@@ -180,17 +180,6 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 		return nil
 	}
 	return &CreateBootStrapClusterTask{}
-}
-
-func (s *SetAndValidateTask) validations(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
-	return []validations.Validation{
-		func() *validations.ValidationResult {
-			return &validations.ValidationResult{
-				Name: "create preflight validations pass",
-				Err:  commandContext.Validations.PreflightValidations(ctx),
-			}
-		},
-	}
 }
 
 func (s *SetAndValidateTask) providerValidation(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
