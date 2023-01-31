@@ -87,9 +87,23 @@ type EksARelease struct {
 	// +kubebuilder:validation:Required
 	// EKS Anywhere binary bundle
 	EksABinary BinaryBundle `json:"eksABinary"`
+
+	// +kubebuilder:validation:Required
+	// EKS Anywhere CLI bundle
+	EksACLI PlatformBundle `json:"eksACLI"`
 }
 
 type BinaryBundle struct {
+	// +kubebuilder:validation:Required
+	// EKS Anywhere Linux binary
+	LinuxBinary Archive `json:"linux"`
+
+	// +kubebuilder:validation:Required
+	// EKS Anywhere Darwin binary
+	DarwinBinary Archive `json:"darwin"`
+}
+
+type PlatformBundle struct {
 	// +kubebuilder:validation:Required
 	// EKS Anywhere Linux binary
 	LinuxBinary ArchitectureBundle `json:"linux"`
