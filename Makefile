@@ -275,7 +275,7 @@ vulncheck: $(GO_VULNCHECK)
 LS_FILES_CMD = git ls-files --exclude-standard | grep '\.go$$' | grep -v '/mocks/\|zz_generated\.'
 
 $(TOOLS_BIN_DIR)/gci:
-	GOBIN=$(TOOLS_BIN_DIR) $(GO) install github.com/daixiang0/gci@v0.8.0
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install github.com/daixiang0/gci@v0.8.0
 
 .PHONY: run-gci
 run-gci: $(TOOLS_BIN_DIR)/gci ## Run gci against code.
