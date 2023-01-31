@@ -43,6 +43,7 @@ import (
 const (
 	testClusterConfigMainFilename          = "cluster_main.yaml"
 	testClusterConfigMain121Filename       = "cluster_main_121.yaml"
+	testClusterConfigMain121CPOnlyFilename = "cluster_main_121_cp_only.yaml"
 	testClusterConfigWithCPUpgradeStrategy = "cluster_main_121_cp_upgrade_strategy.yaml"
 	testClusterConfigWithMDUpgradeStrategy = "cluster_main_121_md_upgrade_strategy.yaml"
 	testDataDir                            = "testdata"
@@ -2105,7 +2106,7 @@ func TestSetupAndValidateCreateClusterNoCloneModeDefaultToFullClone(t *testing.T
 	}
 }
 
-func TestSetupAndValidateCreateClusterFullCloneDiskGiBLessThan20(t *testing.T) {
+func TestSetupAndValidateCreateClusterFullCloneDiskGiBLessThan20TemplateDiskSize25(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	govc := NewDummyProviderGovcClient()
@@ -2114,7 +2115,6 @@ func TestSetupAndValidateCreateClusterFullCloneDiskGiBLessThan20(t *testing.T) {
 		clusterSpec.Cluster,
 		govc,
 	)
-	provider.providerGovcClient = govc
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.CloneMode = v1alpha1.FullClone
 	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.DiskGiB = 10
@@ -2135,6 +2135,67 @@ func TestSetupAndValidateCreateClusterFullCloneDiskGiBLessThan20(t *testing.T) {
 	assert.NoError(t, err, "No error expected for provider.SetupAndValidateCreateCluster()")
 
 	for _, m := range clusterSpec.VSphereMachineConfigs {
+		assert.Equalf(t, m.Spec.DiskGiB, 25, "DiskGiB mismatch for VSphereMachineConfig %s", m.Name)
+	}
+}
+
+func TestSetupAndValidateCreateClusterFullCloneDiskGiBLessThan20TemplateDiskSize20(t *testing.T) {
+	setupContext(t)
+	ctrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+	govc := mocks.NewMockProviderGovcClient(ctrl)
+	vscb, _ := newMockVSphereClientBuilder(ctrl)
+	ipValidator := mocks.NewMockIPValidator(ctrl)
+	spec := givenClusterSpec(t, testClusterConfigMain121CPOnlyFilename)
+
+	tt := &providerTest{
+		t:     t,
+		WithT: NewWithT(t),
+		ctx:   context.Background(),
+		managementCluster: &types.Cluster{
+			Name:           "m-cluster",
+			KubeconfigFile: "kubeconfig-m.kubeconfig",
+		},
+		workloadCluster: &types.Cluster{
+			Name:           "test",
+			KubeconfigFile: "kubeconfig-w.kubeconfig",
+		},
+		cluster:          spec.Cluster,
+		clusterSpec:      spec,
+		datacenterConfig: spec.VSphereDatacenter,
+		machineConfigs:   spec.VSphereMachineConfigs,
+		kubectl:          kubectl,
+		govc:             govc,
+		clientBuilder:    vscb,
+		ipValidator:      ipValidator,
+	}
+	tt.buildNewProvider()
+
+	controlPlaneMachineConfigName := tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.CloneMode = v1alpha1.FullClone
+	tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.DiskGiB = 10
+
+	template := tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template
+	tags := []string{eksd121ReleaseTag, ubuntuOSTag}
+
+	tt.setExpectationForSetup()
+	tt.setExpectationForVCenterValidation()
+	tt.setExpectationsForMachineConfigsVCenterValidation()
+
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, template).Return(template, nil)
+	tt.govc.EXPECT().GetVMDiskSizeInGB(tt.ctx, template, tt.clusterSpec.VSphereDatacenter.Spec.Datacenter)
+	tt.govc.EXPECT().TemplateHasSnapshot(tt.ctx, template).Return(false, nil)
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, template).Return(template, nil)
+	tt.govc.EXPECT().GetTags(tt.ctx, template).Return(tags, nil)
+	tt.govc.EXPECT().ListTags(tt.ctx)
+	tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Datastore).Return(100.0, nil)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(tt.cluster)
+
+	err := tt.provider.SetupAndValidateCreateCluster(context.Background(), tt.clusterSpec)
+
+	assert.NoError(t, err, "No error expected for provider.SetupAndValidateCreateCluster()")
+
+	for _, m := range tt.clusterSpec.VSphereMachineConfigs {
 		assert.Equalf(t, m.Spec.DiskGiB, 20, "DiskGiB mismatch for VSphereMachineConfig %s", m.Name)
 	}
 }
