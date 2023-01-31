@@ -21,9 +21,6 @@ import (
 //go:embed config/secrets.yaml
 var secretsValueYaml string
 
-//go:embed config/packagebundlecontroller.yaml
-var packageBundleControllerYaml string
-
 const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
@@ -83,16 +80,9 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 // In case the cluster is a workload cluster, it performs the following actions:
 //   - Creation of package bundle controller (PBC) custom resource in management cluster
 func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) error {
-	sourceRegistry, defaultRegistry, defaultImageRegistry := pc.GetCuratedPackagesRegistries()
-	// When the management cluster name and current cluster name are different,
-	// it indicates that we are trying to install the controller on a workload cluster.
-	// Instead of installing the controller, install packagebundlecontroller resource.
-	if pc.managementClusterName != pc.clusterName {
-		return pc.InstallPBCResources(ctx, defaultRegistry, defaultImageRegistry)
-	}
-
 	ociURI := fmt.Sprintf("%s%s", "oci://", pc.registryMirror.ReplaceRegistry(pc.chart.Image()))
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
+	sourceRegistry, defaultRegistry, defaultImageRegistry := pc.GetCuratedPackagesRegistries()
 	sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
 	defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
 	defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
@@ -117,7 +107,13 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return err
 	}
 
-	if err := pc.chartInstaller.InstallChart(ctx, pc.chart.Name, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
+	chartName := pc.chart.Name
+	if pc.managementClusterName != pc.clusterName {
+		values = append(values, "workloadOnly=true")
+		chartName = chartName + "-" + pc.clusterName
+	}
+
+	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
 		return err
 	}
 
@@ -195,32 +191,6 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 		return []byte{}, err
 	}
 	return result, nil
-}
-
-// InstallPBCResources installs Curated Packages Bundle Controller Custom Resource
-// This method is used only for Workload clusters
-// Please refer to this documentation: https://github.com/aws/eks-anywhere-packages/blob/main/docs/design/remote-management.md
-func (pc *PackageControllerClient) InstallPBCResources(ctx context.Context, defaultRegistry, defaultImageRegistry string) error {
-	templateValues := map[string]string{
-		"clusterName":          pc.clusterName,
-		"namespace":            constants.EksaPackagesName,
-		"defaultRegistry":      defaultRegistry,
-		"defaultImageRegistry": defaultImageRegistry,
-	}
-
-	result, err := templater.Execute(packageBundleControllerYaml, templateValues)
-	if err != nil {
-		return fmt.Errorf("replacing template values %v", err)
-	}
-
-	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
-	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
-	if err != nil {
-		return fmt.Errorf("creating package bundle controller custom resource%v", err)
-	}
-
-	fmt.Print(&stdOut)
-	return nil
 }
 
 // packageBundleControllerResource is the name of the package bundle controller
