@@ -29,7 +29,7 @@ var _ webhook.Validator = &SnowIPPool{}
 func (r *SnowIPPool) ValidateCreate() error {
 	snowippoollog.Info("validate create", "name", r.Name)
 
-	return nil
+	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -45,7 +45,7 @@ func (r *SnowIPPool) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewInvalid(GroupVersion.WithKind(SnowIPPoolKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return nil
+	return r.Validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.

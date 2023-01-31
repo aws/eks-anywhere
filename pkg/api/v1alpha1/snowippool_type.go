@@ -40,6 +40,11 @@ type SnowIPPool struct {
 	Status SnowIPPoolStatus `json:"status,omitempty"`
 }
 
+// Validate validates the fields in a SnowIPPool object.
+func (s *SnowIPPool) Validate() error {
+	return validateSnowIPPool(s)
+}
+
 // ConvertConfigToConfigGenerateStruct converts a SnowIPPool to SnowIPPoolGenerate object.
 func (s *SnowIPPool) ConvertConfigToConfigGenerateStruct() *SnowIPPoolGenerate {
 	namespace := defaultEksaNamespace
