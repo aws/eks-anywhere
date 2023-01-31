@@ -7,7 +7,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -39,7 +38,6 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		WithManifestReader().
 		WithKubectl().
 		WithHelm(executables.WithInsecure()).
-		WithRegistryMirror(registrymirror.FromCluster(config.spec.Cluster)).
 		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
 		WithPackageControllerClient(config.spec, config.kubeConfig).
 		Build(ctx)
