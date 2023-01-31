@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
-	"k8s.io/apimachinery/pkg/api/equality"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -64,7 +63,7 @@ func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Clie
 	}
 
 	workers := builder.Workers
-	if err = workers.UpdateImmutableObjectNames(ctx, client, getMachineTemplate, machineTemplateEqual); err != nil {
+	if err = workers.UpdateImmutableObjectNames(ctx, client, GetMachineTemplate, machineTemplateEqual); err != nil {
 		return nil, errors.Wrap(err, "updating Tinkerbell worker immutable object names")
 	}
 
@@ -90,17 +89,4 @@ func machineTemplateMapping() yamlutil.Mapping[*tinkerbellv1.TinkerbellMachineTe
 			return &tinkerbellv1.TinkerbellMachineTemplate{}
 		},
 	)
-}
-
-func getMachineTemplate(ctx context.Context, client kubernetes.Client, name, namespace string) (*tinkerbellv1.TinkerbellMachineTemplate, error) {
-	m := &tinkerbellv1.TinkerbellMachineTemplate{}
-	if err := client.Get(ctx, name, namespace, m); err != nil {
-		return nil, errors.Wrap(err, "reading TinkerbellMachineTemplate")
-	}
-
-	return m, nil
-}
-
-func machineTemplateEqual(new, old *tinkerbellv1.TinkerbellMachineTemplate) bool {
-	return equality.Semantic.DeepDerivative(new.Spec, old.Spec)
 }

@@ -20,7 +20,7 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()
 	ctx := context.Background()
-	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_multiple_worker_node_groups.yaml")
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_tinkerbell_multiple_node_groups.yaml")
 	client := test.NewFakeKubeClient()
 
 	workers, err := tinkerbell.WorkersSpec(ctx, logger, client, spec)
