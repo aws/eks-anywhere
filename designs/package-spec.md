@@ -49,10 +49,6 @@ metadata:
 spec:
   packageController:
     disable: false
-    # -- defaultRegistry for all package helm charts.
-    defaultRegistry: public.ecr.aws/eks-anywhere
-    # -- defaultImageRegistry for all package images.
-    defaultImageRegistry: 783794618700.dkr.ecr.us-west-2.amazonaws.com
     controller:
       # -- Controller repository name.
       repository: "eks-anywhere-packages"
