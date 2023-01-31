@@ -92,7 +92,7 @@ https://github.com/go-openapi/jsonpointer
 ** github.com/go-openapi/jsonreference; version v0.20.0 --
 https://github.com/go-openapi/jsonreference
 
-** github.com/go-openapi/swag; version v0.19.15 --
+** github.com/go-openapi/swag; version v0.22.3 --
 https://github.com/go-openapi/swag
 
 ** github.com/golang/groupcache/lru; version v0.0.0-20210331224755-41bb18bfe9da --
@@ -101,7 +101,7 @@ https://github.com/golang/groupcache
 ** github.com/golang/mock/gomock; version v1.6.0 --
 https://github.com/golang/mock
 
-** github.com/google/gnostic; version v0.5.7-v3refs --
+** github.com/google/gnostic; version v0.6.9 --
 https://github.com/google/gnostic
 
 ** github.com/google/gofuzz; version v1.2.0 --
@@ -158,6 +158,9 @@ https://github.com/spf13/afero
 ** github.com/spf13/cobra; version v1.6.1 --
 https://github.com/spf13/cobra
 
+** github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1; version v0.1.1-0.20220615214617-9e9c2a397288 --
+https://github.com/tinkerbell/cluster-api-provider-tinkerbell
+
 ** github.com/tinkerbell/rufio/api/v1alpha1; version v0.0.0-20220606134123-599b7401b5cc --
 https://github.com/tinkerbell/rufio
 
@@ -173,7 +176,7 @@ https://github.com/xanzy/ssh-agent
 ** gomodules.xyz/jsonpatch/v2; version v2.2.0 --
 https://github.com/gomodules/jsonpatch
 
-** google.golang.org/genproto/googleapis/rpc/status; version v0.0.0-20220519153652-3a47de7e79bd --
+** google.golang.org/genproto/googleapis/rpc/status; version v0.0.0-20220829175752-36a9c930ecbf --
 https://github.com/googleapis/go-genproto
 
 ** google.golang.org/grpc; version v1.49.0 --
@@ -1120,7 +1123,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/imdario/mergo; version v0.3.12 --
+** github.com/imdario/mergo; version v0.3.13 --
 https://github.com/imdario/mergo
 
 Copyright (c) 2013 Dario Castañé. All rights reserved.
@@ -1298,7 +1301,7 @@ https://go.googlesource.com/exp
 ** golang.org/x/net; version v0.5.0 --
 https://go.googlesource.com/net
 
-** golang.org/x/oauth2; version v0.0.0-20220608161450-d0670ef3b1eb --
+** golang.org/x/oauth2; version v0.0.0-20220822191816-0ebed06d0094 --
 https://go.googlesource.com/oauth2
 
 ** golang.org/x/sync; version v0.1.0 --
@@ -1313,7 +1316,7 @@ https://go.googlesource.com/term
 ** golang.org/x/text; version v0.6.0 --
 https://go.googlesource.com/text
 
-** golang.org/x/time/rate; version v0.0.0-20220609170525-579cf78fd858 --
+** golang.org/x/time/rate; version v0.0.0-20220722155302-e5dcc9cfc0b9 --
 https://go.googlesource.com/time
 
 ** k8s.io/apimachinery/third_party/forked/golang; version v0.25.6 --
@@ -1635,7 +1638,7 @@ Copyright (c) 2016 Uber Technologies, Inc.
 https://github.com/uber-go/multierr
 Copyright (c) 2017-2021 Uber Technologies, Inc.
 
-** go.uber.org/zap; version v1.22.0 --
+** go.uber.org/zap; version v1.23.0 --
 https://github.com/uber-go/zap
 Copyright (c) 2016-2017 Uber Technologies, Inc.
 
