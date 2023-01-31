@@ -59,6 +59,14 @@ func snowEntry() *ConfigManagerEntry {
 				return nil
 			},
 			func(c *Config) error {
+				for _, p := range c.SnowIPPools {
+					if err := p.Validate(); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *Config) error {
 				if c.SnowDatacenter != nil {
 					if err := validateSameNamespace(c, c.SnowDatacenter); err != nil {
 						return err
