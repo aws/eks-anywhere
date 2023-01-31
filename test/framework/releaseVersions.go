@@ -163,9 +163,9 @@ func (p *platformAwareRelease) binaryUri() (binaryUri string, err error) {
 	r := runtime.GOOS
 	switch r {
 	case "darwin":
-		return p.EksABinary.DarwinBinary.Amd64.URI, nil
+		return p.EksABinary.DarwinBinary.URI, nil
 	case "linux":
-		return p.EksABinary.LinuxBinary.Amd64.URI, nil
+		return p.EksABinary.LinuxBinary.URI, nil
 	default:
 		return "", fmt.Errorf("unsupported runtime %s", r)
 	}

@@ -126,6 +126,10 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 		GitCommit: r.CliRepoHead,
 		GitTag:    r.ReleaseVersion,
 		EksABinary: anywherev1alpha1.BinaryBundle{
+			LinuxBinary:  bundleArchiveArtifacts["eksctl-anywhere-linux-amd64"],
+			DarwinBinary: bundleArchiveArtifacts["eksctl-anywhere-darwin-amd64"],
+		},
+		EksACLI: anywherev1alpha1.PlatformBundle{
 			LinuxBinary: anywherev1alpha1.ArchitectureBundle{
 				Amd64: bundleArchiveArtifacts["eksctl-anywhere-linux-amd64"],
 				Arm64: bundleArchiveArtifacts["eksctl-anywhere-linux-arm64"],
