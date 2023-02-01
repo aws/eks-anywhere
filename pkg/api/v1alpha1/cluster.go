@@ -562,17 +562,30 @@ func validateNetworking(clusterConfig *Cluster) error {
 	if len(clusterNetwork.Services.CidrBlocks) > 1 {
 		return fmt.Errorf("multiple CIDR blocks for Services are not yet supported")
 	}
-	_, podCIDRIpNet, err := net.ParseCIDR(clusterNetwork.Pods.CidrBlocks[0])
+	_, podCIDRIPNet, err := net.ParseCIDR(clusterNetwork.Pods.CidrBlocks[0])
 	if err != nil {
 		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterNetwork.Pods)
 	}
-	_, _, err = net.ParseCIDR(clusterNetwork.Services.CidrBlocks[0])
+	_, serviceCIDRIPNet, err := net.ParseCIDR(clusterNetwork.Services.CidrBlocks[0])
 	if err != nil {
 		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterNetwork.Services)
 	}
 
+	if clusterConfig.Spec.DatacenterRef.Kind == SnowDatacenterKind {
+		controlPlaneEndpoint := net.ParseIP(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host)
+		if controlPlaneEndpoint == nil {
+			return fmt.Errorf("control plane endpoint %s is invalid", clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host)
+		}
+		if podCIDRIPNet.Contains(controlPlaneEndpoint) {
+			return fmt.Errorf("control plane endpoint %s conflicts with pods CIDR block %s", clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, clusterNetwork.Pods.CidrBlocks[0])
+		}
+		if serviceCIDRIPNet.Contains(controlPlaneEndpoint) {
+			return fmt.Errorf("control plane endpoint %s conflicts with services CIDR block %s", clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, clusterNetwork.Services.CidrBlocks[0])
+		}
+	}
+
 	if clusterNetwork.Nodes != nil && clusterNetwork.Nodes.CIDRMaskSize != nil {
-		podMaskSize, _ := podCIDRIpNet.Mask.Size()
+		podMaskSize, _ := podCIDRIPNet.Mask.Size()
 		nodeCidrMaskSize := clusterNetwork.Nodes.CIDRMaskSize
 		// the pod subnet mask needs to allow one or multiple node-masks
 		// i.e. if it has a /24 the node mask must be between 24 and 32 for ipv4
