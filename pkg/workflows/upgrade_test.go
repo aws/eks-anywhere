@@ -401,6 +401,8 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectVerifyClusterSpecNoChanges()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectCreateEKSAResources(test.workloadCluster)
+	test.expectInstallEksdManifest(test.workloadCluster)
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)

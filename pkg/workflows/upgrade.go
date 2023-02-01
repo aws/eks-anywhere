@@ -110,7 +110,10 @@ type deleteBootstrapClusterTask struct {
 
 type updateClusterAndGitResources struct{}
 
-type resumeEksaReconcile struct {
+// reconcileClusterDefinitions updates all the places that have a cluster definition to follow the cluster config provided to this workflow:
+// the eks-a objects in the management cluster and the cluster config in the git repo if GitOps is enabled. It also resumes the eks-a controller
+// manager and GitOps reconciliations.
+type reconcileClusterDefinitions struct {
 	eksaSpecDiff bool
 }
 
@@ -303,7 +306,7 @@ func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandCon
 
 	if !diff {
 		logger.Info("No upgrades needed from cluster spec")
-		return &resumeEksaReconcile{}
+		return &reconcileClusterDefinitions{eksaSpecDiff: false}
 	}
 
 	return &createBootstrapClusterTask{}
@@ -508,7 +511,7 @@ func (s *upgradeWorkloadClusterTask) Restore(ctx context.Context, commandContext
 
 func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.ManagementCluster.ExistingManagement {
-		return &updateClusterAndGitResources{}
+		return &reconcileClusterDefinitions{eksaSpecDiff: true}
 	}
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
 	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef(), types.WithNodeHealthy())
@@ -517,7 +520,7 @@ func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *
 		return &CollectDiagnosticsTask{}
 	}
 	commandContext.ManagementCluster = commandContext.WorkloadCluster
-	return &updateClusterAndGitResources{}
+	return &reconcileClusterDefinitions{eksaSpecDiff: true}
 }
 
 func (s *moveManagementToWorkloadTask) Name() string {
@@ -534,11 +537,11 @@ func (s *moveManagementToWorkloadTask) Restore(ctx context.Context, commandConte
 	if !commandContext.ManagementCluster.ExistingManagement {
 		commandContext.ManagementCluster = commandContext.WorkloadCluster
 	}
-	return &updateClusterAndGitResources{}, nil
+	return &reconcileClusterDefinitions{eksaSpecDiff: true}, nil
 }
 
-func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Applying new EKS-A cluster resource")
+func (s *reconcileClusterDefinitions) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	logger.Info("Updating EKS-A cluster resource")
 	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
 	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
@@ -551,33 +554,9 @@ func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	return &resumeEksaReconcile{
-		eksaSpecDiff: true,
-	}
-}
-
-func (s *updateClusterAndGitResources) Name() string {
-	return "update-resources"
-}
-
-func (s *updateClusterAndGitResources) Checkpoint() *task.CompletedTask {
-	return &task.CompletedTask{
-		Checkpoint: nil,
-	}
-}
-
-func (s *updateClusterAndGitResources) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	return &resumeEksaReconcile{
-		eksaSpecDiff: true,
-	}, nil
-}
-
-func (s *resumeEksaReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
-	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 
 	logger.Info("Resuming EKS-A controller reconcile")
-	err := commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.Provider)
+	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -609,17 +588,17 @@ func (s *resumeEksaReconcile) Run(ctx context.Context, commandContext *task.Comm
 	return &writeClusterConfigTask{}
 }
 
-func (s *resumeEksaReconcile) Name() string {
+func (s *reconcileClusterDefinitions) Name() string {
 	return "resume-eksa-and-gitops-kustomization"
 }
 
-func (s *resumeEksaReconcile) Checkpoint() *task.CompletedTask {
+func (s *reconcileClusterDefinitions) Checkpoint() *task.CompletedTask {
 	return &task.CompletedTask{
 		Checkpoint: nil,
 	}
 }
 
-func (s *resumeEksaReconcile) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+func (s *reconcileClusterDefinitions) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
 	return &writeClusterConfigTask{}, nil
 }
 
