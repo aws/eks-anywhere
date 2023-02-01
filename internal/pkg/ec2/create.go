@@ -77,7 +77,8 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 					},
 				},
 			},
-			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(dockerLogsUserData))),
+			UserData:        aws.String(base64.StdEncoding.EncodeToString([]byte(dockerLogsUserData))),
+			MetadataOptions: &ec2.InstanceMetadataOptionsRequest{HttpTokens: aws.String("required"), HttpPutResponseHopLimit: aws.Int64(int64(2))},
 		})
 
 		return err
