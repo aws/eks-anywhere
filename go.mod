@@ -173,7 +173,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stmcginnis/gofish v0.12.1-0.20220311113027-6072260f4c8d // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
-	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.4.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect

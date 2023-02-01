@@ -12,6 +12,7 @@ import (
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 )
@@ -44,7 +45,17 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 					md.Name = "test-md-1"
 					md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 					md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
-					md.Spec.Replicas = ptr.Int32(2)
+					md.Spec.Replicas = ptr.Int32(1)
+					md.Labels["pool"] = "md-1"
+					md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
+					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+						Type: "",
+						RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+							MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
+							MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
+							DeletePolicy:   nil,
+						},
+					}
 				},
 			),
 			ProviderMachineTemplate: machineTemplate(
@@ -65,17 +76,17 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0",
 			Namespace: "eksa-system",
-			Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": "test"},
+			Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": "test", "pool": "md-0"},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
 			ClusterName: "test",
-			Replicas:    ptr.Int32(3),
+			Replicas:    ptr.Int32(1),
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
 			Template: clusterv1.MachineTemplateSpec{
 				ObjectMeta: clusterv1.ObjectMeta{
-					Labels: map[string]string{"cluster.x-k8s.io/cluster-name": "test"},
+					Labels: map[string]string{"pool": "md-0", "cluster.x-k8s.io/cluster-name": "test"},
 				},
 				Spec: clusterv1.MachineSpec{
 					ClusterName: "test",
@@ -92,6 +103,14 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 					},
 					Version: ptr.String("v1.21.2-eks-1-21-4"),
+				},
+			},
+			Strategy: &clusterv1.MachineDeploymentStrategy{
+				Type: "",
+				RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+					MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 0, StrVal: ""},
+					MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 1, StrVal: ""},
+					DeletePolicy:   nil,
 				},
 			},
 		},
@@ -119,36 +138,22 @@ func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bo
 				Spec: bootstrapv1.KubeadmConfigSpec{
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
 						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-							Name:      "{{ ds.meta_data.hostname }}",
-							CRISocket: "/var/run/containerd/containerd.sock",
-							Taints: []corev1.Taint{
-								{
-									Key:       "key2",
-									Value:     "val2",
-									Effect:    "PreferNoSchedule",
-									TimeAdded: nil,
-								},
-							},
+							Name:      "",
+							CRISocket: "",
+							Taints:    nil,
 							KubeletExtraArgs: map[string]string{
 								"anonymous-auth":    "false",
-								"cloud-provider":    "external",
+								"provider-id":       "PROVIDER_ID",
 								"read-only-port":    "0",
 								"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 							},
 						},
 					},
-					PreKubeadmCommands: []string{
-						`hostname "{{ ds.meta_data.hostname }}"`,
-						`echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts`,
-						`echo "127.0.0.1   localhost" >>/etc/hosts`,
-						`echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts`,
-						`echo "{{ ds.meta_data.hostname }}" >/etc/hostname`,
-					},
 					Users: []bootstrapv1.User{
 						{
-							Name:              "capv",
+							Name:              "tink-user",
 							Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
-							SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+							SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"},
 						},
 					},
 					Format: bootstrapv1.Format("cloud-config"),
