@@ -2084,6 +2084,39 @@ func TestValidateNetworking(t *testing.T) {
 			},
 		},
 		{
+			name:    "both pods CIDR block and service CIDR block do not conflict with control plane endpoint",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: SnowDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "192.168.1.10",
+						},
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"10.1.0.0/16",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"10.96.0.0/12",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
 			name:    "invalid pods CIDR block",
 			wantErr: fmt.Errorf("invalid CIDR block format for Pods: {[1.2.3]}. Please specify a valid CIDR block for pod subnet"),
 			cluster: &Cluster{
@@ -2097,6 +2130,39 @@ func TestValidateNetworking(t *testing.T) {
 						Services: Services{
 							CidrBlocks: []string{
 								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "pods CIDR block conflicts with control plane endpoint",
+			wantErr: fmt.Errorf("control plane endpoint 192.168.1.10 conflicts with pods CIDR block 192.168.1.0/24"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: SnowDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "192.168.1.10",
+						},
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"192.168.1.0/24",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
 							},
 						},
 						Nodes: &Nodes{
@@ -2219,6 +2285,72 @@ func TestValidateCNIConfig(t *testing.T) {
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{
 						PolicyEnforcementMode: "never",
+					},
+				},
+			},
+		},
+		{
+			name:    "services CIDR block conflicts with control plane endpoint",
+			wantErr: fmt.Errorf("control plane endpoint 192.168.1.10 conflicts with services CIDR block 192.168.1.0/24"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: SnowDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "192.168.1.10",
+						},
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"192.168.1.0/24",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "control plane endpoint is invalid",
+			wantErr: fmt.Errorf("control plane endpoint 192.168.1 is invalid"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: SnowDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "192.168.1",
+						},
+					},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"10.1.0.0/24",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
 					},
 				},
 			},
