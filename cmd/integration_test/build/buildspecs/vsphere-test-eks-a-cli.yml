@@ -17,6 +17,7 @@ env:
     T_VSPHERE_TEMPLATE_BR_1_22: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22"
     T_VSPHERE_TEMPLATE_BR_1_23: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-23"
     T_VSPHERE_TEMPLATE_BR_1_24: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-24"
+    T_VSPHERE_TEMPLATE_BR_1_25: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-25"
     T_VSPHERE_TEMPLATE_REDHAT_1_21: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-21"
     T_VSPHERE_TEMPLATE_REDHAT_1_22: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-22"
     T_VSPHERE_TEMPLATE_REDHAT_1_23: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-23"
