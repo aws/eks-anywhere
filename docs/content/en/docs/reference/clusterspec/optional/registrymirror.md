@@ -57,7 +57,6 @@ spec:
     -----END CERTIFICATE-----
   ```
 ### __authenticate__ (optional)
->**_NOTE:_** Authenticated private registries are only supported for Ubuntu on vSphere currently. 
 
 * __Description__: Optional field to authenticate with a private registry. When using private registries that 
   require authentication, it is necessary to set this parameter to ```true``` in the cluster spec.
