@@ -12,6 +12,8 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const minDiskGib int = 20
+
 type Defaulter struct {
 	govc ProviderGovcClient
 }
@@ -34,11 +36,9 @@ func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *Spec)
 			return err
 		}
 
-		if err := d.setCloneModeDefaults(ctx, m, spec.VSphereDatacenter.Spec.Datacenter); err != nil {
+		if err := d.setCloneModeAndDiskSizeDefaults(ctx, m, spec.VSphereDatacenter.Spec.Datacenter); err != nil {
 			return err
 		}
-
-		d.setDiskSizeDefaults(m)
 	}
 
 	return nil
@@ -101,10 +101,24 @@ func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machin
 	return nil
 }
 
-func (d *Defaulter) setCloneModeDefaults(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig, datacenter string) error {
-	diskSize, err := d.govc.GetVMDiskSizeInGB(ctx, machineConfig.Spec.Template, datacenter)
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func (d *Defaulter) setCloneModeAndDiskSizeDefaults(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig, datacenter string) error {
+	templateDiskSize, err := d.govc.GetVMDiskSizeInGB(ctx, machineConfig.Spec.Template, datacenter)
 	if err != nil {
 		return fmt.Errorf("getting disk size for template %s: %v", machineConfig.Spec.Template, err)
+	}
+
+	minDiskSize := max(minDiskGib, templateDiskSize)
+
+	if machineConfig.Spec.DiskGiB < minDiskSize {
+		logger.Info("Warning: VSphereMachineConfig DiskGiB cannot be less than %s. Defaulting to %s.", minDiskSize, minDiskSize)
+		machineConfig.Spec.DiskGiB = minDiskSize
 	}
 
 	templateHasSnapshot, err := d.govc.TemplateHasSnapshot(ctx, machineConfig.Spec.Template)
@@ -112,48 +126,49 @@ func (d *Defaulter) setCloneModeDefaults(ctx context.Context, machineConfig *any
 		return fmt.Errorf("getting template snapshot details: %v", err)
 	}
 
-	switch machineConfig.Spec.CloneMode {
-	case "":
-		if templateHasSnapshot && machineConfig.Spec.DiskGiB == diskSize {
-			logger.V(3).Info("CloneMode not set, defaulting to linkedClone", "VSphereMachineConfig", machineConfig.Name)
-			machineConfig.Spec.CloneMode = anywherev1.LinkedClone
-		} else {
-			logger.V(3).Info("CloneMode not set, defaulting to fullClone", "VSphereMachineConfig", machineConfig.Name)
-			machineConfig.Spec.CloneMode = anywherev1.FullClone
-		}
-
-	case anywherev1.FullClone:
-		// do nothing
-
-	case anywherev1.LinkedClone:
-		if !templateHasSnapshot {
-			return fmt.Errorf(
-				"cannot use 'linkedClone' for VSphereMachineConfig '%s' because its template (%s) has no snapshots; create snapshots or change the cloneMode to 'fullClone'",
-				machineConfig.Name,
-				machineConfig.Spec.Template,
-			)
-		}
-		if machineConfig.Spec.DiskGiB != diskSize {
-			return fmt.Errorf(
-				"diskGiB cannot be customized for VSphereMachineConfig '%s' when using 'linkedClone'; change the cloneMode to 'fullClone' or the diskGiB to match the template's (%s) disk size of %d GiB",
-				machineConfig.Name,
-				machineConfig.Spec.Template,
-				diskSize,
-			)
-		}
-
-	default:
-		return fmt.Errorf("cloneMode %s is not supported for VSphereMachineConfig %s. Supported clone modes: [%s, %s]", machineConfig.Spec.CloneMode, machineConfig.Name, anywherev1.LinkedClone, anywherev1.FullClone)
+	if machineConfig.Spec.CloneMode == anywherev1.FullClone {
+		return nil
 	}
 
+	if machineConfig.Spec.CloneMode == anywherev1.LinkedClone {
+		return validateMachineWithLinkedCloneMode(templateHasSnapshot, templateDiskSize, machineConfig)
+	}
+
+	if machineConfig.Spec.CloneMode == "" {
+		return validateMachineWithNoCloneMode(templateHasSnapshot, templateDiskSize, machineConfig)
+	}
+
+	return fmt.Errorf("cloneMode %s is not supported for VSphereMachineConfig %s. Supported clone modes: [%s, %s]", machineConfig.Spec.CloneMode, machineConfig.Name, anywherev1.LinkedClone, anywherev1.FullClone)
+}
+
+func validateMachineWithNoCloneMode(templateHasSnapshot bool, templateDiskSize int, machineConfig *anywherev1.VSphereMachineConfig) error {
+	if templateHasSnapshot && machineConfig.Spec.DiskGiB == templateDiskSize {
+		logger.V(3).Info("CloneMode not set, defaulting to linkedClone", "VSphereMachineConfig", machineConfig.Name)
+		machineConfig.Spec.CloneMode = anywherev1.LinkedClone
+	} else {
+		logger.V(3).Info("CloneMode not set, defaulting to fullClone", "VSphereMachineConfig", machineConfig.Name)
+		machineConfig.Spec.CloneMode = anywherev1.FullClone
+	}
 	return nil
 }
 
-func (d *Defaulter) setDiskSizeDefaults(machineConfig *anywherev1.VSphereMachineConfig) {
-	if machineConfig.Spec.DiskGiB < 20 {
-		logger.Info("Warning: VSphereMachineConfig DiskGiB cannot be less than 20. Defaulting to 20.")
-		machineConfig.Spec.DiskGiB = 20
+func validateMachineWithLinkedCloneMode(templateHasSnapshot bool, templateDiskSize int, machineConfig *anywherev1.VSphereMachineConfig) error {
+	if !templateHasSnapshot {
+		return fmt.Errorf(
+			"cannot use 'linkedClone' for VSphereMachineConfig '%s' because its template (%s) has no snapshots; create snapshots or change the cloneMode to 'fullClone'",
+			machineConfig.Name,
+			machineConfig.Spec.Template,
+		)
 	}
+	if machineConfig.Spec.DiskGiB != templateDiskSize {
+		return fmt.Errorf(
+			"diskGiB cannot be customized for VSphereMachineConfig '%s' when using 'linkedClone'; change the cloneMode to 'fullClone' or the diskGiB to match the template's (%s) disk size of %d GiB",
+			machineConfig.Name,
+			machineConfig.Spec.Template,
+			templateDiskSize,
+		)
+	}
+	return nil
 }
 
 func (d *Defaulter) setTemplateFullPath(ctx context.Context,
