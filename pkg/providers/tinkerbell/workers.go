@@ -7,12 +7,10 @@ import (
 	"github.com/pkg/errors"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	capiyaml "github.com/aws/eks-anywhere/pkg/clusterapi/yaml"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
@@ -27,19 +25,10 @@ type (
 // names for them.
 func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*Workers, error) {
 	wcc := spec.Cluster.Spec.WorkerNodeGroupConfigurations
-	groups := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(wcc))
 	workerTemplateNames := make(map[string]string, len(wcc))
 	kubeadmTemplateNames := make(map[string]string, len(wcc))
-	de := hardware.NewDiskExtractor()
 
 	for _, wc := range wcc {
-		if wc.MachineGroupRef != nil && spec.TinkerbellMachineConfigs[wc.MachineGroupRef.Name] != nil {
-			groups[wc.MachineGroupRef.Name] = spec.TinkerbellMachineConfigs[wc.MachineGroupRef.Name].Spec
-			if err := de.Register(groups[wc.MachineGroupRef.Name].HardwareSelector); err != nil {
-				return nil, err
-			}
-		}
-
 		workerTemplateNames[wc.Name] = clusterapi.WorkerMachineTemplateName(spec, wc)
 		kubeadmTemplateNames[wc.Name] = clusterapi.DefaultKubeadmConfigTemplateName(spec, wc)
 	}

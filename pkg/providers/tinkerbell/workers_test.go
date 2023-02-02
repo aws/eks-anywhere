@@ -3,6 +3,7 @@ package tinkerbell_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
@@ -66,6 +67,90 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 			),
 		},
 	))
+}
+
+func TestWorkersSpecUpgradeClusterNoMachineTemplateChanges(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_tinkerbell_multiple_node_groups.yaml")
+	oldGroup1 := &clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+		MachineDeployment:       machineDeployment(),
+		ProviderMachineTemplate: machineTemplate(),
+	}
+	oldGroup2 := &clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+		KubeadmConfigTemplate: kubeadmConfigTemplate(
+			func(kct *bootstrapv1.KubeadmConfigTemplate) {
+				kct.Name = "test-md-1-1"
+			},
+		),
+		MachineDeployment: machineDeployment(
+			func(md *clusterv1.MachineDeployment) {
+				md.Name = "test-md-1"
+				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+				md.Spec.Replicas = ptr.Int32(1)
+				md.Labels["pool"] = "md-1"
+				md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
+				md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+					Type: "",
+					RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+						MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
+						MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
+						DeletePolicy:   nil,
+					},
+				}
+			},
+		),
+		ProviderMachineTemplate: machineTemplate(
+			func(vmt *tinkerbellv1.TinkerbellMachineTemplate) {
+				vmt.Name = "test-md-1-1"
+			},
+		),
+	}
+
+	expectedGroup1 := oldGroup1.DeepCopy()
+	expectedGroup2 := oldGroup2.DeepCopy()
+
+	oldGroup1.ProviderMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
+	oldGroup2.ProviderMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
+
+	client := test.NewFakeKubeClient(
+		oldGroup1.MachineDeployment,
+		oldGroup1.KubeadmConfigTemplate,
+		oldGroup1.ProviderMachineTemplate,
+		oldGroup2.MachineDeployment,
+		oldGroup2.KubeadmConfigTemplate,
+		oldGroup2.ProviderMachineTemplate,
+	)
+
+	workers, err := tinkerbell.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers).NotTo(BeNil())
+	g.Expect(workers.Groups).To(HaveLen(2))
+	g.Expect(workers.Groups).To(ConsistOf(*expectedGroup1, *expectedGroup2))
+}
+
+func TestWorkersSpecMachineTemplateNotFound(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_tinkerbell_multiple_node_groups.yaml")
+	client := test.NewFakeKubeClient(machineDeployment())
+	_, err := tinkerbell.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+}
+
+func TestWorkersSpecErrorFromClient(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_tinkerbell_multiple_node_groups.yaml")
+	client := test.NewFakeKubeClientAlwaysError()
+
+	_, err := tinkerbell.WorkersSpec(ctx, logger, client, spec)
+	g.Expect(err).To(HaveOccurred())
 }
 
 func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.MachineDeployment {
