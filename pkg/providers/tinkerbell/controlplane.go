@@ -22,13 +22,13 @@ type BaseControlPlane = clusterapi.ControlPlane[*tinkerbellv1.TinkerbellCluster,
 // ControlPlane holds the Tinkerbell specific objects for a CAPI Tinkerbell control plane.
 type ControlPlane struct {
 	BaseControlPlane
-	Secrets *corev1.Secret
+	Secret *corev1.Secret
 }
 
 // Objects returns the control plane objects associated with the Tinkerbell cluster.
 func (p ControlPlane) Objects() []kubernetes.Object {
 	o := p.BaseControlPlane.Objects()
-	o = append(o, p.Secrets)
+	o = append(o, p.Secret)
 
 	return o
 }
@@ -84,7 +84,7 @@ func (b *controlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) erro
 	b.ControlPlane.BaseControlPlane = *b.BaseBuilder.ControlPlane
 	for _, obj := range lookup {
 		if obj.GetObjectKind().GroupVersionKind().Kind == constants.SecretKind {
-			b.ControlPlane.Secrets = obj.(*corev1.Secret)
+			b.ControlPlane.Secret = obj.(*corev1.Secret)
 		}
 	}
 

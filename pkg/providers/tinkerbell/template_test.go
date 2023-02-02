@@ -52,9 +52,4 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 	gotWorkerNodeGroupMachineSpec, err := getWorkerNodeGroupMachineSpec(clusterSpec, diskExtractor)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotWorkerNodeGroupMachineSpec).To(Equal(expectedWorkerNodeGroupMachineSpec))
-
-	gotEtcdMachineSpec, err := getEtcdMachineSpec(clusterSpec, diskExtractor)
-	var expectedEtcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(gotEtcdMachineSpec).To(Equal(expectedEtcdMachineSpec))
 }

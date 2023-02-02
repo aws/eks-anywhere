@@ -36,7 +36,7 @@ func TestControlPlaneObjects(t *testing.T) {
 					KubeadmControlPlane:         kubeadmControlPlane(),
 					ControlPlaneMachineTemplate: tinkerbellMachineTemplate("controlplane-machinetemplate"),
 				},
-				Secrets: secret(),
+				Secret: secret(),
 			},
 			expected: []kubernetes.Object{
 				capiCluster(),

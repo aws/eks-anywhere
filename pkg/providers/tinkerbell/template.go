@@ -44,20 +44,19 @@ type TemplateBuilder struct {
 	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
 	datacenterSpec              *v1alpha1.TinkerbellDatacenterConfigSpec
 	WorkerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
-	etcdMachineSpec             *v1alpha1.TinkerbellMachineConfigSpec
 	diskExtractor               *hardware.DiskExtractor
 	tinkerbellIp                string
 	now                         types.NowFunc
 }
 
-func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, diskExtractor *hardware.DiskExtractor, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, tinkerbellIp string, now types.NowFunc) providers.TemplateBuilder {
+// NewTemplateBuilder returns a TemplateBuilder.
+func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, diskExtractor *hardware.DiskExtractor, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, tinkerbellIP string, now types.NowFunc) providers.TemplateBuilder {
 	return &TemplateBuilder{
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
 		datacenterSpec:              datacenterSpec,
 		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-		etcdMachineSpec:             etcdMachineSpec,
 		diskExtractor:               diskExtractor,
-		tinkerbellIp:                tinkerbellIp,
+		tinkerbellIp:                tinkerbellIP,
 		now:                         now,
 	}
 }
@@ -83,25 +82,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 
 	var etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec
 	var etcdTemplateString string
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineSpec = *tb.etcdMachineSpec
-		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.etcdMachineSpec.TemplateRef.Name]
-		if etcdTemplateConfig == nil {
-			disk, err := tb.diskExtractor.GetDisk(tb.etcdMachineSpec.HardwareSelector)
-			if err != nil {
-				disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.etcdMachineSpec.HardwareSelector)
-				if err != nil {
-					return nil, fmt.Errorf("getting etcd disk type of the hardware selector: %v", err)
-				}
-			}
-			versionBundle := clusterSpec.VersionsBundle.VersionsBundle
-			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
-		}
-		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get ETCD TinkerbellTemplateConfig: %v", err)
-		}
-	}
+
 	values := buildTemplateMapCP(clusterSpec, *tb.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString, *tb.datacenterSpec)
 
 	for _, buildOption := range buildOptions {
@@ -572,21 +553,6 @@ func getWorkerNodeGroupMachineSpec(clusterSpec *cluster.Spec, diskExtractor *har
 	return workerNodeGroupMachineSpecs, nil
 }
 
-func getEtcdMachineSpec(clusterSpec *cluster.Spec, diskExtractor *hardware.DiskExtractor) (*v1alpha1.TinkerbellMachineConfigSpec, error) {
-	var etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && clusterSpec.TinkerbellMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &clusterSpec.TinkerbellMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-			err := diskExtractor.Register(etcdMachineSpec.HardwareSelector)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return etcdMachineSpec, nil
-}
-
 func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuilder, error) {
 	diskExtractor := hardware.NewDiskExtractor()
 
@@ -600,14 +566,8 @@ func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuild
 		return nil, errors.Wrap(err, "generating worker node group machine specs")
 	}
 
-	etcdMachineSpec, err := getEtcdMachineSpec(clusterSpec, diskExtractor)
-	if err != nil {
-		return nil, errors.Wrap(err, "generating etcd machine spec")
-	}
-
 	templateBuilder := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec,
 		controlPlaneMachineSpec,
-		etcdMachineSpec,
 		diskExtractor,
 		workerNodeGroupMachineSpecs,
 		clusterSpec.TinkerbellDatacenter.Spec.TinkerbellIP,

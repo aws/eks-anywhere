@@ -147,7 +147,6 @@ func NewProvider(
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-			etcdMachineSpec:             etcdMachineSpec,
 			diskExtractor:               diskExtractor,
 			tinkerbellIp:                tinkerbellIp,
 			now:                         now,
