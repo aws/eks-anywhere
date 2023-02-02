@@ -111,6 +111,15 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *controlPlaneB
 		return nil, nil, errors.Wrap(err, "building tinkerbell control plane parser")
 	}
 
+	err = parser.RegisterMappings(
+		yamlutil.NewMapping(constants.SecretKind, func() yamlutil.APIObject {
+			return &corev1.Secret{}
+		}),
+	)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "registering tinkerbell control plane mappings in parser")
+	}
+
 	builder := &controlPlaneBuilder{
 		BaseBuilder:  baseBuilder,
 		ControlPlane: &ControlPlane{},
