@@ -4,10 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+
+	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestWorkersSpecNewCluster(t *testing.T) {
@@ -86,7 +87,7 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 			},
 			Template: clusterv1.MachineTemplateSpec{
 				ObjectMeta: clusterv1.ObjectMeta{
-					Labels: map[string]string{"pool": "md-0", "cluster.x-k8s.io/cluster-name": "test"},
+					Labels: map[string]string{"cluster.x-k8s.io/cluster-name": "test", "pool": "md-0"},
 				},
 				Spec: clusterv1.MachineSpec{
 					ClusterName: "test",
@@ -186,7 +187,7 @@ func machineTemplate(opts ...func(*tinkerbellv1.TinkerbellMachineTemplate)) *tin
 					HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 						Required: []tinkerbellv1.HardwareAffinityTerm{
 							{
-								LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{"type": "cp"}},
+								LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{"type": "worker"}},
 							},
 						},
 					},

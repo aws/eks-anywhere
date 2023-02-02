@@ -2,8 +2,8 @@ package tinkerbell
 
 import (
 	"context"
-	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 
@@ -14,14 +14,17 @@ import (
 	capiyaml "github.com/aws/eks-anywhere/pkg/clusterapi/yaml"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
-	"github.com/go-logr/logr"
 )
 
 type (
+	// Workers represents the Tinkerbell specific CAPI spec for worker nodes.
 	Workers        = clusterapi.Workers[*tinkerbellv1.TinkerbellMachineTemplate]
 	workersBuilder = capiyaml.WorkersBuilder[*tinkerbellv1.TinkerbellMachineTemplate]
 )
 
+// WorkersSpec generates a Tinkerbell specific CAPI spec for an eks-a cluster worker nodes.
+// It talks to the cluster with a client to detect changes in immutable objects and generates new
+// names for them.
 func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*Workers, error) {
 	wcc := spec.Cluster.Spec.WorkerNodeGroupConfigurations
 	groups := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(wcc))
@@ -41,17 +44,15 @@ func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Clie
 		kubeadmTemplateNames[wc.Name] = clusterapi.DefaultKubeadmConfigTemplateName(spec, wc)
 	}
 
-	TemplateBuilder := NewTemplateBuilder(
-		&spec.TinkerbellDatacenter.Spec,
-		nil,
-		nil,
-		de,
-		groups,
-		spec.TinkerbellDatacenter.Spec.TinkerbellIP,
-		time.Now,
-	)
+	TemplateBuilder, err := generateTemplateBuilder(spec)
+	if err != nil {
+		return nil, err
+	}
 
 	workersYaml, err := TemplateBuilder.GenerateCAPISpecWorkers(spec, workerTemplateNames, kubeadmTemplateNames)
+	if err != nil {
+		return nil, err
+	}
 
 	parser, builder, err := newWorkersParserAndBuilder(logger)
 	if err != nil {
