@@ -160,6 +160,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 		c.Name = workloadClusterName
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyNotExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "registry-credentials", Namespace: constants.EksaSystemNamespace}})
 }
 
 func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *testing.T) {
