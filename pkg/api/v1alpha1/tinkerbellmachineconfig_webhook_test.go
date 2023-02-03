@@ -80,6 +80,27 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailSshAuthorizedKeys(t *testing.
 	g.Expect(HaveField("Users[0].SshAuthorizedKeys[0]", err))
 }
 
+func TestTinkerbellMachineConfig_ValidateUpdateFailUsersLen(t *testing.T) {
+	machineConfigOld := createTinkerbellMachineConfig()
+	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+		mc.Spec.Users = []UserConfiguration{
+			{
+				Name:              "mySshUsername1",
+				SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+			},
+			{
+				Name:              "mySshUsername2",
+				SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+			},
+		}
+	})
+
+	g := NewWithT(t)
+	err := machineConfigNew.ValidateUpdate(machineConfigOld)
+	g.Expect(err).NotTo(BeNil())
+	g.Expect(HaveField("Users", err))
+}
+
 func TestTinkerbellMachineConfig_ValidateUpdateFailUsers(t *testing.T) {
 	machineConfigOld := createTinkerbellMachineConfig()
 	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
