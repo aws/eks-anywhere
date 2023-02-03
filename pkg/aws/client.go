@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,6 +13,7 @@ import (
 type Client struct {
 	ec2            EC2Client
 	snowballDevice SnowballDeviceClient
+	httpClient     *http.Client
 }
 
 // Clients are a map between aws profile and its aws client.
@@ -72,7 +74,9 @@ func WithSnowballDevice(snowballdevice SnowballDeviceClient) ClientOpt {
 
 // NewClient builds an aws Client.
 func NewClient(opts ...ClientOpt) *Client {
-	c := &Client{}
+	c := &Client{
+		httpClient: &http.Client{},
+	}
 
 	for _, o := range opts {
 		o(c)
