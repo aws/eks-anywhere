@@ -24,23 +24,23 @@ type (
 // It talks to the cluster with a client to detect changes in immutable objects and generates new
 // names for them.
 func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*Workers, error) {
-	wcc := spec.Cluster.Spec.WorkerNodeGroupConfigurations
-	workerTemplateNames := make(map[string]string, len(wcc))
-	kubeadmTemplateNames := make(map[string]string, len(wcc))
+	wgc := spec.Cluster.Spec.WorkerNodeGroupConfigurations
+	workerTemplateNames := make(map[string]string, len(wgc))
+	kubeadmTemplateNames := make(map[string]string, len(wgc))
 
-	for _, wc := range wcc {
+	for _, wc := range wgc {
 		workerTemplateNames[wc.Name] = clusterapi.WorkerMachineTemplateName(spec, wc)
 		kubeadmTemplateNames[wc.Name] = clusterapi.DefaultKubeadmConfigTemplateName(spec, wc)
 	}
 
-	TemplateBuilder, err := generateTemplateBuilder(spec)
+	templateBuilder, err := generateTemplateBuilder(spec)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "generating tinkerbell template builder")
 	}
 
-	workersYaml, err := TemplateBuilder.GenerateCAPISpecWorkers(spec, workerTemplateNames, kubeadmTemplateNames)
+	workersYaml, err := templateBuilder.GenerateCAPISpecWorkers(spec, workerTemplateNames, kubeadmTemplateNames)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "generating tinkerbell workers yaml spec")
 	}
 
 	parser, builder, err := newWorkersParserAndBuilder(logger)
