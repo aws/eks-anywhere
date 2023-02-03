@@ -119,5 +119,9 @@ func validateTinkerbellMachineConfig(config *TinkerbellMachineConfig) error {
 		)
 	}
 
+	if len(config.Spec.Users) == 0 {
+		return fmt.Errorf("TinkerbellMachineConfig: missing spec.Users: %s", config.Name)
+	}
+
 	return nil
 }

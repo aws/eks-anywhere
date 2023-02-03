@@ -108,16 +108,21 @@ func validateImmutableFieldsTinkerbellMachineConfig(new, old *TinkerbellMachineC
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("OSFamily"), "field is immutable"))
 	}
 
+	if len(new.Spec.Users) != len(old.Spec.Users) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users"), "field is immutable"))
+		return allErrs
+	}
+
+	if new.Spec.Users[0].Name != old.Spec.Users[0].Name {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users[0].Name"), "field is immutable"))
+	}
+
 	if len(new.Spec.Users[0].SshAuthorizedKeys) != len(old.Spec.Users[0].SshAuthorizedKeys) {
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users[0].SshAuthorizedKeys"), "field is immutable"))
 	}
 
 	if len(new.Spec.Users[0].SshAuthorizedKeys) > 0 && (new.Spec.Users[0].SshAuthorizedKeys[0] != old.Spec.Users[0].SshAuthorizedKeys[0]) {
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users[0].SshAuthorizedKeys[0]"), "field is immutable"))
-	}
-
-	if new.Spec.Users[0].Name != old.Spec.Users[0].Name {
-		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users[0].Name"), "field is immutable"))
 	}
 
 	if !reflect.DeepEqual(new.Spec.HardwareSelector, old.Spec.HardwareSelector) {
