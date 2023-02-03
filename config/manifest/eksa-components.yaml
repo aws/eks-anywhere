@@ -5789,6 +5789,8 @@ rules:
   - awssnowmachinetemplates
   - dockerclusters
   - dockermachinetemplates
+  - tinkerbellclusters
+  - tinkerbellmachinetemplates
   - vsphereclusters
   - vspheremachinetemplates
   verbs:
