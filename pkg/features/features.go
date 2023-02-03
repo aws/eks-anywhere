@@ -1,12 +1,14 @@
 package features
 
+// These are environment variables used as flags to enable/disable features.
 const (
-	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
-	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
-	FullLifecycleGate               = "FullLifecycleAPI"
-	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
-	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
-	K8s125SupportEnvVar             = "K8S_1_25_SUPPORT"
+	CloudStackKubeVipDisabledEnvVar             = "CLOUDSTACK_KUBE_VIP_DISABLED"
+	FullLifecycleAPIEnvVar                      = "FULL_LIFECYCLE_API"
+	FullLifecycleGate                           = "FullLifecycleAPI"
+	CheckpointEnabledEnvVar                     = "CHECKPOINT_ENABLED"
+	UseNewWorkflowsEnvVar                       = "USE_NEW_WORKFLOWS"
+	K8s125SupportEnvVar                         = "K8S_1_25_SUPPORT"
+	TinkerbellUseDiskExtractorDefaultDiskEnvVar = "TINKERBELL_DISK_EXTRACTOR_DISABLED"
 )
 
 func FeedGates(featureGates []string) {
@@ -60,5 +62,13 @@ func K8s125Support() Feature {
 	return Feature{
 		Name:     "Kubernetes version 1.25 support",
 		IsActive: globalFeatures.isActiveForEnvVar(K8s125SupportEnvVar),
+	}
+}
+
+// TinkerbellUseDiskExtractorDefaultDisk is a flag that forces the diskExtractor to use /dev/sda disk by default.
+func TinkerbellUseDiskExtractorDefaultDisk() Feature {
+	return Feature{
+		Name:     "Use a default disk /dev/sda when using the diskExtractor",
+		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellUseDiskExtractorDefaultDiskEnvVar),
 	}
 }

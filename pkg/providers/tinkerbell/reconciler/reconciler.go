@@ -10,6 +10,7 @@ import (
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 )
 
@@ -84,9 +85,14 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, c
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
 func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
-	// Implement reconcile control plane here
+	log = log.WithValues("phase", "reconcileControlPlane")
+	log.Info("Applying control plane CAPI objects")
+	cp, err := tinkerbell.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, err
+	}
 
-	return controller.Result{}, nil
+	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(cp))
 }
 
 // ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
@@ -107,4 +113,20 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 	}
 
 	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
+}
+
+func toClientControlPlane(cp *tinkerbell.ControlPlane) *clusters.ControlPlane {
+	other := make([]client.Object, 0, 1)
+	if cp.Secrets != nil {
+		other = append(other, cp.Secrets)
+	}
+	return &clusters.ControlPlane{
+		Cluster:                     cp.Cluster,
+		ProviderCluster:             cp.ProviderCluster,
+		KubeadmControlPlane:         cp.KubeadmControlPlane,
+		ControlPlaneMachineTemplate: cp.ControlPlaneMachineTemplate,
+		EtcdCluster:                 cp.EtcdCluster,
+		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
+		Other:                       other,
+	}
 }
