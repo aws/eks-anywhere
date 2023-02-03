@@ -110,7 +110,6 @@ func validateImmutableFieldsTinkerbellMachineConfig(new, old *TinkerbellMachineC
 
 	if len(new.Spec.Users) != len(old.Spec.Users) {
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users"), "field is immutable"))
-		return allErrs
 	}
 
 	if new.Spec.Users[0].Name != old.Spec.Users[0].Name {
