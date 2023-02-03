@@ -64,7 +64,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+	tt.cleanup()
 }
 
 func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
@@ -75,7 +75,7 @@ func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+	tt.cleanup()
 }
 
 func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T) {
@@ -88,7 +88,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("\"nonexistent-management-cluster\" not found")))
-	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+	tt.cleanup()
 }
 
 func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testing.T) {
@@ -101,7 +101,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testin
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("\"nonexistent-datacenter\" not found")))
-	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+	tt.cleanup()
 }
 
 func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
@@ -119,7 +119,7 @@ func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("workload cluster Tinkerbell IP must match managment cluster Tinkerbell IP")))
-	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+	tt.cleanup()
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
