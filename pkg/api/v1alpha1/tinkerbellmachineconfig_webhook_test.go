@@ -22,6 +22,15 @@ func TestTinkerbellMachineConfig_ValidateCreateFail(t *testing.T) {
 	g.Expect(machineConfig.ValidateCreate()).NotTo(Succeed())
 }
 
+func TestTinkerbellMachineConfig_ValidateCreateFailNoUsers(t *testing.T) {
+	machineConfig := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+		mc.Spec.Users = []UserConfiguration{}
+	})
+
+	g := NewWithT(t)
+	g.Expect(machineConfig.ValidateCreate()).NotTo(Succeed())
+}
+
 func TestTinkerbellMachineConfig_ValidateUpdateSucceed(t *testing.T) {
 	machineConfigOld := createTinkerbellMachineConfig()
 	machineConfigNew := machineConfigOld.DeepCopy()
