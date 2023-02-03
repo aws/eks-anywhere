@@ -29,7 +29,7 @@ func newEC2Test(t *testing.T) *ec2Test {
 		WithT:  NewWithT(t),
 		ctx:    ctx,
 		ec2:    ec2,
-		client: aws.NewClientFromEC2(ec2),
+		client: aws.NewClient(aws.WithEC2(ec2)),
 	}
 }
 
