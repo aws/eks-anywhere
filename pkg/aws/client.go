@@ -53,23 +53,38 @@ func LoadConfig(ctx context.Context, opts ...AwsConfigOpt) (aws.Config, error) {
 	return cfg, nil
 }
 
-func NewClient(ctx context.Context, cfg aws.Config) *Client {
-	return &Client{
-		ec2:            NewEC2Client(cfg),
-		snowballDevice: NewSnowballClient(cfg),
+// ClientOpt updates an aws.Client.
+type ClientOpt func(*Client)
+
+// WithEC2 returns a ClientOpt that sets the ec2 client.
+func WithEC2(ec2 EC2Client) ClientOpt {
+	return func(c *Client) {
+		c.ec2 = ec2
 	}
 }
 
-// NewClientFromEC2 is mainly used for EC2 related unit tests.
-func NewClientFromEC2(ec2 EC2Client) *Client {
-	return &Client{
-		ec2: ec2,
+// WithSnowballDevice returns a ClientOpt that sets the snowballdevice client.
+func WithSnowballDevice(snowballdevice SnowballDeviceClient) ClientOpt {
+	return func(c *Client) {
+		c.snowballDevice = snowballdevice
 	}
 }
 
-// NewClientFromSnowball is mainly used for Snowballdevice related unit tests.
-func NewClientFromSnowball(snowballdevice SnowballDeviceClient) *Client {
-	return &Client{
-		snowballDevice: snowballdevice,
+// NewClient builds an aws Client.
+func NewClient(opts ...ClientOpt) *Client {
+	c := &Client{}
+
+	for _, o := range opts {
+		o(c)
 	}
+
+	return c
+}
+
+// NewClientFromConfig builds an aws client with ec2 and snowballdevice apis from aws config.
+func NewClientFromConfig(cfg aws.Config) *Client {
+	return NewClient(
+		WithEC2(NewEC2Client(cfg)),
+		WithSnowballDevice(NewSnowballClient(cfg)),
+	)
 }

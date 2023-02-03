@@ -78,7 +78,7 @@ func createAwsClients(ctx context.Context, credentials []byte, certificates []by
 		if err != nil {
 			return nil, errors.Wrap(err, "setting up aws client")
 		}
-		deviceClientMap[ip] = aws.NewClient(ctx, clientCfg)
+		deviceClientMap[ip] = aws.NewClientFromConfig(clientCfg)
 	}
 
 	return deviceClientMap, nil
