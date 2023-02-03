@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
@@ -268,4 +269,17 @@ func TestDiskExtractorNoDiskFound(t *testing.T) {
 
 	_, err = diskExtractor.GetDisk(hardwareSelector)
 	g.Expect(err).To(gomega.MatchError(hardware.ErrDiskNotFound{}))
+}
+
+// TODO: remove after diskExtractor has been refactored and removed.
+func TestDiskExtractorUseDefaultDisk(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	g := gomega.NewWithT(t)
+	diskExtractor := hardware.NewDiskExtractor()
+	hardwareSelector := eksav1alpha1.HardwareSelector{}
+
+	disk, err := diskExtractor.GetDisk(hardwareSelector)
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(disk).To(gomega.Equal("/dev/sda"))
 }

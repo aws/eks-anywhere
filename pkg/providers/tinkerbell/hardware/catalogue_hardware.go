@@ -10,6 +10,7 @@ import (
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // DiskExtractor represents a hardware labels and map it with the appropriate disk given in the hardware csv file.
@@ -79,6 +80,12 @@ func (d *DiskExtractor) InsertProvisionedHardwareDisks(hardware *tinkv1alpha1.Ha
 // GetDisk returns the disk cached for selector. If selector has no disk cached ErrDiskNotFound
 // is returned.
 func (d *DiskExtractor) GetDisk(selector eksav1alpha1.HardwareSelector) (string, error) {
+	// TODO: To be removed with the diskExtractor logic. For now this is a temporary solution
+	// while having to use the diskExtractor in the controller.
+	if features.TinkerbellUseDiskExtractorDefaultDisk().IsActive() {
+		return "/dev/sda", nil
+	}
+
 	key, err := serializeHardwareSelector(selector)
 	if err != nil {
 		return "", err

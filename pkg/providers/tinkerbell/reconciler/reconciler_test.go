@@ -7,8 +7,12 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -20,16 +24,22 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const (
-	clusterNamespace = "test-namespace"
+	workloadClusterName = "workload-cluster"
+	clusterNamespace    = "test-namespace"
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
 	tt := newReconcilerTest(t)
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -44,7 +54,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
-		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil)
 	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
 
@@ -63,7 +73,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 	spec := tt.buildSpec()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
-		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil)
 	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
 
@@ -82,7 +92,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	spec := tt.buildSpec()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
-		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
 	).Return(nil, errors.New("building client"))
 
 	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
@@ -90,6 +100,151 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      workloadClusterName,
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&tinkerbellv1.TinkerbellMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      workloadClusterName + "-control-plane-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+			Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
+				Template: tinkerbellv1.TinkerbellMachineTemplateResource{
+					Spec: tinkerbellv1.TinkerbellMachineSpec{
+						HardwareAffinity: &tinkerbellv1.HardwareAffinity{
+							Required: []tinkerbellv1.HardwareAffinityTerm{
+								{
+									LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx, &tinkerbellv1.TinkerbellCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "TinkerbellCluster",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	})
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = workloadClusterName
+	})
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+}
+
+func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	spec := tt.buildSpec()
+	spec.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+		Authenticate: true,
+		Endpoint:     "1.2.3.4",
+		Port:         "65536",
+	}
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      workloadClusterName,
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&tinkerbellv1.TinkerbellMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      workloadClusterName + "-control-plane-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+			Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
+				Template: tinkerbellv1.TinkerbellMachineTemplateResource{
+					Spec: tinkerbellv1.TinkerbellMachineSpec{
+						HardwareAffinity: &tinkerbellv1.HardwareAffinity{
+							Required: []tinkerbellv1.HardwareAffinityTerm{
+								{
+									LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx, &tinkerbellv1.TinkerbellCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "TinkerbellCluster",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	})
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = workloadClusterName
+	})
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "registry-credentials", Namespace: constants.EksaSystemNamespace}})
+}
+
+func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	spec := tt.buildSpec()
+	spec.Cluster = spec.Cluster.DeepCopy()
+	spec.Cluster.Name = ""
+
+	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("resource name may not be empty")))
 }
 
 func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
@@ -183,6 +338,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := tinkerbellreconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
+	// secret := registryCredentialSecret()
 
 	managementCluster := tinkerbellCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -198,6 +354,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	machineConfigCP := machineConfig(func(m *anywherev1.TinkerbellMachineConfig) {
 		m.Name = "cp-machine-config"
+		m.Spec.HardwareSelector = anywherev1.HardwareSelector{"type": "cp"}
 	})
 	machineConfigWN := machineConfig(func(m *anywherev1.TinkerbellMachineConfig) {
 		m.Name = "worker-machine-config"
@@ -206,7 +363,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	workloadClusterDatacenter := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {})
 
 	cluster := tinkerbellCluster(func(c *anywherev1.Cluster) {
-		c.Name = "workload-cluster"
+		c.Name = workloadClusterName
 		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
 			Name: managementCluster.Name,
 		}
@@ -259,6 +416,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			workloadClusterDatacenter,
 			bundle,
 			test.EksdRelease(),
+			// secret,
 		},
 		cluster:                   cluster,
 		datacenterConfig:          workloadClusterDatacenter,
@@ -266,7 +424,15 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		machineConfigWorker:       machineConfigWN,
 	}
 
+	t.Cleanup(tt.cleanup)
 	return tt
+}
+
+func (tt *reconcilerTest) cleanup() {
+	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
 }
 
 type clusterOpt func(*anywherev1.Cluster)
