@@ -91,6 +91,11 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 				Spec: v1alpha1.TinkerbellMachineConfigSpec{
 					HardwareSelector: v1alpha1.HardwareSelector{"type": "cp"},
 					OSFamily:         v1alpha1.Ubuntu,
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name: "ec2-user",
+						},
+					},
 				},
 			},
 			b.ExternalEtcdMachineName: {
@@ -101,6 +106,11 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 				Spec: v1alpha1.TinkerbellMachineConfigSpec{
 					HardwareSelector: v1alpha1.HardwareSelector{"type": "etcd"},
 					OSFamily:         v1alpha1.Ubuntu,
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name: "ec2-user",
+						},
+					},
 				},
 			},
 			b.WorkerNodeGroupMachineName: {
@@ -111,6 +121,11 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 				Spec: v1alpha1.TinkerbellMachineConfigSpec{
 					HardwareSelector: v1alpha1.HardwareSelector{"type": "worker"},
 					OSFamily:         v1alpha1.Ubuntu,
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name: "ec2-user",
+						},
+					},
 				},
 			},
 		},

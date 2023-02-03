@@ -39,6 +39,9 @@ func TestAssertMachineConfigsValid_InvalidFails(t *testing.T) {
 				"baz": "qux",
 			}
 		},
+		"MissingUsers": func(clusterSpec *tinkerbell.ClusterSpec) {
+			clusterSpec.ControlPlaneMachineConfig().Spec.Users = []eksav1alpha1.UserConfiguration{}
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
