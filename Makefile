@@ -537,6 +537,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/import_tools_image.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import_tools_image.go"
 	${GOPATH}/bin/mockgen -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
+	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/imds.go -package=mocks -source "pkg/aws/imds.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/snowballdevice.go -package=mocks -source "pkg/aws/snowballdevice.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/nutanix/mocks/client.go -package=mocks -source "pkg/providers/nutanix/client.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/nutanix/mocks/roundtripper.go -package=mocks net/http RoundTripper
