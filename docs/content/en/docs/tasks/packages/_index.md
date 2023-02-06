@@ -13,14 +13,14 @@ For proper curated package support, make sure the cluster `kubernetes` version i
 
 ### Setup authentication to use curated-packages
 
-When you have been notified that your account has been given access to curated packages, create a user in your account with a policy that only allows ECR read access similar to this:
+When you have been notified that your account has been given access to curated packages, create an IAM user in your account with a policy that only allows ECR read access to the Curated Packages repository; similar to this:
 
 ```
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "VisualEditor0",
+            "Sid": "ECRRead",
             "Effect": "Allow",
             "Action": [
                 "ecr:DescribeImageScanFindings",
@@ -28,13 +28,20 @@ When you have been notified that your account has been given access to curated p
                 "ecr:DescribeRegistry",
                 "ecr:DescribePullThroughCacheRules",
                 "ecr:DescribeImageReplicationStatus",
-                "ecr:GetAuthorizationToken",
                 "ecr:ListTagsForResource",
                 "ecr:ListImages",
                 "ecr:BatchGetImage",
                 "ecr:DescribeImages",
                 "ecr:DescribeRepositories",
                 "ecr:BatchCheckLayerAvailability"
+            ],
+            "Resource": "arn:aws:ecr:*:783794618700:repository/*"
+        },
+        {
+            "Sid": "ECRLogin",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken"
             ],
             "Resource": "*"
         }
