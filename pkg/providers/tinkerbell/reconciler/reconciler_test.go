@@ -26,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -327,8 +328,8 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "hw1",
 			Labels: map[string]string{
-				"v1alpha1.tinkerbell.org/ownerName": "cluster",
-				"type":                              "cp",
+				hardware.OwnerNameLabel: "cluster",
+				"type":                  "cp",
 			},
 		},
 		Spec: tinkv1alpha1.HardwareSpec{

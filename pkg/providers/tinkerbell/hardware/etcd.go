@@ -10,6 +10,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// OwnerNameLabel is the label set by CAPT to mark a hardware as part of a cluster.
+const OwnerNameLabel string = "v1alpha1.tinkerbell.org/ownerName"
+
 // ETCDReader reads the tinkerbell hardware objects from the cluster.
 // It holds the objects in a catalogue.
 type ETCDReader struct {
@@ -62,7 +65,7 @@ func (er *ETCDReader) getUnprovisionedTinkerbellHardware(ctx context.Context) ([
 	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
 		MatchExpressions: []metav1.LabelSelectorRequirement{
 			{
-				Key:      "v1alpha1.tinkerbell.org/ownerName",
+				Key:      OwnerNameLabel,
 				Operator: metav1.LabelSelectorOpDoesNotExist,
 			},
 		},

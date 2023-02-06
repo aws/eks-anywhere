@@ -53,8 +53,8 @@ func TestNewCatalogueFromETCDNoHardware(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "hw1",
 			Labels: map[string]string{
-				"v1alpha1.tinkerbell.org/ownerName": "cluster",
-				"type":                              "cp",
+				hardware.OwnerNameLabel: "cluster",
+				"type":                  "cp",
 			},
 		},
 		Spec: tinkv1alpha1.HardwareSpec{
