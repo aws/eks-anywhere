@@ -10,7 +10,8 @@ import (
 
 // Client provides the single API client to make operations call to aws services.
 type Client struct {
-	ec2            *EC2
+	ec2            EC2Client
+	imds           IMDSClient
 	snowballDevice SnowballDeviceClient
 }
 
@@ -57,9 +58,16 @@ func LoadConfig(ctx context.Context, opts ...AwsConfigOpt) (aws.Config, error) {
 type ClientOpt func(*Client)
 
 // WithEC2 returns a ClientOpt that sets the ec2 client.
-func WithEC2(ec2 *EC2) ClientOpt {
+func WithEC2(ec2 EC2Client) ClientOpt {
 	return func(c *Client) {
 		c.ec2 = ec2
+	}
+}
+
+// WithIMDS returns a ClientOpt that sets the imds client.
+func WithIMDS(imds IMDSClient) ClientOpt {
+	return func(c *Client) {
+		c.imds = imds
 	}
 }
 
