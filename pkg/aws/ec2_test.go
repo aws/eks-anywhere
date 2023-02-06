@@ -3,8 +3,11 @@ package aws_test
 import (
 	"context"
 	"errors"
+	"io"
+	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/golang/mock/gomock"
@@ -19,17 +22,24 @@ type ec2Test struct {
 	ctx    context.Context
 	client *aws.Client
 	ec2    *mocks.MockEC2Client
+	imds   *mocks.MockIMDSClient
 }
 
 func newEC2Test(t *testing.T) *ec2Test {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 	ec2 := mocks.NewMockEC2Client(ctrl)
+	imds := mocks.NewMockIMDSClient(ctrl)
+	ec2Client := &aws.EC2{
+		EC2Client:  ec2,
+		IMDSClient: imds,
+	}
 	return &ec2Test{
 		WithT:  NewWithT(t),
 		ctx:    ctx,
 		ec2:    ec2,
-		client: aws.NewClient(aws.WithEC2(ec2)),
+		imds:   imds,
+		client: aws.NewClient(aws.WithEC2(ec2Client)),
 	}
 }
 
@@ -115,4 +125,29 @@ func TestEC2ImportKeyPair(t *testing.T) {
 	g.ec2.EXPECT().ImportKeyPair(g.ctx, params).Return(out, nil)
 	err := g.client.EC2ImportKeyPair(g.ctx, key, val)
 	g.Expect(err).To(Succeed())
+}
+
+func TestEC2InstanceIP(t *testing.T) {
+	g := newEC2Test(t)
+	params := &imds.GetMetadataInput{
+		Path: "public-ipv4",
+	}
+	want := "1.2.3.4"
+	out := &imds.GetMetadataOutput{
+		Content: io.NopCloser(strings.NewReader(want)),
+	}
+	g.imds.EXPECT().GetMetadata(g.ctx, params).Return(out, nil)
+	got, err := g.client.EC2InstanceIP(g.ctx)
+	g.Expect(err).To(Succeed())
+	g.Expect(got).To(Equal(want))
+}
+
+func TestEC2InstanceIPGetMetadataError(t *testing.T) {
+	g := newEC2Test(t)
+	params := &imds.GetMetadataInput{
+		Path: "public-ipv4",
+	}
+	g.imds.EXPECT().GetMetadata(g.ctx, params).Return(nil, errors.New("error"))
+	_, err := g.client.EC2InstanceIP(g.ctx)
+	g.Expect(err).NotTo(Succeed())
 }
