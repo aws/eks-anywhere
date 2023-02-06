@@ -8,7 +8,7 @@ const (
 	rufioAPIVersion        = "bmc.tinkerbell.org/v1alpha1"
 	tinkerbellAPIVersion   = "tinkerbell.org/v1alpha1"
 	tinkerbellHardwareKind = "Hardware"
-	tinkerbellBMCKind      = "BaseboardManagement"
+	tinkerbellBMCKind      = "Machine"
 
 	secretKind       = "Secret"
 	secretAPIVersion = "v1"
@@ -21,7 +21,7 @@ func newHardwareTypeMeta() v1.TypeMeta {
 	}
 }
 
-func newBaseboardManagementTypeMeta() v1.TypeMeta {
+func newMachineTypeMeta() v1.TypeMeta {
 	return v1.TypeMeta{
 		Kind:       tinkerbellBMCKind,
 		APIVersion: rufioAPIVersion,

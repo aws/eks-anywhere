@@ -222,6 +222,16 @@ func (s *ensureEtcdCAPIComponentsExistTask) Restore(ctx context.Context, command
 func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Upgrading core components")
 
+	err := commandContext.Provider.PreCoreComponentsUpgrade(
+		ctx,
+		commandContext.ManagementCluster,
+		commandContext.ClusterSpec,
+	)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
 	changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, commandContext.WorkloadCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)

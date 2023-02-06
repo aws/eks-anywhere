@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -904,7 +905,7 @@ func TestKubectlGetMachines(t *testing.T) {
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			k, ctx, cluster, e := newKubectl(t)
 			e.EXPECT().Execute(ctx, []string{
-				"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+				"get", "machines.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 				"--selector=cluster.x-k8s.io/cluster-name=" + cluster.Name,
 				"--namespace", constants.EksaSystemNamespace,
 			}).Return(*bytes.NewBufferString(fileContent), nil)
@@ -2592,7 +2593,7 @@ func TestKubectlWaitForClusterReady(t *testing.T) {
 	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
 }
 
-func TestWaitForBaseboardManagements(t *testing.T) {
+func TestWaitForRufioMachines(t *testing.T) {
 	kt := newKubectlTest(t)
 
 	timeout := "5m"
@@ -2600,10 +2601,10 @@ func TestWaitForBaseboardManagements(t *testing.T) {
 
 	kt.e.EXPECT().Execute(
 		kt.ctx,
-		"wait", "--timeout", expectedTimeout, "--for=condition=Contactable", "baseboardmanagements.bmc.tinkerbell.org", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system", "--all",
+		"wait", "--timeout", expectedTimeout, "--for=condition=Contactable", "machines.bmc.tinkerbell.org", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system", "--all",
 	).Return(bytes.Buffer{}, nil)
 
-	kt.Expect(kt.k.WaitForBaseboardManagements(kt.ctx, kt.cluster, timeout, "Contactable", "eksa-system")).To(Succeed())
+	kt.Expect(kt.k.WaitForRufioMachines(kt.ctx, kt.cluster, timeout, "Contactable", "eksa-system")).To(Succeed())
 }
 
 func TestKubectlApply(t *testing.T) {
@@ -3208,5 +3209,87 @@ func TestGetMachineDeploymentsForCluster(t *testing.T) {
 
 	if !reflect.DeepEqual(gotMachineDeploymentNames, wantMachineDeploymentNames) {
 		t.Fatalf("Kubectl.GetMachineDeployments() deployments = %+v, want %+v", gotMachineDeploymentNames, wantMachineDeploymentNames)
+	}
+}
+
+func TestKubectlHasCRD(t *testing.T) {
+	for _, tt := range []struct {
+		Name      string
+		Error     error
+		ExpectCRD bool
+		ExpectErr bool
+	}{
+		{
+			Name:      "CRDPresent",
+			ExpectCRD: true,
+		},
+		{
+			Name:  "CRDNotPresent",
+			Error: errors.New("NotFound"),
+		},
+		{
+			Name:      "Error",
+			Error:     errors.New("some error"),
+			ExpectErr: true,
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			k, ctx, _, e := newKubectl(t)
+			const crd = "foo"
+			const kubeconfig = "kubeconfig"
+			var b bytes.Buffer
+
+			params := []string{"get", "crd", crd, "--kubeconfig", kubeconfig}
+			e.EXPECT().Execute(ctx, gomock.Eq(params)).Return(b, tt.Error)
+
+			r, err := k.HasCRD(context.Background(), crd, kubeconfig)
+
+			if tt.ExpectErr && !strings.Contains(err.Error(), tt.Error.Error()) {
+				t.Fatalf("Expected error: %v; Received: %v", tt.ExpectErr, err)
+			}
+
+			if r != tt.ExpectCRD {
+				t.Fatalf("Expected: %v; Received: %v", tt.ExpectCRD, r)
+			}
+		})
+	}
+}
+
+func TestKubectlDeleteCRD(t *testing.T) {
+	//"delete", "crd", crd, "--kubeconfig", kubeconfig
+
+	for _, tt := range []struct {
+		Name      string
+		Error     error
+		ExpectErr bool
+	}{
+		{
+			Name: "CRDPresent",
+		},
+		{
+			Name:  "CRDNotPresent",
+			Error: errors.New("NotFound"),
+		},
+		{
+			Name:      "Error",
+			Error:     errors.New("some error"),
+			ExpectErr: true,
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			k, ctx, _, e := newKubectl(t)
+			const crd = "foo"
+			const kubeconfig = "kubeconfig"
+			var b bytes.Buffer
+
+			params := []string{"delete", "crd", crd, "--kubeconfig", kubeconfig}
+			e.EXPECT().Execute(ctx, gomock.Eq(params)).Return(b, tt.Error)
+
+			err := k.DeleteCRD(context.Background(), crd, kubeconfig)
+
+			if tt.ExpectErr && !strings.Contains(err.Error(), tt.Error.Error()) {
+				t.Fatalf("Expected error: %v; Received: %v", tt.ExpectErr, err)
+			}
+		})
 	}
 }

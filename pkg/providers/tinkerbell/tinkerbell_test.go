@@ -449,7 +449,7 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
-	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	if err := provider.readCSVToCatalogue(); err != nil {
@@ -462,7 +462,7 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	}
 }
 
-func TestPostBootstrapSetupWaitForBaseboardManagementsFail(t *testing.T) {
+func TestPostBootstrapSetupWaitForRufioMachinesFail(t *testing.T) {
 	wantError := errors.New("test error")
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -479,7 +479,7 @@ func TestPostBootstrapSetupWaitForBaseboardManagementsFail(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
-	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	if err := provider.readCSVToCatalogue(); err != nil {
@@ -505,7 +505,7 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(nil).MaxTimes(2)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(nil).MaxTimes(2)
 
 	tt := []struct {
 		name            string
@@ -537,7 +537,7 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	}
 }
 
-func TestPostMoveManagementToBootstrapWaitForBaseboardManagementsFail(t *testing.T) {
+func TestPostMoveManagementToBootstrapWaitForRufioMachinesFail(t *testing.T) {
 	wantError := errors.New("test error")
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -554,7 +554,7 @@ func TestPostMoveManagementToBootstrapWaitForBaseboardManagementsFail(t *testing
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 
-	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
 	if err := provider.readCSVToCatalogue(); err != nil {
 		t.Fatalf("failed to read hardware csv: %v", err)
 	}
@@ -1008,7 +1008,7 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
-	kubectl.EXPECT().WaitForBaseboardManagements(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
@@ -1325,7 +1325,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
 
-	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(fmt.Errorf("error"))
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(fmt.Errorf("error"))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	assertError(t, "waiting for baseboard management to be contactable: error", err)
@@ -1373,6 +1373,48 @@ func TestSetupAndValidateCreateWorkloadClusterErrorManagementCluster(t *testing.
 }
 
 func TestSetupAndValidateCreateWorkloadClusterErrorManagementClusterTinkerbellIP(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+	}
+	kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, fmt.Errorf("error"))
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assertError(t, "getting TinkerbellIP of management cluster: error", err)
+}
+
+func TestPreCoreComponentsUpgrade(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
