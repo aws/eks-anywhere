@@ -104,7 +104,7 @@ Example command output:
 Package                 Version(s)
 -------                 ----------
 hello-eks-anywhere      0.1.2-a6847010915747a9fc8a412b233a2b1ee608ae76
-adot                    0.23.0-8dcf5fb5a1502a1da44c3e4c0552a13fa125fb74
+adot                    0.25.0-c26690f90d38811dbb0e3dad5aea77d1efa52c7b
 cert-manager            1.9.1-dc0c845b5f71bea6869efccd3ca3f2dd11b5c95f
 cluster-autoscaler      9.21.0-1.23-5516c0368ff74d14c328d61fe374da9787ecf437
 harbor                  2.5.1-ee7e5a6898b6c35668a1c5789aa0d654fad6c913
@@ -113,7 +113,7 @@ metallb-crds            0.13.7-758df43f8c5a3c2ac693365d06e7b0feba87efd5
 metrics-server          0.6.1-eks-1-23-6-c94ed410f56421659f554f13b4af7a877da72bc1
 emissary                3.3.0-cbf71de34d8bb5a72083f497d599da63e8b3837b
 emissary-crds           3.3.0-cbf71de34d8bb5a72083f497d599da63e8b3837b
-prometheus              2.39.1-a5a5cc31867fdec4da73f95483e6893cf424f80f
+prometheus              2.41.0-b53c8be243a6cc3ac2553de24ab9f726d9b851ca
 ```
 
 ### Generate a curated-packages config

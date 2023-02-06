@@ -107,8 +107,8 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 		}
 
 		bundleArchiveArtifact := anywherev1alpha1.Archive{
-			Name:        fmt.Sprintf("eksctl-anywhere-%s", archiveArtifact.OS),
-			Description: fmt.Sprintf("EKS Anywhere %s CLI", strings.Title(archiveArtifact.OS)),
+			Name:        fmt.Sprintf("eksctl-anywhere-%s-%s", archiveArtifact.OS, archiveArtifact.Arch[0]),
+			Description: fmt.Sprintf("EKS Anywhere %s %s CLI", strings.Title(archiveArtifact.OS), archiveArtifact.Arch[0]),
 			OS:          archiveArtifact.OS,
 			Arch:        archiveArtifact.Arch,
 			URI:         archiveArtifact.ReleaseCdnURI,
@@ -116,7 +116,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 			SHA512:      sha512,
 		}
 
-		bundleArchiveArtifacts[fmt.Sprintf("eksctl-anywhere-%s-%s", archiveArtifact.OS, archiveArtifact.Arch)] = bundleArchiveArtifact
+		bundleArchiveArtifacts[fmt.Sprintf("eksctl-anywhere-%s-%s", archiveArtifact.OS, archiveArtifact.Arch[0])] = bundleArchiveArtifact
 	}
 
 	eksARelease := anywherev1alpha1.EksARelease{
@@ -126,6 +126,10 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 		GitCommit: r.CliRepoHead,
 		GitTag:    r.ReleaseVersion,
 		EksABinary: anywherev1alpha1.BinaryBundle{
+			LinuxBinary:  bundleArchiveArtifacts["eksctl-anywhere-linux-amd64"],
+			DarwinBinary: bundleArchiveArtifacts["eksctl-anywhere-darwin-amd64"],
+		},
+		EksACLI: anywherev1alpha1.PlatformBundle{
 			LinuxBinary: anywherev1alpha1.ArchitectureBundle{
 				Amd64: bundleArchiveArtifacts["eksctl-anywhere-linux-amd64"],
 				Arm64: bundleArchiveArtifacts["eksctl-anywhere-linux-arm64"],

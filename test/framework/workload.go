@@ -65,6 +65,19 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 	}
 }
 
+// ValidateClusterDelete verifies the cluster has been deleted.
+func (w *WorkloadCluster) ValidateClusterDelete() {
+	ctx := context.Background()
+	w.T.Logf("Validating cluster deletion %s", w.ClusterName)
+	clusterStateValidator := newClusterStateValidator(w.clusterStateValidationConfig)
+	clusterStateValidator.WithValidations(
+		validationsForClusterDoesNotExist()...,
+	)
+	if err := clusterStateValidator.Validate(ctx); err != nil {
+		w.T.Fatalf("failed to validate cluster deletion %v", err)
+	}
+}
+
 func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context) error {
 	secret, err := w.KubectlClient.GetSecretFromNamespace(ctx, w.ManagementClusterKubeconfigFile(), fmt.Sprintf("%s-kubeconfig", w.ClusterName), constants.EksaSystemNamespace)
 	if err != nil {

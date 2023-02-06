@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
 const (
@@ -258,7 +259,7 @@ func WithCustomTinkerbellMachineConfig(selector string) TinkerbellOpt {
 	}
 }
 
-// ClusterValidations returns a list of provider specific validations.
-func (t *Tinkerbell) ClusterValidations() []ClusterValidation {
-	return []ClusterValidation{}
+// ClusterStateValidations returns a list of provider specific validations.
+func (t *Tinkerbell) ClusterStateValidations() []clusterf.StateValidation {
+	return []clusterf.StateValidation{}
 }

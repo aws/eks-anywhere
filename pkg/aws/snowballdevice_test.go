@@ -29,7 +29,7 @@ func newSnowballDeviceTest(t *testing.T) *snowballDeviceTest {
 		WithT:          NewWithT(t),
 		ctx:            ctx,
 		snowballDevice: sbd,
-		client:         aws.NewClientFromSnowball(sbd),
+		client:         aws.NewClient(aws.WithSnowballDevice(sbd)),
 	}
 }
 

@@ -3,6 +3,7 @@ package kubernetes
 import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
@@ -32,6 +33,7 @@ var schemeAdders = []schemeAdder{
 	vspherev1.AddToScheme,
 	etcdv1.AddToScheme,
 	addonsv1.AddToScheme,
+	tinkerbellv1.AddToScheme,
 }
 
 func addToScheme(scheme *runtime.Scheme, schemeAdders ...schemeAdder) error {

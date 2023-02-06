@@ -308,7 +308,7 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 }
 
 func (f *Factory) withTinkerbellClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker()
+	f.withCNIReconciler().withTracker().withIPValidator()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tinkerbellClusterReconciler != nil {

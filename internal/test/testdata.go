@@ -104,11 +104,11 @@ func Bundle() *releasev1.Bundles {
 		Spec: releasev1.BundlesSpec{
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
-					KubeVersion: "1.20",
+					KubeVersion: "1.22",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
 						EksDReleaseUrl: "testdata/release.yaml",
-						KubeVersion:    "1.20",
+						KubeVersion:    "1.22",
 					},
 					CertManager:                releasev1.CertManagerBundle{},
 					ClusterAPI:                 releasev1.CoreClusterAPI{},

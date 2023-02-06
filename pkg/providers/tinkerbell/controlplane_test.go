@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -139,6 +140,26 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	g.Expect(cp.KubeadmControlPlane).To(Equal(expectedKCP))
 	g.Expect(cp.ProviderCluster).To(Equal(tinkerbellCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(expectedCPTemplate))
+}
+
+func TestControlPlaneSpecRegistryMirrorAuthentication(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+	spec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+		Authenticate: true,
+	}
+	cp, err := ControlPlaneSpec(ctx, logger, client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp.Cluster).To(Equal(capiCluster()))
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kcpWithRegistryCredentials()))
+	g.Expect(cp.ProviderCluster).To(Equal(tinkerbellCluster()))
+	g.Expect(cp.Secrets).To(Equal(secret()))
+	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
 }
 
 func tinkerbellCluster() *tinkerbellv1.TinkerbellCluster {
@@ -317,6 +338,204 @@ spec:
 	return kcp
 }
 
+func kcpWithRegistryCredentials() *controlplanev1.KubeadmControlPlane {
+	var kcp *controlplanev1.KubeadmControlPlane
+	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  creationTimestamp: null
+  name: test
+  namespace: eksa-system
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer:
+        extraArgs:
+          authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
+          feature-gates: ServiceLoadBalancerClass=true
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+          mountPath: /etc/kubernetes/aws-iam-authenticator/
+          name: authconfig
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+          mountPath: /var/aws-iam-authenticator/
+          name: awsiamcert
+      bottlerocketAdmin: {}
+      bottlerocketBootstrap: {}
+      bottlerocketControl: {}
+      controllerManager: {}
+      dns:
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.3-eks-1-21-4
+      etcd:
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.16-eks-1-21-4
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+      networking: {}
+      pause: {}
+      proxy: {}
+      registryMirror: {}
+      scheduler: {}
+    files:
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+          - args:
+            - manager
+            env:
+            - name: vip_arp
+              value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_cidr
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: kube-system
+            - name: vip_ddns
+              value: "false"
+            - name: vip_leaderelection
+              value: "true"
+            - name: vip_leaseduration
+              value: "15"
+            - name: vip_renewdeadline
+              value: "10"
+            - name: vip_retryperiod
+              value: "2"
+            - name: address
+              value: 1.2.3.4
+            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+            imagePullPolicy: IfNotPresent
+            name: kube-vip
+            resources: {}
+            securityContext:
+              capabilities:
+                add:
+                - NET_ADMIN
+                - NET_RAW
+            volumeMounts:
+            - mountPath: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          hostNetwork: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/admin.conf
+            name: kubeconfig
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
+    - content: |
+        # clusters refers to the remote service.
+        clusters:
+          - name: aws-iam-authenticator
+            cluster:
+              certificate-authority: /var/aws-iam-authenticator/cert.pem
+              server: https://localhost:21362/authenticate
+        # users refers to the API Server's webhook configuration
+        # (we don't need to authenticate the API server).
+        users:
+          - name: apiserver
+        # kubeconfig files require a context. Provide one for the API Server.
+        current-context: webhook
+        contexts:
+        - name: webhook
+          context:
+            cluster: aws-iam-authenticator
+            user: apiserver
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
+      permissions: "0640"
+    - contentFrom:
+        secret:
+          key: cert.pem
+          name: test-aws-iam-authenticator-ca
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
+      permissions: "0640"
+    - contentFrom:
+        secret:
+          key: key.pem
+          name: test-aws-iam-authenticator-ca
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
+      permissions: "0640"
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://:"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs.":".auth]
+            username = "username"
+            password = "password"
+      owner: root:root
+      path: /etc/containerd/config_append.toml
+    format: cloud-config
+    initConfiguration:
+      localAPIEndpoint: {}
+      nodeRegistration:
+        kubeletExtraArgs:
+          anonymous-auth: "false"
+          provider-id: PROVIDER_ID
+          read-only-port: "0"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    joinConfiguration:
+      bottlerocketAdmin: {}
+      bottlerocketBootstrap: {}
+      bottlerocketControl: {}
+      discovery: {}
+      nodeRegistration:
+        ignorePreflightErrors:
+        - DirAvailable--etc-kubernetes-manifests
+        kubeletExtraArgs:
+          anonymous-auth: "false"
+          provider-id: PROVIDER_ID
+          read-only-port: "0"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      pause: {}
+      proxy: {}
+      registryMirror: {}
+    preKubeadmCommands:
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+    - sudo systemctl daemon-reload
+    - sudo systemctl restart containerd
+    users:
+    - name: tink-user
+      sshAuthorizedKeys:
+      - '[ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ==]'
+      sudo: ALL=(ALL) NOPASSWD:ALL
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: TinkerbellMachineTemplate
+      name: test-control-plane-1
+    metadata: {}
+  replicas: 1
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+  version: v1.21.2-eks-1-21-4
+status:
+  initialized: false
+  ready: false
+  readyReplicas: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0
+
+`)
+	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
+		return nil
+	}
+	return kcp
+}
+
 func tinkerbellMachineTemplate(name string) *tinkerbellv1.TinkerbellMachineTemplate {
 	return &tinkerbellv1.TinkerbellMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
@@ -391,11 +610,14 @@ func secret() *corev1.Secret {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "eksa-system",
-			Name:      "my-secret",
+			Name:      "registry-credentials",
+			Labels: map[string]string{
+				"clusterctl.cluster.x-k8s.io/move": "true",
+			},
 		},
-		Data: map[string][]byte{
-			"username": []byte("test"),
-			"password": []byte("test"),
+		StringData: map[string]string{
+			"username": "username",
+			"password": "password",
 		},
 	}
 }

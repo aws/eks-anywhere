@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
 const (
@@ -319,7 +320,7 @@ func UpdateSnowUbuntuTemplate123Var() api.SnowFiller {
 	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines)
 }
 
-// ClusterValidations returns a list of provider specific validations.
-func (s *Snow) ClusterValidations() []ClusterValidation {
-	return []ClusterValidation{}
+// ClusterStateValidations returns a list of provider specific validations.
+func (s *Snow) ClusterStateValidations() []clusterf.StateValidation {
+	return []clusterf.StateValidation{}
 }

@@ -1,9 +1,0 @@
-apiVersion: packages.eks.amazonaws.com/v1alpha1
-kind: PackageBundleController
-metadata:
-  name: {{.clusterName}}
-  namespace: {{.namespace}}
-spec:
-  logLevel: 4
-  defaultRegistry: {{.defaultRegistry}}
-  defaultImageRegistry: {{.defaultImageRegistry}}

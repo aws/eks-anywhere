@@ -39,7 +39,7 @@ done
 
 for os in darwin linux; do
     for arch in amd64 arm64; do
-        EKSA_CLI_URI=$(yq e ".spec.releases[0].eksABinary.$os.$arch.uri" $ARTIFACTS_DIR/$DATE_YYYYMMDD-eks-a-release.yaml)
+        EKSA_CLI_URI=$(yq e ".spec.releases[0].eksACLI.$os.$arch.uri" $ARTIFACTS_DIR/$DATE_YYYYMMDD-eks-a-release.yaml)
         wget $EKSA_CLI_URI -O $ARTIFACTS_DIR/$(basename $EKSA_CLI_URI)
     done
 done

@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 )
 
 // Docker is a Provider for running end-to-end tests.
@@ -76,7 +77,7 @@ func (d *Docker) WithWorkerNodeGroup(workerNodeGroup *WorkerNodeGroup) api.Clust
 	return api.ClusterToConfigFiller(workerNodeGroup.ClusterFiller())
 }
 
-// ClusterValidations returns a list of provider specific validations.
-func (d *Docker) ClusterValidations() []ClusterValidation {
-	return []ClusterValidation{}
+// ClusterStateValidations returns a list of provider specific validations.
+func (d *Docker) ClusterStateValidations() []clusterf.StateValidation {
+	return []clusterf.StateValidation{}
 }

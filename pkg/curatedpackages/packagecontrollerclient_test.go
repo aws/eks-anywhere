@@ -1,7 +1,6 @@
 package curatedpackages_test
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"errors"
@@ -25,12 +24,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	artifactsv1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
-
-//go:embed testdata/packagebundlectrl_test.yaml
-var packageBundleControllerTest string
-
-//go:embed testdata/packagebundlectrl_registrymirror.yaml
-var packageBundleControllerTestWithMirror string
 
 const valueFileName = "values.yaml"
 
@@ -73,8 +66,19 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
 			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
 		},
-		Auth:          true,
-		CACertContent: "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
+		Auth:               true,
+		CACertContent:      "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
+		InsecureSkipVerify: false,
+	}
+	registryMirrorInsecure := &registrymirror.RegistryMirror{
+		BaseRegistry: "1.2.3.4:8443",
+		NamespacedRegistryMap: map[string]string{
+			constants.DefaultCoreEKSARegistry:             "1.2.3.4:443/public",
+			constants.DefaultCuratedPackagesRegistryRegex: "1.2.3.4:443/private",
+		},
+		Auth:               true,
+		CACertContent:      "-----BEGIN CERTIFICATE-----\nabc\nefg\n-----END CERTIFICATE-----\n",
+		InsecureSkipVerify: true,
 	}
 	writer, _ := filewriter.NewWriter(clusterName)
 	return []*packageControllerTest{
@@ -137,7 +141,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, kubeConfig, chart, registryMirror,
+				ci, k, clusterName, kubeConfig, chart, registryMirrorInsecure,
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
 			),
@@ -150,7 +154,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			httpProxy:      "1.1.1.1",
 			httpsProxy:     "1.1.1.1",
 			noProxy:        []string{"1.1.1.1/24"},
-			registryMirror: registryMirror,
+			registryMirror: registryMirrorInsecure,
 			writer:         writer,
 			wantValueFile:  "testdata/values_empty_awssecret.yaml",
 		},
@@ -216,16 +220,34 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 		tt.command = curatedpackages.NewPackageControllerClient(
 			tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
 			tt.registryMirror,
-			curatedpackages.WithManagementClusterName("mgmt"),
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion("us-west-2"),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithManagementClusterName("mgmt"),
+			curatedpackages.WithValuesFileWriter(tt.writer),
 		)
-
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
+		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
 		if tt.registryMirror != nil {
-			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTestWithMirror), params).Return(bytes.Buffer{}, nil)
-		} else {
-			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
 		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		values = append(values, "workloadOnly=true")
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		any := gomock.Any()
+		tt.kubectl.EXPECT().
+			GetObject(any, any, any, any, any, any).
+			DoAndReturn(getPBCSuccess(t)).
+			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
 		tt.Expect(err).To(BeNil())
@@ -408,60 +430,6 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		if err == nil {
 			t.Errorf("expected error, got nil")
 		}
-	}
-}
-
-func TestPbcCreationSuccess(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		tt.eksaRegion = "us-west-2"
-		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
-			tt.registryMirror,
-			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
-			curatedpackages.WithEksaRegion(tt.eksaRegion),
-			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
-			curatedpackages.WithManagementClusterName(tt.clusterName),
-			curatedpackages.WithValuesFileWriter(tt.writer),
-		)
-
-		_, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-
-		if tt.registryMirror != nil {
-			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTestWithMirror), params).Return(bytes.Buffer{}, nil)
-		} else {
-			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
-		}
-
-		err := tt.command.InstallPBCResources(tt.ctx, defaultRegistry, defaultImageRegistry)
-		tt.Expect(err).To(BeNil())
-	}
-}
-
-func TestPbcCreationFail(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		tt.eksaRegion = "us-west-2"
-		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
-			tt.registryMirror,
-			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
-			curatedpackages.WithEksaRegion(tt.eksaRegion),
-			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
-			curatedpackages.WithManagementClusterName(tt.clusterName),
-			curatedpackages.WithValuesFileWriter(tt.writer),
-		)
-
-		_, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
-		params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
-
-		if tt.registryMirror != nil {
-			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTestWithMirror), params).Return(bytes.Buffer{}, errors.New("creating pbc"))
-		} else {
-			tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, errors.New("creating pbc"))
-		}
-
-		err := tt.command.InstallPBCResources(tt.ctx, defaultRegistry, defaultImageRegistry)
-		tt.Expect(err).NotTo(BeNil())
 	}
 }
 
