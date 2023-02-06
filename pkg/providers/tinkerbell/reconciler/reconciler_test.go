@@ -339,7 +339,6 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := tinkerbellreconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
-	// secret := registryCredentialSecret()
 
 	managementCluster := tinkerbellCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -417,7 +416,6 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			workloadClusterDatacenter,
 			bundle,
 			test.EksdRelease(),
-			// secret,
 		},
 		cluster:                   cluster,
 		datacenterConfig:          workloadClusterDatacenter,

@@ -62,6 +62,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateClusterSpec,
 		r.ReconcileControlPlane,
+		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 	).Run(ctx, log, clusterSpec)
 }
@@ -93,6 +94,13 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	}
 
 	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(cp))
+}
+
+// CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
+// Requeues with the appropriate wait times whenever the cluster is not ready yet.
+func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "checkControlPlaneReady")
+	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
 
 // ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
