@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/smithy-go"
 )
@@ -19,23 +17,9 @@ type EC2Client interface {
 	ImportKeyPair(ctx context.Context, params *ec2.ImportKeyPairInput, optFns ...func(*ec2.Options)) (*ec2.ImportKeyPairOutput, error)
 }
 
-// IMDSClient is an imds client that wraps around the aws sdk imds client.
-type IMDSClient interface {
-	GetMetadata(ctx context.Context, params *imds.GetMetadataInput, optFns ...func(*imds.Options)) (*imds.GetMetadataOutput, error)
-}
-
-// EC2 contains the ec2 and imds client.
-type EC2 struct {
-	EC2Client
-	IMDSClient
-}
-
 // NewEC2Client builds a new ec2 client.
-func NewEC2Client(config aws.Config) *EC2 {
-	return &EC2{
-		ec2.NewFromConfig(config),
-		imds.NewFromConfig(config),
-	}
+func NewEC2Client(config aws.Config) *ec2.Client {
+	return ec2.NewFromConfig(config)
 }
 
 // EC2ImageExists calls aws sdk ec2.DescribeImages with filter imageID to fetch a
@@ -87,23 +71,4 @@ func (c *Client) EC2ImportKeyPair(ctx context.Context, keyName string, keyMateri
 		return fmt.Errorf("importing key pairs in ec2: %v", err)
 	}
 	return nil
-}
-
-// EC2InstanceIP calls aws sdk imds.GetMetadata with public-ipv4 path to fetch the instance ip from metadata service.
-func (c *Client) EC2InstanceIP(ctx context.Context) (string, error) {
-	params := &imds.GetMetadataInput{
-		Path: "public-ipv4",
-	}
-	out, err := c.ec2.GetMetadata(ctx, params)
-	if err != nil {
-		return "", fmt.Errorf("fetching instance IP from IMDSv2: %v", err)
-	}
-
-	defer out.Content.Close()
-
-	b, err := io.ReadAll(out.Content)
-	if err != nil {
-		return "", fmt.Errorf("reading output content from IMDSv2 instance ip endpoint: %v", err)
-	}
-	return string(b), nil
 }
