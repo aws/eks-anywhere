@@ -250,9 +250,6 @@ Refers to a `SnowIPPool` object which provides a range of ip addresses. When spe
 ### containersVolume (optional)
 Configuration option for customizing containers data storage volume.
 
-### containersVolume.deviceName (optional)
-Name of the device for the containers data storage volume.
-
 ### containersVolume.size
 Size of the storage device in Gi.
 
@@ -260,18 +257,6 @@ This field is required for BottleRocket OS and the size must be no smaller than 
 
 ### containersVolume.type (optional)
 Type of the volume. For example: `gp2`, `io1`.
-
-### containersVolume.iops (optional)
-Number of IOPS requested for the disk.
-
-### containersVolume.encrypted (optional)
-Whether the volume should be encrypted or not.
-
-### containersVolume.encryptionKey (optional)
-KMS key to use to encrypt the volume. Can be either a KMS key ID or ARN.
-
-If `encrypted` is set and `encryptionKey` is omitted, the default AWS key will be used.
-The key must already exist and be accessible by the Snow controller.
 
 ## SnowIPPool Fields
 
