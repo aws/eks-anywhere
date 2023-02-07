@@ -101,7 +101,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
    Example command output
     ```
     NAMESPACE                      NAME                   PACKAGE      AGE   STATE       CURRENTVERSION                                    TARGETVERSION                                              DETAIL
-    eksa-packages-<cluster-name>   generated-prometheus   prometheus   17m   installed   2.39.1-6d6d682ba5bf7b54ce62c48955b246c95cc193dd   2.39.1-6d6d682ba5bf7b54ce62c48955b246c95cc193dd (latest)
+    eksa-packages-<cluster-name>   generated-prometheus   prometheus   17m   installed   2.41.0-b53c8be243a6cc3ac2553de24ab9f726d9b851ca   2.41.0-b53c8be243a6cc3ac2553de24ab9f726d9b851ca (latest)
     ```
 
 ## Update

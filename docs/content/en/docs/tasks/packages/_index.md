@@ -120,7 +120,7 @@ metallb-crds            0.13.7-758df43f8c5a3c2ac693365d06e7b0feba87efd5
 metrics-server          0.6.1-eks-1-23-6-c94ed410f56421659f554f13b4af7a877da72bc1
 emissary                3.3.0-cbf71de34d8bb5a72083f497d599da63e8b3837b
 emissary-crds           3.3.0-cbf71de34d8bb5a72083f497d599da63e8b3837b
-prometheus              2.39.1-a5a5cc31867fdec4da73f95483e6893cf424f80f
+prometheus              2.41.0-b53c8be243a6cc3ac2553de24ab9f726d9b851ca
 ```
 
 ### Generate a curated-packages config
