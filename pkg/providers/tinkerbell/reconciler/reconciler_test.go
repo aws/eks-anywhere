@@ -294,7 +294,8 @@ func TestReconcilerValidateHardwareCountFail(t *testing.T) {
 	tt.cluster.Name = "invalidCluster"
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &tinkv1alpha1.Hardware{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "hw1",
+			Name:      "hw1",
+			Namespace: constants.EksaSystemNamespace,
 			Labels: map[string]string{
 				"type": "cp",
 			},

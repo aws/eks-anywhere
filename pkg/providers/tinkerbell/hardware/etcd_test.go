@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
@@ -19,7 +20,8 @@ func TestNewCatalogueFromETCDSuccess(t *testing.T) {
 
 	hw := tinkv1alpha1.Hardware{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "hw1",
+			Name:      "hw1",
+			Namespace: constants.EksaSystemNamespace,
 			Labels: map[string]string{
 				"type": "cp",
 			},

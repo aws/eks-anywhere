@@ -8,6 +8,8 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // OwnerNameLabel is the label set by CAPT to mark a hardware as part of a cluster.
@@ -74,7 +76,7 @@ func (er *ETCDReader) getUnprovisionedTinkerbellHardware(ctx context.Context) ([
 		return nil, fmt.Errorf("converting label selector: %w", err)
 	}
 
-	if err := er.client.List(ctx, &selectedHardware, &client.ListOptions{LabelSelector: selector}); err != nil {
+	if err := er.client.List(ctx, &selectedHardware, &client.ListOptions{LabelSelector: selector}, client.InNamespace(constants.EksaSystemNamespace)); err != nil {
 		return nil, fmt.Errorf("listing hardware without owner: %v", err)
 	}
 
