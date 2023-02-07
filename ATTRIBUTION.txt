@@ -161,10 +161,10 @@ https://github.com/spf13/cobra
 ** github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1; version v0.1.1-0.20220615214617-9e9c2a397288 --
 https://github.com/tinkerbell/cluster-api-provider-tinkerbell
 
-** github.com/tinkerbell/rufio/api/v1alpha1; version v0.0.0-20220606134123-599b7401b5cc --
+** github.com/tinkerbell/rufio/api/v1alpha1; version v0.2.1 --
 https://github.com/tinkerbell/rufio
 
-** github.com/tinkerbell/tink/pkg/apis/core/v1alpha1; version v0.7.1-0.20221004171112-6deeea887dac --
+** github.com/tinkerbell/tink/pkg/apis/core/v1alpha1; version v0.8.0 --
 https://github.com/tinkerbell/tink
 
 ** github.com/vmware/govmomi; version v0.29.0 --
@@ -1594,7 +1594,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 https://github.com/morikuni/aec
 Copyright (c) 2016 Taihei Morikuni
 
-** github.com/onsi/gomega; version v1.23.0 --
+** github.com/onsi/gomega; version v1.24.1 --
 https://github.com/onsi/gomega
 Copyright (c) 2013-2014 Onsi Fakhouri
 
