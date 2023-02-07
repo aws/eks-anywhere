@@ -64,6 +64,62 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Spec.ManagementCluster.Name = "nonexistent-management-cluster"
+	tt.createAllObjs()
+
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("\"nonexistent-management-cluster\" not found")))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.managementCluster.Spec.DatacenterRef.Name = "nonexistent-datacenter"
+	tt.createAllObjs()
+
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("\"nonexistent-datacenter\" not found")))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
+	tt := newReconcilerTest(t)
+	managementDatacenterConfig := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {
+		d.Name = "ip-mismatch-datacenter"
+		d.Spec.TinkerbellIP = "3.3.3.3"
+	})
+	tt.managementCluster.Spec.DatacenterRef.Name = managementDatacenterConfig.Name
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, managementDatacenterConfig)
+	tt.createAllObjs()
+
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("workload cluster Tinkerbell IP must match managment cluster Tinkerbell IP")))
+	tt.cleanup()
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
@@ -377,7 +433,7 @@ func (tt *reconcilerTest) createAllObjs() {
 func (tt *reconcilerTest) allObjs() []client.Object {
 	objs := make([]client.Object, 0, len(tt.eksaSupportObjs)+3)
 	objs = append(objs, tt.eksaSupportObjs...)
-	objs = append(objs, tt.cluster, tt.machineConfigControlPlane, tt.machineConfigWorker)
+	objs = append(objs, tt.cluster, tt.machineConfigControlPlane, tt.machineConfigWorker, tt.managementCluster)
 
 	return objs
 }
@@ -388,6 +444,7 @@ type reconcilerTest struct {
 	*envtest.APIExpecter
 	ctx                       context.Context
 	cluster                   *anywherev1.Cluster
+	managementCluster         *anywherev1.Cluster
 	client                    client.Client
 	eksaSupportObjs           []client.Object
 	datacenterConfig          *anywherev1.TinkerbellDatacenterConfig
@@ -408,6 +465,10 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	bundle := test.Bundle()
 
+	managementClusterDatacenter := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {
+		d.Name = "management-datacenter"
+	})
+
 	managementCluster := tinkerbellCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
 		c.Spec.ManagementCluster = anywherev1.ManagementCluster{
@@ -417,6 +478,10 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			Name:       bundle.Name,
 			Namespace:  bundle.Namespace,
 			APIVersion: bundle.APIVersion,
+		}
+		c.Spec.DatacenterRef = anywherev1.Ref{
+			Kind: anywherev1.TinkerbellDatacenterKind,
+			Name: managementClusterDatacenter.Name,
 		}
 	})
 
@@ -481,12 +546,13 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		eksaSupportObjs: []client.Object{
 			test.Namespace(clusterNamespace),
 			test.Namespace(constants.EksaSystemNamespace),
-			managementCluster,
 			workloadClusterDatacenter,
+			managementClusterDatacenter,
 			bundle,
 			test.EksdRelease(),
 		},
 		cluster:                   cluster,
+		managementCluster:         managementCluster,
 		datacenterConfig:          workloadClusterDatacenter,
 		machineConfigControlPlane: machineConfigCP,
 		machineConfigWorker:       machineConfigWN,

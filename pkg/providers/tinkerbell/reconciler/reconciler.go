@@ -64,6 +64,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateClusterSpec,
 		r.ValidateHardware,
+		r.ValidateDatacenterConfig,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -114,6 +115,20 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	return controller.Result{}, nil
 }
 
+// ValidateDatacenterConfig updates the cluster status if the TinkerbellDatacenter status indicates that the spec is invalid.
+func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateDatacenterConfig")
+
+	if err := r.validateTinkerbellIPMatch(ctx, clusterSpec); err != nil {
+		log.Error(err, "Invalid TinkerbellDatacenterConfig")
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+		return controller.ResultWithReturn(), nil
+	}
+
+	return controller.Result{}, nil
+}
+
 // ReconcileCNI reconciles the CNI to the desired state.
 func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileCNI")
@@ -124,6 +139,38 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 	}
 
 	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
+}
+
+func (r *Reconciler) validateTinkerbellIPMatch(ctx context.Context, clusterSpec *c.Spec) error {
+	if clusterSpec.Cluster.IsManaged() {
+
+		// for workload cluster tinkerbell IP must match management cluster tinkerbell IP
+		managementClusterSpec := &anywherev1.Cluster{}
+
+		err := r.client.Get(ctx, client.ObjectKey{
+			Namespace: clusterSpec.Cluster.Namespace,
+			Name:      clusterSpec.Cluster.Spec.ManagementCluster.Name,
+		}, managementClusterSpec)
+		if err != nil {
+			return err
+		}
+
+		managementDatacenterConfig := &anywherev1.TinkerbellDatacenterConfig{}
+
+		err = r.client.Get(ctx, client.ObjectKey{
+			Namespace: clusterSpec.Cluster.Namespace,
+			Name:      managementClusterSpec.Spec.DatacenterRef.Name,
+		}, managementDatacenterConfig)
+		if err != nil {
+			return err
+		}
+
+		if clusterSpec.TinkerbellDatacenter.Spec.TinkerbellIP != managementDatacenterConfig.Spec.TinkerbellIP {
+			return errors.New("workload cluster Tinkerbell IP must match managment cluster Tinkerbell IP")
+		}
+	}
+
+	return nil
 }
 
 func toClientControlPlane(cp *tinkerbell.ControlPlane) *clusters.ControlPlane {
