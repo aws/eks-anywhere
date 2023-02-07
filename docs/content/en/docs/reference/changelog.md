@@ -4,6 +4,13 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
+## [v0.14.1](https://github.com/aws/eks-anywhere/releases/tag/v0.14.1)
+
+### Added
+- support for authenticated pulls from registry mirror ([#4796](https://github.com/aws/eks-anywhere/pull/4796))
+- option to override default nodeStartupTimeout in machine health check ([#4800](https://github.com/aws/eks-anywhere/pull/4800))
+- Validate control plane endpoint with pods and services CIDR blocks([#4816](https://github.com/aws/eks-anywhere/pull/4816))
+
 ## [v0.14.0](https://github.com/aws/eks-anywhere/releases/tag/v0.14.0)
 
 ### Added
