@@ -360,6 +360,10 @@ func (c *upgradeTestSetup) expectWriteCheckpointFile() {
 	)
 }
 
+func (c *upgradeTestSetup) expectPreCoreComponentsUpgrade() {
+	c.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), gomock.Any())
+}
+
 func (c *upgradeTestSetup) run() error {
 	return c.workflow.Run(c.ctx, c.newClusterSpec, c.managementCluster, c.workloadCluster, c.validator, c.forceCleanup)
 }
@@ -406,6 +410,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectForceReconcileGitRepo(test.workloadCluster)
 	test.expectResumeGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrapNotToBeCalled()
+	test.expectPreCoreComponentsUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -439,6 +444,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectForceReconcileGitRepo(test.workloadCluster)
 	test.expectResumeGitOpsReconcile(test.workloadCluster)
 	test.expectPostBootstrapDeleteForUpgrade()
+	test.expectPreCoreComponentsUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -471,6 +477,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectForceReconcileGitRepo(test.workloadCluster)
 	test.expectResumeGitOpsReconcile(test.workloadCluster)
 	test.expectPostBootstrapDeleteForUpgrade()
+	test.expectPreCoreComponentsUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -494,6 +501,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
+	test.expectPreCoreComponentsUpgrade()
 
 	err := test.run()
 	if err == nil {
@@ -526,6 +534,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectForceReconcileGitRepo(test.managementCluster)
 	test.expectResumeGitOpsReconcile(test.managementCluster)
 	test.expectUpgradeWorkload(test.managementCluster, test.workloadCluster)
+	test.expectPreCoreComponentsUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -568,6 +577,7 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
+	test.expectPreCoreComponentsUpgrade()
 
 	err := test.run()
 	if err == nil {

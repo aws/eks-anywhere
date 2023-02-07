@@ -1034,3 +1034,12 @@ func GetDefaultStorageClass() []byte {
 	copy(exportedStorageClass, defaultStorageClass)
 	return exportedStorageClass
 }
+
+// PreCoreComponentsUpgrade staisfies the Provider interface.
+func (p *vsphereProvider) PreCoreComponentsUpgrade(
+	ctx context.Context,
+	cluster *types.Cluster,
+	clusterSpec *cluster.Spec,
+) error {
+	return nil
+}

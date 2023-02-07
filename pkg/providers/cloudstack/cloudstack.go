@@ -1386,3 +1386,12 @@ func (p *cloudstackProvider) validateK8sVersion(version v1alpha1.KubernetesVersi
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
+
+// PreCoreComponentsUpgrade staisfies the Provider interface.
+func (p *cloudstackProvider) PreCoreComponentsUpgrade(
+	ctx context.Context,
+	cluster *types.Cluster,
+	clusterSpec *cluster.Spec,
+) error {
+	return nil
+}

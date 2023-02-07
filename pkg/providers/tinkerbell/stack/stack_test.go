@@ -335,3 +335,25 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 	err := s.CleanupLocalBoots(ctx, true)
 	assert.NoError(t, err)
 }
+
+func TestUpgrade(t *testing.T) {
+	var (
+		mockCtrl       = gomock.NewController(t)
+		docker         = mocks.NewMockDocker(mockCtrl)
+		helm           = mocks.NewMockHelm(mockCtrl)
+		folder, writer = test.NewWriter(t)
+
+		valuesFile = filepath.Join(folder, "generated", overridesFileName)
+		cluster    = &types.Cluster{Name: "test"}
+		ctx        = context.Background()
+	)
+
+	helm.EXPECT().UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+
+	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile)
+	assert.NoError(t, err)
+
+	assertYamlFilesEqual(t, "testdata/expected_upgrade.yaml", valuesFile)
+}

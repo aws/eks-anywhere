@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 // CNIReconciler is an interface for reconciling CNI in the Tinkerbell cluster reconciler.
@@ -62,7 +63,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	return controller.NewPhaseRunner().Register(
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateClusterSpec,
+		r.ValidateHardware,
 		r.ReconcileControlPlane,
+		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
@@ -95,6 +98,13 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	}
 
 	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(cp))
+}
+
+// CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
+// Requeues with the appropriate wait times whenever the cluster is not ready yet.
+func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "checkControlPlaneReady")
+	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
 
 // ReconcileWorkerNodes reconciles the worker nodes to the desired state.
@@ -149,4 +159,52 @@ func toClientControlPlane(cp *tinkerbell.ControlPlane) *clusters.ControlPlane {
 		EtcdMachineTemplate:         cp.EtcdMachineTemplate,
 		Other:                       other,
 	}
+}
+
+// ValidateHardware performs a set of validations on the tinkerbell hardware read from the cluster.
+func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateHardware")
+
+	capiCluster, err := controller.GetCAPICluster(ctx, r.client, clusterSpec.Cluster)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "validating tinkerbell hardware")
+	}
+	if capiCluster != nil {
+		// If CAPI cluster exists, the hardware has been validated
+		// and it's possibly already in use so no need to validate it again.
+		log.V(3).Info("CAPI cluster already exists, skipping hardware validations")
+		return controller.Result{}, nil
+	}
+
+	// We need a new reader each time so that the catalogue gets recreated.
+	etcdReader := hardware.NewETCDReader(r.client)
+	if err := etcdReader.NewCatalogueFromETCD(ctx); err != nil {
+		log.Error(err, "Hardware validation failure")
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+		return controller.ResultWithReturn(), nil
+	}
+
+	var v tinkerbell.ClusterSpecValidator
+	v.Register(
+		tinkerbell.MinimumHardwareAvailableAssertionForCreate(etcdReader.GetCatalogue()),
+		tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(etcdReader.GetCatalogue()),
+	)
+
+	tinkClusterSpec := tinkerbell.NewClusterSpec(
+		clusterSpec,
+		clusterSpec.Config.TinkerbellMachineConfigs,
+		clusterSpec.Config.TinkerbellDatacenter,
+	)
+
+	if err := v.Validate(tinkClusterSpec); err != nil {
+		log.Error(err, "Hardware validation failure")
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+		return controller.ResultWithReturn(), nil
+	}
+
+	return controller.Result{}, nil
 }

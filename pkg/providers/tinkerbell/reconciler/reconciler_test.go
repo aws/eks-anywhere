@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -25,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -378,6 +380,72 @@ func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
 }
 
+func TestReconcilerValidateHardwareCountFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+
+	tt.cluster.Name = "invalidCluster"
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &tinkv1alpha1.Hardware{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "hw1",
+			Namespace: constants.EksaSystemNamespace,
+			Labels: map[string]string{
+				"type": "cp",
+			},
+		},
+		Spec: tinkv1alpha1.HardwareSpec{
+			Metadata: &tinkv1alpha1.HardwareMetadata{
+				Instance: &tinkv1alpha1.MetadataInstance{
+					ID: "foo",
+				},
+			},
+		},
+	},
+	)
+
+	tt.withFakeClient()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+}
+
+func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+
+	tt.cluster.Name = "invalidCluster"
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &tinkv1alpha1.Hardware{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "hw1",
+			Labels: map[string]string{
+				hardware.OwnerNameLabel: "cluster",
+				"type":                  "cp",
+			},
+		},
+		Spec: tinkv1alpha1.HardwareSpec{
+			Metadata: &tinkv1alpha1.HardwareMetadata{
+				Instance: &tinkv1alpha1.MetadataInstance{
+					ID: "foo",
+				},
+			},
+		},
+	},
+	)
+
+	tt.withFakeClient()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("no available hardware"))
+}
+
 func (tt *reconcilerTest) withFakeClient() {
 	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
 }
@@ -432,7 +500,6 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := tinkerbellreconcilermocks.NewMockIPValidator(ctrl)
 
 	bundle := test.Bundle()
-	// secret := registryCredentialSecret()
 
 	managementCluster := tinkerbellCluster(func(c *anywherev1.Cluster) {
 		c.Name = "management-cluster"
@@ -452,6 +519,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 	machineConfigWN := machineConfig(func(m *anywherev1.TinkerbellMachineConfig) {
 		m.Name = "worker-machine-config"
+		m.Spec.HardwareSelector = anywherev1.HardwareSelector{"type": "worker"}
 	})
 
 	workloadClusterDatacenter := dataCenter(func(d *anywherev1.TinkerbellDatacenterConfig) {})
@@ -510,7 +578,6 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			workloadClusterDatacenter,
 			bundle,
 			test.EksdRelease(),
-			// secret,
 		},
 		cluster:                   cluster,
 		datacenterConfig:          workloadClusterDatacenter,

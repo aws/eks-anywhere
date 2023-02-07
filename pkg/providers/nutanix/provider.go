@@ -672,3 +672,12 @@ func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapC
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
+
+// PreCoreComponentsUpgrade staisfies the Provider interface.
+func (p *Provider) PreCoreComponentsUpgrade(
+	ctx context.Context,
+	cluster *types.Cluster,
+	clusterSpec *cluster.Spec,
+) error {
+	return nil
+}
