@@ -5672,6 +5672,8 @@ rules:
   - dockerdatacenterconfigs/finalizers
   - snowippools/finalizers
   - snowmachineconfigs/finalizers
+  - tinkerbelldatacenterconfigs/finalizers
+  - tinkerbellmachineconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
   - vspheremachineconfigs/finalizers
   verbs:
@@ -5687,6 +5689,8 @@ rules:
   - dockerdatacenterconfigs/status
   - snowippools/status
   - snowmachineconfigs/status
+  - tinkerbelldatacenterconfigs/status
+  - tinkerbellmachineconfigs/status
   - vspheredatacenterconfigs/status
   - vspheremachineconfigs/status
   verbs:
@@ -5796,6 +5800,17 @@ rules:
   verbs:
   - create
   - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tinkerbell.org
+  resources:
+  - hardware
+  - hardware/status
+  verbs:
   - get
   - list
   - patch
