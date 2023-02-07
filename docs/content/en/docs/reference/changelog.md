@@ -13,6 +13,10 @@ weight: 35
 - option to override default nodeStartupTimeout in machine health check ([#4800](https://github.com/aws/eks-anywhere/pull/4800))
 - Validate control plane endpoint with pods and services CIDR blocks([#4816](https://github.com/aws/eks-anywhere/pull/4816))
 
+
+### Fixed
+- Fixed a issue where registry mirror settings weren’t being applied properly on Bottlerocket nodes for Tinkerbell provider
+
 ## [v0.14.0](https://github.com/aws/eks-anywhere/releases/tag/v0.14.0)
 
 ### Added
