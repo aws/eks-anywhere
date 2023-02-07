@@ -12,10 +12,14 @@ const (
 	QSFP    PhysicalNetworkConnectorType = "QSFP"
 	RJ45    PhysicalNetworkConnectorType = "RJ45"
 
-	SbeCLarge   SnowInstanceType = "sbe-c.large"
-	SbeCXLarge  SnowInstanceType = "sbe-c.xlarge"
-	SbeC2XLarge SnowInstanceType = "sbe-c.2xlarge"
-	SbeC4XLarge SnowInstanceType = "sbe-c.4xlarge"
+	SbeCLarge    SnowInstanceType = "sbe-c.large"
+	SbeCXLarge   SnowInstanceType = "sbe-c.xlarge"
+	SbeC2XLarge  SnowInstanceType = "sbe-c.2xlarge"
+	SbeC4XLarge  SnowInstanceType = "sbe-c.4xlarge"
+	SbeC8XLarge  SnowInstanceType = "sbe-c.8xlarge"
+	SbeC12XLarge SnowInstanceType = "sbe-c.12xlarge"
+	SbeC16XLarge SnowInstanceType = "sbe-c.16xlarge"
+	SbeC24XLarge SnowInstanceType = "sbe-c.24xlarge"
 )
 
 type PhysicalNetworkConnectorType string
