@@ -213,7 +213,7 @@ Refers to the Kubernetes secret object with Snow devices credentials used to rec
 AMI ID from which to create the machine instance. Snow provider offers an AMI lookup logic which will look for a suitable AMI ID based on the Kubernetes version and osFamily if the field is empty.
 
 ### instanceType (optional)
-Type of the Snow EC2 machine instance. Permitted values: `sbe-c.large`, `sbe-c.xlarge`, `sbe-c.2xlarge`, `sbe-c.4xlarge` (Default: `sbe-c.large`).
+Type of the Snow EC2 machine instance. Permitted values: `sbe-c.large`, `sbe-c.xlarge`, `sbe-c.2xlarge`, `sbe-c.4xlarge`, `sbe-c.8xlarge`, `sbe-c.12xlarge`, `sbe-c.16xlarge`, `sbe-c.24xlarge` (Default: `sbe-c.large`).
 
 ### osFamily
 Operating System on instance machines. Permitted values: bottlerocket, ubuntu.
@@ -254,12 +254,9 @@ Configuration option for customizing containers data storage volume.
 Name of the device for the containers data storage volume.
 
 ### containersVolume.size
-Size of the storage device in Gi.
+Size of the storage for containerd runtime in Gi.
 
-This field is required for BottleRocket OS and the size must be no smaller than 25 Gi. The field is optional for Ubuntu and if specified, the size must be no smaller than 8 Gi.
-
-### containersVolume.type (optional)
-Type of the volume. For example: `gp2`, `io1`.
+The field is optional for Ubuntu and if specified, the size must be no smaller than 8 Gi.
 
 ### containersVolume.iops (optional)
 Number of IOPS requested for the disk.
