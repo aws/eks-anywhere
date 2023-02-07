@@ -162,7 +162,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		tinkServer: map[string]interface{}{
 			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
-			args:  []string{},
+			args:  []string{"--tls=false"},
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
 			},
