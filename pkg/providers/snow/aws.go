@@ -14,6 +14,11 @@ type AwsClient interface {
 	SnowballDeviceSoftwareVersion(ctx context.Context) (string, error)
 }
 
+// LocalIMDSClient contains methods that fetch metadata from the local imds.
+type LocalIMDSClient interface {
+	EC2InstanceIP(ctx context.Context) (string, error)
+}
+
 type AwsClientMap map[string]AwsClient
 
 func NewAwsClientMap(awsClients aws.Clients) AwsClientMap {

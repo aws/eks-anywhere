@@ -38,6 +38,7 @@ const (
 	vsphere    provider = "vsphere"
 	tinkerbell provider = "tinkerbell"
 	nutanix    provider = "nutanix"
+	snow       provider = "snow"
 )
 
 func newTest(t *testing.T, p provider) *factoryTest {
@@ -49,6 +50,8 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		clusterConfigFile = "testdata/cluster_tinkerbell.yaml"
 	case nutanix:
 		clusterConfigFile = "testdata/nutanix/cluster_nutanix.yaml"
+	case snow:
+		clusterConfigFile = "testdata/snow/cluster_snow.yaml"
 	default:
 		t.Fatalf("Not a valid provider: %v", p)
 	}
@@ -84,6 +87,22 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt.Expect(deps.Provider).NotTo(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
 	tt.Expect(deps.DockerClient).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithProviderSnow(t *testing.T) {
+	tt := newTest(t, snow)
+	t.Setenv("EKSA_AWS_CREDENTIALS_FILE", "./testdata/snow/valid_credentials")
+	t.Setenv("EKSA_AWS_CA_BUNDLES_FILE", "./testdata/snow/valid_certificates")
+
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Provider).NotTo(BeNil())
+	tt.Expect(deps.SnowAwsClientRegistry).NotTo(BeNil())
+	tt.Expect(deps.SnowConfigManager).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithProviderNutanix(t *testing.T) {
