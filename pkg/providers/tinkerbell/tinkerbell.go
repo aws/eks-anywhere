@@ -56,8 +56,7 @@ type Provider struct {
 
 	hardwareCSVFile string
 	catalogue       *hardware.Catalogue
-	diskExtractor   hardware.DiskExtractor
-	tinkerbellIp    string
+	tinkerbellIP    string
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
@@ -110,38 +109,25 @@ func NewProvider(
 	docker stack.Docker,
 	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
-	tinkerbellIp string,
+	tinkerbellIP string,
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
 ) (*Provider, error) {
-	diskExtractor := hardware.NewDiskExtractor()
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-		err := diskExtractor.Register(controlPlaneMachineSpec.HardwareSelector)
-		if err != nil {
-			return nil, err
-		}
 	}
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(machineConfigs))
 	for _, wnConfig := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
 		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
 			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
 			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
-			err := diskExtractor.Register(workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name].HardwareSelector)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-			err := diskExtractor.Register(etcdMachineSpec.HardwareSelector)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 
@@ -156,8 +142,7 @@ func NewProvider(
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
-			diskExtractor:               diskExtractor,
-			tinkerbellIp:                tinkerbellIp,
+			tinkerbellIP:                tinkerbellIP,
 			now:                         now,
 		},
 		writer:          writer,
@@ -170,10 +155,9 @@ func NewProvider(
 			hardware.WithBMCNameIndex(),
 			hardware.WithSecretNameIndex(),
 		),
-		diskExtractor: *diskExtractor,
-		tinkerbellIp:  tinkerbellIp,
-		netClient:     &networkutils.DefaultNetClient{},
-		retrier:       retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		tinkerbellIP: tinkerbellIP,
+		netClient:    &networkutils.DefaultNetClient{},
+		retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.

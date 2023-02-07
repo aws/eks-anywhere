@@ -31,7 +31,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 	err := p.stackInstaller.Install(
 		ctx,
 		clusterSpec.VersionsBundle.Tinkerbell,
-		p.tinkerbellIp,
+		p.tinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnDocker(),
@@ -197,9 +197,6 @@ func (p *Provider) getHardwareFromManagementCluster(ctx context.Context, cluster
 		if err := p.catalogue.InsertHardware(&hardware[i]); err != nil {
 			return err
 		}
-		if err := p.diskExtractor.InsertDisks(&hardware[i]); err != nil {
-			return err
-		}
 	}
 
 	// Retrieve all provisioned hardware from the management cluster and populate diskExtractors's
@@ -211,11 +208,6 @@ func (p *Provider) getHardwareFromManagementCluster(ctx context.Context, cluster
 	)
 	if err != nil {
 		return fmt.Errorf("retrieving provisioned hardware: %v", err)
-	}
-	for i := range hardware {
-		if err := p.diskExtractor.InsertProvisionedHardwareDisks(&hardware[i]); err != nil {
-			return err
-		}
 	}
 
 	// Remove all the provisioned hardware from the existing cluster if repeated from the hardware csv input.
@@ -230,15 +222,7 @@ func (p *Provider) readCSVToCatalogue() error {
 	// Create a catalogue writer used to write hardware to the catalogue.
 	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
-	// Combine disk extraction with catalogue writing. Disk extraction will be used for rendering
-	// templates.
-	writer := hardware.MultiMachineWriter(catalogueWriter, &p.diskExtractor)
-
 	machineValidator := hardware.NewDefaultMachineValidator()
-
-	// Build a set of selectors from machine configs.
-	selectors := selectorsFromMachineConfigs(p.machineConfigs)
-	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
 
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
@@ -248,16 +232,5 @@ func (p *Provider) readCSVToCatalogue() error {
 		return err
 	}
 
-	return hardware.TranslateAll(machines, writer, machineValidator)
-}
-
-// selectorsFromMachineConfigs extracts all selectors from TinkerbellMachineConfigs returning them
-// as a slice. It doesn't need the map, it only accepts that for ease as that's how we manage them
-// in the provider construct.
-func selectorsFromMachineConfigs(configs map[string]*v1alpha1.TinkerbellMachineConfig) []v1alpha1.HardwareSelector {
-	selectors := make([]v1alpha1.HardwareSelector, 0, len(configs))
-	for _, s := range configs {
-		selectors = append(selectors, s.Spec.HardwareSelector)
-	}
-	return selectors
+	return hardware.TranslateAll(machines, catalogueWriter, machineValidator)
 }

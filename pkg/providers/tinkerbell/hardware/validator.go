@@ -251,48 +251,6 @@ func validateLabelValue(v string) error {
 	return nil
 }
 
-// MatchingDisksForSelectors returns an assertion that ensures all machines matching a given entry
-// in selectors specify the same Disk value.
-func MatchingDisksForSelectors(selectors []v1alpha1.HardwareSelector) MachineAssertion {
-	diskCaches := make([]struct {
-		Selector v1alpha1.HardwareSelector
-		Disk     string
-	}, 0, len(selectors))
-
-	for _, selector := range selectors {
-		diskCaches = append(diskCaches, struct {
-			Selector v1alpha1.HardwareSelector
-			Disk     string
-		}{Selector: selector})
-	}
-
-	// For each selector check if the machine matches the selector and whether it matches
-	// any previously observed disks erroring if not.
-	return func(machine Machine) error {
-		for i, cache := range diskCaches {
-			switch {
-			// If we don't match the selector do nothing.
-			case !LabelsMatchSelector(cache.Selector, machine.Labels):
-
-			// If this is the first machine we've observed matching the selector, configure the
-			// disk cache.
-			case cache.Disk == "":
-				diskCaches[i].Disk = machine.Disk
-
-			// We have a machine that matches the selector and we've already cached a disk for
-			// the selector, so ensure the disk for this machine matches the cache.
-			case cache.Disk != machine.Disk:
-				return fmt.Errorf(
-					"disk value's must be the same for all machines matching selector: %v",
-					cache.Selector,
-				)
-			}
-		}
-
-		return nil
-	}
-}
-
 // LabelsMatchSelector ensures all selector key-value pairs can be found in labels.
 // If selector is empty true is always returned.
 func LabelsMatchSelector(selector v1alpha1.HardwareSelector, labels Labels) bool {
