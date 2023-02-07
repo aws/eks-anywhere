@@ -28,6 +28,7 @@ const (
 	EtcdadmControllerProviderName           = "bootstrap-etcdadm-controller"
 	DefaultHttpsPort                        = "443"
 	DefaultWorkerNodeGroupName              = "md-0"
+	DefaultNodeCidrMaskSize                 = 24
 
 	VSphereProviderName    = "vsphere"
 	DockerProviderName     = "docker"
