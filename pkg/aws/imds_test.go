@@ -39,6 +39,20 @@ func TestNewIMDSClient(t *testing.T) {
 	_ = aws.NewIMDSClient(awsv2.Config{})
 }
 
+func TestBuildIMDS(t *testing.T) {
+	g := newIMDSTest(t)
+	err := g.client.BuildIMDS(g.ctx)
+	g.Expect(err).To(Succeed())
+}
+
+func TestEC2InstanceIPIMDSNotInit(t *testing.T) {
+	g := newIMDSTest(t)
+	g.client = aws.NewClient()
+
+	_, err := g.client.EC2InstanceIP(g.ctx)
+	g.Expect(err).To(MatchError(ContainSubstring("imds client is not initialized")))
+}
+
 func TestEC2InstanceIP(t *testing.T) {
 	g := newIMDSTest(t)
 	params := &imds.GetMetadataInput{

@@ -41,9 +41,11 @@ const (
 type snowTest struct {
 	*WithT
 	ctx              context.Context
+	ctrl             *gomock.Controller
 	kubeUnAuthClient *mocks.MockKubeUnAuthClient
 	kubeconfigClient *kubemock.MockClient
 	aws              *mocks.MockAwsClient
+	imds             *mocks.MockLocalIMDSClient
 	provider         *snow.SnowProvider
 	cluster          *types.Cluster
 	clusterSpec      *cluster.Spec
@@ -56,16 +58,19 @@ func newSnowTest(t *testing.T) snowTest {
 	mockKubeUnAuthClient := mocks.NewMockKubeUnAuthClient(ctrl)
 	mockKubeconfigClient := kubemock.NewMockClient(ctrl)
 	mockaws := mocks.NewMockAwsClient(ctrl)
+	mockimds := mocks.NewMockLocalIMDSClient(ctrl)
 	cluster := &types.Cluster{
 		Name: "cluster",
 	}
-	provider := newProvider(ctx, t, mockKubeUnAuthClient, mockaws, ctrl)
+	provider := newProvider(ctx, t, mockKubeUnAuthClient, mockaws, mockimds, ctrl)
 	return snowTest{
 		WithT:            NewWithT(t),
 		ctx:              ctx,
+		ctrl:             ctrl,
 		kubeUnAuthClient: mockKubeUnAuthClient,
 		kubeconfigClient: mockKubeconfigClient,
 		aws:              mockaws,
+		imds:             mockimds,
 		provider:         provider,
 		cluster:          cluster,
 		clusterSpec:      givenClusterSpec(),
@@ -448,7 +453,7 @@ func givenIPPools() map[string]*v1alpha1.SnowIPPool {
 }
 
 func givenProvider(t *testing.T) *snow.SnowProvider {
-	return newProvider(context.Background(), t, nil, nil, gomock.NewController(t))
+	return newProvider(context.Background(), t, nil, nil, nil, gomock.NewController(t))
 }
 
 func givenEmptyClusterSpec() *cluster.Spec {
@@ -457,14 +462,14 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	})
 }
 
-func newProvider(ctx context.Context, t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient, ctrl *gomock.Controller) *snow.SnowProvider {
+func newProvider(ctx context.Context, t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient, mockimds *mocks.MockLocalIMDSClient, ctrl *gomock.Controller) *snow.SnowProvider {
 	awsClients := snow.AwsClientMap{
 		"1.2.3.4": mockaws,
 		"1.2.3.5": mockaws,
 	}
 	mockClientRegistry := mocks.NewMockClientRegistry(ctrl)
 	mockClientRegistry.EXPECT().Get(ctx).Return(awsClients, nil).AnyTimes()
-	validator := snow.NewValidator(mockClientRegistry)
+	validator := snow.NewValidator(mockClientRegistry, snow.WithIMDS(mockimds))
 	defaulters := snow.NewDefaulters(mockClientRegistry, nil)
 	configManager := snow.NewConfigManager(defaulters, validator)
 	return snow.NewProvider(
@@ -498,9 +503,49 @@ func TestSetupAndValidateCreateClusterSuccess(t *testing.T) {
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.5", nil)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
 	tt.Expect(err).To(Succeed())
+}
+
+func TestSetupAndValidateCreateClusterIMDSNotInitialized(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	tt.provider = newProvider(tt.ctx, t, tt.kubeUnAuthClient, tt.aws, nil, tt.ctrl)
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
+	tt.Expect(err).To(MatchError(ContainSubstring("imds client is not initialized")))
+}
+
+func TestSetupAndValidateCreateClusterCPIPInvalid(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.4", nil)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
+	tt.Expect(err).To(MatchError(ContainSubstring("control plane host ip cannot be same as the admin instance ip")))
+}
+
+func TestSetupAndValidateCreateClusterGetInstanceIPError(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("", errors.New("fetch instance ip error"))
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
+	tt.Expect(err).To(MatchError(ContainSubstring("fetch instance ip error")))
 }
 
 func TestSetupAndValidateCreateClusterNoCredsEnv(t *testing.T) {
@@ -540,6 +585,7 @@ func TestSetupAndValidateUpgradeClusterSuccess(t *testing.T) {
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.5", nil)
 	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec, tt.clusterSpec)
 	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
 	tt.Expect(err).To(Succeed())
