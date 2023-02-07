@@ -7,11 +7,12 @@ import (
 )
 
 type ConfigManager struct {
-	validator  *AwsClientValidator
+	validator  *Validator
 	defaulters *Defaulters
 }
 
-func NewConfigManager(defaulters *Defaulters, validators *AwsClientValidator) *ConfigManager {
+// NewConfigManager returns a new snow config manager.
+func NewConfigManager(defaulters *Defaulters, validators *Validator) *ConfigManager {
 	return &ConfigManager{
 		validator:  validators,
 		defaulters: defaulters,
@@ -77,6 +78,9 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 					}
 				}
 				return nil
+			},
+			func(c *cluster.Config) error {
+				return cm.validator.ValidateControlPlaneIP(ctx, c.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 			},
 		},
 	}

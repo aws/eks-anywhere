@@ -16,6 +16,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -97,7 +98,7 @@ type Dependencies struct {
 	VSphereValidator            *vsphere.Validator
 	VSphereDefaulter            *vsphere.Defaulter
 	NutanixPrismClient          *v3.Client
-	SnowValidator               *snow.AwsClientValidator
+	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 }
 
@@ -562,7 +563,12 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 			return nil
 		}
 
-		validator := snow.NewValidator(f.dependencies.SnowAwsClientRegistry)
+		client := aws.NewClient()
+		if err := client.BuildIMDS(ctx); err != nil {
+			return err
+		}
+
+		validator := snow.NewValidator(f.dependencies.SnowAwsClientRegistry, snow.WithIMDS(client))
 		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClientRegistry, f.dependencies.Writer)
 
 		f.dependencies.SnowConfigManager = snow.NewConfigManager(defaulters, validator)

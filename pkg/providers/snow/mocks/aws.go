@@ -107,3 +107,41 @@ func (mr *MockAwsClientMockRecorder) SnowballDeviceSoftwareVersion(ctx interface
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnowballDeviceSoftwareVersion", reflect.TypeOf((*MockAwsClient)(nil).SnowballDeviceSoftwareVersion), ctx)
 }
+
+// MockLocalIMDSClient is a mock of LocalIMDSClient interface.
+type MockLocalIMDSClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockLocalIMDSClientMockRecorder
+}
+
+// MockLocalIMDSClientMockRecorder is the mock recorder for MockLocalIMDSClient.
+type MockLocalIMDSClientMockRecorder struct {
+	mock *MockLocalIMDSClient
+}
+
+// NewMockLocalIMDSClient creates a new mock instance.
+func NewMockLocalIMDSClient(ctrl *gomock.Controller) *MockLocalIMDSClient {
+	mock := &MockLocalIMDSClient{ctrl: ctrl}
+	mock.recorder = &MockLocalIMDSClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLocalIMDSClient) EXPECT() *MockLocalIMDSClientMockRecorder {
+	return m.recorder
+}
+
+// EC2InstanceIP mocks base method.
+func (m *MockLocalIMDSClient) EC2InstanceIP(ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EC2InstanceIP", ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EC2InstanceIP indicates an expected call of EC2InstanceIP.
+func (mr *MockLocalIMDSClientMockRecorder) EC2InstanceIP(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2InstanceIP", reflect.TypeOf((*MockLocalIMDSClient)(nil).EC2InstanceIP), ctx)
+}
