@@ -35,7 +35,6 @@ import (
 var clusterlog = logf.Log.WithName("cluster-resource")
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -61,10 +60,17 @@ func (a *ClusterAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	// adding acluster annotation
-	if cluster.GetAnnotations() == nil {
-		cluster.SetAnnotations(make(map[string]string))
+	if !cluster.IsReconcilePaused() {
+		if cluster.GetAnnotations() == nil {
+			cluster.SetAnnotations(make(map[string]string))
+		}
+		if req.Operation == "CREATE" {
+			cluster.Annotations["CustomHandlerWebhook"] = "Success - create"
+		}
+		if req.Operation == "UPDATE" {
+			cluster.Annotations["CustomHandlerWebhook"] = "Success - update"
+		}
 	}
-	cluster.Annotations["CustomHandlerWebhook"] = "Success"
 
 	marshaledCluster, err := json.Marshal(cluster)
 	if err != nil {
@@ -93,12 +99,12 @@ func (r *Cluster) ValidateCreate() error {
 	clusterlog.Info("validate create", "name", r.Name)
 
 	var allErrs field.ErrorList
-	if r.GetAnnotations() == nil {
-		r.SetAnnotations(make(map[string]string))
-	}
-	r.Annotations["ValidationWebhook"] = "Success"
 
 	if !r.IsReconcilePaused() {
+		if r.GetAnnotations() == nil {
+			r.SetAnnotations(make(map[string]string))
+		}
+		r.Annotations["ValidationWebhook"] = "Success"
 		if r.IsSelfManaged() {
 			return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
 		} else if !features.IsActive(features.FullLifecycleAPI()) {
@@ -120,10 +126,13 @@ func (r *Cluster) ValidateCreate() error {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	clusterlog.Info("validate update", "name", r.Name)
-	if r.GetAnnotations() == nil {
-		r.SetAnnotations(make(map[string]string))
+
+	if !r.IsReconcilePaused() {
+		if r.GetAnnotations() == nil {
+			r.SetAnnotations(make(map[string]string))
+		}
+		r.Annotations["ValidationWebhook"] = "Success"
 	}
-	r.Annotations["ValidationWebhook"] = "Success"
 	oldCluster, ok := old.(*Cluster)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))

@@ -27,11 +27,12 @@ func setClusterDefaults(cluster *Cluster) error {
 }
 
 func setAnnotation(clusterConfig *Cluster) error {
-	if clusterConfig.GetAnnotations() == nil {
-		clusterConfig.SetAnnotations(make(map[string]string))
+	if !clusterConfig.IsReconcilePaused() {
+		if clusterConfig.GetAnnotations() == nil {
+			clusterConfig.SetAnnotations(make(map[string]string))
+		}
+		clusterConfig.Annotations["DefaultMutatingWebhook"] = "Success"
 	}
-	clusterConfig.Annotations["DefaultMutatingWebhook"] = "Success"
-
 	return nil
 }
 
