@@ -47,6 +47,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	clusterValidator := mocks.NewMockClusterValidator(ctrl)
 
 	vcb := govmomi.NewVMOMIClientBuilder()
 
@@ -67,7 +68,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		Add(anywherev1.VSphereDatacenterKind, reconciler).
 		Build()
 
-	r := controllers.NewClusterReconciler(cl, &registry, iam)
+	r := controllers.NewClusterReconciler(cl, &registry, iam, clusterValidator)
 
 	return &vsphereClusterReconcilerTest{
 		govcClient: govcClient,
@@ -94,12 +95,13 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
 	providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 
-	r := controllers.NewClusterReconciler(c, registry, iam)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator)
 	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(ctrl.Result{}))
@@ -124,8 +126,9 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
 	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	clusterValidator := mocks.NewMockClusterValidator(ctrl)
 	registry := newRegistryMock(providerReconciler)
-	r := controllers.NewClusterReconciler(c, registry, iam)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -157,10 +160,11 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
-	r := controllers.NewClusterReconciler(c, registry, iam)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator)
 	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).To(MatchError(ContainSubstring("deleting self-managed clusters is not supported")))
 }
@@ -224,11 +228,12 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 
 	controller := gomock.NewController(t)
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	clusterValidator := mocks.NewMockClusterValidator(controller)
 	c := fake.NewClientBuilder().WithRuntimeObjects(
 		managementCluster, cluster, capiCluster,
 	).Build()
 
-	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam)
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -269,8 +274,9 @@ func TestClusterReconcilerReconcileDeleteClusterManagedByCLI(t *testing.T) {
 	).Build()
 	controller := gomock.NewController(t)
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	clusterValidator := mocks.NewMockClusterValidator(controller)
 
-	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam)
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
