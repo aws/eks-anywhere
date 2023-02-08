@@ -30,7 +30,7 @@ func setAnnotation(clusterConfig *Cluster) error {
 	if clusterConfig.GetAnnotations() == nil {
 		clusterConfig.SetAnnotations(make(map[string]string))
 	}
-	clusterConfig.Annotations["Default"] = "Successful"
+	clusterConfig.Annotations["DefaultMutatingWebhook"] = "Success"
 
 	return nil
 }

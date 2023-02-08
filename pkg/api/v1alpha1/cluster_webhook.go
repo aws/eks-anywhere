@@ -60,11 +60,11 @@ func (a *ClusterAnnotator) Handle(ctx context.Context, req admission.Request) ad
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	//TODO: annotate cluster here
+	// adding acluster annotation
 	if cluster.GetAnnotations() == nil {
 		cluster.SetAnnotations(make(map[string]string))
 	}
-	cluster.Annotations["CustomAnnotation"] = "Done"
+	cluster.Annotations["CustomHandlerWebhook"] = "Success"
 
 	marshaledCluster, err := json.Marshal(cluster)
 	if err != nil {
@@ -96,7 +96,7 @@ func (r *Cluster) ValidateCreate() error {
 	if r.GetAnnotations() == nil {
 		r.SetAnnotations(make(map[string]string))
 	}
-	r.Annotations["ValidationHook"] = "Worked"
+	r.Annotations["ValidationWebhook"] = "Success"
 
 	if !r.IsReconcilePaused() {
 		if r.IsSelfManaged() {
@@ -123,7 +123,7 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	if r.GetAnnotations() == nil {
 		r.SetAnnotations(make(map[string]string))
 	}
-	r.Annotations["ValidationHook"] = "Worked"
+	r.Annotations["ValidationWebhook"] = "Success"
 	oldCluster, ok := old.(*Cluster)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
