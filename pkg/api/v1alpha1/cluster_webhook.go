@@ -61,6 +61,9 @@ func (a *clusterAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	//TODO: annotate cluster here
+	if cluster.GetAnnotations() == nil {
+		cluster.SetAnnotations(make(map[string]string))
+	}
 	cluster.Annotations["CustomAnnotation"] = "Done"
 
 	marshaledCluster, err := json.Marshal(cluster)
@@ -90,7 +93,9 @@ func (r *Cluster) ValidateCreate() error {
 	clusterlog.Info("validate create", "name", r.Name)
 
 	var allErrs field.ErrorList
-
+	if r.GetAnnotations() == nil {
+		r.SetAnnotations(make(map[string]string))
+	}
 	r.Annotations["ValidationHook"] = "Worked"
 
 	if !r.IsReconcilePaused() {
@@ -115,6 +120,9 @@ func (r *Cluster) ValidateCreate() error {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	clusterlog.Info("validate update", "name", r.Name)
+	if r.GetAnnotations() == nil {
+		r.SetAnnotations(make(map[string]string))
+	}
 	r.Annotations["ValidationHook"] = "Worked"
 	oldCluster, ok := old.(*Cluster)
 	if !ok {
