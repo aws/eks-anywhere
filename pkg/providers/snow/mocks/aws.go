@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	aws "github.com/aws/eks-anywhere/pkg/aws"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -64,10 +65,10 @@ func (mr *MockAwsClientMockRecorder) EC2ImportKeyPair(ctx, keyName, keyMaterial 
 }
 
 // EC2InstanceTypes mocks base method.
-func (m *MockAwsClient) EC2InstanceTypes(ctx context.Context) ([]string, error) {
+func (m *MockAwsClient) EC2InstanceTypes(ctx context.Context) ([]aws.EC2InstanceType, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EC2InstanceTypes", ctx)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]aws.EC2InstanceType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

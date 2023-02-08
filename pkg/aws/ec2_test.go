@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/aws/mocks"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 type ec2Test struct {
@@ -123,13 +124,28 @@ func TestEC2InstanceTypes(t *testing.T) {
 		InstanceTypes: []types.InstanceTypeInfo{
 			{
 				InstanceType: types.InstanceTypeC1Medium,
+				VCpuInfo: &types.VCpuInfo{
+					DefaultVCpus: ptr.Int32(8),
+				},
 			},
 			{
 				InstanceType: types.InstanceTypeA1Large,
+				VCpuInfo: &types.VCpuInfo{
+					DefaultVCpus: ptr.Int32(2),
+				},
 			},
 		},
 	}
-	want := []string{"c1.medium", "a1.large"}
+	want := []aws.EC2InstanceType{
+		{
+			Name:        "c1.medium",
+			DefaultVCPU: ptr.Int32(8),
+		},
+		{
+			Name:        "a1.large",
+			DefaultVCPU: ptr.Int32(2),
+		},
+	}
 	g.ec2.EXPECT().DescribeInstanceTypes(g.ctx, &ec2.DescribeInstanceTypesInput{}).Return(out, nil)
 	got, err := g.client.EC2InstanceTypes(g.ctx)
 	g.Expect(err).To(Succeed())

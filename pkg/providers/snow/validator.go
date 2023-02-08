@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/pkg/errors"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -14,7 +13,7 @@ import (
 const (
 	defaultAwsSshKeyName       = "eksa-default"
 	snowballMinSoftwareVersion = "102"
-	deviceV3C                  = "EDGE_C"
+	minimumVCPU                = 2
 )
 
 // Validator includes a client registry that maintains a snow device aws client map,
@@ -134,6 +133,27 @@ func (v *Validator) ValidateDeviceIsUnlocked(ctx context.Context, m *v1alpha1.Sn
 	return nil
 }
 
+func validateInstanceTypeInDevice(ctx context.Context, client AwsClient, instanceType, deviceIP string) error {
+	instanceTypes, err := client.EC2InstanceTypes(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching supported instance types for device [%s]: %v", deviceIP, err)
+	}
+
+	for _, it := range instanceTypes {
+		if instanceType != it.Name {
+			continue
+		}
+
+		if it.DefaultVCPU != nil && *it.DefaultVCPU < minimumVCPU {
+			return fmt.Errorf("the instance type [%s] has %d vCPU. Please choose an instance type with at least %d default vCPU", instanceType, *it.DefaultVCPU, minimumVCPU)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("the instance type [%s] is not supported in device [%s]", instanceType, deviceIP)
+}
+
 // ValidateInstanceType validates whether the instance type is compatible to run in each device.
 func (v *Validator) ValidateInstanceType(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	clientMap, err := v.clientRegistry.Get(ctx)
@@ -147,13 +167,8 @@ func (v *Validator) ValidateInstanceType(ctx context.Context, m *v1alpha1.SnowMa
 			return fmt.Errorf("credentials not found for device [%s]", ip)
 		}
 
-		supportedInstanceTypes, err := client.EC2InstanceTypes(ctx)
-		if err != nil {
-			return fmt.Errorf("fetching supported instance types for device [%s]: %v", ip, err)
-		}
-
-		if !slices.Contains(supportedInstanceTypes, string(m.Spec.InstanceType)) {
-			return fmt.Errorf("the instance type [%s] is not supported in device [%s]", m.Spec.InstanceType, ip)
+		if err := validateInstanceTypeInDevice(ctx, client, string(m.Spec.InstanceType), ip); err != nil {
+			return err
 		}
 	}
 
