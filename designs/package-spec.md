@@ -47,7 +47,7 @@ kind: Cluster
 metadata:
   name: billy
 spec:
-  packageController:
+  packages:
     disable: false
     controller:
       # -- Controller repository name.
@@ -88,6 +88,7 @@ spec:
 ```
 
 These values will be passed to the helm chart during installation using a values.yaml file to protect the secrets.
+A run-time validation will be performed to verify a controller section is not included for a workload cluster.
 
 ## Testing
 
