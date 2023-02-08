@@ -35,7 +35,6 @@ import (
 var clusterlog = logf.Log.WithName("cluster-resource")
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	mgr.GetWebhookServer().Register("/annotate-anywhere-eks-amazonaws-com-v1alpha1-cluster", &webhook.Admission{Handler: &clusterAnnotator{}})
 
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -44,16 +43,16 @@ func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // +kubebuilder:webhook:path=/annotate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=annotation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-type clusterAnnotator struct {
+type ClusterAnnotator struct {
 	decoder *admission.Decoder
 }
 
-func (a *clusterAnnotator) InjectDecoder(d *admission.Decoder) error {
+func (a *ClusterAnnotator) InjectDecoder(d *admission.Decoder) error {
 	a.decoder = d
 	return nil
 }
 
-func (a *clusterAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
+func (a *ClusterAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	cluster := &Cluster{}
 	err := a.decoder.Decode(req, cluster)
 	if err != nil {

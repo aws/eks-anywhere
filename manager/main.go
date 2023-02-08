@@ -28,6 +28,7 @@ import (
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -253,6 +254,7 @@ func setupCoreWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.AWSIamConfigKind)
 		os.Exit(1)
 	}
+	mgr.GetWebhookServer().Register("/annotate-anywhere-eks-amazonaws-com-v1alpha1-cluster", &webhook.Admission{Handler: &anywherev1.ClusterAnnotator{}})
 }
 
 func setupVSphereWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
