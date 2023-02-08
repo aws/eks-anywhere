@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/pkg/errors"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -146,14 +147,13 @@ func (v *Validator) ValidateInstanceType(ctx context.Context, m *v1alpha1.SnowMa
 			return fmt.Errorf("credentials not found for device [%s]", ip)
 		}
 
-		deviceType, err := client.SnowballDeviceType(ctx)
+		supportedInstanceTypes, err := client.EC2InstanceTypes(ctx)
 		if err != nil {
-			return fmt.Errorf("checking device type for device [%s]: %v", ip, err)
+			return fmt.Errorf("fetching supported instance types for device [%s]: %v", ip, err)
 		}
 
-		// instance type sbe-c.16xlarge and sbe-c.24xlarge are not supported in device type v3c.
-		if deviceType == deviceV3C && (m.Spec.InstanceType == v1alpha1.SbeC16XLarge || m.Spec.InstanceType == v1alpha1.SbeC24XLarge) {
-			return fmt.Errorf("the instance type [%s] is not supported in device [%s] with device type [%s]", m.Spec.InstanceType, ip, deviceType)
+		if !slices.Contains(supportedInstanceTypes, string(m.Spec.InstanceType)) {
+			return fmt.Errorf("the instance type [%s] is not supported in device [%s]", m.Spec.InstanceType, ip)
 		}
 	}
 

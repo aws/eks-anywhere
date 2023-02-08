@@ -63,6 +63,21 @@ func (mr *MockAwsClientMockRecorder) EC2ImportKeyPair(ctx, keyName, keyMaterial 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2ImportKeyPair", reflect.TypeOf((*MockAwsClient)(nil).EC2ImportKeyPair), ctx, keyName, keyMaterial)
 }
 
+// EC2InstanceTypes mocks base method.
+func (m *MockAwsClient) EC2InstanceTypes(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EC2InstanceTypes", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EC2InstanceTypes indicates an expected call of EC2InstanceTypes.
+func (mr *MockAwsClientMockRecorder) EC2InstanceTypes(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2InstanceTypes", reflect.TypeOf((*MockAwsClient)(nil).EC2InstanceTypes), ctx)
+}
+
 // EC2KeyNameExists mocks base method.
 func (m *MockAwsClient) EC2KeyNameExists(ctx context.Context, keyName string) (bool, error) {
 	m.ctrl.T.Helper()
@@ -106,21 +121,6 @@ func (m *MockAwsClient) SnowballDeviceSoftwareVersion(ctx context.Context) (stri
 func (mr *MockAwsClientMockRecorder) SnowballDeviceSoftwareVersion(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnowballDeviceSoftwareVersion", reflect.TypeOf((*MockAwsClient)(nil).SnowballDeviceSoftwareVersion), ctx)
-}
-
-// SnowballDeviceType mocks base method.
-func (m *MockAwsClient) SnowballDeviceType(ctx context.Context) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SnowballDeviceType", ctx)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SnowballDeviceType indicates an expected call of SnowballDeviceType.
-func (mr *MockAwsClientMockRecorder) SnowballDeviceType(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnowballDeviceType", reflect.TypeOf((*MockAwsClient)(nil).SnowballDeviceType), ctx)
 }
 
 // MockLocalIMDSClient is a mock of LocalIMDSClient interface.

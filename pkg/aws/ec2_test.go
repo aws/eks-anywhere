@@ -116,3 +116,29 @@ func TestEC2ImportKeyPair(t *testing.T) {
 	err := g.client.EC2ImportKeyPair(g.ctx, key, val)
 	g.Expect(err).To(Succeed())
 }
+
+func TestEC2InstanceTypes(t *testing.T) {
+	g := newEC2Test(t)
+	out := &ec2.DescribeInstanceTypesOutput{
+		InstanceTypes: []types.InstanceTypeInfo{
+			{
+				InstanceType: types.InstanceTypeC1Medium,
+			},
+			{
+				InstanceType: types.InstanceTypeA1Large,
+			},
+		},
+	}
+	want := []string{"c1.medium", "a1.large"}
+	g.ec2.EXPECT().DescribeInstanceTypes(g.ctx, &ec2.DescribeInstanceTypesInput{}).Return(out, nil)
+	got, err := g.client.EC2InstanceTypes(g.ctx)
+	g.Expect(err).To(Succeed())
+	g.Expect(got).To(Equal(want))
+}
+
+func TestEC2InstanceTypesError(t *testing.T) {
+	g := newEC2Test(t)
+	g.ec2.EXPECT().DescribeInstanceTypes(g.ctx, &ec2.DescribeInstanceTypesInput{}).Return(nil, errors.New("describe instance type error"))
+	_, err := g.client.EC2InstanceTypes(g.ctx)
+	g.Expect(err).To(MatchError(ContainSubstring("describing ec2 instance type in device")))
+}
