@@ -74,16 +74,25 @@ func (c *Client) EC2ImportKeyPair(ctx context.Context, keyName string, keyMateri
 	return nil
 }
 
+// EC2InstanceType has the information of an ec2 instance type.
+type EC2InstanceType struct {
+	Name        string
+	DefaultVCPU *int32
+}
+
 // EC2InstanceTypes calls aws sdk ec2.DescribeInstanceTypes to get a list of supported instance type for a device.
-func (c *Client) EC2InstanceTypes(ctx context.Context) ([]string, error) {
+func (c *Client) EC2InstanceTypes(ctx context.Context) ([]EC2InstanceType, error) {
 	out, err := c.ec2.DescribeInstanceTypes(ctx, &ec2.DescribeInstanceTypesInput{})
 	if err != nil {
 		return nil, fmt.Errorf("describing ec2 instance type in device: %v", err)
 	}
 
-	instanceTypes := make([]string, 0, len(out.InstanceTypes))
+	instanceTypes := make([]EC2InstanceType, 0, len(out.InstanceTypes))
 	for _, it := range out.InstanceTypes {
-		instanceTypes = append(instanceTypes, string(it.InstanceType))
+		instanceTypes = append(instanceTypes, EC2InstanceType{
+			Name:        string(it.InstanceType),
+			DefaultVCPU: it.VCpuInfo.DefaultVCpus,
+		})
 	}
 	return instanceTypes, nil
 }
