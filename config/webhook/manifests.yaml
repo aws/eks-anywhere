@@ -55,6 +55,27 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /annotate-anywhere-eks-amazonaws-com-v1alpha1-cluster
+  failurePolicy: Fail
+  name: annotation.cluster.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-snowmachineconfig
   failurePolicy: Fail
   name: mutation.snowmachineconfig.anywhere.amazonaws.com

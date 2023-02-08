@@ -15,7 +15,10 @@
 package v1alpha1
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,6 +26,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	admission "sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/aws/eks-anywhere/pkg/features"
 )
@@ -31,9 +35,39 @@ import (
 var clusterlog = logf.Log.WithName("cluster-resource")
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	mgr.GetWebhookServer().Register("/annotate-anywhere-eks-amazonaws-com-v1alpha1-cluster", &webhook.Admission{Handler: &clusterAnnotator{}})
+
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
+}
+
+// +kubebuilder:webhook:path=/annotate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=annotation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+type clusterAnnotator struct {
+	decoder *admission.Decoder
+}
+
+func (a *clusterAnnotator) InjectDecoder(d *admission.Decoder) error {
+	a.decoder = d
+	return nil
+}
+
+func (a *clusterAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
+	cluster := &Cluster{}
+	err := a.decoder.Decode(req, cluster)
+	if err != nil {
+		return admission.Errored(http.StatusBadRequest, err)
+	}
+
+	//TODO: annotate cluster here
+	cluster.Annotations["CustomAnnotation"] = "Done"
+
+	marshaledCluster, err := json.Marshal(cluster)
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
+	}
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledCluster)
 }
 
 //+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=mutation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
