@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -382,6 +383,101 @@ func TestVSphereMachineConfigValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			err := tt.obj.Validate()
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestVSphereMachineConfigValidateHostOSConfig(t *testing.T) {
+	machineName := "test-machine-config"
+	baseVsphereMachineConfig := &VSphereMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: machineName,
+		},
+		Spec: VSphereMachineConfigSpec{
+			MemoryMiB:    64,
+			DiskGiB:      100,
+			NumCPUs:      3,
+			Template:     "templateA",
+			ResourcePool: "poolA",
+			Datastore:    "ds-aaa",
+			Folder:       "folder/A",
+			OSFamily:     "ubuntu",
+			Users: []UserConfiguration{
+				{
+					Name: "test",
+					SshAuthorizedKeys: []string{
+						"ssh_rsa",
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name         string
+		hostOSConfig *HostOSConfiguration
+		wantErr      string
+	}{
+		{
+			name:         "nil HostOSConfig",
+			hostOSConfig: nil,
+			wantErr:      "",
+		},
+		{
+			name:         "empty HostOSConfig",
+			hostOSConfig: &HostOSConfiguration{},
+			wantErr:      "",
+		},
+		{
+			name: "empty NTP servers",
+			hostOSConfig: &HostOSConfiguration{
+				NTPConfiguration: &NTPConfiguration{
+					Servers: []string{},
+				},
+			},
+			wantErr: fmt.Sprintf("ntpConfiguration.Servers can not be empty for VSphereMachineConfig %s", machineName),
+		},
+		{
+			name: "invalid NTP servers",
+			hostOSConfig: &HostOSConfiguration{
+				NTPConfiguration: &NTPConfiguration{
+					Servers: []string{
+						"time-a.eks-a.aws",
+						"not a valid ntp server",
+						"also invalid",
+						"udp://",
+						"time-b.eks-a.aws",
+					},
+				},
+			},
+			wantErr: fmt.Sprintf("ntp servers [not a valid ntp server, also invalid, udp://] is not valid for VSphereMachineConfig %s", machineName),
+		},
+		{
+			name: "valid NTP config",
+			hostOSConfig: &HostOSConfiguration{
+				NTPConfiguration: &NTPConfiguration{
+					Servers: []string{
+						"time-a.eks-a.aws",
+						"time-b.eks-a.aws",
+						"192.168.0.10",
+						"2610:20:6f15:15::26",
+					},
+				},
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			baseVsphereMachineConfig.Spec.HostOSConfiguration = tt.hostOSConfig
+			err := baseVsphereMachineConfig.Validate()
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
