@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.10.0
-	helm.sh/helm/v3 v3.11.0
+	helm.sh/helm/v3 v3.11.1
 	k8s.io/apimachinery v0.26.0
 	k8s.io/helm v2.17.0+incompatible
 	sigs.k8s.io/controller-runtime v0.13.1
@@ -166,9 +166,9 @@ require (
 replace (
 	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
-	
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.25.6
+
 	// These 2 are needed because v0.26.0 needs go 1.19 and controller-runtime v0.14
 	// Once we update to go 1.19, remove these replaces and bump controller-runtime
 	k8s.io/client-go => k8s.io/client-go v0.25.0
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.25.6
 )
