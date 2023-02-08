@@ -108,6 +108,21 @@ func (mr *MockAwsClientMockRecorder) SnowballDeviceSoftwareVersion(ctx interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnowballDeviceSoftwareVersion", reflect.TypeOf((*MockAwsClient)(nil).SnowballDeviceSoftwareVersion), ctx)
 }
 
+// SnowballDeviceType mocks base method.
+func (m *MockAwsClient) SnowballDeviceType(ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SnowballDeviceType", ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SnowballDeviceType indicates an expected call of SnowballDeviceType.
+func (mr *MockAwsClientMockRecorder) SnowballDeviceType(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SnowballDeviceType", reflect.TypeOf((*MockAwsClient)(nil).SnowballDeviceType), ctx)
+}
+
 // MockLocalIMDSClient is a mock of LocalIMDSClient interface.
 type MockLocalIMDSClient struct {
 	ctrl     *gomock.Controller

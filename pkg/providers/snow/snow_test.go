@@ -503,6 +503,7 @@ func TestSetupAndValidateCreateClusterSuccess(t *testing.T) {
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceType(tt.ctx).Return("device-type1", nil).Times(4)
 	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.5", nil)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
@@ -517,6 +518,7 @@ func TestSetupAndValidateCreateClusterIMDSNotInitialized(t *testing.T) {
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceType(tt.ctx).Return("device-type1", nil).Times(4)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
 	tt.Expect(err).To(MatchError(ContainSubstring("imds client is not initialized")))
@@ -529,6 +531,7 @@ func TestSetupAndValidateCreateClusterCPIPInvalid(t *testing.T) {
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceType(tt.ctx).Return("device-type1", nil).Times(4)
 	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.4", nil)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
@@ -542,10 +545,41 @@ func TestSetupAndValidateCreateClusterGetInstanceIPError(t *testing.T) {
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceType(tt.ctx).Return("device-type1", nil).Times(4)
 	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("", errors.New("fetch instance ip error"))
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
 	tt.Expect(err).To(MatchError(ContainSubstring("fetch instance ip error")))
+}
+
+func TestSetupAndValidateCreateClusterGetDeviceTypeError(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceType(tt.ctx).Return("", errors.New("get device type error"))
+	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.5", nil)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
+	tt.Expect(err).To(MatchError(ContainSubstring("checking device type for device [1.2.3.4]: get device type error")))
+}
+
+func TestSetupAndValidateCreateClusterInvalidInstanceTypeError(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	tt.clusterSpec.SnowMachineConfigs["test-cp"].Spec.InstanceType = v1alpha1.SbeC16XLarge
+	tt.clusterSpec.SnowMachineConfigs["test-wn"].Spec.InstanceType = v1alpha1.SbeC16XLarge
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceType(tt.ctx).Return("EDGE_C", nil)
+	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.5", nil)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
+	tt.Expect(err).To(MatchError(ContainSubstring("the instance type [sbe-c.16xlarge] is not supported in device [1.2.3.4] with device type [EDGE_C]")))
 }
 
 func TestSetupAndValidateCreateClusterNoCredsEnv(t *testing.T) {
@@ -585,6 +619,7 @@ func TestSetupAndValidateUpgradeClusterSuccess(t *testing.T) {
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
+	tt.aws.EXPECT().SnowballDeviceType(tt.ctx).Return("device-type1", nil).Times(4)
 	tt.imds.EXPECT().EC2InstanceIP(tt.ctx).Return("1.2.3.5", nil)
 	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec, tt.clusterSpec)
 	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))

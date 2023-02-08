@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -25,6 +26,19 @@ func (c *Client) IsSnowballDeviceUnlocked(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("describing snowball device: %v", err)
 	}
 	return out.UnlockStatus.State == types.UnlockStatusStateUnlocked, nil
+}
+
+// SnowballDeviceType returns the snowball device type by calling the describe-device api.
+func (c *Client) SnowballDeviceType(ctx context.Context) (string, error) {
+	out, err := c.snowballDevice.DescribeDevice(ctx, nil)
+	if err != nil {
+		return "", fmt.Errorf("describing snowball device: %v", err)
+	}
+	deviceType := out.DeviceType
+	if deviceType == nil {
+		return "", errors.New("snowball device type not found")
+	}
+	return *deviceType, nil
 }
 
 func (c *Client) SnowballDeviceSoftwareVersion(ctx context.Context) (string, error) {

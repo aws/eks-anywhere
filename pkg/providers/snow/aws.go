@@ -11,6 +11,7 @@ type AwsClient interface {
 	EC2KeyNameExists(ctx context.Context, keyName string) (bool, error)
 	EC2ImportKeyPair(ctx context.Context, keyName string, keyMaterial []byte) error
 	IsSnowballDeviceUnlocked(ctx context.Context) (bool, error)
+	SnowballDeviceType(ctx context.Context) (string, error)
 	SnowballDeviceSoftwareVersion(ctx context.Context) (string, error)
 }
 
