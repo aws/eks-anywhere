@@ -91,6 +91,9 @@ func (r *Cluster) ValidateCreate() error {
 
 	var allErrs field.ErrorList
 
+	annotations := r.GetAnnotations()
+	annotations["ValidationHook"] = "Worked"
+
 	if !r.IsReconcilePaused() {
 		if r.IsSelfManaged() {
 			return apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
@@ -113,6 +116,8 @@ func (r *Cluster) ValidateCreate() error {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	clusterlog.Info("validate update", "name", r.Name)
+	annotations := r.GetAnnotations()
+	annotations["ValidationHook"] = "Worked"
 	oldCluster, ok := old.(*Cluster)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
