@@ -103,7 +103,7 @@ func DescribeImagesPaginated(ecrClient *ecr.ECR, describeInput *ecr.DescribeImag
 }
 
 // FilterECRRepoByTagPrefix will take a substring, and a repository as input and find the latest pushed image matching that substring.
-func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string) (string, string, error) {
+func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTag bool) (string, string, error) {
 	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
 	})
@@ -113,12 +113,16 @@ func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string) (stri
 	if err != nil {
 		return "", "", errors.Cause(err)
 	}
-	filteredImageDetails := imageTagFilter(imageDetails, prefix)
+	var filteredImageDetails []*ecr.ImageDetail
+	if hasTag {
+		filteredImageDetails = imageTagFilter(imageDetails, prefix)
+	} else {
+		filteredImageDetails = imageTagFilterWithout(imageDetails, prefix)
+	}
 	// In case we don't find any tag substring matches, we still want to populate the bundle with the latest version.
 	if len(filteredImageDetails) < 1 {
 		filteredImageDetails = imageDetails
 	}
-	fmt.Printf("filteredImageDetails=%v\n", filteredImageDetails)
 	version, sha, err := getLastestOCIShaTag(filteredImageDetails)
 	if err != nil {
 		return "", "", err
@@ -132,6 +136,19 @@ func imageTagFilter(details []*ecr.ImageDetail, substring string) []*ecr.ImageDe
 	for _, detail := range details {
 		for _, tag := range detail.ImageTags {
 			if strings.HasPrefix(*tag, substring) {
+				filteredDetails = append(filteredDetails, detail)
+			}
+		}
+	}
+	return filteredDetails
+}
+
+// imageTagFilterWithout is used when filtering a list of ECR images for images without a specific tag or tag substring
+func imageTagFilterWithout(details []*ecr.ImageDetail, substring string) []*ecr.ImageDetail {
+	var filteredDetails []*ecr.ImageDetail
+	for _, detail := range details {
+		for _, tag := range detail.ImageTags {
+			if !strings.HasPrefix(*tag, substring) {
 				filteredDetails = append(filteredDetails, detail)
 			}
 		}

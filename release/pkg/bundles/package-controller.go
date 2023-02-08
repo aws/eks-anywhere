@@ -46,11 +46,11 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 	// Find latest Package Dev build for the Helm chart and Image which will always start with `0.0.0` and is built off of the package Github repo main on every commit.
 	// If we can't find the build starting with our substring, we default to the original dev tag.
 	if r.DevRelease && !r.DryRun {
-		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "0.0.0")
+		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "0.0.0", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version helm tag EKS Anywhere package controller, using latest version %v", err)
 		}
-		Imagetag, Imagesha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "v0.0.0")
+		Imagetag, Imagesha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "v0.0.0", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
 		}
