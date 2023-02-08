@@ -43,6 +43,7 @@ func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // +kubebuilder:webhook:path=/annotate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=annotation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
+// Cluster Annotator contains a custom handler function for adding cluster annotations
 type ClusterAnnotator struct {
 	decoder *admission.Decoder
 }
