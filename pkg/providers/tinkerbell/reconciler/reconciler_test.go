@@ -343,7 +343,9 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	features.ClearCache()
 	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
 	//
+
 	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
@@ -355,6 +357,33 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&tinkerbellv1.TinkerbellMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
