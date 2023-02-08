@@ -14,6 +14,7 @@ var clusterDefaults = []func(*Cluster) error{
 	setRegistryMirrorConfigDefaults,
 	setWorkerNodeGroupDefaults,
 	setCNIConfigDefault,
+	setAnnotation,
 }
 
 func setClusterDefaults(cluster *Cluster) error {
@@ -22,6 +23,15 @@ func setClusterDefaults(cluster *Cluster) error {
 			return err
 		}
 	}
+	return nil
+}
+
+func setAnnotation(clusterConfig *Cluster) error {
+	if clusterConfig.GetAnnotations() == nil {
+		clusterConfig.SetAnnotations(make(map[string]string))
+	}
+	clusterConfig.Annotations["Default"] = "Successful"
+
 	return nil
 }
 
