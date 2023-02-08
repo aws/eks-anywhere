@@ -13,6 +13,7 @@ import (
 const (
 	defaultAwsSshKeyName       = "eksa-default"
 	snowballMinSoftwareVersion = "102"
+	deviceV3C                  = "EDGE_C"
 )
 
 // Validator includes a client registry that maintains a snow device aws client map,
@@ -126,6 +127,33 @@ func (v *Validator) ValidateDeviceIsUnlocked(ctx context.Context, m *v1alpha1.Sn
 		}
 		if !deviceUnlocked {
 			return fmt.Errorf("device [%s] is not unlocked. Please unlock the device before you proceed", ip)
+		}
+	}
+
+	return nil
+}
+
+// ValidateInstanceType validates whether the instance type is compatible to run in each device.
+func (v *Validator) ValidateInstanceType(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, ip := range m.Spec.Devices {
+		client, ok := clientMap[ip]
+		if !ok {
+			return fmt.Errorf("credentials not found for device [%s]", ip)
+		}
+
+		deviceType, err := client.SnowballDeviceType(ctx)
+		if err != nil {
+			return fmt.Errorf("checking device type for device [%s]: %v", ip, err)
+		}
+
+		// instance type sbe-c.16xlarge and sbe-c.24xlarge are not supported in device type v3c.
+		if deviceType == deviceV3C && (m.Spec.InstanceType == v1alpha1.SbeC16XLarge || m.Spec.InstanceType == v1alpha1.SbeC24XLarge) {
+			return fmt.Errorf("the instance type [%s] is not supported in device [%s] with device type [%s]", m.Spec.InstanceType, ip, deviceType)
 		}
 	}
 
