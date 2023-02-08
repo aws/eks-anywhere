@@ -14,7 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
-func TestNewCatalogueFromETCDSuccess(t *testing.T) {
+func TestHardwareFromETCDSuccess(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -42,12 +42,12 @@ func TestNewCatalogueFromETCDSuccess(t *testing.T) {
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
 	etcdReader := hardware.NewETCDReader(cl)
-	err := etcdReader.NewCatalogueFromETCD(ctx)
+	err := etcdReader.HardwareFromETCD(ctx)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(len(etcdReader.GetCatalogue().AllHardware())).To(Equal(1))
 }
 
-func TestNewCatalogueFromETCDNoHardware(t *testing.T) {
+func TestHardwareFromETCDNoHardware(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -74,7 +74,7 @@ func TestNewCatalogueFromETCDNoHardware(t *testing.T) {
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
 	etcdReader := hardware.NewETCDReader(cl)
-	err := etcdReader.NewCatalogueFromETCD(ctx)
-	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("no available hardware"))
+	err := etcdReader.HardwareFromETCD(ctx)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(len(etcdReader.GetCatalogue().AllHardware())).To(Equal(0))
 }

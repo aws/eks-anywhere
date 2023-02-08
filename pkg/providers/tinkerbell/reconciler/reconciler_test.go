@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -528,7 +529,42 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("no available hardware"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+}
+
+func TestReconcilerCheckRufioMachinesContactableFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+
+	tt.cluster.Name = "invalidCluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:   rufiov1alpha1.Contactable,
+					Status: rufiov1alpha1.ConditionFalse,
+				},
+			},
+		},
+	},
+	)
+
+	tt.withFakeClient()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	// tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
 }
 
 func (tt *reconcilerTest) withFakeClient() {

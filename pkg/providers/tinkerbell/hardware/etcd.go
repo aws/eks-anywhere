@@ -2,9 +2,9 @@ package hardware
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,15 +36,11 @@ func NewETCDReader(client client.Client) *ETCDReader {
 	}
 }
 
-// NewCatalogueFromETCD fetches the unprovisioned tinkerbell hardware objects and inserts in to ETCDReader catalogue.
-func (er *ETCDReader) NewCatalogueFromETCD(ctx context.Context) error {
+// HardwareFromETCD fetches the unprovisioned tinkerbell hardware objects and inserts in to ETCDReader catalogue.
+func (er *ETCDReader) HardwareFromETCD(ctx context.Context) error {
 	hwList, err := er.getUnprovisionedTinkerbellHardware(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build catalogue: %v", err)
-	}
-
-	if len(hwList) == 0 {
-		return errors.New("no available hardware")
 	}
 
 	for i := range hwList {
@@ -81,4 +77,19 @@ func (er *ETCDReader) getUnprovisionedTinkerbellHardware(ctx context.Context) ([
 	}
 
 	return selectedHardware.Items, nil
+}
+
+func (er *ETCDReader) RufioMachinesFromEtcd(ctx context.Context) error {
+	var rufioMachines rufiov1alpha1.MachineList
+	if err := er.client.List(ctx, &rufioMachines, &client.ListOptions{Namespace: constants.EksaSystemNamespace}); err != nil {
+		return fmt.Errorf("listing rufio machines: %v", err)
+	}
+
+	for i := range rufioMachines.Items {
+		if err := er.catalogue.InsertBMC(&rufioMachines.Items[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

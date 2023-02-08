@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -79,6 +80,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateClusterSpec,
 		r.ValidateHardware,
 		r.ValidateDatacenterConfig,
+		r.CheckRufioMachinesContactable,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -252,7 +254,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 
 	// We need a new reader each time so that the catalogue gets recreated.
 	etcdReader := hardware.NewETCDReader(r.client)
-	if err := etcdReader.NewCatalogueFromETCD(ctx); err != nil {
+	if err := etcdReader.HardwareFromETCD(ctx); err != nil {
 		log.Error(err, "Hardware validation failure")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
@@ -281,4 +283,44 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	}
 
 	return controller.Result{}, nil
+}
+
+func (r *Reconciler) CheckRufioMachinesContactable(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "checkRufioMachinesContactable")
+
+	etcdReader := hardware.NewETCDReader(r.client)
+	if err := etcdReader.RufioMachinesFromEtcd(ctx); err != nil {
+		log.Error(err, "rufio machine check failure")
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+		return controller.ResultWithReturn(), nil
+	}
+
+	for _, rm := range etcdReader.GetCatalogue().AllBMCs() {
+		if err := r.checkContactable(rm); err != nil {
+			log.Error(err, "rufio machine check failure")
+			failureMessage := err.Error()
+			clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+			return controller.ResultWithReturn(), nil
+		}
+	}
+
+	return controller.Result{}, nil
+}
+
+func (r *Reconciler) checkContactable(rm *rufiov1alpha1.Machine) error {
+	for _, c := range rm.Status.Conditions {
+		if c.Type == rufiov1alpha1.Contactable {
+			if c.Status == rufiov1alpha1.ConditionTrue {
+				return nil
+			}
+			if c.Status == rufiov1alpha1.ConditionFalse {
+				return errors.New(c.Message)
+			}
+		}
+	}
+
+	return nil
 }
