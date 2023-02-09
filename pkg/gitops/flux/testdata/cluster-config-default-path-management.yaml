@@ -16,6 +16,7 @@ spec:
   kubernetesVersion: "1.19"
   managementCluster:
     name: management-cluster
+  packages: {}
 
 ---
 kind: VSphereDatacenterConfig

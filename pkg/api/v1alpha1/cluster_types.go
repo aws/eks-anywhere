@@ -54,6 +54,7 @@ type ClusterSpec struct {
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
+	Packages                    PackageConfiguration         `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
 	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
 }
@@ -104,6 +105,9 @@ func (n *Cluster) Equal(o *Cluster) bool {
 		return false
 	}
 	if !n.Spec.RegistryMirrorConfiguration.Equal(o.Spec.RegistryMirrorConfiguration) {
+		return false
+	}
+	if !n.Spec.Packages.Equal(&o.Spec.Packages) {
 		return false
 	}
 	if !n.ManagementClusterEqual(o) {
@@ -760,6 +764,23 @@ type ProviderRefAccessor interface {
 type KindAccessor interface {
 	Kind() string
 	ExpectedKind() string
+}
+
+// PackageConfiguration for installing EKS Anywhere curated packages.
+type PackageConfiguration struct {
+	// Disable package controller on cluster
+	Disable bool `json:"bool,omitempty"`
+}
+
+// Equal package controller configurations.
+func (n *PackageConfiguration) Equal(o *PackageConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Disable == o.Disable
 }
 
 // ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology.
