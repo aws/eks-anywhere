@@ -129,3 +129,9 @@ func validateTinkerbellMachineConfig(config *TinkerbellMachineConfig) error {
 
 	return nil
 }
+
+func setTinkerbellMachineConfigDefaults(machineConfig *TinkerbellMachineConfig) {
+	if machineConfig.Spec.OSFamily == "" {
+		machineConfig.Spec.OSFamily = Bottlerocket
+	}
+}

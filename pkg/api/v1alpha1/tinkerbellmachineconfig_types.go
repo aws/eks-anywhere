@@ -134,6 +134,11 @@ func (c *TinkerbellMachineConfig) Validate() error {
 	return validateTinkerbellMachineConfig(c)
 }
 
+// SetDefaults sets defaults for Tinkerbell machine config.
+func (c *TinkerbellMachineConfig) SetDefaults() {
+	setTinkerbellMachineConfigDefaults(c)
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as TinkerbellMachineConfig except stripped down for generation of yaml file during generate clusterconfig.
