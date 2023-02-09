@@ -1976,6 +1976,336 @@ func TestPackageConfiguration_Equal(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "not equal controller",
+			pcn: &v1alpha1.PackageConfiguration{
+				Disable: true,
+				Controller: v1alpha1.PackageControllerConfiguration{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				Disable: false,
+				Controller: v1alpha1.PackageControllerConfiguration{
+					Tag: "v2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "equal controller",
+			pcn: &v1alpha1.PackageConfiguration{
+				Controller: v1alpha1.PackageControllerConfiguration{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				Controller: v1alpha1.PackageControllerConfiguration{
+					Tag: "v1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestPackageControllerConfiguration_Equal(t *testing.T) {
+	same := &v1alpha1.PackageControllerConfiguration{Tag: "v1"}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageControllerConfiguration
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageControllerConfiguration{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageControllerConfiguration{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal Repository",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Repository: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Repository: "a"},
+			want: true,
+		},
+		{
+			name: "not equal Repository",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Repository: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Repository: "b"},
+			want: false,
+		},
+		{
+			name: "equal Tag",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Tag: "v1"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Tag: "v1"},
+			want: true,
+		},
+		{
+			name: "not equal Tag",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Tag: "v1"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Tag: "v2"},
+			want: false,
+		},
+		{
+			name: "equal Digest",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Digest: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Digest: "a"},
+			want: true,
+		},
+		{
+			name: "not equal Digest",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Digest: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Digest: "b"},
+			want: false,
+		},
+		{
+			name: "equal DisableWebhooks",
+			pcn:  &v1alpha1.PackageControllerConfiguration{DisableWebhooks: true},
+			pco:  &v1alpha1.PackageControllerConfiguration{DisableWebhooks: true},
+			want: true,
+		},
+		{
+			name: "not equal DisableWebhooks",
+			pcn:  &v1alpha1.PackageControllerConfiguration{DisableWebhooks: true},
+			pco:  &v1alpha1.PackageControllerConfiguration{},
+			want: false,
+		},
+		{
+			name: "equal Env",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Env: []string{"a"}},
+			pco:  &v1alpha1.PackageControllerConfiguration{Env: []string{"a"}},
+			want: true,
+		},
+		{
+			name: "not equal Env",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Env: []string{"a"}},
+			pco:  &v1alpha1.PackageControllerConfiguration{Env: []string{"b"}},
+			want: false,
+		},
+		{
+			name: "not equal Resources",
+			pcn: &v1alpha1.PackageControllerConfiguration{
+				Resources: v1alpha1.PackageControllerResources{
+					Requests: v1alpha1.ImageResource{
+						Cpu: "1",
+					},
+				},
+			},
+			pco: &v1alpha1.PackageControllerConfiguration{
+				Resources: v1alpha1.PackageControllerResources{
+					Requests: v1alpha1.ImageResource{
+						Cpu: "2",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestPackageControllerResources_Equal(t *testing.T) {
+	same := &v1alpha1.PackageControllerResources{
+		Limits: v1alpha1.ImageResource{
+			Cpu: "3",
+		},
+	}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageControllerResources
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageControllerResources{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageControllerResources{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal Requests",
+			pcn: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					Cpu: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					Cpu: "1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "not equal Requests",
+			pcn: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					Cpu: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					Cpu: "2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "equal Limits",
+			pcn: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					Cpu: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					Cpu: "1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "not equal Limits",
+			pcn: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					Cpu: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					Cpu: "2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestImageResource_Equal(t *testing.T) {
+	same := &v1alpha1.ImageResource{
+		Cpu: "3",
+	}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.ImageResource
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.ImageResource{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.ImageResource{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal Cpu",
+			pcn: &v1alpha1.ImageResource{
+				Cpu: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				Cpu: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Cpu",
+			pcn: &v1alpha1.ImageResource{
+				Cpu: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				Cpu: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Memory",
+			pcn: &v1alpha1.ImageResource{
+				Memory: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				Memory: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Memory",
+			pcn: &v1alpha1.ImageResource{
+				Memory: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				Memory: "2",
+			},
+			want: false,
+		},
+		{
 			name: "same",
 			pcn:  same,
 			pco:  same,

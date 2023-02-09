@@ -769,9 +769,13 @@ type KindAccessor interface {
 // PackageConfiguration for installing EKS Anywhere curated packages.
 type PackageConfiguration struct {
 	// Disable package controller on cluster
-	Disable bool `json:"bool,omitempty"`
+	Disable bool `json:"disable,omitempty"`
+
+	// Controller package controller configuration
+	Controller PackageControllerConfiguration `json:"controller,omitempty"`
 }
 
+// Equal for PackageConfiguration
 func (n *PackageConfiguration) Equal(o *PackageConfiguration) bool {
 	if n == o {
 		return true
@@ -779,7 +783,78 @@ func (n *PackageConfiguration) Equal(o *PackageConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Disable == o.Disable
+	return n.Disable == o.Disable && n.Controller.Equal(&o.Controller)
+}
+
+// PackageControllerConfiguration configure aspects of package controller.
+type PackageControllerConfiguration struct {
+	// Repository package controller repository
+	Repository string `json:"repository,omitempty"`
+
+	// Tag package controller tag
+	Tag string `json:"tag,omitempty"`
+
+	// Digest package controller digest
+	Digest string `json:"digest,omitempty"`
+
+	// DisableWebhooks on package controller
+	DisableWebhooks bool `json:"disableWebhooks,omitempty"`
+
+	// Env of package controller
+	Env []string `json:"env,omitempty"`
+
+	// Resources of package controller
+	Resources PackageControllerResources `json:"resources,omitempty"`
+}
+
+// Equal for PackageControllerConfiguration
+func (n *PackageControllerConfiguration) Equal(o *PackageControllerConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Repository == o.Repository && n.Tag == o.Tag && n.Digest == o.Digest &&
+		n.DisableWebhooks == o.DisableWebhooks && SliceEqual(n.Env, o.Env) && n.Resources.Equal(&o.Resources)
+}
+
+// PackageControllerResources resource aspects of package controller.
+type PackageControllerResources struct {
+	// Requests for image resources
+	Requests ImageResource `json:"requests,omitempty"`
+	Limits   ImageResource `json:"limits,omitempty"`
+}
+
+// Equal for PackageControllerResources
+func (n *PackageControllerResources) Equal(o *PackageControllerResources) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Requests.Equal(&o.Requests) && n.Limits.Equal(&o.Limits)
+}
+
+// ImageResource resources for container image.
+type ImageResource struct {
+	// Cpu image cpu
+	Cpu string `json:"cpu,omitempty"`
+
+	// Memory image memory
+	Memory string `json:"memory,omitempty"`
+}
+
+// Equal for ImageResource
+func (n *ImageResource) Equal(o *ImageResource) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Cpu == o.Cpu && n.Memory == o.Memory
 }
 
 // ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology.
