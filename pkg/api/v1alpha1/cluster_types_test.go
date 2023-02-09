@@ -1212,6 +1212,48 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 	}
 }
 
+func TestClusterEqualPackageConfigurationNetwork(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		disable1, disable2 bool
+		want               bool
+	}{
+		{
+			testName: "equal",
+			disable1: true,
+			disable2: true,
+			want:     true,
+		},
+		{
+			testName: "not equal",
+			disable1: true,
+			disable2: false,
+			want:     false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					Packages: v1alpha1.PackageConfiguration{
+						Disable: tt.disable1,
+					},
+				},
+			}
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					Packages: v1alpha1.PackageConfiguration{
+						Disable: tt.disable2,
+					},
+				},
+			}
+
+			g := NewWithT(t)
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterEqualManagement(t *testing.T) {
 	testCases := []struct {
 		testName                               string
@@ -1892,6 +1934,58 @@ func TestClusterHasAWSIamConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.cluster.HasAWSIamConfig()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestPackageConfiguration_Equal(t *testing.T) {
+	same := &v1alpha1.PackageConfiguration{Disable: false}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageConfiguration
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageConfiguration{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageConfiguration{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal",
+			pcn:  &v1alpha1.PackageConfiguration{Disable: true},
+			pco:  &v1alpha1.PackageConfiguration{Disable: true},
+			want: true,
+		},
+		{
+			name: "not equal",
+			pcn:  &v1alpha1.PackageConfiguration{Disable: true},
+			pco:  &v1alpha1.PackageConfiguration{Disable: false},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
 		})
 	}
 }
