@@ -235,6 +235,14 @@ spec:
                   name:
                     type: string
                 type: object
+              packages:
+                description: PackageConfiguration for installing EKS Anywhere curated
+                  packages.
+                properties:
+                  bool:
+                    description: Disable package controller on cluster
+                    type: boolean
+                type: object
               podIamConfig:
                 properties:
                   serviceAccountIssuer:
