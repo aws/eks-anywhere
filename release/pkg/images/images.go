@@ -131,7 +131,11 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		latestTag = artifactutils.GetLatestUploadDestination(r.BuildRepoBranchName)
 		if imageTagConfiguration.SourceLatestTagFromECR && !r.DryRun {
-			latestTag, err = ecr.GetLatestImageSha(r.SourceClients.ECR.EcrClient, repoName)
+			if (strings.Contains(name, "eks-anywhere-packages") || strings.Contains(name, "ecr-token-refresher")) && r.BuildRepoBranchName != "main" {
+				latestTag, _, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, repoName, "v0.0.0", false)
+			} else {
+				latestTag, err = ecr.GetLatestImageSha(r.SourceClients.ECR.EcrClient, repoName)
+			}
 			if err != nil {
 				return "", "", errors.Cause(err)
 			}
@@ -283,7 +287,6 @@ func generateFormattedTagPrefix(imageTagFormat string, tagOptions map[string]str
 		trimmedResult := strings.Trim(result, "<>")
 		formattedTag = strings.ReplaceAll(formattedTag, result, tagOptions[trimmedResult])
 	}
-
 	return formattedTag
 }
 
