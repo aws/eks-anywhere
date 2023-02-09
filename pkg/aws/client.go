@@ -11,6 +11,7 @@ import (
 // Client provides the single API client to make operations call to aws services.
 type Client struct {
 	ec2            EC2Client
+	imds           IMDSClient
 	snowballDevice SnowballDeviceClient
 }
 
@@ -60,6 +61,13 @@ type ClientOpt func(*Client)
 func WithEC2(ec2 EC2Client) ClientOpt {
 	return func(c *Client) {
 		c.ec2 = ec2
+	}
+}
+
+// WithIMDS returns a ClientOpt that sets the imds client.
+func WithIMDS(imds IMDSClient) ClientOpt {
+	return func(c *Client) {
+		c.imds = imds
 	}
 }
 

@@ -173,7 +173,7 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "InstanceType invalid-instance-type is not supported",
+			wantErr: "InstanceType invalid-instance-type is not supported, please use one of the following: sbe-c.large, sbe-c.xlarge, sbe-c.2xlarge, sbe-c.4xlarge, sbe-c.8xlarge, sbe-c.12xlarge, sbe-c.16xlarge, sbe-c.24xlarge",
 		},
 		{
 			name: "invalid physical network connector",

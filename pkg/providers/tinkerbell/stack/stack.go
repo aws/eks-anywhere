@@ -46,6 +46,18 @@ type Docker interface {
 type Helm interface {
 	RegistryLogin(ctx context.Context, endpoint, username, password string) error
 	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
+	UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
+}
+
+// StackInstaller deploys a Tinkerbell stack.
+//
+//nolint:revive // Stutter and the interface shouldn't exist. Will clean up (chrisdoherty4)
+type StackInstaller interface {
+	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
+	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
+	UninstallLocal(ctx context.Context) error
+	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string) error
+	GetNamespace() string
 }
 
 type Installer struct {
@@ -63,12 +75,6 @@ type Installer struct {
 }
 
 type InstallOption func(s *Installer)
-
-type StackInstaller interface {
-	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
-	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
-	UninstallLocal(ctx context.Context) error
-}
 
 // WithNamespaceCreate is an InstallOption is lets you specify whether to create the namespace needed for Tinkerbell stack.
 func WithNamespaceCreate(create bool) InstallOption {
@@ -152,27 +158,23 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		namespace:       s.namespace,
 		createNamespace: s.createNamespace,
 		tinkController: map[string]interface{}{
-			deploy: true,
-			image:  bundle.TinkerbellStack.Tink.TinkController.URI,
+			image: bundle.TinkerbellStack.Tink.TinkController.URI,
 		},
 		tinkServer: map[string]interface{}{
-			deploy: true,
-			image:  bundle.TinkerbellStack.Tink.TinkServer.URI,
-			args:   []string{"--tls=false"},
+			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
+			args:  []string{"--tls=false"},
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
 			},
 		},
 		hegel: map[string]interface{}{
-			deploy: true,
-			image:  bundle.TinkerbellStack.Hegel.URI,
-			args:   []string{"--grpc-use-tls=false"},
+			image: bundle.TinkerbellStack.Hegel.URI,
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
 			},
 			env: []map[string]string{
 				{
-					"name":  "TRUSTED_PROXIES",
+					"name":  "HEGEL_TRUSTED_PROXIES",
 					"value": s.podCidrRange,
 				},
 			},
@@ -187,8 +189,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			},
 		},
 		rufio: map[string]interface{}{
-			deploy: true,
-			image:  bundle.TinkerbellStack.Rufio.URI,
+			image: bundle.TinkerbellStack.Rufio.URI,
 		},
 		kubevip: map[string]interface{}{
 			image:  bundle.KubeVip.URI,
@@ -349,4 +350,88 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 
 func (s *Installer) localRegistryURL(originalURL string) string {
 	return s.registryMirror.ReplaceRegistry(originalURL)
+}
+
+// Upgrade the Tinkerbell stack using images specified in bundle.
+func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string) error {
+	logger.V(6).Info("Upgrading Tinkerbell helm chart")
+
+	bootEnv := []map[string]string{}
+	for k, v := range s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP) {
+		bootEnv = append(bootEnv, map[string]string{
+			"name":  k,
+			"value": v,
+		})
+	}
+
+	osiePath, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
+	if err != nil {
+		return fmt.Errorf("getting directory path from hook uri: %v", err)
+	}
+
+	valuesMap := map[string]interface{}{
+		namespace:       s.namespace,
+		createNamespace: false,
+		tinkController: map[string]interface{}{
+			image: bundle.TinkerbellStack.Tink.TinkController.URI,
+		},
+		tinkServer: map[string]interface{}{
+			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
+		},
+		hegel: map[string]interface{}{
+			image: bundle.TinkerbellStack.Hegel.URI,
+		},
+		boots: map[string]interface{}{
+			image: bundle.TinkerbellStack.Boots.URI,
+			env:   bootEnv,
+			args: []string{
+				"-dhcp-addr=0.0.0.0:67",
+				fmt.Sprintf("-osie-path-override=%s", osiePath),
+			},
+		},
+		rufio: map[string]interface{}{
+			image: bundle.TinkerbellStack.Rufio.URI,
+		},
+		kubevip: map[string]interface{}{
+			image: bundle.KubeVip.URI,
+		},
+		envoy: map[string]interface{}{
+			image: bundle.Envoy.URI,
+		},
+	}
+
+	values, err := yaml.Marshal(valuesMap)
+	if err != nil {
+		return fmt.Errorf("marshalling values override for Tinkerbell Installer helm chart: %s", err)
+	}
+
+	valuesPath, err := s.filewriter.Write(overridesFileName, values)
+	if err != nil {
+		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
+	}
+
+	if s.registryMirror != nil && s.registryMirror.Auth {
+		username, password, err := config.ReadCredentials()
+		if err != nil {
+			return err
+		}
+		endpoint := s.registryMirror.BaseRegistry
+		if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+			return err
+		}
+	}
+
+	return s.helm.UpgradeChartWithValuesFile(
+		ctx,
+		bundle.TinkerbellStack.TinkebellChart.Name,
+		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
+		bundle.TinkerbellStack.TinkebellChart.Tag(),
+		kubeconfig,
+		valuesPath,
+	)
+}
+
+// GetNamespace retrieves the namespace the installer is using for stack deployment.
+func (s *Installer) GetNamespace() string {
+	return s.namespace
 }

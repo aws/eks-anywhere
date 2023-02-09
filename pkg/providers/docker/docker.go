@@ -603,3 +603,12 @@ func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {
 
 	return haproxyImageRepo
 }
+
+// PreCoreComponentsUpgrade staisfies the Provider interface.
+func (p *provider) PreCoreComponentsUpgrade(
+	ctx context.Context,
+	cluster *types.Cluster,
+	clusterSpec *cluster.Spec,
+) error {
+	return nil
+}

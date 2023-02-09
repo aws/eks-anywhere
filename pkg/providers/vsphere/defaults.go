@@ -117,7 +117,8 @@ func (d *Defaulter) setCloneModeAndDiskSizeDefaults(ctx context.Context, machine
 	minDiskSize := max(minDiskGib, templateDiskSize)
 
 	if machineConfig.Spec.DiskGiB < minDiskSize {
-		logger.Info("Warning: VSphereMachineConfig DiskGiB cannot be less than %s. Defaulting to %s.", minDiskSize, minDiskSize)
+		errStr := fmt.Sprintf("Warning: VSphereMachineConfig DiskGiB cannot be less than %v. Defaulting to %v.", minDiskSize, minDiskSize)
+		logger.Info(errStr)
 		machineConfig.Spec.DiskGiB = minDiskSize
 	}
 

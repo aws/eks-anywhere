@@ -40,6 +40,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -59,7 +60,7 @@ var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	TinkerbellHardwareResourceType       = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
-	rufioBaseboardManagementResourceType = fmt.Sprintf("baseboardmanagements.%s", rufiov1alpha1.GroupVersion.Group)
+	rufioMachineResourceType             = fmt.Sprintf("machines.%s", rufiov1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixDatacenterResourceType    = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -375,8 +376,9 @@ func (k *Kubectl) WaitForPod(ctx context.Context, cluster *types.Cluster, timeou
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "pod/"+target, namespace)
 }
 
-func (k *Kubectl) WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioBaseboardManagementResourceType, namespace, WithWaitAll())
+// WaitForRufioMachines blocks until all Rufio Machines have the desired condition.
+func (k *Kubectl) WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioMachineResourceType, namespace, WithWaitAll())
 }
 
 // WaitForJobCompleted waits for a job resource to reach desired condition before returning.
@@ -995,7 +997,7 @@ type machinesResponse struct {
 
 func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error) {
 	params := []string{
-		"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"get", "machines.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
 		"--namespace", constants.EksaSystemNamespace,
 	}
@@ -2160,5 +2162,70 @@ func (k *Kubectl) DeleteEksaNutanixMachineConfig(ctx context.Context, nutanixMac
 	if err != nil {
 		return fmt.Errorf("deleting nutanixmachineconfig cluster %s apply: %v", nutanixMachineConfigName, err)
 	}
+	return nil
+}
+
+// AllBaseboardManagements returns all the baseboard management resources in the cluster.
+func (k *Kubectl) AllBaseboardManagements(ctx context.Context, kubeconfig string) ([]rufiounreleased.BaseboardManagement, error) {
+	stdOut, err := k.Execute(ctx,
+		"get", "baseboardmanagements.bmc.tinkerbell.org",
+		"-o", "json",
+		"--kubeconfig", kubeconfig,
+		"--all-namespaces=true",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var list rufiounreleased.BaseboardManagementList
+	if err := json.Unmarshal(stdOut.Bytes(), &list); err != nil {
+		return nil, err
+	}
+
+	return list.Items, nil
+}
+
+// AllTinkerbellHardware returns all the hardware resources in the cluster.
+func (k *Kubectl) AllTinkerbellHardware(ctx context.Context, kubeconfig string) ([]tinkv1alpha1.Hardware, error) {
+	stdOut, err := k.Execute(ctx,
+		"get", "hardware.tinkerbell.org",
+		"-o", "json",
+		"--kubeconfig", kubeconfig,
+		"--all-namespaces=true",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var list tinkv1alpha1.HardwareList
+	if err := json.Unmarshal(stdOut.Bytes(), &list); err != nil {
+		return nil, err
+	}
+
+	return list.Items, nil
+}
+
+// HasCRD checks if the given CRD exists in the cluster specified by kubeconfig.
+func (k *Kubectl) HasCRD(ctx context.Context, crd, kubeconfig string) (bool, error) {
+	_, err := k.Execute(ctx, "get", "crd", crd, "--kubeconfig", kubeconfig)
+
+	if err == nil {
+		return true, nil
+	}
+
+	if strings.Contains(err.Error(), "NotFound") {
+		return false, nil
+	}
+
+	return false, err
+}
+
+// DeleteCRD removes the given CRD from the cluster specified in kubeconfig.
+func (k *Kubectl) DeleteCRD(ctx context.Context, crd, kubeconfig string) error {
+	_, err := k.Execute(ctx, "delete", "crd", crd, "--kubeconfig", kubeconfig)
+	if err != nil && !strings.Contains(err.Error(), "NotFound") {
+		return err
+	}
+
 	return nil
 }

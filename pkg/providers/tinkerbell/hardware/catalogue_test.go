@@ -25,7 +25,7 @@ spec:
 status: {}
 ---
 apiVersion: tinkerbell.org/v1alpha1
-kind: BaseboardManagement
+kind: Machine
 metadata:
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"

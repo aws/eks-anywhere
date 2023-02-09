@@ -3,8 +3,10 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -18,6 +20,8 @@ const (
 	MinimumContainerVolumeSizeUbuntu        = 8
 	MinimumContainerVolumeSizeBottlerocket  = 25
 )
+
+var validInstanceTypes = []SnowInstanceType{SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge, SbeC8XLarge, SbeC12XLarge, SbeC16XLarge, SbeC24XLarge}
 
 // NewSnowMachineConfigGenerate generates snowMachineConfig example for generate clusterconfig command.
 func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
@@ -62,8 +66,8 @@ func (s *SnowMachineConfigGenerate) Name() string {
 }
 
 func validateSnowMachineConfig(config *SnowMachineConfig) error {
-	if config.Spec.InstanceType != SbeCLarge && config.Spec.InstanceType != SbeCXLarge && config.Spec.InstanceType != SbeC2XLarge && config.Spec.InstanceType != SbeC4XLarge {
-		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
+	if err := validateSnowMachineConfigInstanceType(string(config.Spec.InstanceType)); err != nil {
+		return err
 	}
 
 	if config.Spec.PhysicalNetworkConnector != SFPPlus && config.Spec.PhysicalNetworkConnector != QSFP && config.Spec.PhysicalNetworkConnector != RJ45 {
@@ -87,6 +91,18 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 	}
 
 	return validateSnowMachineConfigContainerVolume(config)
+}
+
+func validateSnowMachineConfigInstanceType(instanceType string) error {
+	validInstanceTypesStr := make([]string, 0, len(validInstanceTypes))
+	for _, i := range validInstanceTypes {
+		validInstanceTypesStr = append(validInstanceTypesStr, string(i))
+	}
+
+	if !slices.Contains(validInstanceTypesStr, instanceType) {
+		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s", instanceType, strings.Join(validInstanceTypesStr, ", "))
+	}
+	return nil
 }
 
 func validateSnowMachineConfigContainerVolume(config *SnowMachineConfig) error {

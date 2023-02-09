@@ -1996,7 +1996,7 @@ func TestValidateNetworking(t *testing.T) {
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
-								"1.2.3.4/6",
+								"1.2.3.4/8",
 							},
 						},
 						Services: Services{
@@ -2018,7 +2018,7 @@ func TestValidateNetworking(t *testing.T) {
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
-								"1.2.3.4/6",
+								"1.2.3.4/8",
 							},
 						},
 						Services: Services{
@@ -2040,7 +2040,7 @@ func TestValidateNetworking(t *testing.T) {
 					ClusterNetwork: ClusterNetwork{
 						Pods: Pods{
 							CidrBlocks: []string{
-								"1.2.3.4/6",
+								"1.2.3.4/8",
 							},
 						},
 						Services: Services{
@@ -2081,7 +2081,7 @@ func TestValidateNetworking(t *testing.T) {
 		},
 		{
 			name:    "node cidr mask size invalid",
-			wantErr: fmt.Errorf("the size of pod subnet with mask 30 is smaller than the size of node subnet with mask 28"),
+			wantErr: fmt.Errorf("the size of pod subnet with mask 30 is smaller than or equal to the size of node subnet with mask 28"),
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					ClusterNetwork: ClusterNetwork{

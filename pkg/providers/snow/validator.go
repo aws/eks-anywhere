@@ -3,6 +3,9 @@ package snow
 import (
 	"context"
 	"fmt"
+	"reflect"
+
+	"github.com/pkg/errors"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -10,19 +13,45 @@ import (
 const (
 	defaultAwsSshKeyName       = "eksa-default"
 	snowballMinSoftwareVersion = "102"
+	minimumVCPU                = 2
 )
 
-type AwsClientValidator struct {
+// Validator includes a client registry that maintains a snow device aws client map,
+// and a local imds service that is used to fetch metadata of the host instance.
+type Validator struct {
+	// clientRegistry maintains a device aws client mapping.
 	clientRegistry ClientRegistry
+
+	// imds is a local imds client built with the default aws config. This imds client can only
+	// interact with the local instance metata service.
+	imds LocalIMDSClient
 }
 
-func NewValidator(clientRegistry ClientRegistry) *AwsClientValidator {
-	return &AwsClientValidator{
-		clientRegistry: clientRegistry,
+// ValidatorOpt updates an Validator.
+type ValidatorOpt func(*Validator)
+
+// WithIMDS returns a ValidatorOpt that sets the imds client.
+func WithIMDS(imds LocalIMDSClient) ValidatorOpt {
+	return func(c *Validator) {
+		c.imds = imds
 	}
 }
 
-func (v *AwsClientValidator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+// NewValidator creates a snow validator.
+func NewValidator(clientRegistry ClientRegistry, opts ...ValidatorOpt) *Validator {
+	v := &Validator{
+		clientRegistry: clientRegistry,
+	}
+
+	for _, o := range opts {
+		o(v)
+	}
+
+	return v
+}
+
+// ValidateEC2SshKeyNameExists validates the ssh key existence in each device in the device list.
+func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.SshKeyName == "" {
 		return nil
 	}
@@ -50,7 +79,8 @@ func (v *AwsClientValidator) ValidateEC2SshKeyNameExists(ctx context.Context, m 
 	return nil
 }
 
-func (v *AwsClientValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+// ValidateEC2ImageExistsOnDevice validates the ami id (if specified) existence in each device in the device list.
+func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.AMIID == "" {
 		return nil
 	}
@@ -78,7 +108,8 @@ func (v *AwsClientValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context,
 	return nil
 }
 
-func (v *AwsClientValidator) ValidateDeviceIsUnlocked(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+// ValidateDeviceIsUnlocked verifies if all snow devices in the device list are unlocked.
+func (v *Validator) ValidateDeviceIsUnlocked(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	clientMap, err := v.clientRegistry.Get(ctx)
 	if err != nil {
 		return err
@@ -102,7 +133,50 @@ func (v *AwsClientValidator) ValidateDeviceIsUnlocked(ctx context.Context, m *v1
 	return nil
 }
 
-func (v *AwsClientValidator) ValidateDeviceSoftware(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func validateInstanceTypeInDevice(ctx context.Context, client AwsClient, instanceType, deviceIP string) error {
+	instanceTypes, err := client.EC2InstanceTypes(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching supported instance types for device [%s]: %v", deviceIP, err)
+	}
+
+	for _, it := range instanceTypes {
+		if instanceType != it.Name {
+			continue
+		}
+
+		if it.DefaultVCPU != nil && *it.DefaultVCPU < minimumVCPU {
+			return fmt.Errorf("the instance type [%s] has %d vCPU. Please choose an instance type with at least %d default vCPU", instanceType, *it.DefaultVCPU, minimumVCPU)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("the instance type [%s] is not supported in device [%s]", instanceType, deviceIP)
+}
+
+// ValidateInstanceType validates whether the instance type is compatible to run in each device.
+func (v *Validator) ValidateInstanceType(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, ip := range m.Spec.Devices {
+		client, ok := clientMap[ip]
+		if !ok {
+			return fmt.Errorf("credentials not found for device [%s]", ip)
+		}
+
+		if err := validateInstanceTypeInDevice(ctx, client, string(m.Spec.InstanceType), ip); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ValidateDeviceSoftware validates whether the snow software is compatible to run eks-a in each device.
+func (v *Validator) ValidateDeviceSoftware(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	clientMap, err := v.clientRegistry.Get(ctx)
 	if err != nil {
 		return err
@@ -121,6 +195,24 @@ func (v *AwsClientValidator) ValidateDeviceSoftware(ctx context.Context, m *v1al
 		if version < snowballMinSoftwareVersion {
 			return fmt.Errorf("the software version installed [%s] on device [%s] is below the minimum supported version [%s]", version, ip, snowballMinSoftwareVersion)
 		}
+	}
+
+	return nil
+}
+
+// ValidateControlPlaneIP checks whether the control plane ip is valid for creating a snow cluster.
+func (v *Validator) ValidateControlPlaneIP(ctx context.Context, controlPlaneIP string) error {
+	if v.imds == nil || reflect.ValueOf(v.imds).IsNil() {
+		return errors.New("imds client is not initialized")
+	}
+
+	instanceIP, err := v.imds.EC2InstanceIP(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching host instance ip: %v", err)
+	}
+
+	if controlPlaneIP == instanceIP {
+		return fmt.Errorf("control plane host ip cannot be same as the admin instance ip")
 	}
 
 	return nil

@@ -584,19 +584,21 @@ func validateNetworking(clusterConfig *Cluster) error {
 		}
 	}
 
+	podMaskSize, _ := podCIDRIPNet.Mask.Size()
+	nodeCidrMaskSize := constants.DefaultNodeCidrMaskSize
+
 	if clusterNetwork.Nodes != nil && clusterNetwork.Nodes.CIDRMaskSize != nil {
-		podMaskSize, _ := podCIDRIPNet.Mask.Size()
-		nodeCidrMaskSize := clusterNetwork.Nodes.CIDRMaskSize
-		// the pod subnet mask needs to allow one or multiple node-masks
-		// i.e. if it has a /24 the node mask must be between 24 and 32 for ipv4
-		// the below validations are run by kubeadm and we are bubbling those up here for better customer experience
-		if podMaskSize > *nodeCidrMaskSize {
-			return fmt.Errorf("the size of pod subnet with mask %d is smaller than the size of node subnet with mask %d", podMaskSize, *nodeCidrMaskSize)
-		} else if (*nodeCidrMaskSize - podMaskSize) > podSubnetNodeMaskMaxDiff {
-			// PodSubnetNodeMaskMaxDiff is limited to 16 due to an issue with uncompressed IP bitmap in core
-			// The node subnet mask size must be no more than the pod subnet mask size + 16
-			return fmt.Errorf("pod subnet mask (%d) and node-mask (%d) difference is greater than %d", podMaskSize, *nodeCidrMaskSize, podSubnetNodeMaskMaxDiff)
-		}
+		nodeCidrMaskSize = *clusterNetwork.Nodes.CIDRMaskSize
+	}
+	// the pod subnet mask needs to allow one or multiple node-masks
+	// i.e. if it has a /24 the node mask must be between 24 and 32 for ipv4
+	// the below validations are run by kubeadm and we are bubbling those up here for better customer experience
+	if podMaskSize >= nodeCidrMaskSize {
+		return fmt.Errorf("the size of pod subnet with mask %d is smaller than or equal to the size of node subnet with mask %d", podMaskSize, nodeCidrMaskSize)
+	} else if (nodeCidrMaskSize - podMaskSize) > podSubnetNodeMaskMaxDiff {
+		// PodSubnetNodeMaskMaxDiff is limited to 16 due to an issue with uncompressed IP bitmap in core
+		// The node subnet mask size must be no more than the pod subnet mask size + 16
+		return fmt.Errorf("pod subnet mask (%d) and node-mask (%d) difference is greater than %d", podMaskSize, nodeCidrMaskSize, podSubnetNodeMaskMaxDiff)
 	}
 
 	return validateCNIPlugin(clusterNetwork)

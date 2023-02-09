@@ -69,7 +69,7 @@ spec:
   amiID: ""
   instanceType: sbe-c.large
   sshKeyName: ""
-  osFamily: bottlerocket
+  osFamily: ubuntu
   devices:
   - ""
   containersVolume:
@@ -213,10 +213,10 @@ Refers to the Kubernetes secret object with Snow devices credentials used to rec
 AMI ID from which to create the machine instance. Snow provider offers an AMI lookup logic which will look for a suitable AMI ID based on the Kubernetes version and osFamily if the field is empty.
 
 ### instanceType (optional)
-Type of the Snow EC2 machine instance. Permitted values: `sbe-c.large`, `sbe-c.xlarge`, `sbe-c.2xlarge`, `sbe-c.4xlarge` (Default: `sbe-c.large`).
+Type of the Snow EC2 machine instance. Permitted values: `sbe-c.large`, `sbe-c.xlarge`, `sbe-c.2xlarge`, `sbe-c.4xlarge`, `sbe-c.8xlarge`, `sbe-c.12xlarge`, `sbe-c.16xlarge`, `sbe-c.24xlarge` (Default: `sbe-c.large`).
 
 ### osFamily
-Operating System on instance machines. Permitted values: bottlerocket, ubuntu.
+Operating System on instance machines. Permitted value: ubuntu.
 
 ### physicalNetworkConnector (optional)
 Type of snow physical network connector to use for creating direct network interfaces. Permitted values: `SFP_PLUS`, `QSFP`, `RJ45` (Default: `SFP_PLUS`).
@@ -250,28 +250,10 @@ Refers to a `SnowIPPool` object which provides a range of ip addresses. When spe
 ### containersVolume (optional)
 Configuration option for customizing containers data storage volume.
 
-### containersVolume.deviceName (optional)
-Name of the device for the containers data storage volume.
-
 ### containersVolume.size
-Size of the storage device in Gi.
+Size of the storage for containerd runtime in Gi.
 
-This field is required for BottleRocket OS and the size must be no smaller than 25 Gi. The field is optional for Ubuntu and if specified, the size must be no smaller than 8 Gi.
-
-### containersVolume.type (optional)
-Type of the volume. For example: `gp2`, `io1`.
-
-### containersVolume.iops (optional)
-Number of IOPS requested for the disk.
-
-### containersVolume.encrypted (optional)
-Whether the volume should be encrypted or not.
-
-### containersVolume.encryptionKey (optional)
-KMS key to use to encrypt the volume. Can be either a KMS key ID or ARN.
-
-If `encrypted` is set and `encryptionKey` is omitted, the default AWS key will be used.
-The key must already exist and be accessible by the Snow controller.
+The field is optional for Ubuntu and if specified, the size must be no smaller than 8 Gi.
 
 ## SnowIPPool Fields
 

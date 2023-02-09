@@ -2,15 +2,24 @@ package tinkerbell
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
+
+	rufiov1 "github.com/tinkerbell/rufio/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
+
+const baseboardManagementResourceName = "baseboardmanagements.bmc.tinkerbell.org"
 
 func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfig, oldTmc, newTmc *v1alpha1.TinkerbellMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
@@ -140,7 +149,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 			return err
 		}
 		if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
-			err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+			err = p.providerKubectlClient.WaitForRufioMachines(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
 			if err != nil {
 				return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 			}
@@ -206,7 +215,7 @@ func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapC
 	// or no hardware with bmc, its sufficient to check the first hardware.
 	if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
 		// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
-		err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		err := p.providerKubectlClient.WaitForRufioMachines(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace)
 		if err != nil {
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
@@ -365,4 +374,135 @@ func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 		refMap[ref.Name] = ref
 	}
 	return refMap
+}
+
+// PreCoreComponentsUpgrade staisfies the Provider interface.
+func (p *Provider) PreCoreComponentsUpgrade(
+	ctx context.Context,
+	cluster *types.Cluster,
+	clusterSpec *cluster.Spec,
+) error {
+	// When a workload cluster the cluster object could be nil. Noop if it is.
+	if cluster == nil {
+		logger.V(4).Info("Cluster object is nil, assuming it is a workload cluster with no " +
+			"Tinkerbell stack to upgrade")
+		return nil
+	}
+
+	if clusterSpec == nil {
+		return errors.New("cluster spec is nil")
+	}
+
+	// Attempt the upgrade. This should upgrade the stack in the mangement cluster by updating
+	// images, installing new CRDs and possibly removing old ones.
+	err := p.stackInstaller.Upgrade(
+		ctx,
+		clusterSpec.VersionsBundle.Tinkerbell,
+		p.datacenterConfig.Spec.TinkerbellIP,
+		cluster.KubeconfigFile,
+	)
+	if err != nil {
+		return fmt.Errorf("upgrading stack: %v", err)
+	}
+
+	hasBaseboardManagement, err := p.providerKubectlClient.HasCRD(
+		ctx,
+		baseboardManagementResourceName,
+		cluster.KubeconfigFile,
+	)
+	if err != nil {
+		return fmt.Errorf("upgrading rufio crds: %v", err)
+	}
+
+	// We introduced the Rufio dependency prior to its initial release. Between its introduction
+	// and its official release breaking changes occured to the CRDs. We're using the presence
+	// of the obsolete BaseboardManagement CRD to determine if there's an old Rufio installed.
+	// If there is, we need to convert all obsolete BaseboardManagement CRs to Machine CRs (the
+	// CRD that superseeds BaseboardManagement).
+	if hasBaseboardManagement {
+		if err := p.handleRufioUnreleasedCRDs(ctx, cluster); err != nil {
+			return fmt.Errorf("upgrading rufio crds: %v", err)
+		}
+
+		// Remove the unreleased Rufio CRDs from the cluster; this will also remove any residual
+		// resources.
+		err = p.providerKubectlClient.DeleteCRD(ctx, baseboardManagementResourceName, cluster.KubeconfigFile)
+		if err != nil {
+			return fmt.Errorf("could not delete machines crd: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) handleRufioUnreleasedCRDs(ctx context.Context, cluster *types.Cluster) error {
+	// Firstly, retrieve all BaseboardManagement CRs and convert them to Machine CRs.
+	bm, err := p.providerKubectlClient.AllBaseboardManagements(
+		ctx,
+		cluster.KubeconfigFile,
+	)
+	if err != nil {
+		return fmt.Errorf("retrieving baseboardmanagement resources: %v", err)
+	}
+
+	serialized, err := yaml.Serialize(toRufioMachines(bm)...)
+	if err != nil {
+		return fmt.Errorf("serializing machines: %v", err)
+	}
+
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytesWithNamespace(
+		ctx,
+		cluster,
+		yaml.Join(serialized),
+		p.stackInstaller.GetNamespace(),
+	)
+	if err != nil {
+		return fmt.Errorf("applying machines: %v", err)
+	}
+
+	// Secondly, iterate over all Hardwarfe CRs and update the BMCRef to point to the new Machine
+	// CR.
+	hardware, err := p.providerKubectlClient.AllTinkerbellHardware(ctx, cluster.KubeconfigFile)
+	if err != nil {
+		return fmt.Errorf("retrieving hardware resources: %v", err)
+	}
+
+	for _, h := range hardware {
+		h.Spec.BMCRef.Kind = "Machine"
+	}
+
+	serialized, err = yaml.Serialize(hardware...)
+	if err != nil {
+		return fmt.Errorf("serializing hardware: %v", err)
+	}
+
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, yaml.Join(serialized))
+	if err != nil {
+		return fmt.Errorf("applying hardware: %v", err)
+	}
+
+	return nil
+}
+
+func toRufioMachines(items []rufiounreleased.BaseboardManagement) []rufiov1.Machine {
+	var machines []rufiov1.Machine
+	for _, item := range items {
+		machines = append(machines, rufiov1.Machine{
+			// We need to populate type meta because we apply with kubectl (leakage).
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Machine",
+				APIVersion: rufiov1.GroupVersion.String(),
+			},
+			ObjectMeta: item.ObjectMeta,
+			Spec: rufiov1.MachineSpec{
+				Connection: rufiov1.Connection{
+					AuthSecretRef: item.Spec.Connection.AuthSecretRef,
+					Host:          item.Spec.Connection.Host,
+					Port:          item.Spec.Connection.Port,
+					InsecureTLS:   item.Spec.Connection.InsecureTLS,
+				},
+			},
+		})
+	}
+	return machines
 }
