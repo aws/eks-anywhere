@@ -130,7 +130,7 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 			name: "valid without ami",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
-					InstanceType:             DefaultSnowInstanceType,
+					InstanceType:             "sbe-c.4xlarge",
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 					Devices:                  []string{"1.2.3.4"},
 					OSFamily:                 Ubuntu,
@@ -151,11 +151,11 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 			wantErr: "",
 		},
 		{
-			name: "invalid instance type",
+			name: "invalid instance type sbe-g.largex",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:                    "ami-1",
-					InstanceType:             "invalid-instance-type",
+					InstanceType:             "sbe-g.largex",
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 					Devices:                  []string{"1.2.3.4"},
 					OSFamily:                 Bottlerocket,
@@ -173,14 +173,64 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "InstanceType invalid-instance-type is not supported, please use one of the following: sbe-c.large, sbe-c.xlarge, sbe-c.2xlarge, sbe-c.4xlarge, sbe-c.8xlarge, sbe-c.12xlarge, sbe-c.16xlarge, sbe-c.24xlarge",
+			wantErr: "SnowMachineConfig InstanceType sbe-g.largex is not supported",
+		},
+		{
+			name: "invalid instance type sbe-c-xlarge",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:                    "ami-1",
+					InstanceType:             "sbe-c-large",
+					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					Devices:                  []string{"1.2.3.4"},
+					OSFamily:                 Bottlerocket,
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig InstanceType sbe-c-large is not supported",
+		},
+		{
+			name: "invalid instance type sbe-c.elarge",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:                    "ami-1",
+					InstanceType:             "sbe-c.elarge",
+					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					Devices:                  []string{"1.2.3.4"},
+					OSFamily:                 Bottlerocket,
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig InstanceType sbe-c.elarge is not supported",
 		},
 		{
 			name: "invalid physical network connector",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:                    "ami-1",
-					InstanceType:             DefaultSnowInstanceType,
+					InstanceType:             "sbe-c.64xlarge",
 					PhysicalNetworkConnector: "invalid-physical-network",
 					Devices:                  []string{"1.2.3.4"},
 					OSFamily:                 Bottlerocket,
@@ -205,7 +255,7 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:                    "ami-1",
-					InstanceType:             DefaultSnowInstanceType,
+					InstanceType:             "sbe-g.large",
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 					OSFamily:                 Bottlerocket,
 					Network: SnowNetwork{

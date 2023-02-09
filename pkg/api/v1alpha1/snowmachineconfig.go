@@ -3,10 +3,9 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-	"strings"
+	"regexp"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -14,14 +13,14 @@ import (
 const (
 	SnowMachineConfigKind                   = "SnowMachineConfig"
 	DefaultSnowSSHKeyName                   = ""
-	DefaultSnowInstanceType                 = SbeCLarge
+	DefaultSnowInstanceType                 = "sbe-c.large"
 	DefaultSnowPhysicalNetworkConnectorType = SFPPlus
 	DefaultOSFamily                         = Ubuntu
 	MinimumContainerVolumeSizeUbuntu        = 8
 	MinimumContainerVolumeSizeBottlerocket  = 25
 )
 
-var validInstanceTypes = []SnowInstanceType{SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge, SbeC8XLarge, SbeC12XLarge, SbeC16XLarge, SbeC24XLarge}
+var snowInstanceTypesRegex = regexp.MustCompile(`^sbe-[cg]\.\d*x?large$`)
 
 // NewSnowMachineConfigGenerate generates snowMachineConfig example for generate clusterconfig command.
 func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
@@ -94,13 +93,9 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 }
 
 func validateSnowMachineConfigInstanceType(instanceType string) error {
-	validInstanceTypesStr := make([]string, 0, len(validInstanceTypes))
-	for _, i := range validInstanceTypes {
-		validInstanceTypesStr = append(validInstanceTypesStr, string(i))
-	}
-
-	if !slices.Contains(validInstanceTypesStr, instanceType) {
-		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s", instanceType, strings.Join(validInstanceTypesStr, ", "))
+	match := snowInstanceTypesRegex.FindStringSubmatch(instanceType)
+	if match == nil {
+		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported", instanceType)
 	}
 	return nil
 }
