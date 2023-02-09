@@ -29,7 +29,8 @@ func WithSnowAMIID(id string) SnowMachineConfigFiller {
 	}
 }
 
-func WithSnowInstanceType(instanceType anywherev1.SnowInstanceType) SnowMachineConfigFiller {
+// WithSnowInstanceType specifies an instance type for the snow machine config.
+func WithSnowInstanceType(instanceType string) SnowMachineConfigFiller {
 	return func(m *anywherev1.SnowMachineConfig) {
 		m.Spec.InstanceType = instanceType
 	}
