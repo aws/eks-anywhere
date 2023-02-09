@@ -32,6 +32,8 @@ func WithRegistryMirror(mirror *registrymirror.RegistryMirror) HelmOpt {
 	}
 }
 
+// WithInsecure configures helm to skip validating TLS certificates when
+// communicating with the Kubernetes API.
 func WithInsecure() HelmOpt {
 	return func(h *Helm) {
 		h.insecure = true
@@ -124,11 +126,18 @@ func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, nam
 }
 
 // InstallChart installs a helm chart to the target cluster.
-func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, values []string) error {
+//
+// If kubeconfigFilePath is the empty string, it won't be passed at all.
+func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error {
 	valueArgs := GetHelmValueArgs(values)
 	params := []string{"upgrade", "--install", chart, ociURI, "--version", version}
+	if skipCRDs {
+		params = append(params, "--skip-crds")
+	}
 	params = append(params, valueArgs...)
-	params = append(params, "--kubeconfig", kubeconfigFilePath)
+	if kubeconfigFilePath != "" {
+		params = append(params, "--kubeconfig", kubeconfigFilePath)
+	}
 	if len(namespace) > 0 {
 		params = append(params, "--create-namespace", "--namespace", namespace)
 	}
@@ -149,6 +158,25 @@ func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, ve
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
+}
+
+// Delete removes an installation.
+func (h *Helm) Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error {
+	params := []string{
+		"delete", installName,
+		"--kubeconfig", kubeconfigFilePath,
+	}
+	if namespace != "" {
+		params = append(params, "--namespace", namespace)
+	}
+
+	params = h.addInsecureFlagIfProvided(params)
+	if _, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run(); err != nil {
+		return fmt.Errorf("deleting helm installation %w", err)
+	}
+	logger.V(6).Info("Deleted helm installation", "name", installName, "namespace", namespace)
+
+	return nil
 }
 
 func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error) {

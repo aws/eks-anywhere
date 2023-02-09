@@ -1092,7 +1092,7 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 	kubeconfig := e.kubeconfigFilePath()
 	ctx := context.Background()
 
-	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", "", e.HelmInstallConfig.chartValues)
+	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", "", false, e.HelmInstallConfig.chartValues)
 	if err != nil {
 		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
 	}
