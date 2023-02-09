@@ -773,6 +773,9 @@ type PackageConfiguration struct {
 
 	// Controller package controller configuration
 	Controller PackageControllerConfiguration `json:"controller,omitempty"`
+
+	// Cronjob for ecr token refresher
+	CronJob PackageControllerCronJob `json:"cronjob,omitempty"`
 }
 
 // Equal for PackageConfiguration
@@ -855,6 +858,32 @@ func (n *ImageResource) Equal(o *ImageResource) bool {
 		return false
 	}
 	return n.Cpu == o.Cpu && n.Memory == o.Memory
+}
+
+// PackageControllerCronJob configure aspects of package controller.
+type PackageControllerCronJob struct {
+	// Repository ecr token refresher repository
+	Repository string `json:"repository,omitempty"`
+
+	// Tag ecr token refresher tag
+	Tag string `json:"tag,omitempty"`
+
+	// Digest ecr token refresher digest
+	Digest string `json:"digest,omitempty"`
+
+	// Disable on cron job
+	Disable bool `json:"disable,omitempty"`
+}
+
+// Equal for PackageControllerCronJob
+func (n *PackageControllerCronJob) Equal(o *PackageControllerCronJob) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Repository == o.Repository && n.Tag == o.Tag && n.Digest == o.Digest && n.Disable == o.Disable
 }
 
 // ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology.

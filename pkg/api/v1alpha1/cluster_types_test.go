@@ -2319,3 +2319,125 @@ func TestImageResource_Equal(t *testing.T) {
 		})
 	}
 }
+
+func TestPackageControllerCronJob_Equal(t *testing.T) {
+	same := &v1alpha1.PackageControllerCronJob{
+		Repository: "3",
+	}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageControllerCronJob
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageControllerCronJob{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageControllerCronJob{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal Repository",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Repository: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Repository: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Repository",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Repository: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Repository: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Tag",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Tag: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Tag: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Tag",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Tag: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Tag: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Digest",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Digest: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Digest: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Digest",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Digest: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Digest: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Disable",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Disable: true,
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Disable: true,
+			},
+			want: true,
+		},
+		{
+			name: "not equal Disable",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Disable: true,
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Disable: false,
+			},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
