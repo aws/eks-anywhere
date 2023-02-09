@@ -117,6 +117,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 
 	return controller.NewPhaseRunner().Register(
 		r.ValidateClusterSpec,
+		r.ValidateHardware,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
