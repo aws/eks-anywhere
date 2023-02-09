@@ -11,9 +11,83 @@ import (
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	controller "github.com/aws/eks-anywhere/pkg/controller"
 	clusters "github.com/aws/eks-anywhere/pkg/controller/clusters"
+	curatedpackages "github.com/aws/eks-anywhere/pkg/curatedpackages"
+	registrymirror "github.com/aws/eks-anywhere/pkg/registrymirror"
+	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	logr "github.com/go-logr/logr"
 	gomock "github.com/golang/mock/gomock"
+	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// MockPackagesClient is a mock of PackagesClient interface.
+type MockPackagesClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockPackagesClientMockRecorder
+}
+
+// MockPackagesClientMockRecorder is the mock recorder for MockPackagesClient.
+type MockPackagesClientMockRecorder struct {
+	mock *MockPackagesClient
+}
+
+// NewMockPackagesClient creates a new mock instance.
+func NewMockPackagesClient(ctrl *gomock.Controller) *MockPackagesClient {
+	mock := &MockPackagesClient{ctrl: ctrl}
+	mock.recorder = &MockPackagesClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPackagesClient) EXPECT() *MockPackagesClientMockRecorder {
+	return m.recorder
+}
+
+// EnableFullLifecycle mocks base method.
+func (m *MockPackagesClient) EnableFullLifecycle(ctx context.Context, log logr.Logger, clusterName, kubeConfig string, chart *v1alpha10.Image, registry *registrymirror.RegistryMirror, options ...curatedpackages.PackageControllerClientOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, log, clusterName, kubeConfig, chart, registry}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EnableFullLifecycle", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableFullLifecycle indicates an expected call of EnableFullLifecycle.
+func (mr *MockPackagesClientMockRecorder) EnableFullLifecycle(ctx, log, clusterName, kubeConfig, chart, registry interface{}, options ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, log, clusterName, kubeConfig, chart, registry}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableFullLifecycle", reflect.TypeOf((*MockPackagesClient)(nil).EnableFullLifecycle), varargs...)
+}
+
+// Reconcile mocks base method.
+func (m *MockPackagesClient) Reconcile(arg0 context.Context, arg1 logr.Logger, arg2 client.Client, arg3 *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Reconcile", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Reconcile indicates an expected call of Reconcile.
+func (mr *MockPackagesClientMockRecorder) Reconcile(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockPackagesClient)(nil).Reconcile), arg0, arg1, arg2, arg3)
+}
+
+// ReconcileDelete mocks base method.
+func (m *MockPackagesClient) ReconcileDelete(arg0 context.Context, arg1 logr.Logger, arg2 curatedpackages.KubeDeleter, arg3 *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReconcileDelete", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReconcileDelete indicates an expected call of ReconcileDelete.
+func (mr *MockPackagesClientMockRecorder) ReconcileDelete(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileDelete", reflect.TypeOf((*MockPackagesClient)(nil).ReconcileDelete), arg0, arg1, arg2, arg3)
+}
 
 // MockProviderClusterReconcilerRegistry is a mock of ProviderClusterReconcilerRegistry interface.
 type MockProviderClusterReconcilerRegistry struct {

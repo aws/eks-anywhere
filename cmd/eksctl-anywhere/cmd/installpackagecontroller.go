@@ -72,7 +72,7 @@ func installPackageController(ctx context.Context) error {
 	}
 
 	curatedpackages.PrintLicense()
-	err = ctrlClient.EnableCuratedPackages(ctx)
+	err = ctrlClient.Enable(ctx)
 	if err != nil {
 		return err
 	}

@@ -133,8 +133,9 @@ func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, nam
 //
 // If kubeconfigFilePath is the empty string, it won't be passed at all.
 func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error {
+	logger.Init(logger.Options{Level: 6})
 	valueArgs := GetHelmValueArgs(values)
-	params := []string{"upgrade", "--install", chart, ociURI, "--version", version}
+	params := []string{"--debug", "upgrade", "--install", chart, ociURI, "--version", version}
 	if skipCRDs {
 		params = append(params, "--skip-crds")
 	}

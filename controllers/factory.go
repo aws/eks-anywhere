@@ -13,6 +13,7 @@ import (
 	awsiamconfigreconciler "github.com/aws/eks-anywhere/pkg/awsiamauth/reconciler"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
@@ -42,6 +43,7 @@ type Factory struct {
 	awsIamConfigReconciler      *awsiamconfigreconciler.Reconciler
 	logger                      logr.Logger
 	deps                        *dependencies.Dependencies
+	packageControllerClient     *curatedpackages.PackageControllerClient
 }
 
 type Reconcilers struct {
@@ -91,7 +93,10 @@ func (f *Factory) Close(ctx context.Context) error {
 
 func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
 	f.dependencyFactory.WithGovc()
-	f.withTracker().WithProviderClusterReconcilerRegistry(capiProviders).withAWSIamConfigReconciler()
+	f.withTracker().
+		WithProviderClusterReconcilerRegistry(capiProviders).
+		withAWSIamConfigReconciler().
+		withPackageControllerClient()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.ClusterReconciler != nil {
@@ -103,6 +108,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *
 			f.registry,
 			f.awsIamConfigReconciler,
 			clusters.NewClusterValidator(f.manager.GetClient()),
+			f.packageControllerClient,
 		)
 
 		return nil
@@ -417,6 +423,20 @@ func (f *Factory) withAWSIamConfigReconciler() *Factory {
 			f.tracker,
 		)
 
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withPackageControllerClient() *Factory {
+	f.dependencyFactory.WithHelm().WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.packageControllerClient != nil {
+			return nil
+		}
+		f.packageControllerClient = curatedpackages.NewPackageControllerClientFullLifecycle(f.logger, f.deps.Helm, f.deps.Helm, f.deps.Kubectl, f.tracker)
 		return nil
 	})
 

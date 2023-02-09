@@ -27,7 +27,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -42,6 +45,15 @@ type ClusterReconciler struct {
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
 	awsIamAuth                 AWSIamConfigReconciler
 	clusterValidator           ClusterValidator
+	packagesClient             PackagesClient
+}
+
+// PackagesClient handles curated packages operations from within the cluster
+// controller.
+type PackagesClient interface {
+	EnableFullLifecycle(ctx context.Context, log logr.Logger, clusterName string, kubeConfig string, chart *v1alpha1.Image, registry *registrymirror.RegistryMirror, options ...curatedpackages.PackageControllerClientOpt) error
+	ReconcileDelete(context.Context, logr.Logger, curatedpackages.KubeDeleter, *anywherev1.Cluster) error
+	Reconcile(context.Context, logr.Logger, client.Client, *anywherev1.Cluster) error
 }
 
 type ProviderClusterReconcilerRegistry interface {
@@ -61,12 +73,13 @@ type ClusterValidator interface {
 }
 
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient) *ClusterReconciler {
 	return &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
 		awsIamAuth:                 awsIamAuth,
 		clusterValidator:           clusterValidator,
+		packagesClient:             pkgs,
 	}
 }
 
@@ -266,6 +279,14 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 		}
 	}
 
+	// Self-managed clusters can support curated packages, but that support
+	// comes from the CLI at this time.
+	if cluster.IsManaged() && cluster.IsPackagesEnabled() {
+		if err := r.packagesClient.Reconcile(ctx, log, r.client, cluster); err != nil {
+			return controller.Result{}, err
+		}
+	}
+
 	return controller.Result{}, nil
 }
 
@@ -311,6 +332,12 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 	if cluster.HasAWSIamConfig() {
 		if err := r.awsIamAuth.ReconcileDelete(ctx, log, cluster); err != nil {
 			return ctrl.Result{}, err
+		}
+	}
+
+	if cluster.IsManaged() {
+		if err := r.packagesClient.ReconcileDelete(ctx, log, r.client, cluster); err != nil {
+			return ctrl.Result{}, fmt.Errorf("deleting packages for cluster %q: %w", cluster.Name, err)
 		}
 	}
 

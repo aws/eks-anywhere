@@ -9,7 +9,47 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	types "k8s.io/apimachinery/pkg/types"
+	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// MockClientBuilder is a mock of ClientBuilder interface.
+type MockClientBuilder struct {
+	ctrl     *gomock.Controller
+	recorder *MockClientBuilderMockRecorder
+}
+
+// MockClientBuilderMockRecorder is the mock recorder for MockClientBuilder.
+type MockClientBuilderMockRecorder struct {
+	mock *MockClientBuilder
+}
+
+// NewMockClientBuilder creates a new mock instance.
+func NewMockClientBuilder(ctrl *gomock.Controller) *MockClientBuilder {
+	mock := &MockClientBuilder{ctrl: ctrl}
+	mock.recorder = &MockClientBuilderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockClientBuilder) EXPECT() *MockClientBuilderMockRecorder {
+	return m.recorder
+}
+
+// GetClient mocks base method.
+func (m *MockClientBuilder) GetClient(arg0 context.Context, arg1 types.NamespacedName) (client.Client, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClient", arg0, arg1)
+	ret0, _ := ret[0].(client.Client)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetClient indicates an expected call of GetClient.
+func (mr *MockClientBuilderMockRecorder) GetClient(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClient", reflect.TypeOf((*MockClientBuilder)(nil).GetClient), arg0, arg1)
+}
 
 // MockChartInstaller is a mock of ChartInstaller interface.
 type MockChartInstaller struct {
@@ -35,15 +75,94 @@ func (m *MockChartInstaller) EXPECT() *MockChartInstallerMockRecorder {
 }
 
 // InstallChart mocks base method.
-func (m *MockChartInstaller) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, values []string) error {
+func (m *MockChartInstaller) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallChart", ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, values)
+	ret := m.ctrl.Call(m, "InstallChart", ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallChart indicates an expected call of InstallChart.
-func (mr *MockChartInstallerMockRecorder) InstallChart(ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, values interface{}) *gomock.Call {
+func (mr *MockChartInstallerMockRecorder) InstallChart(ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockChartInstaller)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, values)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockChartInstaller)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
+}
+
+// MockChartUninstaller is a mock of ChartUninstaller interface.
+type MockChartUninstaller struct {
+	ctrl     *gomock.Controller
+	recorder *MockChartUninstallerMockRecorder
+}
+
+// MockChartUninstallerMockRecorder is the mock recorder for MockChartUninstaller.
+type MockChartUninstallerMockRecorder struct {
+	mock *MockChartUninstaller
+}
+
+// NewMockChartUninstaller creates a new mock instance.
+func NewMockChartUninstaller(ctrl *gomock.Controller) *MockChartUninstaller {
+	mock := &MockChartUninstaller{ctrl: ctrl}
+	mock.recorder = &MockChartUninstallerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockChartUninstaller) EXPECT() *MockChartUninstallerMockRecorder {
+	return m.recorder
+}
+
+// Delete mocks base method.
+func (m *MockChartUninstaller) Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, kubeconfigFilePath, installName, namespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockChartUninstallerMockRecorder) Delete(ctx, kubeconfigFilePath, installName, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockChartUninstaller)(nil).Delete), ctx, kubeconfigFilePath, installName, namespace)
+}
+
+// MockKubeDeleter is a mock of KubeDeleter interface.
+type MockKubeDeleter struct {
+	ctrl     *gomock.Controller
+	recorder *MockKubeDeleterMockRecorder
+}
+
+// MockKubeDeleterMockRecorder is the mock recorder for MockKubeDeleter.
+type MockKubeDeleterMockRecorder struct {
+	mock *MockKubeDeleter
+}
+
+// NewMockKubeDeleter creates a new mock instance.
+func NewMockKubeDeleter(ctrl *gomock.Controller) *MockKubeDeleter {
+	mock := &MockKubeDeleter{ctrl: ctrl}
+	mock.recorder = &MockKubeDeleterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKubeDeleter) EXPECT() *MockKubeDeleterMockRecorder {
+	return m.recorder
+}
+
+// Delete mocks base method.
+func (m *MockKubeDeleter) Delete(arg0 context.Context, arg1 client.Object, arg2 ...client.DeleteOption) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Delete", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockKubeDeleterMockRecorder) Delete(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockKubeDeleter)(nil).Delete), varargs...)
 }

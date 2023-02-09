@@ -70,6 +70,12 @@ func (c *Cluster) HasAWSIamConfig() bool {
 	return false
 }
 
+// IsPackagesEnabled checks if the user has opted out of curated packages
+// installation.
+func (c *Cluster) IsPackagesEnabled() bool {
+	return c.Spec.Packages == nil || !c.Spec.Packages.Disable
+}
+
 func (n *Cluster) Equal(o *Cluster) bool {
 	if n == o {
 		return true

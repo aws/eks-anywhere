@@ -3,10 +3,12 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/go-logr/logr/testr"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	apiv1 "k8s.io/api/core/v1"
@@ -24,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers/mocks"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -68,7 +71,12 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		Add(anywherev1.VSphereDatacenterKind, reconciler).
 		Build()
 
-	r := controllers.NewClusterReconciler(cl, &registry, iam, clusterValidator)
+	mockPkgs := mocks.NewMockPackagesClient(ctrl)
+	mockPkgs.EXPECT().
+		ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+
+	r := controllers.NewClusterReconciler(cl, &registry, iam, clusterValidator, mockPkgs)
 
 	return &vsphereClusterReconcilerTest{
 		govcClient: govcClient,
@@ -98,10 +106,10 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
-
+	mockPkgs := mocks.NewMockPackagesClient(controller)
 	providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs)
 	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(ctrl.Result{}))
@@ -128,7 +136,7 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
 	clusterValidator := mocks.NewMockClusterValidator(ctrl)
 	registry := newRegistryMock(providerReconciler)
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -164,7 +172,7 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 	registry := newRegistryMock(providerReconciler)
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
 
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).To(MatchError(ContainSubstring("deleting self-managed clusters is not supported")))
 }
@@ -233,7 +241,7 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 		managementCluster, cluster, capiCluster,
 	).Build()
 
-	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator)
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -276,7 +284,7 @@ func TestClusterReconcilerReconcileDeleteClusterManagedByCLI(t *testing.T) {
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 
-	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator)
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -333,6 +341,178 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 	if apiCluster.Status.FailureMessage != nil {
 		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
 	}
+}
+
+func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
+	ctx := context.Background()
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "my-namespace",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: "v1.25",
+			BundlesRef: &anywherev1.BundlesRef{
+				Name:      "my-bundles-ref",
+				Namespace: "my-namespace",
+			},
+			ManagementCluster: anywherev1.ManagementCluster{
+				Name: "",
+			},
+		},
+	}
+	objs := []runtime.Object{cluster}
+	cb := fake.NewClientBuilder()
+	mockClient := cb.WithRuntimeObjects(objs...).Build()
+	nullRegistry := newRegistryForDummyProviderReconciler()
+
+	ctrl := gomock.NewController(t)
+	mockPkgs := mocks.NewMockPackagesClient(ctrl)
+	mockPkgs.EXPECT().ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	r := controllers.NewClusterReconciler(mockClient, nullRegistry, nil, nil, mockPkgs)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	if err != nil {
+		t.Fatalf("expected err to be nil, got %s", err)
+	}
+}
+
+func TestClusterReconcilerDontDeletePackagesOnSelfManaged(t *testing.T) {
+	ctx := context.Background()
+	deleteTime := metav1.NewTime(time.Now().Add(-1 * time.Second))
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "my-cluster",
+			Namespace:         "my-namespace",
+			DeletionTimestamp: &deleteTime,
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: "v1.25",
+			BundlesRef: &anywherev1.BundlesRef{
+				Name:      "my-bundles-ref",
+				Namespace: "my-namespace",
+			},
+			ManagementCluster: anywherev1.ManagementCluster{
+				Name: "",
+			},
+		},
+	}
+	objs := []runtime.Object{cluster}
+	cb := fake.NewClientBuilder()
+	mockClient := cb.WithRuntimeObjects(objs...).Build()
+	nullRegistry := newRegistryForDummyProviderReconciler()
+
+	ctrl := gomock.NewController(t)
+	// At the moment, Reconcile won't get this far, but if the time comes when
+	// deleting self-managed clusters via full cluster lifecycle happens, we
+	// need to be aware and adapt appropriately.
+	mockPkgs := mocks.NewMockPackagesClient(ctrl)
+	mockPkgs.EXPECT().ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	r := controllers.NewClusterReconciler(mockClient, nullRegistry, nil, nil, mockPkgs)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	if err == nil || !strings.Contains(err.Error(), "deleting self-managed clusters is not supported") {
+		t.Fatalf("unexpected error %s", err)
+	}
+}
+
+func TestClusterReconcilerPackagesDeletion(s *testing.T) {
+	newTestCluster := func() *anywherev1.Cluster {
+		deleteTime := metav1.NewTime(time.Now().Add(-1 * time.Second))
+		return &anywherev1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "my-workload-cluster",
+				Namespace:         "my-namespace",
+				DeletionTimestamp: &deleteTime,
+			},
+			Spec: anywherev1.ClusterSpec{
+				KubernetesVersion: "v1.25",
+				BundlesRef: &anywherev1.BundlesRef{
+					Name:      "my-bundles-ref",
+					Namespace: "my-namespace",
+				},
+				ManagementCluster: anywherev1.ManagementCluster{
+					Name: "my-management-cluster",
+				},
+			},
+		}
+	}
+
+	s.Run("errors when packages client errors", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		logCtx := ctrl.LoggerInto(ctx, log)
+		cluster := newTestCluster()
+		cluster.Spec.BundlesRef.Name = "non-existent"
+		ctrl := gomock.NewController(t)
+		objs := []runtime.Object{cluster}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		nullRegistry := newRegistryForDummyProviderReconciler()
+		mockPkgs := mocks.NewMockPackagesClient(ctrl)
+		mockPkgs.EXPECT().ReconcileDelete(logCtx, log, gomock.Any(), gomock.Any()).Return(fmt.Errorf("test error"))
+		mockIAM := mocks.NewMockAWSIamConfigReconciler(ctrl)
+		mockValid := mocks.NewMockClusterValidator(ctrl)
+
+		r := controllers.NewClusterReconciler(fakeClient, nullRegistry, mockIAM, mockValid, mockPkgs)
+		_, err := r.Reconcile(logCtx, clusterRequest(cluster))
+		if err == nil || !strings.Contains(err.Error(), "test error") {
+			t.Errorf("expected packages client deletion error, got %s", err)
+		}
+	})
+}
+
+func TestClusterReconcilerPackagesInstall(s *testing.T) {
+	newTestCluster := func() *anywherev1.Cluster {
+		return &anywherev1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-workload-cluster",
+				Namespace: "my-namespace",
+			},
+			Spec: anywherev1.ClusterSpec{
+				KubernetesVersion: "v1.25",
+				BundlesRef: &anywherev1.BundlesRef{
+					Name:      "my-bundles-ref",
+					Namespace: "my-namespace",
+				},
+				ManagementCluster: anywherev1.ManagementCluster{
+					Name: "my-management-cluster",
+				},
+			},
+		}
+	}
+
+	s.Run("skips installation when disabled via cluster spec", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		logCtx := ctrl.LoggerInto(ctx, log)
+		cluster := newTestCluster()
+		cluster.Spec.Packages = &anywherev1.PackageConfiguration{Disable: true}
+		ctrl := gomock.NewController(t)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &apiv1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		objs := []runtime.Object{cluster, bundles, secret}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		nullRegistry := newRegistryForDummyProviderReconciler()
+		mockIAM := mocks.NewMockAWSIamConfigReconciler(ctrl)
+		mockValid := mocks.NewMockClusterValidator(ctrl)
+		mockValid.EXPECT().ValidateManagementClusterName(logCtx, log, gomock.Any()).Return(nil)
+		mockPkgs := mocks.NewMockPackagesClient(ctrl)
+		mockPkgs.EXPECT().
+			EnableFullLifecycle(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(0)
+
+		r := controllers.NewClusterReconciler(fakeClient, nullRegistry, mockIAM, mockValid, mockPkgs)
+		_, err := r.Reconcile(logCtx, clusterRequest(cluster))
+		if err != nil {
+			t.Errorf("expected nil error, got %s", err)
+		}
+	})
 }
 
 func createWNMachineConfig() *anywherev1.VSphereMachineConfig {

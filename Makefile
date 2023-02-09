@@ -575,7 +575,8 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/curatedpackages/mocks/bundlemanager.go -package=mocks -source "pkg/curatedpackages/bundlemanager.go" Manager
 	${MOCKGEN} -destination=pkg/clients/kubernetes/mocks/kubectl.go -package=mocks -source "pkg/clients/kubernetes/unauth.go"
 	${MOCKGEN} -destination=pkg/clients/kubernetes/mocks/kubeconfig.go -package=mocks -source "pkg/clients/kubernetes/kubeconfig.go"
-	${MOCKGEN} -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartInstaller
+	${MOCKGEN} -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartInstaller ChartUninstaller ClientBuilder
+	${MOCKGEN} -destination=pkg/curatedpackages/mocks/kube_client.go -package=mocks -mock_names Client=MockKubeClient sigs.k8s.io/controller-runtime/pkg/client Client
 	${MOCKGEN} -destination=pkg/cluster/mocks/client_builder.go -package=mocks -source "pkg/cluster/client_builder.go"
 	${MOCKGEN} -destination=controllers/mocks/factory.go -package=mocks "github.com/aws/eks-anywhere/controllers" Manager
 	${MOCKGEN} -destination=pkg/networking/cilium/reconciler/mocks/templater.go -package=mocks -source "pkg/networking/cilium/reconciler/reconciler.go"
@@ -585,7 +586,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/providers/docker/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/docker/reconciler/reconciler.go"
 	${MOCKGEN} -destination=pkg/providers/tinkerbell/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/tinkerbell/reconciler/reconciler.go"
 	${MOCKGEN} -destination=pkg/awsiamauth/reconciler/mocks/reconciler.go -package=mocks -source "pkg/awsiamauth/reconciler/reconciler.go"
-	${MOCKGEN} -destination=controllers/mocks/cluster_controller.go -package=mocks -source "controllers/cluster_controller.go" AWSIamConfigReconciler ClusterValidator
+	${MOCKGEN} -destination=controllers/mocks/cluster_controller.go -package=mocks -source "controllers/cluster_controller.go" AWSIamConfigReconciler ClusterValidator PackageControllerClient
 	${MOCKGEN} -destination=pkg/workflow/task_mock_test.go -package=workflow_test -source "pkg/workflow/task.go"
 	${MOCKGEN} -destination=pkg/validations/createcluster/mocks/createcluster.go -package=mocks -source "pkg/validations/createcluster/createcluster.go"
 	${MOCKGEN} -destination=pkg/awsiamauth/mock_test.go -package=awsiamauth_test -source "pkg/awsiamauth/installer.go"
