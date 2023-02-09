@@ -16,7 +16,6 @@ spec:
     name: testsnow
   managementCluster:
     name: testcluster
-  packages: {}
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

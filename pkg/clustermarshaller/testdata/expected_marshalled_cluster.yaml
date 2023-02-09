@@ -19,7 +19,6 @@ spec:
     name: config
   managementCluster:
     name: mycluster
-  packages: {}
   workerNodeGroupConfigurations:
   - {}
 

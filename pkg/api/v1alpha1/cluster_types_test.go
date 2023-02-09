@@ -1235,14 +1235,14 @@ func TestClusterEqualPackageConfigurationNetwork(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			cluster1 := &v1alpha1.Cluster{
 				Spec: v1alpha1.ClusterSpec{
-					Packages: v1alpha1.PackageConfiguration{
+					Packages: &v1alpha1.PackageConfiguration{
 						Disable: tt.disable1,
 					},
 				},
 			}
 			cluster2 := &v1alpha1.Cluster{
 				Spec: v1alpha1.ClusterSpec{
-					Packages: v1alpha1.PackageConfiguration{
+					Packages: &v1alpha1.PackageConfiguration{
 						Disable: tt.disable2,
 					},
 				},
@@ -2110,14 +2110,14 @@ func TestPackageControllerConfiguration_Equal(t *testing.T) {
 			pcn: &v1alpha1.PackageControllerConfiguration{
 				Resources: v1alpha1.PackageControllerResources{
 					Requests: v1alpha1.ImageResource{
-						Cpu: "1",
+						CPU: "1",
 					},
 				},
 			},
 			pco: &v1alpha1.PackageControllerConfiguration{
 				Resources: v1alpha1.PackageControllerResources{
 					Requests: v1alpha1.ImageResource{
-						Cpu: "2",
+						CPU: "2",
 					},
 				},
 			},
@@ -2141,7 +2141,7 @@ func TestPackageControllerConfiguration_Equal(t *testing.T) {
 func TestPackageControllerResources_Equal(t *testing.T) {
 	same := &v1alpha1.PackageControllerResources{
 		Limits: v1alpha1.ImageResource{
-			Cpu: "3",
+			CPU: "3",
 		},
 	}
 	tests := []struct {
@@ -2171,12 +2171,12 @@ func TestPackageControllerResources_Equal(t *testing.T) {
 			name: "equal Requests",
 			pcn: &v1alpha1.PackageControllerResources{
 				Requests: v1alpha1.ImageResource{
-					Cpu: "1",
+					CPU: "1",
 				},
 			},
 			pco: &v1alpha1.PackageControllerResources{
 				Requests: v1alpha1.ImageResource{
-					Cpu: "1",
+					CPU: "1",
 				},
 			},
 			want: true,
@@ -2185,12 +2185,12 @@ func TestPackageControllerResources_Equal(t *testing.T) {
 			name: "not equal Requests",
 			pcn: &v1alpha1.PackageControllerResources{
 				Requests: v1alpha1.ImageResource{
-					Cpu: "1",
+					CPU: "1",
 				},
 			},
 			pco: &v1alpha1.PackageControllerResources{
 				Requests: v1alpha1.ImageResource{
-					Cpu: "2",
+					CPU: "2",
 				},
 			},
 			want: false,
@@ -2199,12 +2199,12 @@ func TestPackageControllerResources_Equal(t *testing.T) {
 			name: "equal Limits",
 			pcn: &v1alpha1.PackageControllerResources{
 				Limits: v1alpha1.ImageResource{
-					Cpu: "1",
+					CPU: "1",
 				},
 			},
 			pco: &v1alpha1.PackageControllerResources{
 				Limits: v1alpha1.ImageResource{
-					Cpu: "1",
+					CPU: "1",
 				},
 			},
 			want: true,
@@ -2213,12 +2213,12 @@ func TestPackageControllerResources_Equal(t *testing.T) {
 			name: "not equal Limits",
 			pcn: &v1alpha1.PackageControllerResources{
 				Limits: v1alpha1.ImageResource{
-					Cpu: "1",
+					CPU: "1",
 				},
 			},
 			pco: &v1alpha1.PackageControllerResources{
 				Limits: v1alpha1.ImageResource{
-					Cpu: "2",
+					CPU: "2",
 				},
 			},
 			want: false,
@@ -2240,7 +2240,7 @@ func TestPackageControllerResources_Equal(t *testing.T) {
 
 func TestImageResource_Equal(t *testing.T) {
 	same := &v1alpha1.ImageResource{
-		Cpu: "3",
+		CPU: "3",
 	}
 	tests := []struct {
 		name     string
@@ -2266,22 +2266,22 @@ func TestImageResource_Equal(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "equal Cpu",
+			name: "equal CPU",
 			pcn: &v1alpha1.ImageResource{
-				Cpu: "1",
+				CPU: "1",
 			},
 			pco: &v1alpha1.ImageResource{
-				Cpu: "1",
+				CPU: "1",
 			},
 			want: true,
 		},
 		{
-			name: "not equal Cpu",
+			name: "not equal CPU",
 			pcn: &v1alpha1.ImageResource{
-				Cpu: "1",
+				CPU: "1",
 			},
 			pco: &v1alpha1.ImageResource{
-				Cpu: "2",
+				CPU: "2",
 			},
 			want: false,
 		},

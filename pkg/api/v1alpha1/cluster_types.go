@@ -54,7 +54,7 @@ type ClusterSpec struct {
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
-	Packages                    PackageConfiguration         `json:"packages,omitempty"`
+	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
 	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
 }
@@ -107,7 +107,7 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	if !n.Spec.RegistryMirrorConfiguration.Equal(o.Spec.RegistryMirrorConfiguration) {
 		return false
 	}
-	if !n.Spec.Packages.Equal(&o.Spec.Packages) {
+	if !n.Spec.Packages.Equal(o.Spec.Packages) {
 		return false
 	}
 	if !n.ManagementClusterEqual(o) {
@@ -778,7 +778,7 @@ type PackageConfiguration struct {
 	CronJob PackageControllerCronJob `json:"cronjob,omitempty"`
 }
 
-// Equal for PackageConfiguration
+// Equal for PackageConfiguration.
 func (n *PackageConfiguration) Equal(o *PackageConfiguration) bool {
 	if n == o {
 		return true
@@ -810,7 +810,7 @@ type PackageControllerConfiguration struct {
 	Resources PackageControllerResources `json:"resources,omitempty"`
 }
 
-// Equal for PackageControllerConfiguration
+// Equal for PackageControllerConfiguration.
 func (n *PackageControllerConfiguration) Equal(o *PackageControllerConfiguration) bool {
 	if n == o {
 		return true
@@ -829,7 +829,7 @@ type PackageControllerResources struct {
 	Limits   ImageResource `json:"limits,omitempty"`
 }
 
-// Equal for PackageControllerResources
+// Equal for PackageControllerResources.
 func (n *PackageControllerResources) Equal(o *PackageControllerResources) bool {
 	if n == o {
 		return true
@@ -842,14 +842,14 @@ func (n *PackageControllerResources) Equal(o *PackageControllerResources) bool {
 
 // ImageResource resources for container image.
 type ImageResource struct {
-	// Cpu image cpu
-	Cpu string `json:"cpu,omitempty"`
+	// CPU image cpu
+	CPU string `json:"cpu,omitempty"`
 
 	// Memory image memory
 	Memory string `json:"memory,omitempty"`
 }
 
-// Equal for ImageResource
+// Equal for ImageResource.
 func (n *ImageResource) Equal(o *ImageResource) bool {
 	if n == o {
 		return true
@@ -857,7 +857,7 @@ func (n *ImageResource) Equal(o *ImageResource) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Cpu == o.Cpu && n.Memory == o.Memory
+	return n.CPU == o.CPU && n.Memory == o.Memory
 }
 
 // PackageControllerCronJob configure aspects of package controller.
@@ -875,7 +875,7 @@ type PackageControllerCronJob struct {
 	Disable bool `json:"disable,omitempty"`
 }
 
-// Equal for PackageControllerCronJob
+// Equal for PackageControllerCronJob.
 func (n *PackageControllerCronJob) Equal(o *PackageControllerCronJob) bool {
 	if n == o {
 		return true

@@ -34,7 +34,6 @@ spec:
   kubernetesVersion: "1.19"
   managementCluster:
     name: test-cluster
-  packages: {}
 
 ---
 kind: VSphereDatacenterConfig
