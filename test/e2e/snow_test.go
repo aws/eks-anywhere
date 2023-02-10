@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -37,7 +36,6 @@ func TestSnowKubernetes124To125AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -85,7 +83,6 @@ func TestSnowKubernetes125OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }
@@ -146,7 +143,6 @@ func TestSnowKubernetes125SimpleFlow(t *testing.T) {
 		t,
 		framework.NewSnow(t, framework.WithSnowUbuntu125()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -215,7 +211,6 @@ func TestSnowKubernetes124To125UbuntuMultipleFieldsUpgrade(t *testing.T) {
 			api.WithSnowInstanceTypeForAllMachines(v1alpha1.SbeCXLarge),
 			api.WithSnowPhysicalNetworkConnectorForAllMachines(v1alpha1.QSFP),
 		),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -281,7 +276,7 @@ func TestSnowKubernetes123UbuntuTo124Upgrade(t *testing.T) {
 
 func TestSnowKubernetes124UbuntuTo125Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow, framework.WithEnvVar(features.K8s125SupportEnvVar, "true"))
+	test := framework.NewClusterE2ETest(t, snow)
 
 	runSnowUpgradeTest(test, snow, snow.WithUbuntu124(), snow.WithUbuntu125())
 }

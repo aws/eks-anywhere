@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -65,7 +64,6 @@ func TestNutanixKubernetes125CuratedPackagesSimpleFlow(t *testing.T) {
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -138,7 +136,6 @@ func TestNutanixKubernetes125CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -191,7 +188,6 @@ func TestNutanixKubernetes125CuratedPackagesClusterAutoscalerUbuntuSimpleFlow(t 
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
@@ -238,7 +234,6 @@ func TestNutanixKubernetes125SimpleFlowWithName(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -294,7 +289,6 @@ func TestNutanixKubernetes125SimpleFlowWithUUID(t *testing.T) {
 			framework.WithPrismElementClusterUUID(),
 			framework.WithSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -353,7 +347,6 @@ func TestNutanixKubernetes124To125UbuntuUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -502,7 +495,6 @@ func TestNutanixKubernetes125UbuntuWorkerNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -520,7 +512,6 @@ func TestNutanixKubernetes125UbuntuWorkerNodeScaleUp2To5(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -670,7 +661,6 @@ func TestNutanixKubernetes125UbuntuControlPlaneNodeScaleUp1To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -688,7 +678,6 @@ func TestNutanixKubernetes125UbuntuControlPlaneNodeScaleUp3To5(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(5)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -834,7 +823,6 @@ func TestNutanixKubernetes125UbuntuWorkerNodeScaleDown3To1(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -852,7 +840,6 @@ func TestNutanixKubernetes125UbuntuWorkerNodeScaleDown5To2(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(5)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -998,7 +985,6 @@ func TestNutanixKubernetes125UbuntuControlPlaneNodeScaleDown3To1(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -1016,7 +1002,6 @@ func TestNutanixKubernetes125UbuntuControlPlaneNodeScaleDown5To3(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(5)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -1083,7 +1068,6 @@ func TestNutanixKubernetes125OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }

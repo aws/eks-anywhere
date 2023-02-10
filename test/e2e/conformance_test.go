@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -77,7 +76,6 @@ func TestDockerKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -128,7 +126,6 @@ func TestVSphereKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu125()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -383,7 +380,6 @@ func TestNutanixKubernetes125ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
