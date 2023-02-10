@@ -51,3 +51,16 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 | Control plane pricing                       | Free to download, paid support subscription option  | Hourly pricing per cluster |
 | AWS Support                       | Additional annual subscription (per cluster) for AWS support | Basic support included. Included in paid AWS support plans (developer, business, and enterprise)  |
 ||||
+
+### Comparing Amazon EKS Anywhere to Amazon EKS on Outposts
+
+Like EKS Anywhere, Amazon EKS on Outposts provides a means of running Kubernetes clusters using EKS software and customer on-premises hardware.
+The main difference is that Amazon provides the hardware with Outposts, while most EKS Anywhere providers leverage the customer's own hardware.
+
+Outposts have two deployment methods available:
+
+* **Extended clusters**: With extended clusters, the Kubernetes control plane runs in an AWS Region , while Kubernetes nodes run on Outpost hardware.
+
+* **Local clusters**: With local clusters, bot the Kubernetes control plane and nodes run on Outpost hardware.
+
+For more information, see [Amazon EKS on AWS Outposts](https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts.html).
