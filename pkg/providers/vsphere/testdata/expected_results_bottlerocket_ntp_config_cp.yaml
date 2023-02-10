@@ -458,6 +458,12 @@ spec:
   etcdadmConfigSpec:
     etcdadmBuiltin: true
     format: bottlerocket
+    ntp:
+      enabled: true
+      servers: 
+      - time-a.eks-a.aws
+      - time-b.eks-a.aws
+      - 192.168.0.10
     bottlerocketConfig:
       etcdImage: public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.16-eks-1-21-4
       bootstrapImage: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-21-4-eks-a-v0.0.0-dev-build.158

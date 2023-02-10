@@ -491,6 +491,13 @@ spec:
   etcdadmConfigSpec:
     etcdadmBuiltin: true
     format: {{.format}}
+{{- if .ntpServers }}
+    ntp:
+      enabled: true
+      servers: {{ range .ntpServers }}
+      - {{ . }}
+      {{- end }}
+{{- end }}
 {{- if (eq .format "bottlerocket") }}
     bottlerocketConfig:
       etcdImage: {{.etcdImage}}
