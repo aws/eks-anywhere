@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -82,7 +83,10 @@ spec:
 var wantEksaKustomization = `apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- {{.ConfigFileName}}`
+- {{.ConfigFileName}}
+{{- if .HardwareFileName }}
+- {{.HardwareFileName}}
+{{- end }}`
 
 var wantFluxKustomization = `apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -149,6 +153,8 @@ var wantPatchesValues = map[string]string{
 	"NotificationControllerImage": "public.ecr.aws/l0g8r8j6/fluxcd/notification-controller:v0.13.0-d82011942ec8a447ba89a70ff9a84bf7b9579492",
 }
 
+var clusterName = "test-cluster"
+
 type fileGeneratorTest struct {
 	*WithT
 	ctx              context.Context
@@ -164,7 +170,6 @@ func newFileGeneratorTest(t *testing.T) *fileGeneratorTest {
 	ctrl := gomock.NewController(t)
 	writer := writerMocks.NewMockFileWriter(ctrl)
 	templater := fluxMocks.NewMockTemplater(ctrl)
-	clusterName := "test-cluster"
 	return &fileGeneratorTest{
 		WithT:            NewWithT(t),
 		ctx:              context.Background(),
@@ -212,6 +217,42 @@ func TestFileGeneratorWriteEksaFilesSuccess(t *testing.T) {
 	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml"}, "kustomization.yaml", gomock.Any()).Return("", nil)
 
 	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs)).To(Succeed())
+}
+
+func TestFileGeneratorWriteEksaFilesSuccessWithHardware(t *testing.T) {
+	tt := newFileGeneratorTest(t)
+	clus := v1alpha1.NewCluster(clusterName)
+	clus.Spec.DatacenterRef = v1alpha1.Ref{
+		Kind: v1alpha1.TinkerbellDatacenterKind,
+		Name: clusterName,
+	}
+	tt.clusterSpec = newClusterSpec(t, clus, "")
+	tinkDatacenterConfig := &v1alpha1.TinkerbellDatacenterConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind: v1alpha1.TinkerbellDatacenterKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
+			TinkerbellIP: "",
+		},
+	}
+	tinkMachineConfig := &v1alpha1.TinkerbellMachineConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind: v1alpha1.TinkerbellMachineConfigKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+		Spec: v1alpha1.TinkerbellMachineConfigSpec{
+			OSFamily: "bottlerocket",
+		},
+	}
+	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(tinkerbellConfig()), gomock.Any()).Return("", nil)
+	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml", "HardwareFileName": "hardware.yaml"}, "kustomization.yaml", gomock.Any()).Return("", nil)
+
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tinkDatacenterConfig, []providers.MachineConfig{tinkMachineConfig})).To(Succeed())
 }
 
 func TestFileGeneratorWriteEksaFilesSkip(t *testing.T) {
@@ -272,4 +313,63 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxPatchesError(t *testing.T) {
 	tt.t.EXPECT().WriteToFile(wantFluxPatches, wantPatchesValues, "gotk-patches.yaml", gomock.Any()).Return("", errors.New("error in write patches"))
 
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write patches")))
+}
+
+func tinkerbellConfig() string {
+	return `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test-cluster
+  namespace: default
+spec:
+  clusterNetwork:
+    cniConfig: {}
+    pods: {}
+    services: {}
+  controlPlaneConfiguration: {}
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: test-cluster
+  gitOpsRef:
+    kind: FluxConfig
+    name: test-gitops
+  kubernetesVersion: "1.19"
+  managementCluster:
+    name: test-cluster
+
+---
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: test-cluster
+  namespace: default
+spec:
+  tinkerbellIP: ""
+
+---
+kind: TinkerbellMachineConfig
+metadata:
+  name: test-cluster
+  namespace: default
+spec:
+  hardwareSelector: null
+  osFamily: bottlerocket
+  templateRef: {}
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: test-gitops
+  namespace: default
+spec:
+  branch: testBranch
+  clusterConfigPath: clusters/test-cluster
+  github:
+    owner: mFolwer
+    personal: true
+    repository: testRepo
+  systemNamespace: flux-system
+
+---
+`
 }

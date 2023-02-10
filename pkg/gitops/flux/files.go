@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -15,6 +16,7 @@ const (
 	eksaSystemDirName     = "eksa-system"
 	kustomizeFileName     = "kustomization.yaml"
 	clusterConfigFileName = "eksa-cluster.yaml"
+	hardwareFileName      = "hardware.yaml"
 	fluxSyncFileName      = "gotk-sync.yaml"
 	fluxPatchFileName     = "gotk-patches.yaml"
 )
@@ -85,7 +87,7 @@ func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConf
 		return err
 	}
 
-	if err := g.WriteEksaKustomization(); err != nil {
+	if err := g.WriteEksaKustomization(clusterSpec); err != nil {
 		return err
 	}
 
@@ -120,9 +122,15 @@ func (g *FileGenerator) WriteClusterConfig(clusterSpec *cluster.Spec, datacenter
 	return nil
 }
 
-func (g *FileGenerator) WriteEksaKustomization() error {
+// WriteEksaKustomization writes the eks-a kustomization manifest to the eksa-system folder in the repository path.
+func (g *FileGenerator) WriteEksaKustomization(clusterSpec *cluster.Spec) error {
 	values := map[string]string{
 		"ConfigFileName": clusterConfigFileName,
+	}
+
+	// Allow edits to a hardware.yaml file by adding it to resources in the kuztomization.yaml file
+	if clusterSpec.Cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind {
+		values["HardwareFileName"] = hardwareFileName
 	}
 
 	if path, err := g.eksaTemplater.WriteToFile(eksaKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
