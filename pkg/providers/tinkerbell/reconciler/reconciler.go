@@ -68,6 +68,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
+		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
 
@@ -107,12 +108,31 @@ func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger
 	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
 
-// ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
-// to the desired state.
+// ReconcileWorkerNodes reconciles the worker nodes to the desired state.
 func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	// Implement reconcile worker nodes here
+	log = log.WithValues("provider", "tinkerbell", "reconcile type", "workers")
+	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
+	}
 
-	return controller.Result{}, nil
+	return controller.NewPhaseRunner().Register(
+		r.ValidateClusterSpec,
+		r.ValidateHardware,
+		r.ReconcileWorkers,
+	).Run(ctx, log, clusterSpec)
+}
+
+// ReconcileWorkers applies the worker CAPI objects to the cluster.
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileWorkers")
+	log.Info("Applying worker CAPI objects")
+	w, err := tinkerbell.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "generating workers spec")
+	}
+
+	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, spec.Cluster, clusters.ToWorkers(w))
 }
 
 // ValidateDatacenterConfig updates the cluster status if the TinkerbellDatacenter status indicates that the spec is invalid.

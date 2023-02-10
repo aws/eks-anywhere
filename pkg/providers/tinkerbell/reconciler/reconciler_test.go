@@ -343,6 +343,128 @@ func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("unsupported spec.osFamily (invalidOS); Please use one of the following: ubuntu, redhat, bottlerocket"))
 }
 
+func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      capiCluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&tinkerbellv1.TinkerbellMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      capiCluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      capiCluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+}
+
+func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&tinkerbellv1.TinkerbellMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+}
+
+func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.cluster.Spec.KubernetesVersion = ""
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	_, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
+}
+
 func TestReconcilerValidateHardwareCountFail(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
