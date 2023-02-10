@@ -154,7 +154,7 @@ spec:
 {{- end }}
 {{- if and (or .proxyConfig .registryMirrorMap) (ne .format "bottlerocket") }}
       preKubeadmCommands:
-{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
+{{- if .registryMirrorMap }}
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
       - sudo systemctl daemon-reload

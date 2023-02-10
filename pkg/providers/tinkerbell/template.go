@@ -432,7 +432,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values = populateProxyConfigurations(values, clusterSpec, datacenterSpec)
+		values["proxyConfig"] = true
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+		values["noProxy"] = generateNoProxyList(clusterSpec, datacenterSpec)
 	}
 
 	values["controlPlanetemplateOverride"] = cpTemplateOverride
@@ -497,7 +500,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values = populateProxyConfigurations(values, clusterSpec, datacenterSpec)
+		values["proxyConfig"] = true
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+		values["noProxy"] = generateNoProxyList(clusterSpec, datacenterSpec)
 	}
 
 	values["workertemplateOverride"] = workerTemplateOverride
@@ -623,7 +629,7 @@ func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuild
 	return templateBuilder, nil
 }
 
-func populateProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec) map[string]interface{} {
+func generateNoProxyList(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec) []string {
 	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
 		len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
 		len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
@@ -638,9 +644,6 @@ func populateProxyConfigurations(values map[string]interface{}, clusterSpec *clu
 		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		datacenterSpec.TinkerbellIP,
 	)
-	values["proxyConfig"] = true
-	values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
-	values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-	values["noProxy"] = noProxyList
-	return values
+
+	return noProxyList
 }
