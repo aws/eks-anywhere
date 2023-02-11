@@ -55,12 +55,15 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 ### Comparing Amazon EKS Anywhere to Amazon EKS on Outposts
 
 Like EKS Anywhere, Amazon EKS on Outposts provides a means of running Kubernetes clusters using EKS software and customer on-premises hardware.
-The main difference is that Amazon provides the hardware with Outposts, while most EKS Anywhere providers leverage the customer's own hardware.
+The main difference are that:
+
+* Amazon provides the hardware with Outposts, while most EKS Anywhere providers leverage the customer's own hardware.
+* Outposts have the option of having the EKS control plane run and be managed on the AWS cloud.
 
 Outposts have two deployment methods available:
 
-* **Extended clusters**: With extended clusters, the Kubernetes control plane runs in an AWS Region , while Kubernetes nodes run on Outpost hardware.
+* **Extended clusters**: With extended clusters, the Kubernetes control plane runs in an AWS Region, while Kubernetes nodes run on Outpost hardware.
 
-* **Local clusters**: With local clusters, bot the Kubernetes control plane and nodes run on Outpost hardware.
+* **Local clusters**: With local clusters, both the Kubernetes control plane and nodes run on Outpost hardware.
 
 For more information, see [Amazon EKS on AWS Outposts](https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts.html).
