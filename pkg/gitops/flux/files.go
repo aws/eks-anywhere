@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -78,13 +79,19 @@ func (g *FileGenerator) Init(writer filewriter.FileWriter, eksaSystemDir, fluxSy
 	return nil
 }
 
-func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareCSVPath string) error {
 	if datacenterConfig == nil && machineConfigs == nil {
 		return nil
 	}
 
 	if err := g.WriteClusterConfig(clusterSpec, datacenterConfig, machineConfigs); err != nil {
 		return err
+	}
+
+	if hardwareCSVPath != "" {
+		if err := g.WriteHardware(hardwareCSVPath); err != nil {
+			return err
+		}
 	}
 
 	if err := g.WriteEksaKustomization(clusterSpec); err != nil {
@@ -139,6 +146,17 @@ func (g *FileGenerator) WriteEksaKustomization(clusterSpec *cluster.Spec) error 
 	return nil
 }
 
+// WriteHardware writes the hardware manifest kustomization manifest to the eksa-system folder in the repository path.
+func (g *FileGenerator) WriteHardware(hardwareCSVPath string) error {
+	hardwareSpec, err := hardware.BuildHardwareManifestFromCSV(hardwareCSVPath)
+	if err != nil {
+		return fmt.Errorf("building hardware manifest from csv file %s: %v", hardwareCSVPath, err)
+	}
+	if filePath, err := g.eksaWriter.Write(hardwareFileName, hardwareSpec, filewriter.PersistentFile); err != nil {
+		return fmt.Errorf("writing eks-a hardware manifest file into %s: %v", filePath, err)
+	}
+	return nil
+}
 func (g *FileGenerator) WriteFluxKustomization(clusterSpec *cluster.Spec) error {
 	values := map[string]string{
 		"Namespace": clusterSpec.FluxConfig.Spec.SystemNamespace,

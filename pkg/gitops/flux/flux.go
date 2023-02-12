@@ -229,7 +229,12 @@ func (f *Flux) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cluster.Spec,
 		return err
 	}
 
-	if err := g.WriteEksaFiles(clusterSpec, datacenterConfig, machineConfigs); err != nil {
+	hardwareCSVPath := ""
+	if f.cliConfig != nil {
+		hardwareCSVPath = fc.Flux.cliConfig.HardwareCSVPath
+	}
+
+	if err := g.WriteEksaFiles(clusterSpec, datacenterConfig, machineConfigs, hardwareCSVPath); err != nil {
 		return err
 	}
 

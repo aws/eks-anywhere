@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"bufio"
+	"bytes"
 	stdcsv "encoding/csv"
 	"fmt"
 	"io"
@@ -86,4 +87,24 @@ func ensureRequiredColumnsInCSV(unmatched []string) error {
 	}
 
 	return nil
+}
+
+func BuildHardwareManifestFromCSV(path string) ([]byte, error) {
+	reader, err := NewNormalizedCSVReaderFromFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("csv: %v", err)
+	}
+
+	var b bytes.Buffer
+	bufferedWriter := io.Writer(&b)
+	writer := NewTinkerbellManifestYAML(bufferedWriter)
+
+	validator := NewDefaultMachineValidator()
+
+	err = TranslateAll(reader, writer, validator)
+	if err != nil {
+		return nil, fmt.Errorf("generating hardware: %v", err)
+	}
+
+	return b.Bytes(), nil
 }

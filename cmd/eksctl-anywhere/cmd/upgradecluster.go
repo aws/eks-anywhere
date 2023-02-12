@@ -85,7 +85,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
-	cliConfig := buildCliConfig(clusterSpec)
+	cliConfig := buildCliConfig(clusterSpec, cc.hardwareCSVPath)
 	dirs, err := uc.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
 		return err

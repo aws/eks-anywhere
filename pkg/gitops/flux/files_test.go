@@ -216,10 +216,10 @@ func TestFileGeneratorWriteEksaFilesSuccess(t *testing.T) {
 	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(wantConfig), gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml"}, "kustomization.yaml", gomock.Any()).Return("", nil)
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs)).To(Succeed())
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, "")).To(Succeed())
 }
 
-func TestFileGeneratorWriteEksaFilesSuccessWithHardware(t *testing.T) {
+func TestFileGeneratorWriteEksaFilesWithHardwareSuccess(t *testing.T) {
 	tt := newFileGeneratorTest(t)
 	clus := v1alpha1.NewCluster(clusterName)
 	clus.Spec.DatacenterRef = v1alpha1.Ref{
@@ -249,16 +249,17 @@ func TestFileGeneratorWriteEksaFilesSuccessWithHardware(t *testing.T) {
 			OSFamily: "bottlerocket",
 		},
 	}
-	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(tinkerbellConfig()), gomock.Any()).Return("", nil)
+	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(wantTinkerbellConfig()), gomock.Any()).Return("", nil)
+	tt.w.EXPECT().Write("hardware.yaml", []byte(wantHardwareConfig()), gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml", "HardwareFileName": "hardware.yaml"}, "kustomization.yaml", gomock.Any()).Return("", nil)
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tinkDatacenterConfig, []providers.MachineConfig{tinkMachineConfig})).To(Succeed())
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tinkDatacenterConfig, []providers.MachineConfig{tinkMachineConfig}, "./testdata/hardware.csv")).To(Succeed())
 }
 
 func TestFileGeneratorWriteEksaFilesSkip(t *testing.T) {
 	tt := newFileGeneratorTest(t)
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, nil, nil)).To(Succeed())
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, nil, nil, "")).To(Succeed())
 }
 
 func TestFileGeneratorWriteEksaFilesWriteError(t *testing.T) {
@@ -266,7 +267,7 @@ func TestFileGeneratorWriteEksaFilesWriteError(t *testing.T) {
 
 	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(wantConfig), gomock.Any()).Return("", errors.New("error in write"))
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs)).To(MatchError(ContainSubstring("error in write")))
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, "")).To(MatchError(ContainSubstring("error in write")))
 }
 
 func TestFileGeneratorWriteEksaFilesWriteToFileError(t *testing.T) {
@@ -275,7 +276,7 @@ func TestFileGeneratorWriteEksaFilesWriteToFileError(t *testing.T) {
 	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(wantConfig), gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml"}, "kustomization.yaml", gomock.Any()).Return("", errors.New("error in write to file"))
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs)).To(MatchError(ContainSubstring("error in write to file")))
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, "")).To(MatchError(ContainSubstring("error in write to file")))
 }
 
 func TestFileGeneratorWriteFluxSystemFilesSuccess(t *testing.T) {
@@ -315,7 +316,7 @@ func TestFileGeneratorWriteFluxSystemFilesWriteFluxPatchesError(t *testing.T) {
 	tt.Expect(tt.g.WriteFluxSystemFiles(tt.clusterSpec)).To(MatchError(ContainSubstring("error in write patches")))
 }
 
-func tinkerbellConfig() string {
+func wantTinkerbellConfig() string {
 	return `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
@@ -370,6 +371,89 @@ spec:
     repository: testRepo
   systemNamespace: flux-system
 
+---
+`
+}
+
+func wantHardwareConfig() string {
+	return `apiVersion: tinkerbell.org/v1alpha1
+kind: Hardware
+metadata:
+  creationTimestamp: null
+  labels:
+    type: cp
+  name: worker1
+  namespace: eksa-system
+spec:
+  bmcRef:
+    apiGroup: null
+    kind: Machine
+    name: bmc-worker1
+  disks:
+  - device: /dev/sda
+  interfaces:
+  - dhcp:
+      arch: x86_64
+      hostname: worker1
+      ip:
+        address: 10.10.10.10
+        family: 4
+        gateway: 10.10.10.1
+        netmask: 255.255.255.0
+      lease_time: 4294967294
+      mac: "00:00:00:00:00:01"
+      name_servers:
+      - 1.1.1.1
+      uefi: true
+    netboot:
+      allowPXE: true
+      allowWorkflow: true
+  metadata:
+    facility:
+      facility_code: onprem
+      plan_slug: c2.medium.x86
+    instance:
+      allow_pxe: true
+      always_pxe: true
+      hostname: worker1
+      id: "00:00:00:00:00:01"
+      ips:
+      - address: 10.10.10.10
+        family: 4
+        gateway: 10.10.10.1
+        netmask: 255.255.255.0
+        public: true
+      operating_system: {}
+status: {}
+---
+apiVersion: bmc.tinkerbell.org/v1alpha1
+kind: Machine
+metadata:
+  creationTimestamp: null
+  name: bmc-worker1
+  namespace: eksa-system
+spec:
+  connection:
+    authSecretRef:
+      name: bmc-worker1-auth
+      namespace: eksa-system
+    host: 192.168.0.10
+    insecureTLS: true
+    port: 0
+status: {}
+---
+apiVersion: v1
+data:
+  password: YWRtaW4=
+  username: QWRtaW4=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: bmc-worker1-auth
+  namespace: eksa-system
+type: kubernetes.io/basic-auth
 ---
 `
 }

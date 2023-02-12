@@ -50,7 +50,11 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return err
 	}
 
-	if err := g.WriteEksaFiles(fc.clusterSpec, fc.datacenterConfig, fc.machineConfigs); err != nil {
+	hardwareCSVPath := ""
+	if fc.Flux.cliConfig != nil {
+		hardwareCSVPath = fc.Flux.cliConfig.HardwareCSVPath
+	}
+	if err := g.WriteEksaFiles(fc.clusterSpec, fc.datacenterConfig, fc.machineConfigs, hardwareCSVPath); err != nil {
 		return fmt.Errorf("writing eks-a config files: %v", err)
 	}
 
