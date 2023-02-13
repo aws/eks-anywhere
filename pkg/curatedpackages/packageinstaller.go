@@ -2,8 +2,8 @@ package curatedpackages
 
 import (
 	"context"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
