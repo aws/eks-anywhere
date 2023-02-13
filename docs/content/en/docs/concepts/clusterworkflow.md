@@ -64,7 +64,7 @@ EKS Anywhere uses an infrastructure provider model for creating, upgrading, and 
 Like Cluster API, EKS Anywhere runs a [kind](https://kind.sigs.k8s.io/) cluster on the local Administrative machine to act as a bootstrap cluster.
 However, instead of using CAPI directly with the `clusterctl` command to manage the workload cluster, you use the `eksctl anywhere` command which abstracts that process for you, including calling `clusterctl` under the covers.
 
-With your Administrative machine in place, you need to prepare your [Bare Metal]({{< relref "../reference/baremetal" >}}), [vSphere]({{< relref "../reference/vsphere" >}}), or [CloudStack]({{< relref "../reference/cloudstack" >}}), provider for EKS Anywhere.
+With your Administrative machine in place, you need to prepare your [Bare Metal]({{< relref "../reference/baremetal" >}}), [vSphere]({{< relref "../reference/vsphere" >}}), [CloudStack]({{< relref "../reference/cloudstack" >}}), or [Snow]({{< relref "../getting-started/production-environment/snow-getstarted/#prerequisite-checklist" >}}) provider for EKS Anywhere.
 The following sections describe how to create a Bare Metal or vSphere cluster.
 
 ## Creating a Bare Metal cluster

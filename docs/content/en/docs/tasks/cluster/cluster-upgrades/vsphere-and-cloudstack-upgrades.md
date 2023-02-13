@@ -1,10 +1,10 @@
 ---
-title: "Upgrade vSphere, CloudStack, or Nutanix cluster"
-linkTitle: "Upgrade vSphere, CloudStack, or Nutanix cluster"
+title: "Upgrade vSphere, CloudStack, Nutanix, or Snow cluster"
+linkTitle: "Upgrade vSphere, CloudStack, Nutanix, or Snow cluster"
 weight: 20
 date: 2017-01-05
 description: >
-  How to perform a cluster upgrade for vSphere, CloudStack, or Nutanix cluster
+  How to perform a cluster upgrade for vSphere, CloudStack, Nutanix, or Snow cluster
 ---
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
@@ -46,6 +46,8 @@ If there is a new Kubernetes version that is going to get rolled out, the core c
 version. 
 Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
 Anywhere components mentioned above to their latest available versions. All upgrade changes are backwards compatible.
+
+Specifically for Snow provider, a new Admin instance is needed when upgrading to the new versions of EKS Anywhere. See [Upgrade EKS Anywhere AMIs in Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html) to upgrade and use a new Admin instance in Snow devices. After that, ugrades of other components can be done as described in this document.
 
 ### Check upgrade components
 Before you perform an upgrade, check the current and new versions of components that are ready to upgrade by typing:
@@ -193,13 +195,23 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `users`
 
 `NutanixMachineConfig`:
-- `VCPUsPerSocket`
-- `VCPUSockets`
-- `MemorySize`
-- `Image`
-- `Cluster`
-- `Subnet`
-- `SystemDiskSize`
+- `vcpusPerSocket`
+- `vcpuSockets`
+- `memorySize`
+- `image`
+- `cluster`
+- `subnet`
+- `systemDiskSize`
+
+`SnowMachineConfig`:
+- `amiID`
+- `instanceType`
+- `physicalNetworkConnector`
+- `sshKeyName`
+- `devices`
+- `containersVolume`
+- `osFamily`
+- `network`
 
 `OIDCConfig`:
 - `clientID`
