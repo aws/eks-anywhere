@@ -150,7 +150,7 @@ creation process are [here]({{< relref "../vsphere/vsphere-prereq/#prepare-a-vmw
 ### controlPlaneConfiguration.taints
 A list of taints to apply to the control plane nodes of the cluster.
 
-Replaces the default control plane taint (For k8s versions prior to 1.24, `node-role.kubernetes.io/master`. For k8s versions 1.24+, `node-role.kubernetes.io/control-plane`). The default control plane components will tolerate the provided taints.
+Replaces the default control plane taint. For k8s versions prior to 1.24, it replaces `node-role.kubernetes.io/master`. For k8s versions 1.24+, it replaces `node-role.kubernetes.io/control-plane`. The default control plane components will tolerate the provided taints.
 
 Modifying the taints associated with the control plane configuration will cause new nodes to be rolled-out, replacing the existing nodes.
 
