@@ -47,7 +47,8 @@ func WithSnowAMIIDForAllMachines(id string) SnowFiller {
 	}
 }
 
-func WithSnowInstanceTypeForAllMachines(instanceType anywherev1.SnowInstanceType) SnowFiller {
+// WithSnowInstanceTypeForAllMachines specifies an instance type for all the snow machine configs.
+func WithSnowInstanceTypeForAllMachines(instanceType string) SnowFiller {
 	return func(config SnowConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.InstanceType = instanceType

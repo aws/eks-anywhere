@@ -81,9 +81,7 @@ spec:
                   type: string
                 type: array
               instanceType:
-                description: 'InstanceType is the type of instance to create. Valid
-                  values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge"
-                  and "sbe-c.4xlarge".'
+                description: InstanceType is the type of instance to create.
                 type: string
               network:
                 description: Network provides the custom network setting for the machine.
