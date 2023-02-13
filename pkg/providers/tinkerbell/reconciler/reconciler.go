@@ -285,6 +285,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	return controller.Result{}, nil
 }
 
+// CheckRufioMachinesContactable checks to ensure all the Rufio machines condition contactable is True.
 func (r *Reconciler) CheckRufioMachinesContactable(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "checkRufioMachinesContactable")
 

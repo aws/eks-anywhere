@@ -45,6 +45,7 @@ const (
 	capvPackage         = "sigs.k8s.io/cluster-api-provider-vsphere"
 	captPackage         = "github.com/tinkerbell/cluster-api-provider-tinkerbell"
 	etcdProviderPackage = "github.com/aws/etcdadm-controller"
+	rufioPackage        = "github.com/tinkerbell/rufio"
 )
 
 func init() {
@@ -80,6 +81,7 @@ var packages = []moduleWithCRD{
 		withMainCustomCRDPath("infrastructure/docker/config/crd/bases"),
 	),
 	mustBuildModuleWithCRDs(etcdProviderPackage),
+	mustBuildModuleWithCRDs(rufioPackage),
 }
 
 type Environment struct {

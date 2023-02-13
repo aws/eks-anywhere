@@ -549,8 +549,9 @@ func TestReconcilerCheckRufioMachinesContactableFail(t *testing.T) {
 		Status: rufiov1alpha1.MachineStatus{
 			Conditions: []rufiov1alpha1.MachineCondition{
 				{
-					Type:   rufiov1alpha1.Contactable,
-					Status: rufiov1alpha1.ConditionFalse,
+					Type:    rufiov1alpha1.Contactable,
+					Status:  rufiov1alpha1.ConditionFalse,
+					Message: "bmc connection failure",
 				},
 			},
 		},
@@ -564,7 +565,7 @@ func TestReconcilerCheckRufioMachinesContactableFail(t *testing.T) {
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
-	// tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("bmc connection failure"))
 }
 
 func (tt *reconcilerTest) withFakeClient() {

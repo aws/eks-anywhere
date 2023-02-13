@@ -79,6 +79,7 @@ func (er *ETCDReader) getUnprovisionedTinkerbellHardware(ctx context.Context) ([
 	return selectedHardware.Items, nil
 }
 
+// RufioMachinesFromEtcd fetches rufio machine objects from the cluster and inserts into catalogue.
 func (er *ETCDReader) RufioMachinesFromEtcd(ctx context.Context) error {
 	var rufioMachines rufiov1alpha1.MachineList
 	if err := er.client.List(ctx, &rufioMachines, &client.ListOptions{Namespace: constants.EksaSystemNamespace}); err != nil {

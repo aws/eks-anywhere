@@ -154,8 +154,8 @@ rules:
 - apiGroups:
   - bmc.tinkerbell.org
   resources:
-  - machine
-  - machine/status
+  - machines
+  - machines/status
   verbs:
   - get
   - list
