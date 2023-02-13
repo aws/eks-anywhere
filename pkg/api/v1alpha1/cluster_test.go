@@ -3005,7 +3005,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
-	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube124))
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube125))
 }
 
 func TestClusterWorkerNodeConfigCount(t *testing.T) {
