@@ -67,6 +67,10 @@ func installPackageController(ctx context.Context) error {
 		return errors.New("curated Packages controller exists in the current cluster")
 	}
 
+	if curatedpackages.IsPackageControllerDisabled(clusterSpec.Cluster) {
+		return errors.New("package controller disabled in cluster specification")
+	}
+
 	curatedpackages.PrintLicense()
 	err = ctrlClient.EnableCuratedPackages(ctx)
 	if err != nil {
