@@ -79,7 +79,7 @@ func RunCommand(session *session.Session, logger logr.Logger, instanceId, comman
 	}
 
 	// Make sure ssm send command is registered
-	logger.V(4).Info("Waiting for ssm command to be registered")
+	logger.Info("Waiting for ssm command to be registered", "commandId", commandIn.CommandId, "instanceId", commandIn.InstanceId)
 	err = retrier.Retry(10, 5*time.Second, func() error {
 		_, err := service.GetCommandInvocation(commandIn)
 		if err != nil {
@@ -92,7 +92,7 @@ func RunCommand(session *session.Session, logger logr.Logger, instanceId, comman
 		return nil, fmt.Errorf("waiting for ssm command to be registered: %v", err)
 	}
 
-	logger.V(4).Info("Waiting for ssm command to finish")
+	logger.Info("Waiting for ssm command to finish")
 	var commandOut *ssm.GetCommandInvocationOutput
 	r := retrier.New(300*time.Minute, retrier.WithMaxRetries(2160, 60*time.Second))
 	err = r.Retry(func() error {
