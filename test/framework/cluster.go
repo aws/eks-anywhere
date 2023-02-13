@@ -1446,6 +1446,19 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 	}
 }
 
+// VerifyCertManagerPackageInstalled is checking if the Cert manager package gets installed correctly
+func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(packageName string) {
+	ctx := context.Background()
+	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
+
+	e.T.Log("Waiting for package", packageName, "to be installed")
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		e.Cluster(), packageName, "10m", packageMetadatNamespace)
+	if err != nil {
+		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
+	}
+}
+
 // VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.
 func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string, targetNamespace string, mode string) {
 	ctx := context.Background()
