@@ -803,7 +803,7 @@ type PackageControllerConfiguration struct {
 	// DisableWebhooks on package controller
 	DisableWebhooks bool `json:"disableWebhooks,omitempty"`
 
-	// Env of package controller
+	// Env of package controller in the format `key=value`
 	Env []string `json:"env,omitempty"`
 
 	// Resources of package controller
