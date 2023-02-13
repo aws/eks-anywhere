@@ -37,7 +37,7 @@ func BuildClients(ctx context.Context) (Clients, error) {
 		if err != nil {
 			return nil, fmt.Errorf("setting up aws client: %v", err)
 		}
-		deviceClientMap[ip] = NewClient(ctx, config)
+		deviceClientMap[ip] = NewClientFromConfig(config)
 	}
 	return deviceClientMap, nil
 }
