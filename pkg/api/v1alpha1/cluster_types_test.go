@@ -2006,6 +2006,36 @@ func TestPackageConfiguration_Equal(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "not equal cronjob",
+			pcn: &v1alpha1.PackageConfiguration{
+				Disable: true,
+				CronJob: v1alpha1.PackageControllerCronJob{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				Disable: false,
+				CronJob: v1alpha1.PackageControllerCronJob{
+					Tag: "v2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "equal cronjob",
+			pcn: &v1alpha1.PackageConfiguration{
+				CronJob: v1alpha1.PackageControllerCronJob{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				CronJob: v1alpha1.PackageControllerCronJob{
+					Tag: "v1",
+				},
+			},
+			want: true,
+		},
+		{
 			name: "same",
 			pcn:  same,
 			pco:  same,

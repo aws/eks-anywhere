@@ -786,7 +786,7 @@ func (n *PackageConfiguration) Equal(o *PackageConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Disable == o.Disable && n.Controller.Equal(&o.Controller)
+	return n.Disable == o.Disable && n.Controller.Equal(&o.Controller) && n.CronJob.Equal(&o.CronJob)
 }
 
 // PackageControllerConfiguration configure aspects of package controller.
