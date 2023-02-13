@@ -11,7 +11,7 @@ import (
 
 	csv "github.com/gocarina/gocsv"
 
-	"github.com/aws/eks-anywhere/pkg/utils/yaml"
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 )
 
 // CSVReader reads a CSV file and provides Machine instances. It satisfies the MachineReader interface. The ID field of
@@ -91,16 +91,15 @@ func ensureRequiredColumnsInCSV(unmatched []string) error {
 	return nil
 }
 
-// BuildHardwareYaml builds a hardware yaml from the csv at the provided path.
-func BuildHardwareYaml(path string) ([]byte, error) {
+// BuildHardwareYAML builds a hardware yaml from the csv at the provided path.
+func BuildHardwareYAML(path string) ([]byte, error) {
 	reader, err := NewNormalizedCSVReaderFromFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading csv: %v", err)
 	}
 
 	var b bytes.Buffer
-	bufferedWriter := io.Writer(&b)
-	writer := NewTinkerbellManifestYAML(bufferedWriter)
+	writer := NewTinkerbellManifestYAML(&b)
 
 	validator := NewDefaultMachineValidator()
 
@@ -109,5 +108,5 @@ func BuildHardwareYaml(path string) ([]byte, error) {
 		return nil, fmt.Errorf("generating hardware yaml: %v", err)
 	}
 
-	return yaml.StripNull(b.Bytes())
+	return unstructuredutil.StripNull(b.Bytes())
 }

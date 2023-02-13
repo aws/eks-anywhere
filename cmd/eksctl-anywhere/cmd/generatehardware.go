@@ -44,7 +44,7 @@ func init() {
 }
 
 func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string) error {
-	hardwareYaml, err := hardware.BuildHardwareYaml(hOpts.csvPath)
+	hardwareYaml, err := hardware.BuildHardwareYAML(hOpts.csvPath)
 	if err != nil {
 		return fmt.Errorf("building hardware yaml from csv: %v", err)
 	}
