@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -77,4 +78,26 @@ func TestHardwareFromETCDNoHardware(t *testing.T) {
 	err := etcdReader.HardwareFromETCD(ctx)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(len(etcdReader.GetCatalogue().AllHardware())).To(Equal(0))
+}
+
+func TestRufioMachinesFromEtcdSuccess(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	rm := rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bm1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+	scheme := runtime.NewScheme()
+	_ = rufiov1alpha1.AddToScheme(scheme)
+	objs := []runtime.Object{&rm}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
+
+	etcdReader := hardware.NewETCDReader(cl)
+	err := etcdReader.RufioMachinesFromEtcd(ctx)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(len(etcdReader.GetCatalogue().AllBMCs())).To(Equal(1))
 }
