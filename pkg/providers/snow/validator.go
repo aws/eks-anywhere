@@ -72,7 +72,7 @@ func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1
 			return fmt.Errorf("describing key pair on snow device [%s]: %v", ip, err)
 		}
 		if !keyExists {
-			return fmt.Errorf("aws key pair [%s] does not exist", m.Spec.SshKeyName)
+			return fmt.Errorf("aws key pair [%s] does not exist on snow device [deviceIP=%s]", m.Spec.SshKeyName, ip)
 		}
 	}
 
