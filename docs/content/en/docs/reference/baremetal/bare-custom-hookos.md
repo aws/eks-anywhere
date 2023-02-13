@@ -23,7 +23,7 @@ For more information on Tinkerbell’s Hook Installation Environment, see the [T
 1. Pull down the commit that EKS Anywhere is tracking for Hook:
 
     ```bash
-    git checkout -b <new-branch> 029ef8f0711579717bfd14ac5eb63cdc3e658b1d
+    git checkout -b <new-branch> 03a67729d895635fe3c612e4feca3400b9336cc9
     ```
 
     >**_NOTE_**: This commit number can be obtained from the [EKS-A build tooling repo](https://github.com/aws/eks-anywhere-build-tooling/blob/main/projects/tinkerbell/hook/GIT_TAG).
