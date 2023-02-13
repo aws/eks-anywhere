@@ -18,16 +18,17 @@ func runProxyConfigFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster()
 }
 
-func TestVSphereKubernetes124UbuntuProxyConfig(t *testing.T) {
+func TestVSphereKubernetes125UbuntuProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu124(),
+		framework.NewVSphere(t, framework.WithUbuntu125(),
 			framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }

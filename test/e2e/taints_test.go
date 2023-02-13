@@ -32,14 +32,14 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 // remove a taint from a node
 // add a taint to a node which already has another taint
 // add a taint to a node which had no taints.
-func TestDockerKubernetes124Taints(t *testing.T) {
+func TestDockerKubernetes125Taints(t *testing.T) {
 	provider := framework.NewDocker(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithKubernetesVersion(v1alpha1.Kube125),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -47,11 +47,12 @@ func TestDockerKubernetes124Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
 			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
 		),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
 		test,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -61,23 +62,24 @@ func TestDockerKubernetes124Taints(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes124Taints(t *testing.T) {
-	provider := ubuntu124ProviderWithTaints(t)
+func TestVSphereKubernetes125Taints(t *testing.T) {
+	provider := ubuntu125ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithKubernetesVersion(v1alpha1.Kube125),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
 		test,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -156,7 +158,7 @@ func TestSnowKubernetes123TaintsUbuntu(t *testing.T) {
 	)
 }
 
-func ubuntu124ProviderWithTaints(t *testing.T) *framework.VSphere {
+func ubuntu125ProviderWithTaints(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -170,7 +172,7 @@ func ubuntu124ProviderWithTaints(t *testing.T) *framework.VSphere {
 			worker2,
 			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
-		framework.WithUbuntu124(),
+		framework.WithUbuntu125(),
 	)
 }
 
