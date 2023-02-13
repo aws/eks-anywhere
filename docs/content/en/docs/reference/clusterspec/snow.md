@@ -46,7 +46,7 @@ spec:
     machineGroupRef:
       kind: SnowMachineConfig
       name: my-cluster-machines
-  kubernetesVersion: "1.24"
+  kubernetesVersion: "1.25"
   workerNodeGroupConfigurations:
   - count: 1
     machineGroupRef:
@@ -142,11 +142,11 @@ the control plane nodes for kube-apiserver loadbalancing.
 ### controlPlaneConfiguration.taints
 A list of taints to apply to the control plane nodes of the cluster.
 
-Replaces the default control plane taint, `node-role.kubernetes.io/master`. The default control plane components will tolerate the provided taints.
+Replaces the default control plane taint (For k8s versions prior to 1.24, `node-role.kubernetes.io/master`. For k8s versions 1.24+, `node-role.kubernetes.io/control-plane`).. The default control plane components will tolerate the provided taints.
 
 Modifying the taints associated with the control plane configuration will cause new nodes to be rolled-out, replacing the existing nodes.
 
->**_NOTE:_** The taints provided will be used instead of the default control plane taint `node-role.kubernetes.io/master`.
+>**_NOTE:_** The taints provided will be used instead of the default control plane taint.
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
 > 
 
@@ -200,7 +200,7 @@ Refers to the Kubernetes object with Snow specific configuration for your etcd m
 Refers to the Kubernetes object with Snow environment specific configuration. See `SnowDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.24`, `1.23`, `1.22`, `1.21`
+The Kubernetes version you want to use for your cluster. Supported values: `1.25`, `1.24`, `1.23`, `1.22`, `1.21`
 
 ## SnowDatacenterConfig Fields
 

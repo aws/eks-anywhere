@@ -40,7 +40,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.23"
+  kubernetesVersion: "1.25"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -131,11 +131,11 @@ Refers to the Kubernetes object with Tinkerbell-specific configuration for your 
 ### controlPlaneConfiguration.taints
 A list of taints to apply to the control plane nodes of the cluster.
 
-Replaces the default control plane taint, `node-role.kubernetes.io/master`. The default control plane components will tolerate the provided taints.
+Replaces the default control plane taint (For k8s versions prior to 1.24, `node-role.kubernetes.io/master`. For k8s versions 1.24+, `node-role.kubernetes.io/control-plane`). The default control plane components will tolerate the provided taints.
 
 Modifying the taints associated with the control plane configuration will cause new nodes to be rolled-out, replacing the existing nodes.
 
->**_NOTE:_** The taints provided will be used instead of the default control plane taint `node-role.kubernetes.io/master`.
+>**_NOTE:_** The taints provided will be used instead of the default control plane taint.
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
 > 
 
@@ -150,7 +150,7 @@ the existing nodes.
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.23`, `1.22`, `1.21`
+The Kubernetes version you want to use for your cluster. Supported values: `1.25`, `1.24`, `1.23`, `1.22`, `1.21`
 
 ### managementCluster
 Identifies the name of the management cluster.
