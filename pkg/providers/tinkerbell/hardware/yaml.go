@@ -23,6 +23,7 @@ func NewTinkerbellManifestYAML(w io.Writer) *TinkerbellManifestYAML {
 // Hardware, BMC and Secret (for the BMC).
 func (yw *TinkerbellManifestYAML) Write(m Machine) error {
 	hardware, err := marshalTinkerbellHardwareYAML(m)
+
 	if err != nil {
 		return fmt.Errorf("marshalling tinkerbell hardware yaml (mac=%v): %v", m.MACAddress, err)
 	}
