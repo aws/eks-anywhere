@@ -24,7 +24,7 @@ type configManagerTest struct {
 	aws                     *mocks.MockAwsClient
 	keyGenerator            *mocks.MockSshKeyGenerator
 	writer                  filewriter.FileWriter
-	validator               *snow.AwsClientValidator
+	validator               *snow.Validator
 	defaulters              *snow.Defaulters
 	machineConfigDefaulters *snow.MachineConfigDefaulters
 	machineConfig           *v1alpha1.SnowMachineConfig
