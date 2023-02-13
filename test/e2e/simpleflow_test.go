@@ -88,7 +88,6 @@ func TestDockerKubernetes125SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar("K8S_1_25_SUPPORT", "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -134,7 +133,6 @@ func TestVSphereKubernetes125SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu125()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar("K8S_1_25_SUPPORT", "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -326,7 +324,6 @@ func TestTinkerbellKubernetes125SimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -382,7 +379,6 @@ func TestTinkerbellKubernetes125RedHatSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
