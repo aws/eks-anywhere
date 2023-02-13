@@ -167,7 +167,7 @@ func (v *Validator) ValidateInstanceType(ctx context.Context, m *v1alpha1.SnowMa
 			return fmt.Errorf("credentials not found for device [%s]", ip)
 		}
 
-		if err := validateInstanceTypeInDevice(ctx, client, string(m.Spec.InstanceType), ip); err != nil {
+		if err := validateInstanceTypeInDevice(ctx, client, m.Spec.InstanceType, ip); err != nil {
 			return err
 		}
 	}

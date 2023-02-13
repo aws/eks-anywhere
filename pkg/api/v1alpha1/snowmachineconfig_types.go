@@ -11,20 +11,9 @@ const (
 	SFPPlus PhysicalNetworkConnectorType = "SFP_PLUS"
 	QSFP    PhysicalNetworkConnectorType = "QSFP"
 	RJ45    PhysicalNetworkConnectorType = "RJ45"
-
-	SbeCLarge    SnowInstanceType = "sbe-c.large"
-	SbeCXLarge   SnowInstanceType = "sbe-c.xlarge"
-	SbeC2XLarge  SnowInstanceType = "sbe-c.2xlarge"
-	SbeC4XLarge  SnowInstanceType = "sbe-c.4xlarge"
-	SbeC8XLarge  SnowInstanceType = "sbe-c.8xlarge"
-	SbeC12XLarge SnowInstanceType = "sbe-c.12xlarge"
-	SbeC16XLarge SnowInstanceType = "sbe-c.16xlarge"
-	SbeC24XLarge SnowInstanceType = "sbe-c.24xlarge"
 )
 
 type PhysicalNetworkConnectorType string
-
-type SnowInstanceType string
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // Important: Run "make generate" to regenerate code after modifying this file
@@ -37,8 +26,7 @@ type SnowMachineConfigSpec struct {
 	AMIID string `json:"amiID,omitempty"`
 
 	// InstanceType is the type of instance to create.
-	// Valid values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge" and "sbe-c.4xlarge".
-	InstanceType SnowInstanceType `json:"instanceType,omitempty"`
+	InstanceType string `json:"instanceType,omitempty"`
 
 	// PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
 	// Valid values: "SFP_PLUS" (default), "QSFP" and "RJ45".

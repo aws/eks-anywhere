@@ -25,7 +25,7 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 
 	sOld := snowMachineConfig()
 	sOld.Spec.SshKeyName = "testKey"
-	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
+	sOld.Spec.InstanceType = v1alpha1.DefaultSnowInstanceType
 	sOld.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
@@ -58,7 +58,7 @@ func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
 func TestSnowMachineConfigValidateCreateEmptySSHKeyName(t *testing.T) {
 	g := NewWithT(t)
 	s := snowMachineConfig()
-	s.Spec.InstanceType = v1alpha1.SbeCLarge
+	s.Spec.InstanceType = v1alpha1.DefaultSnowInstanceType
 	s.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	s.Spec.Devices = []string{"1.2.3.4"}
 	s.Spec.OSFamily = v1alpha1.Ubuntu
@@ -80,7 +80,7 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 	sOld := snowMachineConfig()
 	sOld.Spec.AMIID = "testAMI"
 	sOld.Spec.SshKeyName = "testKey"
-	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
+	sOld.Spec.InstanceType = v1alpha1.DefaultSnowInstanceType
 	sOld.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 	sOld.Spec.OSFamily = v1alpha1.Bottlerocket
@@ -107,7 +107,7 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
 	sNew.Spec.SshKeyName = "testKey"
-	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+	sNew.Spec.InstanceType = v1alpha1.DefaultSnowInstanceType
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.Devices = []string{"1.2.3.4"}
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
@@ -134,7 +134,7 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
 	sNew.Spec.SshKeyName = "testKey"
-	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+	sNew.Spec.InstanceType = v1alpha1.DefaultSnowInstanceType
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
@@ -147,7 +147,7 @@ func TestSnowMachineConfigValidateUpdateEmptySSHKeyName(t *testing.T) {
 	sOld := snowMachineConfig()
 	sNew := sOld.DeepCopy()
 	sNew.Spec.AMIID = "testAMI"
-	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+	sNew.Spec.InstanceType = v1alpha1.DefaultSnowInstanceType
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
