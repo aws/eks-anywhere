@@ -11,8 +11,12 @@ import (
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-func getImages(spec string) ([]v1alpha1.Image, error) {
-	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
+func getImages(clusterSpecPath, bundlesOverride string) ([]v1alpha1.Image, error) {
+	var specOpts []cluster.SpecOpt
+	if bundlesOverride != "" {
+		specOpts = append(specOpts, cluster.WithOverrideBundlesManifest(bundlesOverride))
+	}
+	clusterSpec, err := readAndValidateClusterSpec(clusterSpecPath, version.Get(), specOpts...)
 	if err != nil {
 		return nil, err
 	}
