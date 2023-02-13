@@ -13,6 +13,8 @@ See [Create cluster workflow]({{< relref "../../concepts/clusterworkflow" >}}) f
 To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.
 
+>**_NOTE:_** For Snow provider, the Snow devices will come with a pre-configured Admin AMI which can be used to create an Admin instance with all the necessary binaries, dependencies and artifacts to create an EKS Anywhere cluster. Skip the below steps and see [Create Snow production cluster]({{< relref "../production-environment/snow-getstarted" >}}) to get started with EKS Anywhere on Snow.
+
 ### Administrative machine prerequisites
 
 - Docker 20.x.x
