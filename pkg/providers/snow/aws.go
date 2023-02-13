@@ -10,8 +10,8 @@ type AwsClient interface {
 	EC2ImageExists(ctx context.Context, imageID string) (bool, error)
 	EC2KeyNameExists(ctx context.Context, keyName string) (bool, error)
 	EC2ImportKeyPair(ctx context.Context, keyName string, keyMaterial []byte) error
+	EC2InstanceTypes(ctx context.Context) ([]string, error)
 	IsSnowballDeviceUnlocked(ctx context.Context) (bool, error)
-	SnowballDeviceType(ctx context.Context) (string, error)
 	SnowballDeviceSoftwareVersion(ctx context.Context) (string, error)
 }
 

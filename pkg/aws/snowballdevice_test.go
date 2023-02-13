@@ -86,33 +86,3 @@ func TestSnowballDeviceSoftwareVersionDescribeDeviceSoftwareError(t *testing.T) 
 	g.Expect(err).NotTo(Succeed())
 	g.Expect(got).To(Equal(""))
 }
-
-func TestSnowballDeviceTypeSuccess(t *testing.T) {
-	g := newSnowballDeviceTest(t)
-	deviceType := "device-type"
-	out := &snowballdevice.DescribeDeviceOutput{
-		DeviceType: &deviceType,
-	}
-	g.snowballDevice.EXPECT().DescribeDevice(g.ctx, nil).Return(out, nil)
-	got, err := g.client.SnowballDeviceType(g.ctx)
-	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal(deviceType))
-}
-
-func TestSnowballDeviceTypeDescribeDeviceError(t *testing.T) {
-	g := newSnowballDeviceTest(t)
-	g.snowballDevice.EXPECT().DescribeDevice(g.ctx, nil).Return(nil, errors.New("error"))
-	got, err := g.client.SnowballDeviceType(g.ctx)
-	g.Expect(err).NotTo(Succeed())
-	g.Expect(got).To(Equal(""))
-}
-
-func TestSnowballDeviceTypeNotFoundError(t *testing.T) {
-	g := newSnowballDeviceTest(t)
-	out := &snowballdevice.DescribeDeviceOutput{
-		DeviceType: nil,
-	}
-	g.snowballDevice.EXPECT().DescribeDevice(g.ctx, nil).Return(out, nil)
-	_, err := g.client.SnowballDeviceType(g.ctx)
-	g.Expect(err).To(MatchError(ContainSubstring("snowball device type not found")))
-}
