@@ -1,9 +1,6 @@
 package e2e
 
 import (
-	"fmt"
-	"github.com/aws/eks-anywhere/pkg/types"
-	"path/filepath"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -32,12 +29,4 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 	})
 	time.Sleep(5 * time.Minute)
 	test.DeleteManagementCluster()
-}
-
-func withMgmtCluster(cluster *framework.ClusterE2ETest) *types.Cluster {
-	return &types.Cluster{
-		Name:               cluster.ClusterName,
-		KubeconfigFile:     filepath.Join(cluster.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", cluster.ClusterName)),
-		ExistingManagement: true,
-	}
 }
