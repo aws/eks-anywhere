@@ -47,7 +47,7 @@ version.
 Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
 Anywhere components mentioned above to their latest available versions. All upgrade changes are backwards compatible.
 
-Specifically for Snow provider, a new Admin instance is needed when upgrading to the new versions of EKS Anywhere. See [Upgrade EKS Anywhere AMIs in Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html) to upgrade and use a new Admin instance in Snow devices. After that, ugrades of other components can be done as described in this document.
+Specifically for Snow provider, a new Admin instance is needed when upgrading to the new versions of EKS Anywhere. See [Upgrade EKS Anywhere AMIs in Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/CrUD-clusters.html) to upgrade and use a new Admin instance in Snow devices. After that, ugrades of other components can be done as described in this document.
 
 ### Check upgrade components
 Before you perform an upgrade, check the current and new versions of components that are ready to upgrade by typing:
