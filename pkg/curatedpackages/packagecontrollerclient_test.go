@@ -649,7 +649,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
-		expectedErr := fmt.Errorf("timed out finding an active package bundle for the current cluster: %v", context.DeadlineExceeded)
+		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
 		if err.Error() != expectedErr.Error() {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
@@ -700,7 +700,7 @@ func TestEnableCuratedPackagesActiveBundleNamespaceTimesOut(t *testing.T) {
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
-		expectedErr := fmt.Errorf("timed out finding an active package bundle for the current cluster: %v", context.DeadlineExceeded)
+		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
 		if err.Error() != expectedErr.Error() {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}

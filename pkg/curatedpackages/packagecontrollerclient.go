@@ -211,6 +211,7 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	targetNs := constants.EksaPackagesName + "-" + pc.clusterName
 	done := make(chan error)
 	go func() {
 		defer close(done)
@@ -233,7 +234,6 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 					"clusterName", pc.clusterName)
 			}
 
-			targetNs := constants.EksaPackagesName + "-" + pc.clusterName
 			found, _ := pc.kubectl.HasResource(timeoutCtx, "namespace", targetNs, pc.kubeConfig, "default")
 
 			if found {
@@ -255,7 +255,7 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 
 	select {
 	case <-timeoutCtx.Done():
-		return fmt.Errorf("timed out finding an active package bundle for the current cluster: %v", timeoutCtx.Err())
+		return fmt.Errorf("timed out finding an active package bundle / %s namespace for the current cluster: %v", targetNs, timeoutCtx.Err())
 	case err := <-done:
 		if err != nil {
 			return fmt.Errorf("couldn't find an active package bundle for the current cluster: %v", err)
