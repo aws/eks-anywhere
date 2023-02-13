@@ -10,7 +10,7 @@ import (
 
 // Client provides the single API client to make operations call to aws services.
 type Client struct {
-	ec2            EC2Client
+	ec2            *EC2
 	snowballDevice SnowballDeviceClient
 }
 
@@ -57,7 +57,7 @@ func LoadConfig(ctx context.Context, opts ...AwsConfigOpt) (aws.Config, error) {
 type ClientOpt func(*Client)
 
 // WithEC2 returns a ClientOpt that sets the ec2 client.
-func WithEC2(ec2 EC2Client) ClientOpt {
+func WithEC2(ec2 *EC2) ClientOpt {
 	return func(c *Client) {
 		c.ec2 = ec2
 	}
