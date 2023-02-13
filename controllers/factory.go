@@ -100,6 +100,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *
 			f.manager.GetClient(),
 			f.registry,
 			f.awsIamConfigReconciler,
+			clusters.NewClusterValidator(f.manager.GetClient()),
 		)
 
 		return nil
