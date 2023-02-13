@@ -144,6 +144,87 @@ func TestCSVReaderWithMissingRequiredColumns(t *testing.T) {
 	}
 }
 
+func TestCSVBuildHardwareYamlFromCSV(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	hardwareYaml, err := hardware.BuildHardwareYAML("./testdata/hardware.csv")
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(hardwareYaml).To(gomega.Equal([]byte(`apiVersion: tinkerbell.org/v1alpha1
+kind: Hardware
+metadata:
+  labels:
+    type: cp
+  name: worker1
+  namespace: eksa-system
+spec:
+  bmcRef:
+    kind: Machine
+    name: bmc-worker1
+  disks:
+  - device: /dev/sda
+  interfaces:
+  - dhcp:
+      arch: x86_64
+      hostname: worker1
+      ip:
+        address: 10.10.10.10
+        family: 4
+        gateway: 10.10.10.1
+        netmask: 255.255.255.0
+      lease_time: 4294967294
+      mac: "00:00:00:00:00:01"
+      name_servers:
+      - 1.1.1.1
+      uefi: true
+    netboot:
+      allowPXE: true
+      allowWorkflow: true
+  metadata:
+    facility:
+      facility_code: onprem
+      plan_slug: c2.medium.x86
+    instance:
+      allow_pxe: true
+      always_pxe: true
+      hostname: worker1
+      id: "00:00:00:00:00:01"
+      ips:
+      - address: 10.10.10.10
+        family: 4
+        gateway: 10.10.10.1
+        netmask: 255.255.255.0
+        public: true
+      operating_system: {}
+status: {}
+---
+apiVersion: bmc.tinkerbell.org/v1alpha1
+kind: Machine
+metadata:
+  name: bmc-worker1
+  namespace: eksa-system
+spec:
+  connection:
+    authSecretRef:
+      name: bmc-worker1-auth
+      namespace: eksa-system
+    host: 192.168.0.10
+    insecureTLS: true
+    port: 0
+status: {}
+---
+apiVersion: v1
+data:
+  password: YWRtaW4=
+  username: QWRtaW4=
+kind: Secret
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: bmc-worker1-auth
+  namespace: eksa-system
+type: kubernetes.io/basic-auth`)))
+}
+
 // BufferedCSV is an in-memory CSV that satisfies io.Reader and io.Writer.
 type BufferedCSV struct {
 	*bytes.Buffer

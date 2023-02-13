@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -88,13 +87,19 @@ func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConf
 		return err
 	}
 
+	kuztomizationValues := map[string]string{
+		"ConfigFileName": clusterConfigFileName,
+	}
+
 	if hardwareCSVPath != "" {
-		if err := g.WriteHardware(hardwareCSVPath); err != nil {
+		// Allow edits to a hardware.yaml file by adding it to resources in the kuztomization.yaml file
+		kuztomizationValues["HardwareFileName"] = hardwareFileName
+		if err := g.WriteHardwareYAML(hardwareCSVPath); err != nil {
 			return err
 		}
 	}
 
-	if err := g.WriteEksaKustomization(clusterSpec); err != nil {
+	if err := g.WriteEksaKustomization(kuztomizationValues); err != nil {
 		return err
 	}
 
@@ -130,28 +135,20 @@ func (g *FileGenerator) WriteClusterConfig(clusterSpec *cluster.Spec, datacenter
 }
 
 // WriteEksaKustomization writes the eks-a kustomization manifest to the eksa-system folder in the repository path.
-func (g *FileGenerator) WriteEksaKustomization(clusterSpec *cluster.Spec) error {
-	values := map[string]string{
-		"ConfigFileName": clusterConfigFileName,
-	}
-
-	// Allow edits to a hardware.yaml file by adding it to resources in the kuztomization.yaml file
-	if clusterSpec.Cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind {
-		values["HardwareFileName"] = hardwareFileName
-	}
-
+func (g *FileGenerator) WriteEksaKustomization(values map[string]string) error {
 	if path, err := g.eksaTemplater.WriteToFile(eksaKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("writing eks-a kustomization manifest file into %s: %v", path, err)
 	}
 	return nil
 }
 
-// WriteHardware writes the hardware manifest kustomization manifest to the eksa-system folder in the repository path.
-func (g *FileGenerator) WriteHardware(hardwareCSVPath string) error {
-	hardwareSpec, err := hardware.BuildHardwareManifestFromCSV(hardwareCSVPath)
+// WriteHardwareYAML writes the hardware manifest kustomization manifest to the eksa-system folder in the repository path.
+func (g *FileGenerator) WriteHardwareYAML(hardwareCSVPath string) error {
+	hardwareSpec, err := hardware.BuildHardwareYAML(hardwareCSVPath)
 	if err != nil {
 		return fmt.Errorf("building hardware manifest from csv file %s: %v", hardwareCSVPath, err)
 	}
+	fmt.Printf("YAML: \n\n%v\n", string(hardwareSpec))
 	if filePath, err := g.eksaWriter.Write(hardwareFileName, hardwareSpec, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("writing eks-a hardware manifest file into %s: %v", filePath, err)
 	}

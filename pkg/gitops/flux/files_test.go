@@ -379,14 +379,12 @@ func wantHardwareConfig() string {
 	return `apiVersion: tinkerbell.org/v1alpha1
 kind: Hardware
 metadata:
-  creationTimestamp: null
   labels:
     type: cp
   name: worker1
   namespace: eksa-system
 spec:
   bmcRef:
-    apiGroup: null
     kind: Machine
     name: bmc-worker1
   disks:
@@ -429,7 +427,6 @@ status: {}
 apiVersion: bmc.tinkerbell.org/v1alpha1
 kind: Machine
 metadata:
-  creationTimestamp: null
   name: bmc-worker1
   namespace: eksa-system
 spec:
@@ -448,12 +445,9 @@ data:
   username: QWRtaW4=
 kind: Secret
 metadata:
-  creationTimestamp: null
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
   name: bmc-worker1-auth
   namespace: eksa-system
-type: kubernetes.io/basic-auth
----
-`
+type: kubernetes.io/basic-auth`
 }

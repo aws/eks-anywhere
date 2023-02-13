@@ -218,17 +218,17 @@ func anywhereCluster(name string) *anywherev1.Cluster {
 	}
 }
 
-func TestValidateK8s125Support(t *testing.T) {
+func TestValidateK8s126Support(t *testing.T) {
 	tt := newTest(t)
-	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube125
-	tt.Expect(validations.ValidateK8s125Support(tt.clusterSpec)).To(
-		MatchError(ContainSubstring("kubernetes version 1.25 is not enabled. Please set the env variable K8S_1_25_SUPPORT")))
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube126
+	tt.Expect(validations.ValidateK8s126Support(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("kubernetes version 1.26 is not enabled. Please set the env variable K8S_1_26_SUPPORT")))
 }
 
-func TestValidateK8s125SupportActive(t *testing.T) {
+func TestValidateK8s126SupportActive(t *testing.T) {
 	tt := newTest(t)
-	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube125
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube126
 	features.ClearCache()
-	os.Setenv(features.K8s125SupportEnvVar, "true")
-	tt.Expect(validations.ValidateK8s125Support(tt.clusterSpec)).To(Succeed())
+	os.Setenv(features.K8s126SupportEnvVar, "true")
+	tt.Expect(validations.ValidateK8s126Support(tt.clusterSpec)).To(Succeed())
 }

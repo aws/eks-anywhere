@@ -87,9 +87,9 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		},
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name:        "validate kubernetes version 1.25 support",
-				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s125SupportEnvVar),
-				Err:         validations.ValidateK8s125Support(u.Opts.Spec),
+				Name:        "validate kubernetes version 1.26 support",
+				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s126SupportEnvVar),
+				Err:         validations.ValidateK8s126Support(u.Opts.Spec),
 				Silent:      true,
 			}
 		},

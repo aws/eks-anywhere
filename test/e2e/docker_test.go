@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
@@ -33,7 +32,6 @@ func TestDockerKubernetes125Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -63,7 +61,6 @@ func TestDockerKubernetes125GithubFlux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFluxGithub(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -73,7 +70,6 @@ func TestDockerKubernetes125GitFlux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -89,7 +85,6 @@ func TestDockerKubernetes125GitopsOptionsFluxLegacy(t *testing.T) {
 			api.WithFluxNamespace(fluxUserProvidedNamespace),
 			api.WithFluxConfigurationPath(fluxUserProvidedPath),
 		),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -247,7 +242,6 @@ func TestDockerKubernetes125AWSIamAuth(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -371,7 +365,6 @@ func TestDockerKubernetes125OIDC(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }
@@ -418,7 +411,6 @@ func TestDockerKubernetes125SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -447,7 +439,6 @@ func TestDockerKubernetes125Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
 			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
 		),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -475,7 +466,6 @@ func TestDockerKubernetes124To125StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -491,7 +481,6 @@ func TestDockerKubernetes124To125ExternalEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -586,7 +575,6 @@ func TestDockerKubernetes124to125UpgradeFromLatestMinorRelease(t *testing.T) {
 		release,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 

@@ -70,11 +70,11 @@ func ValidateManagementClusterName(ctx context.Context, k KubectlClient, mgmtClu
 	return nil
 }
 
-// ValidateK8s125Support checks if the 1.25 feature flag is set when using k8s 1.25.
-func ValidateK8s125Support(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.K8s125Support()) {
-		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube125 {
-			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube125, features.K8s125SupportEnvVar)
+// ValidateK8s126Support checks if the 1.26 feature flag is set when using k8s 1.26.
+func ValidateK8s126Support(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.K8s126Support()) {
+		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube126 {
+			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube126, features.K8s126SupportEnvVar)
 		}
 	}
 	return nil

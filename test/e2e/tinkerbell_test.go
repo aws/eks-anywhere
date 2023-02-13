@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -683,7 +682,6 @@ func TestTinkerbellKubernetes125SimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -739,7 +737,6 @@ func TestTinkerbellKubernetes125RedHatSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
@@ -1152,7 +1149,6 @@ func TestTinkerbellKubernetes125UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlowForBareMetal(
 		test,

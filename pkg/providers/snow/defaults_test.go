@@ -2,7 +2,6 @@ package snow_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -23,6 +22,7 @@ func TestGenerateDefaultSSHKeysExists(t *testing.T) {
 func TestGenerateDefaultSSHKeysError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.machineConfig.Spec.SshKeyName = ""
+	g.keyGenerator.EXPECT().GenerateSSHAuthKey(g.writer).Return(sshKey, nil)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(false, errors.New("test error"))
 	err := g.defaulters.GenerateDefaultSSHKeys(g.ctx, map[string]*v1alpha1.SnowMachineConfig{g.machineConfig.Name: g.machineConfig}, g.clusterName)
 	g.Expect(err).NotTo(Succeed())
@@ -35,6 +35,7 @@ func TestGenerateDefaultSSHKeysGenerated(t *testing.T) {
 	secondMachineConfig.Name = g.machineConfig.Name + "-2"
 	g.keyGenerator.EXPECT().GenerateSSHAuthKey(g.writer).Return(sshKey, nil)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(false, nil).Times(2)
+	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(true, nil).Times(2)
 	g.aws.EXPECT().EC2ImportKeyPair(g.ctx, g.defaultKeyName, []byte(sshKey)).Return(nil).Times(2)
 	err := g.defaulters.GenerateDefaultSSHKeys(g.ctx, map[string]*v1alpha1.SnowMachineConfig{
 		g.machineConfig.Name:     g.machineConfig,
@@ -56,6 +57,7 @@ func TestSetDefaultSSHKey(t *testing.T) {
 func TestSetDefaultSSHKeyExistsOnAllDevices(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.machineConfig.Spec.SshKeyName = ""
+	g.keyGenerator.EXPECT().GenerateSSHAuthKey(g.writer).Return(sshKey, nil)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(true, nil).Times(2)
 	err := g.machineConfigDefaulters.SetupDefaultSSHKey(g.ctx, g.machineConfig, g.clusterName)
 	g.Expect(g.machineConfig.Spec.SshKeyName).To(Equal(g.defaultKeyName))
@@ -65,17 +67,19 @@ func TestSetDefaultSSHKeyExistsOnAllDevices(t *testing.T) {
 func TestSetDefaultSSHKeyExistsOnPartialDevices(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.machineConfig.Spec.SshKeyName = ""
+	g.keyGenerator.EXPECT().GenerateSSHAuthKey(g.writer).Return(sshKey, nil)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(true, nil)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(false, nil)
+	g.aws.EXPECT().EC2ImportKeyPair(g.ctx, g.defaultKeyName, []byte(sshKey)).Return(nil)
 	err := g.machineConfigDefaulters.SetupDefaultSSHKey(g.ctx, g.machineConfig, g.clusterName)
-	g.Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("default key [keyName=%s] only exists on some of the devices", g.defaultKeyName))))
+	g.Expect(err).To(Succeed())
 }
 
 func TestSetDefaultSSHKeyImportKeyError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.machineConfig.Spec.SshKeyName = ""
 	g.keyGenerator.EXPECT().GenerateSSHAuthKey(g.writer).Return(sshKey, nil)
-	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(false, nil).Times(2)
+	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.defaultKeyName).Return(false, nil)
 	g.aws.EXPECT().EC2ImportKeyPair(g.ctx, g.defaultKeyName, []byte(sshKey)).Return(errors.New("error"))
 	err := g.machineConfigDefaulters.SetupDefaultSSHKey(g.ctx, g.machineConfig, g.clusterName)
 	g.Expect(err).NotTo(Succeed())
@@ -92,6 +96,7 @@ func TestSetDefaultSSHKeyDeviceNotFoundInClientMap(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.machineConfig.Spec.SshKeyName = ""
 	g.machineConfig.Spec.Devices = []string{"device-not-exist"}
+	g.keyGenerator.EXPECT().GenerateSSHAuthKey(g.writer).Return(sshKey, nil)
 	err := g.machineConfigDefaulters.SetupDefaultSSHKey(g.ctx, g.machineConfig, g.clusterName)
 	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
 }
