@@ -59,13 +59,8 @@ func (d *Defaulters) GenerateDefaultSSHKeys(ctx context.Context, machineConfigs 
 
 	for _, m := range machineConfigs {
 		if m.Spec.SshKeyName == "" {
-			if md.keyGenerated {
-				// Generate a random string so that other clusters with same name and devices won't conflict in case user doesn't have access to previous key
-				m.Spec.SshKeyName = md.defaultSSHKeyName(clusterName)
-			} else {
-				if err := md.SetupDefaultSSHKey(ctx, m, clusterName); err != nil {
-					return err
-				}
+			if err := md.SetupDefaultSSHKey(ctx, m, clusterName); err != nil {
+				return err
 			}
 		}
 	}
@@ -74,8 +69,8 @@ func (d *Defaulters) GenerateDefaultSSHKeys(ctx context.Context, machineConfigs 
 }
 
 type MachineConfigDefaulters struct {
-	keyGenerated bool
-	defaulters   *Defaulters
+	sshKey     string
+	defaulters *Defaulters
 }
 
 func NewMachineConfigDefaulters(d *Defaulters) *MachineConfigDefaulters {
@@ -84,28 +79,10 @@ func NewMachineConfigDefaulters(d *Defaulters) *MachineConfigDefaulters {
 	}
 }
 
-func (md *MachineConfigDefaulters) defaultKeyCount(ctx context.Context, clientMap AwsClientMap, m *v1alpha1.SnowMachineConfig, keyName string) (int, error) {
-	var count int
-
-	for _, ip := range m.Spec.Devices {
-		client, ok := clientMap[ip]
-		if !ok {
-			return count, fmt.Errorf("credentials not found for device [%s]", ip)
-		}
-
-		keyExists, err := client.EC2KeyNameExists(ctx, keyName)
-		if err != nil {
-			return count, fmt.Errorf("describing key pair on snow device [deviceIP=%s]: %v", ip, err)
-		}
-		if keyExists {
-			count += 1
-		}
-	}
-
-	return count, nil
-}
-
-// SetupDefaultSSHKey checks the existing keys and sets up a default key.
+// SetupDefaultSSHKey creates and imports a default ssh key to snow devices listed in the snow machine config.
+// If not exist, a ssh auth key is generated locally first. Then we loop through the devices in the machine config,
+// and import the key to any device that does not have the key. In the end the default ssh key name is assigned to
+// the snow machine config.
 func (md *MachineConfigDefaulters) SetupDefaultSSHKey(ctx context.Context, m *v1alpha1.SnowMachineConfig, clusterName string) error {
 	defaultSSHKeyName := md.defaultSSHKeyName(clusterName)
 
@@ -113,23 +90,13 @@ func (md *MachineConfigDefaulters) SetupDefaultSSHKey(ctx context.Context, m *v1
 	if err != nil {
 		return err
 	}
-	keyCount, err := md.defaultKeyCount(ctx, clientMap, m, defaultSSHKeyName)
-	if err != nil {
-		return err
-	}
-	if keyCount > 0 && keyCount < len(m.Spec.Devices) {
-		return fmt.Errorf("default key [keyName=%s] only exists on some of the devices. Use 'aws ec2 import-key-pair' to import this key to all the devices", defaultSSHKeyName)
-	}
-	if keyCount == len(m.Spec.Devices) {
-		md.keyGenerated = true
-		m.Spec.SshKeyName = defaultSSHKeyName
-		return nil
-	}
 
-	logger.V(1).Info("SnowMachineConfig SshKey is empty. Creating default key pair", "default key name", defaultSSHKeyName)
-	key, err := md.defaulters.keyGenerator.GenerateSSHAuthKey(md.defaulters.writer)
-	if err != nil {
-		return err
+	if len(md.sshKey) <= 0 {
+		logger.V(1).Info("SnowMachineConfig SshKey is empty. Creating default key pair", "default key name", defaultSSHKeyName)
+		md.sshKey, err = md.defaulters.keyGenerator.GenerateSSHAuthKey(md.defaulters.writer)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, ip := range m.Spec.Devices {
@@ -138,14 +105,22 @@ func (md *MachineConfigDefaulters) SetupDefaultSSHKey(ctx context.Context, m *v1
 			return fmt.Errorf("credentials not found for device [%s]", ip)
 		}
 
-		err := client.EC2ImportKeyPair(ctx, defaultSSHKeyName, []byte(key))
+		keyExists, err := client.EC2KeyNameExists(ctx, defaultSSHKeyName)
 		if err != nil {
+			return fmt.Errorf("describing key pair on snow device [%s]: %v", ip, err)
+		}
+
+		if keyExists {
+			continue
+		}
+
+		if err = client.EC2ImportKeyPair(ctx, defaultSSHKeyName, []byte(md.sshKey)); err != nil {
 			return fmt.Errorf("importing key pair on snow device [deviceIP=%s]: %v", ip, err)
 		}
 	}
 
-	md.keyGenerated = true
 	m.Spec.SshKeyName = defaultSSHKeyName
+
 	return nil
 }
 
