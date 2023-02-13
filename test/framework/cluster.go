@@ -1446,16 +1446,52 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 	}
 }
 
-// VerifyCertManagerPackageInstalled is checking if the Cert manager package gets installed correctly
-func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(packageName string) {
-	ctx := context.Background()
-	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
+// VerifyCertManagerPackageInstalled is checking if the cert manager package gets installed correctly.
+func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namespace string, packageName string, mgmtCluster *types.Cluster) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	e.T.Log("Waiting for package", packageName, "to be installed")
+	deployments := []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"}
+
+	var wg sync.WaitGroup
+	wg.Add(len(deployments))
+	errCh := make(chan error, 1)
+	okCh := make(chan string, 1)
+
+	time.Sleep(3 * time.Minute)
+
+	e.T.Log("Waiting for Package", packageName, "To be installed")
+
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.Cluster(), packageName, "10m", packageMetadatNamespace)
+		mgmtCluster, packageName, "5m", fmt.Sprintf("%s-%s", namespace, e.ClusterName))
+
 	if err != nil {
-		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
+		e.T.Fatalf("waiting for cert-manager package timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
+
+	for _, name := range deployments {
+		go func(name string) {
+			defer wg.Done()
+			err := e.KubectlClient.WaitForDeployment(ctx,
+				e.Cluster(), "5m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
+			if err != nil {
+				errCh <- err
+			}
+		}(name)
+	}
+
+	go func() {
+		wg.Wait()
+		okCh <- "completed"
+	}()
+
+	select {
+	case err := <-errCh:
+		e.T.Fatal(err)
+	case <-okCh:
+		return
 	}
 }
 
