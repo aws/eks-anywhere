@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
@@ -45,14 +44,9 @@ func init() {
 }
 
 func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string) error {
-	csvFile, err := os.Open(hOpts.csvPath)
+	hardwareYaml, err := hardware.BuildHardwareYaml(hOpts.csvPath)
 	if err != nil {
-		return fmt.Errorf("csv: %v", err)
-	}
-
-	reader, err := hardware.NewCSVReader(csvFile)
-	if err != nil {
-		return fmt.Errorf("csv: %v", err)
+		return fmt.Errorf("building hardware yaml from csv: %v", err)
 	}
 
 	fh, err := hardware.CreateOrStdout(hOpts.outputPath)
@@ -61,9 +55,10 @@ func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string
 	}
 	bufferedWriter := bufio.NewWriter(fh)
 	defer bufferedWriter.Flush()
-	writer := hardware.NewTinkerbellManifestYAML(bufferedWriter)
+	_, err = bufferedWriter.Write(hardwareYaml)
+	if err != nil {
+		return fmt.Errorf("writing hardware yaml to output: %v", err)
+	}
 
-	validator := hardware.NewDefaultMachineValidator()
-
-	return hardware.TranslateAll(reader, writer, validator)
+	return nil
 }
