@@ -56,8 +56,22 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	}
 }
 
+func (pi *Installer) isPackagesDisabled() bool {
+	if pi.spec.Cluster != nil {
+		if pi.spec.Cluster.Spec.Packages != nil {
+			if pi.spec.Cluster.Spec.Packages.Disable == true {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Enabling curated packages on the cluster")
+	if pi.isPackagesDisabled() {
+		return nil
+	}
 	err := pi.packageController.EnableCuratedPackages(ctx)
 	if err != nil {
 		return err
