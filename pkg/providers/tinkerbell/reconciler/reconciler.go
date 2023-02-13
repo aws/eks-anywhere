@@ -143,6 +143,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	return controller.NewPhaseRunner[*Scope]().Register(
 		r.ValidateClusterSpec,
 		r.ValidateHardware,
+		r.CheckRufioMachinesContactable,
 		r.ReconcileWorkers,
 	).Run(ctx, log, NewScope(clusterSpec))
 }
