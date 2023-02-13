@@ -213,7 +213,7 @@ Refers to the Kubernetes secret object with Snow devices credentials used to rec
 AMI ID from which to create the machine instance. Snow provider offers an AMI lookup logic which will look for a suitable AMI ID based on the Kubernetes version and osFamily if the field is empty.
 
 ### instanceType (optional)
-Type of the Snow EC2 machine instance. Permitted values: `sbe-c.large`, `sbe-c.xlarge`, `sbe-c.2xlarge`, `sbe-c.4xlarge`, `sbe-c.8xlarge`, `sbe-c.12xlarge`, `sbe-c.16xlarge`, `sbe-c.24xlarge` (Default: `sbe-c.large`).
+Type of the Snow EC2 machine instance. See [Quotas for Compute Instances on a Snowball Edge Device](https://docs.aws.amazon.com/snowball/latest/developer-guide/ec2-edge-limits.html) for supported instance types on Snow (Default: `sbe-c.large`).
 
 ### osFamily
 Operating System on instance machines. Permitted value: ubuntu.
