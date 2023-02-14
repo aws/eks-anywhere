@@ -151,7 +151,6 @@ func (g *FileGenerator) WriteHardwareYAML(hardwareCSVPath string) error {
 	if err != nil {
 		return fmt.Errorf("building hardware manifest from csv file %s: %v", hardwareCSVPath, err)
 	}
-	fmt.Printf("YAML: \n\n%v\n", string(hardwareSpec))
 	if filePath, err := g.eksaWriter.Write(hardwareFileName, hardwareSpec, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("writing eks-a hardware manifest file into %s: %v", filePath, err)
 	}
