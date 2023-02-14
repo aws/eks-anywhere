@@ -568,7 +568,7 @@ func TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade(t *testing.T) {
 		),
 		provider.WithProviderUpgrade(
 			framework.UpdateSnowUbuntuTemplate123Var(),
-			api.WithSnowInstanceTypeForAllMachines(v1alpha1.SbeCXLarge),
+			api.WithSnowInstanceTypeForAllMachines("sbe-c.large"),
 			api.WithSnowPhysicalNetworkConnectorForAllMachines(v1alpha1.QSFP),
 		),
 		framework.WithEnvVar(features.SnowProviderEnvVar, "true"),
