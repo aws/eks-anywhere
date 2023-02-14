@@ -55,6 +55,14 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 		Name: "test_controller",
 		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
 	}
+	chartDev := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "public.ecr.aws/l0g8r8j6/eks-anywhere-packages:v1",
+	}
+	chartStaging := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "public.ecr.aws/w9m0f3l5/eks-anywhere-packages:v1",
+	}
 	eksaAccessId := "test-access-id"
 	eksaAccessKey := "test-access-key"
 	eksaRegion := "test-region"
@@ -124,6 +132,60 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
 			chart:          chart,
+			eksaAccessID:   eksaAccessId,
+			eksaAccessKey:  eksaAccessKey,
+			eksaRegion:     eksaRegion,
+			httpProxy:      "1.1.1.1",
+			httpsProxy:     "1.1.1.1",
+			noProxy:        []string{"1.1.1.1/24"},
+			registryMirror: nil,
+			writer:         writer,
+			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
+		},
+		{
+			WithT:          NewWithT(t),
+			ctx:            context.Background(),
+			kubectl:        k,
+			chartInstaller: ci,
+			command: curatedpackages.NewPackageControllerClient(
+				ci, k, clusterName, kubeConfig, chartDev,
+				nil,
+				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
+				curatedpackages.WithEksaRegion(eksaRegion),
+				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
+				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
+			),
+			clusterName:    clusterName,
+			kubeConfig:     kubeConfig,
+			chart:          chartDev,
+			eksaAccessID:   eksaAccessId,
+			eksaAccessKey:  eksaAccessKey,
+			eksaRegion:     eksaRegion,
+			httpProxy:      "1.1.1.1",
+			httpsProxy:     "1.1.1.1",
+			noProxy:        []string{"1.1.1.1/24"},
+			registryMirror: nil,
+			writer:         writer,
+			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
+		},
+		{
+			WithT:          NewWithT(t),
+			ctx:            context.Background(),
+			kubectl:        k,
+			chartInstaller: ci,
+			command: curatedpackages.NewPackageControllerClient(
+				ci, k, clusterName, kubeConfig, chartStaging,
+				nil,
+				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
+				curatedpackages.WithEksaRegion(eksaRegion),
+				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
+				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
+			),
+			clusterName:    clusterName,
+			kubeConfig:     kubeConfig,
+			chart:          chartStaging,
 			eksaAccessID:   eksaAccessId,
 			eksaAccessKey:  eksaAccessKey,
 			eksaRegion:     eksaRegion,
@@ -310,7 +372,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -362,7 +424,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -533,7 +595,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -634,7 +696,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -681,7 +743,7 @@ func TestEnableCuratedPackagesActiveBundleNamespaceTimesOut(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
