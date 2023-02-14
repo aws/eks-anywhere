@@ -130,6 +130,11 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistr
 		defaultImageRegistry = packageDevDomain
 		sourceRegistry = publicDevECR
 	}
+	if strings.Contains(pc.chart.Image(), stagingAccount) {
+		accountName = stagingAccount
+		defaultImageRegistry = packageProdDomain
+		sourceRegistry = stagingDevECR
+	}
 	defaultRegistry = sourceRegistry
 
 	if pc.registryMirror != nil {
