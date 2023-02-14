@@ -122,11 +122,9 @@ func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTa
 
 	// Filter out any tags that don't match our prefix for doubletagged scenarios
 	for _, detail := range filteredImageDetails {
-		if len(detail.ImageTags) > 0 {
-			for j, tag := range detail.ImageTags {
-				if !strings.HasPrefix(*tag, prefix) {
-					detail.ImageTags = removeStringSlice(detail.ImageTags, *detail.ImageTags[j])
-				}
+		for _, tag := range detail.ImageTags {
+			if tag != nil && !strings.HasPrefix(*tag, prefix) {
+				detail.ImageTags = removeStringSlice(detail.ImageTags, *tag)
 			}
 		}
 	}
