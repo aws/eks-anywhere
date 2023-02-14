@@ -23,8 +23,6 @@ var secretsValueYaml string
 
 const (
 	eksaDefaultRegion = "us-west-2"
-	cronJobName       = "cronjob/cron-ecr-renew"
-	jobName           = "eksa-auth-refresher"
 	valueFileName     = "values.yaml"
 )
 
@@ -129,6 +127,11 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistr
 		accountName = devAccount
 		defaultImageRegistry = packageDevDomain
 		sourceRegistry = publicDevECR
+	}
+	if strings.Contains(pc.chart.Image(), stagingAccount) {
+		accountName = stagingAccount
+		defaultImageRegistry = packageProdDomain
+		sourceRegistry = stagingDevECR
 	}
 	defaultRegistry = sourceRegistry
 
