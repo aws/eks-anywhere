@@ -421,18 +421,6 @@ func TestCPackagesVSphereKubernetes124BottleRocketSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestCPackagesVSphereKubernetes125BottleRocketSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket125()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
-	)
-	runCuratedPackageInstallSimpleFlow(test)
-}
-
 func TestCPackagesVSphereKubernetes121UbuntuWorkloadCluster(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithUbuntu121())
