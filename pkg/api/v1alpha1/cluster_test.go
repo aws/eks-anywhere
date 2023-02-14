@@ -938,6 +938,18 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantCluster: nil,
 			wantErr:     true,
 		},
+		{
+			testName:    "invalid controller package configuration",
+			fileName:    "testdata/cluster_package_configuration_invalid.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName:    "invalid package cronjob",
+			fileName:    "testdata/cluster_package_cronjob_invalid.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {

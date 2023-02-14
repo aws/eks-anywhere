@@ -1,0 +1,38 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: test-ip
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: VSphereMachineConfig
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        name: eksa-unit-test
+        kind: VSphereMachineConfig
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: eksa-unit-test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  managementCluster:
+    name: billy
+  packages:
+    disable: false
+    cronjob:
+      repository: "ecr-token-refresher"
+      tag: "latest"
+      digest: "sha256:123123"
+      disable: false
