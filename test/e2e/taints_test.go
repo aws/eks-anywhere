@@ -47,7 +47,6 @@ func TestDockerKubernetes125Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
 			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
 		),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -74,7 +73,6 @@ func TestVSphereKubernetes125Taints(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(

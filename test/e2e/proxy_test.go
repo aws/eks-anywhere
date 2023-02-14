@@ -28,7 +28,6 @@ func TestVSphereKubernetes125UbuntuProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }

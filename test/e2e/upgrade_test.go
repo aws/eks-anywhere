@@ -124,7 +124,6 @@ func TestVSphereKubernetes124UbuntuTo125Upgrade(t *testing.T) {
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -144,7 +143,6 @@ func TestVSphereKubernetes124UbuntuTo125UpgradeCiliumPolicyEnforcementMode(t *te
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
 		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -159,7 +157,6 @@ func TestVSphereKubernetes124UbuntuTo125MultipleFieldsUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 		provider.WithProviderUpgrade(
 			provider.Ubuntu125Template(),
 			api.WithNumCPUsForAllMachines(vsphereCpVmNumCpuUpdateVar),
@@ -191,7 +188,6 @@ func TestVSphereKubernetes124UbuntuTo125WithFluxLegacyUpgrade(t *testing.T) {
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -213,7 +209,6 @@ func TestVSphereKubernetes124UbuntuTo125DifferentNamespaceWithFluxLegacyUpgrade(
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -225,7 +220,6 @@ func TestVSphereKubernetes125UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -242,7 +236,6 @@ func TestVSphereKubernetes125UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -375,7 +368,6 @@ func TestDockerKubernetes124To125StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -391,7 +383,6 @@ func TestDockerKubernetes124To125ExternalEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
@@ -724,7 +715,6 @@ func TestTinkerbellKubernetes125UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlowForBareMetal(
 		test,

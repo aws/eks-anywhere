@@ -83,7 +83,6 @@ func TestDockerKubernetes125AWSIamAuth(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -134,7 +133,6 @@ func TestVSphereKubernetes125AWSIamAuth(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu125()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -192,7 +190,6 @@ func TestVSphereKubernetes124To125AWSIamAuthUpgrade(t *testing.T) {
 		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
-		framework.WithEnvVar(features.K8s125SupportEnvVar, "true"),
 	)
 }
 
