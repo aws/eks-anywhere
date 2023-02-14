@@ -232,7 +232,7 @@ func TestNutanixKubernetes124SimpleFlowWithName(t *testing.T) {
 func TestNutanixKubernetes125SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu124Nutanix()),
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 	)
 	runSimpleFlow(test)
