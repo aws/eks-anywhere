@@ -1102,15 +1102,16 @@ func (f *Factory) WithDiagnosticCollectorImage(diagnosticCollectorImage string) 
 }
 
 func (f *Factory) WithCollectorFactory() *Factory {
+	f.WithFileReader()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CollectorFactory != nil {
 			return nil
 		}
 
 		if f.diagnosticCollectorImage == "" {
-			f.dependencies.CollectorFactory = diagnostics.NewDefaultCollectorFactory()
+			f.dependencies.CollectorFactory = diagnostics.NewDefaultCollectorFactory(f.dependencies.FileReader)
 		} else {
-			f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)
+			f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage, f.dependencies.FileReader)
 		}
 		return nil
 	})
@@ -1140,9 +1141,7 @@ func (f *Factory) WithFileReader() *Factory {
 			return nil
 		}
 
-		f.dependencies.FileReader = files.NewReader(files.WithUserAgent(
-			fmt.Sprintf("eks-a-cli/%s", version.Get().GitVersion)),
-		)
+		f.dependencies.FileReader = files.NewReader(files.WithEKSAUserAgent("cli", version.Get().GitVersion))
 		return nil
 	})
 

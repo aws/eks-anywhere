@@ -14,7 +14,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -121,7 +120,7 @@ func (e *ClusterE2ETest) setIamAuthClientPATH() error {
 
 func (e *ClusterE2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error) {
 	c := e.ClusterConfig.Cluster
-	r := manifests.NewReader(files.NewReader())
+	r := manifests.NewReader(newFileReader())
 	eksdRelease, err := r.ReadEKSD(version.Get().GitVersion, string(c.Spec.KubernetesVersion))
 	if err != nil {
 		return nil, fmt.Errorf("getting EKS-D release spec from bundle: %v", err)

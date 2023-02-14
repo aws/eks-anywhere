@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 )
 
@@ -134,4 +135,11 @@ const sanitizePathReplacementChar = "_"
 // A-Z, a-z, 0-9, _ or - are illegal and replaces them with _.
 func SanitizePath(s string) string {
 	return sanitizePathChars.ReplaceAllString(s, sanitizePathReplacementChar)
+}
+
+// NewFileReader builds a file reader with a proper user-agent.
+// Unit tests should never make network call to the internet, but just in case we
+// set the user-agent to be able to pin-point them here.
+func NewFileReader() *files.Reader {
+	return files.NewReader(files.WithEKSAUserAgent("unit-test", "no-version"))
 }

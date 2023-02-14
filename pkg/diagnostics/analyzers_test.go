@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 )
@@ -32,7 +33,7 @@ func getDeploymentStatusAnalyzer(analyzers []*diagnostics.Analyze, name string) 
 }
 
 func TestEksaLogTextAnalyzers(t *testing.T) {
-	collectorFactory := diagnostics.NewDefaultCollectorFactory()
+	collectorFactory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := collectorFactory.DefaultCollectors()
 	collectors = append(collectors, collectorFactory.ManagementClusterCollectors()...)
 	analyzerFactory := diagnostics.NewAnalyzerFactory()
