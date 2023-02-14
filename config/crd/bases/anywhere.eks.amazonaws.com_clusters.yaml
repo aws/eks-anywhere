@@ -249,7 +249,7 @@ spec:
                         description: DisableWebhooks on package controller
                         type: boolean
                       env:
-                        description: Env of package controller
+                        description: Env of package controller in the format `key=value`
                         items:
                           type: string
                         type: array
@@ -263,7 +263,7 @@ spec:
                             description: ImageResource resources for container image.
                             properties:
                               cpu:
-                                description: Cpu image cpu
+                                description: CPU image cpu
                                 type: string
                               memory:
                                 description: Memory image memory
@@ -273,7 +273,7 @@ spec:
                             description: Requests for image resources
                             properties:
                               cpu:
-                                description: Cpu image cpu
+                                description: CPU image cpu
                                 type: string
                               memory:
                                 description: Memory image memory

@@ -772,10 +772,10 @@ type PackageConfiguration struct {
 	Disable bool `json:"disable,omitempty"`
 
 	// Controller package controller configuration
-	Controller PackageControllerConfiguration `json:"controller,omitempty"`
+	Controller *PackageControllerConfiguration `json:"controller,omitempty"`
 
 	// Cronjob for ecr token refresher
-	CronJob PackageControllerCronJob `json:"cronjob,omitempty"`
+	CronJob *PackageControllerCronJob `json:"cronjob,omitempty"`
 }
 
 // Equal for PackageConfiguration.
@@ -786,7 +786,7 @@ func (n *PackageConfiguration) Equal(o *PackageConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Disable == o.Disable && n.Controller.Equal(&o.Controller) && n.CronJob.Equal(&o.CronJob)
+	return n.Disable == o.Disable && n.Controller.Equal(o.Controller) && n.CronJob.Equal(o.CronJob)
 }
 
 // PackageControllerConfiguration configure aspects of package controller.
