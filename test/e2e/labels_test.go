@@ -91,14 +91,14 @@ func TestVSphereKubernetes125Labels(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes124LabelsBottlerocket(t *testing.T) {
-	provider := bottlerocket124ProviderWithLabels(t)
+func TestVSphereKubernetes125LabelsBottlerocket(t *testing.T) {
+	provider := bottlerocket125ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube124),
+			api.WithKubernetesVersion(v1alpha1.Kube125),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -107,7 +107,7 @@ func TestVSphereKubernetes124LabelsBottlerocket(t *testing.T) {
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
@@ -175,7 +175,7 @@ func ubuntu125ProviderWithLabels(t *testing.T) *framework.VSphere {
 	)
 }
 
-func bottlerocket124ProviderWithLabels(t *testing.T) *framework.VSphere {
+func bottlerocket125ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -191,6 +191,6 @@ func bottlerocket124ProviderWithLabels(t *testing.T) *framework.VSphere {
 			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithBottleRocket124(),
+		framework.WithBottleRocket125(),
 	)
 }

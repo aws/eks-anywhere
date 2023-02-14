@@ -110,11 +110,11 @@ func TestVSphereKubernetes125GitFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes121BottleRocketFluxLegacy(t *testing.T) {
+func TestVSphereKubernetes125BottleRocketFluxLegacy(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket121()),
+		framework.NewVSphere(t, framework.WithBottleRocket125()),
 		framework.WithFluxLegacy(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
@@ -122,11 +122,11 @@ func TestVSphereKubernetes121BottleRocketFluxLegacy(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes121BottleRocketGithubFlux(t *testing.T) {
+func TestVSphereKubernetes125BottleRocketGithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket121()),
+		framework.NewVSphere(t, framework.WithBottleRocket125()),
 		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
@@ -134,11 +134,11 @@ func TestVSphereKubernetes121BottleRocketGithubFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes121BottleRocketGitFlux(t *testing.T) {
+func TestVSphereKubernetes125BottleRocketGitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket121()),
+		framework.NewVSphere(t, framework.WithBottleRocket125()),
 		framework.WithFluxGit(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
