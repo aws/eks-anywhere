@@ -215,9 +215,9 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 	done := make(chan error)
 	go func() {
 		defer close(done)
-		readyCnt := 0
 		pbc := &packagesv1.PackageBundleController{}
 		for {
+			readyCnt := 0
 			err := pc.kubectl.GetObject(timeoutCtx, packageBundleControllerResource, pc.clusterName,
 				packagesv1.PackageNamespace, pc.kubeConfig, pbc)
 			if err != nil {
