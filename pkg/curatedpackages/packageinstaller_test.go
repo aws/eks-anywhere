@@ -93,3 +93,40 @@ func TestPackageInstallerFailWhenPackageFails(t *testing.T) {
 
 	tt.command.InstallCuratedPackages(tt.ctx)
 }
+
+func TestPackageInstallerDisabled(t *testing.T) {
+	tt := newPackageInstallerTest(t)
+	tt.spec.Cluster.Spec.Packages = &anywherev1.PackageConfiguration{
+		Disable: true,
+	}
+
+	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(nil)
+
+	tt.command.InstallCuratedPackages(tt.ctx)
+}
+
+func TestIsPackageControllerDisabled(t *testing.T) {
+	tt := newPackageInstallerTest(t)
+
+	if curatedpackages.IsPackageControllerDisabled(nil) == true {
+		t.Errorf("nil cluster should be enabled")
+	}
+
+	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) == true {
+		t.Errorf("nil package controller should be enabled")
+	}
+
+	tt.spec.Cluster.Spec.Packages = &anywherev1.PackageConfiguration{
+		Disable: false,
+	}
+	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) == true {
+		t.Errorf("package controller should be enabled")
+	}
+
+	tt.spec.Cluster.Spec.Packages = &anywherev1.PackageConfiguration{
+		Disable: true,
+	}
+	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) == false {
+		t.Errorf("package controller should be disabled")
+	}
+}
