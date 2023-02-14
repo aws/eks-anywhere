@@ -78,6 +78,7 @@ func (g *FileGenerator) Init(writer filewriter.FileWriter, eksaSystemDir, fluxSy
 	return nil
 }
 
+// WriteEksaFiles writes the files defining objects in the eksa-system namespace for the cluster to the git repo.
 func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareCSVPath string) error {
 	if datacenterConfig == nil && machineConfigs == nil {
 		return nil
@@ -92,11 +93,13 @@ func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConf
 	}
 
 	if hardwareCSVPath != "" {
-		// Allow edits to a hardware.yaml file by adding it to resources in the kuztomization.yaml file
-		kuztomizationValues["HardwareFileName"] = hardwareFileName
 		if err := g.WriteHardwareYAML(hardwareCSVPath); err != nil {
 			return err
 		}
+
+		// Allow edits to a hardware.yaml file to be recognized by flux by
+		// adding it to resources in the kuztomization.yaml file
+		kuztomizationValues["HardwareFileName"] = hardwareFileName
 	}
 
 	if err := g.WriteEksaKustomization(kuztomizationValues); err != nil {
@@ -154,6 +157,7 @@ func (g *FileGenerator) WriteHardwareYAML(hardwareCSVPath string) error {
 	}
 	return nil
 }
+
 func (g *FileGenerator) WriteFluxKustomization(clusterSpec *cluster.Spec) error {
 	values := map[string]string{
 		"Namespace": clusterSpec.FluxConfig.Spec.SystemNamespace,
