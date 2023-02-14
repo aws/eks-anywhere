@@ -177,6 +177,16 @@ func TestVSphereKubernetes124BottleRocketAWSIamAuth(t *testing.T) {
 	runAWSIamAuthFlow(test)
 }
 
+func TestVSphereKubernetes125BottleRocketAWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket125()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+	)
+	runAWSIamAuthFlow(test)
+}
+
 func TestVSphereKubernetes124To125AWSIamAuthUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu124())
 	test := framework.NewClusterE2ETest(

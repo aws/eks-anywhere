@@ -54,6 +54,34 @@ func TestCPackagesClusterAutoscalerVSphereKubernetes123BottleRocketSimpleFlow(t 
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
 
+func TestCPackagesClusterAutoscalerVSphereKubernetes125UbuntuSimpleFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runAutoscalerWitMetricsServerSimpleFlow(test)
+}
+
+func TestCPackagesClusterAutoscalerVSphereKubernetes125BottleRocketSimpleFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewVSphere(t, framework.WithBottleRocket125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runAutoscalerWitMetricsServerSimpleFlow(test)
+}
+
 func TestCPackagesClusterAutoscalerNutanixKubernetes124UbuntuSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2

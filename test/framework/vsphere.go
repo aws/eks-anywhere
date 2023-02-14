@@ -334,6 +334,16 @@ func (v *VSphere) WithBottleRocket124() api.ClusterConfigFiller {
 	)
 }
 
+// WithBottleRocket125 returns br 1.25 var.
+func WithBottleRocket125() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube125)),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		)
+	}
+}
+
 // WithBottleRocket124 returns br 124 var.
 func WithBottleRocket124() VSphereOpt {
 	return func(v *VSphere) {
@@ -488,6 +498,11 @@ func (v *VSphere) Bottlerocket123Template() api.VSphereFiller {
 // Bottlerocket124Template returns vsphere filler for 1.24 BR.
 func (v *VSphere) Bottlerocket124Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube124))
+}
+
+// Bottlerocket125Template returns vsphere filler for 1.25 BR.
+func (v *VSphere) Bottlerocket125Template() api.VSphereFiller {
+	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube125))
 }
 
 func (v *VSphere) getDevRelease() *releasev1.EksARelease {

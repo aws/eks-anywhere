@@ -26,18 +26,18 @@ func runVSphereDisableCSIUpgradeFlow(test *framework.ClusterE2ETest, updateVersi
 	test.DeleteCluster()
 }
 
-func TestVSphereKubernetes124DisableCSIUpgrade(t *testing.T) {
+func TestVSphereKubernetes125DisableCSIUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t,
-		framework.WithUbuntu124(),
+		framework.WithUbuntu125(),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 	)
 	runVSphereDisableCSIUpgradeFlow(
 		test,
-		v1alpha1.Kube124,
+		v1alpha1.Kube125,
 		provider,
 	)
 }
