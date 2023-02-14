@@ -23,8 +23,6 @@ var secretsValueYaml string
 
 const (
 	eksaDefaultRegion = "us-west-2"
-	cronJobName       = "cronjob/cron-ecr-renew"
-	jobName           = "eksa-auth-refresher"
 	valueFileName     = "values.yaml"
 )
 
