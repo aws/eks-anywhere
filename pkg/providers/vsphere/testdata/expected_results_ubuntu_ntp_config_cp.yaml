@@ -62,7 +62,7 @@ spec:
       resourcePool: '*/Resources'
       server: vsphere_server
       storagePolicyName: "vSAN Default Storage Policy"
-      template: /SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -82,18 +82,12 @@ spec:
       etcd:
         external:
           endpoints: []
-          caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
-          certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"
-          keyFile: "/var/lib/kubeadm/pki/apiserver-etcd-client.key"
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
-      pause:
-        imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
-        imageTag: v1.21.2-eks-1-21-4
-      bottlerocketBootstrap:
-        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
-        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
       apiServer:
         extraArgs:
           cloud-provider: external
@@ -105,7 +99,7 @@ spec:
           profiling: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
-        - hostPath: /var/lib/kubeadm/audit-policy.yaml
+        - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
           name: audit-policy
           pathType: File
@@ -120,23 +114,10 @@ spec:
           cloud-provider: external
           profiling: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        extraVolumes:
-        - hostPath: /var/lib/kubeadm/controller-manager.conf
-          mountPath: /etc/kubernetes/controller-manager.conf
-          name: kubeconfig
-          pathType: File
-          readOnly: true
       scheduler:
         extraArgs:
           profiling: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        extraVolumes:
-        - hostPath: /var/lib/kubeadm/scheduler.conf
-          mountPath: /etc/kubernetes/scheduler.conf
-          name: kubeconfig
-          pathType: File
-          readOnly: true
-      certificatesDir: /var/lib/kubeadm/pki
     files:
     - content: |
         apiVersion: v1
@@ -360,12 +341,6 @@ spec:
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
-      pause:
-        imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
-        imageTag: v1.21.2-eks-1-21-4
-      bottlerocketBootstrap:
-        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
-        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
@@ -392,7 +367,7 @@ spec:
       sshAuthorizedKeys:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
-    format: bottlerocket
+    format: cloud-config
   replicas: 3
   version: v1.21.2-eks-1-21-4
 ---
@@ -453,17 +428,22 @@ spec:
   replicas: 3
   etcdadmConfigSpec:
     etcdadmBuiltin: true
-    format: bottlerocket
+    format: cloud-config
     ntp:
       enabled: true
       servers: 
       - time-a.eks-a.aws
       - time-b.eks-a.aws
       - 192.168.0.10
-    bottlerocketConfig:
-      etcdImage: public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.16-eks-1-21-4
-      bootstrapImage: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-21-4-eks-a-v0.0.0-dev-build.158
-      pauseImage: public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4
+    cloudInitConfig:
+      version: 3.4.16
+      installDir: "/usr/bin"
+    preEtcdadmCommands:
+      - hostname "{{ ds.meta_data.hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
       - name: ec2-user
@@ -497,7 +477,7 @@ spec:
       resourcePool: '*/Resources'
       server: vsphere_server
       storagePolicyName: "vSAN Default Storage Policy"
-      template: /SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 ---
 apiVersion: v1

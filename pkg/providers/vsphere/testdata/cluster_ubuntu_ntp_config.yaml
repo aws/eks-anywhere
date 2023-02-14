@@ -45,10 +45,10 @@ spec:
   folder: "/SDDC-Datacenter/vm"
   memoryMiB: 8192
   numCPUs: 2
-  osFamily: bottlerocket
+  osFamily: ubuntu
   resourcePool: "*/Resources"
   storagePolicyName: "vSAN Default Storage Policy"
-  template: "/SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
   hostOSConfiguration:
     ntpConfiguration:
       servers:
@@ -71,10 +71,10 @@ spec:
   folder: "/SDDC-Datacenter/vm"
   memoryMiB: 4096
   numCPUs: 3
-  osFamily: bottlerocket
+  osFamily: ubuntu
   resourcePool: "*/Resources"
   storagePolicyName: "vSAN Default Storage Policy"
-  template: "/SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
   hostOSConfiguration:
     ntpConfiguration:
       servers:
@@ -97,10 +97,10 @@ spec:
   folder: "/SDDC-Datacenter/vm"
   memoryMiB: 4096
   numCPUs: 3
-  osFamily: bottlerocket
+  osFamily: ubuntu
   resourcePool: "*/Resources"
   storagePolicyName: "vSAN Default Storage Policy"
-  template: "/SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
   hostOSConfiguration:
     ntpConfiguration:
       servers:
