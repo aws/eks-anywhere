@@ -3,7 +3,9 @@ package yaml
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 	"sigs.k8s.io/yaml"
 )
 
@@ -24,4 +26,34 @@ func Serialize[T any](objs ...T) ([][]byte, error) {
 		r = append(r, b)
 	}
 	return r, nil
+}
+
+// Strips null fields from the yaml.
+func StripNull(resources []byte) ([]byte, error) {
+	uList, err := unstructuredutil.YamlToUnstructured(resources)
+	if err != nil {
+		return nil, fmt.Errorf("stripping object of null fields")
+	}
+
+	for _, u := range uList {
+		stripNulls(u.Object)
+	}
+
+	return unstructuredutil.UnstructuredToYaml(uList)
+}
+
+func stripNulls(m map[string]interface{}) {
+	val := reflect.ValueOf(m)
+	for _, key := range val.MapKeys() {
+		v := val.MapIndex(key)
+		if v.IsNil() {
+			delete(m, key.String())
+			continue
+		}
+		switch t := v.Interface().(type) {
+		// If key is a JSON object (Go Map), use recursion to go deeper
+		case map[string]interface{}:
+			stripNulls(t)
+		}
+	}
 }

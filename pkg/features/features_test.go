@@ -70,12 +70,12 @@ func TestIsActiveWithFeatureGatesTrue(t *testing.T) {
 	g.Expect(IsActive(fakeFeatureWithGate())).To(BeTrue())
 }
 
-func TestWithK8s125FeatureFlag(t *testing.T) {
+func TestWithK8s126FeatureFlag(t *testing.T) {
 	g := NewWithT(t)
 	setupContext(t)
 
-	g.Expect(os.Setenv(K8s125SupportEnvVar, "true")).To(Succeed())
-	g.Expect(IsActive(K8s125Support())).To(BeTrue())
+	g.Expect(os.Setenv(K8s126SupportEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(K8s126Support())).To(BeTrue())
 }
 
 func TestWithTinkerbellUseDiskExtractorDefaultDiskFlag(t *testing.T) {
