@@ -1979,13 +1979,13 @@ func TestPackageConfiguration_Equal(t *testing.T) {
 			name: "not equal controller",
 			pcn: &v1alpha1.PackageConfiguration{
 				Disable: true,
-				Controller: v1alpha1.PackageControllerConfiguration{
+				Controller: &v1alpha1.PackageControllerConfiguration{
 					Tag: "v1",
 				},
 			},
 			pco: &v1alpha1.PackageConfiguration{
 				Disable: false,
-				Controller: v1alpha1.PackageControllerConfiguration{
+				Controller: &v1alpha1.PackageControllerConfiguration{
 					Tag: "v2",
 				},
 			},
@@ -1994,12 +1994,12 @@ func TestPackageConfiguration_Equal(t *testing.T) {
 		{
 			name: "equal controller",
 			pcn: &v1alpha1.PackageConfiguration{
-				Controller: v1alpha1.PackageControllerConfiguration{
+				Controller: &v1alpha1.PackageControllerConfiguration{
 					Tag: "v1",
 				},
 			},
 			pco: &v1alpha1.PackageConfiguration{
-				Controller: v1alpha1.PackageControllerConfiguration{
+				Controller: &v1alpha1.PackageControllerConfiguration{
 					Tag: "v1",
 				},
 			},
@@ -2009,13 +2009,13 @@ func TestPackageConfiguration_Equal(t *testing.T) {
 			name: "not equal cronjob",
 			pcn: &v1alpha1.PackageConfiguration{
 				Disable: true,
-				CronJob: v1alpha1.PackageControllerCronJob{
+				CronJob: &v1alpha1.PackageControllerCronJob{
 					Tag: "v1",
 				},
 			},
 			pco: &v1alpha1.PackageConfiguration{
 				Disable: false,
-				CronJob: v1alpha1.PackageControllerCronJob{
+				CronJob: &v1alpha1.PackageControllerCronJob{
 					Tag: "v2",
 				},
 			},
@@ -2024,12 +2024,12 @@ func TestPackageConfiguration_Equal(t *testing.T) {
 		{
 			name: "equal cronjob",
 			pcn: &v1alpha1.PackageConfiguration{
-				CronJob: v1alpha1.PackageControllerCronJob{
+				CronJob: &v1alpha1.PackageControllerCronJob{
 					Tag: "v1",
 				},
 			},
 			pco: &v1alpha1.PackageConfiguration{
-				CronJob: v1alpha1.PackageControllerCronJob{
+				CronJob: &v1alpha1.PackageControllerCronJob{
 					Tag: "v1",
 				},
 			},
