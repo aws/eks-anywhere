@@ -119,6 +119,18 @@ func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTa
 	} else {
 		filteredImageDetails = imageTagFilterWithout(imageDetails, prefix)
 	}
+
+	// Filter out any tags that don't match our prefix for doubletagged scenarios
+	for _, detail := range filteredImageDetails {
+		if len(detail.ImageTags) > 0 {
+			for j, tag := range detail.ImageTags {
+				if !strings.HasPrefix(*tag, prefix) {
+					detail.ImageTags = removeStringSlice(detail.ImageTags, *detail.ImageTags[j])
+				}
+			}
+		}
+	}
+
 	// In case we don't find any tag substring matches, we still want to populate the bundle with the latest version.
 	if len(filteredImageDetails) < 1 {
 		filteredImageDetails = imageDetails
@@ -200,4 +212,14 @@ func GetLatestImageSha(ecrClient *ecr.ECR, repoName string) (string, error) {
 		return "", fmt.Errorf("error no images found")
 	}
 	return *latest.ImageTags[0], nil
+}
+
+// removeStringSlice removes a named string from a slice, without knowing it's index or it being ordered.
+func removeStringSlice(l []*string, item string) []*string {
+	for i, other := range l {
+		if *other == item {
+			return append(l[:i], l[i+1:]...)
+		}
+	}
+	return l
 }
