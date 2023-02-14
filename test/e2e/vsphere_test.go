@@ -373,7 +373,7 @@ func TestVSphereKubernetes121BottleRocketWorkloadClusterCuratedPackagesSimpleFlo
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes121BottleRocketWorkloadClusterCertManagerSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes121BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
 	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
