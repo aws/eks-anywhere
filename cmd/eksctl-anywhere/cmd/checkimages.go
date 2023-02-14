@@ -48,13 +48,13 @@ var checkImagesCommand = &cobra.Command{
 	},
 }
 
-func checkImages(context context.Context, spec string) error {
-	images, err := getImages(spec)
+func checkImages(context context.Context, clusterSpecPath string) error {
+	images, err := getImages(clusterSpecPath, "")
 	if err != nil {
 		return err
 	}
 
-	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(clusterSpecPath, version.Get())
 	if err != nil {
 		return err
 	}
