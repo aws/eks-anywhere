@@ -145,7 +145,9 @@ func markFlagHidden(flagSet *pflag.FlagSet, flagName string) {
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec, hardwareCSVPath string) *config.CliConfig {
-	cliConfig := &config.CliConfig{}
+	cliConfig := &config.CliConfig{
+		HardwareCSVPath: hardwareCSVPath,
+	}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
 		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
