@@ -1464,7 +1464,6 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namesp
 
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
 		mgmtCluster, packageName, "5m", fmt.Sprintf("%s-%s", namespace, e.ClusterName))
-
 	if err != nil {
 		e.T.Fatalf("waiting for cert-manager package timed out: %s", err)
 	}

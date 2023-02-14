@@ -2,9 +2,8 @@ package e2e
 
 import (
 	"fmt"
-	"time"
-
 	"path/filepath"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
