@@ -200,6 +200,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validatePodIAMConfig,
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
+	validatePackageControllerConfiguration,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -825,5 +826,19 @@ func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
 		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
 	}
 
+	return nil
+}
+
+func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
+	if clusterConfig.IsManaged() {
+		if clusterConfig.Spec.Packages != nil {
+			if clusterConfig.Spec.Packages.Controller != nil {
+				return fmt.Errorf("packages: controller should not be specified for a workload cluster")
+			}
+			if clusterConfig.Spec.Packages.CronJob != nil {
+				return fmt.Errorf("packages: cronjob should not be specified for a workload cluster")
+			}
+		}
+	}
 	return nil
 }
