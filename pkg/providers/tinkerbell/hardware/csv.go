@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"bufio"
+	"bytes"
 	stdcsv "encoding/csv"
 	"fmt"
 	"io"
@@ -9,6 +10,8 @@ import (
 	"strings"
 
 	csv "github.com/gocarina/gocsv"
+
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 )
 
 // CSVReader reads a CSV file and provides Machine instances. It satisfies the MachineReader interface. The ID field of
@@ -86,4 +89,24 @@ func ensureRequiredColumnsInCSV(unmatched []string) error {
 	}
 
 	return nil
+}
+
+// BuildHardwareYAML builds a hardware yaml from the csv at the provided path.
+func BuildHardwareYAML(path string) ([]byte, error) {
+	reader, err := NewNormalizedCSVReaderFromFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("reading csv: %v", err)
+	}
+
+	var b bytes.Buffer
+	writer := NewTinkerbellManifestYAML(&b)
+
+	validator := NewDefaultMachineValidator()
+
+	err = TranslateAll(reader, writer, validator)
+	if err != nil {
+		return nil, fmt.Errorf("generating hardware yaml: %v", err)
+	}
+
+	return unstructuredutil.StripNull(b.Bytes())
 }
