@@ -72,8 +72,10 @@ func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 	tt.createAllObjs()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	t.Log(tt.cluster.Status.FailureMessage)
 
 	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.cleanup()
 }
