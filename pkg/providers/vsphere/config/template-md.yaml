@@ -94,6 +94,13 @@ spec:
         path: "/etc/containerd/config_append.toml"
 {{- end }}
 {{- end }}
+{{- if .ntpServers }}
+      ntp:
+        enabled: true
+        servers: {{ range .ntpServers }}
+        - {{ . }}
+        {{- end }}
+{{- end }}
       preKubeadmCommands:
 {{- if and .registryMirrorMap (ne .format "bottlerocket") }}
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
