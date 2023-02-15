@@ -28,14 +28,7 @@ type Installer struct {
 
 // IsPackageControllerDisabled detect if the package controller is disabled.
 func IsPackageControllerDisabled(cluster *anywherev1.Cluster) bool {
-	if cluster != nil {
-		if cluster.Spec.Packages != nil {
-			if cluster.Spec.Packages.Disable {
-				return true
-			}
-		}
-	}
-	return false
+	return cluster != nil && cluster.Spec.Packages != nil && cluster.Spec.Packages.Disable
 }
 
 // NewInstaller installs packageController and packages during cluster creation.

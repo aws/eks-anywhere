@@ -108,25 +108,25 @@ func TestPackageInstallerDisabled(t *testing.T) {
 func TestIsPackageControllerDisabled(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
-	if curatedpackages.IsPackageControllerDisabled(nil) == true {
+	if curatedpackages.IsPackageControllerDisabled(nil) {
 		t.Errorf("nil cluster should be enabled")
 	}
 
-	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) == true {
+	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) {
 		t.Errorf("nil package controller should be enabled")
 	}
 
 	tt.spec.Cluster.Spec.Packages = &anywherev1.PackageConfiguration{
 		Disable: false,
 	}
-	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) == true {
+	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) {
 		t.Errorf("package controller should be enabled")
 	}
 
 	tt.spec.Cluster.Spec.Packages = &anywherev1.PackageConfiguration{
 		Disable: true,
 	}
-	if curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) == false {
+	if !curatedpackages.IsPackageControllerDisabled(tt.spec.Cluster) {
 		t.Errorf("package controller should be disabled")
 	}
 }
