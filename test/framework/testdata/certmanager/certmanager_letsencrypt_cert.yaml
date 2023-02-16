@@ -2,6 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: test-cert
+  namespace: eksa-packages
 spec:
   secretName: cert-manager-e2e
   duration: 170000h

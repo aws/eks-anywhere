@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: my-selfsigned-ca
-  namespace: cert-manager
+  namespace: eksa-packages
 spec:
   isCA: true
   commonName: my-selfsigned-ca
