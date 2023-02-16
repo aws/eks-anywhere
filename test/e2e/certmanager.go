@@ -12,7 +12,6 @@ import (
 
 const (
 	cmPackageName     = "cert-manager"
-	cmPackagePrefix   = "generated"
 	cmTargetNamespace = "cert-manager"
 )
 

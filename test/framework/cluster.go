@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/sha1"
 	_ "embed"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
@@ -1563,9 +1562,9 @@ func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error
 	}
 
 	data = map[string]interface{}{
-		"route53AccessKeyId": base64.StdEncoding.EncodeToString([]byte(accessKey)),
-		"route53ZoneId":      base64.StdEncoding.EncodeToString([]byte(zoneId)),
-		"route53Region":      base64.StdEncoding.EncodeToString([]byte(region)),
+		"route53AccessKeyId": accessKey,
+		"route53ZoneId":      zoneId,
+		"route53Region":      region,
 	}
 
 	certManagerIssuerData, err := templater.Execute(certManagerLetsEncryptIssuer, data)
