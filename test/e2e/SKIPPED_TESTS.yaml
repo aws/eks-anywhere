@@ -31,9 +31,6 @@ skipped_tests:
 - TestNutanixKubernetes122UbuntuWorkerNodeScaleDown5To2
 - TestNutanixKubernetes122UbuntuWorkerNodeScaleUp1To3
 - TestNutanixKubernetes122UbuntuWorkerNodeScaleUp2To5
-- TestNutanixKubernetes125CuratedPackagesClusterAutoscalerUbuntuSimpleFlow
-- TestNutanixKubernetes125CuratedPackagesEmissarySimpleFlow
-- TestNutanixKubernetes125CuratedPackagesSimpleFlow
 # Snow
 - TestSnowKubernetes121UbuntuAWSIamAuth
 - TestSnowKubernetes124To125AWSIamAuthUpgrade
@@ -53,6 +50,8 @@ skipped_tests:
 - TestSnowKubernetes121BottlerocketTo122Upgrade
 - TestSnowKubernetes122BottlerocketTo123Upgrade
 - TestSnowKubernetes123BottlerocketTo124Upgrade
+- TestSnowKubernetes122To123BottlerocketStaticIPUpgrade
+- TestSnowKubernetes123To124BottlerocketStaticIPUpgrade
 - TestSnowMulticlusterWorkloadClusterAPI
 - TestSnowKubernetes123UbuntuTaintsUpgradeFlow
 - TestSnowKubernetes121To122UbuntuUpgrade

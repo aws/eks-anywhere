@@ -21,7 +21,9 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/aws/ecr"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
+	"github.com/aws/eks-anywhere/release/pkg/helm"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
@@ -36,9 +38,28 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 
 	var sourceBranch string
 	var componentChecksum string
+	var Helmtag, Imagetag, Tokentag string
+	var Helmsha, Imagesha, TokenSha string
+	var err error
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
 
+	// Find latest Package Dev build for the Helm chart and Image which will always start with `0.0.0` and is built off of the package Github repo main on every commit.
+	// If we can't find the build starting with our substring, we default to the original dev tag.
+	if r.DevRelease && !r.DryRun {
+		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "0.0.0", true)
+		if err != nil {
+			fmt.Printf("Error getting dev version helm tag EKS Anywhere package controller, using latest version %v", err)
+		}
+		Imagetag, Imagesha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "v0.0.0", true)
+		if err != nil {
+			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
+		}
+		Tokentag, TokenSha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "ecr-token-refresher", "v0.0.0", true)
+		if err != nil {
+			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
+		}
+	}
 	for _, componentName := range sortedComponentNames {
 		for _, artifact := range artifacts[componentName] {
 			if artifact.Image != nil {
@@ -46,25 +67,69 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 				sourceBranch = imageArtifact.SourcedFromBranch
 				bundleImageArtifact := anywherev1alpha1.Image{}
 				if strings.HasSuffix(imageArtifact.AssetName, "helm") {
+					Digest := imageDigests[imageArtifact.ReleaseImageURI]
+					if r.DevRelease && Helmsha != "" && Helmtag != "" {
+						Digest = Helmsha
+						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Helmtag)
+					}
 					assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        assetName,
 						Description: fmt.Sprintf("Helm chart for %s", assetName),
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+						ImageDigest: Digest,
 					}
 				} else {
+					Digest := imageDigests[imageArtifact.ReleaseImageURI]
+					if strings.HasSuffix(imageArtifact.AssetName, "eks-anywhere-packages") && r.DevRelease && TokenSha != "" && Tokentag != "" {
+						Digest = Imagesha
+						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Imagetag)
+					} else if strings.HasSuffix(imageArtifact.AssetName, "ecr-token-refresher") && r.DevRelease && Imagesha != "" && Imagetag != "" {
+						Digest = TokenSha
+						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Tokentag)
+					}
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        imageArtifact.AssetName,
 						Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 						OS:          imageArtifact.OS,
 						Arch:        imageArtifact.Arch,
 						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+						ImageDigest: Digest,
 					}
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
+			}
+		}
+	}
+
+	if !r.DryRun && r.DevRelease && r.BuildRepoBranchName == "main" {
+		for _, componentName := range sortedComponentNames {
+			for _, artifact := range artifacts[componentName] {
+				if artifact.Image != nil {
+					imageArtifact := artifact.Image
+					sourceBranch = imageArtifact.SourcedFromBranch
+					if strings.HasSuffix(imageArtifact.AssetName, "helm") {
+						trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
+						fmt.Printf("trimmedAsset=%v\n\n", trimmedAsset)
+						helmDriver, err := helm.NewHelm()
+						if err != nil {
+							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "creating helm client")
+						}
+						fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
+						helmDest, err := helm.GetHelmDest(helmDriver, r, imageArtifact.ReleaseImageURI, trimmedAsset)
+						if err != nil {
+							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "getting Helm destination:")
+						}
+						fmt.Printf("helmDest=%v\n", helmDest)
+						fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
+						fmt.Printf("r.sourceClients")
+						err = helm.ModifyAndPushChartYaml(*imageArtifact, r, helmDriver, helmDest, artifacts, bundleImageArtifacts)
+						if err != nil {
+							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "modifying Chart.yaml and pushing Helm chart to destination:")
+						}
+					}
+				}
 			}
 		}
 	}
@@ -89,4 +154,15 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 		HelmChart:      bundleImageArtifacts["eks-anywhere-packages-helm"],
 	}
 	return bundle, nil
+}
+
+// replaceTag is used to replace the tag of an Image URI with a string.
+func replaceTag(uri, tag string) string {
+	NewURIList := strings.Split(uri, ":")
+	if len(NewURIList) < 2 {
+		return uri
+	}
+	NewURIList[len(NewURIList)-1] = tag
+	uri = strings.Join(NewURIList[:], ":")
+	return uri
 }

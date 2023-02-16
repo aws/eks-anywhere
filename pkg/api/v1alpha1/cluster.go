@@ -243,7 +243,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 
 // GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster.
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
-	return Kube124
+	return Kube125
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
@@ -320,6 +320,12 @@ func (c *Cluster) ProxyConfiguration() map[string]string {
 	}
 	noProxyList := append(c.Spec.ProxyConfiguration.NoProxy, c.Spec.ClusterNetwork.Pods.CidrBlocks...)
 	noProxyList = append(noProxyList, c.Spec.ClusterNetwork.Services.CidrBlocks...)
+	if c.Spec.ControlPlaneConfiguration.Endpoint != nil && c.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
+		noProxyList = append(
+			noProxyList,
+			c.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		)
+	}
 	return map[string]string{
 		"HTTP_PROXY":  c.Spec.ProxyConfiguration.HttpProxy,
 		"HTTPS_PROXY": c.Spec.ProxyConfiguration.HttpsProxy,

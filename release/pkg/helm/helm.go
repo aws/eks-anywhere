@@ -32,6 +32,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/yaml"
 
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
@@ -112,7 +113,7 @@ func GetChartImageTags(d *helmDriver, helmDest string) (*Requires, error) {
 	return helmRequires, nil
 }
 
-func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksArtifacts map[string][]releasetypes.Artifact) error {
+func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksArtifacts map[string][]releasetypes.Artifact, shaMap map[string]anywherev1alpha1.Image) error {
 	helmChart := strings.Split(i.ReleaseImageURI, ":")
 	helmtag := helmChart[1]
 
@@ -142,6 +143,13 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 		err = OverWriteChartValuesImageTag(helmDest, imageTagMap)
 		if err != nil {
 			return fmt.Errorf("overwriting the values.yaml version: %w", err)
+		}
+		if shaMap != nil {
+			fmt.Printf("Overwriting helm values.yaml image shas to new image shas for Dev Release %v\n", shaMap)
+			err = OverWriteChartValuesImageSha(helmDest, shaMap)
+			if err != nil {
+				return fmt.Errorf("overwriting the values.yaml version: %w", err)
+			}
 		}
 	}
 
@@ -425,6 +433,25 @@ func OverWriteChartValuesImageTag(filename string, tagMap map[string]string) err
 	}
 	values["controller"].(map[string]interface{})["tag"] = packagesURI[len(packagesURI)-1]
 	values["cronjob"].(map[string]interface{})["tag"] = refresherURI[len(refresherURI)-1]
+	yamlData, err := yaml.Marshal(&values)
+	if err != nil {
+		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", values, yamlData, err)
+	}
+	err = ioutil.WriteFile(valuesFile, yamlData, 0o644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func OverWriteChartValuesImageSha(filename string, shaMap map[string]anywherev1alpha1.Image) error {
+	valuesFile := filepath.Join(filename, "values.yaml")
+	values, err := chartutil.ReadValuesFile(valuesFile)
+	if err != nil {
+		return err
+	}
+	values["controller"].(map[string]interface{})["digest"] = shaMap["eks-anywhere-packages"].ImageDigest
+	values["cronjob"].(map[string]interface{})["digest"] = shaMap["ecr-token-refresher"].ImageDigest
 	yamlData, err := yaml.Marshal(&values)
 	if err != nil {
 		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", values, yamlData, err)

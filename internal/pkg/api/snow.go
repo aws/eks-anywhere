@@ -13,6 +13,7 @@ import (
 type SnowConfig struct {
 	datacenterConfig *anywherev1.SnowDatacenterConfig
 	machineConfigs   map[string]*anywherev1.SnowMachineConfig
+	ipPools          map[string]*anywherev1.SnowIPPool
 }
 
 type SnowFiller func(config SnowConfig)
@@ -25,9 +26,14 @@ func SnowToConfigFiller(fillers ...SnowFiller) ClusterConfigFiller {
 }
 
 func updateSnow(config *cluster.Config, fillers ...SnowFiller) {
+	if config.SnowIPPools == nil {
+		config.SnowIPPools = map[string]*anywherev1.SnowIPPool{}
+	}
+
 	sc := SnowConfig{
 		datacenterConfig: config.SnowDatacenter,
 		machineConfigs:   config.SnowMachineConfigs,
+		ipPools:          config.SnowIPPools,
 	}
 
 	for _, f := range fillers {
@@ -47,7 +53,8 @@ func WithSnowAMIIDForAllMachines(id string) SnowFiller {
 	}
 }
 
-func WithSnowInstanceTypeForAllMachines(instanceType anywherev1.SnowInstanceType) SnowFiller {
+// WithSnowInstanceTypeForAllMachines specifies an instance type for all the snow machine configs.
+func WithSnowInstanceTypeForAllMachines(instanceType string) SnowFiller {
 	return func(config SnowConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.InstanceType = instanceType
@@ -113,6 +120,31 @@ func WithChangeForAllSnowMachines(change SnowMachineConfigFiller) SnowFiller {
 	return func(config SnowConfig) {
 		for _, m := range config.machineConfigs {
 			change(m)
+		}
+	}
+}
+
+// WithSnowIPPool sets a SnowIPPool.
+func WithSnowIPPool(name, ipStart, ipEnd, gateway, subnet string) SnowFiller {
+	return func(config SnowConfig) {
+		config.ipPools[name] = &anywherev1.SnowIPPool{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       anywherev1.SnowIPPoolKind,
+				APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+			},
+			Spec: anywherev1.SnowIPPoolSpec{
+				Pools: []anywherev1.IPPool{
+					{
+						IPStart: ipStart,
+						IPEnd:   ipEnd,
+						Subnet:  subnet,
+						Gateway: gateway,
+					},
+				},
+			},
 		}
 	}
 }

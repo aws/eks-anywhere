@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -44,8 +45,14 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 }
 
 func initLogger() error {
-	outputFilePath := fmt.Sprintf("./eksa-cli-%s.log", time.Now().Format("2006-01-02T15_04_05"))
-	if err := logger.InitZap(logger.ZapOpts{
+	logsFolder := filepath.Join(".", "eksa-cli-logs")
+	err := os.MkdirAll(logsFolder, 0o750)
+	if err != nil {
+		return fmt.Errorf("failed to create logs folder: %v", err)
+	}
+
+	outputFilePath := filepath.Join(".", "eksa-cli-logs", fmt.Sprintf("%s.log", time.Now().Format("2006-01-02T15_04_05")))
+	if err = logger.InitZap(logger.ZapOpts{
 		Level:          viper.GetInt("verbosity"),
 		OutputFilePath: outputFilePath,
 	}); err != nil {

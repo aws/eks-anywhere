@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	aws "github.com/aws/eks-anywhere/pkg/aws"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -61,6 +62,21 @@ func (m *MockAwsClient) EC2ImportKeyPair(ctx context.Context, keyName string, ke
 func (mr *MockAwsClientMockRecorder) EC2ImportKeyPair(ctx, keyName, keyMaterial interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2ImportKeyPair", reflect.TypeOf((*MockAwsClient)(nil).EC2ImportKeyPair), ctx, keyName, keyMaterial)
+}
+
+// EC2InstanceTypes mocks base method.
+func (m *MockAwsClient) EC2InstanceTypes(ctx context.Context) ([]aws.EC2InstanceType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EC2InstanceTypes", ctx)
+	ret0, _ := ret[0].([]aws.EC2InstanceType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EC2InstanceTypes indicates an expected call of EC2InstanceTypes.
+func (mr *MockAwsClientMockRecorder) EC2InstanceTypes(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2InstanceTypes", reflect.TypeOf((*MockAwsClient)(nil).EC2InstanceTypes), ctx)
 }
 
 // EC2KeyNameExists mocks base method.

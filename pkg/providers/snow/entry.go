@@ -73,6 +73,14 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 			},
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
+					if err := cm.validator.ValidateInstanceType(ctx, m); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *cluster.Config) error {
+				for _, m := range c.SnowMachineConfigs {
 					if err := cm.validator.ValidateDeviceSoftware(ctx, m); err != nil {
 						return err
 					}

@@ -43,6 +43,7 @@ func init() {
 
 	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "this flag no longer works, use copy packages instead")
 	downloadImagesCmd.Flag("include-packages").Deprecated = "use copy packages command"
+	downloadImagesCmd.Flags().StringVarP(&downloadImagesRunner.bundlesOverride, "bundles-override", "", "", "Override default Bundles manifest (not recommended)")
 	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.insecure, "insecure", false, "Flag to indicate skipping TLS verification while downloading helm charts")
 }
 
@@ -50,6 +51,7 @@ var downloadImagesRunner = downloadImagesCommand{}
 
 type downloadImagesCommand struct {
 	outputFile      string
+	bundlesOverride string
 	includePackages bool
 	insecure        bool
 }
@@ -61,6 +63,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		helmOpts = append(helmOpts, executables.WithInsecure())
 	}
 	deps, err := factory.
+		WithFileReader().
 		WithManifestReader().
 		WithHelm(helmOpts...).
 		Build(ctx)
@@ -75,7 +78,8 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	downloadArtifacts := artifacts.Download{
-		Reader: deps.ManifestReader,
+		Reader:     deps.ManifestReader,
+		FileReader: deps.FileReader,
 		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, imagesFile),
@@ -90,6 +94,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		DstFile:            c.outputFile,
 		Packager:           packagerForFile(c.outputFile),
 		ManifestDownloader: oras.NewBundleDownloader(downloadFolder),
+		BundlesOverride:    c.bundlesOverride,
 	}
 
 	return downloadArtifacts.Run(ctx)

@@ -2,15 +2,15 @@ package clusters
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 // CleanupStatusAfterValidate removes errors from the cluster status. Intended to be used as a reconciler phase
@@ -20,41 +20,37 @@ func CleanupStatusAfterValidate(_ context.Context, _ logr.Logger, spec *cluster.
 	return controller.Result{}, nil
 }
 
-// IPUniquenessValidator defines an interface for the methods to validate the control plane IP.
-type IPUniquenessValidator interface {
-	ValidateControlPlaneIPUniqueness(cluster *anywherev1.Cluster) error
+// ClusterValidator runs cluster level validations.
+type ClusterValidator struct {
+	client client.Client
 }
 
-// IPValidator validates control plane IP.
-type IPValidator struct {
-	ipUniquenessValidator IPUniquenessValidator
-	client                client.Client
-}
-
-// NewIPValidator returns a new NewIPValidator.
-func NewIPValidator(ipUniquenessValidator IPUniquenessValidator, client client.Client) *IPValidator {
-	return &IPValidator{
-		ipUniquenessValidator: ipUniquenessValidator,
-		client:                client,
+// NewClusterValidator returns a validator that will run cluster level validations.
+func NewClusterValidator(client client.Client) *ClusterValidator {
+	return &ClusterValidator{
+		client: client,
 	}
 }
 
-// ValidateControlPlaneIP only validates IP on cluster creation.
-func (i *IPValidator) ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
-	capiCluster, err := controller.GetCAPICluster(ctx, i.client, spec.Cluster)
-	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "validating control plane IP")
+// ValidateManagementClusterName checks if the management cluster specified in the workload cluster spec is valid.
+func (v *ClusterValidator) ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
+	mgmtCluster := &anywherev1.Cluster{}
+	mgmtClusterKey := client.ObjectKey{
+		Namespace: cluster.Namespace,
+		Name:      cluster.Spec.ManagementCluster.Name,
 	}
-	if capiCluster != nil {
-		// If CAPI cluster exists, the control plane IP has already been validated,
-		// and it's possibly already in use so no need to validate it again
-		log.V(3).Info("CAPI cluster already exists, skipping control plane IP validation")
-		return controller.Result{}, nil
+	if err := v.client.Get(ctx, mgmtClusterKey, mgmtCluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			err := fmt.Errorf("unable to retrieve management cluster %v: %v", cluster.Spec.ManagementCluster.Name, err)
+			log.Error(err, "Invalid cluster configuration")
+			return err
+		}
 	}
-	if err := i.ipUniquenessValidator.ValidateControlPlaneIPUniqueness(spec.Cluster); err != nil {
-		spec.Cluster.Status.FailureMessage = ptr.String(err.Error())
-		log.Error(err, "Unavailable control plane IP")
-		return controller.ResultWithReturn(), nil
+	if mgmtCluster.IsManaged() {
+		err := fmt.Errorf("%s is not a valid management cluster", mgmtCluster.Name)
+		log.Error(err, "Invalid cluster configuration")
+		return err
 	}
-	return controller.Result{}, nil
+
+	return nil
 }

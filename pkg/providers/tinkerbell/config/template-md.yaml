@@ -79,6 +79,13 @@ spec:
           imageRepository: {{.bottlerocketBootstrapRepository}}
           imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
+{{- if and .proxyConfig (eq .format "bottlerocket") }}
+        proxy:
+          httpsProxy: {{.httpsProxy}}
+          noProxy: {{ range .noProxy }}
+            - {{ . }}
+          {{- end }}
+{{- end }}
 {{- if and .registryMirrorMap (eq .format "bottlerocket") }}
         registryMirror:
           endpoint: {{ .publicMirror }}
@@ -106,8 +113,19 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
-{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
+{{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap) }}
       files:
+{{- end }}
+{{- if and .proxyConfig (ne .format "bottlerocket") }}
+        - content: |
+            [Service]
+            Environment="HTTP_PROXY={{.httpProxy}}"
+            Environment="HTTPS_PROXY={{.httpsProxy}}"
+            Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
+          owner: root:root
+          path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+{{- end }}
+{{- if (ne .format "bottlerocket") }}
 {{- if .registryCACert }}
         - content: |
 {{ .registryCACert | indent 12 }}
@@ -134,9 +152,11 @@ spec:
           path: "/etc/containerd/config_append.toml"
 {{- end }}
 {{- end }}
-{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
+{{- if and (or .proxyConfig .registryMirrorMap) (ne .format "bottlerocket") }}
       preKubeadmCommands:
+{{- if .registryMirrorMap }}
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+{{- end }}
       - sudo systemctl daemon-reload
       - sudo systemctl restart containerd
 {{- end }}

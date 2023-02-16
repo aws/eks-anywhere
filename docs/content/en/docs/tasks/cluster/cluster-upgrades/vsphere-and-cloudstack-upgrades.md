@@ -21,7 +21,7 @@ Cluster upgrades are not handled automatically and require administrator action 
 You are advised to upgrade your clusters in development environments first and verify your workloads and controllers are compatible with the new version.
 
 Cluster upgrades are performed in place using a rolling process (similar to Kubernetes Deployments).
-Upgrades can only happen one minor version at a time (e.g. `1.23` -> `1.24`).
+Upgrades can only happen one minor version at a time (e.g. `1.24` -> `1.25`).
 Control plane components will be upgraded before worker nodes.
 
 A new VM is created with the new version and then an old VM is removed.
@@ -47,7 +47,7 @@ version.
 Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
 Anywhere components mentioned above to their latest available versions. All upgrade changes are backwards compatible.
 
-Specifically for Snow provider, a new Admin instance is needed when upgrading to the new versions of EKS Anywhere. See [Upgrade EKS Anywhere AMIs in Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html) to upgrade and use a new Admin instance in Snow devices. After that, ugrades of other components can be done as described in this document.
+Specifically for Snow provider, a new Admin instance is needed when upgrading to the new versions of EKS Anywhere. See [Upgrade EKS Anywhere AMIs in Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/CrUD-clusters.html) to upgrade and use a new Admin instance in Snow devices. After that, ugrades of other components can be done as described in this document.
 
 ### Check upgrade components
 Before you perform an upgrade, check the current and new versions of components that are ready to upgrade by typing:
@@ -86,7 +86,7 @@ To the format output in json, add `-o json` to the end of the command line.
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.23 to 1.24 you would change your spec
+As an example, to upgrade a cluster with version 1.24 to 1.25 you would change your spec
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -102,7 +102,7 @@ spec:
       kind: VSphereMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.24"
+  kubernetesVersion: "1.25"
       ...
 ```
 

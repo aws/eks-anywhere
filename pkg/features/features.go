@@ -7,7 +7,7 @@ const (
 	FullLifecycleGate                           = "FullLifecycleAPI"
 	CheckpointEnabledEnvVar                     = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar                       = "USE_NEW_WORKFLOWS"
-	K8s125SupportEnvVar                         = "K8S_1_25_SUPPORT"
+	K8s126SupportEnvVar                         = "K8S_1_26_SUPPORT"
 	TinkerbellUseDiskExtractorDefaultDiskEnvVar = "TINKERBELL_DISK_EXTRACTOR_DISABLED"
 )
 
@@ -57,11 +57,11 @@ func UseNewWorkflows() Feature {
 	}
 }
 
-// K8s125Support is the feature flag for Kubernetes 1.25 support.
-func K8s125Support() Feature {
+// K8s126Support is the feature flag for Kubernetes 1.26 support.
+func K8s126Support() Feature {
 	return Feature{
-		Name:     "Kubernetes version 1.25 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s125SupportEnvVar),
+		Name:     "Kubernetes version 1.26 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s126SupportEnvVar),
 	}
 }
 

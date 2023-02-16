@@ -19,7 +19,7 @@ import (
 
 func TestFileCollectors(t *testing.T) {
 	g := NewGomegaWithT(t)
-	factory := diagnostics.NewDefaultCollectorFactory()
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 
 	w, err := filewriter.NewWriter(t.TempDir())
 	g.Expect(err).To(BeNil())
@@ -73,7 +73,7 @@ func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 		}
 	})
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.VSphereDatacenterKind}
-	factory := diagnostics.NewDefaultCollectorFactory()
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
 	g.Expect(collectors).To(HaveLen(11), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapvSystemNamespace))
@@ -91,7 +91,7 @@ func TestCloudStackDataCenterConfigCollectors(t *testing.T) {
 	g := NewGomegaWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {})
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.CloudStackDatacenterKind}
-	factory := diagnostics.NewDefaultCollectorFactory()
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
 	g.Expect(collectors).To(HaveLen(10), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapcSystemNamespace))
@@ -106,7 +106,7 @@ func TestTinkerbellDataCenterConfigCollectors(t *testing.T) {
 	g := NewGomegaWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {})
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.TinkerbellDatacenterKind}
-	factory := diagnostics.NewDefaultCollectorFactory()
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
 	g.Expect(collectors).To(HaveLen(13), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CaptSystemNamespace))
@@ -121,7 +121,7 @@ func TestSnowCollectors(t *testing.T) {
 	g := NewGomegaWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {})
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.SnowDatacenterKind}
-	factory := diagnostics.NewDefaultCollectorFactory()
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
 	g.Expect(collectors).To(HaveLen(6), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapasSystemNamespace))
@@ -136,7 +136,7 @@ func TestNutanixCollectors(t *testing.T) {
 	g := NewGomegaWithT(t)
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {})
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.NutanixDatacenterKind}
-	factory := diagnostics.NewDefaultCollectorFactory()
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
 	g.Expect(collectors).To(HaveLen(6), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapxSystemNamespace))

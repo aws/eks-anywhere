@@ -29,7 +29,8 @@ func WithSnowAMIID(id string) SnowMachineConfigFiller {
 	}
 }
 
-func WithSnowInstanceType(instanceType anywherev1.SnowInstanceType) SnowMachineConfigFiller {
+// WithSnowInstanceType specifies an instance type for the snow machine config.
+func WithSnowInstanceType(instanceType string) SnowMachineConfigFiller {
 	return func(m *anywherev1.SnowMachineConfig) {
 		m.Spec.InstanceType = instanceType
 	}
@@ -60,6 +61,21 @@ func WithDHCP() SnowMachineConfigFiller {
 			{
 				DHCP:    true,
 				Primary: true,
+			},
+		}
+	}
+}
+
+// WithStaticIP configures one single primary DNI using static ip for IP allocation.
+func WithStaticIP(poolName string) SnowMachineConfigFiller {
+	return func(m *anywherev1.SnowMachineConfig) {
+		m.Spec.Network.DirectNetworkInterfaces = []anywherev1.SnowDirectNetworkInterface{
+			{
+				Primary: true,
+				IPPoolRef: &anywherev1.Ref{
+					Kind: anywherev1.SnowIPPoolKind,
+					Name: poolName,
+				},
 			},
 		}
 	}

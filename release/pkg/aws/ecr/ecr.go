@@ -17,6 +17,7 @@ package ecr
 import (
 	"encoding/base64"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -101,6 +102,88 @@ func DescribeImagesPaginated(ecrClient *ecr.ECR, describeInput *ecr.DescribeImag
 	return images, nil
 }
 
+// FilterECRRepoByTagPrefix will take a substring, and a repository as input and find the latest pushed image matching that substring.
+func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTag bool) (string, string, error) {
+	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
+		RepositoryName: aws.String(repoName),
+	})
+	if len(imageDetails) == 0 {
+		return "", "", fmt.Errorf("no image details obtained: %v", err)
+	}
+	if err != nil {
+		return "", "", errors.Cause(err)
+	}
+	var filteredImageDetails []*ecr.ImageDetail
+	if hasTag {
+		filteredImageDetails = imageTagFilter(imageDetails, prefix)
+	} else {
+		filteredImageDetails = imageTagFilterWithout(imageDetails, prefix)
+	}
+
+	// Filter out any tags that don't match our prefix for doubletagged scenarios
+	for _, detail := range filteredImageDetails {
+		for _, tag := range detail.ImageTags {
+			if tag != nil && !strings.HasPrefix(*tag, prefix) {
+				detail.ImageTags = removeStringSlice(detail.ImageTags, *tag)
+			}
+		}
+	}
+
+	// In case we don't find any tag substring matches, we still want to populate the bundle with the latest version.
+	if len(filteredImageDetails) < 1 {
+		filteredImageDetails = imageDetails
+	}
+	version, sha, err := getLastestOCIShaTag(filteredImageDetails)
+	if err != nil {
+		return "", "", err
+	}
+	return version, sha, nil
+}
+
+// imageTagFilter is used when filtering a list of ECR images for a specific tag or tag substring
+func imageTagFilter(details []*ecr.ImageDetail, substring string) []*ecr.ImageDetail {
+	var filteredDetails []*ecr.ImageDetail
+	for _, detail := range details {
+		for _, tag := range detail.ImageTags {
+			if strings.HasPrefix(*tag, substring) {
+				filteredDetails = append(filteredDetails, detail)
+			}
+		}
+	}
+	return filteredDetails
+}
+
+// imageTagFilterWithout is used when filtering a list of ECR images for images without a specific tag or tag substring
+func imageTagFilterWithout(details []*ecr.ImageDetail, substring string) []*ecr.ImageDetail {
+	var filteredDetails []*ecr.ImageDetail
+	for _, detail := range details {
+		for _, tag := range detail.ImageTags {
+			if !strings.HasPrefix(*tag, substring) {
+				filteredDetails = append(filteredDetails, detail)
+			}
+		}
+	}
+	return filteredDetails
+}
+
+// getLastestOCIShaTag is used to find the tag/sha of the latest pushed OCI image from a list.
+func getLastestOCIShaTag(details []*ecr.ImageDetail) (string, string, error) {
+	latest := &ecr.ImageDetail{}
+	latest.ImagePushedAt = &time.Time{}
+	for _, detail := range details {
+		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 {
+			continue
+		}
+		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
+			latest = detail
+		}
+	}
+	if reflect.DeepEqual(latest, ecr.ImageDetail{}) {
+		return "", "", fmt.Errorf("error no images found")
+	}
+	return *latest.ImageTags[0], *latest.ImageDigest, nil
+}
+
 func GetLatestImageSha(ecrClient *ecr.ECR, repoName string) (string, error) {
 	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
@@ -127,4 +210,14 @@ func GetLatestImageSha(ecrClient *ecr.ECR, repoName string) (string, error) {
 		return "", fmt.Errorf("error no images found")
 	}
 	return *latest.ImageTags[0], nil
+}
+
+// removeStringSlice removes a named string from a slice, without knowing it's index or it being ordered.
+func removeStringSlice(l []*string, item string) []*string {
+	for i, other := range l {
+		if *other == item {
+			return append(l[:i], l[i+1:]...)
+		}
+	}
+	return l
 }

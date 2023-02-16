@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -138,7 +139,48 @@ func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
 		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", config.Spec.Users[0].Name)
 	}
 
+	return validateVSphereMachineConfigHostOSConfig(config)
+}
+
+func validateVSphereMachineConfigHostOSConfig(config *VSphereMachineConfig) error {
+	if config.Spec.HostOSConfiguration == nil {
+		return nil
+	}
+
+	if err := validateVSphereMachineConfigNTPServers(config); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func validateVSphereMachineConfigNTPServers(config *VSphereMachineConfig) error {
+	if config.Spec.HostOSConfiguration.NTPConfiguration == nil {
+		return nil
+	}
+	if len(config.Spec.HostOSConfiguration.NTPConfiguration.Servers) == 0 {
+		return fmt.Errorf("ntpConfiguration.Servers can not be empty for VSphereMachineConfig %s", config.Name)
+	}
+	invalidServers := []string{}
+	for _, ntpServer := range config.Spec.HostOSConfiguration.NTPConfiguration.Servers {
+		// ParseRequestURI expects a scheme but ntp servers generally don't have one
+		// Prepending a scheme here so it doesn't fail because of missing scheme
+		if u, err := url.ParseRequestURI(addNTPScheme(ntpServer)); err != nil || u.Scheme == "" || u.Host == "" {
+			invalidServers = append(invalidServers, ntpServer)
+		}
+	}
+	if len(invalidServers) != 0 {
+		return fmt.Errorf("ntp servers [%s] is not valid for VSphereMachineConfig %s", strings.Join(invalidServers[:], ", "), config.Name)
+	}
+
+	return nil
+}
+
+func addNTPScheme(server string) string {
+	if strings.Contains(server, "://") {
+		return server
+	}
+	return fmt.Sprintf("udp://%s", server)
 }
 
 func validateVSphereMachineConfigHasTemplate(config *VSphereMachineConfig) error {

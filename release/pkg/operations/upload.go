@@ -84,7 +84,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 			if artifact.Image != nil {
 				// If the artifact is a helm chart, skip the skopeo copy. Instead, modify the Chart.yaml to match the release tag
 				// and then use Helm package and push commands to upload chart to ECR Public
-				if !r.DryRun && (strings.HasSuffix(artifact.Image.AssetName, "helm") || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
+				if !r.DryRun && !r.DevRelease && (strings.HasSuffix(artifact.Image.AssetName, "helm") || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
 					// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
 					trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 
@@ -100,7 +100,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 					}
 
 					fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
-					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, helmDriver, helmDest, eksArtifacts)
+					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, helmDriver, helmDest, eksArtifacts, nil)
 					if err != nil {
 						return fmt.Errorf("modifying Chart.yaml and pushing Helm chart to destination: %v", err)
 					}

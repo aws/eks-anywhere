@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -521,6 +522,7 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	e.ClusterConfig.VSphereMachineConfigs = config.VSphereMachineConfigs
 	e.ClusterConfig.CloudStackMachineConfigs = config.CloudStackMachineConfigs
 	e.ClusterConfig.SnowMachineConfigs = config.SnowMachineConfigs
+	e.ClusterConfig.SnowIPPools = config.SnowIPPools
 	e.ClusterConfig.NutanixMachineConfigs = config.NutanixMachineConfigs
 	e.ClusterConfig.TinkerbellMachineConfigs = config.TinkerbellMachineConfigs
 	e.ClusterConfig.TinkerbellTemplateConfigs = config.TinkerbellTemplateConfigs
@@ -597,6 +599,16 @@ func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
 	}
 }
 
+// ExtractDownloadedArtifacts extract the downloaded artifacts.
+func (e *ClusterE2ETest) ExtractDownloadedArtifacts(opts ...CommandOpt) {
+	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
+		e.T.Fatal(err)
+	}
+
+	e.T.Logf("Extract downloaded artifacts ")
+	e.Run("tar", "-xf", "eks-anywhere-downloads.tar.gz")
+}
+
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 	e.createCluster(opts...)
 }
@@ -604,6 +616,17 @@ func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	e.T.Logf("Creating cluster %s", e.ClusterName)
 	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
+
+	file, err := os.Open(e.ClusterConfigLocation)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	e.T.Log("Create cluster from file:\n", string(b))
+
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
@@ -1732,4 +1755,20 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
 func (e *ClusterE2ETest) ValidateEndpointContent(endpoint string, namespace string, expectedContent string) {
 	busyBoxPodName := e.CurlEndpointByBusyBox(endpoint, namespace)
 	e.MatchLogs(namespace, busyBoxPodName, busyBoxPodName, expectedContent, 5*time.Minute)
+}
+
+// AirgapDockerContainers airgap docker containers. Outside network should not be reached during airgapped deployment.
+func (e *ClusterE2ETest) AirgapDockerContainers(localCIDRs string) {
+	e.T.Logf("Airgap docker containers...")
+	e.Run(fmt.Sprintf("sudo iptables -F DOCKER-USER && sudo iptables -I DOCKER-USER -j DROP && sudo iptables -I DOCKER-USER -s %s,172.0.0.0/8,127.0.0.1 -j ACCEPT", localCIDRs))
+}
+
+// CreateAirgappedUser create airgapped user and setup the iptables rule. Notice that OUTPUT chain is flushed each time.
+func (e *ClusterE2ETest) CreateAirgappedUser(localCIDR string) {
+	e.Run("if ! id airgap; then sudo useradd airgap -G docker; fi")
+	e.Run("mkdir ./eksa-cli-logs || chmod 777 ./eksa-cli-logs") // Allow the airgap user to access logs folder
+	e.Run("chmod -R 777 ./")                                    // Allow the airgap user to access working dir
+	e.Run("sudo iptables -F OUTPUT")
+	e.Run(fmt.Sprintf("sudo iptables -A OUTPUT -d %s,172.0.0.0/8,127.0.0.1 -m owner --uid-owner airgap -j ACCEPT", localCIDR))
+	e.Run("sudo iptables -A OUTPUT -m owner --uid-owner airgap -j REJECT")
 }

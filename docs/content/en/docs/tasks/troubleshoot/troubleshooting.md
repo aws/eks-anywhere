@@ -14,6 +14,7 @@ This guide covers EKS Anywhere troubleshooting. It is divided into the following
 * [Bare Metal Troubleshooting]({{< relref "#bare-metal-troubleshooting" >}})
 * [vSphere Troubleshooting]({{< relref "#vsphere-troubleshooting" >}})
 * [Snow Troubleshooting]({{< relref "#snow-troubleshooting" >}})
+* [Nutanix Troubleshooting]({{< relref "#nutanix-troubleshooting" >}})
 
 You may want to search this document for a fragment of the error you are seeing.
 
@@ -703,3 +704,24 @@ $ aws ec2 terminate-instances --instance-id instance-id-1,instance-id-2 --endpoi
 ### Generate a log file from the Snowball Edge device
 
 You can also generate a log file from the Snowball Edge device for AWS Support. See [AWS Snowball Edge Logs](https://docs.aws.amazon.com/snowball/latest/developer-guide/using-client-commands.html#logs) in this guide.
+
+## Nutanix troubleshooting
+
+### Error creating Nutanix client
+
+```
+Error: error creating nutanix client: username, password and endpoint are required
+```
+
+Verify if the required environment variables are set before creating the clusters:
+```
+export EKSA_NUTANIX_USERNAME="<Nutanix-username>"
+export EKSA_NUTANIX_PASSWORD="<Nutanix-password>"
+```
+
+Also, make sure the `spec.endpoint` is correctly configured in the `NutanixDatacenterConfig`. The value of the `spec.endpoint` should be the IP or FQDN of Prism Central.
+
+### x509: certificate signed by unknown authority
+
+Failure of the `nutanix Provider setup is valid` validation with the `x509: certificate signed by unknown authority` message indicates the certificate of the Prism Central endpoint is not trusted. 
+In case Prism Central is configured with self-signed certificates, it is recommended to configure the `additionalTrustBundle` in the `NutanixDatacenterConfig`. More information can be found [here](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/nutanix/#nutanixdatacenterconfig-fields).

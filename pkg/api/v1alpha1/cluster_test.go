@@ -2702,6 +2702,11 @@ func TestClusterProxyConfiguration(t *testing.T) {
 			name: "with proxy configuration",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "1.2.3.4",
+						},
+					},
 					ProxyConfiguration: &ProxyConfiguration{
 						HttpProxy:  "test-http",
 						HttpsProxy: "test-https",
@@ -2712,7 +2717,7 @@ func TestClusterProxyConfiguration(t *testing.T) {
 			want: map[string]string{
 				"HTTP_PROXY":  "test-http",
 				"HTTPS_PROXY": "test-https",
-				"NO_PROXY":    "test-noproxy-1,test-noproxy-2,test-noproxy-3",
+				"NO_PROXY":    "test-noproxy-1,test-noproxy-2,test-noproxy-3,1.2.3.4",
 			},
 		},
 		{
@@ -3005,7 +3010,7 @@ func TestValidateMDUpgradeRolloutStrategy(t *testing.T) {
 
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
-	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube124))
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube125))
 }
 
 func TestClusterWorkerNodeConfigCount(t *testing.T) {

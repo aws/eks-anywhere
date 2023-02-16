@@ -56,6 +56,14 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 		Name: "test_controller",
 		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
 	}
+	chartDev := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "public.ecr.aws/l0g8r8j6/eks-anywhere-packages:v1",
+	}
+	chartStaging := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "public.ecr.aws/w9m0f3l5/eks-anywhere-packages:v1",
+	}
 	eksaAccessId := "test-access-id"
 	eksaAccessKey := "test-access-key"
 	eksaRegion := "test-region"
@@ -141,6 +149,60 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
+				ci, k, clusterName, kubeConfig, chartDev,
+				nil,
+				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
+				curatedpackages.WithEksaRegion(eksaRegion),
+				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
+				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
+			),
+			clusterName:    clusterName,
+			kubeConfig:     kubeConfig,
+			chart:          chartDev,
+			eksaAccessID:   eksaAccessId,
+			eksaAccessKey:  eksaAccessKey,
+			eksaRegion:     eksaRegion,
+			httpProxy:      "1.1.1.1",
+			httpsProxy:     "1.1.1.1",
+			noProxy:        []string{"1.1.1.1/24"},
+			registryMirror: nil,
+			writer:         writer,
+			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
+		},
+		{
+			WithT:          NewWithT(t),
+			ctx:            context.Background(),
+			kubectl:        k,
+			chartInstaller: ci,
+			command: curatedpackages.NewPackageControllerClient(
+				ci, k, clusterName, kubeConfig, chartStaging,
+				nil,
+				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
+				curatedpackages.WithEksaRegion(eksaRegion),
+				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
+				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
+			),
+			clusterName:    clusterName,
+			kubeConfig:     kubeConfig,
+			chart:          chartStaging,
+			eksaAccessID:   eksaAccessId,
+			eksaAccessKey:  eksaAccessKey,
+			eksaRegion:     eksaRegion,
+			httpProxy:      "1.1.1.1",
+			httpsProxy:     "1.1.1.1",
+			noProxy:        []string{"1.1.1.1/24"},
+			registryMirror: nil,
+			writer:         writer,
+			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
+		},
+		{
+			WithT:          NewWithT(t),
+			ctx:            context.Background(),
+			kubectl:        k,
+			chartInstaller: ci,
+			command: curatedpackages.NewPackageControllerClient(
 				ci, k, clusterName, kubeConfig, chart, registryMirrorInsecure,
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
@@ -207,6 +269,10 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 			GetObject(any, any, any, any, any, any).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
+			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
 		if err != nil {
@@ -247,6 +313,10 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
 			DoAndReturn(getPBCSuccess(t)).
+			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
@@ -303,7 +373,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName, httpProxy, httpsProxy, noProxy}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -314,6 +384,10 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
 			DoAndReturn(getPBCSuccess(t)).
+			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
@@ -351,7 +425,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -362,6 +436,10 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
 			DoAndReturn(getPBCSuccess(t)).
+			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
@@ -456,6 +534,10 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 			GetObject(any, any, any, any, any, any).
 			DoAndReturn(getPBCSuccess(t)).
 			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
+			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
 		if err != nil {
@@ -514,7 +596,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -525,6 +607,10 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
 			DoAndReturn(getPBCSuccess(t)).
+			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
@@ -556,6 +642,10 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 		tt.kubectl.EXPECT().
 			GetObject(any, any, any, any, any, any).
 			DoAndReturn(getPBCLoops(t, 3)).
+			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
@@ -607,7 +697,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			if tt.eksaRegion == "" {
 				tt.eksaRegion = "us-west-2"
 			}
-			defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", strings.ReplaceAll(constants.DefaultCuratedPackagesRegistryRegex, "*", tt.eksaRegion))
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
 		}
 		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
@@ -621,7 +711,58 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
-		expectedErr := fmt.Errorf("timed out finding an active package bundle for the current cluster: %v", context.DeadlineExceeded)
+		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
+		if err.Error() != expectedErr.Error() {
+			t.Errorf("expected %v, got %v", expectedErr, err)
+		}
+	}
+}
+
+func TestEnableCuratedPackagesActiveBundleNamespaceTimesOut(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithActiveBundleTimeout(time.Millisecond),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
+		)
+		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
+		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		} else {
+			if tt.eksaRegion == "" {
+				tt.eksaRegion = "us-west-2"
+			}
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
+		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		any := gomock.Any()
+		tt.kubectl.EXPECT().
+			GetObject(any, any, any, any, any, any).
+			DoAndReturn(getPBCSuccess(t)).
+			AnyTimes()
+		tt.kubectl.EXPECT().
+			HasResource(any, any, any, any, any).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return false, nil }).
+			AnyTimes()
+
+		err := tt.command.EnableCuratedPackages(tt.ctx)
+		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
 		if err.Error() != expectedErr.Error() {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
