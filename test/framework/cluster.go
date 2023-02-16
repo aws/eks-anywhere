@@ -990,7 +990,6 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 func (e *ClusterE2ETest) CreateNamespace(namespace string) {
 	kubeconfig := e.kubeconfigFilePath()
 	err := e.KubectlClient.CreateNamespace(context.Background(), kubeconfig, namespace)
-	e.T.Log("Namespace: " + namespace)
 	if err != nil {
 		e.T.Fatalf("Namespace creation failed for %s", namespace)
 	}
