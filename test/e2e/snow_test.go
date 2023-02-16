@@ -302,6 +302,20 @@ func TestSnowKubernetes123BottlerocketTo124Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocket123(), snow.WithBottlerocket124())
 }
 
+func TestSnowKubernetes122To123BottlerocketStaticIPUpgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP122(), snow.WithBottlerocketStaticIP123())
+}
+
+func TestSnowKubernetes123To124BottlerocketStaticIPUpgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP123(), snow.WithBottlerocketStaticIP124())
+}
+
 // Workload API
 func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
 	snow := framework.NewSnow(t)

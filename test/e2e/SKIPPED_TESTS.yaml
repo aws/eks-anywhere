@@ -50,6 +50,8 @@ skipped_tests:
 - TestSnowKubernetes121BottlerocketTo122Upgrade
 - TestSnowKubernetes122BottlerocketTo123Upgrade
 - TestSnowKubernetes123BottlerocketTo124Upgrade
+- TestSnowKubernetes122To123BottlerocketStaticIPUpgrade
+- TestSnowKubernetes123To124BottlerocketStaticIPUpgrade
 - TestSnowMulticlusterWorkloadClusterAPI
 - TestSnowKubernetes123UbuntuTaintsUpgradeFlow
 - TestSnowKubernetes121To122UbuntuUpgrade
