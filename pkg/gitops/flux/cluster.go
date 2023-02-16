@@ -22,14 +22,16 @@ type fluxForCluster struct {
 	clusterSpec      *cluster.Spec
 	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
+	hardwareSpec     []byte
 }
 
-func newFluxForCluster(flux *Flux, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) *fluxForCluster {
+func newFluxForCluster(flux *Flux, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareSpec []byte) *fluxForCluster {
 	return &fluxForCluster{
 		Flux:             flux,
 		clusterSpec:      clusterSpec,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
+		hardwareSpec:     hardwareSpec,
 	}
 }
 
@@ -50,11 +52,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return err
 	}
 
-	hardwareCSVPath := ""
-	if fc.Flux.cliConfig != nil {
-		hardwareCSVPath = fc.Flux.cliConfig.HardwareCSVPath
-	}
-	if err := g.WriteEksaFiles(fc.clusterSpec, fc.datacenterConfig, fc.machineConfigs, hardwareCSVPath); err != nil {
+	if err := g.WriteEksaFiles(fc.clusterSpec, fc.datacenterConfig, fc.machineConfigs, fc.hardwareSpec); err != nil {
 		return fmt.Errorf("writing eks-a config files: %v", err)
 	}
 

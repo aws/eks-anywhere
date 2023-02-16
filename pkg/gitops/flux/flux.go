@@ -81,13 +81,13 @@ func NewFluxFromGitOpsFluxClient(fluxClient GitOpsFluxClient, gitClient GitClien
 	}
 }
 
-func (f *Flux) InstallGitOps(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+func (f *Flux) InstallGitOps(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareSpec []byte) error {
 	if f.shouldSkipFlux() {
 		logger.Info("GitOps field not specified, bootstrap flux skipped")
 		return nil
 	}
 
-	fc := newFluxForCluster(f, clusterSpec, datacenterConfig, machineConfigs)
+	fc := newFluxForCluster(f, clusterSpec, datacenterConfig, machineConfigs, hardwareSpec)
 
 	if err := fc.setupRepository(ctx); err != nil {
 		return err
@@ -212,13 +212,13 @@ func (f *Flux) ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster
 	return f.fluxClient.ForceReconcile(ctx, cluster, clusterSpec.FluxConfig.Spec.SystemNamespace)
 }
 
-func (f *Flux) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+func (f *Flux) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareSpec []byte) error {
 	if f.shouldSkipFlux() {
 		logger.Info("GitOps field not specified, update git repo skipped")
 		return nil
 	}
 
-	fc := newFluxForCluster(f, clusterSpec, datacenterConfig, machineConfigs)
+	fc := newFluxForCluster(f, clusterSpec, datacenterConfig, machineConfigs, hardwareSpec)
 
 	if err := fc.syncGitRepo(ctx); err != nil {
 		return err
@@ -229,12 +229,7 @@ func (f *Flux) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cluster.Spec,
 		return err
 	}
 
-	hardwareCSVPath := ""
-	if f.cliConfig != nil {
-		hardwareCSVPath = fc.Flux.cliConfig.HardwareCSVPath
-	}
-
-	if err := g.WriteEksaFiles(clusterSpec, datacenterConfig, machineConfigs, hardwareCSVPath); err != nil {
+	if err := g.WriteEksaFiles(clusterSpec, datacenterConfig, machineConfigs, hardwareSpec); err != nil {
 		return err
 	}
 
@@ -255,7 +250,7 @@ func (f *Flux) Validations(ctx context.Context, clusterSpec *cluster.Spec) []val
 		return nil
 	}
 
-	fc := newFluxForCluster(f, clusterSpec, nil, nil)
+	fc := newFluxForCluster(f, clusterSpec, nil, nil, nil)
 
 	return []validations.Validation{
 		func() *validations.ValidationResult {
@@ -274,7 +269,7 @@ func (f *Flux) CleanupGitRepo(ctx context.Context, clusterSpec *cluster.Spec) er
 		return nil
 	}
 
-	fc := newFluxForCluster(f, clusterSpec, nil, nil)
+	fc := newFluxForCluster(f, clusterSpec, nil, nil, nil)
 
 	if err := fc.syncGitRepo(ctx); err != nil {
 		return err

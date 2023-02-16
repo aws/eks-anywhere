@@ -496,6 +496,10 @@ func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	return nil
 }
 
+func (p *Provider) HardwareSpec() []byte {
+	return nil
+}
+
 func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Nutanix.Version
 }

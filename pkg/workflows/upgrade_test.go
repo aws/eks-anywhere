@@ -42,6 +42,7 @@ type upgradeTestSetup struct {
 	bootstrapCluster   *types.Cluster
 	workloadCluster    *types.Cluster
 	managementCluster  *types.Cluster
+	hardwareSpec       []byte
 }
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
@@ -81,6 +82,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		ctx:              context.Background(),
 		newClusterSpec:   test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		workloadCluster:  &types.Cluster{Name: "workload"},
+		hardwareSpec:     nil,
 	}
 }
 
@@ -295,6 +297,12 @@ func (c *upgradeTestSetup) expectMachineConfigs() {
 	)
 }
 
+func (c *upgradeTestSetup) expectHardwareSpec() {
+	gomock.InOrder(
+		c.provider.EXPECT().HardwareSpec().Return(c.hardwareSpec).AnyTimes(),
+	)
+}
+
 func (c *upgradeTestSetup) expectCreateEKSAResources(expectedCluster *types.Cluster) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().CreateEKSAResources(
@@ -314,7 +322,7 @@ func (c *upgradeTestSetup) expectInstallEksdManifest(expectedCLuster *types.Clus
 func (c *upgradeTestSetup) expectUpdateGitEksaSpec() {
 	gomock.InOrder(
 		c.gitOpsManager.EXPECT().UpdateGitEksaSpec(
-			c.ctx, c.newClusterSpec, c.datacenterConfig, c.machineConfigs,
+			c.ctx, c.newClusterSpec, c.datacenterConfig, c.machineConfigs, gomock.Any(),
 		),
 	)
 }
@@ -405,6 +413,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectVerifyClusterSpecNoChanges()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectHardwareSpec()
 	test.expectCreateEKSAResources(test.workloadCluster)
 	test.expectInstallEksdManifest(test.workloadCluster)
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
@@ -439,6 +448,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectHardwareSpec()
 	test.expectCreateEKSAResources(test.workloadCluster)
 	test.expectInstallEksdManifest(test.workloadCluster)
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
@@ -472,6 +482,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectHardwareSpec()
 	test.expectCreateEKSAResources(test.workloadCluster)
 	test.expectInstallEksdManifest(test.workloadCluster)
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
@@ -529,6 +540,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectNotToDeleteBootstrap()
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
+	test.expectHardwareSpec()
 	test.expectCreateEKSAResources(test.managementCluster)
 	test.expectInstallEksdManifest(test.managementCluster)
 	test.expectResumeEKSAControllerReconcile(test.managementCluster)
@@ -595,6 +607,7 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 	test2.expectDeleteBootstrap()
 	test2.expectDatacenterConfig()
 	test2.expectMachineConfigs()
+	test2.expectHardwareSpec()
 	test2.expectCreateEKSAResources(test2.workloadCluster)
 	test2.expectInstallEksdManifest(test2.workloadCluster)
 	test2.expectResumeEKSAControllerReconcile(test2.workloadCluster)

@@ -72,7 +72,7 @@ func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 
 func (f *Flux) Install(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) error {
 	if oldSpec.Cluster.Spec.GitOpsRef == nil && newSpec.Cluster.Spec.GitOpsRef != nil {
-		return f.InstallGitOps(ctx, cluster, newSpec, nil, nil)
+		return f.InstallGitOps(ctx, cluster, newSpec, nil, nil, nil)
 	}
 	return nil
 }

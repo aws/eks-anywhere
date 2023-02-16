@@ -39,6 +39,7 @@ type createTestSetup struct {
 	forceCleanup     bool
 	bootstrapCluster *types.Cluster
 	workloadCluster  *types.Cluster
+	hardwareSpec     []byte
 }
 
 func newCreateTest(t *testing.T) *createTestSetup {
@@ -73,6 +74,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name"; s.Cluster.Annotations = map[string]string{} }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
 		workloadCluster:  &types.Cluster{Name: "workload"},
+		hardwareSpec:     nil,
 	}
 }
 
@@ -222,9 +224,10 @@ func (c *createTestSetup) expectInstallGitOpsManager() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
 		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
+		c.provider.EXPECT().HardwareSpec().Return(c.hardwareSpec),
 
 		c.gitOpsManager.EXPECT().InstallGitOps(
-			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
+			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs, c.hardwareSpec),
 	)
 }
 

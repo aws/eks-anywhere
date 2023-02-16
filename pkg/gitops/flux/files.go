@@ -8,7 +8,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -79,7 +78,7 @@ func (g *FileGenerator) Init(writer filewriter.FileWriter, eksaSystemDir, fluxSy
 }
 
 // WriteEksaFiles writes the files defining objects in the eksa-system namespace for the cluster to the git repo.
-func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareCSVPath string) error {
+func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareSpec []byte) error {
 	if datacenterConfig == nil && machineConfigs == nil {
 		return nil
 	}
@@ -92,8 +91,8 @@ func (g *FileGenerator) WriteEksaFiles(clusterSpec *cluster.Spec, datacenterConf
 		"ConfigFileName": clusterConfigFileName,
 	}
 
-	if hardwareCSVPath != "" {
-		if err := g.WriteHardwareYAML(hardwareCSVPath); err != nil {
+	if hardwareSpec != nil {
+		if err := g.WriteHardwareYAML(hardwareSpec); err != nil {
 			return err
 		}
 
@@ -146,11 +145,7 @@ func (g *FileGenerator) WriteEksaKustomization(values map[string]string) error {
 }
 
 // WriteHardwareYAML writes the hardware manifest kustomization manifest to the eksa-system folder in the repository path.
-func (g *FileGenerator) WriteHardwareYAML(hardwareCSVPath string) error {
-	hardwareSpec, err := hardware.BuildHardwareYAML(hardwareCSVPath)
-	if err != nil {
-		return fmt.Errorf("building hardware manifest from csv file %s: %v", hardwareCSVPath, err)
-	}
+func (g *FileGenerator) WriteHardwareYAML(hardwareSpec []byte) error {
 	if filePath, err := g.eksaWriter.Write(hardwareFileName, hardwareSpec, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("writing eks-a hardware manifest file into %s: %v", filePath, err)
 	}

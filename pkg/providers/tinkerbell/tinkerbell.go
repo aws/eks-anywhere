@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,6 +14,7 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -55,6 +57,7 @@ type Provider struct {
 	keyGenerator          SSHAuthKeyGenerator
 
 	hardwareCSVFile string
+	hardwareSpec    []byte
 	catalogue       *hardware.Catalogue
 	diskExtractor   hardware.DiskExtractor
 	tinkerbellIp    string
@@ -300,5 +303,34 @@ func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
+
+func (p *Provider) HardwareSpec() []byte {
+	return p.hardwareSpec
+}
+
+func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Cluster) error {
+	client, err := kubernetes.NewRuntimeClientFromFileName(cluster.KubeconfigFile)
+	if err != nil {
+		return fmt.Errorf("creating client for cluster %s: %v", cluster.Name, err)
+	}
+
+	etcdReader := hardware.NewETCDReader(client)
+	err = etcdReader.NewMachineCatalogueFromETCD(ctx)
+	if err != nil {
+		return fmt.Errorf("creating machine catalogue from etcd: %v", err)
+	}
+
+	hardwareSpec, err := hardware.MarshalCatalogue(etcdReader.GetCatalogue())
+	if err != nil {
+		return fmt.Errorf("marshing hardware catalogue: %v", err)
+	}
+	hardwareSpec, err = unstructuredutil.StripNull(hardwareSpec)
+	if err != nil {
+		return err
+	}
+	p.hardwareSpec = hardwareSpec
+
 	return nil
 }

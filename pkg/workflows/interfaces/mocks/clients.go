@@ -509,17 +509,17 @@ func (mr *MockGitOpsManagerMockRecorder) Install(arg0, arg1, arg2, arg3 interfac
 }
 
 // InstallGitOps mocks base method.
-func (m *MockGitOpsManager) InstallGitOps(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
+func (m *MockGitOpsManager) InstallGitOps(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig, arg5 []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallGitOps", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "InstallGitOps", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallGitOps indicates an expected call of InstallGitOps.
-func (mr *MockGitOpsManagerMockRecorder) InstallGitOps(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockGitOpsManagerMockRecorder) InstallGitOps(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallGitOps", reflect.TypeOf((*MockGitOpsManager)(nil).InstallGitOps), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallGitOps", reflect.TypeOf((*MockGitOpsManager)(nil).InstallGitOps), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // PauseClusterResourcesReconcile mocks base method.
@@ -551,17 +551,17 @@ func (mr *MockGitOpsManagerMockRecorder) ResumeClusterResourcesReconcile(arg0, a
 }
 
 // UpdateGitEksaSpec mocks base method.
-func (m *MockGitOpsManager) UpdateGitEksaSpec(arg0 context.Context, arg1 *cluster.Spec, arg2 providers.DatacenterConfig, arg3 []providers.MachineConfig) error {
+func (m *MockGitOpsManager) UpdateGitEksaSpec(arg0 context.Context, arg1 *cluster.Spec, arg2 providers.DatacenterConfig, arg3 []providers.MachineConfig, arg4 []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateGitEksaSpec", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "UpdateGitEksaSpec", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateGitEksaSpec indicates an expected call of UpdateGitEksaSpec.
-func (mr *MockGitOpsManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockGitOpsManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitEksaSpec", reflect.TypeOf((*MockGitOpsManager)(nil).UpdateGitEksaSpec), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitEksaSpec", reflect.TypeOf((*MockGitOpsManager)(nil).UpdateGitEksaSpec), arg0, arg1, arg2, arg3, arg4)
 }
 
 // Upgrade mocks base method.

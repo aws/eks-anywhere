@@ -189,6 +189,10 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
+func (p *vsphereProvider) HardwareSpec() []byte {
+	return nil
+}
+
 func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
 	for _, oldMcRef := range cc.MachineConfigRefs() {
 		existingVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)

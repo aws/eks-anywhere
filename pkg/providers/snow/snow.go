@@ -188,6 +188,10 @@ func (p *SnowProvider) UpdateKubeConfig(content *[]byte, clusterName string) err
 	return nil
 }
 
+func (p *SnowProvider) HardwareSpec() []byte {
+	return nil
+}
+
 func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Snow.Version
 }

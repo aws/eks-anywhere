@@ -80,6 +80,9 @@ func (p *Provider) applyHardware(ctx context.Context, cluster *types.Cluster) er
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
 	}
+	if err := p.generateHardwareSpec(ctx, cluster); err != nil {
+		return err
+	}
 	return nil
 }
 

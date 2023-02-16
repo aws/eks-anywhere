@@ -216,7 +216,7 @@ func TestFileGeneratorWriteEksaFilesSuccess(t *testing.T) {
 	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(wantConfig), gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml"}, "kustomization.yaml", gomock.Any()).Return("", nil)
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, "")).To(Succeed())
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, nil)).To(Succeed())
 }
 
 func TestFileGeneratorWriteEksaFilesWithHardwareSuccess(t *testing.T) {
@@ -253,13 +253,13 @@ func TestFileGeneratorWriteEksaFilesWithHardwareSuccess(t *testing.T) {
 	tt.w.EXPECT().Write("hardware.yaml", []byte(wantHardwareConfig()), gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml", "HardwareFileName": "hardware.yaml"}, "kustomization.yaml", gomock.Any()).Return("", nil)
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tinkDatacenterConfig, []providers.MachineConfig{tinkMachineConfig}, "./testdata/hardware.csv")).To(Succeed())
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tinkDatacenterConfig, []providers.MachineConfig{tinkMachineConfig}, []byte(wantHardwareConfig()))).To(Succeed())
 }
 
 func TestFileGeneratorWriteEksaFilesSkip(t *testing.T) {
 	tt := newFileGeneratorTest(t)
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, nil, nil, "")).To(Succeed())
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, nil, nil, nil)).To(Succeed())
 }
 
 func TestFileGeneratorWriteEksaFilesWriteError(t *testing.T) {
@@ -267,7 +267,7 @@ func TestFileGeneratorWriteEksaFilesWriteError(t *testing.T) {
 
 	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(wantConfig), gomock.Any()).Return("", errors.New("error in write"))
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, "")).To(MatchError(ContainSubstring("error in write")))
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, nil)).To(MatchError(ContainSubstring("error in write")))
 }
 
 func TestFileGeneratorWriteEksaFilesWriteToFileError(t *testing.T) {
@@ -276,7 +276,7 @@ func TestFileGeneratorWriteEksaFilesWriteToFileError(t *testing.T) {
 	tt.w.EXPECT().Write("eksa-cluster.yaml", []byte(wantConfig), gomock.Any()).Return("", nil)
 	tt.t.EXPECT().WriteToFile(wantEksaKustomization, map[string]string{"ConfigFileName": "eksa-cluster.yaml"}, "kustomization.yaml", gomock.Any()).Return("", errors.New("error in write to file"))
 
-	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, "")).To(MatchError(ContainSubstring("error in write to file")))
+	tt.Expect(tt.g.WriteEksaFiles(tt.clusterSpec, tt.datacenterConfig, tt.machineConfigs, nil)).To(MatchError(ContainSubstring("error in write to file")))
 }
 
 func TestFileGeneratorWriteFluxSystemFilesSuccess(t *testing.T) {

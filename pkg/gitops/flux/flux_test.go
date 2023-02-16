@@ -254,7 +254,7 @@ func TestInstallGitOpsOnManagementClusterWithPrexistingRepo(t *testing.T) {
 			datacenterConfig := datacenterConfig(tt.clusterName)
 			machineConfig := machineConfig(tt.clusterName)
 
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
@@ -317,7 +317,7 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 			g.git.EXPECT().Push(g.ctx).Return(nil)
 			g.git.EXPECT().Pull(g.ctx, clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil, nil)).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			g.Expect(validations.FileExists(expectedEksaClusterConfigPath)).To(Equal(false))
@@ -356,7 +356,7 @@ func TestInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *testing.T) {
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 
 	expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), "clusters/management-cluster/workload-cluster/eksa-system", defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-workload.yaml")
@@ -387,7 +387,7 @@ func TestInstallGitOpsSetupRepoError(t *testing.T) {
 	g.git.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	g.git.EXPECT().Add(path.Dir("clusters/management-cluster")).Return(errors.New("error in add"))
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in add")))
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil, nil)).To(MatchError(ContainSubstring("error in add")))
 }
 
 func TestInstallGitOpsBootstrapError(t *testing.T) {
@@ -406,7 +406,7 @@ func TestInstallGitOpsBootstrapError(t *testing.T) {
 	g.flux.EXPECT().BootstrapGithub(g.ctx, cluster, clusterSpec.FluxConfig).Return(errors.New("error in bootstrap"))
 	g.flux.EXPECT().Uninstall(g.ctx, cluster, clusterSpec.FluxConfig).Return(nil)
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in bootstrap")))
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil, nil)).To(MatchError(ContainSubstring("error in bootstrap")))
 }
 
 func TestInstallGitOpsGitProviderSuccess(t *testing.T) {
@@ -429,7 +429,7 @@ func TestInstallGitOpsGitProviderSuccess(t *testing.T) {
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 }
 
 func TestInstallGitOpsCommitFilesError(t *testing.T) {
@@ -442,7 +442,7 @@ func TestInstallGitOpsCommitFilesError(t *testing.T) {
 	g.git.EXPECT().GetRepo(g.ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	g.git.EXPECT().Clone(g.ctx).Return(errors.New("error in clone"))
 
-	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in clone")))
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil, nil)).To(MatchError(ContainSubstring("error in clone")))
 }
 
 func TestInstallGitOpsNoPrexistingRepo(t *testing.T) {
@@ -517,7 +517,7 @@ func TestInstallGitOpsNoPrexistingRepo(t *testing.T) {
 
 			datacenterConfig := datacenterConfig(tt.clusterName)
 			machineConfig := machineConfig(tt.clusterName)
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
@@ -585,7 +585,7 @@ func TestInstallGitOpsToolkitsBareRepo(t *testing.T) {
 
 			datacenterConfig := datacenterConfig(tt.clusterName)
 			machineConfig := machineConfig(tt.clusterName)
-			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+			g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 
 			expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
@@ -756,7 +756,7 @@ func TestUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 
-	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 	expectedEksaClusterConfigPath := path.Join(g.writer.Dir(), eksaSystemDirPath, defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-management.yaml")
 }
@@ -792,7 +792,7 @@ func TestUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 
-	g.Expect(f.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+	g.Expect(f.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 
 	expectedEksaClusterConfigPath := path.Join(writePath, eksaSystemDirPath, defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-management.yaml")
@@ -808,7 +808,7 @@ func TestUpdateGitRepoEksaSpecErrorCloneRepo(t *testing.T) {
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
-	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(MatchError(ContainSubstring("error in cloneIfExists repo")))
+	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(MatchError(ContainSubstring("error in cloneIfExists repo")))
 }
 
 func TestUpdateGitRepoEksaSpecErrorSwitchBranch(t *testing.T) {
@@ -822,7 +822,7 @@ func TestUpdateGitRepoEksaSpecErrorSwitchBranch(t *testing.T) {
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
-	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(MatchError(ContainSubstring("failed to switch branch")))
+	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(MatchError(ContainSubstring("failed to switch branch")))
 }
 
 func TestUpdateGitRepoEksaSpecErrorAddFile(t *testing.T) {
@@ -837,7 +837,7 @@ func TestUpdateGitRepoEksaSpecErrorAddFile(t *testing.T) {
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
-	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(MatchError(ContainSubstring("failed to add file")))
+	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(MatchError(ContainSubstring("failed to add file")))
 }
 
 func TestUpdateGitRepoEksaSpecErrorCommit(t *testing.T) {
@@ -853,7 +853,7 @@ func TestUpdateGitRepoEksaSpecErrorCommit(t *testing.T) {
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
-	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(MatchError(ContainSubstring("failed to commit")))
+	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(MatchError(ContainSubstring("failed to commit")))
 }
 
 func TestUpdateGitRepoEksaSpecErrorPushAfterRetry(t *testing.T) {
@@ -870,7 +870,7 @@ func TestUpdateGitRepoEksaSpecErrorPushAfterRetry(t *testing.T) {
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
-	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(MatchError(ContainSubstring("failed to push code")))
+	g.Expect(g.gitOpsFlux.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(MatchError(ContainSubstring("failed to push code")))
 }
 
 func TestUpdateGitRepoEksaSpecSkip(t *testing.T) {
@@ -882,7 +882,7 @@ func TestUpdateGitRepoEksaSpecSkip(t *testing.T) {
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
-	g.Expect(f.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+	g.Expect(f.UpdateGitEksaSpec(g.ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig}, nil)).To(Succeed())
 }
 
 func TestForceReconcileGitRepo(t *testing.T) {

@@ -554,6 +554,8 @@ func (s *reconcileClusterDefinitions) Run(ctx context.Context, commandContext *t
 	logger.Info("Updating EKS-A cluster resource")
 	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
 	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
+	hardwareSpec := commandContext.Provider.HardwareSpec()
+
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
@@ -573,7 +575,7 @@ func (s *reconcileClusterDefinitions) Run(ctx context.Context, commandContext *t
 	}
 
 	logger.Info("Updating Git Repo with new EKS-A cluster spec")
-	err = commandContext.GitOpsManager.UpdateGitEksaSpec(ctx, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	err = commandContext.GitOpsManager.UpdateGitEksaSpec(ctx, commandContext.ClusterSpec, datacenterConfig, machineConfigs, hardwareSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

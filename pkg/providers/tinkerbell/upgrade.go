@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
@@ -154,6 +155,9 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 				return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 			}
 		}
+		if err := p.generateHardwareSpec(ctx, clusterSpec.ManagementCluster); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -202,6 +206,10 @@ func (p *Provider) applyHardwareUpgrade(ctx context.Context, cluster *types.Clus
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
 	}
+	filePath, err := p.writer.Write("hardware-upgrade.yaml", hardwareSpec, filewriter.PersistentFile)
+	if err != nil {
+		return fmt.Errorf("failed to write hardware-upgrade.yaml %s: %v", filePath, err)
+	}
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
@@ -219,6 +227,10 @@ func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapC
 		if err != nil {
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
+	}
+
+	if err := p.generateHardwareSpec(ctx, bootstrapCluster); err != nil {
+		return err
 	}
 
 	return nil
