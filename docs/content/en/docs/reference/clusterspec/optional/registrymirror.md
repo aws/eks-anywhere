@@ -72,6 +72,7 @@ export REGISTRY_PASSWORD=<password>
 ## Import images into a private registry
 You can use the `download images` and `import images` commands to pull images from `public.ecr.aws` and push them to your
 private registry.
+The `copy packages` must be used if you want to copy EKS Anywhere Curated Packages to your registry mirror.
 The `download images` command also pulls the cilium chart from `public.ecr.aws` and pushes it to the registry mirror. It requires the registry credentials for performing a login. Set the following environment variables for the login:
 ```bash
 export REGISTRY_ENDPOINT=<registry_endpoint>
