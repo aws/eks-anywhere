@@ -522,6 +522,7 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	e.ClusterConfig.VSphereMachineConfigs = config.VSphereMachineConfigs
 	e.ClusterConfig.CloudStackMachineConfigs = config.CloudStackMachineConfigs
 	e.ClusterConfig.SnowMachineConfigs = config.SnowMachineConfigs
+	e.ClusterConfig.SnowIPPools = config.SnowIPPools
 	e.ClusterConfig.NutanixMachineConfigs = config.NutanixMachineConfigs
 	e.ClusterConfig.TinkerbellMachineConfigs = config.TinkerbellMachineConfigs
 	e.ClusterConfig.TinkerbellTemplateConfigs = config.TinkerbellTemplateConfigs
