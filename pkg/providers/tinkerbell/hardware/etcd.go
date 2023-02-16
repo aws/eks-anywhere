@@ -23,10 +23,8 @@ const (
 // ETCDReader reads the tinkerbell hardware objects from the cluster.
 // It holds the objects in a catalogue.
 type ETCDReader struct {
-	client             client.Client
-	catalogue          *Catalogue
-	hardwareCache      []tinkv1alpha1.Hardware
-	hardwareCacheIndex int
+	client    client.Client
+	catalogue *Catalogue
 }
 
 // NewETCDReader returns a new instance of ETCDReader.
@@ -86,7 +84,10 @@ func (er *ETCDReader) NewMachineCatalogueFromETCD(ctx context.Context) error {
 		}
 
 		machine := NewMachineFromHardware(hw, rufioMachine, authSecret)
-		catalogueWriter.Write(*machine)
+		err = catalogueWriter.Write(*machine)
+		if err != nil {
+			return fmt.Errorf("writing machine to catalogue: %v", err)
+		}
 	}
 
 	return nil

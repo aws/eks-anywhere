@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -290,10 +290,13 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 	return nil
 }
 
+// HardwareSpec returns the hardware yaml containing configurations for the hardware in the cluster.
 func (p *Provider) HardwareSpec() []byte {
 	return p.hardwareSpec
 }
 
+// generateHardwareSpec reads the hardware information from the available cluster, generates a yaml that can be submitted to a kubernetes cluster
+// and caches it on the Provider.
 func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Cluster) error {
 	client, err := kubernetes.NewRuntimeClientFromFileName(cluster.KubeconfigFile)
 	if err != nil {
