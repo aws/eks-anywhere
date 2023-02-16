@@ -24,7 +24,6 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 		test.ManagementCluster.SetPackageBundleActive()
 		packageName := "cert-manager"
 		packagePrefix := "test"
-		//namespace := fmt.Sprintf("%s-%s", cmTargetNamespace, e.ClusterName)
 		e.CreateNamespace(cmTargetNamespace)
 		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))

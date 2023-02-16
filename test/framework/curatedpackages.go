@@ -34,7 +34,7 @@ const (
 	route53AccessKey      = "ROUTE53_ACCESS_KEY_ID"
 	route53SecretKey      = "ROUTE53_SECRET_ACCESS_KEY"
 	route53Region         = "ROUTE53_REGION"
-	route53ZoneId         = "ROUTE53_ZONEID"
+	route53ZoneID         = "ROUTE53_ZONEID"
 )
 
 var requiredPackagesEnvVars = []string{
@@ -47,7 +47,7 @@ var requiredCertManagerEnvVars = []string{
 	route53Region,
 	route53AccessKey,
 	route53SecretKey,
-	route53ZoneId,
+	route53ZoneID,
 }
 
 // RequiredPackagesEnvVars returns the list of packages env vars.
@@ -65,7 +65,7 @@ func CheckCuratedPackagesCredentials(t *testing.T) {
 	}
 }
 
-// CheckCertManagerCredentials will exit if route53 credentials are not set
+// CheckCertManagerCredentials will exit if route53 credentials are not set.
 func CheckCertManagerCredentials(t *testing.T) {
 	for _, env := range requiredCertManagerEnvVars {
 		_, ok := os.LookupEnv(env)
@@ -75,7 +75,8 @@ func CheckCertManagerCredentials(t *testing.T) {
 	}
 }
 
+// GetRoute53Configs returns route53 configurations for cert-manager.
 func GetRoute53Configs() (string, string, string, string) {
 	return os.Getenv(route53AccessKey), os.Getenv(route53SecretKey),
-		os.Getenv(route53Region), os.Getenv(route53ZoneId)
+		os.Getenv(route53Region), os.Getenv(route53ZoneID)
 }
