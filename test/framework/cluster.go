@@ -1546,7 +1546,7 @@ var certManagerSecret string
 func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error {
 	ctx := context.Background()
 	letsEncryptCert := "test-cert"
-	accessKey, secretAccess, region, zoneId := GetRoute53Configs()
+	accessKey, secretAccess, region, zoneID := GetRoute53Configs()
 	data := map[string]interface{}{
 		"route53SecretAccessKey": secretAccess,
 	}
@@ -1563,7 +1563,7 @@ func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error
 
 	data = map[string]interface{}{
 		"route53AccessKeyId": accessKey,
-		"route53ZoneId":      zoneId,
+		"route53ZoneId":      zoneID,
 		"route53Region":      region,
 	}
 
