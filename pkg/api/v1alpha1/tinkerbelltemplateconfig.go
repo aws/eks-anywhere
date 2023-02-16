@@ -17,8 +17,9 @@ const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 // +kubebuilder:object:generate=false
 type ActionOpt func(action *[]tinkerbell.Action)
 
-// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the required Tasks and Actions.
-func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, disk string, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp string, osFamily OSFamily) *TinkerbellTemplateConfig {
+// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the
+// required Tasks and Actions.
+func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) *TinkerbellTemplateConfig {
 	config := &TinkerbellTemplateConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellTemplateConfigKind,
@@ -45,7 +46,7 @@ func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha
 		},
 	}
 
-	defaultActions := GetDefaultActionsFromBundle(versionBundle, disk, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp, osFamily)
+	defaultActions := GetDefaultActionsFromBundle(versionBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP, osFamily)
 	for _, action := range defaultActions {
 		action(&config.Spec.Template.Tasks[0].Actions)
 	}

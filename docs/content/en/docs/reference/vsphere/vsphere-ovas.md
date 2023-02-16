@@ -100,7 +100,7 @@ environment variables to run `govc` GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
    and cluster creation will be faster. If you prefer not to take snapshot, skip this step)
 
     ```
-    govc snapshot.create -vm ubuntu-2004-kube-v1.23.7 root
+    govc snapshot.create -vm ubuntu-2004-kube-v1.25.6 root
     ```
 
 4. Mark the new VM as a template
@@ -128,7 +128,7 @@ environment variables to run `govc` GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
    ![Import ova wizard](/images/ss10.jpg)
 1. Click *Assign* -> *Add Tag* to create a new tag and attach it
    ![Import ova wizard](/images/ss11.jpg)
-1. Name the tag *eksdRelease:{eksd release for the selected ova}*, for example *eksdRelease:kubernetes-1-23-eks-4* for the 1.23 ova. You can find the rest of eksd releases in the previous [section](../vsphere-preparation/#deploy-an-ova-template). If it's the first time you add an `eksdRelease` tag, you would need to create the category first. Click on "Create New Category" and name it `eksdRelease`.
+1. Name the tag *eksdRelease:{eksd release for the selected ova}*, for example *eksdRelease:kubernetes-1-25-eks-5* for the 1.25 ova. You can find the rest of eksd releases in the previous [section](../vsphere-preparation/#deploy-an-ova-template). If it's the first time you add an `eksdRelease` tag, you would need to create the category first. Click on "Create New Category" and name it `eksdRelease`.
    ![Import ova wizard](/images/ss13.png)
 
 ### Using govc
@@ -163,13 +163,13 @@ govc tags.ls <Template Path>
 ```
 govc tags.category.create -t VirtualMachine eksdRelease
 ```
-2. Create the proper eksd release Tag, depending on your template. You can find the eksd releases in the previous [section](../vsphere-preparation/#deploy-an-ova-template). For example *eksdRelease:kubernetes-1-23-eks-4* for the 1.23 template.
+2. Create the proper eksd release Tag, depending on your template. You can find the eksd releases in the previous [section](../vsphere-preparation/#deploy-an-ova-template). For example *eksdRelease:kubernetes-1-25-eks-5* for the 1.25 template.
 ```
-govc tags.create -c eksdRelease eksdRelease:kubernetes-1-23-eks-4
+govc tags.create -c eksdRelease eksdRelease:kubernetes-1-25-eks-5
 ```
 3. Attach newly created tag to the template
 ```
-govc tags.attach eksdRelease:kubernetes-1-23-eks-4 <Template Path>
+govc tags.attach eksdRelease:kubernetes-1-25-eks-5 <Template Path>
 ```
 4. Verify tag is attached to the template 
 

@@ -38,6 +38,15 @@ func newInstallerTest(t *testing.T) *installerTest {
 	client := mocks.NewMockKubernetesClient(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.Eksa.Version = "v0.1.0"
+		s.Cluster = &anywherev1.Cluster{
+			Spec: anywherev1.ClusterSpec{
+				ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+					Endpoint: &anywherev1.Endpoint{
+						Host: "1.2.3.4",
+					},
+				},
+			},
+		}
 	})
 
 	return &installerTest{
@@ -68,6 +77,7 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 	tt := newInstallerTest(t)
 	tt.newSpec.VersionsBundle.Eksa.Components.URI = "testdata/eksa_components.yaml"
+	tt.newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "1.2.3.4"
 	tt.newSpec.Cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
 	tt.newSpec.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
 		HttpProxy:  "proxy",
@@ -104,7 +114,7 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 								},
 								{
 									Name:  "NO_PROXY",
-									Value: "no-proxy,no-proxy-2",
+									Value: "no-proxy,no-proxy-2,1.2.3.4",
 								},
 							},
 						},
@@ -270,10 +280,19 @@ func TestSetManagerEnvVars(t *testing.T) {
 			name:       "proxy env vars",
 			deployment: deployment(),
 			spec: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Cluster.Spec.ProxyConfiguration = &anywherev1.ProxyConfiguration{
-					HttpProxy:  "proxy",
-					HttpsProxy: "proxy",
-					NoProxy:    []string{"no-proxy", "no-proxy-2"},
+				s.Cluster = &anywherev1.Cluster{
+					Spec: anywherev1.ClusterSpec{
+						ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+							Endpoint: &anywherev1.Endpoint{
+								Host: "1.2.3.4",
+							},
+						},
+						ProxyConfiguration: &anywherev1.ProxyConfiguration{
+							HttpProxy:  "proxy",
+							HttpsProxy: "proxy",
+							NoProxy:    []string{"no-proxy", "no-proxy-2"},
+						},
+					},
 				}
 			}),
 			want: deployment(func(d *appsv1.Deployment) {
@@ -288,7 +307,7 @@ func TestSetManagerEnvVars(t *testing.T) {
 					},
 					{
 						Name:  "NO_PROXY",
-						Value: "no-proxy,no-proxy-2",
+						Value: "no-proxy,no-proxy-2,1.2.3.4",
 					},
 				}
 			}),

@@ -7,13 +7,11 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 func TestGenerateTemplateBuilder(t *testing.T) {
 	g := NewWithT(t)
 	clusterSpec := test.NewFullClusterSpec(t, testClusterConfigFilename)
-	diskExtractor := hardware.NewDiskExtractor()
 
 	expectedControlPlaneMachineSpec := &v1alpha1.TinkerbellMachineConfigSpec{
 		HardwareSelector: map[string]string{"type": "cp"},
@@ -29,7 +27,7 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 			},
 		},
 	}
-	gotExpectedControlPlaneMachineSpec, err := getControlPlaneMachineSpec(clusterSpec, diskExtractor)
+	gotExpectedControlPlaneMachineSpec, err := getControlPlaneMachineSpec(clusterSpec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotExpectedControlPlaneMachineSpec).To(Equal(expectedControlPlaneMachineSpec))
 
@@ -49,11 +47,11 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 			},
 		},
 	}
-	gotWorkerNodeGroupMachineSpec, err := getWorkerNodeGroupMachineSpec(clusterSpec, diskExtractor)
+	gotWorkerNodeGroupMachineSpec, err := getWorkerNodeGroupMachineSpec(clusterSpec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotWorkerNodeGroupMachineSpec).To(Equal(expectedWorkerNodeGroupMachineSpec))
 
-	gotEtcdMachineSpec, err := getEtcdMachineSpec(clusterSpec, diskExtractor)
+	gotEtcdMachineSpec, err := getEtcdMachineSpec(clusterSpec)
 	var expectedEtcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotEtcdMachineSpec).To(Equal(expectedEtcdMachineSpec))

@@ -63,6 +63,11 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 	if err != nil {
 		w.T.Fatalf("Failed waiting for cluster kubeconfig: %s", err)
 	}
+
+	w.T.Logf("Waiting for workload cluster %s control plane to be ready", w.ClusterName)
+	if err := w.KubectlClient.WaitForControlPlaneReady(ctx, w.managementCluster(), "10m", w.ClusterName); err != nil {
+		w.T.Errorf("Failed waiting for control plane ready: %s", err)
+	}
 }
 
 // ValidateClusterDelete verifies the cluster has been deleted.

@@ -3,7 +3,7 @@ GO_OS:=$(shell go env GOOS)
 BINARY_NAME:=bin/eks-a-test-tool
 
 .PHONY: build-test-tool
-build-test-tool: lint
+build-test-tool:
 	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) go build -o $(BINARY_NAME) github.com/aws/eks-anywhere-test-tool
 
 .PHONY: clean

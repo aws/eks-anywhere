@@ -34,11 +34,18 @@ func WithUserAgent(userAgent string) ReaderOpt {
 	}
 }
 
+// WithEKSAUserAgent sets the user agent for a particular eks-a component and version.
+// component should be something like "cli", "controller", "e2e", etc.
+// version should generally be a semver, but when not available, any string is valid.
+func WithEKSAUserAgent(eksAComponent, version string) ReaderOpt {
+	return WithUserAgent(eksaUserAgent(eksAComponent, version))
+}
+
 func NewReader(opts ...ReaderOpt) *Reader {
 	r := &Reader{
 		embedFS:    embed.FS{},
 		httpClient: &http.Client{},
-		userAgent:  "eks-a/unknown",
+		userAgent:  eksaUserAgent("unknown", "no-version"),
 	}
 
 	for _, o := range opts {
@@ -101,4 +108,8 @@ func readLocalFile(filename string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func eksaUserAgent(eksAComponent, version string) string {
+	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
 }

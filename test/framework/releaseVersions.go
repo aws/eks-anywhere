@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/files"
-	filereader "github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -180,7 +179,7 @@ func devReleases() (release *releasev1alpha1.Release, err error) {
 }
 
 func getReleases(url string) (release *releasev1alpha1.Release, err error) {
-	reader := filereader.NewReader()
+	reader := newFileReader()
 	logger.Info("Reading release manifest", "manifest", url)
 	releases, err := releases.ReadReleasesFromURL(reader, url)
 	if err != nil {

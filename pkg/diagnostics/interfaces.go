@@ -51,6 +51,7 @@ type AnalyzerFactory interface {
 	PackageAnalyzers() []*Analyze
 }
 
+// CollectorFactory generates support-bundle collectors.
 type CollectorFactory interface {
 	PackagesCollectors() []*Collect
 	DefaultCollectors() []*Collect

@@ -41,6 +41,7 @@ type ClusterReconciler struct {
 	client                     client.Client
 	providerReconcilerRegistry ProviderClusterReconcilerRegistry
 	awsIamAuth                 AWSIamConfigReconciler
+	clusterValidator           ClusterValidator
 }
 
 type ProviderClusterReconcilerRegistry interface {
@@ -54,12 +55,18 @@ type AWSIamConfigReconciler interface {
 	ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
 }
 
+// ClusterValidator runs cluster level preflight validations before it goes to provider reconciler.
+type ClusterValidator interface {
+	ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
+}
+
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator) *ClusterReconciler {
 	return &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
 		awsIamAuth:                 awsIamAuth,
+		clusterValidator:           clusterValidator,
 	}
 }
 
@@ -219,11 +226,18 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 }
 
 func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	// Run some preflight validations that can't be checked in webhook
 	if cluster.HasAWSIamConfig() {
 		if result, err := r.awsIamAuth.EnsureCASecret(ctx, log, cluster); err != nil {
 			return controller.Result{}, err
 		} else if result.Return() {
 			return result, nil
+		}
+	}
+	if cluster.IsManaged() {
+		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
+			cluster.Status.FailureMessage = ptr.String(err.Error())
+			return controller.Result{}, err
 		}
 	}
 

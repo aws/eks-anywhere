@@ -82,21 +82,14 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	if p.hardwareCSVIsProvided() {
 		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
-		writer := hardware.MultiMachineWriter(machineCatalogueWriter, &p.diskExtractor)
-
 		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
 		if err != nil {
 			return err
 		}
 
-		// TODO(chrisdoherty4) Build the selectors slice using the selectors in the Tinkerbell
-		// Enabled Management Cluster that we're upgrading.
-		var selectors []v1alpha1.HardwareSelector
-
 		machineValidator := hardware.NewDefaultMachineValidator()
-		machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
 
-		if err := hardware.TranslateAll(machines, writer, machineValidator); err != nil {
+		if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
 			return err
 		}
 	}
@@ -115,9 +108,6 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		if err := p.catalogue.InsertHardware(&hardware[i]); err != nil {
 			return err
 		}
-		if err := p.diskExtractor.InsertDisks(&hardware[i]); err != nil {
-			return err
-		}
 	}
 
 	// Retrieve all provisioned hardware from the existing cluster and populate diskExtractors's
@@ -129,11 +119,6 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	)
 	if err != nil {
 		return fmt.Errorf("retrieving provisioned hardware: %v", err)
-	}
-	for i := range hardware {
-		if err := p.diskExtractor.InsertProvisionedHardwareDisks(&hardware[i]); err != nil {
-			return err
-		}
 	}
 
 	// Remove all the provisioned hardware from the existing cluster if repeated from the hardware csv input.

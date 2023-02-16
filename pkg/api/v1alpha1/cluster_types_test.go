@@ -1212,6 +1212,48 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 	}
 }
 
+func TestClusterEqualPackageConfigurationNetwork(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		disable1, disable2 bool
+		want               bool
+	}{
+		{
+			testName: "equal",
+			disable1: true,
+			disable2: true,
+			want:     true,
+		},
+		{
+			testName: "not equal",
+			disable1: true,
+			disable2: false,
+			want:     false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					Packages: &v1alpha1.PackageConfiguration{
+						Disable: tt.disable1,
+					},
+				},
+			}
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					Packages: &v1alpha1.PackageConfiguration{
+						Disable: tt.disable2,
+					},
+				},
+			}
+
+			g := NewWithT(t)
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterEqualManagement(t *testing.T) {
 	testCases := []struct {
 		testName                               string
@@ -1892,6 +1934,540 @@ func TestClusterHasAWSIamConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.cluster.HasAWSIamConfig()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestPackageConfiguration_Equal(t *testing.T) {
+	same := &v1alpha1.PackageConfiguration{Disable: false}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageConfiguration
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageConfiguration{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageConfiguration{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal",
+			pcn:  &v1alpha1.PackageConfiguration{Disable: true},
+			pco:  &v1alpha1.PackageConfiguration{Disable: true},
+			want: true,
+		},
+		{
+			name: "not equal",
+			pcn:  &v1alpha1.PackageConfiguration{Disable: true},
+			pco:  &v1alpha1.PackageConfiguration{Disable: false},
+			want: false,
+		},
+		{
+			name: "not equal controller",
+			pcn: &v1alpha1.PackageConfiguration{
+				Disable: true,
+				Controller: &v1alpha1.PackageControllerConfiguration{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				Disable: false,
+				Controller: &v1alpha1.PackageControllerConfiguration{
+					Tag: "v2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "equal controller",
+			pcn: &v1alpha1.PackageConfiguration{
+				Controller: &v1alpha1.PackageControllerConfiguration{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				Controller: &v1alpha1.PackageControllerConfiguration{
+					Tag: "v1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "not equal cronjob",
+			pcn: &v1alpha1.PackageConfiguration{
+				Disable: true,
+				CronJob: &v1alpha1.PackageControllerCronJob{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				Disable: false,
+				CronJob: &v1alpha1.PackageControllerCronJob{
+					Tag: "v2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "equal cronjob",
+			pcn: &v1alpha1.PackageConfiguration{
+				CronJob: &v1alpha1.PackageControllerCronJob{
+					Tag: "v1",
+				},
+			},
+			pco: &v1alpha1.PackageConfiguration{
+				CronJob: &v1alpha1.PackageControllerCronJob{
+					Tag: "v1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestPackageControllerConfiguration_Equal(t *testing.T) {
+	same := &v1alpha1.PackageControllerConfiguration{Tag: "v1"}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageControllerConfiguration
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageControllerConfiguration{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageControllerConfiguration{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal Repository",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Repository: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Repository: "a"},
+			want: true,
+		},
+		{
+			name: "not equal Repository",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Repository: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Repository: "b"},
+			want: false,
+		},
+		{
+			name: "equal Tag",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Tag: "v1"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Tag: "v1"},
+			want: true,
+		},
+		{
+			name: "not equal Tag",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Tag: "v1"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Tag: "v2"},
+			want: false,
+		},
+		{
+			name: "equal Digest",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Digest: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Digest: "a"},
+			want: true,
+		},
+		{
+			name: "not equal Digest",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Digest: "a"},
+			pco:  &v1alpha1.PackageControllerConfiguration{Digest: "b"},
+			want: false,
+		},
+		{
+			name: "equal DisableWebhooks",
+			pcn:  &v1alpha1.PackageControllerConfiguration{DisableWebhooks: true},
+			pco:  &v1alpha1.PackageControllerConfiguration{DisableWebhooks: true},
+			want: true,
+		},
+		{
+			name: "not equal DisableWebhooks",
+			pcn:  &v1alpha1.PackageControllerConfiguration{DisableWebhooks: true},
+			pco:  &v1alpha1.PackageControllerConfiguration{},
+			want: false,
+		},
+		{
+			name: "equal Env",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Env: []string{"a"}},
+			pco:  &v1alpha1.PackageControllerConfiguration{Env: []string{"a"}},
+			want: true,
+		},
+		{
+			name: "not equal Env",
+			pcn:  &v1alpha1.PackageControllerConfiguration{Env: []string{"a"}},
+			pco:  &v1alpha1.PackageControllerConfiguration{Env: []string{"b"}},
+			want: false,
+		},
+		{
+			name: "not equal Resources",
+			pcn: &v1alpha1.PackageControllerConfiguration{
+				Resources: v1alpha1.PackageControllerResources{
+					Requests: v1alpha1.ImageResource{
+						CPU: "1",
+					},
+				},
+			},
+			pco: &v1alpha1.PackageControllerConfiguration{
+				Resources: v1alpha1.PackageControllerResources{
+					Requests: v1alpha1.ImageResource{
+						CPU: "2",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestPackageControllerResources_Equal(t *testing.T) {
+	same := &v1alpha1.PackageControllerResources{
+		Limits: v1alpha1.ImageResource{
+			CPU: "3",
+		},
+	}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageControllerResources
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageControllerResources{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageControllerResources{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal Requests",
+			pcn: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					CPU: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					CPU: "1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "not equal Requests",
+			pcn: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					CPU: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Requests: v1alpha1.ImageResource{
+					CPU: "2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "equal Limits",
+			pcn: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					CPU: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					CPU: "1",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "not equal Limits",
+			pcn: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					CPU: "1",
+				},
+			},
+			pco: &v1alpha1.PackageControllerResources{
+				Limits: v1alpha1.ImageResource{
+					CPU: "2",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestImageResource_Equal(t *testing.T) {
+	same := &v1alpha1.ImageResource{
+		CPU: "3",
+	}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.ImageResource
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.ImageResource{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.ImageResource{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal CPU",
+			pcn: &v1alpha1.ImageResource{
+				CPU: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				CPU: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal CPU",
+			pcn: &v1alpha1.ImageResource{
+				CPU: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				CPU: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Memory",
+			pcn: &v1alpha1.ImageResource{
+				Memory: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				Memory: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Memory",
+			pcn: &v1alpha1.ImageResource{
+				Memory: "1",
+			},
+			pco: &v1alpha1.ImageResource{
+				Memory: "2",
+			},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestPackageControllerCronJob_Equal(t *testing.T) {
+	same := &v1alpha1.PackageControllerCronJob{
+		Repository: "3",
+	}
+	tests := []struct {
+		name     string
+		pcn, pco *v1alpha1.PackageControllerCronJob
+		want     bool
+	}{
+		{
+			name: "one nil",
+			pcn:  &v1alpha1.PackageControllerCronJob{},
+			pco:  nil,
+			want: false,
+		},
+		{
+			name: "other nil",
+			pcn:  nil,
+			pco:  &v1alpha1.PackageControllerCronJob{},
+			want: false,
+		},
+		{
+			name: "both nil",
+			pcn:  nil,
+			pco:  nil,
+			want: true,
+		},
+		{
+			name: "equal Repository",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Repository: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Repository: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Repository",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Repository: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Repository: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Tag",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Tag: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Tag: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Tag",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Tag: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Tag: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Digest",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Digest: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Digest: "1",
+			},
+			want: true,
+		},
+		{
+			name: "not equal Digest",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Digest: "1",
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Digest: "2",
+			},
+			want: false,
+		},
+		{
+			name: "equal Disable",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Disable: true,
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Disable: true,
+			},
+			want: true,
+		},
+		{
+			name: "not equal Disable",
+			pcn: &v1alpha1.PackageControllerCronJob{
+				Disable: true,
+			},
+			pco: &v1alpha1.PackageControllerCronJob{
+				Disable: false,
+			},
+			want: false,
+		},
+		{
+			name: "same",
+			pcn:  same,
+			pco:  same,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.pcn.Equal(tt.pco)).To(Equal(tt.want))
 		})
 	}
 }

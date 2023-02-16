@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	filereader "github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -699,7 +698,7 @@ func defaultEnvVarForTemplate(osFamily string, kubeVersion anywherev1.Kubernetes
 }
 
 func readVersionsBundles(t testing.TB, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) *releasev1.VersionsBundle {
-	reader := filereader.NewReader(filereader.WithUserAgent("eks-a-e2e-tests"))
+	reader := newFileReader()
 	b, err := releases.ReadBundlesForRelease(reader, release)
 	if err != nil {
 		t.Fatal(err)

@@ -6,18 +6,29 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig.
 type VSphereMachineConfigSpec struct {
-	DiskGiB           int                 `json:"diskGiB,omitempty"`
-	Datastore         string              `json:"datastore"`
-	Folder            string              `json:"folder"`
-	NumCPUs           int                 `json:"numCPUs"`
-	MemoryMiB         int                 `json:"memoryMiB"`
-	OSFamily          OSFamily            `json:"osFamily"`
-	ResourcePool      string              `json:"resourcePool"`
-	StoragePolicyName string              `json:"storagePolicyName,omitempty"`
-	Template          string              `json:"template,omitempty"`
-	Users             []UserConfiguration `json:"users,omitempty"`
-	TagIDs            []string            `json:"tags,omitempty"`
-	CloneMode         CloneMode           `json:"cloneMode,omitempty"`
+	DiskGiB             int                  `json:"diskGiB,omitempty"`
+	Datastore           string               `json:"datastore"`
+	Folder              string               `json:"folder"`
+	NumCPUs             int                  `json:"numCPUs"`
+	MemoryMiB           int                  `json:"memoryMiB"`
+	OSFamily            OSFamily             `json:"osFamily"`
+	ResourcePool        string               `json:"resourcePool"`
+	StoragePolicyName   string               `json:"storagePolicyName,omitempty"`
+	Template            string               `json:"template,omitempty"`
+	Users               []UserConfiguration  `json:"users,omitempty"`
+	TagIDs              []string             `json:"tags,omitempty"`
+	CloneMode           CloneMode            `json:"cloneMode,omitempty"`
+	HostOSConfiguration *HostOSConfiguration `json:"hostOSConfiguration,omitempty"`
+}
+
+// HostOSConfiguration defines the configuration settings on the host OS.
+type HostOSConfiguration struct {
+	NTPConfiguration *NTPConfiguration `json:"ntpConfiguration"`
+}
+
+// NTPConfiguration defines the NTP configuration on the host OS.
+type NTPConfiguration struct {
+	Servers []string `json:"servers"`
 }
 
 func (c *VSphereMachineConfig) PauseReconcile() {

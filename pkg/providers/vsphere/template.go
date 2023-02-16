@@ -291,6 +291,10 @@ func buildTemplateMapCP(
 		values["awsIamAuth"] = true
 	}
 
+	if controlPlaneMachineSpec.HostOSConfiguration != nil && controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+		values["ntpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+	}
+
 	return values, nil
 }
 
@@ -388,6 +392,10 @@ func buildTemplateMapMD(
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
+	}
+
+	if workerNodeGroupMachineSpec.HostOSConfiguration != nil && workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+		values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
 	}
 
 	return values, nil
