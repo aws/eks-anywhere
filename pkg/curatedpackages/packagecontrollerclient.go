@@ -205,7 +205,7 @@ const packageBundleControllerResource string = "packageBundleController"
 // It returns nil on success. Success is defined as receiving a valid package
 // bundle controller from the API with a non-empty active bundle.
 //
-// If no timeout is specified, a default of 1 minute is used.
+// If no timeout is specified, a default of 3 minutes is used.
 func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) error {
 	timeout := 3 * time.Minute
 	if pc.activeBundleTimeout > 0 {
