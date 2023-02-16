@@ -2165,6 +2165,17 @@ func (k *Kubectl) DeleteEksaNutanixMachineConfig(ctx context.Context, nutanixMac
 	return nil
 }
 
+// GetRufioMachine returns the rufio machine from the cluster.
+func (k *Kubectl) GetRufioMachine(ctx context.Context, name string, namespace string, kubeconfig string) (*rufiov1alpha1.Machine, error) {
+	response := &rufiov1alpha1.Machine{}
+	err := k.GetObject(ctx, rufioMachineResourceType, name, namespace, kubeconfig, response)
+	if err != nil {
+		return nil, fmt.Errorf("getting rufio machine: %v", err)
+	}
+
+	return response, nil
+}
+
 // AllBaseboardManagements returns all the baseboard management resources in the cluster.
 func (k *Kubectl) AllBaseboardManagements(ctx context.Context, kubeconfig string) ([]rufiounreleased.BaseboardManagement, error) {
 	stdOut, err := k.Execute(ctx,

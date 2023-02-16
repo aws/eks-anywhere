@@ -7,13 +7,13 @@ import (
 	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -83,6 +83,8 @@ type ProviderKubectlClient interface {
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
+	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
+	GetRufioMachine(ctx context.Context, name string, namespace string, kubeconfig string) (*rufiov1alpha1.Machine, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	GetUnprovisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
@@ -298,18 +300,13 @@ func (p *Provider) HardwareSpec() []byte {
 // generateHardwareSpec reads the hardware information from the available cluster, generates a yaml that can be submitted to a kubernetes cluster
 // and caches it on the Provider.
 func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Cluster) error {
-	client, err := kubernetes.NewRuntimeClientFromFileName(cluster.KubeconfigFile)
+	catalogue := hardware.NewCatalogue()
+	err := p.readMachineCatalogueFromCluster(ctx, catalogue, cluster)
 	if err != nil {
-		return fmt.Errorf("creating client for cluster %s: %v", cluster.Name, err)
+		return fmt.Errorf("reading machine catalogue from cluster: %v", err)
 	}
 
-	etcdReader := hardware.NewETCDReader(client)
-	err = etcdReader.NewMachineCatalogueFromETCD(ctx)
-	if err != nil {
-		return fmt.Errorf("creating machine catalogue from etcd: %v", err)
-	}
-
-	hardwareSpec, err := hardware.MarshalCatalogue(etcdReader.GetCatalogue())
+	hardwareSpec, err := hardware.MarshalCatalogue(catalogue)
 	if err != nil {
 		return fmt.Errorf("marshing hardware catalogue: %v", err)
 	}
@@ -318,6 +315,38 @@ func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Clus
 		return err
 	}
 	p.hardwareSpec = hardwareSpec
+
+	return nil
+}
+
+// readMachineCatalogueFromCluster fetches all the hardware, bmc and related secret objects and inserts in to ETCDReader catalogue.
+func (p *Provider) readMachineCatalogueFromCluster(ctx context.Context, catalogue *hardware.Catalogue, cluster *types.Cluster) error {
+	catalogueWriter := hardware.NewMachineCatalogueWriter(catalogue)
+	hwList, err := p.providerKubectlClient.AllTinkerbellHardware(ctx, cluster.KubeconfigFile)
+	if err != nil {
+		return fmt.Errorf("failed to build catalogue: %v", err)
+	}
+
+	for _, hw := range hwList {
+		rufioMachine, err := p.providerKubectlClient.GetRufioMachine(ctx, hw.Spec.BMCRef.Name, hw.Namespace, cluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+		if rufioMachine == nil {
+			continue
+		}
+
+		authSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, rufioMachine.Spec.Connection.AuthSecretRef.Name, hw.Namespace)
+		if err != nil {
+			return err
+		}
+
+		machine := hardware.NewMachineFromHardware(hw, rufioMachine, authSecret)
+		err = catalogueWriter.Write(*machine)
+		if err != nil {
+			return fmt.Errorf("writing machine to catalogue: %v", err)
+		}
+	}
 
 	return nil
 }

@@ -67,6 +67,7 @@ func (p *Provider) applyHardware(ctx context.Context, cluster *types.Cluster) er
 	if err := p.generateHardwareSpec(ctx, cluster); err != nil {
 		return err
 	}
+
 	return nil
 }
 

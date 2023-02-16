@@ -15,7 +15,8 @@ import (
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	gomock "github.com/golang/mock/gomock"
-	v1alpha10 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	v1alpha10 "github.com/tinkerbell/rufio/api/v1alpha1"
+	v1alpha11 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
 	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -60,10 +61,10 @@ func (mr *MockProviderKubectlClientMockRecorder) AllBaseboardManagements(arg0, a
 }
 
 // AllTinkerbellHardware mocks base method.
-func (m *MockProviderKubectlClient) AllTinkerbellHardware(arg0 context.Context, arg1 string) ([]v1alpha10.Hardware, error) {
+func (m *MockProviderKubectlClient) AllTinkerbellHardware(arg0 context.Context, arg1 string) ([]v1alpha11.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AllTinkerbellHardware", arg0, arg1)
-	ret0, _ := ret[0].([]v1alpha10.Hardware)
+	ret0, _ := ret[0].([]v1alpha11.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -250,10 +251,10 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 }
 
 // GetProvisionedTinkerbellHardware mocks base method.
-func (m *MockProviderKubectlClient) GetProvisionedTinkerbellHardware(arg0 context.Context, arg1, arg2 string) ([]v1alpha10.Hardware, error) {
+func (m *MockProviderKubectlClient) GetProvisionedTinkerbellHardware(arg0 context.Context, arg1, arg2 string) ([]v1alpha11.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProvisionedTinkerbellHardware", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]v1alpha10.Hardware)
+	ret0, _ := ret[0].([]v1alpha11.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -262,6 +263,21 @@ func (m *MockProviderKubectlClient) GetProvisionedTinkerbellHardware(arg0 contex
 func (mr *MockProviderKubectlClientMockRecorder) GetProvisionedTinkerbellHardware(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProvisionedTinkerbellHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetProvisionedTinkerbellHardware), arg0, arg1, arg2)
+}
+
+// GetRufioMachine mocks base method.
+func (m *MockProviderKubectlClient) GetRufioMachine(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha10.Machine, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRufioMachine", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha10.Machine)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRufioMachine indicates an expected call of GetRufioMachine.
+func (mr *MockProviderKubectlClientMockRecorder) GetRufioMachine(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRufioMachine", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetRufioMachine), arg0, arg1, arg2, arg3)
 }
 
 // GetSecret mocks base method.
@@ -284,11 +300,26 @@ func (mr *MockProviderKubectlClientMockRecorder) GetSecret(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecret), varargs...)
 }
 
+// GetSecretFromNamespace mocks base method.
+func (m *MockProviderKubectlClient) GetSecretFromNamespace(arg0 context.Context, arg1, arg2, arg3 string) (*v1.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSecretFromNamespace", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecretFromNamespace indicates an expected call of GetSecretFromNamespace.
+func (mr *MockProviderKubectlClientMockRecorder) GetSecretFromNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecretFromNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecretFromNamespace), arg0, arg1, arg2, arg3)
+}
+
 // GetUnprovisionedTinkerbellHardware mocks base method.
-func (m *MockProviderKubectlClient) GetUnprovisionedTinkerbellHardware(arg0 context.Context, arg1, arg2 string) ([]v1alpha10.Hardware, error) {
+func (m *MockProviderKubectlClient) GetUnprovisionedTinkerbellHardware(arg0 context.Context, arg1, arg2 string) ([]v1alpha11.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUnprovisionedTinkerbellHardware", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]v1alpha10.Hardware)
+	ret0, _ := ret[0].([]v1alpha11.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
