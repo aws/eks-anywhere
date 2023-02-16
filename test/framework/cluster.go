@@ -1771,3 +1771,20 @@ func (e *ClusterE2ETest) CreateAirgappedUser(localCIDR string) {
 	e.Run(fmt.Sprintf("sudo iptables -A OUTPUT -d %s,172.0.0.0/8,127.0.0.1 -m owner --uid-owner airgap -j ACCEPT", localCIDR))
 	e.Run("sudo iptables -A OUTPUT -m owner --uid-owner airgap -j REJECT")
 }
+
+// AssertAirgappedNetwork make sure that the admin machine is indeed airgapped.
+func (e *ClusterE2ETest) AssertAirgappedNetwork() {
+	cmd := exec.Command("docker", "run", "--rm", "busybox", "ping", "8.8.8.8", "-c", "1", "-W", "2")
+	out, err := cmd.Output()
+	e.T.Log(string(out))
+	if err == nil {
+		e.T.Fatalf("Docker container is not airgapped")
+	}
+
+	cmd = exec.Command("sudo", "-u", "airgap", "ping", "8.8.8.8", "-c", "1", "-W", "2")
+	out, err = cmd.Output()
+	e.T.Log(string(out))
+	if err == nil {
+		e.T.Fatalf("Airgap user is not airgapped")
+	}
+}
