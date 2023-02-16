@@ -78,13 +78,21 @@ export REGISTRY_USERNAME=<username>
 export REGISTRY_PASSWORD=<password>
 ```
 
+Download and import EKS Anywhere images:
 ```bash
 eksctl anywhere download images -o eks-anywhere-images.tar
 docker login https://<private registry endpoint>
 ...
 eksctl anywhere import images -i eks-anywhere-images.tar
-eksctl anywhere copy packages --bundle ./eksa-bundle.yaml <private registry endpoint> --dst-cert rootCA.pem
 ```
+
+Download the EKS Anywhere bundle and use it to copy packages:
+```bash
+eksctl anywhere download artifacts
+tar -xzf eks-anywhere-downloads.tar.gz
+eksctl anywhere copy packages --bundle ./eks-anywhere-downloads/bundle-release.yaml <private registry endpoint> --dst-cert rootCA.pem
+```
+
 ## Docker configurations
 It is necessary to add the private registry's CA Certificate
 to the list of CA certificates on the admin machine if your registry uses self-signed certificates.
