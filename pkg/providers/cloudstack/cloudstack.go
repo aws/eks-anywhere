@@ -271,6 +271,10 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
+func (p *cloudstackProvider) HardwareSpec() []byte {
+	return nil
+}
+
 func (p *cloudstackProvider) BootstrapClusterOpts(clusterSpec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	endpoints := []string{}
 	for _, az := range clusterSpec.CloudStackDatacenter.Spec.AvailabilityZones {

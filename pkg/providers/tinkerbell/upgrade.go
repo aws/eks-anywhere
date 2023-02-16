@@ -139,6 +139,9 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 				return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 			}
 		}
+		if err := p.generateHardwareSpec(ctx, clusterSpec.ManagementCluster); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -204,6 +207,10 @@ func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapC
 		if err != nil {
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
+	}
+
+	if err := p.generateHardwareSpec(ctx, bootstrapCluster); err != nil {
+		return err
 	}
 
 	return nil

@@ -185,6 +185,20 @@ func (mr *MockProviderMockRecorder) GetInfrastructureBundle(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInfrastructureBundle", reflect.TypeOf((*MockProvider)(nil).GetInfrastructureBundle), arg0)
 }
 
+// HardwareSpec mocks base method.
+func (m *MockProvider) HardwareSpec() []byte {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HardwareSpec")
+	ret0, _ := ret[0].([]byte)
+	return ret0
+}
+
+// HardwareSpec indicates an expected call of HardwareSpec.
+func (mr *MockProviderMockRecorder) HardwareSpec() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HardwareSpec", reflect.TypeOf((*MockProvider)(nil).HardwareSpec))
+}
+
 // InstallCustomProviderComponents mocks base method.
 func (m *MockProvider) InstallCustomProviderComponents(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()

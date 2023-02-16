@@ -1,7 +1,7 @@
 package hardware
 
 import (
-	"github.com/tinkerbell/rufio/api/v1alpha1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -14,7 +14,7 @@ func (c *Catalogue) IndexBMCs(index string, fn KeyExtractorFunc) {
 }
 
 // InsertBMC inserts BMCs into the catalogue. If any indexes exist, the BMC is indexed.
-func (c *Catalogue) InsertBMC(bmc *v1alpha1.Machine) error {
+func (c *Catalogue) InsertBMC(bmc *rufiov1alpha1.Machine) error {
 	if err := c.bmcIndex.Insert(bmc); err != nil {
 		return err
 	}
@@ -23,23 +23,23 @@ func (c *Catalogue) InsertBMC(bmc *v1alpha1.Machine) error {
 }
 
 // AllBMCs retrieves a copy of the catalogued BMC instances.
-func (c *Catalogue) AllBMCs() []*v1alpha1.Machine {
-	bmcs := make([]*v1alpha1.Machine, len(c.bmcs))
+func (c *Catalogue) AllBMCs() []*rufiov1alpha1.Machine {
+	bmcs := make([]*rufiov1alpha1.Machine, len(c.bmcs))
 	copy(bmcs, c.bmcs)
 	return bmcs
 }
 
 // LookupBMC retrieves BMC instances on index with a key of key. Multiple BMCs _may_
 // have the same key hence it can return multiple BMCs.
-func (c *Catalogue) LookupBMC(index, key string) ([]*v1alpha1.Machine, error) {
+func (c *Catalogue) LookupBMC(index, key string) ([]*rufiov1alpha1.Machine, error) {
 	untyped, err := c.bmcIndex.Lookup(index, key)
 	if err != nil {
 		return nil, err
 	}
 
-	bmcs := make([]*v1alpha1.Machine, len(untyped))
+	bmcs := make([]*rufiov1alpha1.Machine, len(untyped))
 	for i, v := range untyped {
-		bmcs[i] = v.(*v1alpha1.Machine)
+		bmcs[i] = v.(*rufiov1alpha1.Machine)
 	}
 
 	return bmcs, nil
@@ -56,7 +56,7 @@ const BMCNameIndex = ".ObjectMeta.Name"
 func WithBMCNameIndex() CatalogueOption {
 	return func(c *Catalogue) {
 		c.IndexBMCs(BMCNameIndex, func(o interface{}) string {
-			bmc := o.(*v1alpha1.Machine)
+			bmc := o.(*rufiov1alpha1.Machine)
 			return bmc.ObjectMeta.Name
 		})
 	}
@@ -83,18 +83,18 @@ func (w *BMCCatalogueWriter) Write(m Machine) error {
 	return nil
 }
 
-func toRufioMachine(m Machine) *v1alpha1.Machine {
+func toRufioMachine(m Machine) *rufiov1alpha1.Machine {
 	// TODO(chrisdoherty4)
 	// 	- Set the namespace to the CAPT namespace.
 	// 	- Patch through insecure TLS.
-	return &v1alpha1.Machine{
+	return &rufiov1alpha1.Machine{
 		TypeMeta: newMachineTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
 			Name:      formatBMCRef(m),
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: v1alpha1.MachineSpec{
-			Connection: v1alpha1.Connection{
+		Spec: rufiov1alpha1.MachineSpec{
+			Connection: rufiov1alpha1.Connection{
 				Host: m.BMCIPAddress,
 				AuthSecretRef: corev1.SecretReference{
 					Name:      formatBMCSecretRef(m),

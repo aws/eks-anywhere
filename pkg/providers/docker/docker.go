@@ -507,6 +507,10 @@ func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	}
 }
 
+func (p *provider) HardwareSpec() []byte {
+	return nil
+}
+
 // this is required for docker provider.
 func getUpdatedKubeConfigContent(content *[]byte, dockerLbPort string) {
 	mc := regexp.MustCompile("server:.*")
