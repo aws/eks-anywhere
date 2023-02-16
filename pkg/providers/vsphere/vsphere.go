@@ -45,6 +45,8 @@ const (
 	defaultTemplatesFolder   = "vm/Templates"
 	maxRetries               = 30
 	backOffPeriod            = 5 * time.Second
+	disk1                    = "Hard disk 1"
+	disk2                    = "Hard disk 2"
 )
 
 //go:embed config/template-cp.yaml
@@ -113,6 +115,7 @@ type ProviderGovcClient interface {
 	RoleExists(ctx context.Context, name string) (bool, error)
 	CreateRole(ctx context.Context, name string, privileges []string) error
 	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
+	GetHardDiskSize(ctx context.Context, vm, datacenter string) (map[string]float64, error)
 }
 
 type ProviderKubectlClient interface {
