@@ -81,6 +81,7 @@ func NewFluxFromGitOpsFluxClient(fluxClient GitOpsFluxClient, gitClient GitClien
 	}
 }
 
+// InstallGitOps sets up the git repository and commits all the necessary configuration files manage the cluster through git to the repo, if GitOps is enabled on the cluster.
 func (f *Flux) InstallGitOps(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareSpec []byte) error {
 	if f.shouldSkipFlux() {
 		logger.Info("GitOps field not specified, bootstrap flux skipped")
@@ -212,6 +213,7 @@ func (f *Flux) ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster
 	return f.fluxClient.ForceReconcile(ctx, cluster, clusterSpec.FluxConfig.Spec.SystemNamespace)
 }
 
+// UpdateGitEksaSpec updates the cluster eksa files in the git repo, if GitOps is enabled on the cluster.
 func (f *Flux) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, hardwareSpec []byte) error {
 	if f.shouldSkipFlux() {
 		logger.Info("GitOps field not specified, update git repo skipped")

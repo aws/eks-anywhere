@@ -16,5 +16,4 @@ type CliConfig struct {
 	GitSshKeyPassphrase string
 	GitPrivateKeyFile   string
 	GitKnownHostsFile   string
-	HardwareCSVPath     string
 }

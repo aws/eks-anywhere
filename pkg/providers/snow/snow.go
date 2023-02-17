@@ -188,6 +188,7 @@ func (p *SnowProvider) UpdateKubeConfig(content *[]byte, clusterName string) err
 	return nil
 }
 
+// HardwareSpec returns the hardware yaml containing configurations for the hardware in the cluster.
 func (p *SnowProvider) HardwareSpec() []byte {
 	return nil
 }

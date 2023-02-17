@@ -450,6 +450,7 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+	kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{}, nil)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	if err := provider.readCSVToCatalogue(); err != nil {
@@ -506,6 +507,7 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(nil).MaxTimes(2)
+	kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{}, nil).MaxTimes(2)
 
 	tt := []struct {
 		name            string
@@ -1009,6 +1011,7 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
 	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+	kubectl.EXPECT().AllTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{}, nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {

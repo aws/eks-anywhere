@@ -271,6 +271,7 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
+// HardwareSpec returns the hardware yaml containing configurations for the hardware in the cluster.
 func (p *cloudstackProvider) HardwareSpec() []byte {
 	return nil
 }
