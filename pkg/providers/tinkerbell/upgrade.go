@@ -12,7 +12,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
@@ -190,10 +189,6 @@ func (p *Provider) applyHardwareUpgrade(ctx context.Context, cluster *types.Clus
 	hardwareSpec, err := hardware.MarshalCatalogue(p.catalogue)
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
-	}
-	filePath, err := p.writer.Write("hardware-upgrade.yaml", hardwareSpec, filewriter.PersistentFile)
-	if err != nil {
-		return fmt.Errorf("failed to write hardware-upgrade.yaml %s: %v", filePath, err)
 	}
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
 	if err != nil {

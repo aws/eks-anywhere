@@ -107,7 +107,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
-	cliConfig := buildCliConfig(clusterSpec, cc.hardwareCSVPath)
+	cliConfig := buildCliConfig(clusterSpec)
 	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig, cc.installPackages)
 	if err != nil {
 		return err

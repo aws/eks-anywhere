@@ -59,7 +59,7 @@ func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []str
 		}
 	}
 
-	cliConfig := buildCliConfig(clusterSpec, cc.hardwareCSVPath)
+	cliConfig := buildCliConfig(clusterSpec)
 	dirs, err := valOpt.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
 		return err
