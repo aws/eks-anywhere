@@ -72,19 +72,33 @@ export REGISTRY_PASSWORD=<password>
 ## Import images into a private registry
 You can use the `download images` and `import images` commands to pull images from `public.ecr.aws` and push them to your
 private registry.
+The `copy packages` must be used if you want to copy EKS Anywhere Curated Packages to your registry mirror.
 The `download images` command also pulls the cilium chart from `public.ecr.aws` and pushes it to the registry mirror. It requires the registry credentials for performing a login. Set the following environment variables for the login:
 ```bash
+export REGISTRY_ENDPOINT=<registry_endpoint>
 export REGISTRY_USERNAME=<username>
 export REGISTRY_PASSWORD=<password>
 ```
 
+Download the EKS Anywhere artifacts to get the EKS Anywhere bundle:
+```bash
+eksctl anywhere download artifacts
+tar -xzf eks-anywhere-downloads.tar.gz
+```
+
+Download and import EKS Anywhere images:
 ```bash
 eksctl anywhere download images -o eks-anywhere-images.tar
-docker login https://<private registry endpoint>
+docker login https://${REGISTRY_ENDPOINT}
 ...
-eksctl anywhere import images -i eks-anywhere-images.tar
-eksctl anywhere copy packages --bundle ./eksa-bundle.yaml <private registry endpoint> --dst-cert rootCA.pem
+eksctl anywhere import images -i eks-anywhere-images.tar --bundles eks-anywhere-downloads/bundle-release.yaml --registry ${REGISTRY_ENDPOINT}
 ```
+
+Use the EKS Anywhere bundle to copy packages:
+```bash
+eksctl anywhere copy packages --bundle ./eks-anywhere-downloads/bundle-release.yaml --dst-cert rootCA.pem ${REGISTRY_ENDPOINT}
+```
+
 ## Docker configurations
 It is necessary to add the private registry's CA Certificate
 to the list of CA certificates on the admin machine if your registry uses self-signed certificates.
