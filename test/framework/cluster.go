@@ -1143,9 +1143,9 @@ func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 
 // WithCluster helps with bringing up and tearing down E2E test clusters.
 func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
-	//e.GenerateClusterConfig()
-	//e.CreateCluster()
-	//defer e.DeleteCluster()
+	e.GenerateClusterConfig()
+	e.CreateCluster()
+	defer e.DeleteCluster()
 	f(e)
 }
 
