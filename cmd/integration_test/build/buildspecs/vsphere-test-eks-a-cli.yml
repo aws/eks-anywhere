@@ -62,6 +62,7 @@ env:
     T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:username"
     T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
     T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
+    T_NTP_SERVERS: "ntp:servers"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
 phases:
   pre_build:
