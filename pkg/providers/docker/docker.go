@@ -507,6 +507,7 @@ func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	}
 }
 
+// HardwareSpec returns the hardware yaml containing configurations for the hardware in the cluster.
 func (p *provider) HardwareSpec() []byte {
 	return nil
 }

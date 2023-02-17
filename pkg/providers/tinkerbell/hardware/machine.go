@@ -5,10 +5,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aws/eks-anywhere/pkg/collection"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/aws/eks-anywhere/pkg/collection"
 )
 
 // Machine is a machine configuration with optional BMC interface configuration.
@@ -34,7 +35,7 @@ type Machine struct {
 	VLANID       string `csv:"vlan_id, omitempty"`
 }
 
-// NewMachineFromHardware creates a new Machine from the given hardware and it's dependencies, if any
+// NewMachineFromHardware creates a new Machine from the given hardware and it's dependencies, if any.
 func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine, s *corev1.Secret) *Machine {
 	var bmcIPAddress, bmcUsername, bmcPassword string
 	if rm != nil && s != nil {
