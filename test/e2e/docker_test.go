@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
-	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -197,7 +196,7 @@ func TestDockerKubernetes124CuratedPackagesAdotSimpleFlow(t *testing.T) {
 }
 
 func TestDockerCuratedPackagesMetalLB(t *testing.T) {
-	suite.Run(t, new(Suite))
+	RunMetalLBDockerTests(t)
 }
 
 // AWS IAM Auth

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,19 +19,39 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type Suite struct {
+type MetalLBSuite struct {
 	suite.Suite
-	cluster *framework.ClusterE2ETest
+	cluster           *framework.ClusterE2ETest
+	kubernetesVersion v1alpha1.KubernetesVersion
+	provider          framework.Provider
 }
 
-func (suite *Suite) SetupSuite() {
+var versionsToTest = []v1alpha1.KubernetesVersion{v1alpha1.Kube124, v1alpha1.Kube125}
+
+func RunMetalLBDockerTests(t *testing.T) {
+	for _, v := range versionsToTest {
+		s := new(MetalLBSuite)
+		s.provider = framework.NewDocker(t)
+		s.kubernetesVersion = v
+		suite.Run(t, s)
+	}
+}
+
+func kubeVersionNameDiscriminator(version v1alpha1.KubernetesVersion) framework.ClusterE2ETestOpt {
+	return func(e *framework.ClusterE2ETest) {
+		e.ClusterName = fmt.Sprintf("%s-%s", e.ClusterName, strings.ReplaceAll(string(version), ".", "-"))
+	}
+}
+
+func (suite *MetalLBSuite) SetupSuite() {
 	t := suite.T()
 	suite.cluster = framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
+		suite.provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+		kubeVersionNameDiscriminator(suite.kubernetesVersion),
 	)
 }
 
@@ -49,7 +70,7 @@ func getBGPAdvertisementSpec(ipPoolNames []string) string {
 	return fmt.Sprintf(`{"aggregationLength":32,"aggregationLengthV6":32,"ipAddressPools":%s,"localPref":123}`, pools)
 }
 
-func (suite *Suite) TestPackagesMetalLB() {
+func (suite *MetalLBSuite) TestPackagesMetalLB() {
 	// This should be split into multiple tests with a cluster setup in `SetupSuite`.
 	// This however requires the creation of utilites managing cluster creation.
 	t := suite.T()
