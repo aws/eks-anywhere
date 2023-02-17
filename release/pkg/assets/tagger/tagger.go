@@ -30,7 +30,7 @@ func BuildToolingGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, over
 	if overrideBranch != "" {
 		branchName = overrideBranch
 	}
-	gitTag, err := filereader.ReadGitTag(gitTagPath, rc.BuildRepoSource, branchName)
+	gitTag, err := filereader.ReadGitTag(gitTagPath, rc.BuildRepoSource, branchName, rc.DryRun)
 	if err != nil {
 		return "", errors.Cause(err)
 	}

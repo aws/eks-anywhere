@@ -175,7 +175,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 						if hasSeparateTagPerReleaseBranch {
 							gitTagPath = filepath.Join(tagOptions["projectPath"], tagOptions["eksDReleaseChannel"])
 						}
-						gitTagFromMain, err = filereader.ReadGitTag(gitTagPath, r.BuildRepoSource, "main")
+						gitTagFromMain, err = filereader.ReadGitTag(gitTagPath, r.BuildRepoSource, "main", r.DryRun)
 						if err != nil {
 							return "", "", errors.Cause(err)
 						}

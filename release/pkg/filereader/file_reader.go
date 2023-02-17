@@ -337,7 +337,10 @@ func ReadHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func ReadGitTag(projectPath, gitRootPath, branch string) (string, error) {
+func ReadGitTag(projectPath, gitRootPath, branch string, dryRun bool) (string, error) {
+	if dryRun {
+		return constants.FakeGitTag, nil
+	}
 	_, err := git.CheckoutRepo(gitRootPath, branch)
 	if err != nil {
 		return "", fmt.Errorf("error reading git tag: %v", err)

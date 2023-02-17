@@ -72,7 +72,7 @@ func DownloadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]
 						if strings.Contains(sourceS3Key, "eksctl-anywhere") {
 							latestSourceS3PrefixFromMain = strings.NewReplacer(r.CliRepoBranchName, "latest").Replace(sourceS3Prefix)
 						} else {
-							gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
+							gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main", r.DryRun)
 							if err != nil {
 								return errors.Cause(err)
 							}
@@ -121,7 +121,7 @@ func DownloadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]
 							if strings.Contains(sourceS3Key, "eksctl-anywhere") {
 								latestSourceS3PrefixFromMain = strings.NewReplacer(r.CliRepoBranchName, "latest").Replace(sourceS3Prefix)
 							} else {
-								gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
+								gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main", r.DryRun)
 								if err != nil {
 									return errors.Cause(err)
 								}
@@ -158,7 +158,7 @@ func DownloadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]
 				if err != nil {
 					if r.BuildRepoBranchName != "main" {
 						fmt.Printf("Artifact corresponding to %s branch not found for %s manifest. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
-						gitTagFromMain, err := filereader.ReadGitTag(artifact.Manifest.ProjectPath, r.BuildRepoSource, "main")
+						gitTagFromMain, err := filereader.ReadGitTag(artifact.Manifest.ProjectPath, r.BuildRepoSource, "main", r.DryRun)
 						if err != nil {
 							return errors.Cause(err)
 						}

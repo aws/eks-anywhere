@@ -38,7 +38,7 @@ func SortArtifactsMap(m map[string][]releasetypes.Artifact) []string {
 }
 
 func getKubeRbacProxyImageAttributes(r *releasetypes.ReleaseConfig) (string, string, map[string]string, error) {
-	gitTag, err := filereader.ReadGitTag(constants.KubeRbacProxyProjectPath, r.BuildRepoSource, r.BuildRepoBranchName)
+	gitTag, err := filereader.ReadGitTag(constants.KubeRbacProxyProjectPath, r.BuildRepoSource, r.BuildRepoBranchName, r.DryRun)
 	if err != nil {
 		return "", "", nil, errors.Cause(err)
 	}
