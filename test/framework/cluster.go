@@ -1469,8 +1469,8 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namesp
 	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
 
 	for _, name := range deployments {
+		wg.Add(1)
 		go func(name string) {
-			wg.Add(1)
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
 				e.Cluster(), "5m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
