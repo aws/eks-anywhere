@@ -54,7 +54,7 @@ require (
 	k8s.io/client-go v0.26.0
 	k8s.io/component-base v0.26.0
 	k8s.io/klog/v2 v2.80.1
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
+	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0
 	sigs.k8s.io/cluster-api v1.2.4
@@ -184,7 +184,7 @@ require (
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/term v0.4.0 // indirect
-	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -211,8 +211,10 @@ replace (
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
-	// These 3 are needed because v0.26.0 needs go 1.19 and controller-runtime v0.14
-	// Once we update to go 1.19, remove these replaces and bump controller-runtime
+	// These 3 replaces are needed because v0.26.0 needs controller-runtime v0.14
+	// Once the rest of dependencies we have that use controller-runtime
+	// move to v0.14, remove these replaces and bump controller-runtime
+	// This will be possible once capi v1.4 is released.
 	k8s.io/apimachinery => k8s.io/apimachinery v0.25.6
 	k8s.io/client-go => k8s.io/client-go v0.25.0
 	k8s.io/component-base => k8s.io/component-base v0.25.6
