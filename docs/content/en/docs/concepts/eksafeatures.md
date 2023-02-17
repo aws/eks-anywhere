@@ -55,10 +55,14 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 ### Comparing Amazon EKS Anywhere to Amazon EKS on Outposts
 
 Like EKS Anywhere, Amazon EKS on Outposts provides a means of running Kubernetes clusters using EKS software and customer on-premises hardware.
-The main difference are that:
+The main differences are that:
 
 * Amazon provides the hardware with Outposts, while most EKS Anywhere providers leverage the customer's own hardware.
-* Outposts have the option of having the EKS control plane run and be managed on the AWS cloud.
+* With Amazon EKS on Outposts, the Kubernetes control plane is fully managed by AWS. With EKS Anywhere, customers are responsible for managing the lifecycle of the Kubernetes control plane with EKS Anywhere automation tooling.
+* Customers can use Amazon EKS on Outposts with the same console, APIs, and tools they use to run Amazon EKS clusters in AWS Cloud. With EKS Anywhere, customers can use the eksctl CLI to manage their clusters, optionally connect their clusters to the EKS console for observability, and optionally use infrastructure as code tools such as Terraform and GitOps to manage their clusters. However, the primary interfaces for EKS Anywhere are the EKS Anywhere Custom Resources. Amazon EKS does not have a CRD-based interface today.
+
+Amazon EKS on Outposts is a regional AWS service that requires a consistent, reliable connection from the Outpost to the AWS Region.
+EKS Anywhere is a standalone software offering that can run entirely disconnected from AWS Cloud, including air-gapped environments.
 
 Outposts have two deployment methods available:
 
@@ -67,3 +71,4 @@ Outposts have two deployment methods available:
 * **Local clusters**: With local clusters, both the Kubernetes control plane and nodes run on Outpost hardware.
 
 For more information, see [Amazon EKS on AWS Outposts](https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts.html).
+
