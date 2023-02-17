@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
@@ -43,10 +44,15 @@ func WithEKSAUserAgent(eksAComponent, version string) ReaderOpt {
 }
 
 func NewReader(opts ...ReaderOpt) *Reader {
+	transport := &http.Transport{
+		TLSHandshakeTimeout: 60 * time.Second,
+	}
 	r := &Reader{
-		embedFS:    embed.FS{},
-		httpClient: &http.Client{},
-		userAgent:  eksaUserAgent("unknown", "no-version"),
+		embedFS: embed.FS{},
+		httpClient: &http.Client{
+			Transport: transport,
+		},
+		userAgent: eksaUserAgent("unknown", "no-version"),
 	}
 
 	for _, o := range opts {
