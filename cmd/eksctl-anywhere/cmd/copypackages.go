@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -39,6 +41,7 @@ func init() {
 	copyPackagesCmd.Flags().StringVarP(&copyPackagesCommand.srcCert, "src-cert", "", "", "TLS certificate for source registry")
 	copyPackagesCmd.Flags().BoolVar(&copyPackagesCommand.insecure, "insecure", false, "Skip TLS verification while copying images and charts")
 	copyPackagesCmd.Flags().BoolVar(&copyPackagesCommand.dryRun, "dry-run", false, "Dry run copy to print images that would be copied")
+	copyPackagesCmd.Flags().StringVarP(&copyPackagesCommand.awsRegion, "aws-region", "", os.Getenv(config.EksaRegionEnv), "Region to copy images from")
 }
 
 var copyPackagesCommand = CopyPackagesCommand{}
@@ -51,6 +54,7 @@ type CopyPackagesCommand struct {
 	dstCert       string
 	insecure      bool
 	dryRun        bool
+	awsRegion     string
 	registryCache *registry.Cache
 }
 
@@ -82,7 +86,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry
 	}
 
 	c.registryCache = registry.NewCache()
-	bundleReader := curatedpackages.NewPackageReader(c.registryCache, credentialStore)
+	bundleReader := curatedpackages.NewPackageReader(c.registryCache, credentialStore, c.awsRegion)
 
 	imageList := bundleReader.ReadChartsFromBundles(ctx, eksaBundle)
 
