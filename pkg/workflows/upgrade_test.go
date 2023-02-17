@@ -322,7 +322,7 @@ func (c *upgradeTestSetup) expectInstallEksdManifest(expectedCLuster *types.Clus
 func (c *upgradeTestSetup) expectUpdateGitEksaSpec() {
 	gomock.InOrder(
 		c.gitOpsManager.EXPECT().UpdateGitEksaSpec(
-			c.ctx, c.newClusterSpec, c.datacenterConfig, c.machineConfigs, gomock.Any(),
+			c.ctx, c.newClusterSpec, c.datacenterConfig, c.machineConfigs, c.hardwareSpec,
 		),
 	)
 }
