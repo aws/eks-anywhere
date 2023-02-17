@@ -1454,11 +1454,8 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namesp
 	deployments := []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"}
 
 	var wg sync.WaitGroup
-	wg.Add(len(deployments))
 	errCh := make(chan error, 1)
 	okCh := make(chan string, 1)
-
-	time.Sleep(3 * time.Minute)
 
 	e.T.Log("Waiting for Package", packageName, "To be installed")
 
@@ -1473,6 +1470,7 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namesp
 
 	for _, name := range deployments {
 		go func(name string) {
+			wg.Add(1)
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
 				e.Cluster(), "5m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
