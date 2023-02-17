@@ -116,7 +116,7 @@ func (h *Helm) SaveChart(ctx context.Context, ociURI, version, folder string) er
 }
 
 func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, name, version string) error {
-	params := []string{"install", name, ociURI, "--version", version, "--kubeconfig", kubeConfig}
+	params := []string{"upgade", "--install", name, ociURI, "--version", version, "--kubeconfig", kubeConfig}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).
 		WithEnvVars(h.env).Run()
@@ -126,7 +126,7 @@ func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, nam
 // InstallChart installs a helm chart to the target cluster.
 func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, values []string) error {
 	valueArgs := GetHelmValueArgs(values)
-	params := []string{"install", chart, ociURI, "--version", version}
+	params := []string{"upgrade", "--install", chart, ociURI, "--version", version}
 	params = append(params, valueArgs...)
 	params = append(params, "--kubeconfig", kubeconfigFilePath)
 	if len(namespace) > 0 {
@@ -145,7 +145,7 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 // InstallChartWithValuesFile installs a helm chart with the provided values file and waits for the chart deployment to be ready
 // The default timeout for the chart to reach ready state is 5m.
 func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
-	params := []string{"install", chart, ociURI, "--version", version, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath, "--wait"}
+	params := []string{"upgrade", "--install", chart, ociURI, "--version", version, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath, "--wait"}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err

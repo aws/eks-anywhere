@@ -148,7 +148,7 @@ func TestHelmInstallChartSuccess(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	values := []string{"key1=value1"}
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", "", values)).To(Succeed())
@@ -163,7 +163,7 @@ func TestHelmInstallChartSuccessWithValuesFile(t *testing.T) {
 	values := []string{"key1=value1"}
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName,
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName,
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", valuesFileName, values)).To(Succeed())
@@ -177,7 +177,7 @@ func TestHelmInstallChartSuccessWithInsecure(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	values := []string{"key1=value1"}
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "--insecure-skip-tls-verify",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", "", values)).To(Succeed())
@@ -192,7 +192,7 @@ func TestHelmInstallChartSuccessWithInsecureAndValuesFile(t *testing.T) {
 	values := []string{"key1=value1"}
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName, "--insecure-skip-tls-verify",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName, "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", valuesFileName, values)).To(Succeed())
@@ -232,7 +232,7 @@ func TestHelmInstallChartWithValuesFileSuccess(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
@@ -246,7 +246,7 @@ func TestHelmInstallChartWithValuesFileSuccessWithInsecure(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--insecure-skip-tls-verify",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
