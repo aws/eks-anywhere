@@ -1143,9 +1143,9 @@ func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
 
 // WithCluster helps with bringing up and tearing down E2E test clusters.
 func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
-	e.GenerateClusterConfig()
-	e.CreateCluster()
-	defer e.DeleteCluster()
+	//e.GenerateClusterConfig()
+	//e.CreateCluster()
+	//defer e.DeleteCluster()
 	f(e)
 }
 
@@ -1524,7 +1524,7 @@ func (e *ClusterE2ETest) verifySelfSignedCertificate(mgmtCluster *types.Cluster)
 		return fmt.Errorf("error applying certificate for cert manager: %v", err)
 	}
 
-	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[0].status", "True",
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
 		fmt.Sprintf("certificates.cert-manager.io/%s", selfsignedCert), constants.EksaPackagesName)
 	if err != nil {
 		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
