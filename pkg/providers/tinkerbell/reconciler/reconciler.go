@@ -31,6 +31,18 @@ type IPValidator interface {
 	ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error)
 }
 
+// Scope object for Tinkerbell reconciler.
+type Scope struct {
+	ClusterSpec *c.Spec
+}
+
+// NewScope creates a new Tinkerbell Reconciler Scope.
+func NewScope(clusterSpec *c.Spec) *Scope {
+	return &Scope{
+		ClusterSpec: clusterSpec,
+	}
+}
+
 // Reconciler for Tinkerbell.
 type Reconciler struct {
 	client               client.Client
@@ -60,8 +72,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		return controller.Result{}, err
 	}
 
-	return controller.NewPhaseRunner().Register(
-		r.ipValidator.ValidateControlPlaneIP,
+	return controller.NewPhaseRunner[*Scope]().Register(
+		r.ValidateControlPlaneIP,
 		r.ValidateClusterSpec,
 		r.ValidateHardware,
 		r.ValidateDatacenterConfig,
@@ -69,11 +81,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
-	).Run(ctx, log, clusterSpec)
+	).Run(ctx, log, NewScope(clusterSpec))
+}
+
+// ValidateControlPlaneIP passes the cluster spec from tinkerbellScope to the IP Validator.
+func (r *Reconciler) ValidateControlPlaneIP(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	return r.ipValidator.ValidateControlPlaneIP(ctx, log, tinkerbellScope.ClusterSpec)
 }
 
 // ValidateClusterSpec performs a set of assertions on a cluster spec.
-func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateClusterSpec")
 
 	tinkerbellClusterSpec := tinkerbell.NewClusterSpec(clusterSpec, clusterSpec.Config.TinkerbellMachineConfigs, clusterSpec.Config.TinkerbellDatacenter)
@@ -90,7 +108,8 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, c
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
-func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	spec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
 	cp, err := tinkerbell.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
@@ -103,7 +122,8 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
 // Requeues with the appropriate wait times whenever the cluster is not ready yet.
-func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "checkControlPlaneReady")
 	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
@@ -116,15 +136,16 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
 	}
 
-	return controller.NewPhaseRunner().Register(
+	return controller.NewPhaseRunner[*Scope]().Register(
 		r.ValidateClusterSpec,
 		r.ValidateHardware,
 		r.ReconcileWorkers,
-	).Run(ctx, log, clusterSpec)
+	).Run(ctx, log, NewScope(clusterSpec))
 }
 
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
-func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	spec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "reconcileWorkers")
 	log.Info("Applying worker CAPI objects")
 	w, err := tinkerbell.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
@@ -136,10 +157,11 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec
 }
 
 // ValidateDatacenterConfig updates the cluster status if the TinkerbellDatacenter status indicates that the spec is invalid.
-func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateDatacenterConfig")
 
-	if err := r.validateTinkerbellIPMatch(ctx, clusterSpec); err != nil {
+	if err := r.validateTinkerbellIPMatch(ctx, NewScope(clusterSpec)); err != nil {
 		log.Error(err, "Invalid TinkerbellDatacenterConfig")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
@@ -150,7 +172,8 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 }
 
 // ReconcileCNI reconciles the CNI to the desired state.
-func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "reconcileCNI")
 
 	client, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
@@ -161,7 +184,8 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
 }
 
-func (r *Reconciler) validateTinkerbellIPMatch(ctx context.Context, clusterSpec *c.Spec) error {
+func (r *Reconciler) validateTinkerbellIPMatch(ctx context.Context, tinkerbellScope *Scope) error {
+	clusterSpec := tinkerbellScope.ClusterSpec
 	if clusterSpec.Cluster.IsManaged() {
 
 		// for workload cluster tinkerbell IP must match management cluster tinkerbell IP
@@ -210,7 +234,8 @@ func toClientControlPlane(cp *tinkerbell.ControlPlane) *clusters.ControlPlane {
 }
 
 // ValidateHardware performs a set of validations on the tinkerbell hardware read from the cluster.
-func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateHardware")
 
 	capiCluster, err := controller.GetCAPICluster(ctx, r.client, clusterSpec.Cluster)

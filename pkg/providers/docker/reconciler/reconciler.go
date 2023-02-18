@@ -52,7 +52,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 		return controller.Result{}, err
 	}
 
-	return controller.NewPhaseRunner().Register(
+	return controller.NewPhaseRunner[*cluster.Spec]().Register(
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -87,7 +87,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 		return controller.Result{}, errors.Wrap(err, "building cluster Spec for worker node reconcile")
 	}
 
-	return controller.NewPhaseRunner().Register(
+	return controller.NewPhaseRunner[*cluster.Spec]().Register(
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
