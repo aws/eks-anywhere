@@ -53,7 +53,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
-	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildScope()).Return(controller.Result{}, nil)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
