@@ -57,6 +57,7 @@ func NewFileGeneratorWithWriterTemplater(fluxWriter, eksaWriter filewriter.FileW
 	}
 }
 
+// Init initializes the FileGenerator's writers and templater components based on the provided directories.
 func (g *FileGenerator) Init(writer filewriter.FileWriter, eksaSystemDir, managementEksaSystemDir, fluxSystemDir string) error {
 	eksaWriter, err := writer.WithDir(eksaSystemDir)
 	if err != nil {

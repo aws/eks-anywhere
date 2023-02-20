@@ -260,11 +260,12 @@ func (fc *fluxForCluster) eksaSystemDir() string {
 }
 
 func (fc *fluxForCluster) managementEksaSystemDir() string {
-	if fc.clusterSpec.Cluster.IsSelfManaged() {
-		return path.Join(fc.path(), fc.clusterSpec.Cluster.Name, eksaSystemDirName)
-	} else {
-		return path.Join(fc.path(), fc.clusterSpec.Cluster.ManagedBy(), eksaSystemDirName)
+	clusterName := fc.clusterSpec.Cluster.Name
+	if fc.clusterSpec.Cluster.IsManaged() {
+		clusterName = fc.clusterSpec.Cluster.ManagedBy()
 	}
+
+	return path.Join(fc.path(), clusterName, eksaSystemDirName)
 }
 
 func (fc *fluxForCluster) fluxSystemDir() string {
