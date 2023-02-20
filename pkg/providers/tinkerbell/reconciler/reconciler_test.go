@@ -53,7 +53,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
-	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildScope()).Return(controller.Result{}, nil)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
@@ -128,14 +128,14 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	remoteClient := fake.NewClientBuilder().Build()
-	spec := tt.buildScope()
+	scope := tt.buildScope()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil)
-	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, scope.ClusterSpec)
 
-	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
