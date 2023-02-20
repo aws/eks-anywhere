@@ -123,7 +123,7 @@ If the image downloads successfully, it worked!
 You may need to create or update your credentials which you can do with a command like this. Set the environment variables to the proper values before running the command.
 ```bash
 kubectl delete secret -n eksa-packages aws-secret
-kubectl create secret -n eksa-packages generic aws-secret --from-literal=ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=SECRET=${EKSA_AWS_SECRET_ACCESS_KEY}  --from-literal=REGION=${EKSA_AWS_REGION}
+kubectl create secret -n eksa-packages generic aws-secret --from-literal=AWS_ACCESS_KEY_ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=AWS_SECRET_ACCESS_KEY=${EKSA_AWS_SECRET_ACCESS_KEY}  --from-literal=REGION=${EKSA_AWS_REGION}
 ```
 
 If you recreate secrets, you can manually re-enable the cronjob and run the job to update the image pull secrets:
