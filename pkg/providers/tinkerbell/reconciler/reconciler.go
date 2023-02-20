@@ -80,7 +80,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateClusterSpec,
 		r.ValidateHardware,
 		r.ValidateDatacenterConfig,
-		r.CheckRufioMachinesContactable,
+		r.ValidateRufioMachines,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -143,7 +143,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	return controller.NewPhaseRunner[*Scope]().Register(
 		r.ValidateClusterSpec,
 		r.ValidateHardware,
-		r.CheckRufioMachinesContactable,
+		r.ValidateRufioMachines,
 		r.ReconcileWorkers,
 	).Run(ctx, log, NewScope(clusterSpec))
 }
@@ -286,9 +286,9 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	return controller.Result{}, nil
 }
 
-// CheckRufioMachinesContactable checks to ensure all the Rufio machines condition contactable is True.
-func (r *Reconciler) CheckRufioMachinesContactable(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
-	log = log.WithValues("phase", "checkRufioMachinesContactable")
+// ValidateRufioMachines checks to ensure all the Rufio machines condition contactable is True.
+func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateRufioMachines")
 
 	kubeReader := hardware.NewKubeReader(r.client)
 	if err := kubeReader.LoadRufioMachines(ctx); err != nil {
