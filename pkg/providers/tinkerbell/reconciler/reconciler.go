@@ -40,7 +40,8 @@ type Scope struct {
 // NewScope creates a new Tinkerbell Reconciler Scope.
 func NewScope(clusterSpec *c.Spec) *Scope {
 	return &Scope{
-		ClusterSpec: clusterSpec,
+		ClusterSpec:      clusterSpec,
+		isRollingUpgrade: false,
 	}
 }
 
