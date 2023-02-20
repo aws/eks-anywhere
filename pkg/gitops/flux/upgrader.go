@@ -98,7 +98,7 @@ func (fc *fluxForCluster) commitFluxUpgradeFilesToGit(ctx context.Context) error
 	logger.Info("Adding flux configuration files to Git")
 
 	g := NewFileGenerator()
-	if err := g.Init(fc.writer, fc.eksaSystemDir(), fc.fluxSystemDir()); err != nil {
+	if err := g.Init(fc.writer, fc.eksaSystemDir(), fc.managementEksaSystemDir(), fc.fluxSystemDir()); err != nil {
 		return err
 	}
 

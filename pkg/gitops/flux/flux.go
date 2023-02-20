@@ -227,7 +227,7 @@ func (f *Flux) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cluster.Spec,
 	}
 
 	g := NewFileGenerator()
-	if err := g.Init(f.writer, fc.eksaSystemDir(), fc.fluxSystemDir()); err != nil {
+	if err := g.Init(f.writer, fc.eksaSystemDir(), fc.managementEksaSystemDir(), fc.fluxSystemDir()); err != nil {
 		return err
 	}
 

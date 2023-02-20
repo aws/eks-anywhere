@@ -48,7 +48,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 	}
 
 	g := NewFileGenerator()
-	if err := g.Init(fc.writer, fc.eksaSystemDir(), fc.fluxSystemDir()); err != nil {
+	if err := g.Init(fc.writer, fc.eksaSystemDir(), fc.managementEksaSystemDir(), fc.fluxSystemDir()); err != nil {
 		return err
 	}
 
@@ -257,6 +257,14 @@ func (fc *fluxForCluster) path() string {
 
 func (fc *fluxForCluster) eksaSystemDir() string {
 	return path.Join(fc.path(), fc.clusterSpec.Cluster.GetName(), eksaSystemDirName)
+}
+
+func (fc *fluxForCluster) managementEksaSystemDir() string {
+	if fc.clusterSpec.Cluster.IsSelfManaged() {
+		return path.Join(fc.path(), fc.clusterSpec.Cluster.Name, eksaSystemDirName)
+	} else {
+		return path.Join(fc.path(), fc.clusterSpec.Cluster.ManagedBy(), eksaSystemDirName)
+	}
 }
 
 func (fc *fluxForCluster) fluxSystemDir() string {

@@ -37,8 +37,8 @@ type Templater interface {
 }
 
 type FileGenerator struct {
-	fluxWriter, eksaWriter       filewriter.FileWriter
-	fluxTemplater, eksaTemplater Templater
+	fluxWriter, eksaWriter, managementEksaWriter filewriter.FileWriter
+	fluxTemplater, eksaTemplater                 Templater
 }
 
 func NewFileGenerator() *FileGenerator {
@@ -47,21 +47,28 @@ func NewFileGenerator() *FileGenerator {
 
 // NewFileGeneratorWithWriterTemplater takes flux and eksa writer and templater interface to build the generator.
 // This is only for testing.
-func NewFileGeneratorWithWriterTemplater(fluxWriter, eksaWriter filewriter.FileWriter, fluxTemplater, eksaTemplater Templater) *FileGenerator {
+func NewFileGeneratorWithWriterTemplater(fluxWriter, eksaWriter filewriter.FileWriter, managementEksaWriter filewriter.FileWriter, fluxTemplater, eksaTemplater Templater) *FileGenerator {
 	return &FileGenerator{
-		fluxWriter:    fluxWriter,
-		eksaWriter:    eksaWriter,
-		fluxTemplater: fluxTemplater,
-		eksaTemplater: eksaTemplater,
+		fluxWriter:           fluxWriter,
+		eksaWriter:           eksaWriter,
+		managementEksaWriter: managementEksaWriter,
+		fluxTemplater:        fluxTemplater,
+		eksaTemplater:        eksaTemplater,
 	}
 }
 
-func (g *FileGenerator) Init(writer filewriter.FileWriter, eksaSystemDir, fluxSystemDir string) error {
+func (g *FileGenerator) Init(writer filewriter.FileWriter, eksaSystemDir, managementEksaSystemDir, fluxSystemDir string) error {
 	eksaWriter, err := writer.WithDir(eksaSystemDir)
 	if err != nil {
 		return fmt.Errorf("initializing eks-a system writer: %v", err)
 	}
 	eksaWriter.CleanUpTemp()
+
+	managementEksaWriter, err := writer.WithDir(managementEksaSystemDir)
+	if err != nil {
+		return fmt.Errorf("initializing management eks-a system writer: %v", err)
+	}
+	managementEksaWriter.CleanUpTemp()
 
 	fluxWriter, err := writer.WithDir(fluxSystemDir)
 	if err != nil {
@@ -70,6 +77,7 @@ func (g *FileGenerator) Init(writer filewriter.FileWriter, eksaSystemDir, fluxSy
 	fluxWriter.CleanUpTemp()
 
 	g.eksaWriter = eksaWriter
+	g.managementEksaWriter = managementEksaWriter
 	g.fluxWriter = fluxWriter
 	g.eksaTemplater = templater.New(eksaWriter)
 	g.fluxTemplater = templater.New(fluxWriter)
@@ -146,7 +154,7 @@ func (g *FileGenerator) WriteEksaKustomization(values map[string]string) error {
 
 // WriteHardwareYAML writes the hardware manifest kustomization manifest to the eksa-system folder in the repository path.
 func (g *FileGenerator) WriteHardwareYAML(hardwareSpec []byte) error {
-	if filePath, err := g.eksaWriter.Write(hardwareFileName, hardwareSpec, filewriter.PersistentFile); err != nil {
+	if filePath, err := g.managementEksaWriter.Write(hardwareFileName, hardwareSpec, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("writing eks-a hardware manifest file into %s: %v", filePath, err)
 	}
 	return nil

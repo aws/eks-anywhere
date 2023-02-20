@@ -173,7 +173,7 @@ func newFileGeneratorTest(t *testing.T) *fileGeneratorTest {
 	return &fileGeneratorTest{
 		WithT:            NewWithT(t),
 		ctx:              context.Background(),
-		g:                flux.NewFileGeneratorWithWriterTemplater(writer, writer, templater, templater),
+		g:                flux.NewFileGeneratorWithWriterTemplater(writer, writer, writer, templater, templater),
 		w:                writer,
 		t:                templater,
 		clusterSpec:      newClusterSpec(t, v1alpha1.NewCluster(clusterName), ""),
@@ -187,9 +187,10 @@ func TestFileGeneratorInitSuccess(t *testing.T) {
 
 	tt.w.EXPECT().WithDir("dir1").Return(tt.w, nil)
 	tt.w.EXPECT().WithDir("dir2").Return(tt.w, nil)
-	tt.w.EXPECT().CleanUpTemp().Times(2)
+	tt.w.EXPECT().WithDir("dir3").Return(tt.w, nil)
+	tt.w.EXPECT().CleanUpTemp().Times(3)
 
-	tt.Expect(tt.g.Init(tt.w, "dir1", "dir2")).To(Succeed())
+	tt.Expect(tt.g.Init(tt.w, "dir1", "dir2", "dir3")).To(Succeed())
 }
 
 func TestFileGeneratorInitEksaWriterError(t *testing.T) {
@@ -197,17 +198,28 @@ func TestFileGeneratorInitEksaWriterError(t *testing.T) {
 
 	tt.w.EXPECT().WithDir("dir1").Return(nil, errors.New("error in writer dir1"))
 
-	tt.Expect(tt.g.Init(tt.w, "dir1", "dir2")).To(MatchError(ContainSubstring("error in writer dir1")))
+	tt.Expect(tt.g.Init(tt.w, "dir1", "dir2", "dir3")).To(MatchError(ContainSubstring("error in writer dir1")))
 }
 
-func TestFileGeneratorInitFluxWriterError(t *testing.T) {
+func TestFileGeneratorInitManagementEksaWriterError(t *testing.T) {
 	tt := newFileGeneratorTest(t)
 
 	tt.w.EXPECT().WithDir("dir1").Return(tt.w, nil)
 	tt.w.EXPECT().CleanUpTemp()
 	tt.w.EXPECT().WithDir("dir2").Return(nil, errors.New("error in writer dir2"))
 
-	tt.Expect(tt.g.Init(tt.w, "dir1", "dir2")).To(MatchError(ContainSubstring("error in writer dir2")))
+	tt.Expect(tt.g.Init(tt.w, "dir1", "dir2", "dir3")).To(MatchError(ContainSubstring("error in writer dir2")))
+}
+
+func TestFileGeneratorInitFluxWriterError(t *testing.T) {
+	tt := newFileGeneratorTest(t)
+
+	tt.w.EXPECT().WithDir("dir1").Return(tt.w, nil)
+	tt.w.EXPECT().WithDir("dir2").Return(tt.w, nil)
+	tt.w.EXPECT().CleanUpTemp().MaxTimes(2)
+	tt.w.EXPECT().WithDir("dir3").Return(nil, errors.New("error in writer dir3"))
+
+	tt.Expect(tt.g.Init(tt.w, "dir1", "dir2", "dir3")).To(MatchError(ContainSubstring("error in writer dir3")))
 }
 
 func TestFileGeneratorWriteEksaFilesSuccess(t *testing.T) {
