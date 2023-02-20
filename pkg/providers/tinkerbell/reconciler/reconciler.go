@@ -33,7 +33,8 @@ type IPValidator interface {
 
 // Scope object for Tinkerbell reconciler.
 type Scope struct {
-	ClusterSpec *c.Spec
+	ClusterSpec      *c.Spec
+	isRollingUpgrade bool
 }
 
 // NewScope creates a new Tinkerbell Reconciler Scope.
