@@ -437,6 +437,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		values["awsIamAuth"] = true
 	}
 
+	if controlPlaneMachineSpec.HostOSConfiguration != nil && controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+		values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+	}
+
 	return values
 }
 
@@ -484,6 +488,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	}
 
 	values["workertemplateOverride"] = workerTemplateOverride
+
+	if workerNodeGroupMachineSpec.HostOSConfiguration != nil && workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+		values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+	}
 
 	return values
 }
