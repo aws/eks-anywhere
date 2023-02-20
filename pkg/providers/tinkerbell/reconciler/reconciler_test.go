@@ -53,7 +53,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
-	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildScope()).Return(controller.Result{}, nil)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
@@ -128,11 +128,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	remoteClient := fake.NewClientBuilder().Build()
-<<<<<<< HEAD
 	scope := tt.buildScope()
-=======
-	spec := tt.buildScope()
->>>>>>> 65ed86d5 (updating phase runner to accept generic objects)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
