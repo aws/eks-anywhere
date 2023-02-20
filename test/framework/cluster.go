@@ -1469,6 +1469,149 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 	}
 }
 
+// VerifyCertManagerPackageInstalled is checking if the cert manager package gets installed correctly.
+func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namespace string, packageName string, mgmtCluster *types.Cluster) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deployments := []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"}
+
+	var wg sync.WaitGroup
+	errCh := make(chan error, 1)
+	okCh := make(chan string, 1)
+
+	e.T.Log("Waiting for Package", packageName, "To be installed")
+
+	ns := fmt.Sprintf("%s-%s", namespace, e.ClusterName)
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		mgmtCluster, prefix+"-"+packageName, "5m", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for cert-manager package timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
+
+	for _, name := range deployments {
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+			err := e.KubectlClient.WaitForDeployment(ctx,
+				e.Cluster(), "5m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
+			if err != nil {
+				errCh <- err
+			}
+		}(name)
+	}
+
+	e.T.Log("Waiting for Self Signed certificate to be issued")
+	err = e.verifySelfSignedCertificate(mgmtCluster)
+	if err != nil {
+		errCh <- err
+	}
+
+	e.T.Log("Waiting for Let's Encrypt certificate to be issued")
+	err = e.verifyLetsEncryptCert(mgmtCluster)
+	if err != nil {
+		errCh <- err
+	}
+
+	go func() {
+		wg.Wait()
+		okCh <- "completed"
+	}()
+
+	select {
+	case err := <-errCh:
+		e.T.Fatal(err)
+	case <-okCh:
+		return
+	}
+}
+
+//go:embed testdata/certmanager/certmanager_selfsignedissuer.yaml
+var certManagerSelfSignedIssuer []byte
+
+//go:embed testdata/certmanager/certmanager_selfsignedcert.yaml
+var certManagerSelfSignedCert []byte
+
+func (e *ClusterE2ETest) verifySelfSignedCertificate(mgmtCluster *types.Cluster) error {
+	ctx := context.Background()
+	selfsignedCert := "my-selfsigned-ca"
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSelfSignedIssuer)
+	if err != nil {
+		return fmt.Errorf("error installing Cluster issuer for cert manager: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSelfSignedCert)
+	if err != nil {
+		return fmt.Errorf("error applying certificate for cert manager: %v", err)
+	}
+
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
+		fmt.Sprintf("certificates.cert-manager.io/%s", selfsignedCert), constants.EksaPackagesName)
+	if err != nil {
+		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
+	}
+	return nil
+}
+
+//go:embed testdata/certmanager/certmanager_letsencrypt_issuer.yaml
+var certManagerLetsEncryptIssuer string
+
+//go:embed testdata/certmanager/certmanager_letsencrypt_cert.yaml
+var certManagerLetsEncryptCert []byte
+
+//go:embed testdata/certmanager/certmanager_secret.yaml
+var certManagerSecret string
+
+func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error {
+	ctx := context.Background()
+	letsEncryptCert := "test-cert"
+	accessKey, secretAccess, region, zoneID := GetRoute53Configs()
+	data := map[string]interface{}{
+		"route53SecretAccessKey": secretAccess,
+	}
+
+	certManagerSecretData, err := templater.Execute(certManagerSecret, data)
+	if err != nil {
+		return fmt.Errorf("failed creating cert manager secret: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSecretData)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager secret: %v", err)
+	}
+
+	data = map[string]interface{}{
+		"route53AccessKeyId": accessKey,
+		"route53ZoneId":      zoneID,
+		"route53Region":      region,
+	}
+
+	certManagerIssuerData, err := templater.Execute(certManagerLetsEncryptIssuer, data)
+	if err != nil {
+		return fmt.Errorf("failed creating lets encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerIssuerData)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager let's encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerLetsEncryptCert)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager let's encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
+		fmt.Sprintf("certificates.cert-manager.io/%s", letsEncryptCert), constants.EksaPackagesName)
+	if err != nil {
+		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
+	}
+
+	return nil
+}
+
 // VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.
 func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string, targetNamespace string, mode string) {
 	ctx := context.Background()
