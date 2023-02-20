@@ -15,7 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
-func TestHardwareFromETCDSuccess(t *testing.T) {
+func TestLoadHardwareSuccess(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -42,13 +42,13 @@ func TestHardwareFromETCDSuccess(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
-	etcdReader := hardware.NewETCDReader(cl)
-	err := etcdReader.HardwareFromETCD(ctx)
+	kubeReader := hardware.NewKubeReader(cl)
+	err := kubeReader.LoadHardware(ctx)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(len(etcdReader.GetCatalogue().AllHardware())).To(Equal(1))
+	g.Expect(len(kubeReader.GetCatalogue().AllHardware())).To(Equal(1))
 }
 
-func TestHardwareFromETCDNoHardware(t *testing.T) {
+func TestLoadHardwareNoHardware(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -74,13 +74,13 @@ func TestHardwareFromETCDNoHardware(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
-	etcdReader := hardware.NewETCDReader(cl)
-	err := etcdReader.HardwareFromETCD(ctx)
+	kubeReader := hardware.NewKubeReader(cl)
+	err := kubeReader.LoadHardware(ctx)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(len(etcdReader.GetCatalogue().AllHardware())).To(Equal(0))
+	g.Expect(len(kubeReader.GetCatalogue().AllHardware())).To(Equal(0))
 }
 
-func TestRufioMachinesFromEtcdSuccess(t *testing.T) {
+func TestLoadRufioMachinesSuccess(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -96,8 +96,8 @@ func TestRufioMachinesFromEtcdSuccess(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
-	etcdReader := hardware.NewETCDReader(cl)
-	err := etcdReader.RufioMachinesFromEtcd(ctx)
+	kubeReader := hardware.NewKubeReader(cl)
+	err := kubeReader.LoadRufioMachines(ctx)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(len(etcdReader.GetCatalogue().AllBMCs())).To(Equal(1))
+	g.Expect(len(kubeReader.GetCatalogue().AllBMCs())).To(Equal(1))
 }

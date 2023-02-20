@@ -254,8 +254,8 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	}
 
 	// We need a new reader each time so that the catalogue gets recreated.
-	etcdReader := hardware.NewETCDReader(r.client)
-	if err := etcdReader.HardwareFromETCD(ctx); err != nil {
+	kubeReader := hardware.NewKubeReader(r.client)
+	if err := kubeReader.LoadHardware(ctx); err != nil {
 		log.Error(err, "Hardware validation failure")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
@@ -265,8 +265,8 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 
 	var v tinkerbell.ClusterSpecValidator
 	v.Register(
-		tinkerbell.MinimumHardwareAvailableAssertionForCreate(etcdReader.GetCatalogue()),
-		tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(etcdReader.GetCatalogue()),
+		tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()),
+		tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(kubeReader.GetCatalogue()),
 	)
 
 	tinkClusterSpec := tinkerbell.NewClusterSpec(
@@ -290,8 +290,8 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 func (r *Reconciler) CheckRufioMachinesContactable(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "checkRufioMachinesContactable")
 
-	etcdReader := hardware.NewETCDReader(r.client)
-	if err := etcdReader.RufioMachinesFromEtcd(ctx); err != nil {
+	kubeReader := hardware.NewKubeReader(r.client)
+	if err := kubeReader.LoadRufioMachines(ctx); err != nil {
 		log.Error(err, "rufio machine check failure")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
@@ -299,7 +299,7 @@ func (r *Reconciler) CheckRufioMachinesContactable(ctx context.Context, log logr
 		return controller.ResultWithReturn(), nil
 	}
 
-	for _, rm := range etcdReader.GetCatalogue().AllBMCs() {
+	for _, rm := range kubeReader.GetCatalogue().AllBMCs() {
 		if err := r.checkContactable(rm); err != nil {
 			log.Error(err, "rufio machine check failure")
 			failureMessage := err.Error()
