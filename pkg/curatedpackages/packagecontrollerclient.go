@@ -270,8 +270,8 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 
 // IsInstalled checks if a package controller custom resource exists.
 func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
-	bool, err := pc.kubectl.HasResource(ctx, packageBundleControllerResource, pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
-	return bool && err == nil
+	hasResource, err := pc.kubectl.HasResource(ctx, packageBundleControllerResource, pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
+	return hasResource && err == nil
 }
 
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
