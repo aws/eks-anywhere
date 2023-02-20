@@ -11,8 +11,8 @@ or
 #
 # The makefile will include the .env file and export all the vars to the environment for you
 #
-# By default the local-e2e target will run TestDockerKubernetes121SimpleFlow. You can either 
-#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes121SimpleFlow)
+# By default the local-e2e target will run TestDockerKubernetes125SimpleFlow. You can either 
+#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes125SimpleFlow)
 make local-e2e
 ```
 or
@@ -57,7 +57,7 @@ EKSA_AWS_REGION:# For Packages tests
 
 ### Tests upgrading from old release
 
-If you are running tests that create clusters using an old release and upgrade to the new one (eg. `TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease`), you will need extra variables for the templates.
+If you are running tests that create clusters using an old release and upgrade to the new one (eg. `TestVSphereKubernetes123BottlerocketUpgradeFromLatestMinorRelease`), you will need extra variables for the templates.
 
 The format is: `T_VSPHERE_TEMPLATE_{OS}_{EKS-D VERSION}`. For example, for Ubuntu, kubernetes 1.23 and release v0.11.0, which uses eks-d release `kubernetes-1-23-eks-4`: `T_VSPHERE_TEMPLATE_UBUNTU_KUBERNETES_1_23_EKS_4`.
 
