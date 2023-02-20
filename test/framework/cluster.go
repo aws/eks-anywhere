@@ -1580,7 +1580,7 @@ func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error
 		return fmt.Errorf("error creating cert manager let's encrypt issuer: %v", err)
 	}
 
-	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[0].status", "True",
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
 		fmt.Sprintf("certificates.cert-manager.io/%s", letsEncryptCert), constants.EksaPackagesName)
 	if err != nil {
 		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
