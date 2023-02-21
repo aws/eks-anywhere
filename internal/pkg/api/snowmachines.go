@@ -66,6 +66,21 @@ func WithDHCP() SnowMachineConfigFiller {
 	}
 }
 
+// WithStaticIP configures one single primary DNI using static ip for IP allocation.
+func WithStaticIP(poolName string) SnowMachineConfigFiller {
+	return func(m *anywherev1.SnowMachineConfig) {
+		m.Spec.Network.DirectNetworkInterfaces = []anywherev1.SnowDirectNetworkInterface{
+			{
+				Primary: true,
+				IPPoolRef: &anywherev1.Ref{
+					Kind: anywherev1.SnowIPPoolKind,
+					Name: poolName,
+				},
+			},
+		}
+	}
+}
+
 // WithSnowContainersVolumeSize sets the container volume size for a SnowMachineConfig.
 func WithSnowContainersVolumeSize(size int64) SnowMachineConfigFiller {
 	return func(m *anywherev1.SnowMachineConfig) {

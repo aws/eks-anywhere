@@ -11,8 +11,8 @@ or
 #
 # The makefile will include the .env file and export all the vars to the environment for you
 #
-# By default the local-e2e target will run TestDockerKubernetes121SimpleFlow. You can either 
-#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes121SimpleFlow)
+# By default the local-e2e target will run TestDockerKubernetes125SimpleFlow. You can either 
+#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes125SimpleFlow)
 make local-e2e
 ```
 or
@@ -57,7 +57,7 @@ EKSA_AWS_REGION:# For Packages tests
 
 ### Tests upgrading from old release
 
-If you are running tests that create clusters using an old release and upgrade to the new one (eg. `TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease`), you will need extra variables for the templates.
+If you are running tests that create clusters using an old release and upgrade to the new one (eg. `TestVSphereKubernetes123BottlerocketUpgradeFromLatestMinorRelease`), you will need extra variables for the templates.
 
 The format is: `T_VSPHERE_TEMPLATE_{OS}_{EKS-D VERSION}`. For example, for Ubuntu, kubernetes 1.23 and release v0.11.0, which uses eks-d release `kubernetes-1-23-eks-4`: `T_VSPHERE_TEMPLATE_UBUNTU_KUBERNETES_1_23_EKS_4`.
 
@@ -142,10 +142,10 @@ EKSA_CLOUDSTACK_B64ENCODED_SECRET
 ```
 
 ## Snow tests requisites
-The following env variables need to be set:
+
+The following env variables need to be set (required):
 
 ```sh
-T_SNOW_AMIID_UBUNTU_1_21
 T_SNOW_CONTROL_PLANE_CIDR
 T_SNOW_POD_CIDR
 T_SNOW_DEVICES
@@ -153,7 +153,30 @@ EKSA_AWS_CREDENTIALS_FILE
 EKSA_AWS_CA_BUNDLES_FILE
 ```
 
-T_SNOW_DEVICES should be a comma-separated list of device IPs.
+> **NOTE**: `T_SNOW_DEVICES` should be a comma-separated list of device IPs.
+
+Optional env variables for specific tests:
+
+```sh
+T_SNOW_AMIID_UBUNTU_1_21
+T_SNOW_AMIID_UBUNTU_1_22
+T_SNOW_AMIID_UBUNTU_1_23
+T_SNOW_AMIID_UBUNTU_1_24
+T_SNOW_AMIID_UBUNTU_1_25
+T_SNOW_AMIID_BOTTLEROCKET_1_21
+T_SNOW_AMIID_BOTTLEROCKET_1_22
+T_SNOW_AMIID_BOTTLEROCKET_1_23
+T_SNOW_AMIID_BOTTLEROCKET_1_24
+T_SNOW_AMIID_BOTTLEROCKET_1_25
+T_SNOW_IPPOOL_IPSTART
+T_SNOW_IPPOOL_IPEND
+T_SNOW_IPPOOL_GATEWAY
+T_SNOW_IPPOOL_SUBNET
+```
+
+> **NOTE**: 
+  * Env vars with prefix `T_SNOW_AMIID_` are the optional AMI ids based on OS family and K8s version that will be used to create node instances. If not specified or left empty, CAPAS will use its AMI lookup logic and try to find a valid AMI in the device based on the OS family and K8s version.
+  * Env vars with prefix `T_SNOW_IPPOOL_` are required when running Snow test with static ip. The values will be used to generate the `SnowIPPool` object.
 
 ## OIDC tests requisites
 The following env variables need to be set:
