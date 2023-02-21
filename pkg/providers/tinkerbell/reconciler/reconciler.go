@@ -163,7 +163,7 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateDatacenterConfig")
 
-	if err := r.validateTinkerbellIPMatch(ctx, NewScope(clusterSpec)); err != nil {
+	if err := r.validateTinkerbellIPMatch(ctx, clusterSpec); err != nil {
 		log.Error(err, "Invalid TinkerbellDatacenterConfig")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
@@ -186,8 +186,7 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, tinkerbe
 	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
 }
 
-func (r *Reconciler) validateTinkerbellIPMatch(ctx context.Context, tinkerbellScope *Scope) error {
-	clusterSpec := tinkerbellScope.ClusterSpec
+func (r *Reconciler) validateTinkerbellIPMatch(ctx context.Context, clusterSpec *c.Spec) error {
 	if clusterSpec.Cluster.IsManaged() {
 
 		// for workload cluster tinkerbell IP must match management cluster tinkerbell IP
