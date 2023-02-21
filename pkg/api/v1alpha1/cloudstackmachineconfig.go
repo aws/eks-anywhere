@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +50,7 @@ func (c *CloudStackMachineConfigGenerate) Name() string {
 
 func GetCloudStackMachineConfigs(fileName string) (map[string]*CloudStackMachineConfig, error) {
 	configs := make(map[string]*CloudStackMachineConfig)
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}

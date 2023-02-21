@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -211,7 +211,7 @@ func setupTestFiles(t *testing.T, writer filewriter.FileWriter) error {
 	if err != nil {
 		return fmt.Errorf("failed to create test eksa-system directory: %v", err)
 	}
-	eksaContent, err := ioutil.ReadFile("./testdata/cluster-config-default-path-management.yaml")
+	eksaContent, err := os.ReadFile("./testdata/cluster-config-default-path-management.yaml")
 	if err != nil {
 		return fmt.Errorf("File [%s] reading error in test: %v", "cluster-config-default-path-management.yaml", err)
 	}

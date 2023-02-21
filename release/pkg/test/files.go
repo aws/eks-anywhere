@@ -15,7 +15,7 @@
 package test
 
 import (
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -30,7 +30,7 @@ func CheckFilesEquals(t *testing.T, actualPath, expectedPath string, update bool
 	}
 
 	if update {
-		err = ioutil.WriteFile(expectedPath, []byte(actualContent), 0o644)
+		err = os.WriteFile(expectedPath, []byte(actualContent), 0o644)
 		if err != nil {
 			t.Fatalf("Error updating testdata bundle: %v\n", err)
 		}
@@ -56,7 +56,7 @@ func CheckFilesEquals(t *testing.T, actualPath, expectedPath string, update bool
 }
 
 func readFile(filepath string) (string, error) {
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return "", err
 	}

@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -120,7 +119,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 		return fmt.Errorf("marshaling bundle-release.yaml: %v", err)
 	}
 	bundleReleaseFilePath := filepath.Join(opts.downloadDir, "bundle-release.yaml")
-	if err = ioutil.WriteFile(bundleReleaseFilePath, bundleReleaseContent, 0o644); err != nil {
+	if err = os.WriteFile(bundleReleaseFilePath, bundleReleaseContent, 0o644); err != nil {
 		return err
 	}
 
@@ -161,7 +160,7 @@ func downloadArtifact(filePath, artifactUri string, reader *files.Reader) error 
 	if err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(filePath, contents, 0o644); err != nil {
+	if err = os.WriteFile(filePath, contents, 0o644); err != nil {
 		return err
 	}
 

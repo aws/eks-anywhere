@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -640,11 +639,11 @@ func (e *ClusterE2ETest) validateGitopsRepoContent(gitTools *gitfactory.GitTools
 	if err != nil {
 		e.T.Errorf("Error checking out branch: %v", err)
 	}
-	gitFile, err := ioutil.ReadFile(gitFilePath)
+	gitFile, err := os.ReadFile(gitFilePath)
 	if err != nil {
 		e.T.Errorf("Error opening file from the original repo directory: %v", err)
 	}
-	localFile, err := ioutil.ReadFile(localFilePath)
+	localFile, err := os.ReadFile(localFilePath)
 	if err != nil {
 		e.T.Errorf("Error opening file from the newly created repo directory: %v", err)
 	}
