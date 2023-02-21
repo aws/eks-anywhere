@@ -341,12 +341,12 @@ func (p *Provider) buildHardwareMachineFromCluster(ctx context.Context, cluster 
 
 	rufioMachine, err := p.providerKubectlClient.GetRufioMachine(ctx, hw.Spec.BMCRef.Name, hw.Namespace, cluster.KubeconfigFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting rufio machine: %v", err)
 	}
 
 	authSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, rufioMachine.Spec.Connection.AuthSecretRef.Name, hw.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting rufio machine auth secret: %v", err)
 	}
 
 	machine := hardware.NewMachineFromHardware(*hw, rufioMachine, authSecret)
