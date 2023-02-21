@@ -45,7 +45,15 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 }
 
 func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	return p.applyHardware(ctx, cluster)
+	if err := p.applyHardware(ctx, cluster); err != nil {
+		return err
+	}
+	hardwareSpec, err := p.generateHardwareSpec(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("generating hardware spec: %v", err)
+	}
+	p.hardwareSpec = hardwareSpec
+	return nil
 }
 
 // ApplyHardwareToCluster adds all the hardwares to the cluster.
@@ -63,9 +71,6 @@ func (p *Provider) applyHardware(ctx context.Context, cluster *types.Cluster) er
 		if err != nil {
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
-	}
-	if err := p.generateHardwareSpec(ctx, cluster); err != nil {
-		return err
 	}
 
 	return nil
@@ -180,7 +185,14 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	}
 
 	if p.clusterConfig.IsManaged() {
-		return p.applyHardware(ctx, clusterSpec.ManagementCluster)
+		if err := p.applyHardware(ctx, clusterSpec.ManagementCluster); err != nil {
+			return err
+		}
+		hardwareSpec, err := p.generateHardwareSpec(ctx, clusterSpec.ManagementCluster)
+		if err != nil {
+			return fmt.Errorf("generating hardware spec: %v", err)
+		}
+		p.hardwareSpec = hardwareSpec
 	}
 
 	return nil

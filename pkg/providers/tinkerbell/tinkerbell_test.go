@@ -542,7 +542,7 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	}
 }
 
-func TestPostBootstrapSetupGenerateHardwareSpecFailure(t *testing.T) {
+func TestPostBootstrapSetupGenerateHardwareSpecFail(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
@@ -709,6 +709,70 @@ func TestPostMoveManagementToBootstrapWaitForRufioMachinesFail(t *testing.T) {
 
 	err := provider.PostMoveManagementToBootstrap(ctx, cluster)
 	assert.Error(t, err, "PostMoveManagementToBootstrap should fail")
+}
+
+func TestPostMoveManagementToBootstrapGenerateHardwareFail(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	wantErr := errors.New("test error")
+
+	tt := []struct {
+		name    string
+		wantErr string
+		expect  func(*mocks.MockProviderKubectlClient)
+	}{
+		{
+			name: "failure getting all hardware",
+			expect: func(kubectl *mocks.MockProviderKubectlClient) {
+				kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+				kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return(nil, wantErr)
+			},
+		},
+		{
+			name: "failure getting rufio machine",
+			expect: func(kubectl *mocks.MockProviderKubectlClient) {
+				kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+				kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{*hwWithBMC()}, nil)
+				kubectl.EXPECT().GetRufioMachine(ctx, bmcName, constants.EksaSystemNamespace, cluster.KubeconfigFile).Return(nil, wantErr).MaxTimes(1)
+			},
+		},
+		{
+			name: "failure getting bmc auth secret",
+			expect: func(kubectl *mocks.MockProviderKubectlClient) {
+				kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+				kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{*hwWithBMC()}, nil)
+				kubectl.EXPECT().GetRufioMachine(ctx, bmcName, constants.EksaSystemNamespace, cluster.KubeconfigFile).Return(bmcMachine(), nil).MaxTimes(1)
+				kubectl.EXPECT().GetSecretFromNamespace(
+					ctx, cluster.KubeconfigFile, bmcAuthName, constants.EksaSystemNamespace,
+				).Return(nil, wantErr).MaxTimes(1)
+			},
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			test.expect(kubectl)
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			if err := provider.readCSVToCatalogue(); err != nil {
+				t.Fatalf("failed to read hardware csv: %v", err)
+			}
+
+			err := provider.PostMoveManagementToBootstrap(ctx, cluster)
+			assert.Error(t, err, "PostMoveManagementToBootstrap should fail")
+		})
+	}
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithFullOIDC(t *testing.T) {
