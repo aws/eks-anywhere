@@ -593,7 +593,7 @@ func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuild
 }
 
 // GenerateNoProxyList generates NOPROXY list for tinkerbell provider based on HTTP_PROXY, HTTPS_PROXY, NOPROXY and tinkerbellIP.
-func GenerateNoProxyList(clusterSpec *v1alpha1.Cluster, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec, tinkerbellIp string) []string {
+func GenerateNoProxyList(clusterSpec *v1alpha1.Cluster, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec, tinkerbellIP string) []string {
 	capacity := len(clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks) +
 		len(clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks) +
 		len(clusterSpec.Spec.ProxyConfiguration.NoProxy) + 4
@@ -607,7 +607,7 @@ func GenerateNoProxyList(clusterSpec *v1alpha1.Cluster, datacenterSpec v1alpha1.
 	noProxyList = append(noProxyList,
 		clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		datacenterSpec.TinkerbellIP,
-		tinkerbellIp,
+		tinkerbellIP,
 	)
 
 	return noProxyList
