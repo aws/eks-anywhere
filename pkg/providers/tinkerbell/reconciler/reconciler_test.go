@@ -532,7 +532,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
 }
 
-func TestReconcilerCheckRufioMachinesContactableFail(t *testing.T) {
+func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 
@@ -544,6 +544,21 @@ func TestReconcilerCheckRufioMachinesContactableFail(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "bmc1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:   rufiov1alpha1.Contactable,
+					Status: rufiov1alpha1.ConditionTrue,
+				},
+			},
+		},
+	},
+	)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc2",
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Status: rufiov1alpha1.MachineStatus{

@@ -101,3 +101,15 @@ func TestLoadRufioMachinesSuccess(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(len(kubeReader.GetCatalogue().AllBMCs())).To(Equal(1))
 }
+
+func TestLoadRufioMachinesListFail(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects().Build()
+
+	kubeReader := hardware.NewKubeReader(cl)
+	err := kubeReader.LoadRufioMachines(ctx)
+	g.Expect(err).To(HaveOccurred())
+}

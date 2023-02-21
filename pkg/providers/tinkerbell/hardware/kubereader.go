@@ -43,8 +43,8 @@ func (kr *KubeReader) LoadHardware(ctx context.Context) error {
 		return fmt.Errorf("failed to build catalogue: %v", err)
 	}
 
-	for _, hw := range hwList {
-		if err := kr.catalogue.InsertHardware(&hw); err != nil {
+	for i := range hwList {
+		if err := kr.catalogue.InsertHardware(&hwList[i]); err != nil {
 			return err
 		}
 	}
@@ -86,8 +86,8 @@ func (kr *KubeReader) LoadRufioMachines(ctx context.Context) error {
 		return fmt.Errorf("listing rufio machines: %v", err)
 	}
 
-	for _, rm := range rufioMachines.Items {
-		if err := kr.catalogue.InsertBMC(&rm); err != nil {
+	for i := range rufioMachines.Items {
+		if err := kr.catalogue.InsertBMC(&rufioMachines.Items[i]); err != nil {
 			return err
 		}
 	}
