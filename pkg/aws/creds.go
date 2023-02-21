@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"regexp"
@@ -45,7 +44,7 @@ func EncodeFileFromEnv(envKey string) (string, error) {
 		return "", err
 	}
 
-	content, err := ioutil.ReadFile(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", fmt.Errorf("unable to read file due to: %v", err)
 	}

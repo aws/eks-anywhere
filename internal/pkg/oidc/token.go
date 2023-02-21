@@ -4,7 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	jose "gopkg.in/square/go-jose.v2"
@@ -85,7 +85,7 @@ func WithSubject(subject string) JWTOpt {
 }
 
 func (o *oidcTokenClaim) generateToken() (string, error) {
-	keyContent, err := ioutil.ReadFile(o.keyFile)
+	keyContent, err := os.ReadFile(o.keyFile)
 	if err != nil {
 		return "", fmt.Errorf("could not read key file: %v", err)
 	}

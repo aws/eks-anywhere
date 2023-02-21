@@ -3,7 +3,7 @@ package setupuser
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -66,7 +66,7 @@ func GenerateConfig(ctx context.Context, filepath string) (*VSphereSetupUserConf
 }
 
 func readConfig(ctx context.Context, filepath string) (*VSphereSetupUserConfig, error) {
-	file, err := ioutil.ReadFile(filepath)
+	file, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s, err = %v", filepath, err)
 	}

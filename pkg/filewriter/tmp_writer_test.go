@@ -1,7 +1,6 @@
 package filewriter_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -77,7 +76,7 @@ func TestTmpWriterWriteValid(t *testing.T) {
 				t.Errorf("tmpWriter.Write() = %v, want to end with %v", gotPath, tt.fileName)
 			}
 
-			content, err := ioutil.ReadFile(gotPath)
+			content, err := os.ReadFile(gotPath)
 			if err != nil {
 				t.Fatalf("error reading written file: %v", err)
 			}
