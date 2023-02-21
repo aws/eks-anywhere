@@ -13,7 +13,10 @@ import (
 )
 
 // OwnerNameLabel is the label set by CAPT to mark a hardware as part of a cluster.
-const OwnerNameLabel string = "v1alpha1.tinkerbell.org/ownerName"
+const (
+	OwnerNameLabel      = "v1alpha1.tinkerbell.org/ownerName"
+	OwnerNamespaceLabel = "v1alpha1.tinkerbell.org/ownerNamespace"
+)
 
 // ETCDReader reads the tinkerbell hardware objects from the cluster.
 // It holds the objects in a catalogue.

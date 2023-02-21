@@ -507,6 +507,11 @@ func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	}
 }
 
+// AdditionalFiles returns additional files needed to be stored by providers.
+func (p *provider) AdditionalFiles() map[string][]byte {
+	return nil
+}
+
 // this is required for docker provider.
 func getUpdatedKubeConfigContent(content *[]byte, dockerLbPort string) {
 	mc := regexp.MustCompile("server:.*")

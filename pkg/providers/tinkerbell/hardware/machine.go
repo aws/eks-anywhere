@@ -4,6 +4,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/aws/eks-anywhere/pkg/collection"
 )
 
 // Machine is a machine configuration with optional BMC interface configuration.
@@ -27,6 +33,39 @@ type Machine struct {
 	BMCUsername  string `csv:"bmc_username, omitempty"`
 	BMCPassword  string `csv:"bmc_password, omitempty"`
 	VLANID       string `csv:"vlan_id, omitempty"`
+}
+
+// NewMachineFromHardware creates a new Machine from the given hardware and it's dependencies, if any.
+func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine, s *corev1.Secret) Machine {
+	var bmcIPAddress, bmcUsername, bmcPassword string
+	if rm != nil && s != nil {
+		bmcIPAddress = rm.Spec.Connection.Host
+		bmcUsername = string(s.Data["username"])
+		bmcPassword = string(s.Data["password"])
+	}
+
+	excludedLabels := collection.NewSetFrom(OwnerNameLabel, OwnerNamespaceLabel)
+	labels := make(map[string]string, len(hw.Labels)-len(excludedLabels))
+	for key, value := range hw.Labels {
+		if !excludedLabels.Contains(key) {
+			labels[key] = value
+		}
+	}
+
+	return Machine{
+		Hostname:     hw.Name,
+		IPAddress:    hw.Spec.Interfaces[0].DHCP.IP.Address,
+		Netmask:      hw.Spec.Interfaces[0].DHCP.IP.Netmask,
+		Gateway:      hw.Spec.Interfaces[0].DHCP.IP.Gateway,
+		Nameservers:  hw.Spec.Interfaces[0].DHCP.NameServers,
+		MACAddress:   hw.Spec.Interfaces[0].DHCP.MAC,
+		Disk:         hw.Spec.Disks[0].Device,
+		Labels:       labels,
+		BMCIPAddress: bmcIPAddress,
+		BMCUsername:  bmcUsername,
+		BMCPassword:  bmcPassword,
+		VLANID:       hw.Spec.Interfaces[0].DHCP.VLANID,
+	}
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields

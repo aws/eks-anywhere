@@ -142,10 +142,10 @@ EKSA_CLOUDSTACK_B64ENCODED_SECRET
 ```
 
 ## Snow tests requisites
-
-The following env variables need to be set (required):
+The following env variables need to be set:
 
 ```sh
+T_SNOW_AMIID_UBUNTU_1_21
 T_SNOW_CONTROL_PLANE_CIDR
 T_SNOW_POD_CIDR
 T_SNOW_DEVICES
@@ -153,30 +153,7 @@ EKSA_AWS_CREDENTIALS_FILE
 EKSA_AWS_CA_BUNDLES_FILE
 ```
 
-> **NOTE**: `T_SNOW_DEVICES` should be a comma-separated list of device IPs.
-
-Optional env variables for specific tests:
-
-```sh
-T_SNOW_AMIID_UBUNTU_1_21
-T_SNOW_AMIID_UBUNTU_1_22
-T_SNOW_AMIID_UBUNTU_1_23
-T_SNOW_AMIID_UBUNTU_1_24
-T_SNOW_AMIID_UBUNTU_1_25
-T_SNOW_AMIID_BOTTLEROCKET_1_21
-T_SNOW_AMIID_BOTTLEROCKET_1_22
-T_SNOW_AMIID_BOTTLEROCKET_1_23
-T_SNOW_AMIID_BOTTLEROCKET_1_24
-T_SNOW_AMIID_BOTTLEROCKET_1_25
-T_SNOW_IPPOOL_IPSTART
-T_SNOW_IPPOOL_IPEND
-T_SNOW_IPPOOL_GATEWAY
-T_SNOW_IPPOOL_SUBNET
-```
-
-> **NOTE**: 
-  * Env vars with prefix `T_SNOW_AMIID_` are the optional AMI ids based on OS family and K8s version that will be used to create node instances. If not specified or left empty, CAPAS will use its AMI lookup logic and try to find a valid AMI in the device based on the OS family and K8s version.
-  * Env vars with prefix `T_SNOW_IPPOOL_` are required when running Snow test with static ip. The values will be used to generate the `SnowIPPool` object.
+T_SNOW_DEVICES should be a comma-separated list of device IPs.
 
 ## OIDC tests requisites
 The following env variables need to be set:

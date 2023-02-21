@@ -4,7 +4,7 @@
 
 **Problem:** EKS Anywhere (EKS-A) is currently incompatible with most of the Kubernetes cluster autoscaling products on the market. Installing [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler) in an EKS-A cluster will not work out of the box without API and design changes.
 
-EKS Anywhere builds on top of Cluster API (CAPI) and maintains several CAPI cloud providers for cluster provisioning and management. [Cluster Autoscaler on Cluster API](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/clusterapi) was chosen as the default EKS-A cluster autoscaling solution for its native CAPI support and easy integration, which avoids the need to drastically change the API definition and workflow. The following discussion will focus on Cluster Autoscaler as the autoscaling tool to integrate into EKS Anywhere.
+EKS Anywhere builds on top of Cluster API (CAPI) and maintains several CAPI cloud providers for cluster provisioning and management.[Cluster Autoscaler on Cluster API](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/clusterapi) was chosen as the default EKS-A cluster autoscaling solution for its native CAPI support and easy integration, which avoids the need to drastically change the API definition and workflow. The following discussion will focus on Cluster Autoscaler as the autoscaling tool to integrate into EKS Anywhere.
 
 At launch, EKS Anywhere user can specify a fixed number of nodes for each worker node group in the cluster. Once a cluster is created, EKS-A cluster controller watches this configuration for changes, generates CAPI resources, and re-applies them in the cluster. Since EKS Anywhere does not support user interaction with CAPI directly, most manual CAPI resource changes made by the user will be overwritten by the EKS-A cluster controller. This behavior prevents users from enabling Cluster Autoscaler themselves, since the required autoscaling annotations manually applied to CAPI resources will be removed by EKS-A cluster controller.
 
@@ -199,7 +199,7 @@ harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
 Generate a curated-package config for autoscaler and run create command with it plus the cluster spec:
 
 ```sh
-$ eksctl anywhere generate package cluster-autoscaler --cluster test-cluster > cas-package.yaml
+$ eksctl anywhere generate package cluster-autoscaler --source registry > cas-package.yaml
 ```
 
 a) enables autoscaling in management cluster, where the autoscaler controller is deployed in management cluster and watches the management cluster itself.
@@ -220,7 +220,7 @@ spec:
 ```
 
 ```sh
-$ eksctl anywhere create cluster -f mgmt-cluster.yaml --install-packages cas-package.yaml
+$ eksctl anywhere create cluster -f mgmt-cluster.yaml --install-packages cas-package.yaml`
 ```
 
 This command goes through the following steps:

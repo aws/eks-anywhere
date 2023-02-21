@@ -188,6 +188,11 @@ func (p *SnowProvider) UpdateKubeConfig(content *[]byte, clusterName string) err
 	return nil
 }
 
+// AdditionalFiles returns additional files needed to be stored by providers.
+func (p *SnowProvider) AdditionalFiles() map[string][]byte {
+	return nil
+}
+
 func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Snow.Version
 }

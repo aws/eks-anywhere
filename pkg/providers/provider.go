@@ -26,6 +26,7 @@ type Provider interface {
 	PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	BootstrapClusterOpts(clusterSpec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error
+	AdditionalFiles() map[string][]byte
 	Version(clusterSpec *cluster.Spec) string
 	EnvMap(clusterSpec *cluster.Spec) (map[string]string, error)
 	GetDeployments() map[string][]string
