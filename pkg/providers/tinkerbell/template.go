@@ -86,7 +86,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 			return nil, fmt.Errorf("failed to get ETCD TinkerbellTemplateConfig: %v", err)
 		}
 	}
-	values := buildTemplateMapCP(clusterSpec, *tb.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString, *tb.datacenterSpec)
+	values := buildTemplateMapCP(clusterSpec, *tb.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString, *tb.datacenterSpec, tb.tinkerbellIP)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -113,7 +113,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
 		}
 
-		values := buildTemplateMapMD(clusterSpec, tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString, *tb.datacenterSpec)
+		values := buildTemplateMapMD(clusterSpec, tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString, *tb.datacenterSpec, tb.tinkerbellIP)
 		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		if workloadTemplateNames == nil || !ok {
 			return nil, fmt.Errorf("workloadTemplateNames invalid in GenerateCAPISpecWorkers: %v", err)
@@ -349,7 +349,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec, cpTemplateOverride, etcdTemplateOverride string, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec, cpTemplateOverride, etcdTemplateOverride string, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec, tinkerbellIP string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -412,7 +412,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		values["proxyConfig"] = true
 		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
 		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = generateNoProxyList(clusterSpec, datacenterSpec)
+		values["noProxy"] = GenerateNoProxyList(clusterSpec.Cluster, datacenterSpec, tinkerbellIP)
 	}
 
 	values["controlPlanetemplateOverride"] = cpTemplateOverride
@@ -440,7 +440,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, workerTemplateOverride string, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, workerTemplateOverride string, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec, tinkerbellIP string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -480,7 +480,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["proxyConfig"] = true
 		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
 		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = generateNoProxyList(clusterSpec, datacenterSpec)
+		values["noProxy"] = GenerateNoProxyList(clusterSpec.Cluster, datacenterSpec, tinkerbellIP)
 	}
 
 	values["workertemplateOverride"] = workerTemplateOverride
@@ -592,20 +592,22 @@ func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuild
 	return templateBuilder, nil
 }
 
-func generateNoProxyList(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec) []string {
-	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
-		len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
-		len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
+// GenerateNoProxyList generates NOPROXY list for tinkerbell provider based on HTTP_PROXY, HTTPS_PROXY, NOPROXY and tinkerbellIP.
+func GenerateNoProxyList(clusterSpec *v1alpha1.Cluster, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec, tinkerbellIp string) []string {
+	capacity := len(clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks) +
+		len(clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks) +
+		len(clusterSpec.Spec.ProxyConfiguration.NoProxy) + 4
 	noProxyList := make([]string, 0, capacity)
-	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
+	noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 	noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 
 	noProxyList = append(noProxyList,
-		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		datacenterSpec.TinkerbellIP,
+		tinkerbellIp,
 	)
 
 	return noProxyList

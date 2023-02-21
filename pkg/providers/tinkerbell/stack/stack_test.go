@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
@@ -107,6 +108,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 		expectedFile      string
 		installOnDocker   bool
 		registryMirror    *registrymirror.RegistryMirror
+		proxyConfig       *v1alpha1.ProxyConfiguration
 		opts              []stack.InstallOption
 	}{
 		{
@@ -200,6 +202,15 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			},
 			opts: []stack.InstallOption{},
 		},
+		{
+			name:         "with_proxy_config",
+			expectedFile: "testdata/expected_with_proxy_config.yaml",
+			proxyConfig: &v1alpha1.ProxyConfiguration{
+				HttpProxy:  "1.2.3.4:3128",
+				HttpsProxy: "1.2.3.4:3128",
+			},
+			opts: []stack.InstallOption{},
+		},
 	}
 
 	for _, stackTest := range stackTests {
@@ -210,7 +221,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			folder, writer := test.NewWriter(t)
 			cluster := &types.Cluster{Name: "test"}
 			ctx := context.Background()
-			s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", stackTest.registryMirror)
+			s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", stackTest.registryMirror, stackTest.proxyConfig)
 
 			generatedOverridesPath := filepath.Join(folder, "generated", overridesFileName)
 			if stackTest.registryMirror != nil && stackTest.registryMirror.Auth {
@@ -262,7 +273,7 @@ func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	docker.EXPECT().ForceRemove(ctx, boots)
 
@@ -279,7 +290,7 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	dockerError := "docker error"
 	expectedError := fmt.Sprintf("removing local boots container: %s", dockerError)
@@ -296,7 +307,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
 	docker.EXPECT().ForceRemove(ctx, "boots")
@@ -312,7 +323,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 	expectedErrorMsg := "boots container already exists, delete the container manually or re-run the command with --force-cleanup"
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
@@ -328,7 +339,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
 
@@ -350,7 +361,7 @@ func TestUpgrade(t *testing.T) {
 
 	helm.EXPECT().UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile)
 	assert.NoError(t, err)

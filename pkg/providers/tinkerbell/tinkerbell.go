@@ -131,11 +131,22 @@ func NewProvider(
 		}
 	}
 
+	var proxyConfig *v1alpha1.ProxyConfiguration
+	if clusterConfig.Spec.ProxyConfiguration != nil {
+		proxyConfig = &v1alpha1.ProxyConfiguration{
+			HttpProxy:  clusterConfig.Spec.ProxyConfiguration.HttpProxy,
+			HttpsProxy: clusterConfig.Spec.ProxyConfiguration.HttpsProxy,
+			NoProxy:    GenerateNoProxyList(clusterConfig, datacenterConfig.Spec, tinkerbellIP),
+		}
+	} else {
+		proxyConfig = nil
+	}
+
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromCluster(clusterConfig)),
+		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromCluster(clusterConfig), proxyConfig),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
