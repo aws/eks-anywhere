@@ -218,7 +218,7 @@ https://github.com/kubernetes/kube-openapi
 ** k8s.io/kube-openapi/pkg/validation/spec; version v0.0.0-20221012153701-172d655c2280 --
 https://github.com/kubernetes/kube-openapi
 
-** k8s.io/utils; version v0.0.0-20221107191617-1a15be271d1d --
+** k8s.io/utils; version v0.0.0-20221128185143-99ec85e7a448 --
 https://github.com/kubernetes/utils
 
 ** oras.land/oras-go/pkg; version v1.2.2 --
@@ -1289,7 +1289,7 @@ https://github.com/ProtonMail/go-crypto
 ** github.com/vmware/govmomi/vim25/xml; version v0.29.0 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.18.10 --
+** golang.org/go; version go1.19.5 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.5.0 --
@@ -1316,7 +1316,7 @@ https://go.googlesource.com/term
 ** golang.org/x/text; version v0.6.0 --
 https://go.googlesource.com/text
 
-** golang.org/x/time/rate; version v0.0.0-20220722155302-e5dcc9cfc0b9 --
+** golang.org/x/time/rate; version v0.3.0 --
 https://go.googlesource.com/time
 
 ** k8s.io/apimachinery/third_party/forked/golang; version v0.25.6 --
@@ -1452,7 +1452,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** k8s.io/utils/internal/third_party/forked/golang/net; version v0.0.0-20221107191617-1a15be271d1d --
+** k8s.io/utils/internal/third_party/forked/golang/net; version v0.0.0-20221128185143-99ec85e7a448 --
 https://github.com/kubernetes/utils
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
