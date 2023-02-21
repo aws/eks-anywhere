@@ -86,6 +86,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	return controller.NewPhaseRunner[*Scope]().Register(
 		r.ValidateControlPlaneIP,
 		r.ValidateClusterSpec,
+		r.DetectOperationAndGenerateSpec,
 		r.ValidateHardware,
 		r.ValidateDatacenterConfig,
 		r.ReconcileControlPlane,
@@ -116,6 +117,48 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, t
 		return controller.ResultWithReturn(), nil
 	}
 	return controller.Result{}, nil
+}
+
+// DetectOperationAndGenerateSpec generates control plane and workers spec, then detect create or upgrade type.
+func (r *Reconciler) DetectOperationAndGenerateSpec(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	spec := tinkerbellScope.ClusterSpec
+	log = log.WithValues("phase", "DetectOperation")
+	log.Info("Detecting operation type")
+
+	cp, err := tinkerbell.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, err
+	}
+	tinkerbellScope.controlPlane = cp
+
+	w, err := tinkerbell.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "generating workers spec")
+	}
+	tinkerbellScope.workers = w
+
+	err = detectOperation(ctx, log, tinkerbellScope)
+	if err != nil && apierrors.IsNotFound(err) {
+		return controller.Result{}, errors.Wrap(err, "Detecting operation type")
+	}
+
+	// omit machine template on scale update
+	if tinkerbellScope.operationType == scaleUpdate {
+		tinkerbellScope.controlPlane.ControlPlaneMachineTemplate = nil
+		wg := tinkerbellScope.workers.Groups
+		for _, w := range wg {
+			w.ProviderMachineTemplate = nil
+		}
+	}
+
+	return controller.ResultWithReturn(), err
+}
+
+// detectOperation compares current CAPI objects with desired CAPI objects in scope,
+// then update operation value in scope.
+// todo: detectOperation
+func detectOperation(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) error {
+	return nil
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
@@ -235,48 +278,6 @@ func toClientControlPlane(cp *tinkerbell.ControlPlane) *clusters.ControlPlane {
 	}
 }
 
-// detectOperationAndGenerateSpec generates control plane and workers spec, then detect create or upgrade type.
-func (r *Reconciler) detectOperationAndGenerateSpec(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) error {
-	spec := tinkerbellScope.ClusterSpec
-	log = log.WithValues("phase", "DetectUpgrade")
-	log.Info("Detecting operation type")
-
-	cp, err := tinkerbell.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
-	if err != nil {
-		return err
-	}
-	tinkerbellScope.controlPlane = cp
-
-	w, err := tinkerbell.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
-	if err != nil {
-		return errors.Wrap(err, "generating workers spec")
-	}
-	tinkerbellScope.workers = w
-
-	err = detectOperation(ctx, log, tinkerbellScope)
-	if err != nil && apierrors.IsNotFound(err) {
-		return errors.Wrap(err, "Detecting operation type")
-	}
-
-	// omit machine template on scale update
-	if tinkerbellScope.operationType == scaleUpdate {
-		tinkerbellScope.controlPlane.ControlPlaneMachineTemplate = nil
-		wg := tinkerbellScope.workers.Groups
-		for _, w := range wg {
-			w.ProviderMachineTemplate = nil
-		}
-	}
-
-	return err
-}
-
-// detectOperation compares current CAPI objects with desired CAPI objects in scope,
-// then update operation value in scope.
-// todo: detectOperation
-func detectOperation(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) error {
-	return nil
-}
-
 // ValidateHardware performs a set of validations on the tinkerbell hardware read from the cluster.
 func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
 	clusterSpec := tinkerbellScope.ClusterSpec
@@ -294,10 +295,6 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	var v tinkerbell.ClusterSpecValidator
 	v.Register(tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(etcdReader.GetCatalogue()))
 
-	err := r.detectOperationAndGenerateSpec(ctx, log, tinkerbellScope)
-	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "detecting operation type")
-	}
 	switch tinkerbellScope.operationType {
 	case rollingUpdate:
 		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(etcdReader.GetCatalogue()))
