@@ -36,7 +36,7 @@ type Machine struct {
 }
 
 // NewMachineFromHardware creates a new Machine from the given hardware and it's dependencies, if any.
-func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine, s *corev1.Secret) *Machine {
+func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine, s *corev1.Secret) Machine {
 	var bmcIPAddress, bmcUsername, bmcPassword string
 	if rm != nil && s != nil {
 		bmcIPAddress = rm.Spec.Connection.Host
@@ -52,7 +52,7 @@ func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine,
 		}
 	}
 
-	return &Machine{
+	return Machine{
 		Hostname:     hw.Name,
 		IPAddress:    hw.Spec.Interfaces[0].DHCP.IP.Address,
 		Netmask:      hw.Spec.Interfaces[0].DHCP.IP.Netmask,

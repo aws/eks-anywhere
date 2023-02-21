@@ -301,7 +301,7 @@ func (p *Provider) HardwareSpec() []byte {
 // and caches it on the Provider.
 func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Cluster) error {
 	catalogue := hardware.NewCatalogue()
-	err := p.readMachineCatalogueFromCluster(ctx, catalogue, cluster)
+	err := p.readMachineCatalogueFromCluster(ctx, cluster, catalogue)
 	if err != nil {
 		return fmt.Errorf("reading machine catalogue from cluster: %v", err)
 	}
@@ -320,7 +320,7 @@ func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Clus
 }
 
 // readMachineCatalogueFromCluster fetches all the hardware, bmc and related secret objects and inserts in to ETCDReader catalogue.
-func (p *Provider) readMachineCatalogueFromCluster(ctx context.Context, catalogue *hardware.Catalogue, cluster *types.Cluster) error {
+func (p *Provider) readMachineCatalogueFromCluster(ctx context.Context, cluster *types.Cluster, catalogue *hardware.Catalogue) error {
 	catalogueWriter := hardware.NewMachineCatalogueWriter(catalogue)
 	hwList, err := p.providerKubectlClient.AllTinkerbellHardware(ctx, cluster.KubeconfigFile)
 	if err != nil {
@@ -328,12 +328,17 @@ func (p *Provider) readMachineCatalogueFromCluster(ctx context.Context, catalogu
 	}
 
 	for _, hw := range hwList {
+		if hw.Spec.BMCRef == nil {
+			err = catalogueWriter.Write(hardware.NewMachineFromHardware(hw, nil, nil))
+			if err != nil {
+				return fmt.Errorf("writing machine to catalogue: %v", err)
+			}
+			continue
+		}
+
 		rufioMachine, err := p.providerKubectlClient.GetRufioMachine(ctx, hw.Spec.BMCRef.Name, hw.Namespace, cluster.KubeconfigFile)
 		if err != nil {
 			return err
-		}
-		if rufioMachine == nil {
-			continue
 		}
 
 		authSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, rufioMachine.Spec.Connection.AuthSecretRef.Name, hw.Namespace)
@@ -341,8 +346,7 @@ func (p *Provider) readMachineCatalogueFromCluster(ctx context.Context, catalogu
 			return err
 		}
 
-		machine := hardware.NewMachineFromHardware(hw, rufioMachine, authSecret)
-		err = catalogueWriter.Write(*machine)
+		err = catalogueWriter.Write(hardware.NewMachineFromHardware(hw, rufioMachine, authSecret))
 		if err != nil {
 			return fmt.Errorf("writing machine to catalogue: %v", err)
 		}

@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -917,6 +918,93 @@ func TestKubectlGetMachines(t *testing.T) {
 
 			if !reflect.DeepEqual(gotMachines, tt.wantMachines) {
 				t.Fatalf("Kubectl.GetMachines() machines = %+v, want %+v", gotMachines, tt.wantMachines)
+			}
+		})
+	}
+}
+
+func TestKubectlGetRufioMachine(t *testing.T) {
+	machineName := "bmc-eksa-dev"
+	resourceType := fmt.Sprintf("machines.%s", rufiov1alpha1.GroupVersion.Group)
+	tests := []struct {
+		testName     string
+		jsonResponse bytes.Buffer
+		wantMachine  *rufiov1alpha1.Machine
+		wantError    string
+	}{
+		{
+			testName: "getting rufio machine not found",
+			wantMachine: &rufiov1alpha1.Machine{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      machineName,
+					Namespace: constants.EksaSystemNamespace,
+				},
+			},
+			jsonResponse: *bytes.NewBuffer([]byte{}),
+			wantError:    fmt.Sprintf("getting rufio machine: %s \"%s\" not found", resourceType, machineName),
+		},
+		{
+			testName: "getting rufio machine success",
+			wantMachine: &rufiov1alpha1.Machine{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Machine",
+					APIVersion: "bmc.tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      machineName,
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: rufiov1alpha1.MachineSpec{
+					Connection: rufiov1alpha1.Connection{
+						AuthSecretRef: corev1.SecretReference{
+							Name:      fmt.Sprintf("%s-auth", machineName),
+							Namespace: constants.EksaSystemNamespace,
+						},
+						Host:        "10.10.10.10",
+						InsecureTLS: true,
+						Port:        0,
+					},
+				},
+			},
+			jsonResponse: *bytes.NewBuffer([]byte(`{
+  "apiVersion": "bmc.tinkerbell.org/v1alpha1",
+  "kind": "Machine",
+  "metadata": {
+    "name": "bmc-eksa-dev",
+    "namespace": "eksa-system"
+  },
+  "spec": {
+    "connection": {
+      "authSecretRef": {
+        "name": "bmc-eksa-dev-auth",
+        "namespace": "eksa-system"
+      },
+      "host": "10.10.10.10",
+      "insecureTLS": true,
+      "port": 0
+    }
+  },
+  "status": {}
+}`)),
+			wantError: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			k, ctx, cluster, e := newKubectl(t)
+			e.EXPECT().Execute(ctx, []string{
+				"get", "--ignore-not-found", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+				resourceType, "--namespace", constants.EksaSystemNamespace, tt.wantMachine.Name,
+			}).Return(tt.jsonResponse, nil)
+
+			gotMachine, err := k.GetRufioMachine(ctx, tt.wantMachine.Name, tt.wantMachine.Namespace, cluster.KubeconfigFile)
+			g := NewWithT(t)
+			if tt.wantError != "" {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantError)))
+			} else {
+				g.Expect(err).To(BeNil())
+				g.Expect(gotMachine).To(Equal(tt.wantMachine))
 			}
 		})
 	}
