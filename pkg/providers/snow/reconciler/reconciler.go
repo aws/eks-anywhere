@@ -57,7 +57,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 		return controller.Result{}, err
 	}
 
-	return controller.NewPhaseRunner().Register(
+	return controller.NewPhaseRunner[*cluster.Spec]().Register(
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateMachineConfigs,
 		clusters.CleanupStatusAfterValidate,
@@ -77,7 +77,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 		return controller.Result{}, err
 	}
 
-	return controller.NewPhaseRunner().Register(
+	return controller.NewPhaseRunner[*cluster.Spec]().Register(
 		r.ValidateMachineConfigs,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
