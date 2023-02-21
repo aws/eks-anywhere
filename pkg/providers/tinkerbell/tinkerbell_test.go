@@ -1617,7 +1617,6 @@ func TestSetupAndValidateUpgradeWorkloadClusterGenerateHardwareSpecFail(t *testi
 			assertError(t, test.wantErr, err)
 		})
 	}
-
 }
 
 func TestSetupAndValidateCreateWorkloadClusterErrorManagementCluster(t *testing.T) {
