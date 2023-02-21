@@ -18,11 +18,11 @@ func TestNewMachineFromHardware(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		wantMachine *hardware.Machine
+		wantMachine hardware.Machine
 	}{
 		{
 			name: "new machine with bmc",
-			wantMachine: &hardware.Machine{
+			wantMachine: hardware.Machine{
 				Hostname:    "hw1",
 				IPAddress:   "10.10.10.10",
 				Netmask:     "10.10.10.1",
@@ -41,7 +41,7 @@ func TestNewMachineFromHardware(t *testing.T) {
 		},
 		{
 			name: "new machine without bmc",
-			wantMachine: &hardware.Machine{
+			wantMachine: hardware.Machine{
 				Hostname:    "hw1",
 				IPAddress:   "10.10.10.10",
 				Netmask:     "10.10.10.1",
@@ -62,9 +62,9 @@ func TestNewMachineFromHardware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hw := tinkHardware(tt.wantMachine)
-			rm := rufioMachine(tt.wantMachine)
-			secret := bmcAuthSecret(tt.wantMachine)
+			hw := tinkHardware(&tt.wantMachine)
+			rm := rufioMachine(&tt.wantMachine)
+			secret := bmcAuthSecret(&tt.wantMachine)
 
 			newMachine := hardware.NewMachineFromHardware(*hw, rm, secret)
 			g.Expect(newMachine).To(Equal(tt.wantMachine))

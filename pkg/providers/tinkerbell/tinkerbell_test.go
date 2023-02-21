@@ -10,7 +10,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	rufioalphav1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -26,9 +30,50 @@ import (
 )
 
 const (
+	hwName      = "worker-1"
+	bmcName     = "bmc-worker-1"
+	bmcAuthName = "bmc-worker-1-auth"
 	testDataDir = "testdata"
 	testIP      = "5.6.7.8"
 )
+
+type generateHardwareSpecFailTest struct {
+	name    string
+	wantErr string
+	expect  func(*mocks.MockProviderKubectlClient)
+}
+
+func generateHardwareSpecFailTests(ctx context.Context, cluster *types.Cluster) []generateHardwareSpecFailTest {
+	errorResponse := errors.New("error")
+	return []generateHardwareSpecFailTest{
+		{
+			name:    "failure getting all hardware",
+			wantErr: "generating hardware spec: failed to build catalogue: error",
+			expect: func(kubectl *mocks.MockProviderKubectlClient) {
+				kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return(nil, errorResponse)
+			},
+		},
+		{
+			name:    "failure getting rufio machine",
+			wantErr: "generating hardware spec: reading hardware machine from cluster: getting rufio machine: error",
+			expect: func(kubectl *mocks.MockProviderKubectlClient) {
+				kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{*hwWithBMC()}, nil)
+				kubectl.EXPECT().GetRufioMachine(ctx, bmcName, constants.EksaSystemNamespace, cluster.KubeconfigFile).Return(nil, errorResponse).MaxTimes(1)
+			},
+		},
+		{
+			name:    "failure getting bmc auth secret",
+			wantErr: "generating hardware spec: reading hardware machine from cluster: getting rufio machine auth secret: error",
+			expect: func(kubectl *mocks.MockProviderKubectlClient) {
+				kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{*hwWithBMC()}, nil)
+				kubectl.EXPECT().GetRufioMachine(ctx, bmcName, constants.EksaSystemNamespace, cluster.KubeconfigFile).Return(bmcMachine(), nil).MaxTimes(1)
+				kubectl.EXPECT().GetSecretFromNamespace(
+					ctx, cluster.KubeconfigFile, bmcAuthName, constants.EksaSystemNamespace,
+				).Return(nil, errorResponse).MaxTimes(1)
+			},
+		},
+	}
+}
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 	return test.NewFullClusterSpec(t, path.Join(testDataDir, fileName))
@@ -48,6 +93,73 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 		t.Fatalf("unable to get machine configs from file: %v", err)
 	}
 	return machineConfigs
+}
+
+func hwWithBMC() *tinkv1alpha1.Hardware {
+	return &tinkv1alpha1.Hardware{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Hardware",
+			APIVersion: "tinkerbell.org/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      hwName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: tinkv1alpha1.HardwareSpec{
+			BMCRef: &v1.TypedLocalObjectReference{
+				Name: bmcName,
+			},
+			Disks: []tinkv1alpha1.Disk{{Device: "/dev/sda"}},
+			Interfaces: []tinkv1alpha1.Interface{
+				{
+					DHCP: &tinkv1alpha1.DHCP{
+						MAC: "00:00:00:00:00:01",
+						IP: &tinkv1alpha1.IP{
+							Address: "10.10.10.10",
+							Netmask: "10.10.10.1",
+							Gateway: "10.10.10.1",
+							Family:  4,
+						},
+						Hostname:    hwName,
+						NameServers: []string{"1.1.1.1"},
+						VLANID:      "",
+					},
+				},
+			},
+		},
+	}
+}
+
+func hwWithBMCNoBMC() *tinkv1alpha1.Hardware {
+	hw := hwWithBMC()
+	hw.Spec.BMCRef = nil
+	return hw
+}
+
+func bmcMachine() *rufioalphav1.Machine {
+	return &rufioalphav1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bmcName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: rufioalphav1.MachineSpec{
+			Connection: rufioalphav1.Connection{
+				AuthSecretRef: v1.SecretReference{
+					Name:      bmcAuthName,
+					Namespace: constants.EksaSystemNamespace,
+				},
+			},
+		},
+	}
+}
+
+func bmcAuthSecret() *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      bmcAuthName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
 }
 
 func assertError(t *testing.T, expected string, err error) {
@@ -450,7 +562,12 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
-	kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{}, nil)
+
+	kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{*hwWithBMC(), *hwWithBMCNoBMC()}, nil)
+	kubectl.EXPECT().GetRufioMachine(ctx, bmcName, constants.EksaSystemNamespace, cluster.KubeconfigFile).Return(bmcMachine(), nil).MaxTimes(1)
+	kubectl.EXPECT().GetSecretFromNamespace(
+		ctx, cluster.KubeconfigFile, bmcAuthName, constants.EksaSystemNamespace,
+	).Return(bmcAuthSecret(), nil).MaxTimes(1)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	if err := provider.readCSVToCatalogue(); err != nil {
@@ -460,6 +577,39 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	err := provider.PostBootstrapSetup(ctx, provider.clusterConfig, cluster)
 	if err != nil {
 		t.Fatalf("failed PostBootstrapSetup: %v", err)
+	}
+}
+
+func TestPostBootstrapSetupGenerateHardwareSpecFail(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	tt := generateHardwareSpecFailTests(ctx, cluster)
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
+			kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+			test.expect(kubectl)
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			if err := provider.readCSVToCatalogue(); err != nil {
+				t.Fatalf("failed to read hardware csv: %v", err)
+			}
+
+			err := provider.PostBootstrapSetup(ctx, provider.clusterConfig, cluster)
+			assertError(t, test.wantErr, err)
+		})
 	}
 }
 
@@ -563,6 +713,38 @@ func TestPostMoveManagementToBootstrapWaitForRufioMachinesFail(t *testing.T) {
 
 	err := provider.PostMoveManagementToBootstrap(ctx, cluster)
 	assert.Error(t, err, "PostMoveManagementToBootstrap should fail")
+}
+
+func TestPostMoveManagementToBootstrapGenerateHardwareSpecFail(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	tt := generateHardwareSpecFailTests(ctx, cluster)
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+			test.expect(kubectl)
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			if err := provider.readCSVToCatalogue(); err != nil {
+				t.Fatalf("failed to read hardware csv: %v", err)
+			}
+
+			err := provider.PostMoveManagementToBootstrap(ctx, cluster)
+			assertError(t, test.wantErr, err)
+		})
+	}
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithFullOIDC(t *testing.T) {
@@ -1020,6 +1202,62 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	assert.NoError(t, err, "No error should be returned")
 }
 
+func TestSetupAndValidateCreateWorkloadClusterGenerateHardwareSpecFail(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+
+	tt := generateHardwareSpecFailTests(ctx, clusterSpec.ManagementCluster)
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			provider.providerKubectlClient = kubectl
+
+			provider.stackInstaller = stackInstaller
+			stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
+
+			for _, config := range machineConfigs {
+				kubectl.EXPECT().SearchTinkerbellMachineConfig(ctx, config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.TinkerbellMachineConfig{}, nil)
+			}
+			kubectl.EXPECT().SearchTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return([]*v1alpha1.TinkerbellDatacenterConfig{}, nil)
+			kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+			kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+			kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
+			kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
+			kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
+			kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+			test.expect(kubectl)
+
+			if err := provider.readCSVToCatalogue(); err != nil {
+				t.Fatalf("failed to read hardware csv: %v", err)
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			assertError(t, test.wantErr, err)
+		})
+	}
+}
+
 func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -1332,6 +1570,53 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	assertError(t, "waiting for baseboard management to be contactable: error", err)
+}
+
+func TestSetupAndValidateUpgradeWorkloadClusterGenerateHardwareSpecFail(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	clusterSpec.Cluster.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	cluster.KubeconfigFile = "kc.kubeconfig"
+
+	tt := generateHardwareSpecFailTests(ctx, clusterSpec.ManagementCluster)
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			provider.providerKubectlClient = kubectl
+			provider.stackInstaller = stackInstaller
+			provider.hardwareCSVFile = "testdata/hardware.csv"
+
+			kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+			kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+			kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
+			kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+
+			test.expect(kubectl)
+
+			err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
+			assertError(t, test.wantErr, err)
+		})
+	}
 }
 
 func TestSetupAndValidateCreateWorkloadClusterErrorManagementCluster(t *testing.T) {

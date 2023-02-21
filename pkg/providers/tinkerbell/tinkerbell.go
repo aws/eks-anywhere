@@ -298,55 +298,57 @@ func (p *Provider) HardwareSpec() []byte {
 }
 
 // generateHardwareSpec reads the hardware information from the available cluster, generates a yaml that can be submitted to a kubernetes cluster
-// and caches it on the Provider.
-func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Cluster) error {
+// and returns it.
+func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Cluster) ([]byte, error) {
 	catalogue := hardware.NewCatalogue()
-	err := p.readMachineCatalogueFromCluster(ctx, catalogue, cluster)
+	catalogueWriter := hardware.NewMachineCatalogueWriter(catalogue)
+	hwList, err := p.providerKubectlClient.AllTinkerbellHardware(ctx, cluster.KubeconfigFile)
 	if err != nil {
-		return fmt.Errorf("reading machine catalogue from cluster: %v", err)
+		return nil, fmt.Errorf("failed to build catalogue: %v", err)
+	}
+
+	for _, hw := range hwList {
+		machine, err := p.buildHardwareMachineFromCluster(ctx, cluster, &hw)
+		if err != nil {
+			return nil, fmt.Errorf("reading hardware machine from cluster: %v", err)
+		}
+
+		err = catalogueWriter.Write(*machine)
+		if err != nil {
+			return nil, fmt.Errorf("writing machine to catalogue: %v", err)
+		}
 	}
 
 	hardwareSpec, err := hardware.MarshalCatalogue(catalogue)
 	if err != nil {
-		return fmt.Errorf("marshing hardware catalogue: %v", err)
+		return nil, fmt.Errorf("marshing hardware catalogue: %v", err)
 	}
 	hardwareSpec, err = unstructuredutil.StripNull(hardwareSpec)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("stripping null values from hardware spec: %v", err)
 	}
-	p.hardwareSpec = hardwareSpec
 
-	return nil
+	return hardwareSpec, nil
 }
 
-// readMachineCatalogueFromCluster fetches all the hardware, bmc and related secret objects and inserts in to ETCDReader catalogue.
-func (p *Provider) readMachineCatalogueFromCluster(ctx context.Context, catalogue *hardware.Catalogue, cluster *types.Cluster) error {
-	catalogueWriter := hardware.NewMachineCatalogueWriter(catalogue)
-	hwList, err := p.providerKubectlClient.AllTinkerbellHardware(ctx, cluster.KubeconfigFile)
+// buildHardwareMachineFromCluster fetches all the hardware, bmc machines and related secret objects from the cluster,
+// then it converts that data into a hardware.Machine and returns it.
+func (p *Provider) buildHardwareMachineFromCluster(ctx context.Context, cluster *types.Cluster, hw *tinkv1alpha1.Hardware) (*hardware.Machine, error) {
+	if hw.Spec.BMCRef == nil {
+		machine := hardware.NewMachineFromHardware(*hw, nil, nil)
+		return &machine, nil
+	}
+
+	rufioMachine, err := p.providerKubectlClient.GetRufioMachine(ctx, hw.Spec.BMCRef.Name, hw.Namespace, cluster.KubeconfigFile)
 	if err != nil {
-		return fmt.Errorf("failed to build catalogue: %v", err)
+		return nil, fmt.Errorf("getting rufio machine: %v", err)
 	}
 
-	for _, hw := range hwList {
-		rufioMachine, err := p.providerKubectlClient.GetRufioMachine(ctx, hw.Spec.BMCRef.Name, hw.Namespace, cluster.KubeconfigFile)
-		if err != nil {
-			return err
-		}
-		if rufioMachine == nil {
-			continue
-		}
-
-		authSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, rufioMachine.Spec.Connection.AuthSecretRef.Name, hw.Namespace)
-		if err != nil {
-			return err
-		}
-
-		machine := hardware.NewMachineFromHardware(hw, rufioMachine, authSecret)
-		err = catalogueWriter.Write(*machine)
-		if err != nil {
-			return fmt.Errorf("writing machine to catalogue: %v", err)
-		}
+	authSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, rufioMachine.Spec.Connection.AuthSecretRef.Name, hw.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("getting rufio machine auth secret: %v", err)
 	}
 
-	return nil
+	machine := hardware.NewMachineFromHardware(*hw, rufioMachine, authSecret)
+	return &machine, nil
 }
