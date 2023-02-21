@@ -133,7 +133,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 			Kind:       kubeadmControlPlaneKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      KubeadmControlPlaneName(clusterSpec),
+			Name:      KubeadmControlPlaneName(clusterSpec.Cluster),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
