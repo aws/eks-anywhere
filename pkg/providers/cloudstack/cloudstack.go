@@ -271,6 +271,11 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
+// AdditionalFiles returns additional files needed to be stored by providers.
+func (p *cloudstackProvider) AdditionalFiles() map[string][]byte {
+	return nil
+}
+
 func (p *cloudstackProvider) BootstrapClusterOpts(clusterSpec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	endpoints := []string{}
 	for _, az := range clusterSpec.CloudStackDatacenter.Spec.AvailabilityZones {

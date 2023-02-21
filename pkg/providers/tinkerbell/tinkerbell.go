@@ -7,6 +7,7 @@ import (
 	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -26,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -55,6 +57,7 @@ type Provider struct {
 	keyGenerator          SSHAuthKeyGenerator
 
 	hardwareCSVFile string
+	hardwareSpec    []byte
 	catalogue       *hardware.Catalogue
 	tinkerbellIP    string
 
@@ -80,6 +83,8 @@ type ProviderKubectlClient interface {
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
+	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
+	GetRufioMachine(ctx context.Context, name string, namespace string, kubeconfig string) (*rufiov1alpha1.Machine, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	GetUnprovisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
@@ -285,4 +290,68 @@ func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
+}
+
+// AdditionalFiles returns additional files needed to be stored by providers.
+// For Tinkerbell, this includes the hardware yaml containing the spec for the hardware in the management cluster.
+func (p *Provider) AdditionalFiles() map[string][]byte {
+	additionalFiles := make(map[string][]byte, 0)
+	additionalFiles["hardware"] = p.hardwareSpec
+	return additionalFiles
+}
+
+// generateHardwareSpec reads the hardware information from the available cluster, generates a yaml that can be submitted to a kubernetes cluster
+// and returns it.
+func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Cluster) ([]byte, error) {
+	catalogue := hardware.NewCatalogue()
+	catalogueWriter := hardware.NewMachineCatalogueWriter(catalogue)
+	hwList, err := p.providerKubectlClient.AllTinkerbellHardware(ctx, cluster.KubeconfigFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build catalogue: %v", err)
+	}
+
+	for _, hw := range hwList {
+		machine, err := p.buildHardwareMachineFromCluster(ctx, cluster, &hw)
+		if err != nil {
+			return nil, fmt.Errorf("reading hardware machine from cluster: %v", err)
+		}
+
+		err = catalogueWriter.Write(*machine)
+		if err != nil {
+			return nil, fmt.Errorf("writing machine to catalogue: %v", err)
+		}
+	}
+
+	hardwareSpec, err := hardware.MarshalCatalogue(catalogue)
+	if err != nil {
+		return nil, fmt.Errorf("marshing hardware catalogue: %v", err)
+	}
+	hardwareSpec, err = unstructuredutil.StripNull(hardwareSpec)
+	if err != nil {
+		return nil, fmt.Errorf("stripping null values from hardware spec: %v", err)
+	}
+
+	return hardwareSpec, nil
+}
+
+// buildHardwareMachineFromCluster fetches all the hardware, bmc machines and related secret objects from the cluster,
+// then it converts that data into a hardware.Machine and returns it.
+func (p *Provider) buildHardwareMachineFromCluster(ctx context.Context, cluster *types.Cluster, hw *tinkv1alpha1.Hardware) (*hardware.Machine, error) {
+	if hw.Spec.BMCRef == nil {
+		machine := hardware.NewMachineFromHardware(*hw, nil, nil)
+		return &machine, nil
+	}
+
+	rufioMachine, err := p.providerKubectlClient.GetRufioMachine(ctx, hw.Spec.BMCRef.Name, hw.Namespace, cluster.KubeconfigFile)
+	if err != nil {
+		return nil, fmt.Errorf("getting rufio machine: %v", err)
+	}
+
+	authSecret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, rufioMachine.Spec.Connection.AuthSecretRef.Name, hw.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("getting rufio machine auth secret: %v", err)
+	}
+
+	machine := hardware.NewMachineFromHardware(*hw, rufioMachine, authSecret)
+	return &machine, nil
 }

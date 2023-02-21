@@ -39,6 +39,20 @@ func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 	return m.recorder
 }
 
+// AdditionalFiles mocks base method.
+func (m *MockProvider) AdditionalFiles() map[string][]byte {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdditionalFiles")
+	ret0, _ := ret[0].(map[string][]byte)
+	return ret0
+}
+
+// AdditionalFiles indicates an expected call of AdditionalFiles.
+func (mr *MockProviderMockRecorder) AdditionalFiles() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdditionalFiles", reflect.TypeOf((*MockProvider)(nil).AdditionalFiles))
+}
+
 // BootstrapClusterOpts mocks base method.
 func (m *MockProvider) BootstrapClusterOpts(arg0 *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	m.ctrl.T.Helper()
