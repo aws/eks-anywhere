@@ -578,7 +578,6 @@ func TestPostBootstrapSetupGenerateHardwareSpecFailure(t *testing.T) {
 				kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
 				kubectl.EXPECT().AllTinkerbellHardware(ctx, cluster.KubeconfigFile).Return([]tinkv1alpha1.Hardware{*hwWithBMC()}, nil)
 				kubectl.EXPECT().GetRufioMachine(ctx, bmcName, constants.EksaSystemNamespace, cluster.KubeconfigFile).Return(nil, wantErr).MaxTimes(1)
-
 			},
 		},
 		{
@@ -591,7 +590,6 @@ func TestPostBootstrapSetupGenerateHardwareSpecFailure(t *testing.T) {
 				kubectl.EXPECT().GetSecretFromNamespace(
 					ctx, cluster.KubeconfigFile, bmcAuthName, constants.EksaSystemNamespace,
 				).Return(nil, wantErr).MaxTimes(1)
-
 			},
 		},
 	}
@@ -609,7 +607,6 @@ func TestPostBootstrapSetupGenerateHardwareSpecFailure(t *testing.T) {
 			assert.Error(t, err, "PostBootstrapSetup should fail")
 		})
 	}
-
 }
 
 func TestPostBootstrapSetupWaitForRufioMachinesFail(t *testing.T) {
