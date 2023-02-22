@@ -138,6 +138,31 @@ spec:
 {{ .auditPolicy | indent 8 }}
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
+{{- if .registryCACert }}
+    - content: |
+{{ .registryCACert | indent 8 }}
+      owner: root:root
+      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .registryMirrorMap }}
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          {{- range $orig, $mirror := .registryMirrorMap }}
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+            endpoint = ["https://{{ $mirror }}"]
+          {{- end }}
+          {{- if .registryCACert }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+          {{- end }}
+          {{- if .registryAuth }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
+            username = "{{.registryUsername}}"
+            password = "{{.registryPassword}}"
+          {{- end }}
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
+{{- end }}
 {{- if .awsIamAuth}}
     - content: |
         # clusters refers to the remote service.
@@ -217,6 +242,12 @@ spec:
 {{- end }}
         {{- end }}
 {{- end }}
+{{- if .registryMirrorMap }}
+    preKubeadmCommands:
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+    - systemctl daemon-reload
+    - systemctl restart containerd
+{{- end }}
   replicas: {{.control_plane_replicas}}
   version: {{.kubernetesVersion}}
 {{- if .externalEtcd }}
@@ -234,6 +265,14 @@ spec:
       version: {{.externalEtcdVersion}}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
+{{- end }}
+{{- if .registryMirrorMap }}
+    registryMirror:
+      endpoint: {{ .publicMirror }}
+      {{- if .registryCACert }}
+      caCert: |
+{{ .registryCACert | indent 8 }}
+      {{- end }}
 {{- end }}
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

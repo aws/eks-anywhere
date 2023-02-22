@@ -9,14 +9,19 @@ import (
 
 func runRegistryMirrorConfigFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
+	test.DownloadArtifacts()
+	test.ExtractDownloadedArtifacts()
+	test.DownloadImages()
 	test.ImportImages()
 	test.CreateCluster()
-	test.ImportImages()
 	test.DeleteCluster()
 }
 
 func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
+	test.DownloadArtifacts()
+	test.ExtractDownloadedArtifacts()
+	test.DownloadImages()
 	test.ImportImages()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()

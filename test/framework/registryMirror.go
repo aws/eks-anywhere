@@ -11,21 +11,24 @@ import (
 )
 
 const (
-	RegistryEndpointVar           = "T_REGISTRY_MIRROR_ENDPOINT"
-	RegistryPortVar               = "T_REGISTRY_MIRROR_PORT"
-	RegistryUsernameVar           = "T_REGISTRY_MIRROR_USERNAME"
-	RegistryPasswordVar           = "T_REGISTRY_MIRROR_PASSWORD"
-	RegistryCACertVar             = "T_REGISTRY_MIRROR_CA_CERT"
-	RegistryEndpointTinkerbellVar = "T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
-	RegistryPortTinkerbellVar     = "T_REGISTRY_MIRROR_PORT_TINKERBELL"
-	RegistryUsernameTinkerbellVar = "T_REGISTRY_MIRROR_USERNAME_TINKERBELL"
-	RegistryPasswordTinkerbellVar = "T_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
-	RegistryCACertTinkerbellVar   = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
+	RegistryEndpointVar                  = "T_REGISTRY_MIRROR_ENDPOINT"
+	RegistryPortVar                      = "T_REGISTRY_MIRROR_PORT"
+	RegistryUsernameVar                  = "T_REGISTRY_MIRROR_USERNAME"
+	RegistryPasswordVar                  = "T_REGISTRY_MIRROR_PASSWORD"
+	RegistryCACertVar                    = "T_REGISTRY_MIRROR_CA_CERT"
+	RegistryEndpointTinkerbellVar        = "T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
+	RegistryPortTinkerbellVar            = "T_REGISTRY_MIRROR_PORT_TINKERBELL"
+	RegistryUsernameTinkerbellVar        = "T_REGISTRY_MIRROR_USERNAME_TINKERBELL"
+	RegistryPasswordTinkerbellVar        = "T_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
+	RegistryCACertTinkerbellVar          = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
+	RegistryMirrorDefaultSecurityGroup   = "T_REGISTRY_MIRROR_DEFAULT_SECURITY_GROUP"
+	RegistryMirrorAirgappedSecurityGroup = "T_REGISTRY_MIRROR_AIRGAPPED_SECURITY_GROUP"
 )
 
 var (
-	registryMirrorRequiredEnvVars           = []string{RegistryEndpointVar, RegistryPortVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
-	registryMirrorTinkerbellRequiredEnvVars = []string{RegistryEndpointTinkerbellVar, RegistryPortTinkerbellVar, RegistryUsernameTinkerbellVar, RegistryPasswordTinkerbellVar, RegistryCACertTinkerbellVar}
+	registryMirrorRequiredEnvVars                = []string{RegistryEndpointVar, RegistryPortVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
+	registryMirrorTinkerbellRequiredEnvVars      = []string{RegistryEndpointTinkerbellVar, RegistryPortTinkerbellVar, RegistryUsernameTinkerbellVar, RegistryPasswordTinkerbellVar, RegistryCACertTinkerbellVar}
+	registryMirrorDockerAirgappedRequiredEnvVars = []string{RegistryMirrorDefaultSecurityGroup, RegistryMirrorAirgappedSecurityGroup}
 )
 
 func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
@@ -79,5 +82,6 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 }
 
 func RequiredRegistryMirrorEnvVars() []string {
-	return append(registryMirrorRequiredEnvVars, registryMirrorTinkerbellRequiredEnvVars...)
+	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, registryMirrorTinkerbellRequiredEnvVars...)
+	return append(registryMirrorRequiredEnvVars, registryMirrorDockerAirgappedRequiredEnvVars...)
 }
