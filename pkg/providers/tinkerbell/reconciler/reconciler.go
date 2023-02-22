@@ -34,15 +34,13 @@ type IPValidator interface {
 
 // Scope object for Tinkerbell reconciler.
 type Scope struct {
-	ClusterSpec      *c.Spec
-	isRollingUpgrade bool
+	ClusterSpec *c.Spec
 }
 
 // NewScope creates a new Tinkerbell Reconciler Scope.
 func NewScope(clusterSpec *c.Spec) *Scope {
 	return &Scope{
-		ClusterSpec:      clusterSpec,
-		isRollingUpgrade: false,
+		ClusterSpec: clusterSpec,
 	}
 }
 

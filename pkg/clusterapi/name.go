@@ -72,8 +72,9 @@ func DefaultObjectName(baseName string) string {
 	return ObjectName(baseName, 1)
 }
 
-func KubeadmControlPlaneName(clusterSpec *cluster.Spec) string {
-	return clusterSpec.Cluster.GetName()
+// KubeadmControlPlaneName generates the kubeadmControlPlane name for an EKSA Cluster.
+func KubeadmControlPlaneName(cluster *v1alpha1.Cluster) string {
+	return cluster.GetName()
 }
 
 // EtcdClusterName sets the default EtcdCluster object name.
@@ -110,7 +111,7 @@ func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig 
 }
 
 func ControlPlaneMachineHealthCheckName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(clusterSpec))
+	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(clusterSpec.Cluster))
 }
 
 func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
