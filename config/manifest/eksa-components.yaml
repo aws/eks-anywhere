@@ -3806,6 +3806,75 @@ spec:
                   name:
                     type: string
                 type: object
+              packages:
+                description: PackageConfiguration for installing EKS Anywhere curated
+                  packages.
+                properties:
+                  controller:
+                    description: Controller package controller configuration
+                    properties:
+                      digest:
+                        description: Digest package controller digest
+                        type: string
+                      disableWebhooks:
+                        description: DisableWebhooks on package controller
+                        type: boolean
+                      env:
+                        description: Env of package controller in the format `key=value`
+                        items:
+                          type: string
+                        type: array
+                      repository:
+                        description: Repository package controller repository
+                        type: string
+                      resources:
+                        description: Resources of package controller
+                        properties:
+                          limits:
+                            description: ImageResource resources for container image.
+                            properties:
+                              cpu:
+                                description: CPU image cpu
+                                type: string
+                              memory:
+                                description: Memory image memory
+                                type: string
+                            type: object
+                          requests:
+                            description: Requests for image resources
+                            properties:
+                              cpu:
+                                description: CPU image cpu
+                                type: string
+                              memory:
+                                description: Memory image memory
+                                type: string
+                            type: object
+                        type: object
+                      tag:
+                        description: Tag package controller tag
+                        type: string
+                    type: object
+                  cronjob:
+                    description: Cronjob for ecr token refresher
+                    properties:
+                      digest:
+                        description: Digest ecr token refresher digest
+                        type: string
+                      disable:
+                        description: Disable on cron job
+                        type: boolean
+                      repository:
+                        description: Repository ecr token refresher repository
+                        type: string
+                      tag:
+                        description: Tag ecr token refresher tag
+                        type: string
+                    type: object
+                  disable:
+                    description: Disable package controller on cluster
+                    type: boolean
+                type: object
               podIamConfig:
                 properties:
                   serviceAccountIssuer:
@@ -5807,6 +5876,8 @@ rules:
   - awssnowclusters
   - awssnowippools
   - awssnowmachinetemplates
+  - cloudstackclusters
+  - cloudstackmachinetemplates
   - dockerclusters
   - dockermachinetemplates
   - tinkerbellclusters
