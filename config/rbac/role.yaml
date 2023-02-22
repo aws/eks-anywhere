@@ -194,6 +194,8 @@ rules:
   - awssnowclusters
   - awssnowippools
   - awssnowmachinetemplates
+  - cloudstackclusters
+  - cloudstackmachinetemplates
   - dockerclusters
   - dockermachinetemplates
   - tinkerbellclusters
