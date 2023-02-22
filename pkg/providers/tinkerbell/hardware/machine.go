@@ -35,8 +35,8 @@ type Machine struct {
 	VLANID       string `csv:"vlan_id, omitempty"`
 }
 
-// NewMachineFromHardware creates a new Machine from the given hardware and it's dependencies, if any.
-func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine, s *corev1.Secret) Machine {
+// MachineFromHardware creates a new Machine from the given hardware and it's dependencies, if any.
+func MachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine, s *corev1.Secret) (*Machine, error) {
 	var bmcIPAddress, bmcUsername, bmcPassword string
 	if rm != nil && s != nil {
 		bmcIPAddress = rm.Spec.Connection.Host
@@ -52,7 +52,20 @@ func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine,
 		}
 	}
 
-	return Machine{
+	if len(hw.Spec.Interfaces) == 0 {
+		return nil, hardwareInvalidError("interfaces is emptyd")
+	}
+	if hw.Spec.Interfaces[0].DHCP == nil {
+		return nil, hardwareInvalidError("no DHCP on interface")
+	}
+	if hw.Spec.Interfaces[0].DHCP.IP == nil {
+		return nil, hardwareInvalidError("no IP on DHCP")
+	}
+	if len(hw.Spec.Disks) == 0 {
+		return nil, hardwareInvalidError("disks is empty")
+	}
+
+	return &Machine{
 		Hostname:     hw.Name,
 		IPAddress:    hw.Spec.Interfaces[0].DHCP.IP.Address,
 		Netmask:      hw.Spec.Interfaces[0].DHCP.IP.Netmask,
@@ -65,7 +78,11 @@ func NewMachineFromHardware(hw tinkv1alpha1.Hardware, rm *rufiov1alpha1.Machine,
 		BMCUsername:  bmcUsername,
 		BMCPassword:  bmcPassword,
 		VLANID:       hw.Spec.Interfaces[0].DHCP.VLANID,
-	}
+	}, nil
+}
+
+func hardwareInvalidError(s string) error {
+	return fmt.Errorf(fmt.Sprintf("hardware invalid: %s", s))
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields

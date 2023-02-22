@@ -338,8 +338,8 @@ func (p *Provider) generateHardwareSpec(ctx context.Context, cluster *types.Clus
 // then it converts that data into a hardware.Machine and returns it.
 func (p *Provider) buildHardwareMachineFromCluster(ctx context.Context, cluster *types.Cluster, hw *tinkv1alpha1.Hardware) (*hardware.Machine, error) {
 	if hw.Spec.BMCRef == nil {
-		machine := hardware.NewMachineFromHardware(*hw, nil, nil)
-		return &machine, nil
+		machine, err := hardware.MachineFromHardware(*hw, nil, nil)
+		return machine, fmt.Errorf("creating machine from hardware: %v", err)
 	}
 
 	rufioMachine, err := p.providerKubectlClient.GetRufioMachine(ctx, hw.Spec.BMCRef.Name, hw.Namespace, cluster.KubeconfigFile)
@@ -352,6 +352,9 @@ func (p *Provider) buildHardwareMachineFromCluster(ctx context.Context, cluster 
 		return nil, fmt.Errorf("getting rufio machine auth secret: %v", err)
 	}
 
-	machine := hardware.NewMachineFromHardware(*hw, rufioMachine, authSecret)
-	return &machine, nil
+	machine, err := hardware.MachineFromHardware(*hw, rufioMachine, authSecret)
+	if err != nil {
+		return nil, fmt.Errorf("creating machine from hardware: %v", err)
+	}
+	return machine, nil
 }
