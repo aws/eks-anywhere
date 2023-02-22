@@ -195,6 +195,25 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 	return provider
 }
 
+func TestTinkerbellProviderAdditionalFiles(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	files := provider.AdditionalFiles()
+	_, ok := files["hardware"]
+	assert.Equal(t, true, ok)
+}
+
 func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) {
 	t.Skip("External etcd unsupported for GA")
 	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
