@@ -27,6 +27,11 @@ Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certifie
 Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
 -->
 
+[<img src="docs/static/images/certified-kubernetes-1.25-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2454)
+<!-- 
+Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
+-->
+
 ## Development
 
 The EKS Anywhere is tested using
