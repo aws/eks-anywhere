@@ -19,8 +19,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -41,6 +41,7 @@ type clusterctlTest struct {
 func newClusterctlTest(t *testing.T) *clusterctlTest {
 	ctrl := gomock.NewController(t)
 	_, writer := test.NewWriter(t)
+	reader := files.NewReader()
 	e := mockexecutables.NewMockExecutable(ctrl)
 
 	return &clusterctlTest{
@@ -52,7 +53,7 @@ func newClusterctlTest(t *testing.T) *clusterctlTest {
 		},
 		e:              e,
 		provider:       mockproviders.NewMockProvider(ctrl),
-		clusterctl:     executables.NewClusterctl(e, writer),
+		clusterctl:     executables.NewClusterctl(e, writer, reader),
 		writer:         writer,
 		providerEnvMap: map[string]string{"var": "value"},
 	}
@@ -118,8 +119,6 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 		},
 	}
 
-	mockCtrl := gomock.NewController(t)
-
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			defer func() {
@@ -127,17 +126,16 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 					os.RemoveAll(tt.cluster.Name)
 				}
 			}()
+			tc := newClusterctlTest(t)
+
 			gotConfig := ""
-			ctx := context.Background()
 
-			provider := mockproviders.NewMockProvider(mockCtrl)
-			provider.EXPECT().Name().Return(tt.providerName)
-			provider.EXPECT().Version(clusterSpec).Return(tt.providerVersion)
-			provider.EXPECT().EnvMap(clusterSpec).Return(tt.env, nil)
-			provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+			tc.provider.EXPECT().Name().Return(tt.providerName)
+			tc.provider.EXPECT().Version(clusterSpec).Return(tt.providerVersion)
+			tc.provider.EXPECT().EnvMap(clusterSpec).Return(tt.env, nil)
+			tc.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
-			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			executable.EXPECT().ExecuteWithEnv(ctx, tt.env, tt.wantExecArgs...).Return(bytes.Buffer{}, nil).Times(1).Do(
+			tc.e.EXPECT().ExecuteWithEnv(tc.ctx, tt.env, tt.wantExecArgs...).Return(bytes.Buffer{}, nil).Times(1).Do(
 				func(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
 					gotConfig = args[10]
 					tw := templater.New(writer)
@@ -164,9 +162,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 				},
 			)
 
-			c := executables.NewClusterctl(executable, writer)
-
-			if err := c.InitInfrastructure(ctx, clusterSpec, tt.cluster, provider); err != nil {
+			if err := tc.clusterctl.InitInfrastructure(tc.ctx, clusterSpec, tt.cluster, tc.provider); err != nil {
 				t.Fatalf("Clusterctl.InitInfrastructure() error = %v, want nil", err)
 			}
 		})
@@ -180,22 +176,14 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 			os.RemoveAll(cluster.Name)
 		}
 	}()
-	ctx := context.Background()
+	tt := newClusterctlTest(t)
 
-	_, writer := test.NewWriter(t)
+	tt.provider.EXPECT().Name()
+	tt.provider.EXPECT().Version(clusterSpec)
+	tt.provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
+	tt.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
-	mockCtrl := gomock.NewController(t)
-	provider := mockproviders.NewMockProvider(mockCtrl)
-	provider.EXPECT().Name()
-	provider.EXPECT().Version(clusterSpec)
-	provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
-	provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-
-	c := executables.NewClusterctl(executable, writer)
-
-	if err := c.InitInfrastructure(ctx, clusterSpec, cluster, provider); err == nil {
+	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, cluster, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error = nil")
 	}
 }
@@ -207,39 +195,24 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 			os.RemoveAll(cluster.Name)
 		}
 	}()
-	ctx := context.Background()
+	tt := newClusterctlTest(t)
 
-	_, writer := test.NewWriter(t)
+	tt.provider.EXPECT().Name()
+	tt.provider.EXPECT().Version(clusterSpec)
+	tt.provider.EXPECT().EnvMap(clusterSpec)
+	tt.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
-	mockCtrl := gomock.NewController(t)
-	provider := mockproviders.NewMockProvider(mockCtrl)
-	provider.EXPECT().Name()
-	provider.EXPECT().Version(clusterSpec)
-	provider.EXPECT().EnvMap(clusterSpec)
-	provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, nil, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	executable.EXPECT().ExecuteWithEnv(ctx, nil, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env"))
-
-	c := executables.NewClusterctl(executable, writer)
-
-	if err := c.InitInfrastructure(ctx, clusterSpec, cluster, provider); err == nil {
+	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, cluster, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error = nil")
 	}
 }
 
 func TestClusterctlInitInfrastructureInvalidClusterNameError(t *testing.T) {
-	ctx := context.Background()
+	tt := newClusterctlTest(t)
 
-	_, writer := test.NewWriter(t)
-
-	mockCtrl := gomock.NewController(t)
-	provider := mockproviders.NewMockProvider(mockCtrl)
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-
-	c := executables.NewClusterctl(executable, writer)
-
-	if err := c.InitInfrastructure(ctx, clusterSpec, &types.Cluster{Name: ""}, provider); err == nil {
+	if err := tt.clusterctl.InitInfrastructure(tt.ctx, clusterSpec, &types.Cluster{Name: ""}, tt.provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error != nil")
 	}
 }
@@ -279,14 +252,10 @@ func TestClusterctlMoveManagement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			ctx := context.Background()
-			mockCtrl := gomock.NewController(t)
-			writer := mockswriter.NewMockFileWriter(mockCtrl)
-			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			executable.EXPECT().Execute(ctx, tt.wantMoveArgs...)
+			tc := newClusterctlTest(t)
+			tc.e.EXPECT().Execute(tc.ctx, tt.wantMoveArgs...)
 
-			c := executables.NewClusterctl(executable, writer)
-			if err := c.MoveManagement(ctx, tt.from, tt.to); err != nil {
+			if err := tc.clusterctl.MoveManagement(tc.ctx, tt.from, tt.to); err != nil {
 				t.Fatalf("Clusterctl.MoveManagement() error = %v, want nil", err)
 			}
 		})
@@ -294,10 +263,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 }
 
 func TestClusterctlMoveManagementWithRetry(t *testing.T) {
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	writer := mockswriter.NewMockFileWriter(mockCtrl)
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	tt := newClusterctlTest(t)
 
 	from := &types.Cluster{
 		KubeconfigFile: "from.kubeconfig",
@@ -309,15 +275,14 @@ func TestClusterctlMoveManagementWithRetry(t *testing.T) {
 
 	wantMoveArgs := []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"}
 
-	firstTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
-	secondTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, nil)
+	firstTry := tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
+	secondTry := tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, nil)
 	gomock.InOrder(
 		firstTry,
 		secondTry,
 	)
 
-	c := executables.NewClusterctl(executable, writer)
-	if err := c.MoveManagement(ctx, from, to); err != nil {
+	if err := tt.clusterctl.MoveManagement(tt.ctx, from, to); err != nil {
 		t.Fatalf("Clusterctl.MoveManagement() error = %v, want nil", err)
 	}
 }

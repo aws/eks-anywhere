@@ -11,16 +11,17 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	networking "github.com/aws/eks-anywhere/pkg/networking/internal"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
-func generateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
-	content, err := networking.LoadManifest(clusterSpec, clusterSpec.VersionsBundle.Kindnetd.Manifest)
+func generateManifest(reader manifests.FileReader, clusterSpec *cluster.Spec) ([]byte, error) {
+	kindnetdManifest, err := bundles.ReadManifest(reader, clusterSpec.VersionsBundle.Kindnetd.Manifest)
 	if err != nil {
 		return nil, fmt.Errorf("can't load kindnetd manifest: %v", err)
 	}
-	templates := strings.Split(string(content), "---")
+	templates := strings.Split(string(kindnetdManifest.Content), "---")
 	finalTemplates := make([][]byte, 0, len(templates))
 	for _, template := range templates {
 		u := &unstructured.Unstructured{}

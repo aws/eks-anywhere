@@ -11,10 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 //go:embed testdata/eksa-cluster.yaml
@@ -60,9 +59,7 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
 	assert.NotNil(t, builder)
 
-	v := version.Info{GitVersion: "v0.0.1"}
-	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
-	assert.NoError(t, err)
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 
 	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
 	assert.NoError(t, err)
@@ -97,9 +94,7 @@ func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
 	builder := NewNutanixTemplateBuilder(nil, nil, nil, nil, creds, time.Now)
 	assert.NotNil(t, builder)
 
-	v := version.Info{GitVersion: "v0.0.1"}
-	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
-	assert.NoError(t, err)
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 
 	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
 	assert.Nil(t, secretSpec)
@@ -130,9 +125,7 @@ func TestNutanixTemplateBuilderGenerateCAPISpecForCreateWithAutoscalingConfigura
 	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
 	assert.NotNil(t, builder)
 
-	v := version.Info{GitVersion: "v0.0.1"}
-	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster-autoscaler.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
-	assert.NoError(t, err)
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-autoscaler.yaml")
 
 	workloadTemplateNames := map[string]string{
 		"eksa-unit-test": "eksa-unit-test",
@@ -170,9 +163,7 @@ func TestNewNutanixTemplateBuilderOIDCConfig(t *testing.T) {
 	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
 	assert.NotNil(t, builder)
 
-	v := version.Info{GitVersion: "v0.0.1"}
-	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster-oidc.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
-	assert.NoError(t, err)
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-oidc.yaml")
 
 	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
 	assert.NoError(t, err)

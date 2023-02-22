@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -48,7 +47,7 @@ func init() {
 func (valOpt *validateOptions) validateCreateCluster(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(valOpt.fileName, version.Get())
+	clusterSpec, err := readClusterSpec(valOpt.fileName, version.Get())
 	if err != nil {
 		return err
 	}

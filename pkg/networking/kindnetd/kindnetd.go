@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -19,10 +20,10 @@ type Kindnetd struct {
 }
 
 // NewKindnetd constructs a new Kindnetd.
-func NewKindnetd(client Client) *Kindnetd {
+func NewKindnetd(client Client, reader manifests.FileReader) *Kindnetd {
 	return &Kindnetd{
-		Installer: NewInstaller(client),
-		Upgrader:  NewUpgrader(client),
+		Installer: NewInstaller(client, reader),
+		Upgrader:  NewUpgrader(client, reader),
 	}
 }
 

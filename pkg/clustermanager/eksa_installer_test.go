@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -55,7 +56,7 @@ func newInstallerTest(t *testing.T) *installerTest {
 		ctx:         context.Background(),
 		log:         test.NewNullLogger(),
 		client:      client,
-		installer:   clustermanager.NewEKSAInstaller(client),
+		installer:   clustermanager.NewEKSAInstaller(client, files.NewReader()),
 		currentSpec: currentSpec,
 		newSpec:     currentSpec.DeepCopy(),
 		cluster: &types.Cluster{

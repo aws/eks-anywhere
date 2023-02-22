@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
@@ -1081,18 +1082,15 @@ func (e *ClusterE2ETest) clusterConfigGitPath() string {
 }
 
 func (e *ClusterE2ETest) clusterSpecFromGit() (*cluster.Spec, error) {
-	var opts []cluster.SpecOpt
+	var opts []cluster.FileSpecBuilderOpt
 	if getBundlesOverride() == "true" {
 		// This makes sure that the cluster.Spec uses the same Bundles we pass to the CLI
 		// It avoids the budlesRef getting overwritten with whatever default Bundles the
 		// e2e test build is configured to use
 		opts = append(opts, cluster.WithOverrideBundlesManifest(defaultBundleReleaseManifestFile))
 	}
-	s, err := cluster.NewSpecFromClusterConfig(
-		e.clusterConfigGitPath(),
-		version.Get(),
-		opts...,
-	)
+	b := cluster.NewFileSpecBuilder(files.NewReader(), version.Get(), opts...)
+	s, err := b.Build(e.clusterConfigGitPath())
 	if err != nil {
 		return nil, fmt.Errorf("unable to build spec from git: %v", err)
 	}

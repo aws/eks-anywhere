@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -140,7 +141,7 @@ func TestValidatateCSI(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			spec := cluster.NewSpec(func(s *cluster.Spec) {
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = testCluster()
 				s.VSphereDatacenter = &v1alpha1.VSphereDatacenterConfig{
 					ObjectMeta: metav1.ObjectMeta{

@@ -139,6 +139,8 @@ EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-rel
 DOCKER_E2E_TEST := TestDockerKubernetes125SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
+EMBED_CONFIG_FOLDER = pkg/files/config
+
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
 
 UNAME := $(shell uname -s)
@@ -153,7 +155,7 @@ build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 release: eks-a-release unit-test ## Generate release binary and run unit tests
 
 .PHONY: eks-a-binary
-eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL) -s -w -buildid='' -extldflags -static
+eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL) -s -w -buildid='' -extldflags -static
 eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
@@ -162,29 +164,34 @@ eks-a-binary:
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
+	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) files_embed_fs'
 
 .PHONY: eks-a-cross-platform-embed-latest-config
+eks-a-cross-platform-embed-latest-config: $(EMBED_CONFIG_FOLDER)
 eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release versions of eks-a with the latest bundle-release.yaml embedded in cluster spec config
-	curl -L $(BUNDLE_MANIFEST_URL) --output pkg/cluster/config/bundle-release.yaml
+	curl -L $(BUNDLE_MANIFEST_URL) --output $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
 	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
 	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
 	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
 	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
-	rm pkg/cluster/config/bundle-release.yaml
+	rm $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
 
 .PHONY: eks-a-custom-embed-config
 eks-a-custom-embed-config:
-	$(MAKE) eks-a-binary GIT_VERSION=$(CUSTOM_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true' BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
+	$(MAKE) eks-a-binary GIT_VERSION=$(CUSTOM_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true' BUILD_TAGS='$(BUILD_TAGS) files_embed_fs'
 
 .PHONY: eks-a-cross-platform-custom-embed-latest-config
+eks-a-cross-platform-custom-embed-latest-config: $(EMBED_CONFIG_FOLDER)
 eks-a-cross-platform-custom-embed-latest-config: ## Build custom binary with latest dev release bundle that embeds config and builds it as a release binary for all os/arch
-	curl -L $(BUNDLE_MANIFEST_URL) --output pkg/cluster/config/bundle-release.yaml
+	curl -L $(BUNDLE_MANIFEST_URL) --output $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
 	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
 	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
 	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
 	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
-	rm pkg/cluster/config/bundle-release.yaml
+	rm $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
+
+$(EMBED_CONFIG_FOLDER):
+	mkdir -p $(EMBED_CONFIG_FOLDER) 
 
 .PHONY: eks-a-custom-release-zip
 eks-a-custom-release-zip: eks-a-cross-platform-custom-embed-latest-config ## Build from linux/amd64
@@ -628,7 +635,7 @@ build-eks-a-for-e2e:
 e2e-tests-binary: E2E_TAGS ?= e2e
 e2e-tests-binary: E2E_OUTPUT_FILE ?= bin/e2e.test
 e2e-tests-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o "$(E2E_OUTPUT_FILE)" -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o "$(E2E_OUTPUT_FILE)" -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: build-integration-test-binary
 build-integration-test-binary:

@@ -56,7 +56,7 @@ var listOvasCmd = &cobra.Command{
 }
 
 func listOvas(context context.Context, clusterSpecPath, bundlesOverride string) error {
-	var specOpts []cluster.SpecOpt
+	var specOpts []cluster.FileSpecBuilderOpt
 	if bundlesOverride != "" {
 		specOpts = append(specOpts, cluster.WithOverrideBundlesManifest(bundlesOverride))
 	}

@@ -6,18 +6,21 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 // Upgrader allows to upgrade a kindnetd installation in a EKS-A cluster.
 type Upgrader struct {
 	client Client
+	reader manifests.FileReader
 }
 
 // NewUpgrader constructs a new Upgrader.
-func NewUpgrader(client Client) *Upgrader {
+func NewUpgrader(client Client, reader manifests.FileReader) *Upgrader {
 	return &Upgrader{
 		client: client,
+		reader: reader,
 	}
 }
 
@@ -29,7 +32,7 @@ func (u Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSp
 		return nil, nil
 	}
 
-	manifest, err := generateManifest(newSpec)
+	manifest, err := generateManifest(u.reader, newSpec)
 	if err != nil {
 		return nil, err
 	}

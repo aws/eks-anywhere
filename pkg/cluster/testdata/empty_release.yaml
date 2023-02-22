@@ -1,7 +1,0 @@
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: Release
-metadata:
-  creationTimestamp: null
-spec:
-  latestVersion: ""
-  releases: null
