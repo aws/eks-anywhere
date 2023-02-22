@@ -2,10 +2,8 @@ package reconciler
 
 import (
 	"context"
-
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -18,9 +16,12 @@ import (
 )
 
 const (
-	createOperation = "create"
-	rollingUpdate   = "rolling-update"
-	scaleUpdate     = "scale-update"
+	// ReconcileNewCluster means need to create nodes for a new cluster.
+	ReconcileNewCluster clusterChange = "create-new-cluster"
+	// NeedNewNode means node has k8s version change.
+	NeedNewNode clusterChange = "k8s-version-change"
+	// NeedMoreOrLessNode means node group scales up or scales down.
+	NeedMoreOrLessNode clusterChange = "scale-update"
 )
 
 // CNIReconciler is an interface for reconciling CNI in the Tinkerbell cluster reconciler.
@@ -38,19 +39,20 @@ type IPValidator interface {
 	ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error)
 }
 
+type clusterChange string
+
 // Scope object for Tinkerbell reconciler.
 type Scope struct {
 	ClusterSpec   *c.Spec
-	operationType string
-	controlPlane  *tinkerbell.ControlPlane
+	ClusterChange clusterChange
+	ControlPlane  *tinkerbell.ControlPlane
 	workers       *tinkerbell.Workers
 }
 
 // NewScope creates a new Tinkerbell Reconciler Scope.
 func NewScope(clusterSpec *c.Spec) *Scope {
 	return &Scope{
-		ClusterSpec:   clusterSpec,
-		operationType: "",
+		ClusterSpec: clusterSpec,
 	}
 }
 
@@ -129,7 +131,7 @@ func (r *Reconciler) DetectOperationAndGenerateSpec(ctx context.Context, log log
 	if err != nil {
 		return controller.Result{}, err
 	}
-	tinkerbellScope.controlPlane = cp
+	tinkerbellScope.ControlPlane = cp
 
 	w, err := tinkerbell.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
 	if err != nil {
@@ -137,27 +139,22 @@ func (r *Reconciler) DetectOperationAndGenerateSpec(ctx context.Context, log log
 	}
 	tinkerbellScope.workers = w
 
-	err = detectOperation(ctx, log, tinkerbellScope)
-	if err != nil && apierrors.IsNotFound(err) {
+	err = detectChange(ctx, log, tinkerbellScope)
+	if err != nil {
 		return controller.Result{}, errors.Wrap(err, "Detecting operation type")
 	}
 
 	// omit machine template on scale update
-	if tinkerbellScope.operationType == scaleUpdate {
-		tinkerbellScope.controlPlane.ControlPlaneMachineTemplate = nil
-		wg := tinkerbellScope.workers.Groups
-		for _, w := range wg {
-			w.ProviderMachineTemplate = nil
-		}
+	if tinkerbellScope.ClusterChange == NeedMoreOrLessNode {
+		tinkerbell.OmitTinkerbellCPMachineTemplate(tinkerbellScope.ControlPlane)
+		tinkerbell.OmitTinkerbellWorkersMachineTemplate(tinkerbellScope.workers)
 	}
-
-	return controller.ResultWithReturn(), err
+	return controller.Result{}, nil
 }
 
-// detectOperation compares current CAPI objects with desired CAPI objects in scope,
-// then update operation value in scope.
-// todo: detectOperation
-func detectOperation(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) error {
+// detectChange compares current CAPI objects with desired CAPI objects in scope,
+// then updates the clusterChange value in scope.
+func detectChange(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) error {
 	return nil
 }
 
@@ -166,7 +163,7 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
 
-	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(tinkerbellScope.controlPlane))
+	return clusters.ReconcileControlPlane(ctx, r.client, toClientControlPlane(tinkerbellScope.ControlPlane))
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
@@ -187,6 +184,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 
 	return controller.NewPhaseRunner[*Scope]().Register(
 		r.ValidateClusterSpec,
+		r.DetectOperationAndGenerateSpec,
 		r.ValidateHardware,
 		r.ReconcileWorkers,
 	).Run(ctx, log, NewScope(clusterSpec))
@@ -203,13 +201,12 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, tink
 
 // ValidateDatacenterConfig updates the cluster status if the TinkerbellDatacenter status indicates that the spec is invalid.
 func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
-	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateDatacenterConfig")
 
-	if err := r.validateTinkerbellIPMatch(ctx, NewScope(clusterSpec)); err != nil {
+	if err := r.validateTinkerbellIPMatch(ctx, tinkerbellScope); err != nil {
 		log.Error(err, "Invalid TinkerbellDatacenterConfig")
 		failureMessage := err.Error()
-		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+		tinkerbellScope.ClusterSpec.Cluster.Status.FailureMessage = &failureMessage
 		return controller.ResultWithReturn(), nil
 	}
 
@@ -295,12 +292,11 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	var v tinkerbell.ClusterSpecValidator
 	v.Register(tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(etcdReader.GetCatalogue()))
 
-	switch tinkerbellScope.operationType {
-	case rollingUpdate:
+	// todo: add AssertionsForScaleUpDown
+	switch tinkerbellScope.ClusterChange {
+	case NeedNewNode:
 		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(etcdReader.GetCatalogue()))
-	case scaleUpdate:
-		v.Register(tinkerbell.AssertionsForScaleUpDown(etcdReader.GetCatalogue(), clusterSpec, false))
-	case createOperation:
+	case ReconcileNewCluster:
 		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(etcdReader.GetCatalogue()))
 	}
 

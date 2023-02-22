@@ -43,6 +43,7 @@ const (
 	capdPackage         = "sigs.k8s.io/cluster-api/test"
 	capvPackage         = "sigs.k8s.io/cluster-api-provider-vsphere"
 	captPackage         = "github.com/tinkerbell/cluster-api-provider-tinkerbell"
+	tinkerbellPackage   = "github.com/tinkerbell/tink"
 	etcdProviderPackage = "github.com/aws/etcdadm-controller"
 )
 
@@ -73,6 +74,7 @@ var packages = []moduleWithCRD{
 		withAdditionalCustomCRDPath("controlplane/kubeadm/config/crd/bases"),
 	),
 	mustBuildModuleWithCRDs(captPackage),
+	mustBuildModuleWithCRDs(tinkerbellPackage),
 	mustBuildModuleWithCRDs(capvPackage),
 	mustBuildModuleWithCRDs(capdPackage,
 		withMainCustomCRDPath("infrastructure/docker/config/crd/bases"),

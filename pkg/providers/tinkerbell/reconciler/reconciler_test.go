@@ -48,6 +48,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -160,6 +162,39 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, controlPlaneMachineTemplate())
+
+	tt.createAllObjs()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count = 2
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().DetectOperationAndGenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	kcp := &controlplanev1.KubeadmControlPlane{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+	tt.ShouldEventuallyMatch(tt.ctx, kcp,
+		func(g Gomega) {
+			g.Expect(kcp.Spec.Replicas).To(HaveValue(BeEquivalentTo(2)))
+		})
+	tt.ShouldEventuallyExist(tt.ctx, controlPlaneMachineTemplate())
+}
+
 func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	// TODO: remove after diskExtractor has been refactored and removed.
 	features.ClearCache()
@@ -167,42 +202,19 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
-	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildScope())
+	scope := tt.buildScope()
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().DetectOperationAndGenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	tt.ShouldEventuallyExist(tt.ctx,
-		&controlplanev1.KubeadmControlPlane{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName,
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
+	tt.ShouldEventuallyExist(tt.ctx, kubeadmControlPlane())
+	tt.ShouldEventuallyExist(tt.ctx, controlPlaneMachineTemplate())
 
-	tt.ShouldEventuallyExist(tt.ctx,
-		&tinkerbellv1.TinkerbellMachineTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName + "-control-plane-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-			Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
-				Template: tinkerbellv1.TinkerbellMachineTemplateResource{
-					Spec: tinkerbellv1.TinkerbellMachineSpec{
-						HardwareAffinity: &tinkerbellv1.HardwareAffinity{
-							Required: []tinkerbellv1.HardwareAffinityTerm{
-								{
-									LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	)
 	tt.ShouldEventuallyExist(tt.ctx, &tinkerbellv1.TinkerbellCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "TinkerbellCluster",
@@ -236,42 +248,17 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 		Endpoint:     "1.2.3.4",
 		Port:         "65536",
 	}
-	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), scope)
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().DetectOperationAndGenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	tt.ShouldEventuallyExist(tt.ctx,
-		&controlplanev1.KubeadmControlPlane{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName,
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&tinkerbellv1.TinkerbellMachineTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName + "-control-plane-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-			Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
-				Template: tinkerbellv1.TinkerbellMachineTemplateResource{
-					Spec: tinkerbellv1.TinkerbellMachineSpec{
-						HardwareAffinity: &tinkerbellv1.HardwareAffinity{
-							Required: []tinkerbellv1.HardwareAffinityTerm{
-								{
-									LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	)
+	tt.ShouldEventuallyExist(tt.ctx, kubeadmControlPlane())
+	tt.ShouldEventuallyExist(tt.ctx, controlPlaneMachineTemplate())
 	tt.ShouldEventuallyExist(tt.ctx, &tinkerbellv1.TinkerbellCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "TinkerbellCluster",
@@ -300,8 +287,11 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	scope := tt.buildScope()
 	scope.ClusterSpec.Cluster = scope.ClusterSpec.Cluster.DeepCopy()
 	scope.ClusterSpec.Cluster.Name = ""
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().DetectOperationAndGenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
 
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), scope)
+	_, err = tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("resource name may not be empty")))
 }
@@ -356,6 +346,8 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -394,6 +386,54 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 	)
 }
 
+func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	mt := &tinkerbellv1.TinkerbellMachineTemplate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tt.cluster.Name + "-md-0-1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, mt)
+	tt.createAllObjs()
+
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().DetectOperationAndGenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx, mt)
+	md := &clusterv1.MachineDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tt.cluster.Name + "-md-0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: clusterv1.MachineDeploymentSpec{
+			Replicas: ptr.Int32(2),
+		},
+	}
+	tt.ShouldEventuallyMatch(tt.ctx, md,
+		func(g Gomega) {
+			g.Expect(md.Spec.Replicas).To(HaveValue(BeEquivalentTo(2)))
+		})
+}
+
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	// TODO: remove after diskExtractor has been refactored and removed.
 	features.ClearCache()
@@ -408,7 +448,11 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildScope())
+	scope := tt.buildScope()
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().DetectOperationAndGenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -470,23 +514,7 @@ func TestReconcilerValidateHardwareCountFail(t *testing.T) {
 	logger := test.NewNullLogger()
 
 	tt.cluster.Name = "invalidCluster"
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &tinkv1alpha1.Hardware{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "hw1",
-			Namespace: constants.EksaSystemNamespace,
-			Labels: map[string]string{
-				"type": "cp",
-			},
-		},
-		Spec: tinkv1alpha1.HardwareSpec{
-			Metadata: &tinkv1alpha1.HardwareMetadata{
-				Instance: &tinkv1alpha1.MetadataInstance{
-					ID: "foo",
-				},
-			},
-		},
-	},
-	)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
 
 	tt.withFakeClient()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
@@ -697,6 +725,7 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &tinkv1alpha1.Hardware{})
 }
 
 type clusterOpt func(*anywherev1.Cluster)
@@ -784,4 +813,54 @@ func machineConfig(opts ...tinkerbellMachineOpt) *anywherev1.TinkerbellMachineCo
 	}
 
 	return m
+}
+
+func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
+	return &controlplanev1.KubeadmControlPlane{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+}
+
+func controlPlaneMachineTemplate() *tinkerbellv1.TinkerbellMachineTemplate {
+	return &tinkerbellv1.TinkerbellMachineTemplate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName + "-control-plane-1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
+			Template: tinkerbellv1.TinkerbellMachineTemplateResource{
+				Spec: tinkerbellv1.TinkerbellMachineSpec{
+					HardwareAffinity: &tinkerbellv1.HardwareAffinity{
+						Required: []tinkerbellv1.HardwareAffinityTerm{
+							{
+								LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func tinkHardware(hardwareName, labelType string) *tinkv1alpha1.Hardware {
+	return &tinkv1alpha1.Hardware{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      hardwareName,
+			Namespace: constants.EksaSystemNamespace,
+			Labels: map[string]string{
+				"type": labelType,
+			},
+		},
+		Spec: tinkv1alpha1.HardwareSpec{
+			Metadata: &tinkv1alpha1.HardwareMetadata{
+				Instance: &tinkv1alpha1.MetadataInstance{
+					ID: "foo",
+				},
+			},
+		},
+	}
 }
