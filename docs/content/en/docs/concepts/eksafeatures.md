@@ -54,7 +54,7 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 
 ### Comparing Amazon EKS Anywhere to Amazon EKS on Outposts
 
-Like EKS Anywhere, Amazon EKS on Outposts provides a means of running Kubernetes clusters using EKS software and customer on-premises hardware.
+Like EKS Anywhere, Amazon EKS on Outposts provides a means of running Kubernetes clusters using EKS software on-premises.
 The main differences are that:
 
 * Amazon provides the hardware with Outposts, while most EKS Anywhere providers leverage the customer's own hardware.
