@@ -1,0 +1,40 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 3
+  datacenterRef:
+    kind: DockerDatacenterConfig
+    name: test
+  externalEtcdConfiguration:
+    count: 3
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: test
+  workerNodeGroupConfigurations:
+  - count: 3
+    name: md-0
+  registryMirrorConfiguration:
+    endpoint: 1.2.3.4
+    port: 1234
+    ociNamespaces:
+      - registry: "public.ecr.aws"
+        namespace: "eks-anywhere"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: DockerDatacenterConfig
+metadata:
+  name: test
+spec: {}

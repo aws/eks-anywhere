@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,20 +40,22 @@ import (
 )
 
 const (
-	defaultClusterConfigFile         = "cluster.yaml"
-	defaultBundleReleaseManifestFile = "bin/local-bundle-release.yaml"
-	defaultEksaBinaryLocation        = "eksctl anywhere"
-	defaultClusterName               = "eksa-test"
-	eksctlVersionEnvVar              = "EKSCTL_VERSION"
-	eksctlVersionEnvVarDummyVal      = "ham sandwich"
-	ClusterPrefixVar                 = "T_CLUSTER_PREFIX"
-	JobIdVar                         = "T_JOB_ID"
-	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
-	ClusterIPPoolEnvVar              = "T_CLUSTER_IP_POOL"
-	CleanupVmsVar                    = "T_CLEANUP_VMS"
-	hardwareYamlPath                 = "hardware.yaml"
-	hardwareCsvPath                  = "hardware.csv"
-	EksaPackagesInstallation         = "eks-anywhere-packages"
+	defaultClusterConfigFile               = "cluster.yaml"
+	defaultBundleReleaseManifestFile       = "bin/local-bundle-release.yaml"
+	defaultEksaBinaryLocation              = "eksctl anywhere"
+	defaultClusterName                     = "eksa-test"
+	defaultDownloadArtifactsOutputLocation = "eks-anywhere-downloads.tar.gz"
+	defaultDownloadImagesOutputLocation    = "images.tar"
+	eksctlVersionEnvVar                    = "EKSCTL_VERSION"
+	eksctlVersionEnvVarDummyVal            = "ham sandwich"
+	ClusterPrefixVar                       = "T_CLUSTER_PREFIX"
+	JobIdVar                               = "T_JOB_ID"
+	BundlesOverrideVar                     = "T_BUNDLES_OVERRIDE"
+	ClusterIPPoolEnvVar                    = "T_CLUSTER_IP_POOL"
+	CleanupVmsVar                          = "T_CLEANUP_VMS"
+	hardwareYamlPath                       = "hardware.yaml"
+	hardwareCsvPath                        = "hardware.csv"
+	EksaPackagesInstallation               = "eks-anywhere-packages"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -583,29 +586,65 @@ func (e *ClusterE2ETest) WithClusterConfig(fillers ...api.ClusterConfigFiller) *
 	return e
 }
 
+// DownloadArtifacts runs the EKS-A `download artifacts` command with appropriate args.
+func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
+	downloadArtifactsArgs := []string{"download", "artifacts", "-f", e.ClusterConfigLocation}
+	if getBundlesOverride() == "true" {
+		downloadArtifactsArgs = append(downloadArtifactsArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+	e.RunEKSA(downloadArtifactsArgs, opts...)
+	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err != nil {
+		e.T.Fatal(err)
+	} else {
+		e.T.Logf("Downloaded artifacts tarball saved at %s", defaultDownloadArtifactsOutputLocation)
+	}
+}
+
+// ExtractDownloadedArtifacts extracts the downloaded artifacts.
+func (e *ClusterE2ETest) ExtractDownloadedArtifacts(opts ...CommandOpt) {
+	e.T.Log("Extracting downloaded artifacts")
+	e.Run("tar", "-xf", defaultDownloadArtifactsOutputLocation)
+}
+
+// DownloadImages runs the EKS-A `download images` command with appropriate args.
+func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
+	downloadImagesArgs := []string{"download", "images", "-o", defaultDownloadImagesOutputLocation}
+	if getBundlesOverride() == "true" {
+		var bundleManifestLocation string
+		if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
+			bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+		} else {
+			bundleManifestLocation = defaultBundleReleaseManifestFile
+		}
+		downloadImagesArgs = append(downloadImagesArgs, "--bundles-override", bundleManifestLocation)
+	}
+	e.RunEKSA(downloadImagesArgs, opts...)
+	if _, err := os.Stat(defaultDownloadImagesOutputLocation); err != nil {
+		e.T.Fatal(err)
+	} else {
+		e.T.Logf("Downloaded images archive saved at %s", defaultDownloadImagesOutputLocation)
+	}
+}
+
+// ImportImages runs the EKS-A `import images` command with appropriate args.
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
-	importImagesArgs := []string{"import-images", "-f", e.ClusterConfigLocation}
+	clusterConfig := e.ClusterConfig.Cluster
+	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
+	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
+	var bundleManifestLocation string
+	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
+		bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+	} else {
+		bundleManifestLocation = defaultBundleReleaseManifestFile
+	}
+	importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", registryMirrorHost, "--insecure"}
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
-func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
-	downloadArtifactsArgs := []string{"download", "artifacts", "-f", e.ClusterConfigLocation}
-	e.RunEKSA(downloadArtifactsArgs, opts...)
-	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
-		e.T.Fatal(err)
-	} else {
-		e.T.Log("Downloaded artifacts saved at eks-anywhere-downloads.tar.gz")
-	}
-}
-
-// ExtractDownloadedArtifacts extract the downloaded artifacts.
-func (e *ClusterE2ETest) ExtractDownloadedArtifacts(opts ...CommandOpt) {
-	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
-		e.T.Fatal(err)
-	}
-
-	e.T.Logf("Extract downloaded artifacts ")
-	e.Run("tar", "-xf", "eks-anywhere-downloads.tar.gz")
+// ChangeInstanceSecurityGroup modifies the security group of the instance to the provided value.
+func (e *ClusterE2ETest) ChangeInstanceSecurityGroup(securityGroup string) {
+	e.T.Logf("Changing instance security group to %s", securityGroup)
+	e.Run(fmt.Sprintf("INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}') && aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups %s", securityGroup))
 }
 
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {

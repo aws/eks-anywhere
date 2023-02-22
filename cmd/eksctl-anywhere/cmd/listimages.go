@@ -11,7 +11,7 @@ import (
 )
 
 type listImagesOptions struct {
-	fileName string
+	fileName        string
 	bundlesOverride string
 }
 
