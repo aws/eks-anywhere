@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -30,7 +29,7 @@ func (w *writer) Write(fileName string, content []byte, opts ...FileOptionsFunc)
 	o := buildOptions(w, opts)
 
 	filePath := filepath.Join(o.BasePath, fileName)
-	err := ioutil.WriteFile(filePath, content, o.Permissions)
+	err := os.WriteFile(filePath, content, o.Permissions)
 	if err != nil {
 		return "", fmt.Errorf("writing to file [%s]: %v", filePath, err)
 	}

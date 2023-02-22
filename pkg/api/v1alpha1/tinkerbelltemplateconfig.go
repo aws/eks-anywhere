@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,7 +68,7 @@ func (c *TinkerbellTemplateConfigGenerate) Name() string {
 
 func GetTinkerbellTemplateConfig(fileName string) (map[string]*TinkerbellTemplateConfig, error) {
 	templates := make(map[string]*TinkerbellTemplateConfig)
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}

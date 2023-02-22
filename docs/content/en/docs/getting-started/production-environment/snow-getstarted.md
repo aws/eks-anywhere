@@ -162,7 +162,21 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    Refer to the initial config described earlier for the required and optional settings.
 
-   Ensure workload cluster object names (`Cluster`, `SnowDatacenterConfig`, `SnowMachineConfig`, etc.) are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
+   >**NOTE**: Ensure workload cluster object names (`Cluster`, `SnowDatacenterConfig`, `SnowMachineConfig`, etc.) are distinct from management cluster object names.
+
+1. Be sure to set the `managementCluster` field to identify the name of the management cluster.
+
+   For example, the management cluster, _mgmt_ is defined for our workload cluster _w01_ as follows:
+
+   ```yaml
+   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+   kind: Cluster
+   metadata:
+     name: w01
+   spec:
+     managementCluster:
+       name: mgmt
+   ```
 
 1. Set License Environment Variable
 
@@ -174,31 +188,15 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
 1. Create a workload cluster in one of the following ways:
    
-   * **GitOps**: Recommended for more permanent cluster configurations.
-     1. Clone your git repo and add the new cluster specification. Be sure to follow the directory structure defined on [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}):
+   * **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 
-      ```
-      clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
-      ```
+   * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
-      2. Commit the file to your git repository
-         ```bash
-         git add clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
-         git commit -m 'Creating new workload cluster'
-         git push origin main
-         ```
-         
-      3. The flux controller will automatically make the required changes.
-
-     > **NOTE**: Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
+     > **NOTE**: `snowDatacenterConfig.spec.identityRef` and a Snow bootstrap credentials secret need to be specified when provisioning a cluster through `GitOps` or `Terraform`, as EKS Anywhere Cluster Controller will not create a Snow bootstrap credentials secret like `eksctl CLI` does when field is empty.
      >
-     > `snowDatacenterConfig.spec.identityRef` and a Snow bootstrap credentials secret need to be specified when provisionig a cluster through `GitOps`, as EKS Anywhere Cluster Controller will not create a Snow bootstrap credentials secret like `eksctl CLI` does when field is empty.
-     >
-     > Make sure there is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating a Gitops enabled management cluster with `eksctl` should create the `kustomization.yaml` file automatically.
-     
-   See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for more details.
-   
-   * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, run:
+     > `spec.users[0].sshAuthorizedKeys` must be specified to SSH into your nodes when provisioning a cluster through `GitOps` or `Terraform`, as the EKS Anywhere Cluster Controller will not generate the keys like `eksctl CLI` does when the field is empty.
+
+    * **eksctl CLI**: To create a workload cluster with `eksctl`, run:
       ```bash
       eksctl anywhere create cluster \
           -f eksa-w01-cluster.yaml  \
@@ -209,13 +207,22 @@ Follow these steps if you want to use your initial cluster to create and manage 
 1. Check the workload cluster:
 
    You can now use the workload cluster as you would any Kubernetes cluster.
-   Change your credentials to point to the new workload cluster (for example, `mgmt-w01`), then run the test application with:
+   * If your workload cluster was created with `eksctl`,
+     change your credentials to point to the new workload cluster (for example, `w01`), then run the test application with:
 
-   ```bash
-   export CLUSTER_NAME=mgmt-w01
-   export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-   kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
-   ```
+      ```bash
+      export CLUSTER_NAME=w01
+      export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+      kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
+      ```
+
+   * If your workload cluster was created with GitOps or Terraform, the kubeconfig for your new cluster is stored as a secret on the management cluster.
+     You can get credentials and run the test application as follows:
+      ```bash
+      kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath=‘{.data.value}' | base64 —decode > w01.kubeconfig
+      export KUBECONFIG=w01.kubeconfig
+      kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
+      ```
 
    Verify the test application in the [deploy test application section.]({{< relref "../../tasks/workload/test-app" >}})
 

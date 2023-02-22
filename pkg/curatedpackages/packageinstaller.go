@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"context"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -23,6 +24,11 @@ type Installer struct {
 	kubectl           KubectlRunner
 	packagesLocation  string
 	mgmtKubeconfig    string
+}
+
+// IsPackageControllerDisabled detect if the package controller is disabled.
+func IsPackageControllerDisabled(cluster *anywherev1.Cluster) bool {
+	return cluster != nil && cluster.Spec.Packages != nil && cluster.Spec.Packages.Disable
 }
 
 // NewInstaller installs packageController and packages during cluster creation.
@@ -58,6 +64,10 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Enabling curated packages on the cluster")
+	if IsPackageControllerDisabled(pi.spec.Cluster) {
+		logger.Info("  Package controller disabled")
+		return nil
+	}
 	err := pi.packageController.EnableCuratedPackages(ctx)
 	if err != nil {
 		return err

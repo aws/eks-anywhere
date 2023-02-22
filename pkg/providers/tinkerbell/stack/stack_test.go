@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -90,7 +90,7 @@ func unmarshalYamlToObject(t *testing.T, filepath string) map[string]interface{}
 
 func processUpdate(t *testing.T, goldenFilePath, generatedFilePath string) {
 	if *test.UpdateGoldenFiles {
-		if err := ioutil.WriteFile(goldenFilePath, test.ReadFileAsBytes(t, generatedFilePath), 0o644); err != nil {
+		if err := os.WriteFile(goldenFilePath, test.ReadFileAsBytes(t, generatedFilePath), 0o644); err != nil {
 			t.Fatalf("failed to update golden file %s: %v", goldenFilePath, err)
 		}
 		log.Printf("Golden file updated: %s", goldenFilePath)

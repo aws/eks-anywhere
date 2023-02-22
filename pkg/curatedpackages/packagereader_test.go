@@ -64,7 +64,7 @@ func newPackageReaderTest(t *testing.T) *packageReaderTest {
 		registryName:  registryName,
 		storageClient: sc,
 		bundles:       &bundles,
-		command:       curatedpackages.NewPackageReader(cache, credentialStore),
+		command:       curatedpackages.NewPackageReader(cache, credentialStore, "us-east-1"),
 	}
 }
 

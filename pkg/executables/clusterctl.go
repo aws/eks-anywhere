@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"path"
@@ -147,7 +146,7 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 			return fmt.Errorf("can't load infrastructure bundle for manifest %s: %v", manifest.URI, err)
 		}
 
-		if err := ioutil.WriteFile(filepath.Join(infraFolder, m.Filename), m.Content, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(infraFolder, m.Filename), m.Content, 0o644); err != nil {
 			return fmt.Errorf("generating file for infrastructure bundle %s: %v", m.Filename, err)
 		}
 	}
