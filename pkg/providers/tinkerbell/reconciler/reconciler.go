@@ -287,12 +287,13 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 }
 
 // ValidateRufioMachines checks to ensure all the Rufio machines condition contactable is True.
-func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateRufioMachines")
 
 	kubeReader := hardware.NewKubeReader(r.client)
 	if err := kubeReader.LoadRufioMachines(ctx); err != nil {
-		log.Error(err, "rufio machine check failure")
+		log.Error(err, "loading existing rufio machines from the cluster")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 

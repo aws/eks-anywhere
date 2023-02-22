@@ -543,6 +543,12 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "bmc1",
 			Namespace: constants.EksaSystemNamespace,
 		},
@@ -554,8 +560,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 				},
 			},
 		},
-	},
-	)
+	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "bmc2",
@@ -570,8 +575,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 				},
 			},
 		},
-	},
-	)
+	})
 
 	tt.withFakeClient()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
