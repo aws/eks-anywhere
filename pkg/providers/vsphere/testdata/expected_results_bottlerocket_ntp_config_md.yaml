@@ -26,8 +26,8 @@ spec:
       ntp:
         enabled: true
         servers: 
-        - time-a.eks-a.aws
-        - time-b.eks-a.aws
+        - time-a-wn.eks-a.aws
+        - time-b-wn.eks-a.aws
         - 192.168.0.10
       preKubeadmCommands:
       - hostname "{{ ds.meta_data.hostname }}"

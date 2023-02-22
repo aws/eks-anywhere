@@ -377,8 +377,8 @@ spec:
     ntp:
       enabled: true
       servers: 
-      - time-a.eks-a.aws
-      - time-b.eks-a.aws
+      - time-a-cp.eks-a.aws
+      - time-b-cp.eks-a.aws
       - 192.168.0.10
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
@@ -457,8 +457,8 @@ spec:
     ntp:
       enabled: true
       servers: 
-      - time-a.eks-a.aws
-      - time-b.eks-a.aws
+      - time-a-etcd.eks-a.aws
+      - time-b-etcd.eks-a.aws
       - 192.168.0.10
     bottlerocketConfig:
       etcdImage: public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.16-eks-1-21-4
