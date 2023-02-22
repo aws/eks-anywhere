@@ -304,9 +304,6 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 	if s.proxyConfig != nil {
 		noProxy := strings.Join(s.proxyConfig.NoProxy, ",")
 		extraKernelArgs = fmt.Sprintf("%s HTTP_PROXY=%s HTTPS_PROXY=%s NO_PROXY=%s", extraKernelArgs, s.proxyConfig.HttpProxy, s.proxyConfig.HttpsProxy, noProxy)
-		bootsEnv["HTTP_PROXY"] = s.proxyConfig.HttpProxy
-		bootsEnv["HTTPS_PROXY"] = s.proxyConfig.HttpsProxy
-		bootsEnv["NO_PROXY"] = noProxy
 	}
 	bootsEnv["BOOTS_EXTRA_KERNEL_ARGS"] = extraKernelArgs
 
