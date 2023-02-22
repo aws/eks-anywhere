@@ -16,6 +16,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
+const (
+	// ReconcileNewCluster means need to create nodes for a new cluster.
+	ReconcileNewCluster clusterChange = "create-new-cluster"
+	// NeedNewNode means node has k8s version change.
+	NeedNewNode clusterChange = "rolling-update"
+	// NeedMoreOrLessNode means node group scales up or scales down.
+	NeedMoreOrLessNode clusterChange = "scale-update"
+)
+
+type clusterChange string
+
 // CNIReconciler is an interface for reconciling CNI in the Tinkerbell cluster reconciler.
 type CNIReconciler interface {
 	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *c.Spec) (controller.Result, error)
@@ -33,15 +44,16 @@ type IPValidator interface {
 
 // Scope object for Tinkerbell reconciler.
 type Scope struct {
-	ClusterSpec      *c.Spec
-	isRollingUpgrade bool
+	ClusterSpec   *c.Spec
+	clusterChange clusterChange
+	controlPlane  *tinkerbell.ControlPlane
+	workers       *tinkerbell.Workers
 }
 
 // NewScope creates a new Tinkerbell Reconciler Scope.
 func NewScope(clusterSpec *c.Spec) *Scope {
 	return &Scope{
-		ClusterSpec:      clusterSpec,
-		isRollingUpgrade: false,
+		ClusterSpec: clusterSpec,
 	}
 }
 
@@ -281,4 +293,10 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	}
 
 	return controller.Result{}, nil
+}
+
+// detectChange compares current CAPI objects with desired CAPI objects in scope,
+// then updates the clusterChange value in scope.
+func detectChange(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) error {
+	return nil
 }
