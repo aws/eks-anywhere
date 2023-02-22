@@ -205,7 +205,7 @@ After your cluster has been created, you can test the GitOps controller by modif
     git push origin main
     ```
 
-1. The flux controller will automatically make the required changes.
+1. The Flux controller will automatically make the required changes.
 
    If you updated your node count, you can use this command to see the current node state.
     ```bash
@@ -290,3 +290,71 @@ spec:
       repositoryUrl: ssh://git@provider.com/myAccount/myClusterGitopsRepo.git
       sshKeyAlgorithm: ecdsa
 ```
+
+## Manage separate workload clusters using Gitops
+
+Follow these steps if you want to use your initial cluster to create and manage separate workload clusters via Gitops.
+
+### Prerequisites
+- An existing EKS Anywhere cluster with Gitops enabled.
+  If your existing cluster does not have Gitops installed, see [Enable Gitops in an existing cluster.]({{< relref "#enable-gitops-in-an-existing-cluster" >}}).
+  
+- A cluster configuration file for your new workload cluster.
+
+### Create cluster using Gitops
+
+   1. Clone your git repo and add the new cluster specification.
+      Be sure to follow the directory structure defined [here]({{< relref "#create-gitops-configuration-repo" >}}):
+
+      ```
+      clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
+      ```
+
+      > **NOTE**: Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
+      >
+      >  Ensure workload cluster object names are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
+      > 
+      > Make sure there is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating a Gitops enabled management cluster with `eksctl` should create the `kustomization.yaml` file automatically.
+
+   2. Commit the file to your git repository.
+         ```bash
+         git add clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
+         git commit -m 'Creating new workload cluster'
+         git push origin main
+         ```
+      
+   3. The Flux controller will automatically make the required changes.
+      You can list the workload clusters managed by the management cluster.
+      ```bash
+      export KUBECONFIG=${PWD}/${MGMT_CLUSTER_NAME}/${MGMT_CLUSTER_NAME}-eks-a-cluster.kubeconfig
+      kubectl get clusters
+      ```
+
+   4. The kubeconfig for your new cluster is stored as a secret on the management cluster.
+      You can get credentials and run the test application on your new workload cluster as follows:
+      ```bash
+      kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath=‘{.data.value}' | base64 —decode > w01.kubeconfig
+      export KUBECONFIG=w01.kubeconfig
+      kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
+      ```
+### Upgrade cluster using Gitops
+      
+   1. To upgrade the cluster using Gitops, modify the workload cluster yaml file with the desired changes.
+      
+   2. Commit the file to your git repository. 
+      ```bash 
+      git add eksa-cluster.yaml
+      git commit -m 'Scaling nodes on new workload cluster'
+      git push origin main
+      ```
+      
+### Delete cluster using Gitops
+
+   1. To delete the cluster using Gitops, delete the workload cluster yaml file from your repository and commit those changes.
+      ```bash
+      git rm eksa-cluster.yaml
+      git commit -m 'Deleting workload cluster'
+      git push origin main
+      ```
+      
+  

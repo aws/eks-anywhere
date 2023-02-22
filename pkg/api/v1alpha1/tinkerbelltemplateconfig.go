@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,8 +17,9 @@ const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 // +kubebuilder:object:generate=false
 type ActionOpt func(action *[]tinkerbell.Action)
 
-// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the required Tasks and Actions.
-func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, disk string, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp string, osFamily OSFamily) *TinkerbellTemplateConfig {
+// NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the
+// required Tasks and Actions.
+func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) *TinkerbellTemplateConfig {
 	config := &TinkerbellTemplateConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellTemplateConfigKind,
@@ -45,7 +46,7 @@ func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha
 		},
 	}
 
-	defaultActions := GetDefaultActionsFromBundle(versionBundle, disk, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp, osFamily)
+	defaultActions := GetDefaultActionsFromBundle(versionBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP, osFamily)
 	for _, action := range defaultActions {
 		action(&config.Spec.Template.Tasks[0].Actions)
 	}
@@ -67,7 +68,7 @@ func (c *TinkerbellTemplateConfigGenerate) Name() string {
 
 func GetTinkerbellTemplateConfig(fileName string) (map[string]*TinkerbellTemplateConfig, error) {
 	templates := make(map[string]*TinkerbellTemplateConfig)
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}

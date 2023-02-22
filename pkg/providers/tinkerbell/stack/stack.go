@@ -162,7 +162,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		tinkServer: map[string]interface{}{
 			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
-			args:  []string{"--tls=false"},
+			args:  []string{},
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
 			},
@@ -377,6 +377,7 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		tinkServer: map[string]interface{}{
 			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
+			args:  []string{},
 		},
 		hegel: map[string]interface{}{
 			image: bundle.TinkerbellStack.Hegel.URI,

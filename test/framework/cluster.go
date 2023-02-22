@@ -521,6 +521,7 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	e.ClusterConfig.VSphereMachineConfigs = config.VSphereMachineConfigs
 	e.ClusterConfig.CloudStackMachineConfigs = config.CloudStackMachineConfigs
 	e.ClusterConfig.SnowMachineConfigs = config.SnowMachineConfigs
+	e.ClusterConfig.SnowIPPools = config.SnowIPPools
 	e.ClusterConfig.NutanixMachineConfigs = config.NutanixMachineConfigs
 	e.ClusterConfig.TinkerbellMachineConfigs = config.TinkerbellMachineConfigs
 	e.ClusterConfig.TinkerbellTemplateConfigs = config.TinkerbellTemplateConfigs
@@ -597,6 +598,16 @@ func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
 	}
 }
 
+// ExtractDownloadedArtifacts extract the downloaded artifacts.
+func (e *ClusterE2ETest) ExtractDownloadedArtifacts(opts ...CommandOpt) {
+	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
+		e.T.Fatal(err)
+	}
+
+	e.T.Logf("Extract downloaded artifacts ")
+	e.Run("tar", "-xf", "eks-anywhere-downloads.tar.gz")
+}
+
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 	e.createCluster(opts...)
 }
@@ -604,6 +615,17 @@ func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	e.T.Logf("Creating cluster %s", e.ClusterName)
 	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
+
+	file, err := os.Open(e.ClusterConfigLocation)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	b, err := io.ReadAll(file)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	e.T.Log("Create cluster from file:\n", string(b))
+
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
@@ -1446,6 +1468,149 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 	}
 }
 
+// VerifyCertManagerPackageInstalled is checking if the cert manager package gets installed correctly.
+func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namespace string, packageName string, mgmtCluster *types.Cluster) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deployments := []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"}
+
+	var wg sync.WaitGroup
+	errCh := make(chan error, 1)
+	okCh := make(chan string, 1)
+
+	e.T.Log("Waiting for Package", packageName, "To be installed")
+
+	ns := fmt.Sprintf("%s-%s", namespace, e.ClusterName)
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		mgmtCluster, prefix+"-"+packageName, "5m", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for cert-manager package timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
+
+	for _, name := range deployments {
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+			err := e.KubectlClient.WaitForDeployment(ctx,
+				e.Cluster(), "5m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
+			if err != nil {
+				errCh <- err
+			}
+		}(name)
+	}
+
+	e.T.Log("Waiting for Self Signed certificate to be issued")
+	err = e.verifySelfSignedCertificate(mgmtCluster)
+	if err != nil {
+		errCh <- err
+	}
+
+	e.T.Log("Waiting for Let's Encrypt certificate to be issued")
+	err = e.verifyLetsEncryptCert(mgmtCluster)
+	if err != nil {
+		errCh <- err
+	}
+
+	go func() {
+		wg.Wait()
+		okCh <- "completed"
+	}()
+
+	select {
+	case err := <-errCh:
+		e.T.Fatal(err)
+	case <-okCh:
+		return
+	}
+}
+
+//go:embed testdata/certmanager/certmanager_selfsignedissuer.yaml
+var certManagerSelfSignedIssuer []byte
+
+//go:embed testdata/certmanager/certmanager_selfsignedcert.yaml
+var certManagerSelfSignedCert []byte
+
+func (e *ClusterE2ETest) verifySelfSignedCertificate(mgmtCluster *types.Cluster) error {
+	ctx := context.Background()
+	selfsignedCert := "my-selfsigned-ca"
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSelfSignedIssuer)
+	if err != nil {
+		return fmt.Errorf("error installing Cluster issuer for cert manager: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSelfSignedCert)
+	if err != nil {
+		return fmt.Errorf("error applying certificate for cert manager: %v", err)
+	}
+
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
+		fmt.Sprintf("certificates.cert-manager.io/%s", selfsignedCert), constants.EksaPackagesName)
+	if err != nil {
+		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
+	}
+	return nil
+}
+
+//go:embed testdata/certmanager/certmanager_letsencrypt_issuer.yaml
+var certManagerLetsEncryptIssuer string
+
+//go:embed testdata/certmanager/certmanager_letsencrypt_cert.yaml
+var certManagerLetsEncryptCert []byte
+
+//go:embed testdata/certmanager/certmanager_secret.yaml
+var certManagerSecret string
+
+func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error {
+	ctx := context.Background()
+	letsEncryptCert := "test-cert"
+	accessKey, secretAccess, region, zoneID := GetRoute53Configs()
+	data := map[string]interface{}{
+		"route53SecretAccessKey": secretAccess,
+	}
+
+	certManagerSecretData, err := templater.Execute(certManagerSecret, data)
+	if err != nil {
+		return fmt.Errorf("failed creating cert manager secret: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSecretData)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager secret: %v", err)
+	}
+
+	data = map[string]interface{}{
+		"route53AccessKeyId": accessKey,
+		"route53ZoneId":      zoneID,
+		"route53Region":      region,
+	}
+
+	certManagerIssuerData, err := templater.Execute(certManagerLetsEncryptIssuer, data)
+	if err != nil {
+		return fmt.Errorf("failed creating lets encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerIssuerData)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager let's encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerLetsEncryptCert)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager let's encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
+		fmt.Sprintf("certificates.cert-manager.io/%s", letsEncryptCert), constants.EksaPackagesName)
+	if err != nil {
+		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
+	}
+
+	return nil
+}
+
 // VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.
 func (e *ClusterE2ETest) VerifyPrometheusPrometheusServerStates(packageName string, targetNamespace string, mode string) {
 	ctx := context.Background()
@@ -1732,4 +1897,37 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
 func (e *ClusterE2ETest) ValidateEndpointContent(endpoint string, namespace string, expectedContent string) {
 	busyBoxPodName := e.CurlEndpointByBusyBox(endpoint, namespace)
 	e.MatchLogs(namespace, busyBoxPodName, busyBoxPodName, expectedContent, 5*time.Minute)
+}
+
+// AirgapDockerContainers airgap docker containers. Outside network should not be reached during airgapped deployment.
+func (e *ClusterE2ETest) AirgapDockerContainers(localCIDRs string) {
+	e.T.Logf("Airgap docker containers...")
+	e.Run(fmt.Sprintf("sudo iptables -F DOCKER-USER && sudo iptables -I DOCKER-USER -j DROP && sudo iptables -I DOCKER-USER -s %s,172.0.0.0/8,127.0.0.1 -j ACCEPT", localCIDRs))
+}
+
+// CreateAirgappedUser create airgapped user and setup the iptables rule. Notice that OUTPUT chain is flushed each time.
+func (e *ClusterE2ETest) CreateAirgappedUser(localCIDR string) {
+	e.Run("if ! id airgap; then sudo useradd airgap -G docker; fi")
+	e.Run("mkdir ./eksa-cli-logs || chmod 777 ./eksa-cli-logs") // Allow the airgap user to access logs folder
+	e.Run("chmod -R 777 ./")                                    // Allow the airgap user to access working dir
+	e.Run("sudo iptables -F OUTPUT")
+	e.Run(fmt.Sprintf("sudo iptables -A OUTPUT -d %s,172.0.0.0/8,127.0.0.1 -m owner --uid-owner airgap -j ACCEPT", localCIDR))
+	e.Run("sudo iptables -A OUTPUT -m owner --uid-owner airgap -j REJECT")
+}
+
+// AssertAirgappedNetwork make sure that the admin machine is indeed airgapped.
+func (e *ClusterE2ETest) AssertAirgappedNetwork() {
+	cmd := exec.Command("docker", "run", "--rm", "busybox", "ping", "8.8.8.8", "-c", "1", "-W", "2")
+	out, err := cmd.Output()
+	e.T.Log(string(out))
+	if err == nil {
+		e.T.Fatalf("Docker container is not airgapped")
+	}
+
+	cmd = exec.Command("sudo", "-u", "airgap", "ping", "8.8.8.8", "-c", "1", "-W", "2")
+	out, err = cmd.Output()
+	e.T.Log(string(out))
+	if err == nil {
+		e.T.Fatalf("Airgap user is not airgapped")
+	}
 }

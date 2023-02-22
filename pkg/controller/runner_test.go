@@ -19,7 +19,7 @@ func TestPhaseRunnerRunError(t *testing.T) {
 	ctx := context.Background()
 	phase1 := newPhase()
 	phase3 := newPhase()
-	r := controller.NewPhaseRunner().Register(
+	r := controller.NewPhaseRunner[*cluster.Spec]().Register(
 		phase1.run,
 		phaseReturnError,
 		phase3.run,
@@ -36,7 +36,7 @@ func TestPhaseRunnerRunRequeue(t *testing.T) {
 	ctx := context.Background()
 	phase1 := newPhase()
 	phase3 := newPhase()
-	r := controller.NewPhaseRunner().Register(
+	r := controller.NewPhaseRunner[*cluster.Spec]().Register(
 		phase1.run,
 		phaseReturnRequeue,
 		phase3.run,
@@ -55,7 +55,7 @@ func TestPhaseRunnerRunAllPhasesFinished(t *testing.T) {
 	phase1 := newPhase()
 	phase2 := newPhase()
 	phase3 := newPhase()
-	r := controller.NewPhaseRunner().Register(
+	r := controller.NewPhaseRunner[*cluster.Spec]().Register(
 		phase1.run,
 		phase2.run,
 		phase3.run,

@@ -3,9 +3,10 @@ package files
 import (
 	"embed"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -84,7 +85,7 @@ func (r *Reader) readHttpFile(uri string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading file from url [%s]: %v", uri, err)
 	}
@@ -102,7 +103,7 @@ func (r *Reader) readEmbedFile(url *url.URL) ([]byte, error) {
 }
 
 func readLocalFile(filename string) ([]byte, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading local file [%s]: %v", filename, err)
 	}

@@ -16,7 +16,7 @@ package filereader
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -77,7 +77,7 @@ func ReadShaSums(filename string, r *releasetypes.ReleaseConfig) (string, string
 }
 
 func readShaFile(filename string) (string, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return "", errors.Cause(err)
 	}
@@ -88,7 +88,7 @@ func readShaFile(filename string) (string, error) {
 }
 
 func ReadFileContentsTrimmed(filename string) (string, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return "", errors.Cause(err)
 	}
@@ -100,7 +100,7 @@ func ReadEksDReleases(r *releasetypes.ReleaseConfig) (*EksDLatestReleases, error
 	eksDLatestReleases := &EksDLatestReleases{}
 	eksDReleaseFilePath := filepath.Join(r.BuildRepoSource, "EKSD_LATEST_RELEASES")
 
-	eksDReleaseFile, err := ioutil.ReadFile(eksDReleaseFilePath)
+	eksDReleaseFile, err := os.ReadFile(eksDReleaseFilePath)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -115,7 +115,7 @@ func GetSupportedK8sVersions(r *releasetypes.ReleaseConfig) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
 	releaseFilePath := filepath.Join(r.BuildRepoSource, constants.ReleaseFolderName, "SUPPORTED_RELEASE_BRANCHES")
 
-	releaseFile, err := ioutil.ReadFile(releaseFilePath)
+	releaseFile, err := os.ReadFile(releaseFilePath)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -134,7 +134,7 @@ func GetBottlerocketSupportedK8sVersionsByFormat(r *releasetypes.ReleaseConfig, 
 	bottlerocketReleasesFilename := "BOTTLEROCKET_RELEASES"
 	bottlerocketReleasesFilePath := filepath.Join(r.BuildRepoSource, constants.ImageBuilderProjectPath, bottlerocketReleasesFilename)
 
-	bottlerocketReleasesFileContents, err := ioutil.ReadFile(bottlerocketReleasesFilePath)
+	bottlerocketReleasesFileContents, err := os.ReadFile(bottlerocketReleasesFilePath)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -157,7 +157,7 @@ func GetBottlerocketSupportedK8sVersionsByFormat(r *releasetypes.ReleaseConfig, 
 func GetBottlerocketContainerMetadata(r *releasetypes.ReleaseConfig, filename string) (string, string, error) {
 	var bottlerocketContainerMetadataMap map[string]interface{}
 	bottlerocketContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, constants.ImageBuilderProjectPath, filename)
-	metadata, err := ioutil.ReadFile(bottlerocketContainerMetadataFilePath)
+	metadata, err := os.ReadFile(bottlerocketContainerMetadataFilePath)
 	if err != nil {
 		return "", "", errors.Cause(err)
 	}
@@ -202,7 +202,7 @@ func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.Rele
 			}
 
 			// Check if current version and latest version are the same semver
-			latestBuildS3, err := ioutil.ReadFile(tempFileName)
+			latestBuildS3, err := os.ReadFile(tempFileName)
 			if err != nil {
 				return "", errors.Cause(err)
 			}
@@ -329,7 +329,7 @@ func ReadHttpFile(uri string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed reading file from url [%s]", uri)
 	}

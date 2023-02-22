@@ -53,7 +53,7 @@ https://github.com/containerd/containerd
 ** github.com/coredns/caddy/caddyfile; version v1.1.0 --
 https://github.com/coredns/caddy
 
-** github.com/coredns/corefile-migration/migration; version v1.0.17 --
+** github.com/coredns/corefile-migration/migration; version v1.0.18 --
 https://github.com/coredns/corefile-migration
 
 ** github.com/docker/cli/cli/config; version v20.10.21+incompatible --
@@ -152,7 +152,7 @@ https://github.com/prometheus/common
 ** github.com/prometheus/procfs; version v0.8.0 --
 https://github.com/prometheus/procfs
 
-** github.com/spf13/afero; version v1.8.2 --
+** github.com/spf13/afero; version v1.9.2 --
 https://github.com/spf13/afero
 
 ** github.com/spf13/cobra; version v1.6.1 --
@@ -182,7 +182,7 @@ https://github.com/googleapis/go-genproto
 ** google.golang.org/grpc; version v1.49.0 --
 https://github.com/grpc/grpc-go
 
-** gopkg.in/ini.v1; version v1.66.4 --
+** gopkg.in/ini.v1; version v1.67.0 --
 https://gopkg.in/ini.v1
 
 ** gopkg.in/yaml.v2; version v2.4.0 --
@@ -203,7 +203,7 @@ https://github.com/kubernetes/apiserver
 ** k8s.io/client-go; version v0.25.0 --
 https://github.com/kubernetes/client-go
 
-** k8s.io/cluster-bootstrap/token; version v0.24.0 --
+** k8s.io/cluster-bootstrap/token; version v0.25.0 --
 https://github.com/kubernetes/cluster-bootstrap
 
 ** k8s.io/component-base; version v0.25.6 --
@@ -218,7 +218,7 @@ https://github.com/kubernetes/kube-openapi
 ** k8s.io/kube-openapi/pkg/validation/spec; version v0.0.0-20221012153701-172d655c2280 --
 https://github.com/kubernetes/kube-openapi
 
-** k8s.io/utils; version v0.0.0-20221107191617-1a15be271d1d --
+** k8s.io/utils; version v0.0.0-20221128185143-99ec85e7a448 --
 https://github.com/kubernetes/utils
 
 ** oras.land/oras-go/pkg; version v1.2.2 --
@@ -227,7 +227,7 @@ https://github.com/oras-project/oras-go
 ** oras.land/oras-go/v2; version v2.0.0 --
 https://github.com/oras-project/oras-go
 
-** github.com/abhay-krishna/cluster-api; version v1.2.0-custom.rc5 --
+** github.com/abhay-krishna/cluster-api; version v1.3.3-eksa.1 --
 https://github.com/abhay-krishna/cluster-api
 
 ** sigs.k8s.io/cluster-api-provider-cloudstack; version v0.4.8-rc1 --
@@ -1289,7 +1289,7 @@ https://github.com/ProtonMail/go-crypto
 ** github.com/vmware/govmomi/vim25/xml; version v0.29.0 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.18.10 --
+** golang.org/go; version go1.19.5 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.5.0 --
@@ -1301,7 +1301,7 @@ https://go.googlesource.com/exp
 ** golang.org/x/net; version v0.5.0 --
 https://go.googlesource.com/net
 
-** golang.org/x/oauth2; version v0.0.0-20220822191816-0ebed06d0094 --
+** golang.org/x/oauth2; version v0.0.0-20220909003341-f21342109be1 --
 https://go.googlesource.com/oauth2
 
 ** golang.org/x/sync; version v0.1.0 --
@@ -1316,7 +1316,7 @@ https://go.googlesource.com/term
 ** golang.org/x/text; version v0.6.0 --
 https://go.googlesource.com/text
 
-** golang.org/x/time/rate; version v0.0.0-20220722155302-e5dcc9cfc0b9 --
+** golang.org/x/time/rate; version v0.3.0 --
 https://go.googlesource.com/time
 
 ** k8s.io/apimachinery/third_party/forked/golang; version v0.25.6 --
@@ -1452,7 +1452,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** k8s.io/utils/internal/third_party/forked/golang/net; version v0.0.0-20221107191617-1a15be271d1d --
+** k8s.io/utils/internal/third_party/forked/golang/net; version v0.0.0-20221128185143-99ec85e7a448 --
 https://github.com/kubernetes/utils
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
@@ -1526,7 +1526,7 @@ Copyright (c) 2016 David Calavera
 https://github.com/emicklei/go-restful/v3
 Copyright (c) 2012,2013 Ernest Micklei
 
-** github.com/gobuffalo/flect; version v0.2.5 --
+** github.com/gobuffalo/flect; version v0.3.0 --
 https://github.com/gobuffalo/flect
 Copyright (c) 2019 Mark Bates
 
@@ -1598,7 +1598,7 @@ Copyright (c) 2016 Taihei Morikuni
 https://github.com/onsi/gomega
 Copyright (c) 2013-2014 Onsi Fakhouri
 
-** github.com/pelletier/go-toml/v2; version v2.0.1 --
+** github.com/pelletier/go-toml/v2; version v2.0.5 --
 https://github.com/pelletier/go-toml/v2
 Copyright (c) 2013 - 2022 Thomas Pelletier, Eric Anderton
 
@@ -1622,11 +1622,11 @@ Copyright (c) 2014 Steve Francia
 https://github.com/spf13/jwalterweatherman
 Copyright (c) 2014 Steve Francia
 
-** github.com/spf13/viper; version v1.12.0 --
+** github.com/spf13/viper; version v1.13.0 --
 https://github.com/spf13/viper
 Copyright (c) 2014 Steve Francia
 
-** github.com/subosito/gotenv; version v1.3.0 --
+** github.com/subosito/gotenv; version v1.4.1 --
 https://github.com/subosito/gotenv
 Copyright (c) 2013 Alif Rachmawadi
 

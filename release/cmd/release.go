@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -201,7 +200,7 @@ var releaseCmd = &cobra.Command{
 			fmt.Printf("\n%s\n", string(bundleManifest))
 
 			if !dryRun {
-				err = ioutil.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o644)
+				err = os.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o644)
 				if err != nil {
 					fmt.Printf("Error writing bundles manifest file to disk: %v\n", err)
 					os.Exit(1)
@@ -272,7 +271,7 @@ var releaseCmd = &cobra.Command{
 			}
 
 			// Push the manifest file and other artifacts to release locations
-			err = ioutil.WriteFile(eksAReleaseManifestFile, releaseManifest, 0o644)
+			err = os.WriteFile(eksAReleaseManifestFile, releaseManifest, 0o644)
 			if err != nil {
 				fmt.Printf("Error writing EKS-A release manifest file to disk: %v\n", err)
 				os.Exit(1)

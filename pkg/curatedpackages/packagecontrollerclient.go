@@ -144,7 +144,7 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistr
 			defaultImageRegistry = gatedOCINamespace
 		}
 	} else {
-		defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, defaultRegion, pc.eksaRegion)
+		defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, eksaDefaultRegion, pc.eksaRegion)
 	}
 	return sourceRegistry, defaultRegistry, defaultImageRegistry
 }
@@ -205,9 +205,9 @@ const packageBundleControllerResource string = "packageBundleController"
 // It returns nil on success. Success is defined as receiving a valid package
 // bundle controller from the API with a non-empty active bundle.
 //
-// If no timeout is specified, a default of 1 minute is used.
+// If no timeout is specified, a default of 3 minutes is used.
 func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) error {
-	timeout := time.Minute
+	timeout := 3 * time.Minute
 	if pc.activeBundleTimeout > 0 {
 		timeout = pc.activeBundleTimeout
 	}
@@ -270,8 +270,8 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 
 // IsInstalled checks if a package controller custom resource exists.
 func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
-	bool, err := pc.kubectl.HasResource(ctx, packageBundleControllerResource, pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
-	return bool && err == nil
+	hasResource, err := pc.kubectl.HasResource(ctx, packageBundleControllerResource, pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
+	return hasResource && err == nil
 }
 
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {

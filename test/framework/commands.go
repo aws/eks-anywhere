@@ -41,6 +41,23 @@ func ExecuteWithEksaRelease(release *releasev1alpha1.EksARelease) CommandOpt {
 	})
 }
 
+// WithSudo add prefix "sudo" to the command. And preserve PATH.
+func WithSudo(user string) CommandOpt {
+	return func(binaryPath *string, args *[]string) (err error) {
+		*args = append([]string{*binaryPath}, *args...)
+		*binaryPath = "sudo"
+		if user != "" {
+			*args = append([]string{"-E", "PATH=$PATH", "-u", user}, *args...)
+		}
+		return nil
+	}
+}
+
+// WithBundlesOverride modify bundles-override.
+func WithBundlesOverride(bundles string) CommandOpt {
+	return appendOpt("--bundles-override", bundles)
+}
+
 type binaryFetcher func() (binaryPath string, err error)
 
 func executeWithBinaryCommandOpt(fetcher binaryFetcher) CommandOpt {

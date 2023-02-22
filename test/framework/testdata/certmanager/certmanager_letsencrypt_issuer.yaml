@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+  namespace: eksa-packages
+spec:
+  acme:
+    privateKeySecretRef:
+      name: letsencrypt
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    solvers:
+      - dns01:
+          route53:
+            region: "{{.route53Region}}"
+            hostedZoneID: "{{.route53ZoneId}}"
+            accessKeyID: "{{.route53AccessKeyId}}"
+            secretAccessKeySecretRef:
+              name: route53-credentials-secret
+              key: secret-access-key
+        selector:
+          dnsZones:
+            - "cert-manager-e2e.model-rocket.aws.dev"

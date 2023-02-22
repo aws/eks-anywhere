@@ -19,7 +19,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
@@ -316,7 +315,7 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	for _, wnConfig := range workerTmc {
 		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
 	}
-	templateBuilder := tinkerbell.NewTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &etcdTmc.Spec, hardware.NewDiskExtractor(), workerNodeGroupMachineSpecs, tdc.Spec.TinkerbellIP, r.now)
+	templateBuilder := tinkerbell.NewTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &etcdTmc.Spec, workerNodeGroupMachineSpecs, tdc.Spec.TinkerbellIP, r.now)
 	cp, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
