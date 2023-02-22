@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -58,6 +59,7 @@ func init() {
 	utilruntime.Must(addonsv1.AddToScheme(scheme))
 	utilruntime.Must(tinkerbellv1.AddToScheme(scheme))
 	utilruntime.Must(tinkv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(rufiov1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

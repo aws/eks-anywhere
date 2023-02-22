@@ -5774,6 +5774,15 @@ rules:
   - update
   - watch
 - apiGroups:
+  - bmc.tinkerbell.org
+  resources:
+  - machines
+  - machines/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - cluster.x-k8s.io
   resources:
   - '*'
