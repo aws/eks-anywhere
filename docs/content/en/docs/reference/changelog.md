@@ -6,6 +6,11 @@ weight: 35
 
 ## Unreleased
 
+## [v0.14.2](https://github.com/aws/eks-anywhere/releases/tag/v0.14.2)
+
+### Added
+- Enabled support for Kubernetes version 1.25
+
 ## [v0.14.1](https://github.com/aws/eks-anywhere/releases/tag/v0.14.1)
 
 ### Added
