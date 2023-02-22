@@ -11,6 +11,8 @@ When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere r
 EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
 The upgrade command also upgrades core components of EKS Anywhere and lets the user enjoy the latest features, bug fixes and security patches.
 
+**NOTE: If an upgrade fails, it is very important not to delete the Docker containers running the KinD bootstrap cluster. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
+
 
 ### Minor Version Upgrades
 
