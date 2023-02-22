@@ -400,10 +400,10 @@ spec:
 {{- end }}
         {{- end }}
 {{- end }}
-{{- if .ntpServers }}
+{{- if .cpNtpServers }}
     ntp:
       enabled: true
-      servers: {{ range .ntpServers }}
+      servers: {{ range .cpNtpServers }}
       - {{ . }}
       {{- end }}
 {{- end }}
@@ -491,10 +491,10 @@ spec:
   etcdadmConfigSpec:
     etcdadmBuiltin: true
     format: {{.format}}
-{{- if .ntpServers }}
+{{- if .etcdNtpServers }}
     ntp:
       enabled: true
-      servers: {{ range .ntpServers }}
+      servers: {{ range .etcdNtpServers }}
       - {{ . }}
       {{- end }}
 {{- end }}

@@ -92,10 +92,8 @@ type ProviderKubectlClient interface {
 	WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error
 	SearchTinkerbellMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error)
 	SearchTinkerbellDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error)
-
 	AllTinkerbellHardware(ctx context.Context, kuebconfig string) ([]tinkv1alpha1.Hardware, error)
 	AllBaseboardManagements(ctx context.Context, kubeconfig string) ([]rufiounreleased.BaseboardManagement, error)
-
 	HasCRD(ctx context.Context, kubeconfig, crd string) (bool, error)
 	DeleteCRD(ctx context.Context, kubeconfig, crd string) error
 }
@@ -136,11 +134,22 @@ func NewProvider(
 		}
 	}
 
+	var proxyConfig *v1alpha1.ProxyConfiguration
+	if clusterConfig.Spec.ProxyConfiguration != nil {
+		proxyConfig = &v1alpha1.ProxyConfiguration{
+			HttpProxy:  clusterConfig.Spec.ProxyConfiguration.HttpProxy,
+			HttpsProxy: clusterConfig.Spec.ProxyConfiguration.HttpsProxy,
+			NoProxy:    GenerateNoProxyList(clusterConfig, datacenterConfig.Spec, tinkerbellIP),
+		}
+	} else {
+		proxyConfig = nil
+	}
+
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromCluster(clusterConfig)),
+		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromCluster(clusterConfig), proxyConfig),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,

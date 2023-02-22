@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package e2e
 
 import (
@@ -11,25 +11,25 @@ const (
 	EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
 	EksaPackageControllerHelmVersion   = "0.2.20-eks-a-v0.0.0-dev-build.4894"
 	EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
-	EksaPackagesNamespace = "eksa-packages"
+	EksaPackagesNamespace              = "eksa-packages"
 
 	clusterNamespace = "test-namespace"
 
-	key1    = framework.LabelPrefix + "/" + "key1"
-	key2    = framework.LabelPrefix + "/" + "key2"
-	cpKey1  = framework.LabelPrefix + "/" + "cp-key1"
-	val1    = "val1"
-	val2    = "val2"
-	cpVal1  = "cp-val1"
+	key1            = framework.LabelPrefix + "/" + "key1"
+	key2            = framework.LabelPrefix + "/" + "key2"
+	cpKey1          = framework.LabelPrefix + "/" + "cp-key1"
+	val1            = "val1"
+	val2            = "val2"
+	cpVal1          = "cp-val1"
 	nodeGroupLabel1 = "md-0"
 	nodeGroupLabel2 = "md-1"
-	worker0 = "worker-0"
-	worker1 = "worker-1"
-	worker2 = "worker-2"
+	worker0         = "worker-0"
+	worker1         = "worker-1"
+	worker2         = "worker-2"
 
-	fluxUserProvidedBranch             = "testbranch"
-	fluxUserProvidedNamespace          = "testns"
-	fluxUserProvidedPath               = "test/testerson"
+	fluxUserProvidedBranch    = "testbranch"
+	fluxUserProvidedNamespace = "testns"
+	fluxUserProvidedPath      = "test/testerson"
 
 	vsphereCpVmNumCpuUpdateVar          = 4
 	vsphereCpVmMemoryUpdate             = 16384
