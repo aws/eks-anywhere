@@ -1134,6 +1134,33 @@ func TestVSphereKubernetes125CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *test
 	runSimpleFlow(test)
 }
 
+// NTP Servers test
+func TestVSphereKubernetes125BottleRocketWithNTP(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(
+			t, framework.WithBottleRocket125(),
+			framework.WithNTPServersForAllMachines(),
+			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
+		),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+	)
+	runNTPFlow(test, v1alpha1.Bottlerocket)
+}
+
+func TestVSphereKubernetes125UbuntuWithNTP(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(
+			t, framework.WithUbuntu125(),
+			framework.WithNTPServersForAllMachines(),
+			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
+		),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+	)
+	runNTPFlow(test, v1alpha1.Ubuntu)
+}
+
 // Stacked etcd
 func TestVSphereKubernetes122StackedEtcdUbuntu(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
