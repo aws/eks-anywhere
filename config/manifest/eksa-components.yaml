@@ -5238,6 +5238,24 @@ spec:
                 description: HardwareSelector models a simple key-value selector used
                   in Tinkerbell provisioning.
                 type: object
+              hostOSConfiguration:
+                description: HostOSConfiguration defines the configuration settings
+                  on the host OS.
+                properties:
+                  ntpConfiguration:
+                    description: NTPConfiguration defines the NTP configuration on
+                      the host OS.
+                    properties:
+                      servers:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - servers
+                    type: object
+                required:
+                - ntpConfiguration
+                type: object
               osFamily:
                 type: string
               templateRef:
