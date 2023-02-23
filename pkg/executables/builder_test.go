@@ -46,6 +46,8 @@ func TestLocalExecutablesBuilderAllExecutables(t *testing.T) {
 	g.Expect(helm).NotTo(BeNil())
 	docker := b.BuildDockerExecutable()
 	g.Expect(docker).NotTo(BeNil())
+	ssh := b.BuildSSHExecutable()
+	g.Expect(ssh).NotTo(BeNil())
 
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(closer(ctx)).To(Succeed())

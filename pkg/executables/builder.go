@@ -74,6 +74,11 @@ func (b *ExecutablesBuilder) BuildDockerExecutable() *Docker {
 	return NewDocker(b.executableBuilder.Build(dockerPath))
 }
 
+// BuildSSHExecutable initializes a SSH executable and returns it.
+func (b *ExecutablesBuilder) BuildSSHExecutable() *SSH {
+	return NewSSH(b.executableBuilder.Build(sshPath))
+}
+
 // Init initializes the executable builder and returns a Closer
 // that needs to be called once the executables are not in used anymore
 // The closer will cleanup and free all internal resources.
