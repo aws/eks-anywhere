@@ -14,11 +14,13 @@ import (
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type listOvasOptions struct {
-	fileName string
+	fileName        string
+	bundlesOverride string
 }
 
 type listOvasOutput struct {
@@ -32,6 +34,7 @@ var listOvaOpts = &listOvasOptions{}
 func init() {
 	listCmd.AddCommand(listOvasCmd)
 	listOvasCmd.Flags().StringVarP(&listOvaOpts.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	listOvasCmd.Flags().StringVarP(&listOvaOpts.bundlesOverride, "bundles-override", "", "", "Override default Bundles manifest (not recommended)")
 	err := listOvasCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking filename flag as required: %v", err)
@@ -45,15 +48,19 @@ var listOvasCmd = &cobra.Command{
 	PreRunE:      preRunListOvasCmd,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := listOvas(cmd.Context(), listOvaOpts.fileName); err != nil {
+		if err := listOvas(cmd.Context(), listOvaOpts.fileName, listOvaOpts.bundlesOverride); err != nil {
 			return err
 		}
 		return nil
 	},
 }
 
-func listOvas(context context.Context, spec string) error {
-	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
+func listOvas(context context.Context, clusterSpecPath, bundlesOverride string) error {
+	var specOpts []cluster.SpecOpt
+	if bundlesOverride != "" {
+		specOpts = append(specOpts, cluster.WithOverrideBundlesManifest(bundlesOverride))
+	}
+	clusterSpec, err := readAndValidateClusterSpec(clusterSpecPath, version.Get(), specOpts...)
 	if err != nil {
 		return err
 	}

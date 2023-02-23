@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -260,7 +260,7 @@ func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 // ParseClusterConfig unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml file in disk. It doesn't set defaults nor validates the object.
 func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}

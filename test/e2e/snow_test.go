@@ -7,19 +7,20 @@ package e2e
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // AWS IAM Auth
-func TestSnowKubernetes121UbuntuAWSIamAuth(t *testing.T) {
+func TestSnowKubernetes125UbuntuAWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu121()),
+		framework.NewSnow(t, framework.WithSnowUbuntu125()),
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -88,11 +89,11 @@ func TestSnowKubernetes125OIDC(t *testing.T) {
 }
 
 // Proxy config
-func TestSnowKubernetes121UbuntuProxyConfig(t *testing.T) {
+func TestSnowKubernetes125UbuntuProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu121()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.NewSnow(t, framework.WithSnowUbuntu125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		// TODO: provide separate Proxy Env Vars for Snow provider. Leaving VSphere for backwards compatibility
@@ -102,15 +103,6 @@ func TestSnowKubernetes121UbuntuProxyConfig(t *testing.T) {
 }
 
 // Simpleflow
-func TestSnowKubernetes121SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu121()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestSnowKubernetes122SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -253,13 +245,6 @@ func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 	)
 }
 
-func TestSnowKubernetes121UbuntuTo122Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithUbuntu121(), snow.WithUbuntu122())
-}
-
 func TestSnowKubernetes122UbuntuTo123Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -281,13 +266,6 @@ func TestSnowKubernetes124UbuntuTo125Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithUbuntu124(), snow.WithUbuntu125())
 }
 
-func TestSnowKubernetes121BottlerocketTo122Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithBottlerocket121(), snow.WithBottlerocket122())
-}
-
 func TestSnowKubernetes122BottlerocketTo123Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -300,6 +278,27 @@ func TestSnowKubernetes123BottlerocketTo124Upgrade(t *testing.T) {
 	test := framework.NewClusterE2ETest(t, snow)
 
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocket123(), snow.WithBottlerocket124())
+}
+
+func TestSnowKubernetes124BottlerocketTo125Upgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithBottlerocket124(), snow.WithBottlerocket125())
+}
+
+func TestSnowKubernetes122To123BottlerocketStaticIPUpgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP122(), snow.WithBottlerocketStaticIP123())
+}
+
+func TestSnowKubernetes123To124BottlerocketStaticIPUpgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP123(), snow.WithBottlerocketStaticIP124())
 }
 
 // Workload API
@@ -317,17 +316,6 @@ func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-			snow.WithBottlerocket121(),
-		),
 		framework.NewClusterE2ETest(
 			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
 		).WithClusterConfig(
@@ -360,6 +348,17 @@ func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 			),
 			snow.WithBottlerocket124(),
+		),
+		framework.NewClusterE2ETest(
+			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+			snow.WithBottlerocket125(),
 		),
 	)
 	test.CreateManagementCluster()

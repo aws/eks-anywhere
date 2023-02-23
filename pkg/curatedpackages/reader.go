@@ -19,9 +19,10 @@ import (
 const (
 	prodAccount       = "eks-anywhere"
 	devAccount        = "l0g8r8j6"
+	stagingAccount    = "w9m0f3l5"
 	publicProdECR     = "public.ecr.aws/" + prodAccount
 	publicDevECR      = "public.ecr.aws/" + devAccount
-	defaultRegion     = "us-west-2"
+	stagingDevECR     = "public.ecr.aws/" + stagingAccount
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
@@ -29,13 +30,18 @@ const (
 type PackageReader struct {
 	cache           *registry.Cache
 	credentialStore *registry.CredentialStore
+	awsRegion       string
 }
 
 // NewPackageReader create a new package reader with storage client.
-func NewPackageReader(cache *registry.Cache, credentialStore *registry.CredentialStore) *PackageReader {
+func NewPackageReader(cache *registry.Cache, credentialStore *registry.CredentialStore, awsRegion string) *PackageReader {
+	if len(awsRegion) <= 0 {
+		awsRegion = eksaDefaultRegion
+	}
 	return &PackageReader{
 		cache:           cache,
 		credentialStore: credentialStore,
+		awsRegion:       awsRegion,
 	}
 }
 
@@ -111,7 +117,7 @@ func (r *PackageReader) fetchPackagesHelmChart(bundleURI string, bundle *package
 
 func (r *PackageReader) fetchImagesFromBundle(bundleURI string, bundle *packagesv1.PackageBundle) []registry.Artifact {
 	images := make([]registry.Artifact, 0, len(bundle.Spec.Packages))
-	bundleRegistry := getImageRegistry(bundleURI)
+	bundleRegistry := getImageRegistry(bundleURI, r.awsRegion)
 	for _, p := range bundle.Spec.Packages {
 		// each package will have at least one version
 		for _, version := range p.Source.Versions[0].Images {
@@ -146,9 +152,9 @@ func getChartRegistry(uri string) string {
 	return publicDevECR
 }
 
-func getImageRegistry(uri string) string {
+func getImageRegistry(uri, awsRegion string) string {
 	if strings.Contains(uri, publicProdECR) {
-		return packageProdDomain
+		return strings.ReplaceAll(packageProdDomain, eksaDefaultRegion, awsRegion)
 	}
-	return packageDevDomain
+	return strings.ReplaceAll(packageDevDomain, eksaDefaultRegion, awsRegion)
 }

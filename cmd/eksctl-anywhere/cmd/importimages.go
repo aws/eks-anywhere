@@ -54,13 +54,14 @@ var importImagesCmdDeprecated = &cobra.Command{
 	},
 }
 
-func importImages(ctx context.Context, spec string) error {
+//gocyclo:ignore
+func importImages(ctx context.Context, clusterSpecPath string) error {
 	registryUsername := os.Getenv("REGISTRY_USERNAME")
 	registryPassword := os.Getenv("REGISTRY_PASSWORD")
 	if registryUsername == "" || registryPassword == "" {
 		return fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD for importing helm charts (e.g. cilium)")
 	}
-	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(clusterSpecPath, version.Get())
 	if err != nil {
 		return err
 	}
@@ -88,7 +89,7 @@ func importImages(ctx context.Context, spec string) error {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
 	}
 
-	images, err := getImages(spec)
+	images, err := getImages(clusterSpecPath, "")
 	if err != nil {
 		return err
 	}

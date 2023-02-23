@@ -273,6 +273,10 @@ func buildTemplateMapCP(
 		values["etcdVsphereStoragePolicyName"] = etcdMachineSpec.StoragePolicyName
 		values["etcdSshUsername"] = firstEtcdMachinesUser.Name
 		values["vsphereEtcdSshAuthorizedKey"] = etcdSSHKey
+
+		if etcdMachineSpec.HostOSConfiguration != nil && etcdMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+			values["etcdNtpServers"] = etcdMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
 	}
 
 	if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket {
@@ -289,6 +293,10 @@ func buildTemplateMapCP(
 
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
+	}
+
+	if controlPlaneMachineSpec.HostOSConfiguration != nil && controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+		values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
 	}
 
 	return values, nil
@@ -388,6 +396,10 @@ func buildTemplateMapMD(
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
+	}
+
+	if workerNodeGroupMachineSpec.HostOSConfiguration != nil && workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+		values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
 	}
 
 	return values, nil

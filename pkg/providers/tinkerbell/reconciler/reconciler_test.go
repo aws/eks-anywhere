@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,7 +72,7 @@ func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
@@ -83,7 +84,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T
 	tt.cluster.Spec.ManagementCluster.Name = "nonexistent-management-cluster"
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
@@ -96,7 +97,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testin
 	tt.managementCluster.Spec.DatacenterRef.Name = "nonexistent-datacenter"
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
@@ -114,7 +115,7 @@ func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, managementDatacenterConfig)
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
@@ -128,14 +129,14 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	remoteClient := fake.NewClientBuilder().Build()
-	spec := tt.buildSpec()
+	scope := tt.buildScope()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil)
-	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, scope.ClusterSpec)
 
-	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -147,7 +148,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.withFakeClient()
 
 	logger := test.NewNullLogger()
-	spec := tt.buildSpec()
+	spec := tt.buildScope()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: workloadClusterName, Namespace: constants.EksaSystemNamespace},
@@ -167,7 +168,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
-	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -230,13 +231,13 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 	t.Setenv("REGISTRY_PASSWORD", "password")
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
-	spec := tt.buildSpec()
-	spec.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 		Authenticate: true,
 		Endpoint:     "1.2.3.4",
 		Port:         "65536",
 	}
-	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -297,11 +298,11 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
-	spec := tt.buildSpec()
-	spec.Cluster = spec.Cluster.DeepCopy()
-	spec.Cluster.Name = ""
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster = scope.ClusterSpec.Cluster.DeepCopy()
+	scope.ClusterSpec.Cluster.Name = ""
 
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), scope)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("resource name may not be empty")))
 }
@@ -408,7 +409,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -528,7 +529,62 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("no available hardware"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+}
+
+func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+
+	tt.cluster.Name = "invalidCluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:   rufiov1alpha1.Contactable,
+					Status: rufiov1alpha1.ConditionTrue,
+				},
+			},
+		},
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc2",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:    rufiov1alpha1.Contactable,
+					Status:  rufiov1alpha1.ConditionFalse,
+					Message: "bmc connection failure",
+				},
+			},
+		},
+	})
+
+	tt.withFakeClient()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("bmc connection failure"))
 }
 
 func (tt *reconcilerTest) withFakeClient() {
@@ -537,6 +593,14 @@ func (tt *reconcilerTest) withFakeClient() {
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
 	return reconciler.New(tt.client, tt.cniReconciler, tt.remoteClientRegistry, tt.ipValidator)
+}
+
+func (tt *reconcilerTest) buildScope() *reconciler.Scope {
+	tt.t.Helper()
+	spec, err := clusterspec.BuildSpec(tt.ctx, clientutil.NewKubeClient(tt.client), tt.cluster)
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	return reconciler.NewScope(spec)
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {

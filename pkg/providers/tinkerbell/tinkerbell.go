@@ -56,8 +56,7 @@ type Provider struct {
 
 	hardwareCSVFile string
 	catalogue       *hardware.Catalogue
-	diskExtractor   hardware.DiskExtractor
-	tinkerbellIp    string
+	tinkerbellIP    string
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
@@ -88,10 +87,8 @@ type ProviderKubectlClient interface {
 	WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error
 	SearchTinkerbellMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellMachineConfig, error)
 	SearchTinkerbellDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.TinkerbellDatacenterConfig, error)
-
 	AllTinkerbellHardware(ctx context.Context, kuebconfig string) ([]tinkv1alpha1.Hardware, error)
 	AllBaseboardManagements(ctx context.Context, kubeconfig string) ([]rufiounreleased.BaseboardManagement, error)
-
 	HasCRD(ctx context.Context, kubeconfig, crd string) (bool, error)
 	DeleteCRD(ctx context.Context, kubeconfig, crd string) error
 }
@@ -110,54 +107,51 @@ func NewProvider(
 	docker stack.Docker,
 	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
-	tinkerbellIp string,
+	tinkerbellIP string,
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
 ) (*Provider, error) {
-	diskExtractor := hardware.NewDiskExtractor()
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-		err := diskExtractor.Register(controlPlaneMachineSpec.HardwareSelector)
-		if err != nil {
-			return nil, err
-		}
 	}
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(machineConfigs))
 	for _, wnConfig := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
 		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
 			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
 			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
-			err := diskExtractor.Register(workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name].HardwareSelector)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-			err := diskExtractor.Register(etcdMachineSpec.HardwareSelector)
-			if err != nil {
-				return nil, err
-			}
 		}
+	}
+
+	var proxyConfig *v1alpha1.ProxyConfiguration
+	if clusterConfig.Spec.ProxyConfiguration != nil {
+		proxyConfig = &v1alpha1.ProxyConfiguration{
+			HttpProxy:  clusterConfig.Spec.ProxyConfiguration.HttpProxy,
+			HttpsProxy: clusterConfig.Spec.ProxyConfiguration.HttpsProxy,
+			NoProxy:    GenerateNoProxyList(clusterConfig, datacenterConfig.Spec, tinkerbellIP),
+		}
+	} else {
+		proxyConfig = nil
 	}
 
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromCluster(clusterConfig)),
+		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registrymirror.FromCluster(clusterConfig), proxyConfig),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
-			diskExtractor:               diskExtractor,
-			tinkerbellIp:                tinkerbellIp,
+			tinkerbellIP:                tinkerbellIP,
 			now:                         now,
 		},
 		writer:          writer,
@@ -170,10 +164,9 @@ func NewProvider(
 			hardware.WithBMCNameIndex(),
 			hardware.WithSecretNameIndex(),
 		),
-		diskExtractor: *diskExtractor,
-		tinkerbellIp:  tinkerbellIp,
-		netClient:     &networkutils.DefaultNetClient{},
-		retrier:       retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		tinkerbellIP: tinkerbellIP,
+		netClient:    &networkutils.DefaultNetClient{},
+		retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.

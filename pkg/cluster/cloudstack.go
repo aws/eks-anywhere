@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"context"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func cloudstackEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -87,4 +91,18 @@ func processCloudStackMachineConfig(c *Config, objects ObjectLookup, machineRef 
 	}
 
 	c.CloudStackMachineConfigs[m.GetName()] = m.(*anywherev1.CloudStackMachineConfig)
+}
+
+func getCloudStackDatacenter(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.CloudStackDatacenterKind {
+		return nil
+	}
+
+	datacenter := &anywherev1.CloudStackDatacenterConfig{}
+	if err := client.Get(ctx, c.Cluster.Spec.DatacenterRef.Name, c.Cluster.Namespace, datacenter); err != nil {
+		return err
+	}
+
+	c.CloudStackDatacenter = datacenter
+	return nil
 }

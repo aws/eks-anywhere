@@ -11,7 +11,8 @@ import (
 )
 
 type listImagesOptions struct {
-	fileName string
+	fileName        string
+	bundlesOverride string
 }
 
 var lio = &listImagesOptions{}
@@ -19,10 +20,7 @@ var lio = &listImagesOptions{}
 func init() {
 	listCmd.AddCommand(listImagesCommand)
 	listImagesCommand.Flags().StringVarP(&lio.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	err := listImagesCommand.MarkFlagRequired("filename")
-	if err != nil {
-		log.Fatalf("Error marking filename flag as required: %v", err)
-	}
+	listImagesCommand.Flags().StringVarP(&lio.bundlesOverride, "bundles-override", "", "", "Override default Bundles manifest (not recommended)")
 }
 
 var listImagesCommand = &cobra.Command{
@@ -39,12 +37,12 @@ var listImagesCommand = &cobra.Command{
 	},
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return listImages(cmd.Context(), lio.fileName)
+		return listImages(cmd.Context(), lio.fileName, lio.bundlesOverride)
 	},
 }
 
-func listImages(context context.Context, spec string) error {
-	images, err := getImages(spec)
+func listImages(context context.Context, clusterSpecPath, bundlesOverride string) error {
+	images, err := getImages(clusterSpecPath, bundlesOverride)
 	if err != nil {
 		return err
 	}

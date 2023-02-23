@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -20,21 +19,25 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/version"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type downloadArtifactsOptions struct {
-	downloadDir string
-	fileName    string
-	dryRun      bool
-	retainDir   bool
+	downloadDir     string
+	fileName        string
+	bundlesOverride string
+	dryRun          bool
+	retainDir       bool
 }
 
 var downloadArtifactsopts = &downloadArtifactsOptions{}
 
 func init() {
 	downloadCmd.AddCommand(downloadArtifactsCmd)
+	downloadArtifactsCmd.Flags().StringVarP(&downloadArtifactsopts.bundlesOverride, "bundles-override", "", "", "Override default Bundles manifest (not recommended)")
 	downloadArtifactsCmd.Flags().StringVarP(&downloadArtifactsopts.fileName, "filename", "f", "", "[Deprecated] Filename that contains EKS-A cluster configuration")
 	downloadArtifactsCmd.Flags().StringVarP(&downloadArtifactsopts.downloadDir, "download-dir", "d", "eks-anywhere-downloads", "Directory to download the artifacts to")
 	downloadArtifactsCmd.Flags().BoolVarP(&downloadArtifactsopts.dryRun, "dry-run", "", false, "Print the manifest URIs without downloading them")
@@ -67,9 +70,17 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 
 	reader := deps.FileReader
 
-	bundles, err := deps.ManifestReader.ReadBundlesForVersion(version.Get().GitVersion)
-	if err != nil {
-		return err
+	var b *releasev1.Bundles
+	if opts.bundlesOverride != "" {
+		b, err = bundles.Read(reader, opts.bundlesOverride)
+		if err != nil {
+			return err
+		}
+	} else {
+		b, err = deps.ManifestReader.ReadBundlesForVersion(version.Get().GitVersion)
+		if err != nil {
+			return err
+		}
 	}
 
 	// download the eks-a-release.yaml
@@ -80,7 +91,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 		}
 	}
 
-	versionBundles := bundles.Spec.VersionsBundles
+	versionBundles := b.Spec.VersionsBundles
 	for i, bundle := range versionBundles {
 		for component, manifestList := range bundle.Manifests() {
 			for _, manifest := range manifestList {
@@ -100,15 +111,15 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 				*manifest = filePath
 			}
 		}
-		bundles.Spec.VersionsBundles[i] = bundle
+		b.Spec.VersionsBundles[i] = bundle
 	}
 
-	bundleReleaseContent, err := yaml.Marshal(bundles)
+	bundleReleaseContent, err := yaml.Marshal(b)
 	if err != nil {
 		return fmt.Errorf("marshaling bundle-release.yaml: %v", err)
 	}
 	bundleReleaseFilePath := filepath.Join(opts.downloadDir, "bundle-release.yaml")
-	if err = ioutil.WriteFile(bundleReleaseFilePath, bundleReleaseContent, 0o644); err != nil {
+	if err = os.WriteFile(bundleReleaseFilePath, bundleReleaseContent, 0o644); err != nil {
 		return err
 	}
 
@@ -149,7 +160,7 @@ func downloadArtifact(filePath, artifactUri string, reader *files.Reader) error 
 	if err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile(filePath, contents, 0o644); err != nil {
+	if err = os.WriteFile(filePath, contents, 0o644); err != nil {
 		return err
 	}
 

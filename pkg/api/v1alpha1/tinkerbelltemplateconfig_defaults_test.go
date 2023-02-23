@@ -26,14 +26,12 @@ warnings:
 `
 	tests := []struct {
 		testName        string
-		diskType        string
 		osFamily        OSFamily
 		osImageOverride string
 		wantActions     []tinkerbell.Action
 	}{
 		{
 			testName: "Bottlerocket-sda",
-			diskType: "/dev/sda",
 			osFamily: Bottlerocket,
 			wantActions: []tinkerbell.Action{
 				{
@@ -42,7 +40,7 @@ warnings:
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
-						"DEST_DISK":  "/dev/sda",
+						"DEST_DISK":  "{{ index .Hardware.Disks 0 }}",
 						"COMPRESSED": "true",
 					},
 				},
@@ -52,7 +50,7 @@ warnings:
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":           "/dev/sda12",
+						"DEST_DISK":           "{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}",
 						"FS_TYPE":             "ext4",
 						"DEST_PATH":           "/bootconfig.data",
 						"BOOTCONFIG_CONTENTS": bottlerocketBootconfig,
@@ -68,7 +66,7 @@ warnings:
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":  "/dev/sda12",
+						"DEST_DISK":  "{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}",
 						"FS_TYPE":    "ext4",
 						"DEST_PATH":  "/user-data.toml",
 						"HEGEL_URLS": metadataString,
@@ -84,7 +82,7 @@ warnings:
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":           "/dev/sda12",
+						"DEST_DISK":           "{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}",
 						"FS_TYPE":             "ext4",
 						"DEST_PATH":           "/net.toml",
 						"STATIC_BOTTLEROCKET": "true",
@@ -106,7 +104,6 @@ warnings:
 		},
 		{
 			testName: "Bottlerocket-nvme",
-			diskType: "/dev/nvme0n1",
 			osFamily: Bottlerocket,
 			wantActions: []tinkerbell.Action{
 				{
@@ -115,7 +112,7 @@ warnings:
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
-						"DEST_DISK":  "/dev/nvme0n1",
+						"DEST_DISK":  "{{ index .Hardware.Disks 0 }}",
 						"COMPRESSED": "true",
 					},
 				},
@@ -125,7 +122,7 @@ warnings:
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":           "/dev/nvme0n1p12",
+						"DEST_DISK":           "{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}",
 						"FS_TYPE":             "ext4",
 						"DEST_PATH":           "/bootconfig.data",
 						"BOOTCONFIG_CONTENTS": bottlerocketBootconfig,
@@ -141,7 +138,7 @@ warnings:
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":  "/dev/nvme0n1p12",
+						"DEST_DISK":  "{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}",
 						"FS_TYPE":    "ext4",
 						"DEST_PATH":  "/user-data.toml",
 						"HEGEL_URLS": metadataString,
@@ -157,7 +154,7 @@ warnings:
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":           "/dev/nvme0n1p12",
+						"DEST_DISK":           "{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}",
 						"FS_TYPE":             "ext4",
 						"DEST_PATH":           "/net.toml",
 						"STATIC_BOTTLEROCKET": "true",
@@ -179,7 +176,6 @@ warnings:
 		},
 		{
 			testName:        "RedHat-sda",
-			diskType:        "/dev/sda",
 			osFamily:        RedHat,
 			osImageOverride: "http://tinkerbell-example:8080/redhat-8.4-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
@@ -189,7 +185,7 @@ warnings:
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/redhat-8.4-kube-v1.21.5.gz",
-						"DEST_DISK":  "/dev/sda",
+						"DEST_DISK":  "{{ index .Hardware.Disks 0 }}",
 						"COMPRESSED": "true",
 					},
 				},
@@ -198,7 +194,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK":      "/dev/sda1",
+						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
 						"DEST_PATH":      "/etc/netplan/config.yaml",
 						"DIRMODE":        "0755",
 						"FS_TYPE":        "ext4",
@@ -215,7 +211,7 @@ warnings:
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
-						"DEST_DISK": "/dev/sda1",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
 						"DIRMODE":   "0700",
 						"FS_TYPE":   "ext4",
@@ -229,7 +225,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/sda1",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 						"CONTENTS":  fmt.Sprintf(cloudInit, rhelMetadataString),
@@ -244,7 +240,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/sda1",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 						"CONTENTS":  "datasource: Ec2\n",
@@ -265,7 +261,6 @@ warnings:
 		},
 		{
 			testName:        "Ubuntu-sda",
-			diskType:        "/dev/sda",
 			osFamily:        Ubuntu,
 			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
@@ -275,7 +270,7 @@ warnings:
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
-						"DEST_DISK":  "/dev/sda",
+						"DEST_DISK":  "{{ index .Hardware.Disks 0 }}",
 						"COMPRESSED": "true",
 					},
 				},
@@ -284,7 +279,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK":      "/dev/sda2",
+						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"DEST_PATH":      "/etc/netplan/config.yaml",
 						"DIRMODE":        "0755",
 						"FS_TYPE":        "ext4",
@@ -301,7 +296,7 @@ warnings:
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
-						"DEST_DISK": "/dev/sda2",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
 						"DIRMODE":   "0700",
 						"FS_TYPE":   "ext4",
@@ -315,7 +310,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/sda2",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
@@ -330,7 +325,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/sda2",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 						"CONTENTS":  "datasource: Ec2\n",
@@ -341,20 +336,16 @@ warnings:
 					},
 				},
 				{
-					Name:    "kexec-image",
-					Image:   "public.ecr.aws/eks-anywhere/kexec:latest",
+					Name:    "reboot-image",
+					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
 					Timeout: 90,
 					Pid:     "host",
-					Environment: map[string]string{
-						"BLOCK_DEVICE": "/dev/sda2",
-						"FS_TYPE":      "ext4",
-					},
+					Volumes: []string{"/worker:/worker"},
 				},
 			},
 		},
 		{
 			testName:        "Ubuntu-nvme",
-			diskType:        "/dev/nvme0n1",
 			osFamily:        Ubuntu,
 			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
@@ -364,7 +355,7 @@ warnings:
 					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
-						"DEST_DISK":  "/dev/nvme0n1",
+						"DEST_DISK":  "{{ index .Hardware.Disks 0 }}",
 						"COMPRESSED": "true",
 					},
 				},
@@ -373,7 +364,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK":      "/dev/nvme0n1p2",
+						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"DEST_PATH":      "/etc/netplan/config.yaml",
 						"DIRMODE":        "0755",
 						"FS_TYPE":        "ext4",
@@ -390,7 +381,7 @@ warnings:
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
-						"DEST_DISK": "/dev/nvme0n1p2",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
 						"DIRMODE":   "0700",
 						"FS_TYPE":   "ext4",
@@ -404,7 +395,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/nvme0n1p2",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
@@ -419,7 +410,7 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/nvme0n1p2",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 						"CONTENTS":  "datasource: Ec2\n",
@@ -443,7 +434,7 @@ warnings:
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			givenActions := []tinkerbell.Action{}
-			opts := GetDefaultActionsFromBundle(vBundle, tt.diskType, tt.osImageOverride, tinkerbellLocalIp, tinkerbellLBIP, tt.osFamily)
+			opts := GetDefaultActionsFromBundle(vBundle, tt.osImageOverride, tinkerbellLocalIp, tinkerbellLBIP, tt.osFamily)
 			for _, opt := range opts {
 				opt(&givenActions)
 			}

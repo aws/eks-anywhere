@@ -9,6 +9,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -66,6 +67,7 @@ type Installer struct {
 	helm            Helm
 	podCidrRange    string
 	registryMirror  *registrymirror.RegistryMirror
+	proxyConfig     *v1alpha1.ProxyConfiguration
 	namespace       string
 	createNamespace bool
 	bootsOnDocker   bool
@@ -118,12 +120,13 @@ func WithLoadBalancerEnabled(enabled bool) InstallOption {
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack.
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *registrymirror.RegistryMirror) StackInstaller {
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *registrymirror.RegistryMirror, proxyConfig *v1alpha1.ProxyConfiguration) StackInstaller {
 	return &Installer{
 		docker:         docker,
 		filewriter:     filewriter,
 		helm:           helm,
 		registryMirror: registryMirror,
+		proxyConfig:    proxyConfig,
 		namespace:      namespace,
 		podCidrRange:   podCidrRange,
 	}
@@ -162,7 +165,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		tinkServer: map[string]interface{}{
 			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
-			args:  []string{"--tls=false"},
+			args:  []string{},
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
 			},
@@ -298,6 +301,10 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 			bootsEnv["REGISTRY_PASSWORD"] = password
 		}
 	}
+	if s.proxyConfig != nil {
+		noProxy := strings.Join(s.proxyConfig.NoProxy, ",")
+		extraKernelArgs = fmt.Sprintf("%s HTTP_PROXY=%s HTTPS_PROXY=%s NO_PROXY=%s", extraKernelArgs, s.proxyConfig.HttpProxy, s.proxyConfig.HttpsProxy, noProxy)
+	}
 	bootsEnv["BOOTS_EXTRA_KERNEL_ARGS"] = extraKernelArgs
 
 	return bootsEnv
@@ -377,6 +384,7 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		tinkServer: map[string]interface{}{
 			image: bundle.TinkerbellStack.Tink.TinkServer.URI,
+			args:  []string{},
 		},
 		hegel: map[string]interface{}{
 			image: bundle.TinkerbellStack.Hegel.URI,

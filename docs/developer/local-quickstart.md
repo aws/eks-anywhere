@@ -58,3 +58,18 @@ If using VSCode, you can use the following as a `launch.json` configuration:
     ]
 }
 ```
+
+## Building e2e Tests
+
+Building e2e tests requires adding build tags. You can read more about what they are and how they work here.
+
+If using vscode, add this to your `.vscode/settings.json` file:
+```
+{
+    ...
+    "go.buildFlags": [
+        "-tags=e2e,all_providers"
+    ],
+    ...
+}
+```

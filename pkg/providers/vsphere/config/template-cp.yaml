@@ -400,6 +400,13 @@ spec:
 {{- end }}
         {{- end }}
 {{- end }}
+{{- if .cpNtpServers }}
+    ntp:
+      enabled: true
+      servers: {{ range .cpNtpServers }}
+      - {{ . }}
+      {{- end }}
+{{- end }}
     preKubeadmCommands:
 {{- if and .registryMirrorMap (ne .format "bottlerocket") }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
@@ -484,6 +491,13 @@ spec:
   etcdadmConfigSpec:
     etcdadmBuiltin: true
     format: {{.format}}
+{{- if .etcdNtpServers }}
+    ntp:
+      enabled: true
+      servers: {{ range .etcdNtpServers }}
+      - {{ . }}
+      {{- end }}
+{{- end }}
 {{- if (eq .format "bottlerocket") }}
     bottlerocketConfig:
       etcdImage: {{.etcdImage}}

@@ -188,7 +188,20 @@ Follow these steps if you want to use your initial cluster to create and manage 
    Refer to the initial config described earlier for the required and optional settings. In particular:
 
    * Ensure workload cluster object names (`Cluster`, `CloudDatacenterConfig`, `CloudStackMachineConfig`, etc.) are distinct from management cluster object names.
-   * Be sure to set the `managementCluster` field to identify the name of the management cluster.
+
+1. Be sure to set the `managementCluster` field to identify the name of the management cluster.
+
+   For example, the management cluster, _mgmt_ is defined for our workload cluster _w01_ as follows:
+
+   ```yaml
+   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+   kind: Cluster
+   metadata:
+     name: w01
+   spec:
+     managementCluster:
+       name: mgmt
+   ```
 
 1. Set License Environment Variable
 

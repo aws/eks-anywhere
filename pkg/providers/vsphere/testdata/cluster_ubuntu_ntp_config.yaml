@@ -1,0 +1,124 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+spec:
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: 1.2.3.4
+    machineGroupRef:
+      name: test-cp
+      kind: VSphereMachineConfig
+  kubernetesVersion: "1.21"
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        name: test-wn
+        kind: VSphereMachineConfig
+      name: md-0
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      name: test-etcd
+      kind: VSphereMachineConfig
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: test-cp
+spec:
+  diskGiB: 25
+  cloneMode: linkedClone
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  folder: "/SDDC-Datacenter/vm"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: "*/Resources"
+  storagePolicyName: "vSAN Default Storage Policy"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+  hostOSConfiguration:
+    ntpConfiguration:
+      servers:
+        - time-a-cp.eks-a.aws
+        - time-b-cp.eks-a.aws
+        - 192.168.0.10
+  users:
+    - name: ec2-user
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: test-wn
+spec:
+  diskGiB: 25
+  cloneMode: linkedClone
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  folder: "/SDDC-Datacenter/vm"
+  memoryMiB: 4096
+  numCPUs: 3
+  osFamily: ubuntu
+  resourcePool: "*/Resources"
+  storagePolicyName: "vSAN Default Storage Policy"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+  hostOSConfiguration:
+    ntpConfiguration:
+      servers:
+        - time-a-wn.eks-a.aws
+        - time-b-wn.eks-a.aws
+        - 192.168.0.10
+  users:
+    - name: ec2-user
+      sshAuthorizedKeys:
+        - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: test-etcd
+spec:
+  diskGiB: 25
+  cloneMode: linkedClone
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  folder: "/SDDC-Datacenter/vm"
+  memoryMiB: 4096
+  numCPUs: 3
+  osFamily: ubuntu
+  resourcePool: "*/Resources"
+  storagePolicyName: "vSAN Default Storage Policy"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+  hostOSConfiguration:
+    ntpConfiguration:
+      servers:
+        - time-a-etcd.eks-a.aws
+        - time-b-etcd.eks-a.aws
+        - 192.168.0.10
+  users:
+    - name: ec2-user
+      sshAuthorizedKeys:
+       - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: test
+spec:
+  datacenter: "SDDC-Datacenter"
+  network: "/SDDC-Datacenter/network/sddc-cgw-network-1"
+  server: "vsphere_server"
+  thumbprint: "ABCDEFG"
+  insecure: false

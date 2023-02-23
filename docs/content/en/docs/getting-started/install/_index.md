@@ -24,13 +24,14 @@ This will let you create a cluster in multiple providers for local development o
 - 30GB free disk space
 - Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
 
-   {{% alert title="Note" color="primary" %}}
-   * If you are using Ubuntu use the Docker CE installation instructions to install Docker and not the Snap installation, as described [here.](https://docs.docker.com/engine/install/ubuntu/)
-   * If you are using Ubuntu 21.10 or 22.04 you will need to switch from _cgroups v2_ to _cgroups v1_. For details, see [Troubleshooting Guide.]({{< relref "../../tasks/troubleshoot/troubleshooting.md#cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
-   * If you are using Docker Desktop, you need to know that:
-       * For EKS Anywhere Bare Metal, Docker Desktop is not supported
-       * For EKS Anywhere vSphere, if you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
-   {{% /alert %}}
+If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described [here.](https://docs.docker.com/engine/install/ubuntu/)
+
+If you are using Ubuntu 21.10 or 22.04, you will need to switch from _cgroups v2_ to _cgroups v1_. For details, see [Troubleshooting Guide.]({{< relref "../../tasks/troubleshoot/troubleshooting.md#cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
+
+If you are using Docker Desktop, you need to know that:
+
+* For EKS Anywhere Bare Metal, Docker Desktop is not supported
+* For EKS Anywhere vSphere, if you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
 
 
 ### Install EKS Anywhere CLI tools
@@ -64,7 +65,7 @@ sudo mv /tmp/eksctl /usr/local/bin/
 Install the `eksctl-anywhere` plugin.
 
 ```bash
-export EKSA_RELEASE="0.14.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=28
+export EKSA_RELEASE="0.14.2" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=29
 curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
     --silent --location \
     | tar xz ./eksctl-anywhere
