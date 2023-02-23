@@ -55,6 +55,17 @@ func TestTinkerbellMachineConfigValidateFail(t *testing.T) {
 			}),
 			expectedErr: "unsupported spec.osFamily (invalid OS); Please use one of the following",
 		},
+		{
+			name: "Invalid hostOSConfiguration",
+			machineConfig: createTinkerbellMachineConfig(
+				withHostOSConfiguration(
+					&HostOSConfiguration{
+						NTPConfiguration: &NTPConfiguration{},
+					},
+				),
+			),
+			expectedErr: "HostOSConfiguration is invalid for TinkerbellMachineConfig tinkerbellmachineconfig: NTPConfiguration.Servers can not be empty",
+		},
 	}
 
 	for _, tc := range tests {
@@ -66,6 +77,12 @@ func TestTinkerbellMachineConfigValidateFail(t *testing.T) {
 }
 
 type tinkerbellMachineConfigOpt func(mc *TinkerbellMachineConfig)
+
+func withHostOSConfiguration(config *HostOSConfiguration) tinkerbellMachineConfigOpt {
+	return func(mc *TinkerbellMachineConfig) {
+		mc.Spec.HostOSConfiguration = config
+	}
+}
 
 func createTinkerbellMachineConfig(options ...tinkerbellMachineConfigOpt) *TinkerbellMachineConfig {
 	defaultMachineConfig := &TinkerbellMachineConfig{
