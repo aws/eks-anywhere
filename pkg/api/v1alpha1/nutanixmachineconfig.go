@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -111,7 +111,7 @@ func (c *NutanixMachineConfigGenerate) Name() string {
 
 func GetNutanixMachineConfigs(fileName string) (map[string]*NutanixMachineConfig, error) {
 	configs := make(map[string]*NutanixMachineConfig)
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}

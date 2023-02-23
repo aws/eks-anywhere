@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -177,7 +176,7 @@ func (dt *deployTemplateTest) assertDeployTemplateError(t *testing.T) {
 func (dt *deployTemplateTest) assertDeployOptsMatches(t *testing.T) {
 	g := NewWithT(t)
 
-	actual, err := ioutil.ReadFile(filepath.Join(dt.dir, executables.DeployOptsFile))
+	actual, err := os.ReadFile(filepath.Join(dt.dir, executables.DeployOptsFile))
 	if err != nil {
 		t.Fatalf("failed to read deploy options file: %v", err)
 	}

@@ -52,8 +52,8 @@ spec:
   hostOSConfiguration:
     ntpConfiguration:
       servers:
-        - time-a.eks-a.aws
-        - time-b.eks-a.aws
+        - time-a-cp.eks-a.aws
+        - time-b-cp.eks-a.aws
         - 192.168.0.10
   users:
     - name: ec2-user
@@ -78,8 +78,8 @@ spec:
   hostOSConfiguration:
     ntpConfiguration:
       servers:
-        - time-a.eks-a.aws
-        - time-b.eks-a.aws
+        - time-a-wn.eks-a.aws
+        - time-b-wn.eks-a.aws
         - 192.168.0.10
   users:
     - name: ec2-user
@@ -104,8 +104,8 @@ spec:
   hostOSConfiguration:
     ntpConfiguration:
       servers:
-        - time-a.eks-a.aws
-        - time-b.eks-a.aws
+        - time-a-etcd.eks-a.aws
+        - time-b-etcd.eks-a.aws
         - 192.168.0.10
   users:
     - name: ec2-user

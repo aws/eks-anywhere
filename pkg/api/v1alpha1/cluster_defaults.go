@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -35,7 +34,7 @@ func setRegistryMirrorConfigDefaults(clusterConfig *Cluster) error {
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
-			content, err := ioutil.ReadFile(caCert)
+			content, err := os.ReadFile(caCert)
 			if err != nil {
 				return fmt.Errorf("reading the cert file %s: %v", caCert, err)
 			}

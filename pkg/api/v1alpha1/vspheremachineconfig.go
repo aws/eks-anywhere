@@ -2,8 +2,8 @@ package v1alpha1
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,7 +59,7 @@ func (c *VSphereMachineConfigGenerate) Name() string {
 
 func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig, error) {
 	configs := make(map[string]*VSphereMachineConfig)
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}

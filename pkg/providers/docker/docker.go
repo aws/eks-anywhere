@@ -15,12 +15,15 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -292,6 +295,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	}
 	values["auditPolicy"] = auditPolicy
 
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values = populateRegistryMirrorValues(clusterSpec, values)
+	}
+
 	return values, nil
 }
 
@@ -318,6 +325,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		"workerNodeGroupName":   fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints": workerNodeGroupConfiguration.Taints,
 		"autoscalingConfig":     workerNodeGroupConfiguration.AutoScalingConfiguration,
+	}
+
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values = populateRegistryMirrorValues(clusterSpec, values)
 	}
 
 	return values, nil
@@ -611,4 +622,25 @@ func (p *provider) PreCoreComponentsUpgrade(
 	clusterSpec *cluster.Spec,
 ) error {
 	return nil
+}
+
+func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) map[string]interface{} {
+	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
+	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+	values["mirrorBase"] = registryMirror.BaseRegistry
+	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
+	if len(registryMirror.CACertContent) > 0 {
+		values["registryCACert"] = registryMirror.CACertContent
+	}
+
+	if registryMirror.Auth {
+		values["registryAuth"] = registryMirror.Auth
+		username, password, err := config.ReadCredentials()
+		if err != nil {
+			return values
+		}
+		values["registryUsername"] = username
+		values["registryPassword"] = password
+	}
+	return values
 }

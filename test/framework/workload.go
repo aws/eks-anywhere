@@ -47,7 +47,7 @@ func (w *WorkloadCluster) ApplyClusterManifest() {
 func (w *WorkloadCluster) DeleteClusterWithKubectl() {
 	ctx := context.Background()
 	w.T.Logf("Deleting workload cluster %s with kubectl", w.ClusterName)
-	if err := w.KubectlClient.DeleteCluster(ctx, w.managementCluster(), w.Cluster()); err != nil {
+	if err := w.KubectlClient.DeleteManifest(ctx, w.ManagementClusterKubeconfigFile(), w.ClusterConfigLocation); err != nil {
 		w.T.Fatalf("Failed to delete workload cluster config: %s", err)
 	}
 	w.StopIfFailed()

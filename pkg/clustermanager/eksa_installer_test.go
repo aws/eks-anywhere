@@ -2,6 +2,7 @@ package clustermanager_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -252,6 +253,7 @@ func TestSetManagerFlags(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			os.Unsetenv(features.FullLifecycleAPIEnvVar)
 			features.ClearCache()
 			for _, e := range tt.featureEnvVars {
 				t.Setenv(e, "true")

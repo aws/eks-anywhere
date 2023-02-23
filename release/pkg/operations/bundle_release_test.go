@@ -17,7 +17,6 @@ package operations
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -157,7 +156,7 @@ func TestGenerateBundleManifest(t *testing.T) {
 
 			expectedBundleManifestFile := filepath.Join(gitRoot, releaseFolder, testdataFolder, fmt.Sprintf("%s-bundle-release.yaml", tt.buildRepoBranchName))
 			generatedBundleManifestFile := filepath.Join(generatedBundlePath, fmt.Sprintf("%s-dry-run-bundle-release.yaml", tt.buildRepoBranchName))
-			err = ioutil.WriteFile(generatedBundleManifestFile, bundleManifest, 0o644)
+			err = os.WriteFile(generatedBundleManifestFile, bundleManifest, 0o644)
 			if err != nil {
 				t.Fatalf("Error writing bundles manifest file to disk: %v\n", err)
 			}

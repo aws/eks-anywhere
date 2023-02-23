@@ -16,7 +16,6 @@ package operations
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -82,7 +81,7 @@ func RenameArtifacts(r *releasetypes.ReleaseConfig, artifacts map[string][]relea
 				}
 
 				for _, imageTagOverride := range manifestArtifact.ImageTagOverrides {
-					manifestFileContents, err := ioutil.ReadFile(newArtifactFile)
+					manifestFileContents, err := os.ReadFile(newArtifactFile)
 					if err != nil {
 						return errors.Cause(err)
 					}
@@ -90,7 +89,7 @@ func RenameArtifacts(r *releasetypes.ReleaseConfig, artifacts map[string][]relea
 					compiledRegex := regexp.MustCompile(regex)
 					fmt.Printf("Overriding image to %s in manifest %s\n", imageTagOverride.ReleaseUri, newArtifactFile)
 					updatedManifestFileContents := compiledRegex.ReplaceAllString(string(manifestFileContents), imageTagOverride.ReleaseUri)
-					err = ioutil.WriteFile(newArtifactFile, []byte(updatedManifestFileContents), 0o644)
+					err = os.WriteFile(newArtifactFile, []byte(updatedManifestFileContents), 0o644)
 					if err != nil {
 						return errors.Cause(err)
 					}

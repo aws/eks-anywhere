@@ -8,7 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -40,20 +40,22 @@ import (
 )
 
 const (
-	defaultClusterConfigFile         = "cluster.yaml"
-	defaultBundleReleaseManifestFile = "bin/local-bundle-release.yaml"
-	defaultEksaBinaryLocation        = "eksctl anywhere"
-	defaultClusterName               = "eksa-test"
-	eksctlVersionEnvVar              = "EKSCTL_VERSION"
-	eksctlVersionEnvVarDummyVal      = "ham sandwich"
-	ClusterPrefixVar                 = "T_CLUSTER_PREFIX"
-	JobIdVar                         = "T_JOB_ID"
-	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
-	ClusterIPPoolEnvVar              = "T_CLUSTER_IP_POOL"
-	CleanupVmsVar                    = "T_CLEANUP_VMS"
-	hardwareYamlPath                 = "hardware.yaml"
-	hardwareCsvPath                  = "hardware.csv"
-	EksaPackagesInstallation         = "eks-anywhere-packages"
+	defaultClusterConfigFile               = "cluster.yaml"
+	defaultBundleReleaseManifestFile       = "bin/local-bundle-release.yaml"
+	defaultEksaBinaryLocation              = "eksctl anywhere"
+	defaultClusterName                     = "eksa-test"
+	defaultDownloadArtifactsOutputLocation = "eks-anywhere-downloads.tar.gz"
+	defaultDownloadImagesOutputLocation    = "images.tar"
+	eksctlVersionEnvVar                    = "EKSCTL_VERSION"
+	eksctlVersionEnvVarDummyVal            = "ham sandwich"
+	ClusterPrefixVar                       = "T_CLUSTER_PREFIX"
+	JobIdVar                               = "T_JOB_ID"
+	BundlesOverrideVar                     = "T_BUNDLES_OVERRIDE"
+	ClusterIPPoolEnvVar                    = "T_CLUSTER_IP_POOL"
+	CleanupVmsVar                          = "T_CLEANUP_VMS"
+	hardwareYamlPath                       = "hardware.yaml"
+	hardwareCsvPath                        = "hardware.csv"
+	EksaPackagesInstallation               = "eks-anywhere-packages"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -584,29 +586,65 @@ func (e *ClusterE2ETest) WithClusterConfig(fillers ...api.ClusterConfigFiller) *
 	return e
 }
 
+// DownloadArtifacts runs the EKS-A `download artifacts` command with appropriate args.
+func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
+	downloadArtifactsArgs := []string{"download", "artifacts", "-f", e.ClusterConfigLocation}
+	if getBundlesOverride() == "true" {
+		downloadArtifactsArgs = append(downloadArtifactsArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+	e.RunEKSA(downloadArtifactsArgs, opts...)
+	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err != nil {
+		e.T.Fatal(err)
+	} else {
+		e.T.Logf("Downloaded artifacts tarball saved at %s", defaultDownloadArtifactsOutputLocation)
+	}
+}
+
+// ExtractDownloadedArtifacts extracts the downloaded artifacts.
+func (e *ClusterE2ETest) ExtractDownloadedArtifacts(opts ...CommandOpt) {
+	e.T.Log("Extracting downloaded artifacts")
+	e.Run("tar", "-xf", defaultDownloadArtifactsOutputLocation)
+}
+
+// DownloadImages runs the EKS-A `download images` command with appropriate args.
+func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
+	downloadImagesArgs := []string{"download", "images", "-o", defaultDownloadImagesOutputLocation}
+	if getBundlesOverride() == "true" {
+		var bundleManifestLocation string
+		if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
+			bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+		} else {
+			bundleManifestLocation = defaultBundleReleaseManifestFile
+		}
+		downloadImagesArgs = append(downloadImagesArgs, "--bundles-override", bundleManifestLocation)
+	}
+	e.RunEKSA(downloadImagesArgs, opts...)
+	if _, err := os.Stat(defaultDownloadImagesOutputLocation); err != nil {
+		e.T.Fatal(err)
+	} else {
+		e.T.Logf("Downloaded images archive saved at %s", defaultDownloadImagesOutputLocation)
+	}
+}
+
+// ImportImages runs the EKS-A `import images` command with appropriate args.
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
-	importImagesArgs := []string{"import-images", "-f", e.ClusterConfigLocation}
+	clusterConfig := e.ClusterConfig.Cluster
+	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
+	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
+	var bundleManifestLocation string
+	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
+		bundleManifestLocation = "eks-anywhere-downloads/bundle-release.yaml"
+	} else {
+		bundleManifestLocation = defaultBundleReleaseManifestFile
+	}
+	importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", registryMirrorHost, "--insecure"}
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
-func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
-	downloadArtifactsArgs := []string{"download", "artifacts", "-f", e.ClusterConfigLocation}
-	e.RunEKSA(downloadArtifactsArgs, opts...)
-	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
-		e.T.Fatal(err)
-	} else {
-		e.T.Log("Downloaded artifacts saved at eks-anywhere-downloads.tar.gz")
-	}
-}
-
-// ExtractDownloadedArtifacts extract the downloaded artifacts.
-func (e *ClusterE2ETest) ExtractDownloadedArtifacts(opts ...CommandOpt) {
-	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
-		e.T.Fatal(err)
-	}
-
-	e.T.Logf("Extract downloaded artifacts ")
-	e.Run("tar", "-xf", "eks-anywhere-downloads.tar.gz")
+// ChangeInstanceSecurityGroup modifies the security group of the instance to the provided value.
+func (e *ClusterE2ETest) ChangeInstanceSecurityGroup(securityGroup string) {
+	e.T.Logf("Changing instance security group to %s", securityGroup)
+	e.Run(fmt.Sprintf("INSTANCE_ID=$(ec2-metadata -i | awk '{print $2}') && aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --groups %s", securityGroup))
 }
 
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
@@ -621,7 +659,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	if err != nil {
 		e.T.Fatal(err)
 	}
-	b, err := ioutil.ReadAll(file)
+	b, err := io.ReadAll(file)
 	if err != nil {
 		e.T.Fatal(err)
 	}
@@ -1467,6 +1505,149 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
 	}
+}
+
+// VerifyCertManagerPackageInstalled is checking if the cert manager package gets installed correctly.
+func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namespace string, packageName string, mgmtCluster *types.Cluster) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	deployments := []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"}
+
+	var wg sync.WaitGroup
+	errCh := make(chan error, 1)
+	okCh := make(chan string, 1)
+
+	e.T.Log("Waiting for Package", packageName, "To be installed")
+
+	ns := fmt.Sprintf("%s-%s", namespace, e.ClusterName)
+	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
+		mgmtCluster, prefix+"-"+packageName, "5m", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for cert-manager package timed out: %s", err)
+	}
+
+	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
+
+	for _, name := range deployments {
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+			err := e.KubectlClient.WaitForDeployment(ctx,
+				e.Cluster(), "5m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
+			if err != nil {
+				errCh <- err
+			}
+		}(name)
+	}
+
+	e.T.Log("Waiting for Self Signed certificate to be issued")
+	err = e.verifySelfSignedCertificate(mgmtCluster)
+	if err != nil {
+		errCh <- err
+	}
+
+	e.T.Log("Waiting for Let's Encrypt certificate to be issued")
+	err = e.verifyLetsEncryptCert(mgmtCluster)
+	if err != nil {
+		errCh <- err
+	}
+
+	go func() {
+		wg.Wait()
+		okCh <- "completed"
+	}()
+
+	select {
+	case err := <-errCh:
+		e.T.Fatal(err)
+	case <-okCh:
+		return
+	}
+}
+
+//go:embed testdata/certmanager/certmanager_selfsignedissuer.yaml
+var certManagerSelfSignedIssuer []byte
+
+//go:embed testdata/certmanager/certmanager_selfsignedcert.yaml
+var certManagerSelfSignedCert []byte
+
+func (e *ClusterE2ETest) verifySelfSignedCertificate(mgmtCluster *types.Cluster) error {
+	ctx := context.Background()
+	selfsignedCert := "my-selfsigned-ca"
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSelfSignedIssuer)
+	if err != nil {
+		return fmt.Errorf("error installing Cluster issuer for cert manager: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSelfSignedCert)
+	if err != nil {
+		return fmt.Errorf("error applying certificate for cert manager: %v", err)
+	}
+
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
+		fmt.Sprintf("certificates.cert-manager.io/%s", selfsignedCert), constants.EksaPackagesName)
+	if err != nil {
+		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
+	}
+	return nil
+}
+
+//go:embed testdata/certmanager/certmanager_letsencrypt_issuer.yaml
+var certManagerLetsEncryptIssuer string
+
+//go:embed testdata/certmanager/certmanager_letsencrypt_cert.yaml
+var certManagerLetsEncryptCert []byte
+
+//go:embed testdata/certmanager/certmanager_secret.yaml
+var certManagerSecret string
+
+func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error {
+	ctx := context.Background()
+	letsEncryptCert := "test-cert"
+	accessKey, secretAccess, region, zoneID := GetRoute53Configs()
+	data := map[string]interface{}{
+		"route53SecretAccessKey": secretAccess,
+	}
+
+	certManagerSecretData, err := templater.Execute(certManagerSecret, data)
+	if err != nil {
+		return fmt.Errorf("failed creating cert manager secret: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSecretData)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager secret: %v", err)
+	}
+
+	data = map[string]interface{}{
+		"route53AccessKeyId": accessKey,
+		"route53ZoneId":      zoneID,
+		"route53Region":      region,
+	}
+
+	certManagerIssuerData, err := templater.Execute(certManagerLetsEncryptIssuer, data)
+	if err != nil {
+		return fmt.Errorf("failed creating lets encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerIssuerData)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager let's encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerLetsEncryptCert)
+	if err != nil {
+		return fmt.Errorf("error creating cert manager let's encrypt issuer: %v", err)
+	}
+
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, e.Cluster().KubeconfigFile, "5m", "status.conditions[?(@.type=='Ready')].status", "True",
+		fmt.Sprintf("certificates.cert-manager.io/%s", letsEncryptCert), constants.EksaPackagesName)
+	if err != nil {
+		return fmt.Errorf("failed to issue a self signed certificate: %v", err)
+	}
+
+	return nil
 }
 
 // VerifyPrometheusPrometheusServerStates is checking if the Prometheus package prometheus-server component is functioning properly.

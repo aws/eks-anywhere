@@ -273,6 +273,10 @@ func buildTemplateMapCP(
 		values["etcdVsphereStoragePolicyName"] = etcdMachineSpec.StoragePolicyName
 		values["etcdSshUsername"] = firstEtcdMachinesUser.Name
 		values["vsphereEtcdSshAuthorizedKey"] = etcdSSHKey
+
+		if etcdMachineSpec.HostOSConfiguration != nil && etcdMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+			values["etcdNtpServers"] = etcdMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
 	}
 
 	if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket {
@@ -292,7 +296,7 @@ func buildTemplateMapCP(
 	}
 
 	if controlPlaneMachineSpec.HostOSConfiguration != nil && controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
-		values["ntpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
 	}
 
 	return values, nil

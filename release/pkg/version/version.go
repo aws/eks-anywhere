@@ -19,7 +19,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -129,7 +129,7 @@ func GenerateManifestHash(r *releasetypes.ReleaseConfig, manifestArtifact *relea
 		return FakeComponentChecksum, nil
 	}
 
-	manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+	manifestContents, err := os.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed reading manifest contents from [%s]", manifestArtifact.ArtifactPath)
 	}
