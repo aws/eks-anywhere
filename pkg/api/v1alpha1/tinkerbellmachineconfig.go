@@ -123,5 +123,9 @@ func validateTinkerbellMachineConfig(config *TinkerbellMachineConfig) error {
 		return fmt.Errorf("TinkerbellMachineConfig: missing spec.Users: %s", config.Name)
 	}
 
+	if err := validateHostOSConfig(config.Spec.HostOSConfiguration); err != nil {
+		return fmt.Errorf("HostOSConfiguration is invalid for TinkerbellMachineConfig %s: %v", config.Name, err)
+	}
+
 	return nil
 }

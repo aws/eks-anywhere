@@ -56,3 +56,7 @@ func buildHelm(t T) *executables.Helm {
 
 	return helm
 }
+
+func buildSSH(t T) *executables.SSH {
+	return executables.NewLocalExecutablesBuilder().BuildSSHExecutable()
+}
