@@ -67,3 +67,4 @@ skipped_tests:
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterWorkerScaleDown
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterWorkerScaleup
+- TestTinkerbellKubernetes125UbuntuExternalEtcdSimpleFlow
