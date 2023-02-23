@@ -22,6 +22,56 @@ This section provides information about:
 
 * Using Cilium to securing workload connectivity using Kubernetes Network Policy.
 
+## Cilium Features
+The following table lists Cilium features and notes which of those features are built into EKS Anywhere, upstream Open Source and Cilium Enterprise.
+
+<details><summary>Expand to see Cilium Features</summary>
+
+| Cilium Features         | For EKS Anywhere | For Open Source     | For Enterprise |
+|-------------------------|------------------|---------------------|----------------|
+| **Networking and Security (Cilium)** ||||
+| **Advanced Networking & Routing (CNI)** ||||
+| eBPF powered high performance datapath | | **&#10004;** | **&#10004;** |
+| Overlay, Direct, and Cloud Provider Routing Modes |   | **&mdash;** | **&#10004;** |
+| High-performance L3/L4 Pod Load-balancing (kube-proxy replacement) |   | **&#10004;** | **&#10004;** |
+| Advanced Bandwidth Management (Fair Queueing, TCP Optimization, Rate Limiting) |   | **&#10004;** | **&#10004;** |
+| 3rd-party BGP integrations (MetalLB, BIRD, etc.) |   | **&#10004;** | **&#10004;** |
+| SRv6 |   | **&mdash;** | **&#10004;** |
+| Native support for public cloud integration |   | **&#10004;** | **&#10004;** |
+| **Network Policy & Segmentation** |   |  |  |
+| Kubernetes Label, Services, CIDR |   | **&#10004;** | **&#10004;** |
+| Identity-based enforcement |   | **&#10004;** | **&#10004;** |
+| DNS-aware policies |   | **&#10004;** | **&#10004;** |
+| - HA Capability |   | **&mdash;** | **&#10004;** |
+| Automatic Policy Creation based on Network Traffic |   | **&mdash;** | **&#10004;** |
+| Policy Management, Approvals, GitOps, CI/CD Guardrails |   | **&mdash;** | **&#10004;** |
+| Advanced Policy Troubleshooting UI |   | **&mdash;** | **&#10004;** |
+| Simplified Policy Creation Tools & APIs |   | **&mdash;** | **&#10004;** |
+| **Multi-Cluster** |   |  |  |
+| Service Discovery & Global Services |   | **&#10004;** | **&#10004;** |
+| Multi-Cluster Routing |   | **&#10004;** | **&#10004;** |
+| Network Policy & Encryption |   | **&#10004;** | **&#10004;** |
+| Global Visibility & Flow Export |   | **&mdash;** | **&#10004;** |
+| Automated Cluster Management |   | **&mdash;** | **&#10004;** |
+| **Load-Balancing** ||||
+| Kubernetes services (kube-proxy replacement) |   | **&#10004;** | **&#10004;** |
+| Advanced L3/L4 External Load-balancing (including XDP-acceleration, Direct Server Return, Maglev) |   | **&#10004;** | **&#10004;** |
+| Topology-aware Routing |   | **&#10004;** | **&#10004;** |
+| Network health-based routing & load-balancing |   | **&mdash;** | **&#10004;** |
+| **Encryption** |   |  |  |
+| Transparent IPsec Encryption |   | **&#10004;** | **&#10004;** |
+| Transparent Wireguard Encryption |   | **&#10004;** | **&#10004;** |
+| Multi cluster automation |   | **&mdash;** | **&#10004;** |
+| **Non-Kubernetes Workloads & Endpoints** |   |  |  |
+| Traditional Firewall Integration / Static Egress Gateway |   | **&#10004;** | **&#10004;** |
+| - HA Capability |    | **&mdash;** | **&#10004;** |
+| VM & Metal Workload Support |   | **&#10004;** | **&#10004;** |
+| Control plane automation | |   | **&mdash;** | **&#10004;** |
+| Additional hypervisor orchestration  |   | **&mdash;** | **&#10004;** |
+| And so on...  | | | |
+
+</details>
+
 
 ## Cilium Components
 
