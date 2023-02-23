@@ -28,11 +28,13 @@ warnings:
 		testName        string
 		osFamily        OSFamily
 		osImageOverride string
+		clusterSpec     *Cluster
 		wantActions     []tinkerbell.Action
 	}{
 		{
-			testName: "Bottlerocket-sda",
-			osFamily: Bottlerocket,
+			testName:    "Bottlerocket-sda",
+			osFamily:    Bottlerocket,
+			clusterSpec: &Cluster{},
 			wantActions: []tinkerbell.Action{
 				{
 					Name:    "stream-image",
@@ -103,8 +105,9 @@ warnings:
 			},
 		},
 		{
-			testName: "Bottlerocket-nvme",
-			osFamily: Bottlerocket,
+			testName:    "Bottlerocket-nvme",
+			osFamily:    Bottlerocket,
+			clusterSpec: &Cluster{},
 			wantActions: []tinkerbell.Action{
 				{
 					Name:    "stream-image",
@@ -177,6 +180,7 @@ warnings:
 		{
 			testName:        "RedHat-sda",
 			osFamily:        RedHat,
+			clusterSpec:     &Cluster{},
 			osImageOverride: "http://tinkerbell-example:8080/redhat-8.4-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
@@ -262,6 +266,7 @@ warnings:
 		{
 			testName:        "Ubuntu-sda",
 			osFamily:        Ubuntu,
+			clusterSpec:     &Cluster{},
 			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
@@ -347,6 +352,7 @@ warnings:
 		{
 			testName:        "Ubuntu-nvme",
 			osFamily:        Ubuntu,
+			clusterSpec:     &Cluster{},
 			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
@@ -429,12 +435,113 @@ warnings:
 				},
 			},
 		},
+		{
+			testName: "Ubuntu-sda-with-proxy",
+			osFamily: Ubuntu,
+			clusterSpec: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "1.2.3.4",
+						},
+					},
+					ProxyConfiguration: &ProxyConfiguration{
+						HttpProxy:  "2.3.4.5:3128",
+						HttpsProxy: "2.3.4.5:3128",
+					},
+				},
+			},
+			osImageOverride: "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
+			wantActions: []tinkerbell.Action{
+				{
+					Name:    "stream-image",
+					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
+					Timeout: 600,
+					Environment: map[string]string{
+						"IMG_URL":     "http://tinkerbell-example:8080/ubuntu-kube-v1.21.5.gz",
+						"DEST_DISK":   "{{ index .Hardware.Disks 0 }}",
+						"COMPRESSED":  "true",
+						"HTTPS_PROXY": "2.3.4.5:3128",
+						"HTTP_PROXY":  "2.3.4.5:3128",
+						"NO_PROXY":    "1.2.3.4,127.0.0.1,1.2.3.4",
+					},
+				},
+				{
+					Name:    "write-netplan",
+					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Timeout: 90,
+					Environment: map[string]string{
+						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
+						"DEST_PATH":      "/etc/netplan/config.yaml",
+						"DIRMODE":        "0755",
+						"FS_TYPE":        "ext4",
+						"GID":            "0",
+						"MODE":           "0644",
+						"UID":            "0",
+						"STATIC_NETPLAN": "true",
+					},
+					Pid: "host",
+				},
+				{
+					Name:    "disable-cloud-init-network-capabilities",
+					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Timeout: 90,
+					Environment: map[string]string{
+						"CONTENTS":  "network: {config: disabled}",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
+						"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
+						"DIRMODE":   "0700",
+						"FS_TYPE":   "ext4",
+						"GID":       "0",
+						"MODE":      "0600",
+						"UID":       "0",
+					},
+				},
+				{
+					Name:    "add-tink-cloud-init-config",
+					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Timeout: 90,
+					Environment: map[string]string{
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
+						"FS_TYPE":   "ext4",
+						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
+						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
+						"UID":       "0",
+						"GID":       "0",
+						"MODE":      "0600",
+						"DIRMODE":   "0700",
+					},
+				},
+				{
+					Name:    "add-tink-cloud-init-ds-config",
+					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+					Timeout: 90,
+					Environment: map[string]string{
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
+						"FS_TYPE":   "ext4",
+						"DEST_PATH": "/etc/cloud/ds-identify.cfg",
+						"CONTENTS":  "datasource: Ec2\n",
+						"UID":       "0",
+						"GID":       "0",
+						"MODE":      "0600",
+						"DIRMODE":   "0700",
+					},
+				},
+				{
+					Name:    "reboot-image",
+					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
+					Timeout: 90,
+					Pid:     "host",
+					Volumes: []string{"/worker:/worker"},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			givenActions := []tinkerbell.Action{}
-			opts := GetDefaultActionsFromBundle(vBundle, tt.osImageOverride, tinkerbellLocalIp, tinkerbellLBIP, tt.osFamily)
+			opts := GetDefaultActionsFromBundle(tt.clusterSpec, vBundle, tt.osImageOverride, tinkerbellLocalIp, tinkerbellLBIP, tt.osFamily)
 			for _, opt := range opts {
 				opt(&givenActions)
 			}

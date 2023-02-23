@@ -19,22 +19,22 @@ type ActionOpt func(action *[]tinkerbell.Action)
 
 // NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the
 // required Tasks and Actions.
-func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) *TinkerbellTemplateConfig {
+func NewDefaultTinkerbellTemplateConfigCreate(clusterSpec *Cluster, versionBundle v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) *TinkerbellTemplateConfig {
 	config := &TinkerbellTemplateConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellTemplateConfigKind,
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name: clusterSpec.Name,
 		},
 		Spec: TinkerbellTemplateConfigSpec{
 			Template: tinkerbell.Workflow{
 				Version:       "0.1",
-				Name:          name,
+				Name:          clusterSpec.Name,
 				GlobalTimeout: 6000,
 				Tasks: []tinkerbell.Task{{
-					Name:       name,
+					Name:       clusterSpec.Name,
 					WorkerAddr: "{{.device_1}}",
 					Volumes: []string{
 						"/dev:/dev",
@@ -46,7 +46,7 @@ func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha
 		},
 	}
 
-	defaultActions := GetDefaultActionsFromBundle(versionBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP, osFamily)
+	defaultActions := GetDefaultActionsFromBundle(clusterSpec, versionBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP, osFamily)
 	for _, action := range defaultActions {
 		action(&config.Spec.Template.Tasks[0].Actions)
 	}

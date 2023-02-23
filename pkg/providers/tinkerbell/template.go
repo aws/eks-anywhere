@@ -64,7 +64,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.controlPlaneMachineSpec.TemplateRef.Name]
 	if cpTemplateConfig == nil {
 		versionBundle := clusterSpec.VersionsBundle.VersionsBundle
-		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
+		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
 	}
 
 	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
@@ -79,7 +79,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.etcdMachineSpec.TemplateRef.Name]
 		if etcdTemplateConfig == nil {
 			versionBundle := clusterSpec.VersionsBundle.VersionsBundle
-			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
+			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
 		}
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
 		if err != nil {
@@ -105,7 +105,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[workerNodeMachineSpec.TemplateRef.Name]
 		if wTemplateConfig == nil {
 			versionBundle := clusterSpec.VersionsBundle.VersionsBundle
-			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
+			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster, *versionBundle, tb.datacenterSpec.OSImageURL, tb.tinkerbellIP, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
 		}
 
 		wTemplateString, err := wTemplateConfig.ToTemplateString()
