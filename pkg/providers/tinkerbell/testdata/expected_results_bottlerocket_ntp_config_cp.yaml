@@ -48,6 +48,21 @@ spec:
       apiServer:
         extraArgs:
           feature-gates: ServiceLoadBalancerClass=true
+      controllerManager:
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/controller-manager.conf
+          mountPath: /etc/kubernetes/controller-manager.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
+      scheduler:
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/scheduler.conf
+          mountPath: /etc/kubernetes/scheduler.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
+      certificatesDir: /var/lib/kubeadm/pki
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
