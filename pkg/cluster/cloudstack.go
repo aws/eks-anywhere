@@ -106,3 +106,28 @@ func getCloudStackDatacenter(ctx context.Context, client Client, c *Config) erro
 	c.CloudStackDatacenter = datacenter
 	return nil
 }
+
+func getCloudStackMachineConfigs(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.CloudStackDatacenterKind {
+		return nil
+	}
+
+	if c.CloudStackMachineConfigs == nil {
+		c.CloudStackMachineConfigs = map[string]*anywherev1.CloudStackMachineConfig{}
+	}
+
+	for _, machineRef := range c.Cluster.MachineConfigRefs() {
+		if machineRef.Kind != anywherev1.CloudStackMachineConfigKind {
+			continue
+		}
+
+		machine := &anywherev1.CloudStackMachineConfig{}
+		if err := client.Get(ctx, machineRef.Name, c.Cluster.Namespace, machine); err != nil {
+			return err
+		}
+
+		c.CloudStackMachineConfigs[machine.Name] = machine
+	}
+
+	return nil
+}
