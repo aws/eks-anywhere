@@ -99,7 +99,7 @@ require (
 	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20221202150410-31e3dc1a1588 // indirect
 	github.com/bmc-toolbox/common v0.0.0-20221115135648-0b584f504396 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/containerd/containerd v1.6.15 // indirect
+	github.com/containerd/containerd v1.6.18 // indirect
 	github.com/coredns/caddy v1.1.0 // indirect
 	github.com/coredns/corefile-migration v1.0.18 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
