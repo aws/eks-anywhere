@@ -147,6 +147,20 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueEndWithRoot(t 
 	g.Expect(c.ValidateCreate()).NotTo(Succeed())
 }
 
+func TestCloudStackMachineConfigValidateCreateInvalidTemplateEmpty(t *testing.T) {
+	c := cloudstackMachineConfig()
+	c.Spec.Template = v1alpha1.CloudStackResourceIdentifier{}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateInvalidComputeOfferingEmpty(t *testing.T) {
+	c := cloudstackMachineConfig()
+	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
@@ -468,8 +482,15 @@ func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
 	return v1alpha1.CloudStackMachineConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 2)},
-		Spec:       v1alpha1.CloudStackMachineConfigSpec{},
-		Status:     v1alpha1.CloudStackMachineConfigStatus{},
+		Spec: v1alpha1.CloudStackMachineConfigSpec{
+			Template: v1alpha1.CloudStackResourceIdentifier{
+				Name: "template1",
+			},
+			ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
+				Name: "offering1",
+			},
+		},
+		Status: v1alpha1.CloudStackMachineConfigStatus{},
 	}
 }
 
