@@ -1,0 +1,20 @@
+controller:
+  digest: my-digest
+  enableWebhooks: false
+  repository: my-repo
+  tag: my-tag
+  resources:
+    limits:
+      cpu: my-cpu
+      memory: my-memory
+    requests:
+      cpu: my-requests-cpu
+      memory: my-requests-memory
+  env:
+  - name: A
+    value: B
+cronjob:
+  digest: my-cronjob-digest
+  repository: my-cronjob-repo
+  suspend: true
+  tag: my-cronjob-tag

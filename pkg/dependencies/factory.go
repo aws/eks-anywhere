@@ -999,6 +999,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
+			spec,
 			mgmtKubeConfig,
 			&spec.VersionsBundle.PackageController.HelmChart,
 			f.registryMirror,
