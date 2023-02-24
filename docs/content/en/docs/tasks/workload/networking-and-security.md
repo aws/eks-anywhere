@@ -27,8 +27,8 @@ The following table lists Cilium features and notes which of those features are 
 
 <details><summary>Expand to see Cilium Features</summary>
 
-| Cilium Features         | For EKS Anywhere | For Open Source     | For Enterprise |
-|-------------------------|------------------|---------------------|----------------|
+| Cilium Features         | EKS Anywhere | Open Source     | Enterprise |
+|-------------------------|--------------|-----------------|------------|
 | **Networking and Security (Cilium)** ||||
 | **Advanced Networking & Routing (CNI)** ||||
 | eBPF powered high performance datapath | | **&#10004;** | **&#10004;** |
