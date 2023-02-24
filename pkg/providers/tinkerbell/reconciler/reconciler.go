@@ -17,6 +17,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
+type clusterChange string
+
+const (
+	// ReconcileNewCluster means need to create nodes for a new cluster.
+	ReconcileNewCluster clusterChange = "create-new-cluster"
+	// NeedNewNode means node has k8s version change.
+	NeedNewNode clusterChange = "rolling-update"
+	// NeedMoreOrLessNode means node group scales up or scales down.
+	NeedMoreOrLessNode clusterChange = "scale-update"
+)
+
 // CNIReconciler is an interface for reconciling CNI in the Tinkerbell cluster reconciler.
 type CNIReconciler interface {
 	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *c.Spec) (controller.Result, error)
@@ -34,7 +45,14 @@ type IPValidator interface {
 
 // Scope object for Tinkerbell reconciler.
 type Scope struct {
+<<<<<<< HEAD
 	ClusterSpec *c.Spec
+=======
+	ClusterSpec   *c.Spec
+	ClusterChange *clusterChange
+	ControlPlane  *tinkerbell.ControlPlane
+	Workers       *tinkerbell.Workers
+>>>>>>> b1f87dd0 (Scaling upgrade validation poc)
 }
 
 // NewScope creates a new Tinkerbell Reconciler Scope.
@@ -240,15 +258,12 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateHardware")
 
-	capiCluster, err := controller.GetCAPICluster(ctx, r.client, clusterSpec.Cluster)
+	minHardware, err := DetectOperationAndHardwareRequirements(tinkerbellScope)
 	if err != nil {
-		return controller.Result{}, errors.Wrap(err, "validating tinkerbell hardware")
-	}
-	if capiCluster != nil {
-		// If CAPI cluster exists, the hardware has been validated
-		// and it's possibly already in use so no need to validate it again.
-		log.V(3).Info("CAPI cluster already exists, skipping hardware validations")
-		return controller.Result{}, nil
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+		return controller.ResultWithReturn(), nil
 	}
 
 	// We need a new reader each time so that the catalogue gets recreated.
@@ -266,6 +281,21 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()),
 		tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(kubeReader.GetCatalogue()),
 	)
+
+	switch *tinkerbellScope.ClusterChange {
+	case NeedNewNode:
+		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue()))
+	case ReconcileNewCluster:
+		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
+	case NeedMoreOrLessNode:
+		err := tinkerbell.ValidateMinimumHardwareRequirements(minHardware, kubeReader.GetCatalogue())
+		if err != nil {
+			failureMessage := err.Error()
+			clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+			return controller.ResultWithReturn(), nil
+		}
+	}
 
 	tinkClusterSpec := tinkerbell.NewClusterSpec(
 		clusterSpec,
@@ -324,4 +354,20 @@ func (r *Reconciler) checkContactable(rm *rufiov1alpha1.Machine) error {
 	}
 
 	return nil
+}
+
+func DetectOperationAndHardwareRequirements(tinkerbellScope *Scope) (tinkerbell.MinimumHardwareRequirements, error) {
+
+	// Initialize minimum hardware requirements
+	requirements := tinkerbell.MinimumHardwareRequirements{}
+
+	// Check Kubernetes version for rolling upgrade - simultaneous rolling+scaling not permitted
+
+	// Check Control Plane Replica Count
+	// Add scaling to minimum requirements
+
+	// Check Worker Node Replicas
+	// Add scaling to minimum requirements
+
+	return requirements, nil
 }

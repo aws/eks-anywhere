@@ -182,7 +182,7 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 
 		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
 		// will account for the same selector being specified on different groups.
-		requirements := minimumHardwareRequirements{}
+		requirements := MinimumHardwareRequirements{}
 
 		err := requirements.Add(
 			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
@@ -212,7 +212,7 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 			}
 		}
 
-		return validateMinimumHardwareRequirements(requirements, catalogue)
+		return ValidateMinimumHardwareRequirements(requirements, catalogue)
 	}
 }
 
@@ -228,7 +228,7 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 
 		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
 		// will account for the same selector being specified on different groups.
-		requirements := minimumHardwareRequirements{}
+		requirements := MinimumHardwareRequirements{}
 
 		if currentSpec.Cluster.Spec.ControlPlaneConfiguration.Count != spec.Cluster.Spec.ControlPlaneConfiguration.Count {
 			if rollingUpgrade {
@@ -293,7 +293,7 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 			} */
 		}
 
-		if err := validateMinimumHardwareRequirements(requirements, catalogue); err != nil {
+		if err := ValidateMinimumHardwareRequirements(requirements, catalogue); err != nil {
 			return fmt.Errorf("for scale up, %v", err)
 		}
 		return nil
@@ -312,7 +312,7 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 
 		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
 		// will account for the same selector being specified on different groups.
-		requirements := minimumHardwareRequirements{}
+		requirements := MinimumHardwareRequirements{}
 
 		maxSurge := 1
 		if spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
@@ -344,7 +344,7 @@ func ExtraHardwareAvailableAssertionForRollingUpgrade(catalogue *hardware.Catalo
 			return fmt.Errorf("external etcd upgrade is not supported")
 		}
 
-		if err := validateMinimumHardwareRequirements(requirements, catalogue); err != nil {
+		if err := ValidateMinimumHardwareRequirements(requirements, catalogue); err != nil {
 			return fmt.Errorf("for rolling upgrade, %v", err)
 		}
 		return nil
