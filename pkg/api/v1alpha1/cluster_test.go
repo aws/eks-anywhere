@@ -938,6 +938,69 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantCluster: nil,
 			wantErr:     true,
 		},
+		{
+			testName: "valid package config",
+			fileName: "testdata/cluster_package_configuration.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube120,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
+						Count: ptr.Int(3),
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					}},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+					Packages: &PackageConfiguration{
+						Disable: true,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName:    "invalid controller package configuration",
+			fileName:    "testdata/cluster_package_configuration_invalid.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName:    "invalid package cronjob",
+			fileName:    "testdata/cluster_package_cronjob_invalid.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
