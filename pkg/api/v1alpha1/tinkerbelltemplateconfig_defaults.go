@@ -33,18 +33,19 @@ func GetDefaultActionsFromBundle(clusterSpec *Cluster, b v1alpha1.VersionsBundle
 		fmt.Sprintf("http://%s:50061", tinkerbellLBIP),
 	}
 
-	additionalEnvVar := map[string]string{}
+	additionalEnvVar := make(map[string]string)
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		proxyConfig := clusterSpec.ProxyConfiguration()
 		additionalEnvVar["HTTP_PROXY"] = proxyConfig["HTTP_PROXY"]
 		additionalEnvVar["HTTPS_PROXY"] = proxyConfig["HTTPS_PROXY"]
 
-		noProxy := strings.Split(proxyConfig["NO_PROXY"], ",")
-		noProxy = append(noProxy, tinkerbellLocalIP)
-		noProxy = append(noProxy, tinkerbellLBIP)
+		noProxy := fmt.Sprintf("%s,%s", tinkerbellLocalIP, tinkerbellLBIP)
+		if proxyConfig["NO_PROXY"] != "" {
+			noProxy = fmt.Sprintf("%s,%s", proxyConfig["NO_PROXY"], noProxy)
+		}
 
-		additionalEnvVar["NO_PROXY"] = strings.Join(noProxy[:], ",")
+		additionalEnvVar["NO_PROXY"] = noProxy
 	}
 	// During workflow reconciliation when the Tinkerbell template is rendered, the Workflow
 	// Controller injects a subset of data from the Hardware resource. This lets us use Go template
