@@ -13,7 +13,7 @@ type KubectlRunner interface {
 	// GetObject performs a GET call to the kube API server authenticating with a kubeconfig file
 	// and unmarshalls the response into the provdied Object
 	// If the object is not found, it returns an error implementing apimachinery errors.APIStatus
-	GetObject(ctx context.Context, resourceType, name, namespece, kubeconfig string, obj runtime.Object) error
+	GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error
 	// HasResource is true if the resource can be retrieved from the API and has length > 0.
 	HasResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error)
 }

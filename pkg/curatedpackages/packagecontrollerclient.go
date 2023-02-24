@@ -214,13 +214,12 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	targetNs := constants.EksaPackagesName + "-" + pc.clusterName
 	done := make(chan error)
 	go func() {
 		defer close(done)
 		pbc := &packagesv1.PackageBundleController{}
+
 		for {
-			readyCnt := 0
 			err := pc.kubectl.GetObject(timeoutCtx, packageBundleControllerResource, pc.clusterName,
 				packagesv1.PackageNamespace, pc.kubeConfig, pbc)
 			if err != nil {
@@ -231,37 +230,21 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 			if pbc.Spec.ActiveBundle != "" {
 				logger.V(6).Info("found packages bundle controller active bundle",
 					"name", pbc.Spec.ActiveBundle)
-				readyCnt++
-			} else {
-				logger.V(6).Info("waiting for package bundle controller to activate a bundle",
-					"clusterName", pc.clusterName)
-			}
-
-			found, _ := pc.kubectl.HasResource(timeoutCtx, "namespace", targetNs, pc.kubeConfig, "default")
-
-			if found {
-				logger.V(6).Info("found namespace", "namespace", targetNs)
-				readyCnt++
-			} else {
-				logger.V(6).Info("waiting for namespace", "namespace", targetNs)
-			}
-
-			if readyCnt == 2 {
 				return
 			}
 
-			// TODO read a polling interval value from the context, falling
-			// back to this as a default.
+			logger.V(6).Info("waiting for package bundle controller to activate a bundle",
+				"clusterName", pc.clusterName)
 			time.Sleep(time.Second)
 		}
 	}()
 
 	select {
 	case <-timeoutCtx.Done():
-		return fmt.Errorf("timed out finding an active package bundle / %s namespace for the current cluster: %v", targetNs, timeoutCtx.Err())
+		return fmt.Errorf("waiting for an active package bundle: %w", timeoutCtx.Err())
 	case err := <-done:
 		if err != nil {
-			return fmt.Errorf("couldn't find an active package bundle for the current cluster: %v", err)
+			return err
 		}
 
 		return nil

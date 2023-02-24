@@ -701,59 +701,8 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 			AnyTimes()
 
 		err := tt.command.EnableCuratedPackages(tt.ctx)
-		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
-		if err.Error() != expectedErr.Error() {
-			t.Errorf("expected %v, got %v", expectedErr, err)
-		}
-	}
-}
-
-func TestEnableCuratedPackagesActiveBundleNamespaceTimesOut(t *testing.T) {
-	for _, tt := range newPackageControllerTests(t) {
-		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
-			tt.registryMirror,
-			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
-			curatedpackages.WithEksaRegion(tt.eksaRegion),
-			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
-			curatedpackages.WithActiveBundleTimeout(time.Millisecond),
-			curatedpackages.WithManagementClusterName(tt.clusterName),
-			curatedpackages.WithValuesFileWriter(tt.writer),
-		)
-		clusterName := fmt.Sprintf("clusterName=%s", "billy")
-		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
-		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
-		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
-		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
-		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
-		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
-		if tt.registryMirror != nil {
-			t.Setenv("REGISTRY_USERNAME", "username")
-			t.Setenv("REGISTRY_PASSWORD", "password")
-		} else {
-			if tt.eksaRegion == "" {
-				tt.eksaRegion = "us-west-2"
-			}
-			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, "us-west-2", tt.eksaRegion)
-		}
-		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
-		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
-			values = append(values, "cronjob.suspend=true")
-		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
-		tt.kubectl.EXPECT().
-			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
-			AnyTimes()
-		tt.kubectl.EXPECT().
-			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return false, nil }).
-			AnyTimes()
-
-		err := tt.command.EnableCuratedPackages(tt.ctx)
-		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
-		if err.Error() != expectedErr.Error() {
-			t.Errorf("expected %v, got %v", expectedErr, err)
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("expected timeout error, got %v", err)
 		}
 	}
 }
