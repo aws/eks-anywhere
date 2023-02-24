@@ -108,12 +108,13 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, clusterSpec, kubeConfig, chart, registryMirror,
+				ci, k, clusterName, kubeConfig, chart, registryMirror,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
+				curatedpackages.WithClusterSpec(clusterSpec),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -134,7 +135,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, nil, kubeConfig, chart,
+				ci, k, clusterName, kubeConfig, chart,
 				nil,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
@@ -161,7 +162,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, nil, kubeConfig, chartDev,
+				ci, k, clusterName, kubeConfig, chartDev,
 				nil,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
@@ -188,7 +189,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, nil, kubeConfig, chartStaging,
+				ci, k, clusterName, kubeConfig, chartStaging,
 				nil,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
@@ -215,7 +216,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, nil, kubeConfig, chart, registryMirrorInsecure,
+				ci, k, clusterName, kubeConfig, chart, registryMirrorInsecure,
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
 			),
@@ -238,7 +239,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			kubectl:        k,
 			chartInstaller: ci,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, k, clusterName, nil, kubeConfig, chart, nil,
+				ci, k, clusterName, kubeConfig, chart, nil,
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
 			),
@@ -295,7 +296,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, tt.clusterName, nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion("us-west-2"),
@@ -355,7 +356,7 @@ func getPBCFail(t *testing.T) func(context.Context, string, string, string, stri
 func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -409,7 +410,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -578,7 +579,7 @@ func TestIsInstalledFalse(t *testing.T) {
 func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -677,7 +678,7 @@ func getPBCLoops(t *testing.T, loops int) func(context.Context, string, string, 
 func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -723,7 +724,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 func TestEnableCuratedPackagesActiveBundleNamespaceTimesOut(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -809,7 +810,7 @@ func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
 func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -835,7 +836,7 @@ func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
 	writer := writermocks.NewMockFileWriter(ctrl)
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.kubectl, "billy", nil, tt.kubeConfig, tt.chart,
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithValuesFileWriter(writer),
 		)
@@ -854,7 +855,7 @@ func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
 
 func TestGetPackageControllerConfigurationNil(t *testing.T) {
 	g := NewWithT(t)
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", nil, "", nil, nil)
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil)
 	result, err := sut.GetPackageControllerConfiguration()
 	g.Expect(result).To(Equal(""))
 	g.Expect(err).To(BeNil())
@@ -891,7 +892,7 @@ func TestGetPackageControllerConfigurationAll(t *testing.T) {
 	}
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
 	g := NewWithT(t)
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", &cluster, "", nil, nil)
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
 	result, err := sut.GetPackageControllerConfiguration()
 	g.Expect(result).To(Equal(expectedAllValues))
 	g.Expect(err).To(BeNil())
@@ -905,7 +906,7 @@ func TestGetPackageControllerConfigurationNothing(t *testing.T) {
 	}
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", &cluster, "", nil, nil)
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
 	result, err := sut.GetPackageControllerConfiguration()
 	g.Expect(result).To(Equal(""))
 	g.Expect(err).To(BeNil())
@@ -922,7 +923,7 @@ func TestGetPackageControllerConfigurationError(t *testing.T) {
 	}
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", &cluster, "", nil, nil)
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
 	_, err := sut.GetPackageControllerConfiguration()
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(err.Error()).To(Equal("invalid environment in specification <AB>"))

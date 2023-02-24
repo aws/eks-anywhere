@@ -56,17 +56,10 @@ type ChartInstaller interface {
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName string, clusterSpec *cluster.Spec, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
-	var spec *v1alpha1.ClusterSpec
-	if clusterSpec != nil {
-		if clusterSpec.Cluster != nil {
-			spec = &clusterSpec.Cluster.Spec
-		}
-	}
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName string, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		clusterName:    clusterName,
-		clusterSpec:    spec,
 		chart:          chart,
 		chartInstaller: chartInstaller,
 		kubectl:        kubectl,
@@ -415,5 +408,12 @@ func WithManagementClusterName(managementClusterName string) func(client *Packag
 func WithValuesFileWriter(writer filewriter.FileWriter) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.valuesFileWriter = writer
+	}
+}
+
+// WithClusterSpec sets the cluster spec.
+func WithClusterSpec(clusterSpec *cluster.Spec) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.clusterSpec = &clusterSpec.Cluster.Spec
 	}
 }
