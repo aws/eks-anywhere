@@ -109,6 +109,7 @@ func NewClusterSpecValidator(assertions ...ClusterSpecAssertion) *ClusterSpecVal
 		AssertMachineConfigNamespaceMatchesDatacenterConfig,
 		AssertOsFamilyValid,
 		AssertTinkerbellIPAndControlPlaneIPNotSame,
+		AssertHookRetrievableWithoutProxy,
 	)
 	v.Register(assertions...)
 	return &v
