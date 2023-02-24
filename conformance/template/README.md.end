@@ -16,7 +16,7 @@
 
 ## Run Sonobuoy e2e
 ```
-./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image k8s.gcr.io/conformance:{{conformance_version}}
+./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image registry.k8s.io/conformance:{{conformance_version}}
 results=$(./sonobuoy retrieve)
 mkdir ./results
 tar xzf $results -C ./results
