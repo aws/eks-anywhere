@@ -1010,6 +1010,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithNoProxy(noProxy),
 			curatedpackages.WithManagementClusterName(managementClusterName),
 			curatedpackages.WithValuesFileWriter(writer),
+			curatedpackages.WithClusterSpec(spec),
 		)
 		return nil
 	})

@@ -1,6 +1,7 @@
 package curatedpackages_test
 
 import (
+	_ "embed"
 	"errors"
 	"testing"
 
