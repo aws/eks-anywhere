@@ -363,11 +363,14 @@ func DetectOperationAndHardwareRequirements(tinkerbellScope *Scope) (tinkerbell.
 
 	// Check Kubernetes version for rolling upgrade - simultaneous rolling+scaling not permitted
 
-	// Check Control Plane Replica Count
+	// Check Control Plane Replica Count for scaling upgrade
 	// Add scaling to minimum requirements
 
-	// Check Worker Node Replicas
+	// Check Worker Node Replicas for scaling upgrade
 	// Add scaling to minimum requirements
+
+	// Set operation type
+	*tinkerbellScope.ClusterChange = ReconcileNewCluster
 
 	return requirements, nil
 }
