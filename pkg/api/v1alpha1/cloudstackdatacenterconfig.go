@@ -1,6 +1,9 @@
 package v1alpha1
 
 import (
+	"fmt"
+	"net/url"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,4 +54,17 @@ func GetCloudStackDatacenterConfig(fileName string) (*CloudStackDatacenterConfig
 		return nil, err
 	}
 	return &clusterConfig, nil
+}
+
+// GetCloudStackManagementAPIEndpointHostname parses the CloudStackAvailabilityZone's ManagementApiEndpoint URL and returns the hostname.
+func GetCloudStackManagementAPIEndpointHostname(az CloudStackAvailabilityZone) (string, error) {
+	return getHostnameFromURL(az.ManagementApiEndpoint)
+}
+
+func getHostnameFromURL(rawurl string) (string, error) {
+	url, err := url.Parse(rawurl)
+	if err != nil {
+		return "", fmt.Errorf("%s is not a valid url", rawurl)
+	}
+	return url.Hostname(), nil
 }

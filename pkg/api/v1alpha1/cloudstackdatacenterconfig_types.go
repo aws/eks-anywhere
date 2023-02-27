@@ -208,6 +208,13 @@ func (v *CloudStackDatacenterConfig) Validate() error {
 			return fmt.Errorf("availabilityZone names must be unique. Duplicate name: %s", az.Name)
 		}
 		azSet[az.Name] = true
+		_, err := GetCloudStackManagementAPIEndpointHostname(az)
+		if err != nil {
+			return fmt.Errorf("checking management api endpoint: %v", err)
+		}
+		if len(az.Zone.Network.Id) == 0 && len(az.Zone.Network.Name) == 0 {
+			return fmt.Errorf("zone network is not set or is empty")
+		}
 	}
 
 	return nil
