@@ -13,14 +13,16 @@ import (
 )
 
 const (
-	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
-	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellHardwareS3FileKeyEnvVar       = "T_TINKERBELL_S3_INVENTORY_CSV_KEY"
-	tinkerbellTestsRe                       = `^.*Tinkerbell.*$`
-	e2eHardwareCsvFilePath                  = "e2e-inventory.csv"
-	MaxHardwarePerE2ETestEnvVar             = "T_TINKERBELL_MAX_HARDWARE_PER_TEST"
-	TinkerbellDefaultMaxHardwarePerE2ETest  = 4
-	tinkerbellBootstrapInterfaceEnvVar      = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
+	tinkerbellInventoryCsvFilePathEnvVar       = "T_TINKERBELL_INVENTORY_CSV"
+	tinkerbellControlPlaneNetworkCidrEnvVar    = "T_TINKERBELL_CP_NETWORK_CIDR"
+	tinkerbellHardwareS3FileKeyEnvVar          = "T_TINKERBELL_S3_INVENTORY_CSV_KEY"
+	tinkerbellAirgappedHardwareS3FileKeyEnvVar = "T_TINKERBELL_S3_AG_INVENTORY_CSV_KEY"
+	tinkerbellTestsRe                          = `^.*Tinkerbell.*$`
+	e2eHardwareCsvFilePath                     = "e2e-inventory.csv"
+	e2eAirgappedHardwareCsvFilePath            = "e2e-ag-inventory.csv"
+	maxHardwarePerE2ETestEnvVar                = "T_TINKERBELL_MAX_HARDWARE_PER_TEST"
+	tinkerbellDefaultMaxHardwarePerE2ETest     = 4
+	tinkerbellBootstrapInterfaceEnvVar         = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
 )
 
 func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
@@ -90,11 +92,27 @@ func (e *E2ESession) setTinkerbellBootstrapIPInInstance(tinkInterface string) er
 	return nil
 }
 
-func getTinkerbellTests(tests []string) []string {
+// Get non airgapped, normal tinkerbell tests.
+func getTinkerbellNonAirgappedTests(tests []string) []string {
 	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
+	airgappedRe := regexp.MustCompile(`^.*Airgapped.*$`)
 	var tinkerbellTests []string
+
 	for _, testName := range tests {
-		if tinkerbellTestsRe.MatchString(testName) {
+		if tinkerbellTestsRe.MatchString(testName) && !airgappedRe.MatchString(testName) {
+			tinkerbellTests = append(tinkerbellTests, testName)
+		}
+	}
+	return tinkerbellTests
+}
+
+func getTinkerbellAirgappedTests(tests []string) []string {
+	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
+	airgappedRe := regexp.MustCompile(`^.*Airgapped.*$`)
+	var tinkerbellTests []string
+
+	for _, testName := range tests {
+		if tinkerbellTestsRe.MatchString(testName) && airgappedRe.MatchString(testName) {
 			tinkerbellTests = append(tinkerbellTests, testName)
 		}
 	}
