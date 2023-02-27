@@ -37,7 +37,6 @@ var cloudStackMachineConfigSpec1 = &CloudStackMachineConfigSpec{
 		"/var/log/kubernetes": "/data/var/log/kubernetes",
 	},
 	AffinityGroupIds: []string{"affinityGroupId1"},
-	Affinity:         "pro",
 }
 
 func TestGetCloudStackMachineConfigs(t *testing.T) {
@@ -262,6 +261,315 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.wantCloudStackMachineConfigs) {
 				t.Fatalf("GetCloudStackMachineConfigs() = %#v, want %#v", got, tt.wantCloudStackMachineConfigs)
+			}
+		})
+	}
+}
+
+func TestCloudStackMachineConfigValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		obj     *CloudStackMachineConfig
+		wantErr string
+	}{
+		{
+			name: "valid config",
+			obj: &CloudStackMachineConfig{
+				Spec: *cloudStackMachineConfigSpec1,
+			},
+			wantErr: "",
+		},
+		{
+			name: "disk offering empty",
+			obj: &CloudStackMachineConfig{
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{
+						"foo": "bar",
+					},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					AffinityGroupIds: []string{"affinityGroupId1"},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "invalid - bad mount path",
+			obj: &CloudStackMachineConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/",
+						Device:     "/dev/vdb",
+						Filesystem: "ext4",
+						Label:      "data_disk",
+					},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{
+						"foo": "bar",
+					},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					Affinity: "pro",
+				},
+			},
+			wantErr: "mountPath: / invalid, must be non-empty and start with /",
+		},
+		{
+			name: "invalid - empty device",
+			obj: &CloudStackMachineConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/data",
+						Device:     "",
+						Filesystem: "ext4",
+						Label:      "data_disk",
+					},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{
+						"foo": "bar",
+					},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					AffinityGroupIds: []string{"affinityGroupId1"},
+				},
+			},
+			wantErr: "device:  invalid, empty device",
+		},
+		{
+			name: "invalid - empty filesystem",
+			obj: &CloudStackMachineConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/data",
+						Device:     "/dev/vdb",
+						Filesystem: "",
+						Label:      "data_disk",
+					},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{
+						"foo": "bar",
+					},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					Affinity: "pro",
+				},
+			},
+			wantErr: "filesystem:  invalid, empty filesystem",
+		},
+		{
+			name: "invalid - empty label",
+			obj: &CloudStackMachineConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/data",
+						Device:     "/dev/vdb",
+						Filesystem: "ext4",
+						Label:      "",
+					},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{
+						"foo": "bar",
+					},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					AffinityGroupIds: []string{"affinityGroupId1"},
+				},
+			},
+			wantErr: "label:  invalid, empty label",
+		},
+		{
+			name: "invalid - restricted user details",
+			obj: &CloudStackMachineConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/data",
+						Device:     "/dev/vdb",
+						Filesystem: "ext4",
+						Label:      "data_disk",
+					},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{"keyboard": "test"},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					AffinityGroupIds: []string{"affinityGroupId1"},
+				},
+			},
+			wantErr: "restricted key keyboard found in custom user details",
+		},
+		{
+			name: "bad affinity type",
+			obj: &CloudStackMachineConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/data",
+						Device:     "/dev/vdb",
+						Filesystem: "ext4",
+						Label:      "data_disk",
+					},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{"foo": "bar"},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					Affinity: "xxx",
+				},
+			},
+			wantErr: "invalid affinity type xxx for CloudStackMachineConfig test",
+		},
+		{
+			name: "both affinity and affinityGroupIds are defined",
+			obj: &CloudStackMachineConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: CloudStackMachineConfigSpec{
+					Template: CloudStackResourceIdentifier{
+						Name: "template1",
+					},
+					ComputeOffering: CloudStackResourceIdentifier{
+						Name: "offering1",
+					},
+					DiskOffering: &CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/data",
+						Device:     "/dev/vdb",
+						Filesystem: "ext4",
+						Label:      "data_disk",
+					},
+					Users: []UserConfiguration{
+						{
+							Name:              "zone1",
+							SshAuthorizedKeys: []string{"key"},
+						},
+					},
+					UserCustomDetails: map[string]string{"foo": "bar"},
+					Symlinks: map[string]string{
+						"/var/log/kubernetes": "/data/var/log/kubernetes",
+					},
+					AffinityGroupIds: []string{"affinityGroupId1"},
+					Affinity:         "pro",
+				},
+			},
+			wantErr: "affinity and affinityGroupIds cannot be set at the same time for CloudStackMachineConfig test. Please provide either one of them or none",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := tt.obj.Validate()
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 		})
 	}
