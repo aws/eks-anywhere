@@ -39,6 +39,18 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		caCert = e.testEnvVars[e2etests.RegistryCACertTinkerbellVar]
 	}
 
+	// Since Authenticated tests needs to use separate harbor registries.
+	re = regexp.MustCompile(`^.*VSphere.*Authenticated.*$`)
+	if re.MatchString(testRegex) {
+		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointVar]
+		port = e.testEnvVars[e2etests.PrivateRegistryPortVar]
+		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertVar]
+	} else if re = regexp.MustCompile(`^.*Tinkerbell.*Authenticated.*$`); re.MatchString(testRegex) {
+		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointTinkerbellVar]
+		port = e.testEnvVars[e2etests.PrivateRegistryPortTinkerbellVar]
+		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertTinkerbellVar]
+	}
+
 	if endpoint != "" && port != "" && caCert != "" {
 		return e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port))
 	}
