@@ -18,55 +18,55 @@ The following additional optional configuration can also be included:
 * [Registry Mirror]({{< relref "optional/registrymirror.md" >}})
 
 
-```yaml
+<pre>
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-   name: my-cluster-name
+   name: my-cluster-name             <a href="#name-required"># Name of the cluster (required)</a>
 spec:
-   clusterNetwork:
-      cniConfig:
+   clusterNetwork:                   <a href="#clusternetwork-required"># Cluster network configuration (required)</a>
+      cniConfig:                     <a href="#clusternetworkcniconfig-required"># Cluster CNI plugin - default: cilium (required)</a>
          cilium: {}
       pods:
-         cidrBlocks:
+         cidrBlocks:                 <a href="#clusternetworkpodscidrblocks0-required"># Subnet CIDR notation for pods (required)</a>
             - 192.168.0.0/16
       services:
-         cidrBlocks:
+         cidrBlocks:                 <a href="#clusternetworkservicescidrblocks0-required"># Subnet CIDR notation for services (required)</a>
             - 10.96.0.0/12
-   controlPlaneConfiguration:
-      count: 1
-      endpoint:
+   controlPlaneConfiguration:        <a href="#controlplaneconfiguration-required"># Specific cluster control plane config (required)</a>
+      count: 1                       <a href="#controlplaneconfigurationcount-required"># Number of control plane nodes (required)</a>
+      endpoint:                      <a href="#controlplaneconfigurationendpointhost-required"># IP for control plane endpoint (required)</a>
          host: ""
-      machineGroupRef:
+      machineGroupRef:               <a href="#controlplaneconfigurationmachinegroupref-required"># vSphere-specific Kubernetes node config (required)</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
-      taints:
+      taints:                        <a href="#controlplaneconfigurationtaints"># Taints applied to control plane nodes </a>
       - key: ""
         value: ""
         effect: ""
-      labels:
+      labels:                        <a href="#controlplaneconfigurationlabels"># Labels applied to control plane nodes </a>
         "<key1>": ""
         "<key2>": "" 
-   datacenterRef:
-      kind: VSphereDatacenterConfig
+   datacenterRef:                    <a href="#datacenterref"># Kubernetes object with vSphere-specific config </a>
+      kind: VSphereDatacenterConfig  <a href="#kubernetesversion-required"># Version of Kubernetes to use for cluster (required)</a>
       name: my-cluster-datacenter
    externalEtcdConfiguration:
-     count: 3
-     machineGroupRef:
+     count: 3                        <a href="#externaletcdconfigurationcount"># Number of etcd members </a>
+     machineGroupRef:                <a href="#externaletcdconfigurationmachinegroupref"># vSphere-specific Kubernetes etcd config</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: "1.25"
-   workerNodeGroupConfigurations:
-   - count: 1
-     machineGroupRef:
+   kubernetesVersion: "1.25"         <a href="#kubernetesversion-required"># Kubernetes version to use for the cluster (required)</a>
+   workerNodeGroupConfigurations:    <a href="#workernodegroupconfigurations-required"># List of node groups you can define for workers (required) </a>
+   - count: 1                        <a href="#workernodegroupconfigurationscount"># Number of worker nodes </a>
+     machineGroupRef:                <a href="#workernodegroupconfigurationsmachinegroupref-required"># vSphere-specific Kubernetes node objects (required) </a>
        kind: VSphereMachineConfig
        name: my-cluster-machines
-     name: md-0
-     taints:
-     - key: ""
+     name: md-0                      <a href="#workernodegroupconfigurationsname-required"># Name of the worker nodegroup (required) </a>
+     taints:                         <a href="#workernodegroupconfigurationsname-required"># Taints to apply to worker node group nodes </a>
+     - key: ""                       
        value: ""
        effect: ""
-     labels:
+     labels:                         <a href="#workernodegroupconfigurationslabels"># Labels to apply to worker node group nodes </a>
        "<key1>": ""
        "<key2>": "" 
 ---
@@ -75,12 +75,12 @@ kind: VSphereDatacenterConfig
 metadata:
    name: my-cluster-datacenter
 spec:
-  datacenter: ""
-  disableCSI: false
-  server: ""
-  network: ""
-  insecure: false
-  thumbprint: ""
+  datacenter: ""                     <a href="#datacenter-required"># vSphere datacenter name on which to deploy EKS Anywhere (required) </a>
+  disableCSI: false                  <a href="#disablecsi-optional"># Set to true to not have EKS Anywhere install and manage vSphere CSI driver</a>
+  server: ""                         <a href="#server-required"># FQDN or IP address of vCenter server (required) </a>
+  network: ""                        <a href="#network-required"># Path to the VM network on which to deploy EKS Anywhere (required) </a>
+  insecure: false                    <a href="#insecure-optional"># Set to true if vCenter does not have a valid certificate </a>
+  thumbprint: ""                     <a href="#thumbprint-required-if-insecurefalse"># SHA1 thumprint of vCenter server certificate (required if insecure=false)</a>
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -88,22 +88,22 @@ kind: VSphereMachineConfig
 metadata:
    name: my-cluster-machines
 spec:
-  diskGiB:
-  datastore: ""
-  folder: ""
-  numCPUs:
-  memoryMiB:
-  osFamily: ""
-  resourcePool: ""
-  storagePolicyName: ""
-  template: ""
-  users:
-  - name: ""
-    sshAuthorizedKeys:
+  diskGiB:                          <a href="#diskgib-optional"># Size of disk on VMs, if no snapshots</a>
+  datastore: ""                     <a href="#datastore-required"># Path to vSphere datastore to deploy EKS Anywhere on (required)</a>
+  folder: ""                        <a href="#folder-required"># Path to VM folder for EKS Anywhere cluster VMs (required)</a>
+  numCPUs:                          <a href="#numcpus-optional"># Number of CPUs on virtual machines</a>
+  memoryMiB:                        <a href="#memorymib-optional"># Size of RAM on VMs</a>
+  osFamily: ""                      <a href="#osfamily-optional"># Operating system on VMs</a>
+  resourcePool: ""                  <a href="#resourcepool-required"># vSphere resource pool for EKS Anywhere VMs (required)</a>
+  storagePolicyName: ""             <a href="#storagepolicyname-optional"># Storage policy name associated with VMs</a>
+  template: ""                      <a href="#template-optional"># VM template for EKS Anywhere (required for RHEL/Ubuntu-based OVAs)</a>
+  users:                            <a href="#users-optional"># Add users to access VMs via SSH</a>
+  - name: ""                        <a href="#users0name-optional"># Name of each user set to access VMs</a>
+    sshAuthorizedKeys:              <a href="#users0sshauthorizedkeys-optional"># SSH keys for user needed to access VMs</a>
     - ""
-  tags:
+  tags:                             <a href="#tags-optional"># List of tags to attach to cluster VMs, in URN format</a>
   - ""
-```
+</pre>
 
 ## Cluster Fields
 
@@ -321,7 +321,7 @@ to deploy your EKS Anywhere cluster on, for example `/<DATACENTER>/datastore/<DA
 Use `govc find -type s` to get a list of datastores.
 
 ### folder (required)
-The path to a VM folder for your EKS anywhere cluster VMs. This allows you to organize your VMs. If the folder does not exist,
+The path to a VM folder for your EKS Anywhere cluster VMs. This allows you to organize your VMs. If the folder does not exist,
 it will be created for you. If the folder is blank, the VMs will go in the root folder.
 For example `/<DATACENTER>/vm/<FOLDER_NAME>/...`.
 Use `govc find -type f` to get a list of existing folders.
