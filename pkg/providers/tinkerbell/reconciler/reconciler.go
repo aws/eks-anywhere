@@ -2,10 +2,13 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -45,14 +48,10 @@ type IPValidator interface {
 
 // Scope object for Tinkerbell reconciler.
 type Scope struct {
-<<<<<<< HEAD
-	ClusterSpec *c.Spec
-=======
 	ClusterSpec   *c.Spec
 	ClusterChange *clusterChange
 	ControlPlane  *tinkerbell.ControlPlane
 	Workers       *tinkerbell.Workers
->>>>>>> b1f87dd0 (Scaling upgrade validation poc)
 }
 
 // NewScope creates a new Tinkerbell Reconciler Scope.
@@ -258,7 +257,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	clusterSpec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "validateHardware")
 
-	minHardware, err := DetectOperationAndHardwareRequirements(tinkerbellScope)
+	minHardware, err := DetectOperationAndHardwareRequirements(ctx, tinkerbellScope, r.client)
 	if err != nil {
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
@@ -356,21 +355,61 @@ func (r *Reconciler) checkContactable(rm *rufiov1alpha1.Machine) error {
 	return nil
 }
 
-func DetectOperationAndHardwareRequirements(tinkerbellScope *Scope) (tinkerbell.MinimumHardwareRequirements, error) {
+func DetectOperationAndHardwareRequirements(ctx context.Context, tinkerbellScope *Scope, kclient client.Client) (tinkerbell.MinimumHardwareRequirements, error) {
 
 	// Initialize minimum hardware requirements
 	requirements := tinkerbell.MinimumHardwareRequirements{}
 
 	// Check Kubernetes version for rolling upgrade - simultaneous rolling+scaling not permitted
+	oldKCP, err := controller.GetKubeadmControlPlane(ctx, kclient, tinkerbellScope.ClusterSpec.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	oldKCPcomparator := &tinkerbell.KubeadmControlPlaneComparator{oldKCP}
+	newKCPcomparator := &tinkerbell.KubeadmControlPlaneComparator{tinkerbellScope.ControlPlane.KubeadmControlPlane}
 
-	// Check Control Plane Replica Count for scaling upgrade
-	// Add scaling to minimum requirements
+	isRolling := tinkerbell.KubernetesVersionChange(oldKCPcomparator, newKCPcomparator)
 
-	// Check Worker Node Replicas for scaling upgrade
-	// Add scaling to minimum requirements
+	// Check Control Plane Replica Count
+	controlPlaneReplicaScale := tinkerbell.ReplicasChange(oldKCPcomparator, newKCPcomparator)
+	if controlPlaneReplicaScale != 0 {
+		if isRolling {
+			return nil, fmt.Errorf("cannot perform scale up or down during rolling upgrades")
+		}
 
-	// Set operation type
-	*tinkerbellScope.ClusterChange = ReconcileNewCluster
+		// TODO: Get Control plane hardware selector
+		requirements.Add(tinkerbellScope.ControlPlane.ControlPlaneMachineTemplate.Spec.Template.Spec.HardwareAffinity, controlPlaneReplicaScale)
+	}
+
+	// Check Worker Node Replicas
+	for _, workerGroup := range tinkerbellScope.Workers.Groups {
+		newWorkerMD := workerGroup.MachineDeployment
+		oldWorkerMD := &v1beta1.MachineDeployment{}
+		err := kclient.Get(ctx, client.ObjectKey{
+			Namespace: newWorkerMD.Namespace,
+			Name:      newWorkerMD.Name}, oldWorkerMD)
+		if apierrors.IsNotFound(err) {
+			// New worker node, add all replicas to count
+			if isRolling {
+				return nil, fmt.Errorf("cannot perform scale up or down during rolling upgrades")
+			}
+
+			// TODO: Add replicas to count
+		} else {
+			// Check for node difference
+			oldWorkerMDComparator := &tinkerbell.MachineDeploymentComparator{oldWorkerMD}
+			newWorkerMDComparator := &tinkerbell.MachineDeploymentComparator{newWorkerMD}
+			replicaDiff := tinkerbell.ReplicasChange(oldWorkerMDComparator, newWorkerMDComparator)
+
+			if replicaDiff != 0 && isRolling {
+				return nil, fmt.Errorf("cannot perform scale up or down during rolling upgrades")
+			}
+			// TODO: Get worker node hardware selector
+			requirements.Add(workerGroup.ProviderMachineTemplate.Spec.Template.Spec.HardwareAffinity, replicaDiff)
+		}
+	}
+
+	// TODO: if isRolling, add +1 hardware to minimum requirements
 
 	return requirements, nil
 }
