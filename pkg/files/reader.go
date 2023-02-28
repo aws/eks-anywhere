@@ -48,7 +48,7 @@ func NewReader(opts ...ReaderOpt) *Reader {
 		TLSHandshakeTimeout: 60 * time.Second,
 	}
 	r := &Reader{
-		embedFS: embed.FS{},
+		embedFS: embedFS,
 		httpClient: &http.Client{
 			Transport: transport,
 		},

@@ -157,7 +157,7 @@ func TestValidateClusterReady(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			spec := cluster.NewSpec(func(s *cluster.Spec) {
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = tt.cluster
 			})
 			vt := newStateValidatorTest(t, spec)
@@ -189,7 +189,7 @@ func TestValidateEKSAObjects(t *testing.T) {
 	}{
 		{
 			name: "EKSA objects exists",
-			spec: cluster.NewSpec(func(s *cluster.Spec) {
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = testCluster()
 				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
 					Kind: v1alpha1.DockerDatacenterKind,
@@ -202,7 +202,7 @@ func TestValidateEKSAObjects(t *testing.T) {
 		},
 		{
 			name: "EKSA objects missing",
-			spec: cluster.NewSpec(func(s *cluster.Spec) {
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = testCluster()
 				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
 					Kind: v1alpha1.DockerDatacenterKind,
@@ -242,7 +242,7 @@ func TestValidateControlPlanes(t *testing.T) {
 	}{
 		{
 			name: "control plane nodes valid",
-			spec: cluster.NewSpec(func(s *cluster.Spec) {
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = testCluster()
 				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 					Count: 2,
@@ -272,7 +272,7 @@ func TestValidateControlPlanes(t *testing.T) {
 		},
 		{
 			name: "control planes nodes count mismatch",
-			spec: cluster.NewSpec(func(s *cluster.Spec) {
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = testCluster()
 				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 					Count: 2,
@@ -293,7 +293,7 @@ func TestValidateControlPlanes(t *testing.T) {
 		},
 		{
 			name: "control planes nodes not ready",
-			spec: cluster.NewSpec(func(s *cluster.Spec) {
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = testCluster()
 				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 					Count: 2,
@@ -413,7 +413,7 @@ func TestValidateCilium(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			vt := newStateValidatorTest(t, cluster.NewSpec(func(s *cluster.Spec) {
+			vt := newStateValidatorTest(t, test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = testCluster()
 				s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
 					CNIConfig: &v1alpha1.CNIConfig{

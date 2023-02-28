@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -97,8 +98,13 @@ func (c clusterOptions) mountDirs() []string {
 	return dirs
 }
 
-func readAndValidateClusterSpec(clusterConfigPath string, cliVersion version.Info, opts ...cluster.SpecOpt) (*cluster.Spec, error) {
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(clusterConfigPath, cliVersion, opts...)
+func readClusterSpec(clusterConfigPath string, cliVersion version.Info, opts ...cluster.FileSpecBuilderOpt) (*cluster.Spec, error) {
+	b := cluster.NewFileSpecBuilder(files.NewReader(), cliVersion, opts...)
+	return b.Build(clusterConfigPath)
+}
+
+func readAndValidateClusterSpec(clusterConfigPath string, cliVersion version.Info, opts ...cluster.FileSpecBuilderOpt) (*cluster.Spec, error) {
+	clusterSpec, err := readClusterSpec(clusterConfigPath, cliVersion, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,31 +116,28 @@ func readAndValidateClusterSpec(clusterConfigPath string, cliVersion version.Inf
 }
 
 func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
-	var specOpts []cluster.SpecOpt
+	var opts []cluster.FileSpecBuilderOpt
 	if options.bundlesOverride != "" {
-		specOpts = append(specOpts, cluster.WithOverrideBundlesManifest(options.bundlesOverride))
-	}
-	if options.managementKubeconfig != "" {
-		managementCluster, err := cluster.LoadManagement(options.managementKubeconfig)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get management cluster from kubeconfig: %v", err)
-		}
-		specOpts = append(specOpts, cluster.WithManagementCluster(managementCluster))
+		opts = append(opts, cluster.WithOverrideBundlesManifest(options.bundlesOverride))
 	}
 
-	clusterSpec, err := readAndValidateClusterSpec(options.fileName, version.Get(), specOpts...)
+	clusterSpec, err := readAndValidateClusterSpec(options.fileName, version.Get(), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
 	if clusterSpec.Cluster.IsManaged() && options.managementKubeconfig == "" {
 		options.managementKubeconfig = kubeconfig.FromEnvironment()
-		clusterSpec.ManagementCluster = &types.Cluster{
-			Name:               clusterSpec.Cluster.ManagedBy(),
-			KubeconfigFile:     options.managementKubeconfig,
-			ExistingManagement: true,
-		}
 	}
+
+	if options.managementKubeconfig != "" {
+		managementCluster, err := cluster.LoadManagement(options.managementKubeconfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get management cluster from kubeconfig: %v", err)
+		}
+		clusterSpec.ManagementCluster = managementCluster
+	}
+
 	return clusterSpec, nil
 }
 

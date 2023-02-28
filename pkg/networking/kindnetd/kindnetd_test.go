@@ -9,6 +9,8 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/files"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -21,12 +23,14 @@ type kindnetdTest struct {
 	k       *kindnetd.Kindnetd
 	cluster *types.Cluster
 	client  *mocks.MockClient
+	reader  manifests.FileReader
 	spec    *cluster.Spec
 }
 
 func newKindnetdTest(t *testing.T) *kindnetdTest {
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockClient(ctrl)
+	reader := files.NewReader()
 	return &kindnetdTest{
 		WithT:  NewWithT(t),
 		ctx:    context.Background(),
@@ -35,7 +39,8 @@ func newKindnetdTest(t *testing.T) *kindnetdTest {
 			Name:           "w-cluster",
 			KubeconfigFile: "config.kubeconfig",
 		},
-		k: kindnetd.NewKindnetd(client),
+		reader: reader,
+		k:      kindnetd.NewKindnetd(client, reader),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.1.0/24"}
 			s.VersionsBundle.Kindnetd = kindnetdBundle

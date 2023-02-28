@@ -632,14 +632,17 @@ func (f *Factory) WithKind() *Factory {
 }
 
 func (f *Factory) WithClusterctl() *Factory {
-	f.WithExecutableBuilder().WithWriter()
+	f.WithExecutableBuilder().WithWriter().WithFileReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Clusterctl != nil {
 			return nil
 		}
 
-		f.dependencies.Clusterctl = f.executablesConfig.builder.BuildClusterCtlExecutable(f.dependencies.Writer)
+		f.dependencies.Clusterctl = f.executablesConfig.builder.BuildClusterCtlExecutable(
+			f.dependencies.Writer,
+			f.dependencies.FileReader,
+		)
 		return nil
 	})
 
@@ -698,9 +701,9 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	var networkingBuilder func() clustermanager.Networking
 	if clusterConfig.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-		f.WithKubectl()
+		f.WithKubectl().WithFileReader()
 		networkingBuilder = func() clustermanager.Networking {
-			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
+			return kindnetd.NewKindnetd(f.dependencies.Kubectl, f.dependencies.FileReader)
 		}
 	} else {
 		f.WithKubectl().WithCiliumTemplater()
@@ -727,7 +730,7 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 // WithCNIInstaller builds a CNI installer for the given cluster.
 func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provider) *Factory {
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-		f.WithKubectl()
+		f.WithKubectl().WithFileReader()
 	} else {
 		f.WithKubectl().WithCiliumTemplater()
 	}
@@ -738,7 +741,11 @@ func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provid
 		}
 
 		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
-			f.dependencies.CNIInstaller = kindnetd.NewInstallerForSpec(f.dependencies.Kubectl, spec)
+			f.dependencies.CNIInstaller = kindnetd.NewInstallerForSpec(
+				f.dependencies.Kubectl,
+				f.dependencies.FileReader,
+				spec,
+			)
 		} else {
 			f.dependencies.CNIInstaller = cilium.NewInstallerForSpec(
 				cilium.NewRetrier(f.dependencies.Kubectl),
@@ -825,7 +832,7 @@ type clusterManagerClient struct {
 }
 
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
+	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
@@ -839,7 +846,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...cl
 			},
 			clustermanager.DefaultRetrier(),
 		)
-		installer := clustermanager.NewEKSAInstaller(client)
+		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader)
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			client,

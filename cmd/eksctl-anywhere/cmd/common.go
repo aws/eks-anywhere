@@ -12,7 +12,7 @@ import (
 )
 
 func getImages(clusterSpecPath, bundlesOverride string) ([]v1alpha1.Image, error) {
-	var specOpts []cluster.SpecOpt
+	var specOpts []cluster.FileSpecBuilderOpt
 	if bundlesOverride != "" {
 		specOpts = append(specOpts, cluster.WithOverrideBundlesManifest(bundlesOverride))
 	}
