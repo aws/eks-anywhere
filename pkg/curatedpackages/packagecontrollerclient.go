@@ -115,7 +115,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		chartName = chartName + "-" + pc.clusterName
 	}
 
-	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
+	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, "eksa-packages", valueFilePath, values); err != nil {
 		return err
 	}
 

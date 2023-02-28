@@ -276,7 +276,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -320,7 +320,7 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		values = append(values, "workloadOnly=true")
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -390,7 +390,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -441,7 +441,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -475,7 +475,7 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(errors.New("login failed"))
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(errors.New("login failed"))
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -505,7 +505,7 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCFail(t)).
@@ -535,7 +535,7 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -608,7 +608,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -642,7 +642,7 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCLoops(t, 3)).
@@ -707,7 +707,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCDelay(t, time.Second)).
@@ -753,7 +753,7 @@ func TestEnableCuratedPackagesActiveBundleNamespaceTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
