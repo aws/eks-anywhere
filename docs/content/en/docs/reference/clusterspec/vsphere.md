@@ -37,8 +37,8 @@ spec:
         value: <span style="color:red">"value1"</span>
         effect: <span style="color:red">"NoSchedule"</span>
       labels:                        <a href="#controlplaneconfigurationlabels"># Labels applied to control plane nodes </a>
-        "key1"  : <span style="color:red">"value1"</span>
-        "key2"  : <span style="color:red">"value2"</span> 
+        <span style="color:red">"key1"</span>: <span style="color:red">"value1"</span>
+        <span style="color:red"">"key2"</span>: <span style="color:red">"value2"</span> 
    datacenterRef:                    <a href="#datacenterref"># Kubernetes object with vSphere-specific config </a>
       kind: VSphereDatacenterConfig  
       name: my-cluster-datacenter
@@ -59,8 +59,8 @@ spec:
        value: <span style="color:red">"value1"</span>
        effect: <span style="color:red">"NoSchedule"</span>
      labels:                         <a href="#workernodegroupconfigurationslabels"># Labels to apply to worker node group nodes </a>
-       "key1": <span style="color:red">"value1"</span>
-       "key2": <span style="color:red">"value2"</span> 
+       <span style="color:red">"key1"</span>: <span style="color:red">"value1"</span>
+       <span style="color:red"">"key2"</span>: <span style="color:red">"value2"</span> 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
