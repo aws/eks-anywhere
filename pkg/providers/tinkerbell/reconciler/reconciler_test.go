@@ -70,7 +70,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
@@ -82,7 +82,7 @@ func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ManagementCluster.Name = "nonexistent-management-cluster"
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
@@ -95,7 +95,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T
 func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.managementCluster.Spec.DatacenterRef.Name = "nonexistent-datacenter"
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
@@ -113,7 +113,7 @@ func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
 	})
 	tt.managementCluster.Spec.DatacenterRef.Name = managementDatacenterConfig.Name
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, managementDatacenterConfig)
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
