@@ -48,7 +48,7 @@ spec:
         "<key1>": ""
         "<key2>": "" 
    datacenterRef:                    <a href="#datacenterref"># Kubernetes object with vSphere-specific config </a>
-      kind: VSphereDatacenterConfig  <a href="#kubernetesversion-required"># Version of Kubernetes to use for cluster (required)</a>
+      kind: VSphereDatacenterConfig  
       name: my-cluster-datacenter
    externalEtcdConfiguration:
      count: 3                        <a href="#externaletcdconfigurationcount"># Number of etcd members </a>
@@ -62,7 +62,7 @@ spec:
        kind: VSphereMachineConfig
        name: my-cluster-machines
      name: md-0                      <a href="#workernodegroupconfigurationsname-required"># Name of the worker nodegroup (required) </a>
-     taints:                         <a href="#workernodegroupconfigurationsname-required"># Taints to apply to worker node group nodes </a>
+     taints:                         <a href="#workernodegroupconfigurationstaints"># Taints to apply to worker node group nodes </a>
      - key: ""                       
        value: ""
        effect: ""
