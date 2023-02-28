@@ -155,7 +155,8 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 		rollingUpgrade = true
 	}
 
-	clusterSpecValidator.Register(AssertionsForScaleUpDown(p.catalogue, currentSpec, rollingUpgrade))
+	currentTinkerbellSpec := NewClusterSpec(currentSpec, currentSpec.TinkerbellMachineConfigs, currentSpec.TinkerbellDatacenter)
+	clusterSpecValidator.Register(AssertionsForScaleUpDown(p.catalogue, &ValidatableTinkerbellClusterSpec{currentTinkerbellSpec}, rollingUpgrade))
 
 	tinkerbellClusterSpec := NewClusterSpec(newClusterSpec, p.machineConfigs, p.datacenterConfig)
 
