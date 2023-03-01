@@ -456,11 +456,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -471,14 +471,14 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
-      version: v1.1.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
+      version: v1.1.3+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.31-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -487,7 +487,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.31-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -496,8 +496,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.30-eks-a-v0.0.0-dev-build.1
-      version: v0.2.30+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.31-eks-a-v0.0.0-dev-build.1
+      version: v0.2.31+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -843,7 +843,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-19-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-21-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -1030,13 +1030,13 @@ spec:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ami image for EKS-D 1-22-19 release
-          name: bottlerocket-v1.22.17-eks-d-1-22-19-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          description: Bottlerocket Ami image for EKS-D 1-22-21 release
+          name: bottlerocket-v1.22.17-eks-d-1-22-21-eks-a-v0.0.0-dev-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-22/1-22-19/bottlerocket-v1.22.17-eks-d-1-22-19-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-22/1-22-21/bottlerocket-v1.22.17-eks-d-1-22-21-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:
@@ -1075,32 +1075,32 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.17-eks-d-1-22-19-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.17-eks-d-1-22-21-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.22.17
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-19.yaml
-      name: kubernetes-1-22-eks-19
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-21.yaml
+      name: kubernetes-1-22-eks-21
       ova:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ova image for EKS-D 1-22-19 release
-          name: bottlerocket-v1.22.17-eks-d-1-22-19-eks-a-v0.0.0-dev-build.0-amd64.ova
+          description: Bottlerocket Ova image for EKS-D 1-22-21 release
+          name: bottlerocket-v1.22.17-eks-d-1-22-21-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-19/bottlerocket-v1.22.17-eks-d-1-22-19-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-21/bottlerocket-v1.22.17-eks-d-1-22-21-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Raw image for EKS-D 1-22-19 release
-          name: bottlerocket-v1.22.17-eks-d-1-22-19-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          description: Bottlerocket Raw image for EKS-D 1-22-21 release
+          name: bottlerocket-v1.22.17-eks-d-1-22-21-eks-a-v0.0.0-dev-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-19/bottlerocket-v1.22.17-eks-d-1-22-19-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-21/bottlerocket-v1.22.17-eks-d-1-22-21-eks-a-v0.0.0-dev-build.0-amd64.img.gz
     eksa:
       cliTools:
         arch:
@@ -1242,11 +1242,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1257,14 +1257,14 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
-      version: v1.1.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
+      version: v1.1.3+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.31-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1273,7 +1273,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.31-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1282,8 +1282,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.30-eks-a-v0.0.0-dev-build.1
-      version: v0.2.30+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.31-eks-a-v0.0.0-dev-build.1
+      version: v0.2.31+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -1293,7 +1293,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-22-19-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-22-21-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.23/infrastructure-components.yaml
       kubeVip:
@@ -1629,7 +1629,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-14-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-16-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -1816,13 +1816,13 @@ spec:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ami image for EKS-D 1-23-14 release
-          name: bottlerocket-v1.23.16-eks-d-1-23-14-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          description: Bottlerocket Ami image for EKS-D 1-23-16 release
+          name: bottlerocket-v1.23.16-eks-d-1-23-16-eks-a-v0.0.0-dev-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-23/1-23-14/bottlerocket-v1.23.16-eks-d-1-23-14-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-23/1-23-16/bottlerocket-v1.23.16-eks-d-1-23-16-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-23
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:
@@ -1861,32 +1861,32 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.16-eks-d-1-23-14-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.16-eks-d-1-23-16-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.23.16
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-14.yaml
-      name: kubernetes-1-23-eks-14
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-16.yaml
+      name: kubernetes-1-23-eks-16
       ova:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ova image for EKS-D 1-23-14 release
-          name: bottlerocket-v1.23.16-eks-d-1-23-14-eks-a-v0.0.0-dev-build.0-amd64.ova
+          description: Bottlerocket Ova image for EKS-D 1-23-16 release
+          name: bottlerocket-v1.23.16-eks-d-1-23-16-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-14/bottlerocket-v1.23.16-eks-d-1-23-14-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-16/bottlerocket-v1.23.16-eks-d-1-23-16-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Raw image for EKS-D 1-23-14 release
-          name: bottlerocket-v1.23.16-eks-d-1-23-14-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          description: Bottlerocket Raw image for EKS-D 1-23-16 release
+          name: bottlerocket-v1.23.16-eks-d-1-23-16-eks-a-v0.0.0-dev-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-14/bottlerocket-v1.23.16-eks-d-1-23-14-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-16/bottlerocket-v1.23.16-eks-d-1-23-16-eks-a-v0.0.0-dev-build.0-amd64.img.gz
     eksa:
       cliTools:
         arch:
@@ -2028,11 +2028,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2043,14 +2043,14 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
-      version: v1.1.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
+      version: v1.1.3+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.31-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2059,7 +2059,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.31-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2068,8 +2068,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.30-eks-a-v0.0.0-dev-build.1
-      version: v0.2.30+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.31-eks-a-v0.0.0-dev-build.1
+      version: v0.2.31+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -2079,7 +2079,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-23-14-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-23-16-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.23/infrastructure-components.yaml
       kubeVip:
@@ -2415,7 +2415,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-24-9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-24-11-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -2602,13 +2602,13 @@ spec:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ami image for EKS-D 1-24-9 release
-          name: bottlerocket-v1.24.10-eks-d-1-24-9-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          description: Bottlerocket Ami image for EKS-D 1-24-11 release
+          name: bottlerocket-v1.24.10-eks-d-1-24-11-eks-a-v0.0.0-dev-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-24/1-24-9/bottlerocket-v1.24.10-eks-d-1-24-9-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-24/1-24-11/bottlerocket-v1.24.10-eks-d-1-24-11-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-24
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       crictl:
@@ -2647,32 +2647,32 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.24.10-eks-d-1-24-9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.24.10-eks-d-1-24-11-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.24.10
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-24/kubernetes-1-24-eks-9.yaml
-      name: kubernetes-1-24-eks-9
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-24/kubernetes-1-24-eks-11.yaml
+      name: kubernetes-1-24-eks-11
       ova:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ova image for EKS-D 1-24-9 release
-          name: bottlerocket-v1.24.10-eks-d-1-24-9-eks-a-v0.0.0-dev-build.0-amd64.ova
+          description: Bottlerocket Ova image for EKS-D 1-24-11 release
+          name: bottlerocket-v1.24.10-eks-d-1-24-11-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-24/1-24-9/bottlerocket-v1.24.10-eks-d-1-24-9-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-24/1-24-11/bottlerocket-v1.24.10-eks-d-1-24-11-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Raw image for EKS-D 1-24-9 release
-          name: bottlerocket-v1.24.10-eks-d-1-24-9-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          description: Bottlerocket Raw image for EKS-D 1-24-11 release
+          name: bottlerocket-v1.24.10-eks-d-1-24-11-eks-a-v0.0.0-dev-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-24/1-24-9/bottlerocket-v1.24.10-eks-d-1-24-9-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-24/1-24-11/bottlerocket-v1.24.10-eks-d-1-24-11-eks-a-v0.0.0-dev-build.0-amd64.img.gz
     eksa:
       cliTools:
         arch:
@@ -2814,11 +2814,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2829,14 +2829,14 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
-      version: v1.1.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
+      version: v1.1.3+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.31-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2845,7 +2845,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.31-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2854,8 +2854,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.30-eks-a-v0.0.0-dev-build.1
-      version: v0.2.30+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.31-eks-a-v0.0.0-dev-build.1
+      version: v0.2.31+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -2865,7 +2865,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-24-9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-24-11-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.23/infrastructure-components.yaml
       kubeVip:
@@ -3201,7 +3201,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-25-5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-25-7-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -3424,10 +3424,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.25.6-eks-d-1-25-5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.25.6-eks-d-1-25-7-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.25.6
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-25/kubernetes-1-25-eks-5.yaml
-      name: kubernetes-1-25-eks-5
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-25/kubernetes-1-25-eks-7.yaml
+      name: kubernetes-1-25-eks-7
       ova:
         bottlerocket: {}
       raw:
@@ -3573,11 +3573,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3588,14 +3588,14 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
-      version: v1.1.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
+      version: v1.1.3+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.31-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -3604,7 +3604,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.31-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -3613,8 +3613,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.30-eks-a-v0.0.0-dev-build.1
-      version: v0.2.30+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.31-eks-a-v0.0.0-dev-build.1
+      version: v0.2.31+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -3624,7 +3624,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-25-5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-25-7-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.23/infrastructure-components.yaml
       kubeVip:
@@ -3960,7 +3960,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-26-1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-26-3-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -4183,10 +4183,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.26.1-eks-d-1-26-1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.26.1-eks-d-1-26-3-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.26.1
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-26/kubernetes-1-26-eks-1.yaml
-      name: kubernetes-1-26-eks-1
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-26/kubernetes-1-26-eks-3.yaml
+      name: kubernetes-1-26-eks-3
       ova:
         bottlerocket: {}
       raw:
@@ -4332,11 +4332,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -4347,14 +4347,14 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.1/metadata.yaml
-      version: v1.1.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
+      version: v1.1.3+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.31-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -4363,7 +4363,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.30-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.31-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -4372,8 +4372,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.30-eks-a-v0.0.0-dev-build.1
-      version: v0.2.30+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.31-eks-a-v0.0.0-dev-build.1
+      version: v0.2.31+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -4383,7 +4383,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-26-1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-26-3-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.23/infrastructure-components.yaml
       kubeVip:
