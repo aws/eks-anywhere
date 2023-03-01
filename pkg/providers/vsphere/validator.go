@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -165,6 +166,14 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 
 	logger.MarkPass("Control plane and Workload templates validated")
 
+	for _, mc := range vsphereClusterSpec.VSphereMachineConfigs {
+		if mc.OSFamily() == v1alpha1.Bottlerocket {
+			if err := v.validateBRHardDiskSize(ctx, vsphereClusterSpec, mc); err != nil {
+				return fmt.Errorf("failed validating BR Hard Disk size: %v", err)
+			}
+		}
+	}
+
 	return v.validateDatastoreUsage(ctx, vsphereClusterSpec, controlPlaneMachineConfig, etcdMachineConfig)
 }
 
@@ -216,6 +225,28 @@ func (v *Validator) validateTemplateTags(ctx context.Context, spec *Spec, machin
 		}
 	}
 
+	return nil
+}
+
+func (v *Validator) validateBRHardDiskSize(ctx context.Context, spec *Spec, machineConfigSpec *anywherev1.VSphereMachineConfig) error {
+	dataCenter := spec.Config.VSphereDatacenter.Spec.Datacenter
+	template := machineConfigSpec.Spec.Template
+	hardDiskMap, err := v.govc.GetHardDiskSize(ctx, template, dataCenter)
+	if err != nil {
+		return fmt.Errorf("validating hard disk size: %v", err)
+	}
+	if len(hardDiskMap) == 0 {
+		return fmt.Errorf("no hard disks found for template: %v", template)
+	} else if len(hardDiskMap) > 1 {
+		if hardDiskMap[disk1] != 2097152 { // 2GB in KB to avoid roundoff errors
+			return fmt.Errorf("Incorrect disk size for disk1 - expected: 2097152 kB got: %v", hardDiskMap[disk1])
+		} else if hardDiskMap[disk2] != 20971520 { // 20GB in KB to avoid roundoff errors
+			return fmt.Errorf("Incorrect disk size for disk2 - expected: 20971520 kB got: %v", hardDiskMap[disk2])
+		}
+	} else if hardDiskMap[disk1] != 23068672 { // 22GB in KB to avoid roundoff errors
+		return fmt.Errorf("Incorrect disk size for disk1 - expected: 23068672 kB got: %v", hardDiskMap[disk1])
+	}
+	logger.V(5).Info("Bottlerocket Disk size validated: ", "diskMap", hardDiskMap)
 	return nil
 }
 
