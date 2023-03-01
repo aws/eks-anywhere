@@ -52,11 +52,6 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	}
 
 	for _, az := range localAvailabilityZones {
-		_, err := getHostnameFromUrl(az.ManagementApiEndpoint)
-		if err != nil {
-			return fmt.Errorf("checking management api endpoint: %v", err)
-		}
-
 		endpoint, err := v.cmk.GetManagementApiEndpoint(az.CredentialsRef)
 		if err != nil {
 			return err
@@ -79,9 +74,6 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		zoneId, err := v.cmk.ValidateZoneAndGetId(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone)
 		if err != nil {
 			return err
-		}
-		if len(az.CloudStackAvailabilityZone.Zone.Network.Id) == 0 && len(az.CloudStackAvailabilityZone.Zone.Network.Name) == 0 {
-			return fmt.Errorf("zone network is not set or is empty")
 		}
 		if err := v.cmk.ValidateNetworkPresent(ctx, az.CredentialsRef, az.DomainId, az.CloudStackAvailabilityZone.Zone.Network, zoneId, az.Account); err != nil {
 			return err

@@ -365,14 +365,6 @@ func (p *cloudstackProvider) validateManagementApiEndpoint(rawurl string) error 
 	return nil
 }
 
-func getHostnameFromUrl(rawurl string) (string, error) {
-	url, err := url.Parse(rawurl)
-	if err != nil {
-		return "", fmt.Errorf("%s is not a valid url", rawurl)
-	}
-	return url.Hostname(), nil
-}
-
 func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	var cloudStackB64EncodedSecret string
 	var ok bool
@@ -891,8 +883,8 @@ func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster
 
 	noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 	for _, az := range datacenterConfigSpec.AvailabilityZones {
-		if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		if cloudStackManagementAPIEndpointHostname, err := v1alpha1.GetCloudStackManagementAPIEndpointHostname(az); err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementAPIEndpointHostname)
 		}
 	}
 	noProxyList = append(noProxyList,
