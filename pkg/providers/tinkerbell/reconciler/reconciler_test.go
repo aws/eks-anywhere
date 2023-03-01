@@ -26,7 +26,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
@@ -39,10 +38,6 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -162,10 +157,6 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildScope())
@@ -223,10 +214,6 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	t.Setenv("REGISTRY_USERNAME", "username")
 	t.Setenv("REGISTRY_PASSWORD", "password")
 	tt := newReconcilerTest(t)
@@ -292,10 +279,6 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	scope := tt.buildScope()
@@ -345,11 +328,6 @@ func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
@@ -396,11 +374,6 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -444,11 +417,6 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
