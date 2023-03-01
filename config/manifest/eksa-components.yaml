@@ -6374,8 +6374,8 @@ webhooks:
   - v1beta1
   clientConfig:
     service:
-      name: webhook-service
-      namespace: system
+      name: eksa-webhook-service
+      namespace: eksa-system
       path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig
   failurePolicy: Fail
   name: mutation.cloudstackdatacenterconfig.anywhere.amazonaws.com
