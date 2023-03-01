@@ -50,6 +50,7 @@ type Reconcilers struct {
 	VSphereDatacenterReconciler    *VSphereDatacenterReconciler
 	SnowMachineConfigReconciler    *SnowMachineConfigReconciler
 	TinkerbellDatacenterReconciler *TinkerbellDatacenterReconciler
+	CloudStackDatacenterReconciler *CloudStackDatacenterReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -167,6 +168,22 @@ func (f *Factory) WithTinkerbellDatacenterReconciler() *Factory {
 		}
 
 		f.reconcilers.TinkerbellDatacenterReconciler = NewTinkerbellDatacenterReconciler(
+			f.manager.GetClient(),
+		)
+
+		return nil
+	})
+	return f
+}
+
+// WithCloudStackDatacenterReconciler adds the CloudStackDatacenterReconciler to the controller factory.
+func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.CloudStackDatacenterReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.CloudStackDatacenterReconciler = NewCloudStackDatacenterReconciler(
 			f.manager.GetClient(),
 		)
 

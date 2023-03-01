@@ -72,6 +72,26 @@ func TestFactoryBuildAllTinkerbellReconciler(t *testing.T) {
 	g.Expect(reconcilers.TinkerbellDatacenterReconciler).NotTo(BeNil())
 }
 
+func TestFactoryBuildAllCloudStackReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager).
+		WithCloudStackDatacenterReconciler()
+
+	// testing idempotence
+	f.WithCloudStackDatacenterReconciler()
+
+	reconcilers, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(reconcilers.CloudStackDatacenterReconciler).NotTo(BeNil())
+}
+
 func TestFactoryBuildClusterReconciler(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
