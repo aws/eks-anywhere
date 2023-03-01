@@ -19,7 +19,7 @@ SHELL := /bin/bash
 
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
-GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
+GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
 GOLANG_VERSION?="1.19"
 GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
