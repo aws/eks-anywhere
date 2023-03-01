@@ -1,6 +1,8 @@
 package framework
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -38,6 +40,20 @@ func WithPerMachineWaitTimeout(timeout string) CommandOpt {
 func ExecuteWithEksaRelease(release *releasev1alpha1.EksARelease) CommandOpt {
 	return executeWithBinaryCommandOpt(func() (string, error) {
 		return getBinary(release)
+	})
+}
+
+// PackagedBinary represents a binary that can be extracted
+// executed from local disk.
+type PackagedBinary interface {
+	// BinaryPath returns the local disk path to the binary.
+	BinaryPath() (string, error)
+}
+
+// ExecuteWithBinary executes the command with a binary from an specific path.
+func ExecuteWithBinary(eksa PackagedBinary) CommandOpt {
+	return executeWithBinaryCommandOpt(func() (string, error) {
+		return eksa.BinaryPath()
 	})
 }
 
@@ -93,4 +109,25 @@ func removeFlag(flag string, args *[]string) {
 			break
 		}
 	}
+}
+
+// DefaultLocalEKSABinaryPath returns the full path for the local eks-a binary being tested.
+func DefaultLocalEKSABinaryPath() (string, error) {
+	binDir, err := DefaultLocalEKSABinDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(binDir, "eksctl-anywhere"), nil
+}
+
+// DefaultLocalEKSABinDir returns the full path for the local directory where
+// the tested eks-a binary lives.
+func DefaultLocalEKSABinDir() (string, error) {
+	workDir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(workDir, "bin"), nil
 }

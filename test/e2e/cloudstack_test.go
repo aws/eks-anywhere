@@ -145,32 +145,39 @@ func TestCloudStackKubernetes121WorkloadCluster(t *testing.T) {
 	runWorkloadClusterFlow(test)
 }
 
-func TestCloudStackKubernetes121ManagementClusterUpgradeFromLatest(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
-	test := framework.NewMulticlusterE2ETest(
+func TestCloudStackKubernetes123ManagementClusterUpgradeFromLatest(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
+	managementCluster := framework.NewClusterE2ETest(
 		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube121),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithEtcdCountIfExternal(1),
-			),
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithEtcdCountIfExternal(1),
 		),
+	)
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+
+	test.WithWorkloadClusters(
 		framework.NewClusterE2ETest(
 			t,
 			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithKubernetesVersion(v1alpha1.Kube123),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithEtcdCountIfExternal(1),
 			),
 		),
 	)
-	runWorkloadClusterUpgradeFlowCheckWorkloadRollingUpgrade(test)
+
+	runFlowUpgradeManagementClusterCheckForSideEffects(test,
+		framework.NewEKSAReleasePackagedBinary(latestMinorRelease(t)),
+		newEKSAPackagedBinaryForLocalBinary(t),
+	)
 }
 
 func TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy(t *testing.T) {

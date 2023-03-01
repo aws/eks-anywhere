@@ -978,7 +978,7 @@ func machineDeploymentsToDelete(currentSpec, newSpec *cluster.Spec) []string {
 	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
 	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
 	for _, group := range nodeGroupsToDelete {
-		mdName := clusterapi.MachineDeploymentName(newSpec, group)
+		mdName := clusterapi.MachineDeploymentName(newSpec.Cluster, group)
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments

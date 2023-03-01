@@ -252,7 +252,7 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        MachineDeploymentName(clusterSpec, workerNodeGroupConfig),
+			Name:        MachineDeploymentName(clusterSpec.Cluster, workerNodeGroupConfig),
 			Namespace:   constants.EksaSystemNamespace,
 			Labels:      capiObjectLabels(clusterSpec),
 			Annotations: map[string]string{},
