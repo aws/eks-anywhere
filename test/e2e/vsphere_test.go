@@ -932,7 +932,7 @@ func TestVSphereKubernetes125BottlerocketRegistryMirrorAndCert(t *testing.T) {
 	runRegistryMirrorConfigFlow(test)
 }
 
-func TestVsphereKubernetes125UbuntuAuthenticatedRegistryMirror(t *testing.T) {
+func TestVSphereKubernetes125UbuntuAuthenticatedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu125(), framework.WithPrivateNetwork()),
@@ -945,7 +945,7 @@ func TestVsphereKubernetes125UbuntuAuthenticatedRegistryMirror(t *testing.T) {
 	runRegistryMirrorConfigFlow(test)
 }
 
-func TestVsphereKubernetes125BottlerocketAuthenticatedRegistryMirror(t *testing.T) {
+func TestVSphereKubernetes125BottlerocketAuthenticatedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket125(), framework.WithPrivateNetwork()),
