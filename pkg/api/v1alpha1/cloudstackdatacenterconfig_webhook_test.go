@@ -41,8 +41,8 @@ func TestCloudStackDatacenterDatacenterConfigSetDefaults(t *testing.T) {
 	originalDatacenter.Default()
 
 	g.Expect(originalDatacenter).To(Equal(*expectedDatacenter))
-
 }
+
 func TestCloudStackDatacenterValidateCreateLifecycleApiDisabled(t *testing.T) {
 	features.ClearCache()
 	t.Setenv(features.FullLifecycleAPIEnvVar, "false")
