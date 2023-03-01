@@ -290,55 +290,96 @@ func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
 
 func TestCloudStackDatacenterConfigValidate(t *testing.T) {
 	g := NewWithT(t)
-	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
-		Spec: *cloudStackDatacenterConfigSpecAzs.DeepCopy(),
-	}
 
-	// Spec validation
-	err := cloudStackDatacenterConfig.Validate()
-	g.Expect(err).To(BeNil())
-
-	// Spec.Accout validation
-	cloudStackDatacenterConfig.Spec.Account = "admin"
-	err = cloudStackDatacenterConfig.Validate()
-	g.Expect(err).NotTo(BeNil())
-
-	// Spec.Domain validation
-	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
-	cloudStackDatacenterConfig.Spec.Domain = "root"
-	err = cloudStackDatacenterConfig.Validate()
-	g.Expect(err).NotTo(BeNil())
-
-	// Spec.ManagementApiEndpoint validation
-	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
-	cloudStackDatacenterConfig.Spec.ManagementApiEndpoint = "http://192.168.1.141:8080/client"
-	err = cloudStackDatacenterConfig.Validate()
-	g.Expect(err).NotTo(BeNil())
-
-	// Spec.Zones validation
-	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
-	cloudStackDatacenterConfig.Spec.Zones = []CloudStackZone{
+	tests := []struct {
+		name    string
+		obj     *CloudStackDatacenterConfig
+		wantErr string
+	}{
 		{
-			Name: "zone1",
-			Network: CloudStackResourceIdentifier{
-				Name: "net1",
-			},
+			name:    "valid spec",
+			obj:     cloudStackDatacenterConfig(),
+			wantErr: "",
+		},
+		{
+			name: "invalid account",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.Account = "admin"
+			}),
+			wantErr: "account must be empty",
+		},
+		{
+			name: "invalid domain",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.Domain = "root"
+			}),
+			wantErr: "domain must be empty",
+		},
+		{
+			name: "invalid managment api endpoint",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.ManagementApiEndpoint = "http://192.168.1.141:8080/client"
+			}),
+			wantErr: "managementApiEndpoint must be empty",
+		},
+		{
+			name: "invalid zones",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.Zones = []CloudStackZone{
+					{
+						Name: "zone1",
+						Network: CloudStackResourceIdentifier{
+							Name: "net1",
+						},
+					},
+				}
+			}),
+			wantErr: "zones must be empty",
+		},
+		{
+			name: "invalid availability zone length",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.AvailabilityZones = []CloudStackAvailabilityZone{}
+
+			}),
+			wantErr: "availabilityZones must not be empty",
+		},
+		{
+			name: "invalid availability zone name",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.AvailabilityZones[0].Name = "_az-1"
+
+			}),
+			wantErr: "availabilityZone names must be a valid label value since it is used to label nodes",
+		},
+		{
+			name: "invalid availability zone no network",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.AvailabilityZones[0].Zone.Network.Name = ""
+
+			}),
+			wantErr: "zone network is not set or is empty",
+		},
+		{
+			name: "invalid availability zone bad management api endpoint",
+			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
+				c.Spec.AvailabilityZones[0].ManagementApiEndpoint = ":1234.5234"
+			}),
+			wantErr: "checking management api endpoint: :1234.5234 is not a valid url",
 		},
 	}
-	err = cloudStackDatacenterConfig.Validate()
-	g.Expect(err).NotTo(BeNil())
 
-	// Spec.AvailabilityZones validation #1 (Length)
-	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
-	cloudStackDatacenterConfig.Spec.AvailabilityZones = []CloudStackAvailabilityZone{}
-	err = cloudStackDatacenterConfig.Validate()
-	g.Expect(err).NotTo(BeNil())
-
-	// Spec.AvailabilityZones validation #2 (Name)
-	cloudStackDatacenterConfig.Spec = *cloudStackDatacenterConfigSpecAzs.DeepCopy()
-	cloudStackDatacenterConfig.Spec.AvailabilityZones[0].Name = "_az-1"
-	err = cloudStackDatacenterConfig.Validate()
-	g.Expect(err).NotTo(BeNil())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr != "" {
+				err := tt.obj.Validate()
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			} else {
+				err := tt.obj.Validate()
+				g.Expect(err).To(BeNil())
+			}
+		})
+	}
 }
 
 func TestCloudStackDatacenterConfigValidateAfterSetDefaults(t *testing.T) {
@@ -355,4 +396,16 @@ func TestCloudStackDatacenterConfigValidateAfterSetDefaults(t *testing.T) {
 	cloudStackDatacenterConfig.Spec.AvailabilityZones = append(cloudStackDatacenterConfig.Spec.AvailabilityZones, cloudStackDatacenterConfig.Spec.AvailabilityZones[0])
 	err = cloudStackDatacenterConfig.Validate()
 	g.Expect(err).NotTo(BeNil())
+}
+
+type cloudStackDatacenterConfigOpt func(c *CloudStackDatacenterConfig)
+
+func cloudStackDatacenterConfig(opts ...cloudStackDatacenterConfigOpt) *CloudStackDatacenterConfig {
+	config := &CloudStackDatacenterConfig{
+		Spec: *cloudStackDatacenterConfigSpecAzs.DeepCopy(),
+	}
+	for _, opt := range opts {
+		opt(config)
+	}
+	return config
 }

@@ -146,52 +146,6 @@ func TestValidateMachineConfigsInvalidControlPlanePort(t *testing.T) {
 	thenErrorExpected(t, "validating controlPlaneConfiguration.Endpoint.Host: host 255.255.255.255:0 has an invalid port", err)
 }
 
-func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
-	ctx := context.Background()
-	setupContext(t)
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get datacenter config from file")
-	}
-	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	cloudStackClusterSpec := &Spec{
-		Spec:                 clusterSpec,
-		datacenterConfig:     datacenterConfig,
-		machineConfigsLookup: nil,
-	}
-	validator := NewValidator(cmk, &DummyNetClient{}, true)
-	datacenterConfig.Spec.AvailabilityZones[0].Zone.Network.Id = ""
-	datacenterConfig.Spec.AvailabilityZones[0].Zone.Network.Name = ""
-	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
-
-	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
-
-	thenErrorExpected(t, "zone network is not set or is empty", err)
-}
-
-func TestValidateDatacenterBadManagementEndpoint(t *testing.T) {
-	ctx := context.Background()
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get datacenter config from file")
-	}
-	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	cloudStackClusterSpec := &Spec{
-		Spec:                 clusterSpec,
-		datacenterConfig:     datacenterConfig,
-		machineConfigsLookup: nil,
-	}
-	validator := NewValidator(cmk, &DummyNetClient{}, true)
-	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
-
-	datacenterConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ":1234.5234"
-	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
-
-	thenErrorExpected(t, "checking management api endpoint: :1234.5234 is not a valid url", err)
-}
-
 func TestValidateDatacenterInconsistentManagementEndpoints(t *testing.T) {
 	ctx := context.Background()
 	setupContext(t)
