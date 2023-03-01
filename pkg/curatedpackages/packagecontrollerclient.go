@@ -64,6 +64,7 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 		chartInstaller: chartInstaller,
 		kubectl:        kubectl,
 		registryMirror: registryMirror,
+		eksaRegion:     eksaDefaultRegion,
 	}
 
 	for _, o := range options {
@@ -148,7 +149,9 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistr
 			defaultImageRegistry = gatedOCINamespace
 		}
 	} else {
-		defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, eksaDefaultRegion, pc.eksaRegion)
+		if pc.eksaRegion != eksaDefaultRegion {
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, eksaDefaultRegion, pc.eksaRegion)
+		}
 	}
 	return sourceRegistry, defaultRegistry, defaultImageRegistry
 }
@@ -371,8 +374,6 @@ func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		if eksaRegion != "" {
 			config.eksaRegion = eksaRegion
-		} else {
-			config.eksaRegion = eksaDefaultRegion
 		}
 	}
 }
