@@ -912,6 +912,40 @@ func TestGetPackageControllerConfigurationNothing(t *testing.T) {
 	g.Expect(err).To(BeNil())
 }
 
+func TestGetCuratedPackagesRegistriesDefaultRegion(t *testing.T) {
+	clusterSpec := v1alpha1.ClusterSpec{
+		Packages: &v1alpha1.PackageConfiguration{
+			Disable: true,
+		},
+	}
+	chart := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
+	}
+	g := NewWithT(t)
+	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster))
+	_, _, img := sut.GetCuratedPackagesRegistries()
+	g.Expect(img).To(Equal("783794618700.dkr.ecr.us-west-2.amazonaws.com"))
+}
+
+func TestGetCuratedPackagesRegistriesCustomRegion(t *testing.T) {
+	clusterSpec := v1alpha1.ClusterSpec{
+		Packages: &v1alpha1.PackageConfiguration{
+			Disable: true,
+		},
+	}
+	chart := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
+	}
+	g := NewWithT(t)
+	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster), curatedpackages.WithEksaRegion("test"))
+	_, _, img := sut.GetCuratedPackagesRegistries()
+	g.Expect(img).To(Equal("783794618700.dkr.ecr.test.amazonaws.com"))
+}
+
 func TestGetPackageControllerConfigurationError(t *testing.T) {
 	clusterSpec := v1alpha1.ClusterSpec{
 		Packages: &v1alpha1.PackageConfiguration{
