@@ -36,6 +36,12 @@ type NutanixDatacenterConfigSpec struct {
 	// Certificate that ships with Prism Central, we allow the user to skip TLS
 	// verification. This is not recommended for production use.
 	Insecure bool `json:"insecure,omitempty"`
+
+	// CredentialRef is the reference to the secret name that contains the credentials
+	// for the Nutanix Prism Central. The namespace for the secret is assumed to be a constant i.e. eksa-system.
+	// +kubebuilder:validation:Optional
+	// +optional
+	CredentialRef *Ref `json:"credentialRef,omitempty"`
 }
 
 // NutanixDatacenterConfigStatus defines the observed state of NutanixDatacenterConfig.
