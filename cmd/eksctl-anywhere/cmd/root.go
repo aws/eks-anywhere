@@ -23,7 +23,6 @@ var rootCmd = &cobra.Command{
 		if outputFilePath == "" {
 			return
 		}
-
 		if err := os.Remove(outputFilePath); err != nil {
 			fmt.Printf("Failed to cleanup log file %s: %s", outputFilePath, err)
 		}
