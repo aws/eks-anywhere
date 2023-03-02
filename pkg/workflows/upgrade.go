@@ -3,6 +3,8 @@ package workflows
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
@@ -449,8 +451,15 @@ func (s *installCAPITask) Restore(ctx context.Context, commandContext *task.Comm
 }
 
 func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	logger.Info("Backing up workload cluster's management resources before moving to bootstrap cluster")
+	err := commandContext.ClusterManager.BackupCAPI(ctx, commandContext.WorkloadCluster, commandContext.ManagementClusterStateDir)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
 	logger.Info("Moving cluster management from workload to bootstrap cluster")
-	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef(), types.WithNodeHealthy())
+	err = commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef(), types.WithNodeHealthy())
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -644,6 +653,7 @@ func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, constants.Upgrade, false); err != nil {
 			commandContext.SetError(err)
 		}
+
 		if commandContext.OriginalError == nil {
 			logger.MarkSuccess("Cluster upgraded!")
 		}
@@ -651,6 +661,11 @@ func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 			// Cluster has been succesfully upgraded, bootstrap cluster successfully deleted
 			// We don't necessarily need to return with an error here and abort
 			logger.Info(fmt.Sprintf("%v", err))
+		}
+
+		capiObjectFile := filepath.Join(commandContext.BootstrapCluster.Name, commandContext.ManagementClusterStateDir)
+		if err := os.RemoveAll(capiObjectFile); err != nil {
+			logger.Info(fmt.Sprintf("management cluster CAPI backup file not found: %v", err))
 		}
 		return nil
 	}
