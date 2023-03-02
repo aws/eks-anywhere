@@ -115,7 +115,7 @@ EKS Anywhere supports airgapped installation for creating clusters using a regis
 For airgapped installation to work, the Admin machine must have:
 
 * Temporary access to the internet to download images and artifacts
-* Ample space (50 GB or more) to store artifacts locally
+* Ample space (80 GB or more) to store artifacts locally
 
 
 To create a cluster in an airgapped environment, perform the following:
