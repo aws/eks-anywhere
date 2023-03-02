@@ -8,7 +8,7 @@ import (
 )
 
 func TestTinkerbellMachineConfigValidateSucceed(t *testing.T) {
-	machineConfig := createTinkerbellMachineConfig()
+	machineConfig := CreateTinkerbellMachineConfig()
 
 	g := NewWithT(t)
 	g.Expect(machineConfig.Validate()).To(Succeed())
@@ -22,42 +22,42 @@ func TestTinkerbellMachineConfigValidateFail(t *testing.T) {
 	}{
 		{
 			name: "Invalid object meta",
-			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+			machineConfig: CreateTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.ObjectMeta.Name = ""
 			}),
 			expectedErr: "TinkerbellMachineConfig: missing name",
 		},
 		{
 			name: "Empty hardware selector",
-			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+			machineConfig: CreateTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.HardwareSelector = nil
 			}),
 			expectedErr: "TinkerbellMachineConfig: missing spec.hardwareSelector",
 		},
 		{
 			name: "Multiple hardware selectors",
-			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+			machineConfig: CreateTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.HardwareSelector["type2"] = "cp2"
 			}),
 			expectedErr: "TinkerbellMachineConfig: spec.hardwareSelector must contain only 1 key-value pair",
 		},
 		{
 			name: "Empty OS family",
-			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+			machineConfig: CreateTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.OSFamily = ""
 			}),
 			expectedErr: "TinkerbellMachineConfig: missing spec.osFamily",
 		},
 		{
 			name: "Invalid OS family",
-			machineConfig: createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+			machineConfig: CreateTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
 				mc.Spec.OSFamily = "invalid OS"
 			}),
 			expectedErr: "unsupported spec.osFamily (invalid OS); Please use one of the following",
 		},
 		{
 			name: "Invalid hostOSConfiguration",
-			machineConfig: createTinkerbellMachineConfig(
+			machineConfig: CreateTinkerbellMachineConfig(
 				withHostOSConfiguration(
 					&HostOSConfiguration{
 						NTPConfiguration: &NTPConfiguration{},
@@ -84,7 +84,7 @@ func withHostOSConfiguration(config *HostOSConfiguration) tinkerbellMachineConfi
 	}
 }
 
-func createTinkerbellMachineConfig(options ...tinkerbellMachineConfigOpt) *TinkerbellMachineConfig {
+func CreateTinkerbellMachineConfig(options ...tinkerbellMachineConfigOpt) *TinkerbellMachineConfig {
 	defaultMachineConfig := &TinkerbellMachineConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "tinkerbellmachineconfig",

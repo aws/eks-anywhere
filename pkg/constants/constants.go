@@ -69,6 +69,9 @@ const (
 	SecretKind             = "Secret"
 	ConfigMapKind          = "ConfigMap"
 	ClusterResourceSetKind = "ClusterResourceSet"
+
+	BottlerocketDefaultUser = "ec2-user"
+	UbuntuDefaultUser       = "capv"
 )
 
 type Operation int

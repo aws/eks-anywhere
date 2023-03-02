@@ -340,7 +340,6 @@ func TestCloudStackDatacenterConfigValidate(t *testing.T) {
 			name: "invalid availability zone length",
 			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
 				c.Spec.AvailabilityZones = []CloudStackAvailabilityZone{}
-
 			}),
 			wantErr: "availabilityZones must not be empty",
 		},
@@ -348,7 +347,6 @@ func TestCloudStackDatacenterConfigValidate(t *testing.T) {
 			name: "invalid availability zone name",
 			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
 				c.Spec.AvailabilityZones[0].Name = "_az-1"
-
 			}),
 			wantErr: "availabilityZone names must be a valid label value since it is used to label nodes",
 		},
@@ -356,7 +354,6 @@ func TestCloudStackDatacenterConfigValidate(t *testing.T) {
 			name: "invalid availability zone no network",
 			obj: cloudStackDatacenterConfig(func(c *CloudStackDatacenterConfig) {
 				c.Spec.AvailabilityZones[0].Zone.Network.Name = ""
-
 			}),
 			wantErr: "zone network is not set or is empty",
 		},

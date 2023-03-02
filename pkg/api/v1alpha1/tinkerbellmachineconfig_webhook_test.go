@@ -1,20 +1,22 @@
-package v1alpha1
+package v1alpha1_test
 
 import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-func TestTinkerbellMachineConfig_ValidateCreateSuccess(t *testing.T) {
-	machineConfig := createTinkerbellMachineConfig()
+func TestTinkerbellMachineConfigValidateCreateSuccess(t *testing.T) {
+	machineConfig := v1alpha1.CreateTinkerbellMachineConfig()
 
 	g := NewWithT(t)
 	g.Expect(machineConfig.ValidateCreate()).To(Succeed())
 }
 
-func TestTinkerbellMachineConfig_ValidateCreateFail(t *testing.T) {
-	machineConfig := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+func TestTinkerbellMachineConfigValidateCreateFail(t *testing.T) {
+	machineConfig := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
 		mc.Spec.HardwareSelector = nil
 	})
 
@@ -22,35 +24,35 @@ func TestTinkerbellMachineConfig_ValidateCreateFail(t *testing.T) {
 	g.Expect(machineConfig.ValidateCreate()).NotTo(Succeed())
 }
 
-func TestTinkerbellMachineConfig_ValidateCreateFailNoUsers(t *testing.T) {
-	machineConfig := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
-		mc.Spec.Users = []UserConfiguration{}
+func TestTinkerbellMachineConfigValidateCreateFailNoUsers(t *testing.T) {
+	machineConfig := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{}
 	})
 
 	g := NewWithT(t)
 	g.Expect(machineConfig.ValidateCreate()).NotTo(Succeed())
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateSucceed(t *testing.T) {
-	machineConfigOld := createTinkerbellMachineConfig()
+func TestTinkerbellMachineConfigValidateUpdateSucceed(t *testing.T) {
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
 	machineConfigNew := machineConfigOld.DeepCopy()
 
 	g := NewWithT(t)
 	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).To(Succeed())
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateFailOldMachineConfig(t *testing.T) {
-	machineConfigOld := &TinkerbellDatacenterConfig{}
-	machineConfigNew := createTinkerbellMachineConfig()
+func TestTinkerbellMachineConfigValidateUpdateFailOldMachineConfig(t *testing.T) {
+	machineConfigOld := &v1alpha1.TinkerbellDatacenterConfig{}
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig()
 
 	g := NewWithT(t)
 	g.Expect(machineConfigNew.ValidateUpdate(machineConfigOld)).To(MatchError(ContainSubstring("expected a TinkerbellMachineConfig but got a *v1alpha1.TinkerbellDatacenterConfig")))
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateFailOSFamily(t *testing.T) {
-	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
-		mc.Spec.OSFamily = Bottlerocket
+func TestTinkerbellMachineConfigValidateUpdateFailOSFamily(t *testing.T) {
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.OSFamily = v1alpha1.Bottlerocket
 	})
 
 	g := NewWithT(t)
@@ -59,10 +61,10 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailOSFamily(t *testing.T) {
 	g.Expect(HaveField("spec.OSFamily", err))
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateFailLenSshAuthorizedKeys(t *testing.T) {
-	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
-		mc.Spec.Users = []UserConfiguration{{
+func TestTinkerbellMachineConfigValidateUpdateFailLenSshAuthorizedKeys(t *testing.T) {
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{{
 			Name:              "mySshUsername",
 			SshAuthorizedKeys: []string{},
 		}}
@@ -74,10 +76,10 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailLenSshAuthorizedKeys(t *testi
 	g.Expect(HaveField("Users[0].SshAuthorizedKeys", err))
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateFailSshAuthorizedKeys(t *testing.T) {
-	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
-		mc.Spec.Users = []UserConfiguration{{
+func TestTinkerbellMachineConfigValidateUpdateFailSshAuthorizedKeys(t *testing.T) {
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{{
 			Name:              "mySshUsername",
 			SshAuthorizedKeys: []string{"mySshAuthorizedKey1"},
 		}}
@@ -89,10 +91,10 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailSshAuthorizedKeys(t *testing.
 	g.Expect(HaveField("Users[0].SshAuthorizedKeys[0]", err))
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateFailUsersLen(t *testing.T) {
-	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
-		mc.Spec.Users = []UserConfiguration{
+func TestTinkerbellMachineConfigValidateUpdateFailUsersLen(t *testing.T) {
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{
 			{
 				Name:              "mySshUsername1",
 				SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -110,10 +112,20 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailUsersLen(t *testing.T) {
 	g.Expect(HaveField("Users", err))
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateFailUsers(t *testing.T) {
-	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
-		mc.Spec.Users = []UserConfiguration{{
+func TestTinkerbellMachineConfigDefaultOSFamily(t *testing.T) {
+	mOld := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.OSFamily = ""
+	})
+
+	mOld.Default()
+	g := NewWithT(t)
+	g.Expect(mOld.Spec.OSFamily).To(Equal(v1alpha1.Bottlerocket))
+}
+
+func TestTinkerbellMachineConfigValidateUpdateFailUsers(t *testing.T) {
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{{
 			Name:              "mySshUsername1",
 			SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 		}}
@@ -125,9 +137,9 @@ func TestTinkerbellMachineConfig_ValidateUpdateFailUsers(t *testing.T) {
 	g.Expect(HaveField("Users[0].Name", err))
 }
 
-func TestTinkerbellMachineConfig_ValidateUpdateFailHardwareSelector(t *testing.T) {
-	machineConfigOld := createTinkerbellMachineConfig()
-	machineConfigNew := createTinkerbellMachineConfig(func(mc *TinkerbellMachineConfig) {
+func TestTinkerbellMachineConfigValidateUpdateFailHardwareSelector(t *testing.T) {
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
 		mc.Spec.HardwareSelector = map[string]string{
 			"type2": "cp2",
 		}

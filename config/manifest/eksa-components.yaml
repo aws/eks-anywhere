@@ -6334,6 +6334,27 @@ webhooks:
     service:
       name: eksa-webhook-service
       namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig
+  failurePolicy: Fail
+  name: mutation.tinkerbellmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - tinkerbellmachineconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
       path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig
   failurePolicy: Fail
   name: mutation.vspheredatacenterconfig.anywhere.amazonaws.com

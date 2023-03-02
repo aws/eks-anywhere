@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -17,8 +18,6 @@ const (
 	DefaultVSphereNumCPUs    = 2
 	DefaultVSphereMemoryMiB  = 8192
 	DefaultVSphereOSFamily   = Bottlerocket
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
 )
 
 // Used for generating yaml for generate clusterconfig command.
@@ -116,9 +115,9 @@ func setVSphereMachineConfigDefaults(machineConfig *VSphereMachineConfig) {
 
 	if len(machineConfig.Spec.Users) == 0 || machineConfig.Spec.Users[0].Name == "" {
 		if machineConfig.Spec.OSFamily == Bottlerocket {
-			machineConfig.Spec.Users[0].Name = bottlerocketDefaultUser
+			machineConfig.Spec.Users[0].Name = constants.BottlerocketDefaultUser
 		} else {
-			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
+			machineConfig.Spec.Users[0].Name = constants.UbuntuDefaultUser
 		}
 		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "machineConfig", machineConfig.Name, "user", machineConfig.Spec.Users[0].Name)
 	}
@@ -134,7 +133,7 @@ func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
 	if config.Spec.OSFamily != Bottlerocket && config.Spec.OSFamily != Ubuntu && config.Spec.OSFamily != RedHat {
 		return fmt.Errorf("VSphereMachineConfig %s osFamily: %s is not supported, please use one of the following: %s, %s, %s", config.Name, config.Spec.OSFamily, Bottlerocket, Ubuntu, RedHat)
 	}
-	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users[0].Name != bottlerocketDefaultUser {
+	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
 		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", config.Spec.Users[0].Name)
 	}
 	if err := validateHostOSConfig(config.Spec.HostOSConfiguration); err != nil {
