@@ -7,56 +7,45 @@ using same credentials to authenticate to both instances is not possible. To rem
 with corresponding Nutanix Datacenter Configs.
 
 ## Overview of Solution
-With this feature, a user can specify credentials reference (i.e. Name and Namespace of the secret containing the credentials)
+With this feature, a user can specify credentials reference (i.e. Name of the secret in eksa-system namespace containing the Prism credentials)
 in the Nutanix Datacenter Config. This info will be fetched and used to authenticate to the Nutanix Prism Central instance
 when creating the workload cluster.
 
 ### Solution Details
-Extend the `NutanixDatacenterConfig` CRD to include a new field `credentialRef` storing name, namespace, and kind (similar to how
-`credentialsRef` is defined in the `NutanixCluster` CRD).
+Extend the `NutanixDatacenterConfig` CRD to include a new field `credentialRef` storing name (name of kubernetes secret object) and
+kind ("Secret"). This is similar to how `credentialsRef` is defined in the `NutanixCluster` CRD minus the namespace. The namespace
+of the secret will always be `eksa-system`. Keeping the namespace constant will allow us to avoid granting EKS-A controller access to
+secrets in other namespaces. The `Ref` type used in Snow provider is reused here for this purpose.
 
 ```go
 // NutanixDatacenterConfigSpec defines the desired state of NutanixDatacenterConfig.
 type NutanixDatacenterConfigSpec struct {
     ...
-    // CredentialRef is the reference to the secret that contains the credentials
-    // for the Nutanix Prism Central
+    // CredentialRef is the reference to the secret name that contains the credentials
+    // for the Nutanix Prism Central. The namespace for the secret is assumed to be a constant i.e. eksa-system.
     // +kubebuilder:validation:Optional
     // +optional
-    CredentialRef *CredentialReference `json:"credentialRef,omitempty"`
+    CredentialRef *Ref `json:"credentialRef,omitempty"`
 }
 
-// CredentialKind is the kind of the credential
-type CredentialKind string
-
 const (
-    // CredentialKindSecret is the kind of the credential that corresponds to a Kubernetes Secret
-    CredentialKindSecret = CredentialKind("Secret")
+    // RefKindSecret is the kind of the credential that corresponds to a Kubernetes Secret
+    RefKindSecret = "Secret"
 )
 
-// CredentialReference is the reference to the secret that contains the credentials
-// +kubebuilder:object:generate=true
-type CredentialReference struct {
-    // Kind of the Nutanix credential 
-    // +kubebuilder:validation:Required
-    // +kubebuilder:validation:Enum=Secret
-    // +kubebuilder:default:=Secret
-    Kind CredentialKind `json:"kind"`
-    // Name of the credential.
-    // +kubebuilder:validation:Required
-    // +kubebuilder:validation:MinLength=1
-    Name string `json:"name"`
-    // Namespace of the credential.
-    // +kubebuilder:validation:Optional
-    // +kubebuilder:default:=eksa-system
-    // +optional
-    Namespace string `json:"namespace, omitemp"`
+func (in *NutanixDatacenterConfig) Validate() error {
+    ...
+    if in.Spec.CredentialRef != nil && in.Spec.CredentialRef.Kind != RefKindSecret {
+        return errors.New("only Secret is supported as a credential kind")
+    }
+    ...
 }
 ```
 
 When creating a workload cluster, the `NutanixDatacenterConfig` referenced in the `Cluster` CRD will be fetched and
 the `credentialRef` field will be used to fetch the secret to get the credentials needed to authenticate with Prism Central
-to create resources needed for the cluster. If the `credentialRef` field is not present when creating a workload cluster, we can
-fail the cluster creation request. During management cluster creation, we can fetch the secrets from the
-environment, create the secret manifests, and add the `credentialRef` to the corresponding `NutanixDatacenterConfig` if not present.
-This will allow us to assume that `credentialRef` will always be set in the `NutanixDatacenterConfig` in all cases.
+to create resources needed for the cluster. If the `credentialRef` field is not present when creating a workload cluster,
+validation webhook will return a validation failure. During management cluster creation, we can fetch the secrets from the
+environment, create the secret manifests in `eksa-system` as we do now, and add the `credentialRef` to the corresponding
+`NutanixDatacenterConfig` if not present. This will allow us to assume that `credentialRef` will always be set in the
+`NutanixDatacenterConfig` in all cases.
