@@ -99,7 +99,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
          # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
          -f $CLUSTER_NAME.yaml
       ```
-   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#preparation-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
 
       ```bash
       eksctl anywhere create cluster 
@@ -271,7 +271,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
          # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
          -f $CLUSTER_NAME.yaml
       ```
-   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#preparation-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
 
       ```bash
       eksctl anywhere create cluster \
@@ -333,7 +333,7 @@ Follow these steps to have your management cluster create and manage separate wo
          # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
           --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
       ```
-     For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#preparation-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+     For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
 
       ```bash
       eksctl create cluster \
