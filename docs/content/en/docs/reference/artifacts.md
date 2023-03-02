@@ -477,7 +477,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
      "ami_filter_name": "<Regular expression to filter a source AMI (default: ubuntu/images/*ubuntu-focal-20.04-amd64-server-*)>",
      "ami_filter_owners": "<AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc (default: 679593333241 - the AWS Marketplace AWS account ID)>",
      "ami_regions": "<A list of AWS regions to copy the AMI to>",
-     "aws_region": "The AWS region in which to launch the EC2 instance to create the AMI",
+     "aws_region": "<The AWS region in which to launch the EC2 instance to create the AMI>",
      "ansible_extra_vars": "<The absolute path to the additional variables to pass to Ansible. These are converted to the `--extra-vars` command-line argument. This path must be prefix with '@'>",
      "builder_instance_type": "<The EC2 instance type to use while building the AMI (default: t3.small)>",
      "custom_role": "<If set to true, this will run a custom Ansible role before the `sysprep` role to allow for further customization>",
@@ -485,8 +485,9 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
      "custom_role_names": "<Space-delimited string of the custom roles to run. This field is mutually exclusive with custom_role_name_list and is provided for compatibility with Ansible's input format>",
      "manifest_output": "<The absolute path to write the build artifacts manifest to. If you wish to export the AMI using this manifest, ensure that you provide a path that is not inside the '/home/$USER/eks-anywhere-build-tooling' path since that will be cleaned up when the build finishes>",
      "root_device_name": "<The device name used by EC2 for the root EBS volume attached to the instance>",
+     "subnet_id": "<The ID of the subnet where Packer will launch the EC2 instance. This field is required when using a non-default VPC>",
      "volume_size": "<The size of the root EBS volume in GiB>",
-     "volume_type": "<The type of root EBS volume, such as gp2, gp3, io1, etc>",
+     "volume_type": "<The type of root EBS volume. Currently only gp3 is supported>",
    }
    ```
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
