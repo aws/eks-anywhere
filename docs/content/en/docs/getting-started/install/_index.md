@@ -132,24 +132,24 @@ To create a cluster in an airgapped environment, perform the following:
    ```
    This will create an eks-anywhere-downloads folder that we’ll be using later.
 
-1. In order for the next command to run smoothly, ensure that Docker has been preinstalled. Then run the following:
+1. In order for the next command to run smoothly, ensure that Docker has been pre-installed and is running. Then run the following:
    ```bash
    eksctl anywhere download images -o images.tar
    ```
 
    **For the remaining steps, the Admin machine no longer needs to be connected to the internet or the bastion host.**
 
-1. Next, you will need to set up a local registry mirror to host the downloaded EKS Anywhere contents. In order to set one up, refer to [Registry Mirror configuration.]({{< relref "/docs/reference/clusterspec/optional/registrymirror.md" >}})
+1. Next, you will need to set up a local registry mirror to host the downloaded EKS Anywhere images. In order to set one up, refer to [Registry Mirror configuration.]({{< relref "/docs/reference/clusterspec/optional/registrymirror.md" >}})
 
 1. Now that you’ve configured your local registry mirror, you will need to import images to the local registry mirror using the following command (be sure to replace <registryUrl> with the url of the local registry mirror you created in step 4):
    ```bash
    eksctl anywhere import images -i images.tar -r <registryUrl> \
-      -- bundles ./anywhere-downloads/bundle-release.yaml
+      -- bundles ./eks-anywhere-downloads/bundle-release.yaml
    ```
 You are now ready to deploy a cluster by following instructions to [Create local cluster]({{< relref "/docs/getting-started/local-environment/" >}}) or  [Create production cluster.]({{< relref "/docs/getting-started/production-environment/" >}}) See text below for specific provider instructions.
 
 ### For Bare Metal (Tinkerbell)
-You will need to have hookOS and its OS artifacts downloaded and served locally from an http file server.
+You will need to have hookOS and its OS artifacts downloaded and served locally from an HTTP file server.
 You will also need to modify the [hookImagesURLPath]({{< relref "../../reference/clusterspec/baremetal/#hookimagesurlpath" >}}) and the [osImageURL]({{< relref "../../reference/clusterspec/baremetal/#osimageurl" >}}) in the cluster configuration files.
 Ensure that structure of the files is set up as described in [hookImagesURLPath.]({{< relref "../../reference/clusterspec/baremetal/#hookimagesurlpath" >}})
 
