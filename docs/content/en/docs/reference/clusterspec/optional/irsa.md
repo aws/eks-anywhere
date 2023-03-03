@@ -52,7 +52,7 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes,
 
 1. Assign an IAM role to this OIDC provider. 
 
-	1. To do so from the AWS console, select and click on the OIDC provider, and click on **Assign role** at the top right.
+	1. From the IAM console, select and click on the OIDC provider created from above, and click on **Assign role** at the top right.
 	
 	1. Select **Create a new role**.
 	
