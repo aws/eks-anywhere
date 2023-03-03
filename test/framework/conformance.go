@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
-const kubeConformanceImage = "k8s.gcr.io/conformance"
+const kubeConformanceImage = "registry.k8s.io/conformance"
 
 func (e *ClusterE2ETest) RunConformanceTests() {
 	ctx := context.Background()
