@@ -3,6 +3,7 @@ package nutanix
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,6 +58,26 @@ func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywhe
 
 	if err := v.validateTrustBundleConfig(config.Spec); err != nil {
 		return err
+	}
+
+	if err := v.validateCredentialRef(config); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Validator) validateCredentialRef(config *anywherev1.NutanixDatacenterConfig) error {
+	if config.Spec.CredentialRef == nil {
+		return fmt.Errorf("credentialRef must be provided")
+	}
+
+	if config.Spec.CredentialRef.Kind != constants.SecretKind {
+		return fmt.Errorf("credentialRef kind must be %s", constants.SecretKind)
+	}
+
+	if config.Spec.CredentialRef.Name == "" {
+		return fmt.Errorf("credentialRef name must be provided")
 	}
 
 	return nil

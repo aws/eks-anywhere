@@ -1235,6 +1235,7 @@ func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
 		if err != nil {
 			return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
 		}
+		datacenterConfig.SetDefaults()
 
 		clientOpts := make([]v3.ClientOption, 0)
 		if datacenterConfig.Spec.AdditionalTrustBundle != "" {

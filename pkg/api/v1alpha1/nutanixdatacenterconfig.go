@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/aws/eks-anywhere/pkg/constants"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -19,6 +20,10 @@ func NewNutanixDatacenterConfigGenerate(clusterName string) *NutanixDatacenterCo
 		Spec: NutanixDatacenterConfigSpec{
 			Endpoint: "<enter Prism Central Endpoint (FQDN or IP) here>",
 			Port:     9440,
+			CredentialRef: &Ref{
+				Kind: constants.SecretKind,
+				Name: constants.NutanixCredentialsName,
+			},
 		},
 	}
 }
@@ -43,4 +48,14 @@ func GetNutanixDatacenterConfig(fileName string) (*NutanixDatacenterConfig, erro
 		return nil, err
 	}
 	return &clusterConfig, nil
+}
+
+// SetDefaults sets default values for the NutanixDatacenterConfig object.
+func (c *NutanixDatacenterConfig) SetDefaults() {
+	if c.Spec.CredentialRef == nil {
+		c.Spec.CredentialRef = &Ref{
+			Kind: constants.SecretKind,
+			Name: constants.NutanixCredentialsName,
+		}
+	}
 }

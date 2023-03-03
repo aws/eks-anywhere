@@ -12,6 +12,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// NutanixSecretCredentialsKey is the key in the secret that contains the credentials
+	NutanixSecretCredentialsKey = "credentials"
+)
+
 // NutanixDatacenterConfigSpec defines the desired state of NutanixDatacenterConfig.
 type NutanixDatacenterConfigSpec struct {
 	// Endpoint is the Endpoint of Nutanix Prism Central
@@ -126,6 +131,15 @@ func (in *NutanixDatacenterConfig) Validate() error {
 		}
 		if _, err := x509.ParseCertificates(block.Bytes); err != nil {
 			return fmt.Errorf("NutanixDatacenterConfig additionalTrustBundle is not valid: %s", err)
+		}
+	}
+
+	if in.Spec.CredentialRef != nil {
+		if in.Spec.CredentialRef.Kind != "Secret" {
+			return fmt.Errorf("NutanixDatacenterConfig credentialRef Kind (%T) is not a secret", in.Spec.CredentialRef.Kind)
+		}
+		if len(in.Spec.CredentialRef.Name) <= 0 {
+			return errors.New("NutanixDatacenterConfig credentialRef name is not set or is empty")
 		}
 	}
 
