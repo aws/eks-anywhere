@@ -243,6 +243,21 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	}
 }
 
+func TestClusterManagerCreateWorkloadClusterErrorGetKubeconfig(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Name = tt.clusterName
+	gomock.InOrder(
+		tt.mocks.provider.EXPECT().GenerateCAPISpecForCreate(tt.ctx, tt.cluster, tt.clusterSpec),
+		tt.mocks.writer.EXPECT().Write(tt.clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil())),
+		tt.mocks.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace),
+		tt.mocks.client.EXPECT().WaitForControlPlaneAvailable(tt.ctx, tt.cluster, "1h0m0s", tt.clusterName),
+		tt.mocks.client.EXPECT().GetWorkloadKubeconfig(tt.ctx, tt.clusterName, tt.cluster).Return(nil, errors.New("get kubeconfig error")),
+	)
+
+	_, err := tt.clusterManager.CreateWorkloadCluster(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)
+	tt.Expect(err).To(MatchError(ContainSubstring("get kubeconfig error")))
+}
+
 func TestClusterManagerCreateWorkloadClusterTimeoutOverrideSuccess(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
