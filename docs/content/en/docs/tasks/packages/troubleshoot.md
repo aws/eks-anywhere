@@ -84,19 +84,12 @@ This is most likely caused by an action to install curated packages at a workloa
 
 ## Package registry authentication
 
-### Error: ImagePullBackOff on Package or Package Controller
+### Error: ImagePullBackOff on Package
 
-If a package or the package controller fails to start with ImagePullBackOff
-
+If a package fails to start with ImagePullBackOff:
 ```
 NAME                                     READY   STATUS             RESTARTS   AGE
-eks-anywhere-packages-6589449669-q7rjr   0/1     ImagePullBackOff   0          13h
-```
-
-This is most like because the machine running kubelet in your Kubernetes cluster cannot access the registry with the images or those images do not exist on that registry. Log into the machine and see if it has access to the images:
-
-```bash
-ctr image pull public.ecr.aws/eks-anywhere/eks-anywhere-packages@sha256:whateveritis
+generated-harbor-jobservice-564d6fdc87   0/1     ImagePullBackOff   0          2d23h
 ```
 
 If a package pod cannot pull images, you may not have your AWS credentials set up properly. Verify that your credentials are working properly.
