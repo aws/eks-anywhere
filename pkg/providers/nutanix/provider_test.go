@@ -642,7 +642,7 @@ func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
 func TestNutanixProviderUpdateSecrets(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
-	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil).Times(2)
 	kubectl := executables.NewKubectl(executable)
 	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
@@ -661,7 +661,7 @@ func TestNutanixProviderUpdateSecrets(t *testing.T) {
 func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
-	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil).Times(2)
 	kubectl := executables.NewKubectl(executable)
 	mockClient := mocknutanix.NewMockClient(ctrl)
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
@@ -703,7 +703,7 @@ func TestNutanixProviderGenerateCAPISpecForCreate_Error(t *testing.T) {
 func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
-	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil).Times(2)
 	executable.EXPECT().Execute(gomock.Any(), "get",
 		"clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", "testdata/kubeconfig.yaml", "--field-selector=metadata.name=eksa-unit-test").Return(*bytes.NewBufferString(nutanixClusterConfigSpecJSON), nil)
 	executable.EXPECT().Execute(gomock.Any(), "get",

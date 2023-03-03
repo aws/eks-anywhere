@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,10 @@ func TestGetNutanixDatacenterConfigValidConfig(t *testing.T) {
 		Spec: NutanixDatacenterConfigSpec{
 			Endpoint: "prism.nutanix.com",
 			Port:     9440,
+			CredentialRef: &Ref{
+				Name: "eksa-unit-test",
+				Kind: constants.SecretKind,
+			},
 		},
 	}
 
@@ -150,6 +155,15 @@ func TestGetNutanixDatacenterConfigValidConfig(t *testing.T) {
 				assert.Contains(t, err.Error(), "NutanixDatacenterConfig port is not set or is empty")
 			},
 		},
+		{
+			name:     "datecenterconfig-credentialref-invalid-kind",
+			fileName: "testdata/nutanix/invalid-credentialref-kind.yaml",
+			assertions: func(t *testing.T, dcConf *NutanixDatacenterConfig) {
+				err := dcConf.Validate()
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "NutanixDatacenterConfig credentialRef Kind (ConfigMap) is not a secret")
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -168,4 +182,5 @@ func TestNewNutanixDatacenterConfigGenerate(t *testing.T) {
 	assert.Equal(t, "eksa-unit-test", dcConfGen.Name())
 	assert.Equal(t, NutanixDatacenterKind, dcConfGen.Kind())
 	assert.Equal(t, SchemeBuilder.GroupVersion.String(), dcConfGen.APIVersion())
+	assert.Equal(t, constants.NutanixCredentialsName, dcConfGen.Spec.CredentialRef.Name)
 }

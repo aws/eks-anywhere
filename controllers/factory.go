@@ -51,6 +51,7 @@ type Reconcilers struct {
 	SnowMachineConfigReconciler    *SnowMachineConfigReconciler
 	TinkerbellDatacenterReconciler *TinkerbellDatacenterReconciler
 	CloudStackDatacenterReconciler *CloudStackDatacenterReconciler
+	NutanixDatacenterReconciler    *NutanixDatacenterReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -185,6 +186,25 @@ func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
 
 		f.reconcilers.CloudStackDatacenterReconciler = NewCloudStackDatacenterReconciler(
 			f.manager.GetClient(),
+		)
+
+		return nil
+	})
+	return f
+}
+
+// WithNutanixDatacenterReconciler adds the NutanixDatacenterReconciler to the controller factory.
+func (f *Factory) WithNutanixDatacenterReconciler() *Factory {
+	f.dependencyFactory.WithNutanixDefaulter()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.NutanixDatacenterReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.NutanixDatacenterReconciler = NewNutanixDatacenterReconciler(
+			f.manager.GetClient(),
+			f.deps.NutanixDefaulter,
 		)
 
 		return nil

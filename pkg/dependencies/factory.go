@@ -99,6 +99,7 @@ type Dependencies struct {
 	VSphereValidator            *vsphere.Validator
 	VSphereDefaulter            *vsphere.Defaulter
 	NutanixPrismClient          *v3.Client
+	NutanixDefaulter            *nutanix.Defaulter
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 }
@@ -346,7 +347,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	case v1alpha1.NutanixDatacenterKind:
-		f.WithKubectl().WithPrismClient(clusterConfigFile)
+		f.WithKubectl().WithPrismClient(clusterConfigFile).WithNutanixDefaulter()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -1271,6 +1272,20 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 	return f
 }
 
+func (f *Factory) WithNutanixDefaulter() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.NutanixDefaulter != nil {
+			return nil
+		}
+
+		f.dependencies.NutanixDefaulter = nutanix.NewDefaulter()
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
 	if f.dependencies.NutanixPrismClient != nil {
 		return f
@@ -1280,6 +1295,7 @@ func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
 		if err != nil {
 			return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
 		}
+		datacenterConfig.SetDefaults()
 
 		clientOpts := make([]v3.ClientOption, 0)
 		if datacenterConfig.Spec.AdditionalTrustBundle != "" {

@@ -39,6 +39,7 @@ const (
 	NutanixProviderName    = "nutanix"
 
 	VSphereCredentialsName = "vsphere-credentials"
+	NutanixCredentialsName = "nutanix-credentials"
 	EksaLicenseName        = "eksa-license"
 	EksaPackagesName       = "eksa-packages"
 
