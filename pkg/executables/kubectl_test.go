@@ -2211,7 +2211,7 @@ func TestKubectlGetDeploymentSuccess(t *testing.T) {
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
 							{
-								Image: "k8s.gcr.io/coredns:1.7.0",
+								Image: "registry.k8s/coredns:1.7.0",
 								Name:  "coredns",
 							},
 						},
