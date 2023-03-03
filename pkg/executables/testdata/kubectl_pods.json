@@ -252,7 +252,7 @@
                             "-conf",
                             "/etc/coredns/Corefile"
                         ],
-                        "image": "k8s.gcr.io/coredns:1.7.0",
+                        "image": "registry.k8s/coredns:1.7.0",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "failureThreshold": 5,
@@ -426,7 +426,7 @@
                 "containerStatuses": [
                     {
                         "containerID": "containerd://98264478bc7b0edfd06d0593360b30bf02bb6b10fa0b424dc16496b61deed2fb",
-                        "image": "k8s.gcr.io/coredns:1.7.0",
+                        "image": "registry.k8s/coredns:1.7.0",
                         "imageID": "sha256:bfe3a36ebd2528b454be6aebece806db5b40407b833e2af9617bf39afaff8c16",
                         "lastState": {},
                         "name": "coredns",
@@ -703,7 +703,7 @@
                             "-conf",
                             "/etc/coredns/Corefile"
                         ],
-                        "image": "k8s.gcr.io/coredns:1.7.0",
+                        "image": "registry.k8s/coredns:1.7.0",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "failureThreshold": 5,
@@ -877,7 +877,7 @@
                 "containerStatuses": [
                     {
                         "containerID": "containerd://cfa5959e605d58d9a6cf9e29dc784dad3f5d75ad66da28d61a16883446f0ed8e",
-                        "image": "k8s.gcr.io/coredns:1.7.0",
+                        "image": "registry.k8s/coredns:1.7.0",
                         "imageID": "sha256:bfe3a36ebd2528b454be6aebece806db5b40407b833e2af9617bf39afaff8c16",
                         "lastState": {},
                         "name": "coredns",
@@ -1134,7 +1134,7 @@
                             "--snapshot-count=10000",
                             "--trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt"
                         ],
-                        "image": "k8s.gcr.io/etcd:3.4.13-0",
+                        "image": "registry.k8s/etcd:3.4.13-0",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "failureThreshold": 8,
@@ -1248,7 +1248,7 @@
                 "containerStatuses": [
                     {
                         "containerID": "containerd://7b1811d3865c377ea40bac9e10475c98339a28cb79ceeaef56963a5f28efce98",
-                        "image": "k8s.gcr.io/etcd:3.4.13-0",
+                        "image": "registry.k8s/etcd:3.4.13-0",
                         "imageID": "sha256:0369cf4303ffdb467dc219990960a9baa8512a54b0ad9283eaf55bd6c0adb934",
                         "lastState": {},
                         "name": "etcd",
@@ -2059,7 +2059,7 @@
                             "--tls-cert-file=/etc/kubernetes/pki/apiserver.crt",
                             "--tls-private-key-file=/etc/kubernetes/pki/apiserver.key"
                         ],
-                        "image": "k8s.gcr.io/kube-apiserver:v1.20.2",
+                        "image": "registry.k8s/kube-apiserver:v1.20.2",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "failureThreshold": 8,
@@ -2221,7 +2221,7 @@
                 "containerStatuses": [
                     {
                         "containerID": "containerd://b898ce544ab4b8529a3dfee92c57b49d6f7bbac41f61f953659ba581b9babaf9",
-                        "image": "k8s.gcr.io/kube-apiserver:v1.20.2",
+                        "image": "registry.k8s/kube-apiserver:v1.20.2",
                         "imageID": "sha256:a9ba57743d8e660a83350c4ad2c84870c7da758c5517085d962302d0e2dcda40",
                         "lastState": {},
                         "name": "kube-apiserver",
@@ -2552,7 +2552,7 @@
                             "--service-cluster-ip-range=10.96.0.0/12",
                             "--use-service-account-credentials=true"
                         ],
-                        "image": "k8s.gcr.io/kube-controller-manager:v1.20.2",
+                        "image": "registry.k8s/kube-controller-manager:v1.20.2",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "failureThreshold": 8,
@@ -2725,7 +2725,7 @@
                 "containerStatuses": [
                     {
                         "containerID": "containerd://83d49418634d8f98101d23cf8566810a05575e429916d27725f85fc21bb965cb",
-                        "image": "k8s.gcr.io/kube-controller-manager:v1.20.2",
+                        "image": "registry.k8s/kube-controller-manager:v1.20.2",
                         "imageID": "sha256:19ac5054559e94e01f3cbba102699804a5debd2f0293743fdda9c6219082aad2",
                         "lastState": {},
                         "name": "kube-controller-manager",
@@ -3000,7 +3000,7 @@
                                 }
                             }
                         ],
-                        "image": "k8s.gcr.io/kube-proxy:v1.20.2",
+                        "image": "registry.k8s/kube-proxy:v1.20.2",
                         "imagePullPolicy": "IfNotPresent",
                         "name": "kube-proxy",
                         "resources": {},
@@ -3152,7 +3152,7 @@
                 "containerStatuses": [
                     {
                         "containerID": "containerd://0c304145d497a781a3fdee713c9e125c80a3a99f9c4d643bb9b93ef7cb6a582f",
-                        "image": "k8s.gcr.io/kube-proxy:v1.20.2",
+                        "image": "registry.k8s/kube-proxy:v1.20.2",
                         "imageID": "sha256:cfa653a70d9051035080020b1913942d199795cd341cb521cf752cc2e32626ed",
                         "lastState": {},
                         "name": "kube-proxy",
@@ -3381,7 +3381,7 @@
                             "--leader-elect=true",
                             "--port=0"
                         ],
-                        "image": "k8s.gcr.io/kube-scheduler:v1.20.2",
+                        "image": "registry.k8s/kube-scheduler:v1.20.2",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "failureThreshold": 8,
@@ -3483,7 +3483,7 @@
                 "containerStatuses": [
                     {
                         "containerID": "containerd://5e63d36a1c8c59c9690b079f1281026d45607332c530534f5c24f46add6e1c31",
-                        "image": "k8s.gcr.io/kube-scheduler:v1.20.2",
+                        "image": "registry.k8s/kube-scheduler:v1.20.2",
                         "imageID": "sha256:73e1f7f70cccb27059da5234fcfe4d1acc5da2677929ebac4a4f83506bb08eeb",
                         "lastState": {},
                         "name": "kube-scheduler",
@@ -3704,7 +3704,7 @@
                             "--debug",
                             "start",
                             "--helper-image",
-                            "k8s.gcr.io/build-image/debian-base:v2.1.0",
+                            "registry.k8s/build-image/debian-base:v2.1.0",
                             "--config",
                             "/etc/config/config.json"
                         ],
