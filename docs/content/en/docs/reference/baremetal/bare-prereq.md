@@ -40,9 +40,9 @@ When upgrading without an extra machine, keep in mind that your control plane an
 Each machine should include the following features:
 
 * Network Interface Cards: At least one NIC is required. It must be capable of netbooting from PXE. 
-* IPMI integration (recommended): An IPMI implementation (such a Dell iDRAC, RedFish-compatible, legacy or HP iLO) on the computer's motherboard or on a separate expansion card. This feature is used to allow remote management of the machine, such as turning the machine on and off.
+* BMC integration (recommended): An IPMI or Redfish implementation (such a Dell iDRAC, RedFish-compatible, legacy or HP iLO) on the computer's motherboard or on a separate expansion card. This feature is used to allow remote management of the machine, such as turning the machine on and off.
 
->**_NOTE_**: IPMI is not required for an EKS Anywhere cluster. However, without IPMI, upgrades are not supported and you will have to physically turn machines off and on when appropriate.
+>**_NOTE_**: BMC integration is not required for an EKS Anywhere cluster. However, without BMC integration, upgrades are not supported and you will have to physically turn machines off and on when appropriate.
 
 Here are other network requirements:
 
@@ -73,7 +73,7 @@ Here are other network requirements:
 Through extensive testing in a variety of on premises customer environments during our beta phase, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.
 In addition, we have collaborated with our hardware original equipment manufacturer (OEM) partners to provide you a list of validated hardware:
 
-| Bare metal servers  | IPMI  | NIC     | OS      |
+| Bare metal servers  | BMC   | NIC     | OS      |
 |---------------------|-------|---------|---------|
 | Dell PowerEdge R740 | iDRAC9 |  Mellanox ConnectX-4 LX 25GbE  | Validated with Ubuntu v20.04.1 |
 | Dell PowerEdge R7525 (NVIDIA Tesla™ T4 GPU's) | iDRAC9 |  Mellanox ConnectX-4 LX 25GbE & Intel Ethernet 10G 4P X710 OCP | Validated with Ubuntu v20.04.1 |
