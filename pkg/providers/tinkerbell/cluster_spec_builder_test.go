@@ -94,6 +94,9 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Users: []v1alpha1.UserConfiguration{
 						{
 							Name: "ec2-user",
+							SshAuthorizedKeys: []string{
+								"test-rsa ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+							},
 						},
 					},
 				},
@@ -109,6 +112,9 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Users: []v1alpha1.UserConfiguration{
 						{
 							Name: "ec2-user",
+							SshAuthorizedKeys: []string{
+								"test-rsa ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+							},
 						},
 					},
 				},
@@ -124,6 +130,9 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Users: []v1alpha1.UserConfiguration{
 						{
 							Name: "ec2-user",
+							SshAuthorizedKeys: []string{
+								"test-rsa ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+							},
 						},
 					},
 				},

@@ -21,7 +21,7 @@ func TestTinkerbellMachineConfigValidateCreateFail(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	g.Expect(machineConfig.ValidateCreate()).NotTo(Succeed())
+	g.Expect(machineConfig.ValidateCreate()).To(MatchError(ContainSubstring("TinkerbellMachineConfig: missing spec.hardwareSelector: tinkerbellmachineconfig")))
 }
 
 func TestTinkerbellMachineConfigValidateCreateFailNoUsers(t *testing.T) {
@@ -30,7 +30,34 @@ func TestTinkerbellMachineConfigValidateCreateFailNoUsers(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	g.Expect(machineConfig.ValidateCreate()).NotTo(Succeed())
+	g.Expect(machineConfig.ValidateCreate()).To(MatchError(ContainSubstring("TinkerbellMachineConfig: missing spec.Users: tinkerbellmachineconfig")))
+}
+
+func TestTinkerbellMachineConfigValidateCreateFailNoSSHkeys(t *testing.T) {
+	machineConfig := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{
+			{
+				Name: "test",
+			},
+		}
+	})
+
+	g := NewWithT(t)
+	g.Expect(machineConfig.ValidateCreate()).To(MatchError(ContainSubstring("Please specify a ssh authorized key")))
+}
+
+func TestTinkerbellMachineConfigValidateCreateFailEmptySSHkeys(t *testing.T) {
+	machineConfig := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.Users = []v1alpha1.UserConfiguration{
+			{
+				Name:              "test",
+				SshAuthorizedKeys: []string{},
+			},
+		}
+	})
+
+	g := NewWithT(t)
+	g.Expect(machineConfig.ValidateCreate()).To(MatchError(ContainSubstring("Please specify a ssh authorized key")))
 }
 
 func TestTinkerbellMachineConfigValidateUpdateSucceed(t *testing.T) {
