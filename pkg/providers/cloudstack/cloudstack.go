@@ -400,31 +400,6 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
-// TODO: Consider to move this functionality to validator.go.
-func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, cluster *types.Cluster) error {
-	for _, profile := range p.execConfig.Profiles {
-		secret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
-		if apierrors.IsNotFound(err) {
-			// When the secret is not found we allow for new secrets
-			continue
-		}
-		if err != nil {
-			return fmt.Errorf("getting secret for profile %s: %v", profile.Name, err)
-		}
-		if secretDifferentFromProfile(secret, profile) {
-			return fmt.Errorf("profile '%s' is different from the secret", profile.Name)
-		}
-	}
-	return nil
-}
-
-func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
-	return string(secret.Data[decoder.APIUrlKey]) != profile.ManagementUrl ||
-		string(secret.Data[decoder.APIKeyKey]) != profile.ApiKey ||
-		string(secret.Data[decoder.SecretKeyKey]) != profile.SecretKey ||
-		string(secret.Data[decoder.VerifySslKey]) != profile.VerifySsl
-}
-
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
@@ -499,7 +474,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
 	}
 
-	if err := p.validateSecretsUnchanged(ctx, cluster); err != nil {
+	if err := p.validator.ValidateSecretsUnchanged(ctx, cluster, p.execConfig, p.providerKubectlClient); err != nil {
 		return fmt.Errorf("validating secrets unchanged: %v", err)
 	}
 
