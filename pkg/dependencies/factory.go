@@ -1272,6 +1272,7 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 	return f
 }
 
+// WithNutanixDefaulter adds a new NutanixDefaulter to the factory
 func (f *Factory) WithNutanixDefaulter() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.NutanixDefaulter != nil {
@@ -1286,6 +1287,7 @@ func (f *Factory) WithNutanixDefaulter() *Factory {
 	return f
 }
 
+// WithPrismClient adds a new PrismClient to the factory
 func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
 	if f.dependencies.NutanixPrismClient != nil {
 		return f

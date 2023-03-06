@@ -1,13 +1,14 @@
 package v1alpha1
 
 import (
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func TestGetNutanixDatacenterConfigInvalidConfig(t *testing.T) {

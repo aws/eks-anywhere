@@ -19,8 +19,10 @@ func (r *NutanixDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-nutanixdatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=nutanixdatacenterconfigs,verbs=create;update,versions=v1alpha1,name=nutanixdatacenterconfig.kb.io,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &NutanixDatacenterConfig{}
-var _ webhook.Defaulter = &NutanixDatacenterConfig{}
+var (
+	_ webhook.Validator = &NutanixDatacenterConfig{}
+	_ webhook.Defaulter = &NutanixDatacenterConfig{}
+)
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *NutanixDatacenterConfig) ValidateCreate() error {

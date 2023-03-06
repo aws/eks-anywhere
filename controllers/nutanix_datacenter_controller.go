@@ -25,6 +25,10 @@ func (r *NutanixDatacenterReconciler) Reconcile(ctx context.Context, request ctr
 
 	r.defaulter.SetDefaultsForDatacenterConfig(*dc)
 
+	if !dc.DeletionTimestamp.IsZero() {
+		return r.reconcileDelete(ctx, dc)
+	}
+
 	return ctrl.Result{}, nil
 }
 
