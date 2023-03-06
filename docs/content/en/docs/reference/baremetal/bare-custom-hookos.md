@@ -6,7 +6,7 @@ description: >
   Customizing HookOS for EKS Anywhere on Bare Metal
 ---
 
-To initially PXE boot bare metal machines used in EKS Anywhere clusters, Tinkerbell acquires a kernel and initial ramdisk that is referred to as the HookOS.
+To initially network boot bare metal machines used in EKS Anywhere clusters, Tinkerbell acquires a kernel and initial ramdisk that is referred to as the HookOS.
 A default HookOS is provided when you create an EKS Anywhere cluster.
 However, there may be cases where you want to override the default HookOS, such as to add drivers required to boot your particular type of hardware.
 
