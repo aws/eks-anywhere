@@ -2,7 +2,7 @@ package reconciler
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/constants"
+
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,6 +12,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -127,7 +128,7 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, t
 	return controller.Result{}, nil
 }
 
-// GenerateSpec generates Tinkerbell control plane and workers spec
+// GenerateSpec generates Tinkerbell control plane and workers spec.
 func (r *Reconciler) GenerateSpec(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
 	spec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "GenerateSpec")
@@ -166,7 +167,22 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 	tinkDesiredKCP := tinkerbell.KubeadmControlPlane{KubeadmControlPlane: tinkerbellScope.ControlPlane.KubeadmControlPlane}
 	wantVersionChange := tinkerbell.HasKubernetesVersionChange(&tinkCurrentKCP, &tinkDesiredKCP)
 	cpWantScaleChange := tinkerbell.ReplicasDiff(&tinkCurrentKCP, &tinkDesiredKCP)
+	workerWantScaleChange := r.workerReplicasDiff(ctx, tinkerbellScope)
 
+	if wantVersionChange {
+		if cpWantScaleChange != 0 || workerWantScaleChange {
+			return controller.Result{}, errors.Errorf("cannot perform scale up or down during k8s version change")
+		}
+		tinkerbellScope.ClusterChange = NeedNewNode
+	} else if cpWantScaleChange != 0 || workerWantScaleChange {
+		tinkerbellScope.ClusterChange = NeedMoreOrLessNode
+	} else {
+		return controller.Result{}, errors.Errorf("cannot detect operation type")
+	}
+	return controller.Result{}, nil
+}
+
+func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) bool {
 	workerWantScaleChange := false
 	for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		md := &clusterv1.MachineDeployment{}
@@ -177,26 +193,13 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 				workerWantScaleChange = true
 				break
 			}
-			return controller.Result{}, err
 		}
 		if int(*md.Spec.Replicas) != *wnc.Count {
 			workerWantScaleChange = true
 			break
 		}
 	}
-
-	if wantVersionChange {
-		if cpWantScaleChange != 0 || workerWantScaleChange {
-			return controller.Result{}, errors.Errorf("cannot perform scale up or down during k8s version change")
-		} else {
-			tinkerbellScope.ClusterChange = NeedNewNode
-		}
-	} else if cpWantScaleChange != 0 || workerWantScaleChange {
-		tinkerbellScope.ClusterChange = NeedMoreOrLessNode
-	} else {
-		return controller.Result{}, errors.Errorf("cannot detect operation type")
-	}
-	return controller.Result{}, nil
+	return workerWantScaleChange
 }
 
 // OmitMachineTemplate omits control plane and worker machine template on scaling update.

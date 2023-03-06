@@ -5,8 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
@@ -24,10 +22,12 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
@@ -170,14 +170,16 @@ func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
 	//
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, controlPlaneMachineTemplate())
 
 	tt.createAllObjs()
 	scope := tt.buildScope()
 	scope.ClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count = 2
 	logger := test.NewNullLogger()
-	_, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, _ = tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -206,8 +208,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.createAllObjs()
 	scope := tt.buildScope()
 	logger := test.NewNullLogger()
-	_, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
+	scope.ControlPlane = tinkerbellCP()
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -251,7 +252,9 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 		Port:         "65536",
 	}
 	logger := test.NewNullLogger()
-	_, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
@@ -290,7 +293,7 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	scope.ClusterSpec.Cluster = scope.ClusterSpec.Cluster.DeepCopy()
 	scope.ClusterSpec.Cluster.Name = ""
 	logger := test.NewNullLogger()
-	_, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 
 	_, err = tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
@@ -406,13 +409,16 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 			Namespace: constants.EksaSystemNamespace,
 		},
 	}
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, mt)
 	tt.createAllObjs()
 
 	scope := tt.buildScope()
 	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
 	logger := test.NewNullLogger()
-	_, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
 
@@ -452,7 +458,9 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 
 	scope := tt.buildScope()
 	logger := test.NewNullLogger()
-	_, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
 
@@ -540,6 +548,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 				hardware.OwnerNameLabel: "cluster",
 				"type":                  "cp",
 			},
+			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: tinkv1alpha1.HardwareSpec{
 			Metadata: &tinkv1alpha1.HardwareMetadata{
@@ -577,23 +586,6 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 	tt.Expect(scope.Workers).To(Equal(tinkWorker()))
 }
 
-func TestReconciler_DetectOperationNewCluster(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-	tt := newReconcilerTest(t)
-	tt.createAllObjs()
-	logger := test.NewNullLogger()
-	scope := tt.buildScope()
-	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.Expect(scope.ClusterChange).To(Equal(reconciler.ReconcileNewCluster))
-}
-
 func TestReconciler_DetectOperationNeedNewNode(t *testing.T) {
 	// TODO: remove after diskExtractor has been refactored and removed.
 	features.ClearCache()
@@ -604,7 +596,6 @@ func TestReconciler_DetectOperationNeedNewNode(t *testing.T) {
 		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkerbellCP().KubeadmControlPlane)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -624,12 +615,10 @@ func TestReconciler_DetectOperationNeedMoreOrLessNode(t *testing.T) {
 	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
 	//
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkerbellCP().KubeadmControlPlane)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
-	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
@@ -644,7 +633,6 @@ func TestReconciler_DetectOperationFail(t *testing.T) {
 	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
 	//
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkerbellCP().KubeadmControlPlane)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -655,6 +643,25 @@ func TestReconciler_DetectOperationFail(t *testing.T) {
 	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during k8s version change")))
 	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconciler_DetectOperationNewCluster(t *testing.T) {
+	// TODO: remove after diskExtractor has been refactored and removed.
+	features.ClearCache()
+	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
+	//
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Name = "new-cluster"
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(scope.ClusterChange).To(Equal(reconciler.ReconcileNewCluster))
+	tt.cleanup()
 }
 
 func (tt *reconcilerTest) withFakeClient() {
@@ -821,9 +828,13 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
+	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
-	tt.DeleteAllOfAndWait(tt.ctx, &tinkv1alpha1.Hardware{})
+	tt.DeleteAllOfAndWait(tt.ctx, &anywherev1.Cluster{})
 }
 
 type clusterOpt func(*anywherev1.Cluster)
@@ -1079,15 +1090,6 @@ func tinkerbellCP() *tinkerbell.ControlPlane {
 						Users: []bootstrapv1.User{
 							{
 								Name:              "user",
-								Gecos:             nil,
-								Groups:            nil,
-								HomeDir:           nil,
-								Inactive:          nil,
-								Shell:             nil,
-								Passwd:            nil,
-								PasswdFrom:        nil,
-								PrimaryGroup:      nil,
-								LockPassword:      nil,
 								Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
 								SSHAuthorizedKeys: []string{"[ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZ bottlerocket@ip-10-2-0-6]"},
 							},
