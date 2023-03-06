@@ -3,10 +3,10 @@ package v1alpha1
 import (
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
-
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func TestNutanixDatacenterConfigWebhooks(t *testing.T) {
