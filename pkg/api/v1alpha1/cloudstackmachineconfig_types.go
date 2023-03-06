@@ -206,6 +206,11 @@ func (c *CloudStackMachineConfig) Validate() error {
 	return validateCloudStackMachineConfig(c)
 }
 
+// SetDefaults sets defaults for CloudStackMachineConfig objects.
+func (c *CloudStackMachineConfig) SetDefaults() {
+	setCloudStackMachineConfigDefaults(c)
+}
+
 // CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig.
 type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file

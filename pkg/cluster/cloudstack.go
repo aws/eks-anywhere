@@ -44,6 +44,12 @@ func cloudstackEntry() *ConfigManagerEntry {
 				return nil
 			},
 			func(c *Config) error {
+				for _, m := range c.CloudStackMachineConfigs {
+					m.SetDefaults()
+				}
+				return nil
+			},
+			func(c *Config) error {
 				if c.CloudStackDatacenter != nil {
 					if err := validateSameNamespace(c, c.CloudStackDatacenter); err != nil {
 						return err

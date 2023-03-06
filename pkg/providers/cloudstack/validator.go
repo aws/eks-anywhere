@@ -136,12 +136,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 	}
 
 	for _, machineConfig := range cloudStackClusterSpec.machineConfigsLookup {
-		if len(machineConfig.Spec.Users) <= 0 {
-			machineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
-		}
-		if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-			machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-		}
 		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}

@@ -519,3 +519,12 @@ func TestCloudStackMachineValidateUpdateAffinityGroupIdsImmutable(t *testing.T) 
 	g = NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
 }
+
+func TestCloudStackMachineConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := cloudstackMachineConfig()
+	sOld.Default()
+
+	g.Expect(sOld.Spec.Users).To(Equal([]v1alpha1.UserConfiguration{{SshAuthorizedKeys: []string{""}}}))
+}
