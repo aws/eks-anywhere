@@ -8,7 +8,7 @@ description: >
 
 EKS Anywhere supports three different node operating systems:
 
-* Bottlerocket: For vSphere, Bare Metal and Snow providers
+* Bottlerocket: For vSphere and Bare Metal providers
 * Ubuntu: For vSphere, Bare Metal, Nutanix, and Snow providers
 * Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, and Bare Metal providers
 
