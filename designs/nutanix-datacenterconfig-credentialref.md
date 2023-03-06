@@ -23,7 +23,6 @@ type NutanixDatacenterConfigSpec struct {
     ...
     // CredentialRef is the reference to the secret name that contains the credentials
     // for the Nutanix Prism Central. The namespace for the secret is assumed to be a constant i.e. eksa-system.
-    // +kubebuilder:validation:Optional
     // +optional
     CredentialRef *Ref `json:"credentialRef,omitempty"`
 }
