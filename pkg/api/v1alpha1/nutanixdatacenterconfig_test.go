@@ -165,6 +165,15 @@ func TestGetNutanixDatacenterConfigValidConfig(t *testing.T) {
 				assert.Contains(t, err.Error(), "NutanixDatacenterConfig credentialRef Kind (ConfigMap) is not a secret")
 			},
 		},
+		{
+			name:     "datecenterconfig-credentialref-invalid-kind",
+			fileName: "testdata/nutanix/empty-credentialref-name.yaml",
+			assertions: func(t *testing.T, dcConf *NutanixDatacenterConfig) {
+				err := dcConf.Validate()
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "NutanixDatacenterConfig credentialRef name is not set or is empty")
+			},
+		},
 	}
 
 	for _, test := range tests {
