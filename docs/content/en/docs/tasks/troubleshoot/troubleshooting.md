@@ -277,20 +277,20 @@ In either of those cases, the following steps can help you determine the problem
     * Check all of the machines that the EKS Anywhere CLI has picked up from the pool of hardware in the CSV file:
 
         ```bash
-        kubectl get machines -A
+        kubectl get machines.bmc -A
         ```
     * Check if those nodes are powered on. If any of those nodes are not powered on after a while then it could be possible that BMC credentials are invalid. You can verify it by checking the logs:
 
         ```bash
-        kubectl get bmt -n eksa-system
-        kubectl get bmt <bmt-name> -n eksa-system -o yaml
+        kubectl get tasks.bmc -n eksa-system
+        kubectl get tasks.bmc <bmc-name> -n eksa-system -o yaml
         ```
 
-    Validate BMC credentials are correct if a connection error is observed on the `bmt` resource. Note that "IPMI over LAN" must be enabled in the BMC configuration for the `bmt` resource to communicate successfully.
+    Validate BMC credentials are correct if a connection error is observed on the `tasks.bmc` resource. Note that "IPMI over LAN" or "Redfish" must be enabled in the BMC configuration for the `tasks.bmc` resource to communicate successfully.
 
 1. If the machine is powered on but you see linuxkit is not running, then Tinkerbell failed to serve the node via iPXE. In this case, you would want to:
 
-    * Check the boots service logs from the machine where you are running the CLI to see if it received and/or responded to the request:
+    * Check the Boots service logs from the machine where you are running the CLI to see if it received and/or responded to the request:
 
         ```bash 
         docker logs boots

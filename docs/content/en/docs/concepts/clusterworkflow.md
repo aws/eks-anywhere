@@ -90,7 +90,7 @@ To see details on the cluster creation process, increase verbosity (`-v=9` provi
 #### 4. Create bootstrap cluster and provision hardware
 
 The cluster creation process starts by creating a temporary Kubernetes bootstrap cluster on the Administrative machine.
-Containerized components of the Tinkerbell provisioner run either as pods on the bootstrap cluster (hegel, rufio, and tink) or directly as containers on Docker (boots).
+Containerized components of the Tinkerbell provisioner run either as pods on the bootstrap cluster (Hegel, Rufio, and Tink) or directly as containers on Docker (Boots).
 Those Tinkerbell components drive the provisioning of the operating systems and Kubernetes components on each of the physical computers.
 
 With the information gathered from the cluster specification and the hardware CSV file, three custom resource definitions (CRDs) are created.
@@ -123,14 +123,14 @@ See [Overview of Tinkerbell in EKS Anywhere]({{< relref "../reference/baremetal/
 
 ![Continue creating EKS Anywhere Bare Metal cluster](/images/eksa-baremetal-continue.png)
 
-#### 1. Tinkerbell PXE boots and configures nodes
+#### 1. Tinkerbell network boots and configures nodes
 
 * Rufio uses BMC information to set the power state for the first control plane node it wants to provision.
-* When the node boots from its NIC, it talks to the Boots DHCP server, which fetches the kernel and initramfs (HookOS) needed to PXE boot the machine via HTTP.
+* When the node boots from its NIC, it talks to the Boots DHCP server, which fetches the kernel and initramfs (HookOS) needed to network boot the machine.
 * With HookOS running on the node, the operating system identified by `IMG_URL` in the cluster specification is copied to the identified `DEST_DISK` on the machine.
-* The hegel components provides data stores that contain information used by services such as cloud-init to configure each system.
-* Next, the workflow is run on the first control plane node, followed by PXE booting and running the workflow for each subsequent control plane node.
-* Once the control plane is up, worker nodes are PXE booted and workflows are run to deploy each node.
+* The Hegel components provides data stores that contain information used by services such as cloud-init to configure each system.
+* Next, the workflow is run on the first control plane node, followed by network booting and running the workflow for each subsequent control plane node.
+* Once the control plane is up, worker nodes are network booted and workflows are run to deploy each node.
 
 #### 2. Tinkerbell components move to the target cluster
 

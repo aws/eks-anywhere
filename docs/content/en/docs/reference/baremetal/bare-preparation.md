@@ -12,22 +12,21 @@ To prepare your computer hardware for EKS Anywhere, you need to connect your com
 Once the hardware is in place, you need to:
 
 * Obtain IP and MAC addresses for your machines' NICs.
-* Obtain IP addresses for your machines' IPMI interfaces.
+* Obtain IP addresses for your machines' BMC interfaces.
 * Obtain the gateway address for your network to reach the Internet.
 * Obtain the IP address for your DNS servers.
 * Make sure the following settings are in place:
   * UEFI is enabled on all target cluster machines, unless you are provisioning RHEL systems. Enable legacy BIOS on any RHEL machines.
-  * PXE boot is enabled for the NIC on each machine for which you provided the MAC address. This is the interface on which the operating system will be provisioned.
-  * PXE is set as the first device in each machine's boot order
-  * IPMI over LAN is enabled on the IPMI interfaces
-* Go to the IPMI settings for each machine and set the IP address (bmc_ip), username (bmc_username), and password (bmc_password) to use later in the CSV file.
+  * Netboot (PXE or HTTP) boot is enabled for the NIC on each machine for which you provided the MAC address. This is the interface on which the operating system will be provisioned.
+  * IPMI over LAN and/or Redfish is enabled on all BMC interfaces.
+* Go to the BMC settings for each machine and set the IP address (bmc_ip), username (bmc_username), and password (bmc_password) to use later in the CSV file.
 
 ## Prepare hardware inventory
 Create a CSV file to provide information about all physical machines that you are ready to add to your target Bare Metal cluster.
 This file will be used:
 
 * When you generate the hardware file to be included in the cluster creation process described in the [Create Bare Metal production cluster]({{< relref "../../getting-started/production-environment" >}}) Getting Started guide.
-* To provide information that is passed to each machine from the Tinkerbell DHCP server when the machine is initially PXE booted.
+* To provide information that is passed to each machine from the Tinkerbell DHCP server when the machine is initially network booted.
 
 The following is an example of an EKS Anywhere Bare Metal hardware CSV file:
 
@@ -49,11 +48,11 @@ The following sections describe each value.
 ### hostname
 The hostname assigned to the machine.
 ### bmc_ip (optional)
-The IP address assigned to the IPMI interface on the machine.
+The IP address assigned to the BMC interface on the machine.
 ### bmc_username (optional)
-The username assigned to the IPMI interface on the machine.
+The username assigned to the BMC interface on the machine.
 ### bmc_password (optional)
-The password associated with the `bmc_username` assigned to the IPMI interface on the machine.
+The password associated with the `bmc_username` assigned to the BMC interface on the machine.
 ### mac
 The MAC address of the network interface card (NIC) that provides access to the host computer.
 ### ip_address

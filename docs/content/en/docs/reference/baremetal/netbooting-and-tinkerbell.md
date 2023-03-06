@@ -3,7 +3,7 @@ title: "Netbooting and Tinkerbell for Bare Metal"
 linkTitle: "Netbooting and Tinkerbell"
 weight: 25
 description: >
-  Overview of Netbooting and Tinkerbell for EKS Anywhere on Bare Metal 
+  Overview of Tinkerbell and network booting for EKS Anywhere on Bare Metal
 ---
 
 EKS Anywhere uses [Tinkerbell](https://docs.tinkerbell.org/) to provision machines for a Bare Metal cluster.
@@ -13,7 +13,7 @@ As someone deploying an EKS Anywhere cluster on Bare Metal, you have several opp
 
 * **Create a hardware CSV file**: You are required to create a [hardware CSV file]({{< relref "./bare-preparation/#prepare-hardware-inventory" >}}) that contains an entry for every physical machine you want to add at cluster creation time. 
 * **Create an EKS Anywhere cluster**: By modifying the [Bare Metal configuration file ]({{< relref "../clusterspec/baremetal" >}}) used to create a cluster, you can change some Tinkerbell settings or add actions to define how the operating system on each machine is configured.
-* **Monitor provisioning**: You can follow along with the [Tinkerbell Overview]({{< relref "#overview-of-tinkerbell-in-eks-anywhere" >}}) in this page to monitor the progress of your hardware provisioning, as Tinkerbell finds machines and attempts to PXE boot, configure, and restart them.
+* **Monitor provisioning**: You can follow along with the [Tinkerbell Overview]({{< relref "#overview-of-tinkerbell-in-eks-anywhere" >}}) in this page to monitor the progress of your hardware provisioning, as Tinkerbell finds machines and attempts to network boot, configure, and restart them.
 
 ## Using Tinkerbell on EKS Anywhere
 
@@ -32,7 +32,7 @@ eksa-cp01,10.10.44.1,root,PrZ8W93i,CC:48:3A:00:00:01,10.10.50.2,255.255.254.0,10
 ```
 
 Each physical, bare metal machine is represented by a comma-separated list of information on a single line.
-It includes information needed to identify each machine (the NIC’s MAC address), PXE boot the machine, point to the disk to install on, and then configure and start the installed system.
+It includes information needed to identify each machine (the NIC’s MAC address), network boot the machine, point to the disk to install on, and then configure and start the installed system.
 See [Preparing hardware inventory]({{< relref "./bare-preparation/#prepare-hardware-inventory" >}}) for details on the content and format of that file. 
 
 ### Modify the cluster specification file
@@ -54,43 +54,43 @@ The next section describes how Tinkerbell works during cluster creation to provi
 
 When you run the command to create an EKS Anywhere Bare Metal cluster, a set of Tinkerbell components start up on the Admin machine.
 One of these components runs in a container on Docker, while other components run as either controllers or services in pods on the Kubernetes [kind](https://kind.sigs.k8s.io/) cluster that is started up on the Admin machine.
-Tinkerbell components include boots, hegel, rufio, and tink.
+Tinkerbell components include Boots, Hegel, Rufio, and Tink.
 
-### Tinkerbell boots service
+### Tinkerbell Boots service
 
-The boots service runs in a single container to handle the DHCP service and Netbooting activities. 
-In particular, boots hands out IP addresses, serves iPXE binaries via HTTP and TFTP, delivers an iPXE script to the provisioned machines, and runs a syslog server. 
+The Boots service runs in a single container to handle the DHCP service and network booting activities.
+In particular, Boots hands out IP addresses, serves iPXE binaries via HTTP and TFTP, delivers an iPXE script to the provisioned machines, and runs a syslog server.
 
 Boots is different from the other Tinkerbell services because the DHCP service it runs must listen directly to layer 2 traffic.
-(The kind cluster running on the Admin machine doesn’t have the ability to have pods listening on layer 2 networks, which is why boots is run directly on Docker instead, with host networking enabled.)
+(The kind cluster running on the Admin machine doesn’t have the ability to have pods listening on layer 2 networks, which is why Boots is run directly on Docker instead, with host networking enabled.)
 
-Because boots is running as a container in Docker, you can see the output in the logs for the boots container by running:
+Because Boots is running as a container in Docker, you can see the output in the logs for the Boots container by running:
 
 ```bash
 docker logs boots
 ```
 
-From the logs output, you will see iPXE try to netboot each machine.
+From the logs output, you will see iPXE try to network boot each machine.
 If the process doesn’t get all the information it wants from the DHCP server, it will time out.
 You can see iPXE loading variables, loading a kernel and initramfs (via DHCP), then booting into that kernel and initramfs: in other words, you will see everything that happens with iPXE before it switches over to the kernel and initramfs.
 The kernel, initramfs, and all images retrieved later are obtained remotely over HTTP and HTTPS.
 
-### Tinkerbell hegel, rufio, and tink components
+### Tinkerbell Hegel, Rufio, and Tink components
 
-After boots comes up on Docker, a small Kubernetes kind cluster starts up on the Admin machine.
+After Boots comes up on Docker, a small Kubernetes kind cluster starts up on the Admin machine.
 Other Tinkerbell components run as pods on that kind cluster. Those components include:
 
-* **hegel**: Manages Tinkerbell’s metadata service.
-The hegel service gets its metadata from the hardware specification stored in Kubernetes in the form of custom resources.
+* **Hegel**: Manages Tinkerbell’s metadata service.
+The Hegel service gets its metadata from the hardware specification stored in Kubernetes in the form of custom resources.
 The format that it serves is similar to an Ec2 metadata format.
-* **rufio**: Handles talking to BMCs (which manages things like starting and stopping systems with IPMI).
-The rufio Kubernetes controller sets things such as power state, persistent boot order, and eventually other services (like NTP, LDAP, and TLS certificates).
+* **Rufio**: Handles talking to BMCs (which manages things like starting and stopping systems with IPMI or Redfish).
+The Rufio Kubernetes controller sets things such as power state, persistent boot order.
 BMC authentication is managed with Kubernetes secrets.
-* **tink**: The tink service consists of three components: tink server, tink controller, and tink worker.
-The tink controller manages hardware data, templates you want to execute, and the workflows that each target specific hardware you are provisioning.
-The tink worker is a small binary that runs inside of HookOS and talks to the tink server.
-The worker sends the tink server its MAC address and asks the server for workflows to run.
-The tink worker will then go through each action, one-by-one, and try to execute it.
+* **Tink**: The Tink service consists of three components: Tink server, Tink controller, and Tink worker.
+The Tink controller manages hardware data, templates you want to execute, and the workflows that each target specific hardware you are provisioning.
+The Tink worker is a small binary that runs inside of HookOS and talks to the Tink server.
+The worker sends the Tink server its MAC address and asks the server for workflows to run.
+The Tink worker will then go through each action, one-by-one, and try to execute it.
 
 To see those services and controllers running on the kind bootstrap cluster, type:
 
@@ -116,11 +116,11 @@ export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconf
 
 ### Power up the nodes
 
-Tinkerbell starts by finding a node from the hardware list (based on MAC address) and contacting it to identify a baseboard management job (BMJ) that runs a set of baseboard management tasks (BMT). 
+Tinkerbell starts by finding a node from the hardware list (based on MAC address) and contacting it to identify a baseboard management job (`job.bmc`) that runs a set of baseboard management tasks (`task.bmc`).
 To see that information, type:
 
 ```bash
-kubectl get bmj -A
+kubectl get job.bmc -A
 ```
 ```
 NAMESPACE    NAME                                           AGE
@@ -128,7 +128,7 @@ eksa-system  mycluster-md-0-1656099863422-vxvh2-provision   12m
 ```
 
 ```bash
-kubectl get bmt -A 
+kubectl get tasks.bmc -A
 ```
 ```
 NAMESPACE    NAME                                                AGE
@@ -137,10 +137,10 @@ eksa-system  mycluster-md-0-1656099863422-vxh2-provision-task-1  51s
 eksa-system  mycluster-md-0-1656099863422-vxh2-provision-task-2  47s
 ```
 
-The following shows snippets from the bmt output that represent the three tasks: Power Off, enable PXE boot, and Power On.
+The following shows snippets from the `tasks.bmc` output that represent the three tasks: Power Off, enable network boot, and Power On.
 
 ```bash
-kubectl describe bmt -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-0
+kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-0
 ```
 ```
 ...
@@ -154,7 +154,7 @@ Status:
 ```
         
 ```bash
-kubectl describe bmt -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-1
+kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-1
 ```
 ```
 ...
@@ -171,7 +171,7 @@ Status:
 ```
 
 ```bash
-kubectl describe bmt -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-2
+kubectl describe tasks.bmc -n eksa-system eksa-system mycluster-md-0-1656099863422-vxh2-provision-task-2
 ```
 ```
   Task:
@@ -183,17 +183,17 @@ Status:
     Type:      Completed   
 ```
 
-Rufio converts the baseboard management jobs into task objects, then goes ahead and executes each task. To see rufio logs, type:
+Rufio converts the baseboard management jobs into task objects, then goes ahead and executes each task. To see Rufio logs, type:
 
 ```bash
 kubectl logs -n eksa-system rufio-controller-manager-5dcc568c79-9kllz | less
 ```
 
-### PXE boots
+### Network booting the nodes
 
-Next the boots service PXE boots the machine and begins streaming the HookOS (`vmlinuz` and `initramfs`) to the machine.
+Next the Boots service netboots the machine and begins streaming the HookOS (`vmlinuz` and `initramfs`) to the machine.
 HookOS runs in memory and provides the installation environment.
-To watch the boots log messages as each node boots, type:
+To watch the Boots log messages as each node powers up, type:
 
 ```bash
 docker logs boots 
@@ -204,7 +204,7 @@ You can search the output for `vmlinuz` and `initramfs` to watch as the HookOS i
 ### Running workflows
 
 Once the HookOS is up, Tinkerbell begins running the tasks and actions contained in the workflows.
-This is coordinated between the tink worker, running in memory within the HookOS on the machine, and the tink server on the kind cluster.
+This is coordinated between the Tink worker, running in memory within the HookOS on the machine, and the Tink server on the kind cluster.
 To see the workflows being run, type the following:
 
 ```bash
@@ -269,10 +269,10 @@ kubectl logs -n capt-system capt-controller-manager-9f8b95b-frbq | less
 You can follow this output to see the machine as it goes through the provisioning process.
 
 After the node is initialized, completes all the Tinkerbell actions, and is booted into the installed operating system (Ubuntu or Bottlerocket), the new system starts cloud-init to do further configuration.
-At this point, the system will reach out to the Tinkerbell hegel service to get the hegel metadata.
+At this point, the system will reach out to the Tinkerbell Hegel service to get its metadata.
 
-If something goes wrong, viewing hegel files can help you understand why a stuck system that has booted into Ubuntu or Bottlerocket has not joined the cluster yet.
-To see the hegel files, get the internal IP address for one of the new nodes. Then check for the names of hegel logs and display the contents of one of those logs, searching for the IP address of the node:
+If something goes wrong, viewing Hegel files can help you understand why a stuck system that has booted into Ubuntu or Bottlerocket has not joined the cluster yet.
+To see the Hegel logs, get the internal IP address for one of the new nodes. Then check for the names of Hegel logs and display the contents of one of those logs, searching for the IP address of the node:
 
 ```bash
 kubectl get nodes -o wide
@@ -300,7 +300,7 @@ After the first machine successfully completes the workflow, each other machine 
 
 ### Tinkerbell moves to target cluster
 
-Once the initial set of machines is up and the EKS Anywhere cluster is running, all the Tinkerbell services and components (including boots) are moved to the new target cluster and run as pods on that cluster.
+Once the initial set of machines is up and the EKS Anywhere cluster is running, all the Tinkerbell services and components (including Boots) are moved to the new target cluster and run as pods on that cluster.
 Those services are deleted on the kind cluster on the Admin machine.
 
 ### Reviewing the status
