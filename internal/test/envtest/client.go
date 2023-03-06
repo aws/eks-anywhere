@@ -36,6 +36,7 @@ func CreateObjs(ctx context.Context, t testing.TB, c client.Client, objs ...clie
 	}
 
 	newStatuses := []updatedStatus{}
+	noStatusObjs := []client.Object{}
 
 	for _, o := range objs {
 		newStatus := updateStatus(ctx, t, c, o)
@@ -44,8 +45,17 @@ func CreateObjs(ctx context.Context, t testing.TB, c client.Client, objs ...clie
 				obj:       o,
 				newStatus: newStatus,
 			})
+		} else {
+			noStatusObjs = append(noStatusObjs, o)
 		}
 	}
+
+	// If the status doesn't need to be updated, just wait for the object to
+	// to be available.
+	for _, o := range noStatusObjs {
+		waitForObjectAvailable(ctx, t, c, o)
+	}
+
 	for _, u := range newStatuses {
 		waitForStatusUpdated(ctx, t, c, u.obj, u.newStatus)
 	}
@@ -80,7 +90,7 @@ func updateStatus(ctx context.Context, t testing.TB, c client.Client, o client.O
 		return nil
 	}
 
-	objReady := waitForObjectReady(ctx, t, c, obj)
+	objReady := waitForObjectAvailable(ctx, t, c, obj)
 
 	// We need to update the status independently, kubernetes doesn't allow to create the main objects and
 	// its subresources all at once
@@ -121,7 +131,7 @@ func waitForStatusUpdated(ctx context.Context, t testing.TB, c client.Client, o 
 	}, 5*time.Second).Should(gomega.Succeed(), "the status should be updated")
 }
 
-func waitForObjectReady(ctx context.Context, t testing.TB, c client.Client, obj client.Object) *unstructured.Unstructured {
+func waitForObjectAvailable(ctx context.Context, t testing.TB, c client.Client, obj client.Object) *unstructured.Unstructured {
 	unstructuredObj := &unstructured.Unstructured{}
 	for {
 		unstructuredObj.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
