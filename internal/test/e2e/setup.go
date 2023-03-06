@@ -143,7 +143,17 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupNTPEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupPackagesEnv(regex)
+	if err != nil {
+		return err
+	}
+
+	err = e.setupCertManagerEnv(regex)
 	if err != nil {
 		return err
 	}
@@ -172,7 +182,7 @@ func (e *E2ESession) updateFSInotifyResources() error {
 	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("updating fs inotify resources: %v", err)
 	}
-	e.logger.V(1).Info("Successfully updates the fs inotify user watches and instances")
+	e.logger.V(1).Info("Successfully updated the fs inotify user watches and instances")
 
 	return nil
 }

@@ -7,11 +7,13 @@ package e2e
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/test/framework"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // AWS IAM Auth
@@ -546,11 +548,11 @@ func TestTinkerbellKubernetes124OIDC(t *testing.T) {
 }
 
 // Registry mirror
-func TestTinkerbellKubernetes122UbuntuRegistryMirror(t *testing.T) {
+func TestTinkerbellKubernetes125UbuntuRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
@@ -558,11 +560,11 @@ func TestTinkerbellKubernetes122UbuntuRegistryMirror(t *testing.T) {
 	runTinkerbellRegistryMirrorFlow(test)
 }
 
-func TestTinkerbellKubernetes122BottlerocketRegistryMirror(t *testing.T) {
+func TestTinkerbellKubernetes125BottlerocketRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
@@ -570,50 +572,26 @@ func TestTinkerbellKubernetes122BottlerocketRegistryMirror(t *testing.T) {
 	runTinkerbellRegistryMirrorFlow(test)
 }
 
-func TestTinkerbellKubernetes123UbuntuRegistryMirror(t *testing.T) {
+func TestTinkerbellKubernetes125UbuntuAuthenticatedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
+		framework.WithAuthenticatedRegistryMirror(constants.TinkerbellProviderName),
 	)
 	runTinkerbellRegistryMirrorFlow(test)
 }
 
-func TestTinkerbellKubernetes123BottlerocketRegistryMirror(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
-	)
-	runTinkerbellRegistryMirrorFlow(test)
-}
-
-func TestTinkerbellKubernetes124UbuntuRegistryMirror(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu124Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
-	)
-	runTinkerbellRegistryMirrorFlow(test)
-}
-
-func TestTinkerbellKubernetes124BottlerocketRegistryMirror(t *testing.T) {
+func TestTinkerbellKubernetes125BottlerocketAuthenticatedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
-		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
+		framework.WithAuthenticatedRegistryMirror(constants.TinkerbellProviderName),
 	)
 	runTinkerbellRegistryMirrorFlow(test)
 }
@@ -1299,4 +1277,29 @@ func TestTinkerbellKubernetes124UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
+}
+
+func TestTinkerbellAirgappedKubernetes124BottleRocketRegistryMirror(t *testing.T) {
+	localIp, err := networkutils.GetLocalIP()
+	if err != nil {
+		t.Fatalf("Cannot get admin machine local IP: %v", err)
+	}
+	t.Logf("Admin machine's IP is: %s", localIp)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t,
+			framework.WithBottleRocketTinkerbell(),
+			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
+			framework.WithOSImageURL("http://"+localIp.String()+":8080/"+bottlerocketOSFileName),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
+	)
+
+	runTinkerbellAirgapConfigFlow(test, "10.80.0.0/16")
 }

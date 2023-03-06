@@ -17,6 +17,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
@@ -24,18 +26,20 @@ import (
 // EKSAInstaller allows to install eks-a components in a cluster.
 type EKSAInstaller struct {
 	client KubernetesClient
+	reader manifests.FileReader
 }
 
 // NewEKSAInstaller constructs a new EKSAInstaller.
-func NewEKSAInstaller(client KubernetesClient) *EKSAInstaller {
+func NewEKSAInstaller(client KubernetesClient, reader manifests.FileReader) *EKSAInstaller {
 	return &EKSAInstaller{
 		client: client,
+		reader: reader,
 	}
 }
 
 // Install configures and applies eks-a components in a cluster accordingly to a spec.
 func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error {
-	generator := EKSAComponentGenerator{log: log}
+	generator := EKSAComponentGenerator{log: log, reader: i.reader}
 	components, err := generator.buildEKSAComponentsSpec(spec)
 	if err != nil {
 		return err
@@ -85,7 +89,8 @@ func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, cluster *t
 
 // EKSAComponentGenerator generates and configures eks-a components.
 type EKSAComponentGenerator struct {
-	log logr.Logger
+	log    logr.Logger
+	reader manifests.FileReader
 }
 
 func (g *EKSAComponentGenerator) buildEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {
@@ -155,8 +160,7 @@ func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {
-	// TODO(g-gaston): this load operation shouldn't be done by the cluster spec, we should have a "reader" here
-	componentsManifest, err := spec.LoadManifest(spec.VersionsBundle.Eksa.Components)
+	componentsManifest, err := bundles.ReadManifest(g.reader, spec.VersionsBundle.Eksa.Components)
 	if err != nil {
 		return nil, fmt.Errorf("loading manifest for eksa components: %v", err)
 	}

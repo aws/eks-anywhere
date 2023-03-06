@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"path"
 	"testing"
 	"time"
 
@@ -28,6 +29,8 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const testdataDir = "testdata"
+
 type dockerTest struct {
 	*WithT
 	dockerClient *dockerMocks.MockProviderClient
@@ -45,6 +48,10 @@ func newTest(t *testing.T) *dockerTest {
 		kubectl:      kubectl,
 		provider:     docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow),
 	}
+}
+
+func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
+	return test.NewFullClusterSpec(t, path.Join(testdataDir, fileName))
 }
 
 func TestProviderUpdateKubeConfig(t *testing.T) {
@@ -817,4 +824,78 @@ func TestInvalidDockerTemplateWithControlplaneEndpoint(t *testing.T) {
 	if err == nil || err.Error() != wantErr.Error() {
 		t.Fatalf("err %v, wantErr %v", err, wantErr)
 	}
+}
+
+func TestDockerGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	provider := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+	clusterObj := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, "cluster_mirror_config.yaml")
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), clusterObj, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_md.yaml")
+}
+
+func TestDockerGenerateDeploymentFileWithMirrorAndCertConfig(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	provider := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+	clusterObj := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, "cluster_mirror_with_cert_config.yaml")
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), clusterObj, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	fmt.Println("CP template starts")
+	fmt.Println(string(cp))
+	fmt.Println("CP template ends")
+	fmt.Println("MD template starts")
+	fmt.Println(string(md))
+	fmt.Println("MDtemplate ends")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_with_cert_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_with_cert_config_md.yaml")
+}
+
+func TestDockerGenerateDeploymentFileWithMirrorAndAuthConfig(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+	ctx := context.Background()
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	provider := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+	clusterObj := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, "cluster_mirror_with_auth_config.yaml")
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), clusterObj, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_with_auth_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_with_auth_config_md.yaml")
 }

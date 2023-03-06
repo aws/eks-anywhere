@@ -3,10 +3,12 @@ package files
 import (
 	"embed"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+	"time"
 )
 
 const (
@@ -42,10 +44,15 @@ func WithEKSAUserAgent(eksAComponent, version string) ReaderOpt {
 }
 
 func NewReader(opts ...ReaderOpt) *Reader {
+	transport := &http.Transport{
+		TLSHandshakeTimeout: 60 * time.Second,
+	}
 	r := &Reader{
-		embedFS:    embed.FS{},
-		httpClient: &http.Client{},
-		userAgent:  eksaUserAgent("unknown", "no-version"),
+		embedFS: embedFS,
+		httpClient: &http.Client{
+			Transport: transport,
+		},
+		userAgent: eksaUserAgent("unknown", "no-version"),
 	}
 
 	for _, o := range opts {
@@ -84,7 +91,7 @@ func (r *Reader) readHttpFile(uri string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading file from url [%s]: %v", uri, err)
 	}
@@ -102,7 +109,7 @@ func (r *Reader) readEmbedFile(url *url.URL) ([]byte, error) {
 }
 
 func readLocalFile(filename string) ([]byte, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading local file [%s]: %v", filename, err)
 	}

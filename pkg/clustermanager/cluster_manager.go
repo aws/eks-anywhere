@@ -303,10 +303,8 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 
 	// Use a buffer to cache the kubeconfig.
 	var buf bytes.Buffer
-	err := c.Retrier.Retry(func() error {
-		return c.getWorkloadClusterKubeconfig(ctx, clusterName, managementCluster, &buf)
-	})
-	if err != nil {
+
+	if err := c.getWorkloadClusterKubeconfig(ctx, clusterName, managementCluster, &buf); err != nil {
 		return nil, fmt.Errorf("waiting for workload kubeconfig: %v", err)
 	}
 

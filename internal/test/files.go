@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -61,7 +60,7 @@ func contentEqualToFile(gotContent []byte, wantFile string) (bool, error) {
 		return false, nil
 	}
 
-	fileContent, err := ioutil.ReadFile(wantFile)
+	fileContent, err := os.ReadFile(wantFile)
 	if err != nil {
 		return false, err
 	}
@@ -85,7 +84,7 @@ func computeDiffBetweenContentAndFile(content []byte, file string) (string, erro
 
 func processUpdate(t *testing.T, filePath, content string) {
 	if *UpdateGoldenFiles {
-		if err := ioutil.WriteFile(filePath, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(filePath, []byte(content), 0o644); err != nil {
 			t.Fatalf("failed to update golden file %s: %v", filePath, err)
 		}
 		log.Printf("Golden file updated: %s", filePath)
@@ -93,7 +92,7 @@ func processUpdate(t *testing.T, filePath, content string) {
 }
 
 func ReadFileAsBytes(t *testing.T, file string) []byte {
-	bytesRead, err := ioutil.ReadFile(file)
+	bytesRead, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatalf("File [%s] reading error in test: %v", file, err)
 	}
@@ -106,7 +105,7 @@ func ReadFile(t *testing.T, file string) string {
 }
 
 func NewWriter(t *testing.T) (dir string, writer filewriter.FileWriter) {
-	dir, err := ioutil.TempDir(".", SanitizePath(t.Name())+"-")
+	dir, err := os.MkdirTemp(".", SanitizePath(t.Name())+"-")
 	if err != nil {
 		t.Fatalf("error setting up folder for test: %v", err)
 	}

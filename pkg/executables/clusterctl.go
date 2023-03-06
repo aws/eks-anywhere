@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"path"
@@ -16,6 +15,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -41,6 +42,7 @@ var clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the
 type Clusterctl struct {
 	Executable
 	writer filewriter.FileWriter
+	reader manifests.FileReader
 }
 
 type clusterctlConfiguration struct {
@@ -52,10 +54,12 @@ type clusterctlConfiguration struct {
 	etcdadmControllerVersion string
 }
 
-func NewClusterctl(executable Executable, writer filewriter.FileWriter) *Clusterctl {
+// NewClusterctl builds a new [Clusterctl].
+func NewClusterctl(executable Executable, writer filewriter.FileWriter, reader manifests.FileReader) *Clusterctl {
 	return &Clusterctl{
 		Executable: executable,
 		writer:     writer,
+		reader:     reader,
 	}
 }
 
@@ -66,7 +70,7 @@ func imageRepository(image v1alpha1.Image) string {
 // This method will write the configuration files
 // used by cluster api to install components.
 // See: https://cluster-api.sigs.k8s.io/clusterctl/configuration.html
-func buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider providers.Provider) error {
+func (c *Clusterctl) buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider providers.Provider) error {
 	bundle := clusterSpec.VersionsBundle
 
 	// Adding cluster name to path temporarily following suggestion.
@@ -124,7 +128,7 @@ func buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider
 
 	infraBundles = append(infraBundles, *provider.GetInfrastructureBundle(clusterSpec))
 	for _, infraBundle := range infraBundles {
-		if err := writeInfrastructureBundle(clusterSpec, prefix, &infraBundle); err != nil {
+		if err := c.writeInfrastructureBundle(clusterSpec, prefix, &infraBundle); err != nil {
 			return err
 		}
 	}
@@ -132,7 +136,7 @@ func buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider
 	return nil
 }
 
-func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bundle *types.InfrastructureBundle) error {
+func (c *Clusterctl) writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bundle *types.InfrastructureBundle) error {
 	if bundle == nil {
 		return nil
 	}
@@ -142,12 +146,12 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 		return err
 	}
 	for _, manifest := range bundle.Manifests {
-		m, err := clusterSpec.LoadManifest(manifest)
+		m, err := bundles.ReadManifest(c.reader, manifest)
 		if err != nil {
 			return fmt.Errorf("can't load infrastructure bundle for manifest %s: %v", manifest.URI, err)
 		}
 
-		if err := ioutil.WriteFile(filepath.Join(infraFolder, m.Filename), m.Content, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(infraFolder, m.Filename), m.Content, 0o644); err != nil {
 			return fmt.Errorf("generating file for infrastructure bundle %s: %v", m.Filename, err)
 		}
 	}
@@ -319,7 +323,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 	if err != nil {
 		return nil, fmt.Errorf("generating configuration file for clusterctl: %v", err)
 	}
-	if err := buildOverridesLayer(clusterSpec, clusterName, provider); err != nil {
+	if err := c.buildOverridesLayer(clusterSpec, clusterName, provider); err != nil {
 		return nil, err
 	}
 

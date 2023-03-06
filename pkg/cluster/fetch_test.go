@@ -17,6 +17,91 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+func TestBuildSpecForCluster(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	oidcConfig := &anywherev1.OIDCConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "myconfig",
+		},
+	}
+	awsIamConfig := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "myconfig",
+		},
+	}
+	fluxConfig := &anywherev1.FluxConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "myconfig",
+		},
+	}
+	config := &cluster.Config{
+		Cluster: &anywherev1.Cluster{
+			Spec: anywherev1.ClusterSpec{
+				KubernetesVersion: anywherev1.Kube124,
+				IdentityProviderRefs: []anywherev1.Ref{
+					{
+						Kind: anywherev1.OIDCConfigKind,
+						Name: "myconfig",
+					},
+					{
+						Kind: anywherev1.AWSIamConfigKind,
+						Name: "myconfig",
+					},
+				},
+				GitOpsRef: &anywherev1.Ref{
+					Kind: anywherev1.FluxConfigKind,
+					Name: "myconfig",
+				},
+			},
+		},
+		OIDCConfigs: map[string]*anywherev1.OIDCConfig{
+			"myconfig": oidcConfig,
+		},
+		AWSIAMConfigs: map[string]*anywherev1.AWSIamConfig{
+			"myconfig": awsIamConfig,
+		},
+		FluxConfig: fluxConfig,
+	}
+	bundles := &releasev1.Bundles{
+		Spec: releasev1.BundlesSpec{
+			Number: 2,
+			VersionsBundles: []releasev1.VersionsBundle{
+				{
+					KubeVersion: "1.24",
+				},
+			},
+		},
+	}
+	eksdRelease := readEksdRelease(t, "testdata/eksd_valid.yaml")
+
+	bundlesFetch := func(_ context.Context, _, _ string) (*releasev1.Bundles, error) {
+		return bundles, nil
+	}
+	eksdFetch := func(_ context.Context, _, _ string) (*eksdv1.Release, error) {
+		return eksdRelease, nil
+	}
+	gitOpsFetch := func(_ context.Context, name, namespace string) (*anywherev1.GitOpsConfig, error) {
+		return nil, nil
+	}
+	fluxConfigFetch := func(_ context.Context, _, _ string) (*anywherev1.FluxConfig, error) {
+		return fluxConfig, nil
+	}
+	oidcFetch := func(_ context.Context, _, _ string) (*anywherev1.OIDCConfig, error) {
+		return oidcConfig, nil
+	}
+	awsIamConfigFetch := func(_ context.Context, _, _ string) (*anywherev1.AWSIamConfig, error) {
+		return awsIamConfig, nil
+	}
+
+	spec, err := cluster.BuildSpecForCluster(ctx, config.Cluster, bundlesFetch, eksdFetch, gitOpsFetch, fluxConfigFetch, oidcFetch, awsIamConfigFetch)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(spec.Config).To(Equal(config))
+	g.Expect(spec.OIDCConfig).To(Equal(oidcConfig))
+	g.Expect(spec.AWSIamConfig).To(Equal(awsIamConfig))
+	g.Expect(spec.Bundles).To(Equal(bundles))
+}
+
 func TestGetBundlesForCluster(t *testing.T) {
 	testCases := []struct {
 		testName                string

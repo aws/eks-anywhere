@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 

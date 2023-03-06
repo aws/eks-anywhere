@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,10 +41,6 @@ const (
 )
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -73,7 +70,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
@@ -85,7 +82,7 @@ func TestReconcilerValidateDatacenterConfigSuccess(t *testing.T) {
 func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Spec.ManagementCluster.Name = "nonexistent-management-cluster"
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
@@ -98,7 +95,7 @@ func TestReconcilerValidateDatacenterConfigMissingManagementCluster(t *testing.T
 func TestReconcilerValidateDatacenterConfigMissingManagementDatacenter(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.managementCluster.Spec.DatacenterRef.Name = "nonexistent-datacenter"
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
@@ -116,7 +113,7 @@ func TestReconcilerValidateDatacenterConfigIpMismatch(t *testing.T) {
 	})
 	tt.managementCluster.Spec.DatacenterRef.Name = managementDatacenterConfig.Name
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, managementDatacenterConfig)
-	tt.createAllObjs()
+	tt.withFakeClient()
 
 	result, err := tt.reconciler().ValidateDatacenterConfig(tt.ctx, test.NewNullLogger(), tt.buildScope())
 
@@ -237,10 +234,6 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	t.Setenv("REGISTRY_USERNAME", "username")
 	t.Setenv("REGISTRY_PASSWORD", "password")
 	tt := newReconcilerTest(t)
@@ -283,10 +276,6 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	scope := tt.buildScope()
@@ -339,11 +328,6 @@ func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
@@ -443,11 +427,6 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -497,11 +476,6 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
@@ -567,7 +541,62 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("no available hardware"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+}
+
+func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+
+	tt.cluster.Name = "invalidCluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:   rufiov1alpha1.Contactable,
+					Status: rufiov1alpha1.ConditionTrue,
+				},
+			},
+		},
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc2",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:    rufiov1alpha1.Contactable,
+					Status:  rufiov1alpha1.ConditionFalse,
+					Message: "bmc connection failure",
+				},
+			},
+		},
+	})
+
+	tt.withFakeClient()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("bmc connection failure"))
 }
 
 func TestReconcilerGenerateSpec(t *testing.T) {

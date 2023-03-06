@@ -16,6 +16,8 @@ import (
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
@@ -26,6 +28,9 @@ import (
 )
 
 const valueFileName = "values.yaml"
+
+//go:embed testdata/expected_all_values.yaml
+var expectedAllValues string
 
 type packageControllerTest struct {
 	*WithT
@@ -89,6 +94,13 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 		InsecureSkipVerify: true,
 	}
 	writer, _ := filewriter.NewWriter(clusterName)
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{},
+			},
+		},
+	}
 	return []*packageControllerTest{
 		{
 			WithT:          NewWithT(t),
@@ -102,6 +114,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
+				curatedpackages.WithClusterSpec(clusterSpec),
 			),
 			clusterName:    clusterName,
 			kubeConfig:     kubeConfig,
@@ -263,7 +276,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -307,7 +320,7 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		values = append(values, "workloadOnly=true")
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -377,7 +390,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -428,7 +441,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -462,7 +475,7 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(errors.New("login failed"))
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(errors.New("login failed"))
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -492,7 +505,7 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCFail(t)).
@@ -522,7 +535,7 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -595,7 +608,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -629,7 +642,7 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCLoops(t, 3)).
@@ -694,7 +707,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCDelay(t, time.Second)).
@@ -740,7 +753,7 @@ func TestEnableCuratedPackagesActiveBundleNamespaceTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "", valueFilePath, values).Return(nil)
+		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, "eksa-packages", valueFilePath, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -838,4 +851,114 @@ func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
 		tt.Expect(content).NotTo(BeNil())
 		tt.Expect(err).NotTo(BeNil())
 	}
+}
+
+func TestGetPackageControllerConfigurationNil(t *testing.T) {
+	g := NewWithT(t)
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil)
+	result, err := sut.GetPackageControllerConfiguration()
+	g.Expect(result).To(Equal(""))
+	g.Expect(err).To(BeNil())
+}
+
+func TestGetPackageControllerConfigurationAll(t *testing.T) {
+	clusterSpec := v1alpha1.ClusterSpec{
+		Packages: &v1alpha1.PackageConfiguration{
+			Disable: false,
+			Controller: &v1alpha1.PackageControllerConfiguration{
+				Repository:      "my-repo",
+				Digest:          "my-digest",
+				DisableWebhooks: true,
+				Tag:             "my-tag",
+				Env:             []string{"A=B"},
+				Resources: v1alpha1.PackageControllerResources{
+					Limits: v1alpha1.ImageResource{
+						CPU:    "my-cpu",
+						Memory: "my-memory",
+					},
+					Requests: v1alpha1.ImageResource{
+						CPU:    "my-requests-cpu",
+						Memory: "my-requests-memory",
+					},
+				},
+			},
+			CronJob: &v1alpha1.PackageControllerCronJob{
+				Repository: "my-cronjob-repo",
+				Digest:     "my-cronjob-digest",
+				Tag:        "my-cronjob-tag",
+				Disable:    true,
+			},
+		},
+	}
+	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
+	g := NewWithT(t)
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
+	result, err := sut.GetPackageControllerConfiguration()
+	g.Expect(result).To(Equal(expectedAllValues))
+	g.Expect(err).To(BeNil())
+}
+
+func TestGetPackageControllerConfigurationNothing(t *testing.T) {
+	clusterSpec := v1alpha1.ClusterSpec{
+		Packages: &v1alpha1.PackageConfiguration{
+			Disable: true,
+		},
+	}
+	g := NewWithT(t)
+	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
+	result, err := sut.GetPackageControllerConfiguration()
+	g.Expect(result).To(Equal(""))
+	g.Expect(err).To(BeNil())
+}
+
+func TestGetCuratedPackagesRegistriesDefaultRegion(t *testing.T) {
+	clusterSpec := v1alpha1.ClusterSpec{
+		Packages: &v1alpha1.PackageConfiguration{
+			Disable: true,
+		},
+	}
+	chart := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
+	}
+	g := NewWithT(t)
+	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster))
+	_, _, img := sut.GetCuratedPackagesRegistries()
+	g.Expect(img).To(Equal("783794618700.dkr.ecr.us-west-2.amazonaws.com"))
+}
+
+func TestGetCuratedPackagesRegistriesCustomRegion(t *testing.T) {
+	clusterSpec := v1alpha1.ClusterSpec{
+		Packages: &v1alpha1.PackageConfiguration{
+			Disable: true,
+		},
+	}
+	chart := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
+	}
+	g := NewWithT(t)
+	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster), curatedpackages.WithEksaRegion("test"))
+	_, _, img := sut.GetCuratedPackagesRegistries()
+	g.Expect(img).To(Equal("783794618700.dkr.ecr.test.amazonaws.com"))
+}
+
+func TestGetPackageControllerConfigurationError(t *testing.T) {
+	clusterSpec := v1alpha1.ClusterSpec{
+		Packages: &v1alpha1.PackageConfiguration{
+			Disable: false,
+			Controller: &v1alpha1.PackageControllerConfiguration{
+				Env: []string{"AB"},
+			},
+		},
+	}
+	g := NewWithT(t)
+	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
+	_, err := sut.GetPackageControllerConfiguration()
+	g.Expect(err).NotTo(BeNil())
+	g.Expect(err.Error()).To(Equal("invalid environment in specification <AB>"))
 }

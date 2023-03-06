@@ -59,12 +59,14 @@ Use the following to access the SSH service on the worker nodes:
 On the Admin machine for a Bare Metal provider, the following ports need to be accessible to all the nodes in the cluster, from the same level 2 network, for initially PXE booting:
 
 | Protocol | Direction | Port Range | Purpose                 | Used By                       |
-|----------|-----------|------------|-------------------------|-------------------------------|
-| TCP      | Inbound   | 67         | boots DHCP              | All nodes, for network boot   |
-| TCP      | Inbound   | 69         | boots TFTP              | All nodes, for network boot   |
-| TCP      | Inbound   | 80         | boots HTTP              | All nodes, for network boot   |
-| TCP      | Inbound   | 42113      | tink-server gRCP        | All nodes, talk to Tinkerbell |
-| TCP      | Inbound   | 50061      | hegl HTTP               | All nodes, talk to Tinkerbell |
+|----------|-----------|------------|-------------------------|------------------------------ |
+| UDP      | Inbound   | 67         | Boots DHCP              | All nodes, for network boot   |
+| UDP      | Inbound   | 69         | Boots TFTP              | All nodes, for network boot   |
+| TCP      | Inbound   | 80         | Boots HTTP              | All nodes, for network boot   |
+| TCP      | Inbound   | 42113      | Tink-server gRPC        | All nodes, talk to Tinkerbell |
+| TCP      | Inbound   | 50061      | Hegel HTTP              | All nodes, talk to Tinkerbell |
+| TCP      | Outbound  | 623        | Rufio IPMI              | All nodes, out-of-band power and next boot ([optional]({{< relref "baremetal/bare-prereq/#network-requirements" >}})) |
+| TCP      | Outbound  | 80,443     | Rufio Redfish           | All nodes, out-of-band power and next boot ([optional]({{< relref "baremetal/bare-prereq/#network-requirements" >}})) |
 
 ## VMware provider
 

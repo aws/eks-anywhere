@@ -7,11 +7,13 @@ package e2e
 import (
 	"testing"
 
-	"github.com/aws/eks-anywhere/internal/pkg/api"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/test/framework"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/test/framework"
 )
 
 // Labels
@@ -334,6 +336,29 @@ func TestDockerKubernetes125OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 	)
 	runOIDCFlow(test)
+}
+
+// RegistryMirror
+func TestDockerKubernetes125RegistryMirrorAndCert(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithRegistryMirrorEndpointAndCert(constants.DockerProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
+func TestDockerKubernetes125AirgappedRegistryMirrorAndCert(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithRegistryMirrorEndpointAndCert(constants.DockerProviderName),
+	)
+	runDockerAirgapConfigFlow(test)
 }
 
 // Simple flow

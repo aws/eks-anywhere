@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -200,6 +200,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validatePodIAMConfig,
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
+	validatePackageControllerConfiguration,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -260,7 +261,7 @@ func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 // ParseClusterConfig unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml file in disk. It doesn't set defaults nor validates the object.
 func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
@@ -831,5 +832,19 @@ func validateMDUpgradeRolloutStrategy(w *WorkerNodeGroupConfiguration) error {
 		return fmt.Errorf("WorkerNodeGroupConfiguration: maxSurge and maxUnavailable not specified or are 0. maxSurge and maxUnavailable cannot both be 0")
 	}
 
+	return nil
+}
+
+func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
+	if clusterConfig.IsManaged() {
+		if clusterConfig.Spec.Packages != nil {
+			if clusterConfig.Spec.Packages.Controller != nil {
+				return fmt.Errorf("packages: controller should not be specified for a workload cluster")
+			}
+			if clusterConfig.Spec.Packages.CronJob != nil {
+				return fmt.Errorf("packages: cronjob should not be specified for a workload cluster")
+			}
+		}
+	}
 	return nil
 }

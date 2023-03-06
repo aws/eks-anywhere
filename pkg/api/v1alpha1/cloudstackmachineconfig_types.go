@@ -203,7 +203,7 @@ func (c *CloudStackMachineConfig) GetName() string {
 }
 
 func (c *CloudStackMachineConfig) Validate() error {
-	return nil
+	return validateCloudStackMachineConfig(c)
 }
 
 // CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig.

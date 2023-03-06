@@ -54,6 +54,13 @@ func WithTinkerbellOSImageURL(value string) TinkerbellFiller {
 	}
 }
 
+// WithHookImagesURLPath modify HookImagesURL, it's useful for airgapped testing.
+func WithHookImagesURLPath(value string) TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		config.datacenterConfig.Spec.HookImagesURLPath = value
+	}
+}
+
 func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFiller) TinkerbellFiller {
 	return opt(os.Getenv(envVar))
 }

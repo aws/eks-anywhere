@@ -51,7 +51,7 @@ func TestInstallerInstallSuccess(t *testing.T) {
 
 func TestInstallForSpecInstallSuccess(t *testing.T) {
 	tt := newKindnetdTest(t)
-	installerForSpec := kindnetd.NewInstallerForSpec(tt.client, tt.spec)
+	installerForSpec := kindnetd.NewInstallerForSpec(tt.client, tt.reader, tt.spec)
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(
 		tt.ctx,
 		tt.cluster,

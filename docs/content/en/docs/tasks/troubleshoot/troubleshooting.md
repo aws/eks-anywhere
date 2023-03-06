@@ -226,10 +226,10 @@ CONTAINER=public.ecr.aws/eks-anywhere/cli-tools:v0.12.0-eks-a-19
 rm -rf ${DIRECTORY}
 mkdir ${DIRECTORY}
 
-docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} backup \
+docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} move \
         --namespace eksa-system \
         --kubeconfig $KINDKUBE \
-        --directory ${DIRECTORY}
+        --to-directory ${DIRECTORY}
 
 #After the backup, move the management cluster back
 docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} move \

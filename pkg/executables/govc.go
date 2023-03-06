@@ -37,6 +37,8 @@ const (
 	vSphereServerKey     = "VSPHERE_SERVER"
 	byteToGiB            = 1073741824.0
 	DeployOptsFile       = "deploy-opts.json"
+	disk1                = "Hard disk 1"
+	disk2                = "Hard disk 2"
 )
 
 var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure, govcDatacenterKey}
@@ -271,6 +273,28 @@ func (g *Govc) GetVMDiskSizeInGB(ctx context.Context, vm, datacenter string) (in
 	}
 
 	return int(devicesInfo[0].CapacityInKB / 1024 / 1024), nil
+}
+
+// GetHardDiskSize returns the size of all the hard disks for given VM.
+func (g *Govc) GetHardDiskSize(ctx context.Context, vm, datacenter string) (map[string]float64, error) {
+	devicesInfo, err := g.DevicesInfo(ctx, datacenter, vm, "disk-*")
+	if err != nil {
+		return nil, fmt.Errorf("getting hard disk sizes for vm %s: %v", vm, err)
+	}
+
+	if len(devicesInfo) == 0 {
+		return nil, fmt.Errorf("no hard disks found for vm %s", vm)
+	}
+
+	hardDiskMap := make(map[string]float64)
+	for _, deviceInfo := range devicesInfo {
+		if strings.EqualFold(deviceInfo.DeviceInfo.Label, disk1) {
+			hardDiskMap[disk1] = deviceInfo.CapacityInKB
+		} else if strings.EqualFold(deviceInfo.DeviceInfo.Label, disk2) {
+			hardDiskMap[disk2] = deviceInfo.CapacityInKB
+		}
+	}
+	return hardDiskMap, nil
 }
 
 func (g *Govc) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {

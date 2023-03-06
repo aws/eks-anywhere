@@ -352,6 +352,23 @@ func WithDiskGiBForAllMachines(value int) VSphereOpt {
 	}
 }
 
+// WithNTPServersForAllMachines sets NTP servers for all the machines.
+func WithNTPServersForAllMachines() VSphereOpt {
+	return func(v *VSphere) {
+		checkRequiredEnvVars(v.t, RequiredNTPServersEnvVars())
+		v.fillers = append(v.fillers,
+			api.WithNTPServersForAllMachines(GetNTPServersFromEnv()),
+		)
+	}
+}
+
+// WithSSHAuthorizedKeyForAllMachines sets SSH authorized keys for all the machines.
+func WithSSHAuthorizedKeyForAllMachines(sshKey string) VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers, api.WithSSHAuthorizedKeyForAllMachines(sshKey))
+	}
+}
+
 // WithVSphereTags with vsphere tags option.
 func WithVSphereTags() VSphereOpt {
 	return func(v *VSphere) {

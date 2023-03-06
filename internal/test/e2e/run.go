@@ -158,6 +158,7 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 	if err != nil {
 		return "", nil, err
 	}
+	conf.logger.V(1).Info("TestRunner instance has been created", "instanceId", instanceId)
 
 	defer func() {
 		err := testRunner.decommInstance(conf)
@@ -321,16 +322,22 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	}
 
 	if strings.EqualFold(conf.BranchName, conf.BaremetalBranchName) {
-		runConfs, err = splitTinkerbellTests(awsSession, testsList, conf, testRunnerConfig, runConfs)
+		runConfs, err = appendNonAirgappedTinkerbellRunConfs(awsSession, testsList, conf, testRunnerConfig, runConfs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to split Tinkerbell tests: %v", err)
+		}
+
+		runConfs, err = appendAirgappedTinkerbellRunConfs(awsSession, testsList, conf, testRunnerConfig, runConfs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to run airgapped Tinkerbell tests: %v", err)
 		}
 	}
 
 	return runConfs, nil
 }
 
-func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf) ([]instanceRunConf, error) {
+//nolint:gocyclo // This legacy function is complex but the team too busy to simplify it
+func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf) ([]instanceRunConf, error) {
 	err := s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), conf.StorageBucket, e2eHardwareCsvFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
@@ -341,8 +348,8 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
 	}
 
-	maxHardwarePerE2ETest := TinkerbellDefaultMaxHardwarePerE2ETest
-	maxHardwareEnvValue := os.Getenv(MaxHardwarePerE2ETestEnvVar)
+	maxHardwarePerE2ETest := tinkerbellDefaultMaxHardwarePerE2ETest
+	maxHardwareEnvValue := os.Getenv(maxHardwarePerE2ETestEnvVar)
 	if len(maxHardwareEnvValue) > 0 {
 		maxHardwarePerE2ETest, err = strconv.Atoi(maxHardwareEnvValue)
 		if err != nil {
@@ -352,7 +359,7 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 
 	conf.Logger.V(1).Info("INFO:", "totalHardware", len(hardware))
 
-	tinkerbellTests := getTinkerbellTests(testsList)
+	tinkerbellTests := getTinkerbellNonAirgappedTests(testsList)
 	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(tinkerbellTests))
 
 	tinkTestInstances := len(hardware) / maxHardwarePerE2ETest
@@ -407,6 +414,34 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 			testsInVSphereInstance = make([]string, 0, tinkTestsPerInstance)
 		}
 	}
+
+	return runConfs, nil
+}
+
+func appendAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf) ([]instanceRunConf, error) {
+	tinkerbellTests := getTinkerbellAirgappedTests(testsList)
+	if len(tinkerbellTests) == 0 {
+		conf.Logger.V(1).Info("No tinkerbell airgapped test to run")
+		return runConfs, nil
+	}
+
+	conf.Logger.V(1).Info("INFO:", "tinkerbellAirGappedTests", len(tinkerbellTests))
+
+	err := s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellAirgappedHardwareS3FileKeyEnvVar), conf.StorageBucket, e2eAirgappedHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("downloading tinkerbell airgapped hardware csv: %v", err)
+	}
+
+	hardware, err := api.NewHardwareSliceFromFile(e2eAirgappedHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
+	}
+
+	conf.Logger.V(1).Info("INFO:", "totalAirgappedHardware", len(hardware))
+
+	ipman := newE2EIPManager(conf.Logger, os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
+
+	runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(tinkerbellTests, "|"), ipman.reserveIPPool(2), hardware, VSphereTestRunnerType, testRunnerConfig))
 
 	return runConfs, nil
 }

@@ -1289,7 +1289,7 @@ https://github.com/ProtonMail/go-crypto
 ** github.com/vmware/govmomi/vim25/xml; version v0.29.0 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.19.5 --
+** golang.org/go; version go1.19.6 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.5.0 --
@@ -1298,7 +1298,7 @@ https://go.googlesource.com/crypto
 ** golang.org/x/exp/maps; version v0.0.0-20221011201855-a3968a42eed6 --
 https://go.googlesource.com/exp
 
-** golang.org/x/net; version v0.5.0 --
+** golang.org/x/net; version v0.7.0 --
 https://go.googlesource.com/net
 
 ** golang.org/x/oauth2; version v0.0.0-20220909003341-f21342109be1 --
@@ -1307,13 +1307,13 @@ https://go.googlesource.com/oauth2
 ** golang.org/x/sync; version v0.1.0 --
 https://go.googlesource.com/sync
 
-** golang.org/x/sys; version v0.4.0 --
+** golang.org/x/sys; version v0.5.0 --
 https://go.googlesource.com/sys
 
-** golang.org/x/term; version v0.4.0 --
+** golang.org/x/term; version v0.5.0 --
 https://go.googlesource.com/term
 
-** golang.org/x/text; version v0.6.0 --
+** golang.org/x/text; version v0.7.0 --
 https://go.googlesource.com/text
 
 ** golang.org/x/time/rate; version v0.3.0 --

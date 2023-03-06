@@ -23,7 +23,7 @@ warnings:
 
 // GetDefaultActionsFromBundle constructs a set of default actions for the given osFamily using the
 // bundle as the source of action images.
-func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) []ActionOpt {
+func GetDefaultActionsFromBundle(clusterSpec *Cluster, b v1alpha1.VersionsBundle, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) []ActionOpt {
 	// The metadata string will have two URLs:
 	// 1. one that will be used initially for bootstrap and will point to hegel running on kind.
 	// 2. one that will be used when the workload cluster is up and will point to hegel running on
@@ -33,6 +33,20 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, osImageOverride, tin
 		fmt.Sprintf("http://%s:50061", tinkerbellLBIP),
 	}
 
+	additionalEnvVar := make(map[string]string)
+
+	if clusterSpec.Spec.ProxyConfiguration != nil {
+		proxyConfig := clusterSpec.ProxyConfiguration()
+		additionalEnvVar["HTTP_PROXY"] = proxyConfig["HTTP_PROXY"]
+		additionalEnvVar["HTTPS_PROXY"] = proxyConfig["HTTPS_PROXY"]
+
+		noProxy := fmt.Sprintf("%s,%s", tinkerbellLocalIP, tinkerbellLBIP)
+		if proxyConfig["NO_PROXY"] != "" {
+			noProxy = fmt.Sprintf("%s,%s", proxyConfig["NO_PROXY"], noProxy)
+		}
+
+		additionalEnvVar["NO_PROXY"] = noProxy
+	}
 	// During workflow reconciliation when the Tinkerbell template is rendered, the Workflow
 	// Controller injects a subset of data from the Hardware resource. This lets us use Go template
 	// language to render the disks enabling mix'n'match disk types for templates that represent
@@ -42,7 +56,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, osImageOverride, tin
 	devicePath := "{{ index .Hardware.Disks 0 }}"
 	paritionPathFmt := "{{ formatPartition ( index .Hardware.Disks 0 ) %s }}"
 
-	actions := []ActionOpt{withStreamImageAction(b, devicePath, osImageOverride)}
+	actions := []ActionOpt{withStreamImageAction(b, devicePath, osImageOverride, additionalEnvVar)}
 
 	switch osFamily {
 	case Bottlerocket:
@@ -86,7 +100,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, osImageOverride, tin
 	return actions
 }
 
-func withStreamImageAction(b v1alpha1.VersionsBundle, disk, osImageOverride string) ActionOpt {
+func withStreamImageAction(b v1alpha1.VersionsBundle, disk, osImageOverride string, additionalEnvVar map[string]string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		var imageURL string
 
@@ -97,15 +111,21 @@ func withStreamImageAction(b v1alpha1.VersionsBundle, disk, osImageOverride stri
 			imageURL = b.EksD.Raw.Bottlerocket.URI
 		}
 
+		env := map[string]string{
+			"DEST_DISK":  disk,
+			"IMG_URL":    imageURL,
+			"COMPRESSED": "true",
+		}
+
+		for k, v := range additionalEnvVar {
+			env[k] = v
+		}
+
 		*a = append(*a, tinkerbell.Action{
-			Name:    "stream-image",
-			Image:   b.Tinkerbell.TinkerbellStack.Actions.ImageToDisk.URI,
-			Timeout: 600,
-			Environment: map[string]string{
-				"DEST_DISK":  disk,
-				"IMG_URL":    imageURL,
-				"COMPRESSED": "true",
-			},
+			Name:        "stream-image",
+			Image:       b.Tinkerbell.TinkerbellStack.Actions.ImageToDisk.URI,
+			Timeout:     600,
+			Environment: env,
 		})
 	}
 }

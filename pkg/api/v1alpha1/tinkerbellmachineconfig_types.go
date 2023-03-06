@@ -10,10 +10,11 @@ import (
 
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig.
 type TinkerbellMachineConfigSpec struct {
-	HardwareSelector HardwareSelector    `json:"hardwareSelector"`
-	TemplateRef      Ref                 `json:"templateRef,omitempty"`
-	OSFamily         OSFamily            `json:"osFamily"`
-	Users            []UserConfiguration `json:"users,omitempty"`
+	HardwareSelector    HardwareSelector     `json:"hardwareSelector"`
+	TemplateRef         Ref                  `json:"templateRef,omitempty"`
+	OSFamily            OSFamily             `json:"osFamily"`
+	Users               []UserConfiguration  `json:"users,omitempty"`
+	HostOSConfiguration *HostOSConfiguration `json:"hostOSConfiguration,omitempty"`
 }
 
 // HardwareSelector models a simple key-value selector used in Tinkerbell provisioning.
@@ -131,6 +132,11 @@ func (c *TinkerbellMachineConfig) Marshallable() Marshallable {
 // Validate performs light and fast Tinkerbell machine config validation.
 func (c *TinkerbellMachineConfig) Validate() error {
 	return validateTinkerbellMachineConfig(c)
+}
+
+// SetDefaults sets defaults for Tinkerbell machine config.
+func (c *TinkerbellMachineConfig) SetDefaults() {
+	setTinkerbellMachineConfigDefaults(c)
 }
 
 // +kubebuilder:object:generate=false

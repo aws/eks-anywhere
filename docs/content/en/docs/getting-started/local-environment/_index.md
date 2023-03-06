@@ -88,13 +88,26 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
    export EKSA_AWS_REGION="us-west-2"
    ```
+   **NOTE**: The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. Due to this there might be some warnings in the CLI if proper authentication is not set up.
 
 1. Create Cluster:
 
-     **Note** The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. Due to this there might be some warnings in the CLI if proper authentication is not set up.
+   For a regular cluster create (with internet access), type the following:
+
       ```bash
-      eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
+      eksctl anywhere create cluster \
+         # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+         -f $CLUSTER_NAME.yaml
       ```
+   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+
+      ```bash
+      eksctl anywhere create cluster 
+         # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+         -f $CLUSTER_NAME.yaml \
+         --bundles-override ./eks-anywhere-downloads/bundle-release.yaml
+      ```
+
      Example command output
       ```
       Performing setup and validations
@@ -120,7 +133,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       secret/aws-secret created
       job.batch/eksa-auth-refresher created
       ```
-      **Note** to install curated packages during cluster creation, use `--install-packages packages.yaml` flag  
+      **NOTE**: to install curated packages during cluster creation, use `--install-packages packages.yaml` flag  
    
 1. Use the cluster
 
@@ -157,7 +170,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
 
 ## Create management/workload clusters
-To try the recommended EKS Anywhere [topology]({{< relref "../../concepts/cluster-topologies" >}}), you can create a management cluster and one or more workload clusters on the same Docker provider.
+To try the recommended EKS Anywhere [topology,]({{< relref "../../concepts/cluster-topologies" >}}) you can create a management cluster and one or more workload clusters on the same Docker provider.
 
 ### Prerequisite Checklist
 
@@ -249,13 +262,23 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
    ```
 
-1. Create cluster
+1. Create cluster:
 
-   ```bash
-   eksctl anywhere create cluster \
-      # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
-      -f eksa-mgmt-cluster.yaml
-   ```
+   For a regular cluster create (with internet access), type the following:
+
+      ```bash
+      eksctl anywhere create cluster \ 
+         # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+         -f $CLUSTER_NAME.yaml
+      ```
+   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+
+      ```bash
+      eksctl anywhere create cluster \
+         # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+         -f $CLUSTER_NAME.yaml \
+         --bundles-override ./eks-anywhere-downloads/bundle-release.yaml
+      ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
 
@@ -293,35 +316,30 @@ Follow these steps to have your management cluster create and manage separate wo
    ```
    Refer to the initial config described earlier for the required and optional settings.
 
-   >**NOTE**: Ensure workload cluster object names (`Cluster`, `DockerDatacenterConfig`, `DockerMachineConfig`, etc.) are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
+   >**NOTE**: Ensure workload cluster object names (`Cluster`, `DockerDatacenterConfig`, etc.) are distinct from management cluster object names. Be sure to set the `managementCluster` field to identify the name of the management cluster.
 
 1. Create a workload cluster in one of the following ways:
 
-    * **GitOps**: Recommended for more permanent cluster configurations.
-        1. Clone your git repo and add the new cluster specification. Be sure to follow the directory structure defined on [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}):
+   * **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 
-       ```
-       clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
-       ```
+   * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
+     
+   * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, do one of the following.
+     For a regular cluster create (with internet access), type the following:
 
-        2. Commit the file to your git repository
-           ```bash
-           git add clusters/<management-cluster-name>/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
-           git commit -m 'Creating new workload cluster'
-           git push origin main
-           ```
-
-        3. The flux controller will automatically make the required changes.
-      > **NOTE**: Specify the `namespace` for all EKS Anywhere objects when you are using GitOps to create new workload clusters (even for the `default` namespace, use `namespace: default` on those objects).
-      >
-      > Make sure there is a `kustomization.yaml` file under the namespace directory for the management cluster. Creating a Gitops enabled management cluster with `eksctl` should create the `kustomization.yaml` file automatically.
-
-   See [Manage cluster with GitOps]({{< relref "/docs/tasks/cluster/cluster-flux" >}}) for more details.
-   * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, run:
       ```bash
       eksctl anywhere create cluster \
           -f eksa-w01-cluster.yaml  \
-          # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+         # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+          --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+      ```
+     For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+
+      ```bash
+      eksctl create cluster \
+         # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+         -f $CLUSTER_NAME.yaml \
+         --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \
           --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
       ```
       As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
@@ -337,7 +355,7 @@ Follow these steps to have your management cluster create and manage separate wo
       kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
       ```
 
-   * If your workload cluster was created with GitOps, you can get credentials and run the test application as follows:
+   * If your workload cluster was created with GitOps or Terraform, you can get credentials and run the test application as follows:
       ```bash
       kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath=‘{.data.value}' | base64 —decode > w01.kubeconfig
       export KUBECONFIG=w01.kubeconfig

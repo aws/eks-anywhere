@@ -8,7 +8,7 @@ description: >
 
 EKS Anywhere supports three different node operating systems:
 
-* Bottlerocket: For vSphere, Bare Metal and Snow providers
+* Bottlerocket: For vSphere and Bare Metal providers
 * Ubuntu: For vSphere, Bare Metal, Nutanix, and Snow providers
 * Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, and Bare Metal providers
 
@@ -28,56 +28,64 @@ However, see [Building node images]({{< relref "#building-node-images">}}) for i
 
 ### Bottlerocket OS images for Bare Metal
 
-Bottlerocket vends its Baremetal variant Images using a secure distribution tool called tuftool. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image.
+Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image. You can also get the download URIs for Bottlerocket Baremetal images from the bundle release by running the following command:
+```bash
+curl -s https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/manifest.yaml | yq ".spec.versionsBundles[].eksD.raw.bottlerocket.uri"
+```
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
 ```
 
 ## vSphere artifacts
 
 ### Bottlerocket OVAs
 
-Bottlerocket vends its VMware variant OVAs using a secure distribution tool called tuftool. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket OVA.
+Bottlerocket vends its VMware variant OVAs using a secure distribution tool called `tuftool`. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket OVA. You can also get the download URIs for Bottlerocket OVAs from the bundle release by running the following command:
+```bash
+curl -s https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/manifest.yaml | yq ".spec.versionsBundles[].eksD.ova.bottlerocket.uri"
+```
 
-Bottlerocket Tags
+#### Bottlerocket Template Tags
 
 OS Family - `os:bottlerocket`
 
-EKS-D Release
+EKS Distro Release
 
-1.24 - `eksdRelease:kubernetes-1-24-eks-7`
+1.25 - `eksdRelease:kubernetes-1-25-eks-7`
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-12`
+1.24 - `eksdRelease:kubernetes-1-24-eks-11`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-17`
+1.23 - `eksdRelease:kubernetes-1-23-eks-16`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-24`
+1.22 - `eksdRelease:kubernetes-1-22-eks-21`
+
+1.21 - `eksdRelease:kubernetes-1-21-eks-26`
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
 Building your own Ubuntu-based nodes as described in [Building node images]({{< relref "#building-node-images">}}) is the only supported way to get that functionality.
 
 ## Download Bottlerocket node images
-Bottlerocket vends its VMware variant OVAs and Baremetal variants images using a secure distribution tool called tuftool. Please follow instructions down below to
+Bottlerocket vends its VMware variant OVAs and Baremetal variants images using a secure distribution tool called `tuftool`. Please follow instructions down below to
 download Bottlerocket node images.
 1. Install Rust and Cargo
 ```bash
 curl https://sh.rustup.rs -sSf | sh
 ```
-2. Install tuftool using Cargo
+2. Install `tuftool` using Cargo
 ```bash
 CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 ```
-3. Download the root role that will be used by tuftool to download the Bottlerocket images
+3. Download the root role that will be used by `tuftool` to download the Bottlerocket images
 ```bash
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"
@@ -90,7 +98,7 @@ export KUBEVERSION="1.25"
 
     a. To download VMware variant Bottlerocket OVA
     ```bash
-    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.10.1.ova"
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.12.0.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -100,7 +108,7 @@ export KUBEVERSION="1.25"
 
     b. To download Baremetal variant Bottlerocket image
     ```bash
-    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.10.1.img.lz4"
+    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.12.0.img.lz4"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-metal} --target-name "${IMAGE}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/metal-k8s-${KUBEVERSION}/x86_64/" \
@@ -205,19 +213,21 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```bash
    sudo usermod -aG sudo image-builder
    su image-builder
+   cd /home/$USER
    ```
 1. Install packages and prepare environment:
    ```bash
    sudo apt update -y
    sudo apt install jq unzip make ansible python3-pip -y
    sudo snap install yq
+   mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
    tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    cd -
@@ -266,21 +276,21 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, and 1-24.
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-24 --vsphere-config vsphere-connection.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-25 --vsphere-config vsphere-connection.json
       ```
    * To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, and 1-24.
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
       * `--vsphere-config`: vSphere configuration file (`vsphere-connection.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1-24 --vsphere-config vsphere-connection.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1-25 --vsphere-config vsphere-connection.json
       ```
 ### Build Bare Metal node images
 These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal.
@@ -294,6 +304,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ```bash
    sudo usermod -aG sudo image-builder
    su image-builder
+   cd /home/$USER
    ```
 1. Install packages and prepare environment:
    ```bash
@@ -303,13 +314,16 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
    sudo chown root:kvm /dev/kvm
+   mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
     ```bash
-    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
+    cd /tmp
+    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
       sudo tar -xzC /usr/local/bin ./image-builder
+    cd -
     ```
 
 1. Create an Ubuntu or Red Hat image.
@@ -321,10 +335,10 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `ubuntu`
       * `--hypervisor`: `baremetal`
       * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
-      formatted as "[major]-[minor]"; for example "1-24"
+      formatted as "[major]-[minor]"; for example "1-25"
 
       ```bash
-      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-24
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1-25
       ```
 
    **Red Hat Enterprise Linux (RHEL)**
@@ -349,11 +363,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--hypervisor`: `baremetal`
       * `--release-channel`: A [supported EKS Distro release](https://anywhere.eks.amazonaws.com/docs/reference/support/support-versions/) 
-      formatted as "[major]-[minor]"; for example "1-24"
+      formatted as "[major]-[minor]"; for example "1-25"
       * `--baremetal-config`: Bare metal config file
 
       ```bash
-      image-builder build --os redhat --hypervisor baremetal --release-channel 1-24 --baremetal-config baremetal.json
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1-25 --baremetal-config baremetal.json
       ```
 
 1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "./clusterspec/baremetal/" >}}) 
@@ -378,6 +392,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
    ```bash
    sudo usermod -aG sudo image-builder
    su image-builder
+   cd /home/$USER
    ```
 1. Install packages and prepare environment:
    ```bash
@@ -387,13 +402,14 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
    sudo chown root:kvm /dev/kvm
+   mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     cd -
@@ -414,11 +430,11 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
 
       * `--os`: `redhat`
       * `--hypervisor`: For CloudStack use `cloudstack`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23 and 1-24.
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-24 --cloudstack-config cloudstack.json
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-25 --cloudstack-config cloudstack.json
       ```
 
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing Cloudstack]({{< relref "./cloudstack/cloudstack-preparation.md" >}}).
@@ -436,19 +452,21 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    ```bash
    sudo usermod -aG sudo image-builder
    su image-builder
+   cd /home/$USER
    ```
 1. Install packages and prepare environment:
    ```bash
    sudo apt update -y
    sudo apt install jq unzip make ansible python3-pip -y
    sudo snap install yq
+   mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
    ```bash
     cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     cd -
@@ -459,7 +477,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
      "ami_filter_name": "<Regular expression to filter a source AMI (default: ubuntu/images/*ubuntu-focal-20.04-amd64-server-*)>",
      "ami_filter_owners": "<AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc (default: 679593333241 - the AWS Marketplace AWS account ID)>",
      "ami_regions": "<A list of AWS regions to copy the AMI to>",
-     "aws_region": "The AWS region in which to launch the EC2 instance to create the AMI",
+     "aws_region": "<The AWS region in which to launch the EC2 instance to create the AMI>",
      "ansible_extra_vars": "<The absolute path to the additional variables to pass to Ansible. These are converted to the `--extra-vars` command-line argument. This path must be prefix with '@'>",
      "builder_instance_type": "<The EC2 instance type to use while building the AMI (default: t3.small)>",
      "custom_role": "<If set to true, this will run a custom Ansible role before the `sysprep` role to allow for further customization>",
@@ -467,19 +485,20 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
      "custom_role_names": "<Space-delimited string of the custom roles to run. This field is mutually exclusive with custom_role_name_list and is provided for compatibility with Ansible's input format>",
      "manifest_output": "<The absolute path to write the build artifacts manifest to. If you wish to export the AMI using this manifest, ensure that you provide a path that is not inside the '/home/$USER/eks-anywhere-build-tooling' path since that will be cleaned up when the build finishes>",
      "root_device_name": "<The device name used by EC2 for the root EBS volume attached to the instance>",
+     "subnet_id": "<The ID of the subnet where Packer will launch the EC2 instance. This field is required when using a non-default VPC>",
      "volume_size": "<The size of the root EBS volume in GiB>",
-     "volume_type": "<The type of root EBS volume, such as gp2, gp3, io1, etc>",
+     "volume_type": "<The type of root EBS volume. Currently only gp3 is supported>",
    }
    ```
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
 
    * `--os`: `ubuntu`
    * `--hypervisor`: For AMI, use `ami`
-   * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23 and 1-24.
+   * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1-24 --ami-config ami.json
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1-25 --ami-config ami.json
    ```
 1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a Raw image, you can achieve this using the AWS CLI.
    ```
@@ -508,21 +527,24 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    ```bash
    sudo usermod -aG sudo image-builder
    su image-builder
+   cd /home/$USER
    ```
 1. Install packages and prepare environment:
    ```bash
    sudo apt update -y
    sudo apt install jq unzip make ansible python3-pip -y
    sudo snap install yq
+   mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
     ```bash
-    cd /home/$USER
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/26/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
+    cd /tmp
+    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
     tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
+    cd -
     ```
 1. Create a `nutanix-connection.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
@@ -543,12 +565,12 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
       * `--os`: `ubuntu`
       * `--hypervisor`: For Nutanix use `nutanix`
-      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, and 1-24.
+      * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
       * `--nutanix-config`: Nutanix configuration file (`nutanix-connection.json` in this example)
 
       ```bash
       cd /home/$USER
-      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-24 --nutanix-config nutanix-connection.json
+      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1-25 --nutanix-config nutanix-connection.json
       ```
 
 ## Images

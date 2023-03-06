@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -177,7 +176,7 @@ func (dt *deployTemplateTest) assertDeployTemplateError(t *testing.T) {
 func (dt *deployTemplateTest) assertDeployOptsMatches(t *testing.T) {
 	g := NewWithT(t)
 
-	actual, err := ioutil.ReadFile(filepath.Join(dt.dir, executables.DeployOptsFile))
+	actual, err := os.ReadFile(filepath.Join(dt.dir, executables.DeployOptsFile))
 	if err != nil {
 		t.Fatalf("failed to read deploy options file: %v", err)
 	}
@@ -1554,6 +1553,92 @@ func TestGovcGetVMDiskSizeInGBError(t *testing.T) {
 			executable.EXPECT().ExecuteWithEnv(ctx, env, "device.info", "-dc", datacenter, "-vm", template, "-json", "disk-*").Return(*responseBytes, tt.govcErr)
 
 			_, err = g.GetVMDiskSizeInGB(ctx, template, datacenter)
+			gt.Expect(err.Error()).To(Equal(tt.wantErr.Error()))
+		})
+	}
+}
+
+func TestGovcGetHardDiskSize(t *testing.T) {
+	datacenter := "SDDC-Datacenter"
+	template := "bottlerocket-kube-v1-21"
+	ctx := context.Background()
+	wantDiskMap := map[string]float64{
+		"Hard disk 1": 2097152,
+		"Hard disk 2": 20971520,
+	}
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	response := map[string][]interface{}{
+		"Devices": {
+			map[string]interface{}{
+				"Name": "disk-31000-0",
+				"DeviceInfo": map[string]string{
+					"Label": "Hard disk 1",
+				},
+				"CapacityInKB": 2097152,
+			}, map[string]interface{}{
+				"Name": "disk-31000-1",
+				"DeviceInfo": map[string]string{
+					"Label": "Hard disk 2",
+				},
+				"CapacityInKB": 20971520,
+			},
+		},
+	}
+
+	marshaledResponse, err := json.Marshal(response)
+	if err != nil {
+		t.Fatalf("failed to marshal response: %v", err)
+	}
+	responseBytes := bytes.NewBuffer(marshaledResponse)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "device.info", "-dc", datacenter, "-vm", template, "-json", "disk-*").Return(*responseBytes, nil)
+
+	diskSizeMap, err := g.GetHardDiskSize(ctx, template, datacenter)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(diskSizeMap).To(Equal(wantDiskMap))
+}
+
+func TestGovcGetHardDiskSizeError(t *testing.T) {
+	datacenter := "SDDC-Datacenter"
+	template := "bottlerocket-kube-v1-21"
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	govcErr := errors.New("error DevicesInfo()")
+
+	tests := []struct {
+		testName string
+		response map[string][]interface{}
+		govcErr  error
+		wantErr  error
+	}{
+		{
+			testName: "devices_info_govc_error",
+			response: nil,
+			govcErr:  govcErr,
+			wantErr:  fmt.Errorf("getting hard disk sizes for vm %s: getting template device information: %v", template, govcErr),
+		},
+		{
+			testName: "devices_info_no_devices",
+			response: map[string][]interface{}{
+				"Devices": {},
+			},
+			govcErr: nil,
+			wantErr: fmt.Errorf("no hard disks found for vm %s", template),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			gt := NewWithT(t)
+			marshaledResponse, err := json.Marshal(tt.response)
+			if err != nil {
+				t.Fatalf("failed to marshal response: %v", err)
+			}
+			responseBytes := bytes.NewBuffer(marshaledResponse)
+			executable.EXPECT().ExecuteWithEnv(ctx, env, "device.info", "-dc", datacenter, "-vm", template, "-json", "disk-*").Return(*responseBytes, tt.govcErr)
+			_, err = g.GetHardDiskSize(ctx, template, datacenter)
 			gt.Expect(err.Error()).To(Equal(tt.wantErr.Error()))
 		})
 	}

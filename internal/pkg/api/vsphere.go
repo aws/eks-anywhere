@@ -180,6 +180,21 @@ func WithCloneModeForAllMachines(value anywherev1.CloneMode) VSphereFiller {
 	}
 }
 
+// WithNTPServersForAllMachines sets NTP servers for all VSphereMachineConfigs.
+func WithNTPServersForAllMachines(servers []string) VSphereFiller {
+	return func(config VSphereConfig) {
+		for _, m := range config.machineConfigs {
+			if m.Spec.HostOSConfiguration == nil {
+				m.Spec.HostOSConfiguration = &anywherev1.HostOSConfiguration{}
+			}
+			if m.Spec.HostOSConfiguration.NTPConfiguration == nil {
+				m.Spec.HostOSConfiguration.NTPConfiguration = &anywherev1.NTPConfiguration{}
+			}
+			m.Spec.HostOSConfiguration.NTPConfiguration.Servers = servers
+		}
+	}
+}
+
 func WithVSphereStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar))
 }

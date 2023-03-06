@@ -10,6 +10,39 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 )
 
+func TestCloudStackDatacenterDatacenterConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+
+	originalDatacenter := cloudstackDatacenterConfig()
+	originalDatacenter.Spec.AvailabilityZones = nil
+	originalDatacenter.Spec.Domain = "domain"
+	originalDatacenter.Spec.Account = "admin"
+	originalDatacenter.Spec.ManagementApiEndpoint = "https://127.0.0.1:8080/client/api"
+	originalDatacenter.Spec.Zones = []v1alpha1.CloudStackZone{
+		{Name: "test_zone", Network: v1alpha1.CloudStackResourceIdentifier{Name: "test_zone"}},
+	}
+
+	expectedDatacenter := originalDatacenter.DeepCopy()
+	expectedDatacenter.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+		{
+			Name:                  "default-az-0",
+			CredentialsRef:        "global",
+			Zone:                  originalDatacenter.Spec.Zones[0],
+			Domain:                originalDatacenter.Spec.Domain,
+			Account:               originalDatacenter.Spec.Account,
+			ManagementApiEndpoint: originalDatacenter.Spec.ManagementApiEndpoint,
+		},
+	}
+	expectedDatacenter.Spec.Zones = nil
+	expectedDatacenter.Spec.Domain = ""
+	expectedDatacenter.Spec.Account = ""
+	expectedDatacenter.Spec.ManagementApiEndpoint = ""
+
+	originalDatacenter.Default()
+
+	g.Expect(originalDatacenter).To(Equal(*expectedDatacenter))
+}
+
 func TestCloudStackDatacenterValidateCreateLifecycleApiDisabled(t *testing.T) {
 	features.ClearCache()
 	t.Setenv(features.FullLifecycleAPIEnvVar, "false")

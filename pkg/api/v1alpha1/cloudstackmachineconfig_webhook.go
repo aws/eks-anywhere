@@ -38,7 +38,7 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
 
-	return nil
+	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -75,9 +75,12 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
 		)
 	}
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
 
 	if len(allErrs) > 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
+		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
 	return nil

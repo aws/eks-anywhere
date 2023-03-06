@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
@@ -36,8 +37,9 @@ func (b *ExecutablesBuilder) BuildClusterAwsAdmExecutable() *Clusterawsadm {
 	return NewClusterawsadm(b.executableBuilder.Build(clusterAwsAdminPath))
 }
 
-func (b *ExecutablesBuilder) BuildClusterCtlExecutable(writer filewriter.FileWriter) *Clusterctl {
-	return NewClusterctl(b.executableBuilder.Build(clusterCtlPath), writer)
+// BuildClusterCtlExecutable builds a new Clusterctl executable.
+func (b *ExecutablesBuilder) BuildClusterCtlExecutable(writer filewriter.FileWriter, reader manifests.FileReader) *Clusterctl {
+	return NewClusterctl(b.executableBuilder.Build(clusterCtlPath), writer, reader)
 }
 
 func (b *ExecutablesBuilder) BuildKubectlExecutable() *Kubectl {
@@ -72,6 +74,11 @@ func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...HelmOpt) *Helm {
 // BuildDockerExecutable initializes a docker executable and returns it.
 func (b *ExecutablesBuilder) BuildDockerExecutable() *Docker {
 	return NewDocker(b.executableBuilder.Build(dockerPath))
+}
+
+// BuildSSHExecutable initializes a SSH executable and returns it.
+func (b *ExecutablesBuilder) BuildSSHExecutable() *SSH {
+	return NewSSH(b.executableBuilder.Build(sshPath))
 }
 
 // Init initializes the executable builder and returns a Closer

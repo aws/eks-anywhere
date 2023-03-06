@@ -2,7 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,7 +57,7 @@ func (c *TinkerbellMachineConfigGenerate) Name() string {
 
 func GetTinkerbellMachineConfigs(fileName string) (map[string]*TinkerbellMachineConfig, error) {
 	configs := make(map[string]*TinkerbellMachineConfig)
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}
@@ -123,5 +123,19 @@ func validateTinkerbellMachineConfig(config *TinkerbellMachineConfig) error {
 		return fmt.Errorf("TinkerbellMachineConfig: missing spec.Users: %s", config.Name)
 	}
 
+	if len(config.Spec.Users[0].SshAuthorizedKeys) == 0 || config.Spec.Users[0].SshAuthorizedKeys[0] == "" {
+		return fmt.Errorf("TinkerbellMachineConfig: missing spec.Users[0].SshAuthorizedKeys: %s for user %s. Please specify a ssh authorized key", config.Name, config.Spec.Users[0])
+	}
+
+	if err := validateHostOSConfig(config.Spec.HostOSConfiguration); err != nil {
+		return fmt.Errorf("HostOSConfiguration is invalid for TinkerbellMachineConfig %s: %v", config.Name, err)
+	}
+
 	return nil
+}
+
+func setTinkerbellMachineConfigDefaults(machineConfig *TinkerbellMachineConfig) {
+	if machineConfig.Spec.OSFamily == "" {
+		machineConfig.Spec.OSFamily = Bottlerocket
+	}
 }

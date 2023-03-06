@@ -17,15 +17,12 @@ Its goal is to include full lifecycle management of multiple Kubernetes clusters
 Here are the steps for [getting started](https://anywhere.eks.amazonaws.com/docs/getting-started/) with EKS Anywhere.
 Full documentation for releases can be found on [https://anywhere.eks.amazonaws.com](https://anywhere.eks.amazonaws.com/).
 
+<!-- 
+Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
+-->
 [<img src="docs/static/images/certified-kubernetes-1.23-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2109)
-<!-- 
-Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
--->
-
 [<img src="docs/static/images/certified-kubernetes-1.24-pantone.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2275)
-<!-- 
-Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
--->
+[<img src="docs/static/images/certified-kubernetes-1.25-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2454)
 
 ## Development
 

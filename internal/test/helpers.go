@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -16,7 +15,7 @@ import (
 //
 // The file is automatically closed and removed when the test ends.
 func WithFakeFile(t *testing.T) (f *os.File) {
-	f, err := ioutil.TempFile(t.TempDir(), "fake-file")
+	f, err := os.CreateTemp(t.TempDir(), "fake-file")
 	if err != nil {
 		t.Fatalf("opening throwaway file: %s", err)
 	}

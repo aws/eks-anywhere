@@ -225,6 +225,21 @@ func (mr *MockProviderGovcClientMockRecorder) GetCertThumbprint(arg0 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertThumbprint", reflect.TypeOf((*MockProviderGovcClient)(nil).GetCertThumbprint), arg0)
 }
 
+// GetHardDiskSize mocks base method.
+func (m *MockProviderGovcClient) GetHardDiskSize(arg0 context.Context, arg1, arg2 string) (map[string]float64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardDiskSize", arg0, arg1, arg2)
+	ret0, _ := ret[0].(map[string]float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHardDiskSize indicates an expected call of GetHardDiskSize.
+func (mr *MockProviderGovcClientMockRecorder) GetHardDiskSize(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardDiskSize", reflect.TypeOf((*MockProviderGovcClient)(nil).GetHardDiskSize), arg0, arg1, arg2)
+}
+
 // GetLibraryElementContentVersion mocks base method.
 func (m *MockProviderGovcClient) GetLibraryElementContentVersion(arg0 context.Context, arg1 string) (string, error) {
 	m.ctrl.T.Helper()

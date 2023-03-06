@@ -22,8 +22,10 @@ import (
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/aws/ecr"
+	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	"github.com/aws/eks-anywhere/release/pkg/helm"
+	"github.com/aws/eks-anywhere/release/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
@@ -46,6 +48,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 
 	// Find latest Package Dev build for the Helm chart and Image which will always start with `0.0.0` and is built off of the package Github repo main on every commit.
 	// If we can't find the build starting with our substring, we default to the original dev tag.
+	// If we do find the Tag in Private ECR, but it doesn't exist in Public ECR Copy the image over so the helm chart will work correctly.
 	if r.DevRelease && !r.DryRun {
 		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "eks-anywhere-packages", "0.0.0", true)
 		if err != nil {
@@ -55,9 +58,31 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
 		}
+		PackageImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "eks-anywhere-packages", Imagetag), r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+		if err != nil {
+			fmt.Printf("Error checking image version existance for EKS Anywhere package controller, using latest version: %v", err)
+		}
+		if !PackageImage {
+			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
+			err := images.CopyToDestination(r.SourceClients.ECR.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.SourceContainerRegistry, "eks-anywhere-packages", Imagetag), fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
+			if err != nil {
+				fmt.Printf("Error copying dev EKS Anywhere package controller image, to ECR Public: %v", err)
+			}
+		}
 		Tokentag, TokenSha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.ECR.EcrClient, "ecr-token-refresher", "v0.0.0", true)
 		if err != nil {
-			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
+			fmt.Printf("Error getting dev version Image tag EKS Anywhere package token refresher, using latest version %v", err)
+		}
+		TokenImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "ecr-token-refresher", Tokentag), r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+		if err != nil {
+			fmt.Printf("Error checking image version existance for EKS Anywhere package token refresher, using latest version: %v", err)
+		}
+		if !TokenImage {
+			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
+			err := images.CopyToDestination(r.SourceClients.ECR.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.SourceContainerRegistry, "ecr-token-refresher", Tokentag), fmt.Sprintf("%s/%s:%s", r.ReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
+			if err != nil {
+				fmt.Printf("Error copying dev EKS Anywhere package token refresher image, to ECR Public: %v", err)
+			}
 		}
 	}
 	for _, componentName := range sortedComponentNames {

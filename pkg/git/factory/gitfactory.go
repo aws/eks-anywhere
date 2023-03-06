@@ -3,7 +3,6 @@ package gitfactory
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -140,7 +139,7 @@ func getSignerFromPrivateKeyFile(privateKeyFile string, passphrase string) (ssh.
 	var signer ssh.Signer
 	var err error
 
-	sshKey, err := ioutil.ReadFile(privateKeyFile)
+	sshKey, err := os.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, err
 	}

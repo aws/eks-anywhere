@@ -55,6 +55,11 @@ func RequiredPackagesEnvVars() []string {
 	return requiredPackagesEnvVars
 }
 
+// RequiredCertManagerEnvVars returns the list of cert manager env vars.
+func RequiredCertManagerEnvVars() []string {
+	return requiredCertManagerEnvVars
+}
+
 // CheckCuratedPackagesCredentials will exit out if the Curated Packages environment variables are not set.
 func CheckCuratedPackagesCredentials(t *testing.T) {
 	for _, env := range requiredPackagesEnvVars {

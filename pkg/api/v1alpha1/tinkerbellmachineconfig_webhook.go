@@ -21,6 +21,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -36,7 +37,15 @@ func (r *TinkerbellMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 		Complete()
 }
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
+//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=tinkerbellmachineconfigs,verbs=create;update,versions=v1alpha1,name=mutation.tinkerbellmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Defaulter = &TinkerbellMachineConfig{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
+func (r *TinkerbellMachineConfig) Default() {
+	tinkerbellmachineconfiglog.Info("Setting up Tinkerbell Machine Config defaults", klog.KObj(r))
+	r.SetDefaults()
+}
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=tinkerbellmachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.tinkerbellmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}

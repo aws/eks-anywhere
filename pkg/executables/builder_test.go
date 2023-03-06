@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
@@ -21,12 +22,13 @@ func TestLocalExecutablesBuilderAllExecutables(t *testing.T) {
 	closer, err := b.Init(ctx)
 	g.Expect(err).NotTo(HaveOccurred())
 	_, writer := test.NewWriter(t)
+	reader := files.NewReader()
 
 	kind := b.BuildKindExecutable(writer)
 	g.Expect(kind).NotTo(BeNil())
 	awsAdm := b.BuildClusterAwsAdmExecutable()
 	g.Expect(awsAdm).NotTo(BeNil())
-	clusterctl := b.BuildClusterCtlExecutable(writer)
+	clusterctl := b.BuildClusterCtlExecutable(writer, reader)
 	g.Expect(clusterctl).NotTo(BeNil())
 	kubectl := b.BuildKubectlExecutable()
 	g.Expect(kubectl).NotTo(BeNil())
@@ -46,6 +48,8 @@ func TestLocalExecutablesBuilderAllExecutables(t *testing.T) {
 	g.Expect(helm).NotTo(BeNil())
 	docker := b.BuildDockerExecutable()
 	g.Expect(docker).NotTo(BeNil())
+	ssh := b.BuildSSHExecutable()
+	g.Expect(ssh).NotTo(BeNil())
 
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(closer(ctx)).To(Succeed())

@@ -2,9 +2,10 @@ package reconciler
 
 import (
 	"context"
-
-	"github.com/go-logr/logr"
+  
+  "github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -98,6 +99,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateHardware,
 		r.OmitMachineTemplate,
 		r.ValidateDatacenterConfig,
+		r.ValidateRufioMachines,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -242,7 +244,8 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 		r.GenerateSpec,
 		r.DetectOperation,
 		r.ValidateHardware,
-		r.OmitMachineTemplate,
+		r.ValidateRufioMachines,
+    r.OmitMachineTemplate,
 		r.ReconcileWorkers,
 	).Run(ctx, log, NewScope(clusterSpec))
 }
@@ -338,8 +341,8 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	log = log.WithValues("phase", "validateHardware")
 
 	// We need a new reader each time so that the catalogue gets recreated.
-	etcdReader := hardware.NewETCDReader(r.client)
-	if err := etcdReader.NewCatalogueFromETCD(ctx); err != nil {
+	kubeReader := hardware.NewKubeReader(r.client)
+	if err := kubeReader.LoadHardware(ctx); err != nil {
 		log.Error(err, "Hardware validation failure")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
@@ -372,4 +375,46 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	}
 
 	return controller.Result{}, nil
+}
+
+// ValidateRufioMachines checks to ensure all the Rufio machines condition contactable is True.
+func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	clusterSpec := tinkerbellScope.ClusterSpec
+	log = log.WithValues("phase", "validateRufioMachines")
+
+	kubeReader := hardware.NewKubeReader(r.client)
+	if err := kubeReader.LoadRufioMachines(ctx); err != nil {
+		log.Error(err, "loading existing rufio machines from the cluster")
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+		return controller.ResultWithReturn(), nil
+	}
+
+	for _, rm := range kubeReader.GetCatalogue().AllBMCs() {
+		if err := r.checkContactable(rm); err != nil {
+			log.Error(err, "rufio machine check failure")
+			failureMessage := err.Error()
+			clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+
+			return controller.ResultWithReturn(), nil
+		}
+	}
+
+	return controller.Result{}, nil
+}
+
+func (r *Reconciler) checkContactable(rm *rufiov1alpha1.Machine) error {
+	for _, c := range rm.Status.Conditions {
+		if c.Type == rufiov1alpha1.Contactable {
+			if c.Status == rufiov1alpha1.ConditionTrue {
+				return nil
+			}
+			if c.Status == rufiov1alpha1.ConditionFalse {
+				return errors.New(c.Message)
+			}
+		}
+	}
+
+	return nil
 }

@@ -24,10 +24,12 @@ skipped_tests:
 - TestNutanixKubernetes122UbuntuWorkerNodeScaleUp1To3
 - TestNutanixKubernetes122UbuntuWorkerNodeScaleUp2To5
 # Snow
+- TestSnowKubernetes125UbuntuAWSIamAuth
 - TestSnowKubernetes124To125AWSIamAuthUpgrade
 - TestSnowKubernetes123UbuntuLabelsUpgradeFlow
 - TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups
 - TestSnowKubernetes125OIDC
+- TestSnowKubernetes125UbuntuProxyConfig
 - TestSnowKubernetes122SimpleFlow
 - TestSnowKubernetes123SimpleFlow
 - TestSnowKubernetes124SimpleFlow
@@ -37,6 +39,7 @@ skipped_tests:
 - TestSnowKubernetes124UbuntuTo125Upgrade
 - TestSnowKubernetes122BottlerocketTo123Upgrade
 - TestSnowKubernetes123BottlerocketTo124Upgrade
+- TestSnowKubernetes124BottlerocketTo125Upgrade
 - TestSnowKubernetes122To123BottlerocketStaticIPUpgrade
 - TestSnowKubernetes123To124BottlerocketStaticIPUpgrade
 - TestSnowMulticlusterWorkloadClusterAPI
@@ -44,7 +47,6 @@ skipped_tests:
 - TestSnowKubernetes124To125UbuntuMultipleFieldsUpgrade
 # Tinkerbell
 - TestTinkerbellKubernetes122BottleRocketAWSIamAuth
-- TestTinkerbellKubernetes122BottlerocketRegistryMirror
 - TestTinkerbellKubernetes122BottleRocketSimpleFlow
 - TestTinkerbellKubernetes122BottleRocketThreeReplicasSimpleFlow
 - TestTinkerbellKubernetes122BottleRocketThreeReplicasTwoWorkersConformanceFlow
@@ -58,7 +60,6 @@ skipped_tests:
 - TestTinkerbellKubernetes122ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes122UbuntuControlPlaneScaleDown
 - TestTinkerbellKubernetes122UbuntuControlPlaneUpgrade
-- TestTinkerbellKubernetes122UbuntuRegistryMirror
 - TestTinkerbellKubernetes122UbuntuWorkerNodeGroupsTaintsAndLabels
 - TestTinkerbellKubernetes122UbuntuWorkerNodeScaleDown
 - TestTinkerbellKubernetes122UbuntuWorkerNodeUpgrade
@@ -69,3 +70,4 @@ skipped_tests:
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterWorkerScaleDown
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterWorkerScaleup
+- TestTinkerbellKubernetes125UbuntuExternalEtcdSimpleFlow

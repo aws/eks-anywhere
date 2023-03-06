@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
@@ -227,4 +228,87 @@ func TestValidatorValidateMachineConfigTagsExistTagDoesNotExist(t *testing.T) {
 
 	err := v.validateMachineConfigTagsExist(ctx, machineConfigs)
 	g.Expect(err).To(Not(BeNil()))
+}
+
+func TestValidateBRHardDiskSize(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	ctx := context.Background()
+
+	v := Validator{
+		govc: govc,
+	}
+
+	machineConfig := v1alpha1.VSphereMachineConfig{
+		Spec: v1alpha1.VSphereMachineConfigSpec{
+			Template: "bottlerocket-kube-v1-21",
+		},
+	}
+	spec := Spec{
+		Spec: &cluster.Spec{
+			Config: &cluster.Config{
+				VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
+					Spec: v1alpha1.VSphereDatacenterConfigSpec{
+						Datacenter: "SDDC-Datacenter",
+					},
+				},
+			},
+		},
+	}
+	govcErr := errors.New("error GetHardDiskSize()")
+	tests := []struct {
+		testName      string
+		returnDiskMap map[string]float64
+		ifErr         error
+		wantErr       error
+	}{
+		{
+			testName:      "getHardDiskSize_govc_error",
+			returnDiskMap: map[string]float64{},
+			ifErr:         govcErr,
+			wantErr:       fmt.Errorf("validating hard disk size: %v", govcErr),
+		},
+		{
+			testName:      "getHardDiskSize_empty_map_error",
+			returnDiskMap: map[string]float64{},
+			ifErr:         nil,
+			wantErr:       fmt.Errorf("no hard disks found for template: %v", "bottlerocket-kube-v1-21"),
+		},
+		{
+			testName:      "check_disk1_wrong_size",
+			returnDiskMap: map[string]float64{"Hard disk 1": 100, "Hard disk 2": 20971520},
+			ifErr:         nil,
+			wantErr:       fmt.Errorf("Incorrect disk size for disk1 - expected: 2097152 kB got: %v", 100),
+		},
+		{
+			testName:      "check_disk2_wrong_size",
+			returnDiskMap: map[string]float64{"Hard disk 1": 2097152, "Hard disk 2": 100},
+			ifErr:         nil,
+			wantErr:       fmt.Errorf("Incorrect disk size for disk2 - expected: 20971520 kB got: %v", 100),
+		},
+		{
+			testName:      "check_singleDisk_wrong_size",
+			returnDiskMap: map[string]float64{"Hard disk 1": 100},
+			ifErr:         nil,
+			wantErr:       fmt.Errorf("Incorrect disk size for disk1 - expected: 23068672 kB got: %v", 100),
+		},
+		{
+			testName:      "check_happy_flow",
+			returnDiskMap: map[string]float64{"Hard disk 1": 2097152, "Hard disk 2": 20971520},
+			ifErr:         nil,
+			wantErr:       nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			gt := NewWithT(t)
+			govc.EXPECT().GetHardDiskSize(ctx, machineConfig.Spec.Template, spec.Config.VSphereDatacenter.Spec.Datacenter).Return(tt.returnDiskMap, tt.ifErr)
+			err := v.validateBRHardDiskSize(ctx, &spec, &machineConfig)
+			if err == nil {
+				gt.Expect(err).To(BeNil())
+			} else {
+				gt.Expect(err.Error()).To(Equal(tt.wantErr.Error()))
+			}
+		})
+	}
 }

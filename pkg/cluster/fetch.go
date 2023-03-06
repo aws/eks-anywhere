@@ -24,7 +24,7 @@ type OIDCFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDC
 
 type AWSIamConfigFetch func(ctx context.Context, name, namespace string) (*v1alpha1.AWSIamConfig, error)
 
-// BuildSpec constructs a cluster.Spec for an eks-a cluster by retrieving all
+// BuildSpecForCluster constructs a cluster.Spec for an eks-a cluster by retrieving all
 // necessary objects using fetch methods
 // This is deprecated in favour of BuildSpec.
 func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, fluxConfigFetch FluxConfigFetch, oidcFetch OIDCFetch, awsIamConfigFetch AWSIamConfigFetch) (*Spec, error) {
@@ -64,7 +64,27 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	if err != nil {
 		return nil, err
 	}
-	return BuildSpecFromBundles(cluster, bundles, WithEksdRelease(eksd), WithGitOpsConfig(gitOpsConfig), WithFluxConfig(fluxConfig), WithOIDCConfig(oidcConfig), WithAWSIamConfig(awsIamConfig))
+
+	// This Config is incomplete, if you need the whole thing use [BuildSpec]
+	config := &Config{
+		Cluster:      cluster,
+		GitOpsConfig: gitOpsConfig,
+		FluxConfig:   fluxConfig,
+	}
+
+	if oidcConfig != nil {
+		config.OIDCConfigs = map[string]*v1alpha1.OIDCConfig{
+			oidcConfig.Name: oidcConfig,
+		}
+	}
+
+	if awsIamConfig != nil {
+		config.AWSIAMConfigs = map[string]*v1alpha1.AWSIamConfig{
+			awsIamConfig.Name: awsIamConfig,
+		}
+	}
+
+	return NewSpec(config, bundles, eksd)
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
@@ -209,10 +229,5 @@ func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*S
 		return nil, err
 	}
 
-	spec := NewSpec()
-	if err := spec.init(config, bundles, versionsBundle, eksdRelease); err != nil {
-		return nil, err
-	}
-
-	return spec, nil
+	return NewSpec(config, bundles, eksdRelease)
 }

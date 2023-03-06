@@ -3,7 +3,6 @@ package filewriter
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -42,7 +41,7 @@ func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (s
 		currentDir = t.dir
 	}
 	filePath := filepath.Join(currentDir, fileName)
-	err := ioutil.WriteFile(filePath, content, op.Permissions)
+	err := os.WriteFile(filePath, content, op.Permissions)
 	if err != nil {
 		return "", fmt.Errorf("writing to file [%s]: %v", filePath, err)
 	}
@@ -68,7 +67,7 @@ func (t *writer) WriteTestArtifactsS3ToFile(key string, data []byte) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(p, data, os.ModePerm)
+	err = os.WriteFile(p, data, os.ModePerm)
 	if err != nil {
 		return err
 	}

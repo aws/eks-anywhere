@@ -24,7 +24,7 @@ type upgraderTest struct {
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	kt := newKindnetdTest(t)
-	u := kindnetd.NewUpgrader(kt.client)
+	u := kindnetd.NewUpgrader(kt.client, kt.reader)
 	return &upgraderTest{
 		kindnetdTest: kt,
 		ctx:          context.Background(),

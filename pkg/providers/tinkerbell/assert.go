@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
@@ -216,9 +217,97 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 	}
 }
 
+// WorkerNodeHardware holds machine deployment name, replica count and hardware selector for a Tinkerbell worker node.
+type WorkerNodeHardware struct {
+	MachineDeploymentName string
+	Replicas              int
+	HardwareSelector      v1alpha1.HardwareSelector
+}
+
+// ValidatableCluster allows assertions to pull worker node and control plane information.
+type ValidatableCluster interface {
+	// WorkerNodeHardwareGroups retrieves a list of WorkerNodeHardwares containing MachineDeployment name,
+	// replica count and hardware selector for each worker node of a ValidatableCluster.
+	WorkerNodeHardwareGroups() []WorkerNodeHardware
+
+	// ControlPlaneReplicaCount retrieves the control plane replica count of the ValidatableCluster.
+	ControlPlaneReplicaCount() int
+
+	// ControlPlaneHardwareSelector retrieves the control plane hardware selector of the ValidatableCluster.
+	ControlPlaneHardwareSelector() v1alpha1.HardwareSelector
+}
+
+// ValidatableTinkerbellClusterSpec wraps around the Tinkerbell ClusterSpec as a ValidatableCluster.
+type ValidatableTinkerbellClusterSpec struct {
+	*ClusterSpec
+}
+
+// ControlPlaneReplicaCount retrieves the ValidatableTinkerbellClusterSpec control plane replica count.
+func (v *ValidatableTinkerbellClusterSpec) ControlPlaneReplicaCount() int {
+	return v.Cluster.Spec.ControlPlaneConfiguration.Count
+}
+
+// ControlPlaneHardwareSelector retrieves the ValidatableTinkerbellClusterSpec control plane hardware selector.
+func (v *ValidatableTinkerbellClusterSpec) ControlPlaneHardwareSelector() v1alpha1.HardwareSelector {
+	return v.ControlPlaneMachineConfig().Spec.HardwareSelector
+}
+
+// WorkerNodeHardwareGroups retrieves a list of WorkerNodeHardwares for a ValidatableTinkerbellClusterSpec.
+func (v *ValidatableTinkerbellClusterSpec) WorkerNodeHardwareGroups() []WorkerNodeHardware {
+	workerNodeGroupConfigs := make([]WorkerNodeHardware, 0, len(v.Cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroup := range v.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupConfig := &WorkerNodeHardware{
+			MachineDeploymentName: machineDeploymentName(v.Cluster.Name, workerNodeGroup.Name),
+			Replicas:              *workerNodeGroup.Count,
+			HardwareSelector:      v.WorkerNodeGroupMachineConfig(workerNodeGroup).Spec.HardwareSelector,
+		}
+		workerNodeGroupConfigs = append(workerNodeGroupConfigs, *workerNodeGroupConfig)
+	}
+	return workerNodeGroupConfigs
+}
+
+// ValidatableTinkerbellCAPI wraps around the Tinkerbell control plane and worker CAPI obects as a ValidatableCluster.
+type ValidatableTinkerbellCAPI struct {
+	ControlPlane *ControlPlane
+	Workers      *Workers
+}
+
+// ControlPlaneReplicaCount retrieves the ValidatableTinkerbellCAPI control plane replica count.
+func (v *ValidatableTinkerbellCAPI) ControlPlaneReplicaCount() int {
+	return int(*v.ControlPlane.KubeadmControlPlane.Spec.Replicas)
+}
+
+// ControlPlaneHardwareSelector retrieves the ValidatableTinkerbellCAPI control plane hardware selector.
+func (v *ValidatableTinkerbellCAPI) ControlPlaneHardwareSelector() v1alpha1.HardwareSelector {
+	return HardwareSelector(*v.ControlPlane.ControlPlaneMachineTemplate)
+}
+
+// WorkerNodeHardwareGroups retrieves a list of WorkerNodeHardwares for a ValidatableTinkerbellCAPI.
+func (v *ValidatableTinkerbellCAPI) WorkerNodeHardwareGroups() []WorkerNodeHardware {
+	workerNodeHardwareList := make([]WorkerNodeHardware, 0, len(v.Workers.Groups))
+	for _, workerGroup := range v.Workers.Groups {
+		workerNodeHardware := &WorkerNodeHardware{
+			MachineDeploymentName: workerGroup.MachineDeployment.Name,
+			Replicas:              int(*workerGroup.MachineDeployment.Spec.Replicas),
+			HardwareSelector:      HardwareSelector(*workerGroup.ProviderMachineTemplate),
+		}
+		workerNodeHardwareList = append(workerNodeHardwareList, *workerNodeHardware)
+	}
+	return workerNodeHardwareList
+}
+
+// HardwareSelector returns the HardwareSelector of the first LabelSelector in TinkerbellMachineTemplate hardware affinity.
+func HardwareSelector(machineTemplate v1beta1.TinkerbellMachineTemplate) v1alpha1.HardwareSelector {
+	if len(machineTemplate.Spec.Template.Spec.HardwareAffinity.Required) == 1 {
+		return machineTemplate.Spec.Template.Spec.HardwareAffinity.Required[0].LabelSelector.MatchLabels
+	}
+	return nil
+}
+
 // AssertionsForScaleUpDown asserts that catalogue has sufficient hardware to
-// support the ClusterSpec during an scale up/down upgrade workflow.
-func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluster.Spec, rollingUpgrade bool) ClusterSpecAssertion {
+// support the scaling up/down from current ClusterSpec to desired ValidatableCluster.
+// nolint:gocyclo // TODO: Reduce cyclomatic complexity https://github.com/aws/eks-anywhere-internal/issues/1186
+func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current ValidatableCluster, rollingUpgrade bool) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		// Without Hardware selectors we get undesirable behavior so ensure we have them for
 		// all MachineConfigs.
@@ -226,18 +315,23 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 			return err
 		}
 
+		if spec.HasExternalEtcd() {
+			return fmt.Errorf("scale up/down not supported for external etcd")
+		}
 		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
 		// will account for the same selector being specified on different groups.
 		requirements := minimumHardwareRequirements{}
 
-		if currentSpec.Cluster.Spec.ControlPlaneConfiguration.Count != spec.Cluster.Spec.ControlPlaneConfiguration.Count {
+		desired := &ValidatableTinkerbellClusterSpec{spec}
+
+		if current.ControlPlaneReplicaCount() != desired.ControlPlaneReplicaCount() {
 			if rollingUpgrade {
 				return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 			}
-			if currentSpec.Cluster.Spec.ControlPlaneConfiguration.Count < spec.Cluster.Spec.ControlPlaneConfiguration.Count {
+			if current.ControlPlaneReplicaCount() < desired.ControlPlaneReplicaCount() {
 				err := requirements.Add(
-					spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
-					spec.ControlPlaneConfiguration().Count-currentSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+					desired.ControlPlaneHardwareSelector(),
+					desired.ControlPlaneReplicaCount()-current.ControlPlaneReplicaCount(),
 				)
 				if err != nil {
 					return fmt.Errorf("error during scale up: %v", err)
@@ -245,21 +339,21 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 			}
 		}
 
-		workerNodeGroupMap := make(map[string]*v1alpha1.WorkerNodeGroupConfiguration)
-		for _, workerNodeGroupConfiguration := range currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-			workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+		workerNodeHardwareMap := make(map[string]WorkerNodeHardware)
+		for _, workerNodeHardware := range current.WorkerNodeHardwareGroups() {
+			workerNodeHardwareMap[workerNodeHardware.MachineDeploymentName] = workerNodeHardware
 		}
 
-		for _, nodeGroupNewSpec := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
-			if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
-				if *nodeGroupNewSpec.Count != *workerNodeGrpOldSpec.Count {
+		for _, workerNodeHardwareNewSpec := range desired.WorkerNodeHardwareGroups() {
+			if workerNodeHardwareOldSpec, ok := workerNodeHardwareMap[workerNodeHardwareNewSpec.MachineDeploymentName]; ok {
+				if workerNodeHardwareNewSpec.Replicas != workerNodeHardwareOldSpec.Replicas {
 					if rollingUpgrade {
 						return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 					}
-					if *nodeGroupNewSpec.Count > *workerNodeGrpOldSpec.Count {
+					if workerNodeHardwareNewSpec.Replicas > workerNodeHardwareOldSpec.Replicas {
 						err := requirements.Add(
-							spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
-							*nodeGroupNewSpec.Count-*workerNodeGrpOldSpec.Count,
+							workerNodeHardwareNewSpec.HardwareSelector,
+							workerNodeHardwareNewSpec.Replicas-workerNodeHardwareOldSpec.Replicas,
 						)
 						if err != nil {
 							return fmt.Errorf("error during scale up: %v", err)
@@ -271,26 +365,13 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 					return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 				}
 				err := requirements.Add(
-					spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
-					*nodeGroupNewSpec.Count,
+					workerNodeHardwareNewSpec.HardwareSelector,
+					workerNodeHardwareNewSpec.Replicas,
 				)
 				if err != nil {
 					return fmt.Errorf("error during scale up: %v", err)
 				}
 			}
-		}
-
-		if spec.HasExternalEtcd() {
-			return fmt.Errorf("scale up/down not supported for external etcd")
-			/* if spec.Cluster.Spec.ExternalEtcdConfiguration.Count > currentSpec.Cluster.Spec.ExternalEtcdConfiguration.Count {
-				err := requirements.Add(
-					spec.ExternalEtcdMachineConfig().Spec.HardwareSelector,
-					spec.ExternalEtcdConfiguration().Count - currentSpec.Cluster.Spec.ExternalEtcdConfiguration.Count,
-				)
-				if err != nil {
-					return err
-				}
-			} */
 		}
 
 		if err := validateMinimumHardwareRequirements(requirements, catalogue); err != nil {

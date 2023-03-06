@@ -148,6 +148,10 @@ func (pc *DummyProviderGovcClient) GetVMDiskSizeInGB(ctx context.Context, vm, da
 	return 25, nil
 }
 
+func (pc *DummyProviderGovcClient) GetHardDiskSize(ctx context.Context, vm, datacenter string) (map[string]float64, error) {
+	return map[string]float64{"Hard disk 1": 23068672}, nil
+}
+
 func (pc *DummyProviderGovcClient) GetTags(ctx context.Context, path string) (tags []string, err error) {
 	return []string{eksd119ReleaseTag, eksd121ReleaseTag, pc.osTag}, nil
 }

@@ -8,10 +8,16 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
+	"github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -416,6 +422,81 @@ func TestMinimumHardwareAvailableAssertionForCreate_InsufficientFailsWithoutExte
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
+func TestHardwareSelectorWorker(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	g.Expect(tinkerbell.HardwareSelector(*machineTemplate())).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "worker"}))
+}
+
+func TestHardwareSelectorNil(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	machineTemplate := machineTemplate(func(mt *tinkerbellv1.TinkerbellMachineTemplate) {
+		mt.Spec.Template.Spec.HardwareAffinity.Required = []tinkerbellv1.HardwareAffinityTerm{}
+	})
+
+	g.Expect(tinkerbell.HardwareSelector(*machineTemplate)).To(gomega.BeNil())
+}
+
+func TestValidatableClusterControlPlaneReplicaCount(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	validatableCluster := &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}
+
+	g.Expect(validatableCluster.ControlPlaneReplicaCount()).To(gomega.Equal(1))
+}
+
+func TestValidatableClusterControlPlaneHardwareSelector(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	validatableCluster := &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}
+
+	g.Expect(validatableCluster.ControlPlaneHardwareSelector()).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "cp"}))
+}
+
+func TestValidatableClusterWorkerNodeGroupConfigs(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	validatableCluster := &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}
+
+	workerConfigs := validatableCluster.WorkerNodeHardwareGroups()
+
+	g.Expect(workerConfigs[0].MachineDeploymentName).To(gomega.Equal("cluster-worker-node-group-0"))
+	g.Expect(workerConfigs[0].Replicas).To(gomega.Equal(1))
+	g.Expect(workerConfigs[0].HardwareSelector).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "worker"}))
+}
+
+func TestValidatableTinkerbellCAPIControlPlaneReplicaCount(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	validatableCAPI := validatableTinkerbellCAPI()
+
+	g.Expect(validatableCAPI.ControlPlaneReplicaCount()).To(gomega.Equal(1))
+}
+
+func TestValidatableTinkerbellCAPIControlPlaneHardwareSelector(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	validatableCAPI := validatableTinkerbellCAPI()
+
+	g.Expect(validatableCAPI.ControlPlaneHardwareSelector()).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "cp"}))
+}
+
+func TestValidatableTinkerbellCAPIWorkerNodeGroupConfigs(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	validatableCAPI := validatableTinkerbellCAPI()
+
+	workerConfigs := validatableCAPI.WorkerNodeHardwareGroups()
+
+	g.Expect(workerConfigs[0].MachineDeploymentName).To(gomega.Equal("cluster-worker-node-group-0"))
+	g.Expect(workerConfigs[0].Replicas).To(gomega.Equal(1))
+	g.Expect(workerConfigs[0].HardwareSelector).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "worker"}))
+}
+
 func TestAssertionsForScaleUpDown_Success(t *testing.T) {
 	g := gomega.NewWithT(t)
 
@@ -423,10 +504,94 @@ func TestAssertionsForScaleUpDown_Success(t *testing.T) {
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 
-	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, clusterSpec.Spec, true)
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, true)
 	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
 	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForScaleUpDown_CAPISuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	tinkerbellCAPI := validatableTinkerbellCAPI()
+
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, tinkerbellCAPI, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	check := &tinkerbell.ValidatableTinkerbellClusterSpec{newClusterSpec}
+	t.Log(tinkerbellCAPI.WorkerNodeHardwareGroups()[0].MachineDeploymentName)
+	t.Log(check.WorkerNodeHardwareGroups()[0].MachineDeploymentName)
+
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForScaleUpDown_ScaleUpControlPlaneSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	_ = catalogue.InsertHardware(&v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "cp"},
+	}})
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count = 2
+
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForScaleUpDown_ScaleUpWorkerSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	_ = catalogue.InsertHardware(&v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
+
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForScaleUpDown_AddWorkerSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	_ = catalogue.InsertHardware(&v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+	clusterSpec.Spec.Cluster.Spec.WorkerNodeGroupConfigurations = []eksav1alpha1.WorkerNodeGroupConfiguration{}
+
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, false)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	g.Expect(assertion(newClusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertionsForScaleUpDown_ExternalEtcdErrorFails(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, true)
+	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	g.Expect(assertion(newClusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("scale up/down not supported for external etcd")))
 }
 
 func TestAssertionsForScaleUpDown_FailsScaleUpAndRollingError(t *testing.T) {
@@ -436,7 +601,7 @@ func TestAssertionsForScaleUpDown_FailsScaleUpAndRollingError(t *testing.T) {
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 
-	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, clusterSpec.Spec, true)
+	assertion := tinkerbell.AssertionsForScaleUpDown(catalogue, &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}, true)
 	newClusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	newClusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 	newClusterSpec.WorkerNodeGroupConfigurations()[0].Count = ptr.Int(2)
@@ -504,4 +669,42 @@ func mergeHardwareSelectors(m1, m2 map[string]string) map[string]string {
 		m1[name] = value
 	}
 	return m1
+}
+
+func validatableTinkerbellCAPI() *tinkerbell.ValidatableTinkerbellCAPI {
+	return &tinkerbell.ValidatableTinkerbellCAPI{
+		ControlPlane: &tinkerbell.ControlPlane{
+			BaseControlPlane: tinkerbell.BaseControlPlane{
+				KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
+					Spec: controlplanev1.KubeadmControlPlaneSpec{
+						Replicas: ptr.Int32(1),
+						Version:  "1.22",
+					},
+				},
+				ControlPlaneMachineTemplate: machineTemplate(
+					func(tmt *v1beta1.TinkerbellMachineTemplate) {
+						tmt.Spec.Template.Spec.HardwareAffinity.Required = []tinkerbellv1.HardwareAffinityTerm{
+							{
+								LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{"type": "cp"}},
+							},
+						}
+					},
+				),
+			},
+		},
+		Workers: workers(),
+	}
+}
+
+func workers() *tinkerbell.Workers {
+	return &tinkerbell.Workers{
+		Groups: []clusterapi.WorkerGroup[*v1beta1.TinkerbellMachineTemplate]{
+			{
+				MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.Name = "cluster-worker-node-group-0"
+				}),
+				ProviderMachineTemplate: machineTemplate(),
+			},
+		},
+	}
 }

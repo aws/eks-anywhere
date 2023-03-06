@@ -12,6 +12,7 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -45,6 +46,7 @@ const (
 	captPackage         = "github.com/tinkerbell/cluster-api-provider-tinkerbell"
 	tinkerbellPackage   = "github.com/tinkerbell/tink"
 	etcdProviderPackage = "github.com/aws/etcdadm-controller"
+	rufioPackage        = "github.com/tinkerbell/rufio"
 )
 
 func init() {
@@ -66,6 +68,7 @@ func init() {
 	utilruntime.Must(addonsv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(tinkerbellv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(tinkv1alpha1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(rufiov1alpha1.AddToScheme(scheme.Scheme))
 }
 
 var packages = []moduleWithCRD{
@@ -80,6 +83,7 @@ var packages = []moduleWithCRD{
 		withMainCustomCRDPath("infrastructure/docker/config/crd/bases"),
 	),
 	mustBuildModuleWithCRDs(etcdProviderPackage),
+	mustBuildModuleWithCRDs(rufioPackage),
 }
 
 type Environment struct {

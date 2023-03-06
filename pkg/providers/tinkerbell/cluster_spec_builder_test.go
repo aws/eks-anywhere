@@ -36,6 +36,9 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 		Spec: &cluster.Spec{
 			Config: &cluster.Config{
 				Cluster: &v1alpha1.Cluster{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "cluster",
+					},
 					Spec: v1alpha1.ClusterSpec{
 						ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 							Count: 1,
@@ -70,6 +73,8 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 						},
 					},
 				},
+				TinkerbellDatacenter:     b.NewDefaultTinkerbellDatacenter(),
+				TinkerbellMachineConfigs: b.NewDefaultTinkerbellMachineConfigs(),
 			},
 		},
 		DatacenterConfig: &v1alpha1.TinkerbellDatacenterConfig{
@@ -94,6 +99,9 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Users: []v1alpha1.UserConfiguration{
 						{
 							Name: "ec2-user",
+							SshAuthorizedKeys: []string{
+								"test-rsa ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+							},
 						},
 					},
 				},
@@ -109,6 +117,9 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Users: []v1alpha1.UserConfiguration{
 						{
 							Name: "ec2-user",
+							SshAuthorizedKeys: []string{
+								"test-rsa ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+							},
 						},
 					},
 				},
@@ -124,6 +135,9 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Users: []v1alpha1.UserConfiguration{
 						{
 							Name: "ec2-user",
+							SshAuthorizedKeys: []string{
+								"test-rsa ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+							},
 						},
 					},
 				},
@@ -138,4 +152,67 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 	}
 
 	return spec
+}
+
+func (b ValidClusterSpecBuilder) NewDefaultTinkerbellDatacenter() *v1alpha1.TinkerbellDatacenterConfig {
+	return &v1alpha1.TinkerbellDatacenterConfig{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "datacenter-config",
+			Namespace: b.Namespace,
+		},
+		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
+			TinkerbellIP: "1.1.1.2",
+			OSImageURL:   "https://ubuntu.gz",
+		},
+	}
+}
+
+func (b ValidClusterSpecBuilder) NewDefaultTinkerbellMachineConfigs() map[string]*v1alpha1.TinkerbellMachineConfig {
+	return map[string]*v1alpha1.TinkerbellMachineConfig{
+		b.ControlPlaneMachineName: {
+			ObjectMeta: v1.ObjectMeta{
+				Name:      b.ControlPlaneMachineName,
+				Namespace: b.Namespace,
+			},
+			Spec: v1alpha1.TinkerbellMachineConfigSpec{
+				HardwareSelector: v1alpha1.HardwareSelector{"type": "cp"},
+				OSFamily:         v1alpha1.Ubuntu,
+				Users: []v1alpha1.UserConfiguration{
+					{
+						Name: "ec2-user",
+					},
+				},
+			},
+		},
+		b.ExternalEtcdMachineName: {
+			ObjectMeta: v1.ObjectMeta{
+				Name:      b.ExternalEtcdMachineName,
+				Namespace: b.Namespace,
+			},
+			Spec: v1alpha1.TinkerbellMachineConfigSpec{
+				HardwareSelector: v1alpha1.HardwareSelector{"type": "etcd"},
+				OSFamily:         v1alpha1.Ubuntu,
+				Users: []v1alpha1.UserConfiguration{
+					{
+						Name: "ec2-user",
+					},
+				},
+			},
+		},
+		b.WorkerNodeGroupMachineName: {
+			ObjectMeta: v1.ObjectMeta{
+				Name:      b.WorkerNodeGroupMachineName,
+				Namespace: b.Namespace,
+			},
+			Spec: v1alpha1.TinkerbellMachineConfigSpec{
+				HardwareSelector: v1alpha1.HardwareSelector{"type": "worker"},
+				OSFamily:         v1alpha1.Ubuntu,
+				Users: []v1alpha1.UserConfiguration{
+					{
+						Name: "ec2-user",
+					},
+				},
+			},
+		},
+	}
 }

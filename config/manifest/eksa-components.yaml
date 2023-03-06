@@ -3806,6 +3806,75 @@ spec:
                   name:
                     type: string
                 type: object
+              packages:
+                description: PackageConfiguration for installing EKS Anywhere curated
+                  packages.
+                properties:
+                  controller:
+                    description: Controller package controller configuration
+                    properties:
+                      digest:
+                        description: Digest package controller digest
+                        type: string
+                      disableWebhooks:
+                        description: DisableWebhooks on package controller
+                        type: boolean
+                      env:
+                        description: Env of package controller in the format `key=value`
+                        items:
+                          type: string
+                        type: array
+                      repository:
+                        description: Repository package controller repository
+                        type: string
+                      resources:
+                        description: Resources of package controller
+                        properties:
+                          limits:
+                            description: ImageResource resources for container image.
+                            properties:
+                              cpu:
+                                description: CPU image cpu
+                                type: string
+                              memory:
+                                description: Memory image memory
+                                type: string
+                            type: object
+                          requests:
+                            description: Requests for image resources
+                            properties:
+                              cpu:
+                                description: CPU image cpu
+                                type: string
+                              memory:
+                                description: Memory image memory
+                                type: string
+                            type: object
+                        type: object
+                      tag:
+                        description: Tag package controller tag
+                        type: string
+                    type: object
+                  cronjob:
+                    description: Cronjob for ecr token refresher
+                    properties:
+                      digest:
+                        description: Digest ecr token refresher digest
+                        type: string
+                      disable:
+                        description: Disable on cron job
+                        type: boolean
+                      repository:
+                        description: Repository ecr token refresher repository
+                        type: string
+                      tag:
+                        description: Tag ecr token refresher tag
+                        type: string
+                    type: object
+                  disable:
+                    description: Disable package controller on cluster
+                    type: boolean
+                type: object
               podIamConfig:
                 properties:
                   serviceAccountIssuer:
@@ -5169,6 +5238,24 @@ spec:
                 description: HardwareSelector models a simple key-value selector used
                   in Tinkerbell provisioning.
                 type: object
+              hostOSConfiguration:
+                description: HostOSConfiguration defines the configuration settings
+                  on the host OS.
+                properties:
+                  ntpConfiguration:
+                    description: NTPConfiguration defines the NTP configuration on
+                      the host OS.
+                    properties:
+                      servers:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - servers
+                    type: object
+                required:
+                - ntpConfiguration
+                type: object
               osFamily:
                 type: string
               templateRef:
@@ -5774,6 +5861,15 @@ rules:
   - update
   - watch
 - apiGroups:
+  - bmc.tinkerbell.org
+  resources:
+  - machines
+  - machines/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - cluster.x-k8s.io
   resources:
   - '*'
@@ -5807,6 +5903,8 @@ rules:
   - awssnowclusters
   - awssnowippools
   - awssnowmachinetemplates
+  - cloudstackclusters
+  - cloudstackmachinetemplates
   - dockerclusters
   - dockermachinetemplates
   - tinkerbellclusters
@@ -6236,6 +6334,27 @@ webhooks:
     service:
       name: eksa-webhook-service
       namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig
+  failurePolicy: Fail
+  name: mutation.tinkerbellmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - tinkerbellmachineconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
       path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig
   failurePolicy: Fail
   name: mutation.vspheredatacenterconfig.anywhere.amazonaws.com
@@ -6270,6 +6389,27 @@ webhooks:
     - UPDATE
     resources:
     - vspheremachineconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig
+  failurePolicy: Fail
+  name: mutation.cloudstackdatacenterconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackdatacenterconfigs
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1

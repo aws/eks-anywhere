@@ -16,7 +16,6 @@ package helm
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -348,7 +347,7 @@ func (helmrequires *Requires) validateHelmRequiresNotEmpty() error {
 
 // parseHelmRequires will attempt to unpack the requires.yaml into the Go struct `Requires`.
 func parseHelmRequires(fileName string, helmrequires *Requires) error {
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
@@ -392,7 +391,7 @@ func ValidateHelmChart(fileName string) (*chart.Metadata, error) {
 
 // parseHelmChart will attempt to unpack the Chart.yaml into the Go struct `Chart`.
 func parseHelmChart(fileName string, helmChart *chart.Metadata) error {
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
@@ -415,7 +414,7 @@ func OverwriteChartYaml(filename string, helmChart *chart.Metadata) error {
 		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", helmChart, yamlData, err)
 	}
 
-	err = ioutil.WriteFile(filename, yamlData, 0o644)
+	err = os.WriteFile(filename, yamlData, 0o644)
 	if err != nil {
 		return err
 	}
@@ -437,7 +436,7 @@ func OverWriteChartValuesImageTag(filename string, tagMap map[string]string) err
 	if err != nil {
 		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", values, yamlData, err)
 	}
-	err = ioutil.WriteFile(valuesFile, yamlData, 0o644)
+	err = os.WriteFile(valuesFile, yamlData, 0o644)
 	if err != nil {
 		return err
 	}
@@ -456,7 +455,7 @@ func OverWriteChartValuesImageSha(filename string, shaMap map[string]anywherev1a
 	if err != nil {
 		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", values, yamlData, err)
 	}
-	err = ioutil.WriteFile(valuesFile, yamlData, 0o644)
+	err = os.WriteFile(valuesFile, yamlData, 0o644)
 	if err != nil {
 		return err
 	}

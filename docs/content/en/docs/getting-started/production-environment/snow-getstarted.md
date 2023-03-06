@@ -194,7 +194,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
      > **NOTE**: `snowDatacenterConfig.spec.identityRef` and a Snow bootstrap credentials secret need to be specified when provisioning a cluster through `GitOps` or `Terraform`, as EKS Anywhere Cluster Controller will not create a Snow bootstrap credentials secret like `eksctl CLI` does when field is empty.
      >
-     > `spec.users[0].sshAuthorizedKeys` must be specified to SSH into your nodes when provisioning a cluster through `GitOps` or `Terraform`, as the EKS Anywhere Cluster Controller will not generate the keys like `eksctl CLI` does when the field is empty.
+     > `snowMachineConfig.spec.sshKeyName` must be specified to SSH into your nodes when provisioning a cluster through `GitOps` or `Terraform`, as the EKS Anywhere Cluster Controller will not generate the keys like `eksctl CLI` does when the field is empty.
 
     * **eksctl CLI**: To create a workload cluster with `eksctl`, run:
       ```bash

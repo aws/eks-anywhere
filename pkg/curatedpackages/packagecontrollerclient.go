@@ -5,17 +5,20 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/templater"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 //go:embed config/secrets.yaml
@@ -30,9 +33,10 @@ type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
 	kubeConfig            string
-	chart                 *v1alpha1.Image
+	chart                 *releasev1.Image
 	chartInstaller        ChartInstaller
 	clusterName           string
+	clusterSpec           *v1alpha1.ClusterSpec
 	managementClusterName string
 	kubectl               KubectlRunner
 	eksaAccessKeyID       string
@@ -52,7 +56,7 @@ type ChartInstaller interface {
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig string, chart *v1alpha1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName string, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		clusterName:    clusterName,
@@ -60,6 +64,7 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 		chartInstaller: chartInstaller,
 		kubectl:        kubectl,
 		registryMirror: registryMirror,
+		eksaRegion:     eksaDefaultRegion,
 	}
 
 	for _, o := range options {
@@ -111,7 +116,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		chartName = chartName + "-" + pc.clusterName
 	}
 
-	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, "", valueFilePath, values); err != nil {
+	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, "eksa-packages", valueFilePath, values); err != nil {
 		return err
 	}
 
@@ -144,7 +149,9 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries() (sourceRegistr
 			defaultImageRegistry = gatedOCINamespace
 		}
 	} else {
-		defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, eksaDefaultRegion, pc.eksaRegion)
+		if pc.eksaRegion != eksaDefaultRegion {
+			defaultImageRegistry = strings.ReplaceAll(defaultImageRegistry, eksaDefaultRegion, pc.eksaRegion)
+		}
 	}
 	return sourceRegistry, defaultRegistry, defaultImageRegistry
 }
@@ -193,7 +200,9 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 	if err != nil {
 		return []byte{}, err
 	}
-	return result, nil
+
+	values, err := pc.GetPackageControllerConfiguration()
+	return []byte(values + string(result)), err
 }
 
 // packageBundleControllerResource is the name of the package bundle controller
@@ -274,6 +283,75 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 	return hasResource && err == nil
 }
 
+func formatYamlLine(space, key, value string) string {
+	if value == "" {
+		return ""
+	}
+	return space + key + ": " + value + "\n"
+}
+
+func formatImageResource(resource *v1alpha1.ImageResource, name string) (result string) {
+	if resource.CPU != "" || resource.Memory != "" {
+		result = "    " + name + ":\n"
+		result += formatYamlLine("      ", "cpu", resource.CPU)
+		result += formatYamlLine("      ", "memory", resource.Memory)
+	}
+	return result
+}
+
+func formatCronJob(cronJob *v1alpha1.PackageControllerCronJob) (result string) {
+	if cronJob != nil {
+		result += "cronjob:\n"
+		result += formatYamlLine("  ", "digest", cronJob.Digest)
+		result += formatYamlLine("  ", "repository", cronJob.Repository)
+		result += formatYamlLine("  ", "suspend", strconv.FormatBool(cronJob.Disable))
+		result += formatYamlLine("  ", "tag", cronJob.Tag)
+	}
+	return result
+}
+
+func formatResources(resources *v1alpha1.PackageControllerResources) (result string) {
+	if resources.Limits.CPU != "" || resources.Limits.Memory != "" ||
+		resources.Requests.CPU != "" || resources.Requests.Memory != "" {
+		result += "  resources:\n"
+		result += formatImageResource(&resources.Limits, "limits")
+		result += formatImageResource(&resources.Requests, "requests")
+	}
+	return result
+}
+
+// GetPackageControllerConfiguration returns the default kubernetes version for a Cluster.
+func (pc *PackageControllerClient) GetPackageControllerConfiguration() (result string, err error) {
+	clusterSpec := pc.clusterSpec
+	if clusterSpec == nil || clusterSpec.Packages == nil {
+		return "", nil
+	}
+
+	if clusterSpec.Packages.Controller != nil {
+		result += "controller:\n"
+		result += formatYamlLine("  ", "digest", clusterSpec.Packages.Controller.Digest)
+		result += formatYamlLine("  ", "enableWebhooks", strconv.FormatBool(!clusterSpec.Packages.Controller.DisableWebhooks))
+		result += formatYamlLine("  ", "repository", clusterSpec.Packages.Controller.Repository)
+		result += formatYamlLine("  ", "tag", clusterSpec.Packages.Controller.Tag)
+		result += formatResources(&clusterSpec.Packages.Controller.Resources)
+		if len(clusterSpec.Packages.Controller.Env) > 0 {
+			result += "  env:\n"
+			for _, kvp := range clusterSpec.Packages.Controller.Env {
+				results := strings.SplitN(kvp, "=", 2)
+				if len(results) != 2 {
+					err = fmt.Errorf("invalid environment in specification <%s>", kvp)
+					continue
+				}
+				result += "  - name: " + results[0] + "\n"
+				result += "    value: " + results[1] + "\n"
+			}
+		}
+	}
+	result += formatCronJob(clusterSpec.Packages.CronJob)
+
+	return result, err
+}
+
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.eksaAccessKeyID = eksaAccessKeyId
@@ -296,8 +374,6 @@ func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		if eksaRegion != "" {
 			config.eksaRegion = eksaRegion
-		} else {
-			config.eksaRegion = eksaDefaultRegion
 		}
 	}
 }
@@ -333,5 +409,12 @@ func WithManagementClusterName(managementClusterName string) func(client *Packag
 func WithValuesFileWriter(writer filewriter.FileWriter) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.valuesFileWriter = writer
+	}
+}
+
+// WithClusterSpec sets the cluster spec.
+func WithClusterSpec(clusterSpec *cluster.Spec) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.clusterSpec = &clusterSpec.Cluster.Spec
 	}
 }

@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -48,7 +49,7 @@ func TestClusterStateValidatorValidate(t *testing.T) {
 	}{
 		{
 			name: "validate success",
-			clusterSpec: cluster.NewSpec(func(s *cluster.Spec) {
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = &v1alpha1.Cluster{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster",
@@ -65,7 +66,7 @@ func TestClusterStateValidatorValidate(t *testing.T) {
 		},
 		{
 			name: "invalid cluster name in spec",
-			clusterSpec: cluster.NewSpec(func(s *cluster.Spec) {
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = &v1alpha1.Cluster{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-invalid-name",
@@ -77,7 +78,7 @@ func TestClusterStateValidatorValidate(t *testing.T) {
 		},
 		{
 			name: "invalid cluster name in spec",
-			clusterSpec: cluster.NewSpec(func(s *cluster.Spec) {
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster = &v1alpha1.Cluster{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-name-invalid",

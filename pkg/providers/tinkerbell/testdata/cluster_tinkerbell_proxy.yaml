@@ -50,7 +50,7 @@ metadata:
   name: test
   namespace: test-namespace
 spec:
-  tinkerbellIP: "5.6.7.8"
+  tinkerbellIP: "2.3.4.5"
   osImageURL: "https://ubuntu.gz"
 
 ---

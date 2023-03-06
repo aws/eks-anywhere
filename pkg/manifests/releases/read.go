@@ -3,6 +3,7 @@ package releases
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -29,7 +30,7 @@ func ReadReleases(reader Reader) (*releasev1.Release, error) {
 func ReadReleasesFromURL(reader Reader, url string) (*releasev1.Release, error) {
 	content, err := reader.ReadFile(url)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "reading Releases file")
 	}
 
 	release := &releasev1.Release{}
