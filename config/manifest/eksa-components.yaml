@@ -4425,7 +4425,6 @@ spec:
                 type: boolean
               port:
                 description: Port is the Port of Nutanix Prism Central
-                minimum: 9440
                 type: integer
             required:
             - endpoint
@@ -6120,6 +6119,10 @@ rules:
   - dockerclusters/status
   - dockermachinetemplates
   - dockermachinetemplates/status
+  - nutanixclusters
+  - nutanixclusters/status
+  - nutanixmachinetemplates
+  - nutanixmachinetemplates/status
   verbs:
   - get
   - list

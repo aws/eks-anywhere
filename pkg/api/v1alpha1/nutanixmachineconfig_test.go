@@ -126,6 +126,7 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 				assert.True(t, machineConf.IsEtcd())
 
 				assert.False(t, machineConf.IsManaged())
+				machineConf.Annotations = nil
 				machineConf.SetManagedBy(machineConfName)
 				assert.True(t, machineConf.IsManaged())
 

@@ -89,6 +89,10 @@
       - dockerclusters/status
       - dockermachinetemplates
       - dockermachinetemplates/status
+      - nutanixclusters
+      - nutanixclusters/status
+      - nutanixmachinetemplates
+      - nutanixmachinetemplates/status
     verbs:
       - get
       - list

@@ -49,7 +49,6 @@ type Provider struct {
 	machineConfigs   map[string]*v1alpha1.NutanixMachineConfig
 	templateBuilder  *TemplateBuilder
 	kubectlClient    ProviderKubectlClient
-	nutanixClient    Client
 	validator        *Validator
 	writer           filewriter.FileWriter
 }
@@ -63,7 +62,7 @@ func NewProvider(
 	clusterConfig *v1alpha1.Cluster,
 	providerKubectlClient ProviderKubectlClient,
 	writer filewriter.FileWriter,
-	nutanixClient Client,
+	clientCache *ClientCache,
 	certValidator crypto.TlsValidator,
 	httpClient *http.Client,
 	now types.NowFunc,
@@ -88,14 +87,13 @@ func NewProvider(
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
 	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now)
 
-	nutanixValidator := NewValidator(nutanixClient, certValidator, httpClient)
+	nutanixValidator := NewValidator(clientCache, certValidator, httpClient)
 	return &Provider{
 		clusterConfig:    clusterConfig,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		templateBuilder:  templateBuilder,
 		kubectlClient:    providerKubectlClient,
-		nutanixClient:    nutanixClient,
 		validator:        nutanixValidator,
 		writer:           writer,
 	}
@@ -186,15 +184,9 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	if err := setupEnvVars(clusterSpec.NutanixDatacenter); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
-
-	if err := p.validator.ValidateDatacenterConfig(ctx, clusterSpec.NutanixDatacenter); err != nil {
-		return fmt.Errorf("failed to validate datacenter config: %v", err)
-	}
-
-	for _, conf := range clusterSpec.NutanixMachineConfigs {
-		if err := p.validator.ValidateMachineConfig(ctx, conf); err != nil {
-			return fmt.Errorf("failed to validate machine config: %v", err)
-		}
+	creds := GetCredsFromEnv()
+	if err := p.validator.ValidateClusterSpec(ctx, clusterSpec, creds); err != nil {
+		return fmt.Errorf("failed to validate cluster spec: %v", err)
 	}
 
 	if err := p.generateSSHKeysIfNotSet(); err != nil {
@@ -231,7 +223,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.
 func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	// check if CAPI Secret name and EKS-A Secret name are not the same
 	// this is to ensure that the EKS-A Secret that is watched and CAPX Secret that is reconciled are not the same
-	if capxSecretName(clusterSpec) == eksaSecretName(clusterSpec) {
+	if CAPXSecretName(clusterSpec) == EKSASecretName(clusterSpec) {
 		return fmt.Errorf("NutanixDatacenterConfig CredentialRef name cannot be the same as the NutanixCluster CredentialRef name")
 	}
 

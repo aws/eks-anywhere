@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -28,22 +29,43 @@ const (
 
 // Validator is a client to validate nutanix resources.
 type Validator struct {
-	client        Client
 	httpClient    *http.Client
 	certValidator crypto.TlsValidator
+	clientCache   *ClientCache
 }
 
 // NewValidator returns a new validator client.
-func NewValidator(client Client, certValidator crypto.TlsValidator, httpClient *http.Client) *Validator {
+func NewValidator(clientCache *ClientCache, certValidator crypto.TlsValidator, httpClient *http.Client) *Validator {
 	return &Validator{
-		client:        client,
+		clientCache:   clientCache,
 		certValidator: certValidator,
 		httpClient:    httpClient,
 	}
 }
 
+// ValidateClusterSpec validates the cluster spec.
+func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec, creds credentials.BasicAuthCredential) error {
+	fmt.Printf("ValidateClusterSpec for Nutanix datacenter %s\n", spec.NutanixDatacenter.Name)
+	client, err := v.clientCache.GetNutanixClient(spec.NutanixDatacenter, creds)
+	if err != nil {
+		return err
+	}
+
+	if err := v.ValidateDatacenterConfig(ctx, client, spec.NutanixDatacenter); err != nil {
+		return err
+	}
+
+	for _, conf := range spec.NutanixMachineConfigs {
+		if err := v.ValidateMachineConfig(ctx, client, conf); err != nil {
+			return fmt.Errorf("failed to validate machine config: %v", err)
+		}
+	}
+
+	return nil
+}
+
 // ValidateDatacenterConfig validates the datacenter config.
-func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywherev1.NutanixDatacenterConfig) error {
+func (v *Validator) ValidateDatacenterConfig(ctx context.Context, client Client, config *anywherev1.NutanixDatacenterConfig) error {
 	if config.Spec.Insecure {
 		logger.Info("Warning: Skipping TLS validation for insecure connection to Nutanix Prism Central; this is not recommended for production use")
 	}
@@ -52,7 +74,7 @@ func (v *Validator) ValidateDatacenterConfig(ctx context.Context, config *anywhe
 		return err
 	}
 
-	if err := v.validateCredentials(ctx); err != nil {
+	if err := v.validateCredentials(ctx, client); err != nil {
 		return err
 	}
 
@@ -103,8 +125,8 @@ func (v *Validator) validateEndpointAndPort(dcConf anywherev1.NutanixDatacenterC
 	return nil
 }
 
-func (v *Validator) validateCredentials(ctx context.Context) error {
-	_, err := v.client.GetCurrentLoggedInUser(ctx)
+func (v *Validator) validateCredentials(ctx context.Context, client Client) error {
+	_, err := client.GetCurrentLoggedInUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -151,34 +173,34 @@ func (v *Validator) validateMachineSpecs(machineSpec anywherev1.NutanixMachineCo
 }
 
 // ValidateMachineConfig validates the Prism Element cluster, subnet, and image for the machine.
-func (v *Validator) ValidateMachineConfig(ctx context.Context, config *anywherev1.NutanixMachineConfig) error {
+func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, config *anywherev1.NutanixMachineConfig) error {
 	if err := v.validateMachineSpecs(config.Spec); err != nil {
 		return err
 	}
 
-	if err := v.validateClusterConfig(ctx, config.Spec.Cluster); err != nil {
+	if err := v.validateClusterConfig(ctx, client, config.Spec.Cluster); err != nil {
 		return err
 	}
 
-	if err := v.validateSubnetConfig(ctx, config.Spec.Subnet); err != nil {
+	if err := v.validateSubnetConfig(ctx, client, config.Spec.Subnet); err != nil {
 		return err
 	}
 
-	if err := v.validateImageConfig(ctx, config.Spec.Image); err != nil {
+	if err := v.validateImageConfig(ctx, client, config.Spec.Image); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (v *Validator) validateClusterConfig(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier) error {
+func (v *Validator) validateClusterConfig(ctx context.Context, client Client, identifier anywherev1.NutanixResourceIdentifier) error {
 	switch identifier.Type {
 	case anywherev1.NutanixIdentifierName:
 		if identifier.Name == nil || *identifier.Name == "" {
 			return fmt.Errorf("missing cluster name")
 		} else {
 			clusterName := *identifier.Name
-			if _, err := findClusterUUIDByName(ctx, v.client, clusterName); err != nil {
+			if _, err := findClusterUUIDByName(ctx, client, clusterName); err != nil {
 				return fmt.Errorf("failed to find cluster with name %q: %v", clusterName, err)
 			}
 		}
@@ -187,7 +209,7 @@ func (v *Validator) validateClusterConfig(ctx context.Context, identifier anywhe
 			return fmt.Errorf("missing cluster uuid")
 		} else {
 			clusterUUID := *identifier.UUID
-			if _, err := v.client.GetCluster(ctx, clusterUUID); err != nil {
+			if _, err := client.GetCluster(ctx, clusterUUID); err != nil {
 				return fmt.Errorf("failed to find cluster with uuid %v: %v", clusterUUID, err)
 			}
 		}
@@ -198,14 +220,14 @@ func (v *Validator) validateClusterConfig(ctx context.Context, identifier anywhe
 	return nil
 }
 
-func (v *Validator) validateImageConfig(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier) error {
+func (v *Validator) validateImageConfig(ctx context.Context, client Client, identifier anywherev1.NutanixResourceIdentifier) error {
 	switch identifier.Type {
 	case anywherev1.NutanixIdentifierName:
 		if identifier.Name == nil || *identifier.Name == "" {
 			return fmt.Errorf("missing image name")
 		} else {
 			imageName := *identifier.Name
-			if _, err := findImageUUIDByName(ctx, v.client, imageName); err != nil {
+			if _, err := findImageUUIDByName(ctx, client, imageName); err != nil {
 				return fmt.Errorf("failed to find image with name %q: %v", imageName, err)
 			}
 		}
@@ -214,7 +236,7 @@ func (v *Validator) validateImageConfig(ctx context.Context, identifier anywhere
 			return fmt.Errorf("missing image uuid")
 		} else {
 			imageUUID := *identifier.UUID
-			if _, err := v.client.GetImage(ctx, imageUUID); err != nil {
+			if _, err := client.GetImage(ctx, imageUUID); err != nil {
 				return fmt.Errorf("failed to find image with uuid %s: %v", imageUUID, err)
 			}
 		}
@@ -225,14 +247,14 @@ func (v *Validator) validateImageConfig(ctx context.Context, identifier anywhere
 	return nil
 }
 
-func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier) error {
+func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, identifier anywherev1.NutanixResourceIdentifier) error {
 	switch identifier.Type {
 	case anywherev1.NutanixIdentifierName:
 		if identifier.Name == nil || *identifier.Name == "" {
 			return fmt.Errorf("missing subnet name")
 		} else {
 			subnetName := *identifier.Name
-			if _, err := findSubnetUUIDByName(ctx, v.client, subnetName); err != nil {
+			if _, err := findSubnetUUIDByName(ctx, client, subnetName); err != nil {
 				return fmt.Errorf("failed to find subnet with name %s: %v", subnetName, err)
 			}
 		}
@@ -241,7 +263,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 			return fmt.Errorf("missing subnet uuid")
 		} else {
 			subnetUUID := *identifier.UUID
-			if _, err := v.client.GetSubnet(ctx, subnetUUID); err != nil {
+			if _, err := client.GetSubnet(ctx, subnetUUID); err != nil {
 				return fmt.Errorf("failed to find subnet with uuid %s: %v", subnetUUID, err)
 			}
 		}

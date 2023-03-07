@@ -120,26 +120,6 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 			name:              "nutanix provider valid config with additional trust bundle",
 			clusterConfigFile: "testdata/nutanix/cluster_nutanix_with_trust_bundle.yaml",
 		},
-		{
-			name:              "nutanix provider valid config with invalid additional trust bundle",
-			clusterConfigFile: "testdata/nutanix/cluster_nutanix_with_invalid_trust_bundle.yaml",
-			expectError:       true,
-		},
-		{
-			name:              "nutanix provider valid config with empty additional trust bundle",
-			clusterConfigFile: "testdata/nutanix/cluster_nutanix_with_empty_trust_bundle.yaml",
-			expectError:       true,
-		},
-		{
-			name:              "nutanix provider missing datacenter config",
-			clusterConfigFile: "testdata/nutanix/cluster_nutanix_without_dc.yaml",
-			expectError:       true,
-		},
-		{
-			name:              "nutanix provider missing machine config",
-			clusterConfigFile: "testdata/nutanix/cluster_nutanix_without_mc.yaml",
-			expectError:       true,
-		},
 	}
 
 	t.Setenv(constants.EksaNutanixUsernameKey, "test")
@@ -151,16 +131,13 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 		deps, err := dependencies.NewFactory().
 			WithLocalExecutables().
 			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+			WithNutanixValidator().
+			WithNutanixDefaulter().
 			Build(context.Background())
 
-		if tc.expectError {
-			tt.Expect(err).NotTo(BeNil())
-			tt.Expect(deps).To(BeNil())
-		} else {
-			tt.Expect(err).To(BeNil())
-			tt.Expect(deps.Provider).NotTo(BeNil())
-			tt.Expect(deps.NutanixPrismClient).NotTo(BeNil())
-		}
+		tt.Expect(err).To(BeNil())
+		tt.Expect(deps.Provider).NotTo(BeNil())
+		tt.Expect(deps.NutanixClientCache).NotTo(BeNil())
 	}
 }
 

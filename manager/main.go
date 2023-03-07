@@ -8,6 +8,7 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
+	nutanixv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/spf13/pflag"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -60,6 +61,7 @@ func init() {
 	utilruntime.Must(tinkerbellv1.AddToScheme(scheme))
 	utilruntime.Must(tinkv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rufiov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(nutanixv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -316,6 +318,10 @@ func setupTinkerbellWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 func setupNutanixWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 	if err := (&anywherev1.NutanixDatacenterConfig{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.NutanixDatacenterKind)
+		os.Exit(1)
+	}
+	if err := (&anywherev1.NutanixMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.NutanixMachineConfig{})
 		os.Exit(1)
 	}
 }

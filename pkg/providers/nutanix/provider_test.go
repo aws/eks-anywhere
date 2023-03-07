@@ -93,7 +93,12 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
 	t.Setenv(constants.EksaNutanixPasswordKey, "password")
 
-	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, writer, nutanixClient, certValidator, httpClient, time.Now)
+	clientCache := &ClientCache{
+		clients: make(map[string]Client),
+	}
+	clientCache.clients[dcConf.Name] = nutanixClient
+
+	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, writer, clientCache, certValidator, httpClient, time.Now)
 	require.NotNil(t, provider)
 	return provider
 }
@@ -102,7 +107,11 @@ func testNutanixProviderWithClusterSpec(t *testing.T, nutanixClient Client, kube
 	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
 	t.Setenv(constants.EksaNutanixPasswordKey, "password")
 
-	provider := NewProvider(clusterSpec.NutanixDatacenter, clusterSpec.NutanixMachineConfigs, clusterSpec.Cluster, kubectl, writer, nutanixClient, certValidator, httpClient, time.Now)
+	clientCache := &ClientCache{
+		clients: make(map[string]Client),
+	}
+	clientCache.clients[clusterSpec.NutanixDatacenter.Name] = nutanixClient
+	provider := NewProvider(clusterSpec.NutanixDatacenter, clusterSpec.NutanixMachineConfigs, clusterSpec.Cluster, kubectl, writer, clientCache, certValidator, httpClient, time.Now)
 	require.NotNil(t, provider)
 	return provider
 }
@@ -213,19 +222,19 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			name:            "valid cluster config with invalid trust bundle",
 			clusterConfFile: "testdata/cluster_nutanix_with_invalid_trust_bundle.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed to validate datacenter config: invalid cert",
+			expectErrStr:    "failed to validate cluster spec: invalid cert",
 		},
 		{
 			name:            "valid cluster config with invalid pe cluster name - same as pc name",
 			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-pc.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed to validate machine config: failed to find cluster with name \"prism-central\": failed to find cluster by name \"prism-central\": <nil>",
+			expectErrStr:    "failed to validate cluster spec: failed to validate machine config: failed to find cluster with name \"prism-central\": failed to find cluster by name \"prism-central\": <nil>",
 		},
 		{
 			name:            "valid cluster config with invalid pe cluster name - non existent pe name",
 			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-random-name.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed to validate machine config: failed to find cluster with name \"non-existent-cluster\": failed to find cluster by name \"non-existent-cluster\": <nil>",
+			expectErrStr:    "failed to validate cluster spec: failed to validate machine config: failed to find cluster with name \"non-existent-cluster\": failed to find cluster by name \"non-existent-cluster\": <nil>",
 		},
 		{
 			name:            "cluster config with unsupported upgrade strategy configuration for cp",
@@ -384,158 +393,6 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 				return nil
 			},
 		},
-		// {
-		// 	name:            "validate is ssh key gets generated when empty list provided for SshAuthorizedKeys for cp",
-		// 	clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
-		// 	expectErr:       false,
-		// 	performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
-		// 		// Set the SSH Authorized Key to empty string
-		// 		controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-		// 		clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys = []string{}
-
-		// 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-		// 		if err != nil {
-		// 			return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		// 		}
-		// 		// Expect the SSH Authorized Key to be not empty
-		// 		if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		// 			return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
-		// 		}
-		// 		return nil
-		// 	},
-		// },
-		// {
-		// 	name:            "validate is ssh key gets generated when empty list provided for Users for cp",
-		// 	clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
-		// 	expectErr:       false,
-		// 	performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
-		// 		// Set the SSH Authorized Key to empty string
-		// 		controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-		// 		clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users = []anywherev1.UserConfiguration{}
-
-		// 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-		// 		if err != nil {
-		// 			return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		// 		}
-		// 		// Expect the SSH Authorized Key to be not empty
-		// 		if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		// 			return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
-		// 		}
-		// 		return nil
-		// 	},
-		// },
-		// {
-		// 	name:            "generate error in writing the ssh key by mocking the writer for cp",
-		// 	clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
-		// 	expectErr:       true,
-		// 	performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
-		// 		// Set the SSH Authorized Key to empty string
-		// 		controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-		// 		clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
-
-		// 		writer := filewritermocks.NewMockFileWriter(ctrl)
-		// 		provider.writer = writer
-		// 		writer.EXPECT().Write(
-		// 			test.OfType("string"), gomock.Any(), gomock.Not(gomock.Nil()),
-		// 		).Return("", errors.New("writing file"))
-
-		// 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-		// 		if err != nil {
-		// 			return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		// 		}
-		// 		// Expect the SSH Authorized Key to be not empty
-		// 		if clusterSpec.NutanixMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		// 			return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
-		// 		}
-		// 		return nil
-		// 	},
-		// },
-		// {
-		// 	name:            "validate is ssh key gets generated for md",
-		// 	clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
-		// 	expectErr:       false,
-		// 	performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
-		// 		// Set the SSH Authorized Key to empty string
-		// 		workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-		// 		clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
-
-		// 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-		// 		if err != nil {
-		// 			return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		// 		}
-		// 		// Expect the SSH Authorized Key to be not empty
-		// 		if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		// 			return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
-		// 		}
-		// 		return nil
-		// 	},
-		// },
-		// {
-		// 	name:            "validate is ssh key gets generated when empty list provided for SshAuthorizedKeys for md",
-		// 	clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
-		// 	expectErr:       false,
-		// 	performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
-		// 		// Set the SSH Authorized Key to empty string
-		// 		workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-		// 		clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys = []string{}
-
-		// 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-		// 		if err != nil {
-		// 			return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		// 		}
-		// 		// Expect the SSH Authorized Key to be not empty
-		// 		if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		// 			return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
-		// 		}
-		// 		return nil
-		// 	},
-		// },
-		// {
-		// 	name:            "validate is ssh key gets generated when empty list provided for Users for md",
-		// 	clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
-		// 	expectErr:       false,
-		// 	performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
-		// 		// Set the SSH Authorized Key to empty string
-		// 		workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-		// 		clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users = []anywherev1.UserConfiguration{}
-
-		// 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-		// 		if err != nil {
-		// 			return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		// 		}
-		// 		// Expect the SSH Authorized Key to be not empty
-		// 		if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		// 			return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
-		// 		}
-		// 		return nil
-		// 	},
-		// },
-		// {
-		// 	name:            "generate error in writing the ssh key by mocking the writer for md",
-		// 	clusterConfFile: "testdata/eksa-cluster-multiple-machineconfigs.yaml",
-		// 	expectErr:       true,
-		// 	performTest: func(t *testing.T, provider *Provider, clusterSpec *cluster.Spec) error {
-		// 		// Set the SSH Authorized Key to empty string
-		// 		workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-		// 		clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
-
-		// 		writer := filewritermocks.NewMockFileWriter(ctrl)
-		// 		provider.writer = writer
-		// 		writer.EXPECT().Write(
-		// 			test.OfType("string"), gomock.Any(), gomock.Not(gomock.Nil()),
-		// 		).Return("", errors.New("writing file"))
-
-		// 		err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-		// 		if err != nil {
-		// 			return fmt.Errorf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		// 		}
-		// 		// Expect the SSH Authorized Key to be not empty
-		// 		if clusterSpec.NutanixMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		// 			return fmt.Errorf("sshAuthorizedKey has not changed for control plane machine")
-		// 		}
-		// 		return nil
-		// 	},
-		// },
 	}
 
 	for _, tc := range sshKeyTests {

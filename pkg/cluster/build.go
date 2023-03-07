@@ -14,6 +14,8 @@ func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 		getSnowDatacenter,
 		getSnowMachineConfigsAndIPPools,
 		getSnowIdentitySecret,
+		getNutanixDatacenter,
+		getNutanixMachineConfigs,
 		getOIDC,
 		getAWSIam,
 		getGitOps,
