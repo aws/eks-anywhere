@@ -34,7 +34,6 @@ var schemeAdders = []schemeAdder{
 	etcdv1.AddToScheme,
 	addonsv1.AddToScheme,
 	tinkerbellv1.AddToScheme,
-	tinkerbellv1.AddToScheme,
 }
 
 func addToScheme(scheme *runtime.Scheme, schemeAdders ...schemeAdder) error {

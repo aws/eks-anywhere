@@ -2,8 +2,8 @@ package reconciler
 
 import (
 	"context"
-  
-  "github.com/go-logr/logr"
+
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -245,7 +245,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 		r.DetectOperation,
 		r.ValidateHardware,
 		r.ValidateRufioMachines,
-    r.OmitMachineTemplate,
+		r.OmitMachineTemplate,
 		r.ReconcileWorkers,
 	).Run(ctx, log, NewScope(clusterSpec))
 }
@@ -350,14 +350,14 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	}
 
 	var v tinkerbell.ClusterSpecValidator
-	v.Register(tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(etcdReader.GetCatalogue()))
+	v.Register(tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(kubeReader.GetCatalogue()))
 
 	// todo: add AssertionsForScaleUpDown
 	switch tinkerbellScope.ClusterChange {
 	case NeedNewNode:
-		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(etcdReader.GetCatalogue()))
+		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue()))
 	case ReconcileNewCluster:
-		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(etcdReader.GetCatalogue()))
+		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
 	}
 
 	tinkClusterSpec := tinkerbell.NewClusterSpec(

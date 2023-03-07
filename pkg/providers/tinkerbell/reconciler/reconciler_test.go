@@ -27,9 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -162,10 +160,6 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 
 	tt.createAllObjs()
@@ -197,10 +191,6 @@ func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	scope := tt.buildScope()
@@ -376,11 +366,6 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 }
 
 func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
-
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
@@ -515,24 +500,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 	logger := test.NewNullLogger()
 
 	tt.cluster.Name = "invalidCluster"
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &tinkv1alpha1.Hardware{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "hw1",
-			Labels: map[string]string{
-				hardware.OwnerNameLabel: "cluster",
-				"type":                  "cp",
-			},
-			Namespace: constants.EksaSystemNamespace,
-		},
-		Spec: tinkv1alpha1.HardwareSpec{
-			Metadata: &tinkv1alpha1.HardwareMetadata{
-				Instance: &tinkv1alpha1.MetadataInstance{
-					ID: "foo",
-				},
-			},
-		},
-	},
-	)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "worker"))
 
 	tt.withFakeClient()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
@@ -588,6 +556,8 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 			},
 		},
 	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
 
 	tt.withFakeClient()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
@@ -600,10 +570,6 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 }
 
 func TestReconcilerGenerateSpec(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
@@ -616,10 +582,6 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 }
 
 func TestReconciler_DetectOperationNeedNewNode(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	w := tinkWorker(func(w *tinkerbell.Workers) {
 		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
@@ -639,10 +601,6 @@ func TestReconciler_DetectOperationNeedNewNode(t *testing.T) {
 }
 
 func TestReconciler_DetectOperationNeedMoreOrLessNode(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -657,10 +615,6 @@ func TestReconciler_DetectOperationNeedMoreOrLessNode(t *testing.T) {
 }
 
 func TestReconciler_DetectOperationFail(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -675,10 +629,6 @@ func TestReconciler_DetectOperationFail(t *testing.T) {
 }
 
 func TestReconciler_DetectOperationNewCluster(t *testing.T) {
-	// TODO: remove after diskExtractor has been refactored and removed.
-	features.ClearCache()
-	t.Setenv(features.TinkerbellUseDiskExtractorDefaultDiskEnvVar, "true")
-	//
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
@@ -863,7 +813,6 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
-	tt.DeleteAllOfAndWait(tt.ctx, &anywherev1.Cluster{})
 }
 
 type clusterOpt func(*anywherev1.Cluster)
@@ -986,6 +935,10 @@ func controlPlaneMachineTemplate() *tinkerbellv1.TinkerbellMachineTemplate {
 
 func tinkHardware(hardwareName, labelType string) *tinkv1alpha1.Hardware {
 	return &tinkv1alpha1.Hardware{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Hardware",
+			APIVersion: "tinkerbell.org/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      hardwareName,
 			Namespace: constants.EksaSystemNamespace,
