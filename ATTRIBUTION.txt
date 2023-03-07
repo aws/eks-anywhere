@@ -38,16 +38,16 @@ https://github.com/aws/aws-sdk-go-v2/service/sts
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
 
-** github.com/aws/etcdadm-bootstrap-provider/api/v1beta1; version v1.0.5-rc2 --
+** github.com/aws/etcdadm-bootstrap-provider/api/v1beta1; version v1.0.6 --
 https://github.com/aws/etcdadm-bootstrap-provider
 
-** github.com/aws/etcdadm-controller/api/v1beta1; version v1.0.4-rc2 --
+** github.com/aws/etcdadm-controller/api/v1beta1; version v1.0.5 --
 https://github.com/aws/etcdadm-controller
 
 ** github.com/aws/smithy-go; version v1.13.2 --
 https://github.com/aws/smithy-go
 
-** github.com/containerd/containerd; version v1.6.15 --
+** github.com/containerd/containerd; version v1.6.19 --
 https://github.com/containerd/containerd
 
 ** github.com/coredns/caddy/caddyfile; version v1.1.0 --
