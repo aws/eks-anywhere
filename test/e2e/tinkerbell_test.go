@@ -189,6 +189,33 @@ func TestTinkerbellKubernetes125UbuntuWorkloadCluster(t *testing.T) {
 	runTinkerbellWorkloadClusterFlow(test)
 }
 
+func TestTinkerbellKubernetes125UbuntuWorkloadClusterAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube125),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+		),
+	)
+	runTinkerbellWorkloadClusterAPIFlow(test)
+}
+
 func TestTinkerbellKubernetes125BottlerocketWorkloadClusterSimpleFlow(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
 	test := framework.NewMulticlusterE2ETest(
@@ -207,6 +234,33 @@ func TestTinkerbellKubernetes125BottlerocketWorkloadClusterSimpleFlow(t *testing
 		),
 	)
 	runTinkerbellWorkloadClusterFlow(test)
+}
+
+func TestTinkerbellKubernetes125BottlerocketWorkloadClusterAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube125),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+		),
+	)
+	runTinkerbellWorkloadClusterAPIFlow(test)
 }
 
 func TestTinkerbellKubernetes125UbuntuSingleNodeWorkloadCluster(t *testing.T) {
@@ -237,6 +291,39 @@ func TestTinkerbellKubernetes125UbuntuSingleNodeWorkloadCluster(t *testing.T) {
 	runTinkerbellWorkloadClusterFlow(test)
 }
 
+func TestTinkerbellKubernetes125UbuntuSingleNodeWorkloadClusterAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube125),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(0),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube125),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithEtcdCountIfExternal(0),
+				api.RemoveAllWorkerNodeGroups(),
+			),
+		),
+	)
+	runTinkerbellWorkloadClusterAPIFlow(test)
+}
+
 func TestTinkerbellKubernetes125BottlerocketSingleNodeWorkloadCluster(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
 	test := framework.NewMulticlusterE2ETest(
@@ -263,6 +350,39 @@ func TestTinkerbellKubernetes125BottlerocketSingleNodeWorkloadCluster(t *testing
 		),
 	)
 	runTinkerbellWorkloadClusterFlow(test)
+}
+
+func TestTinkerbellKubernetes125BottlerocketSingleNodeWorkloadClusterAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube125),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(0),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube125),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithEtcdCountIfExternal(0),
+				api.RemoveAllWorkerNodeGroups(),
+			),
+		),
+	)
+	runTinkerbellWorkloadClusterAPIFlow(test)
 }
 
 func TestTinkerbellKubernetes125BottlerocketWorkloadClusterSkipPowerActions(t *testing.T) {

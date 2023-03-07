@@ -2,10 +2,12 @@ package framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -53,6 +55,18 @@ func (w *WorkloadCluster) DeleteClusterWithKubectl() {
 	w.StopIfFailed()
 }
 
+// WaitForAvailableHardware waits for workload cluster hardware to be available.
+func (w *WorkloadCluster) WaitForAvailableHardware() {
+	ctx := context.Background()
+	w.T.Logf("Waiting for workload cluster %s hardware to be available", w.ClusterName)
+	err := retrier.Retry(240, 5*time.Second, func() error {
+		return w.availableHardware(ctx)
+	})
+	if err != nil {
+		w.T.Fatalf("Failed waiting for cluster hardware: %s", err)
+	}
+}
+
 // WaitForKubeconfig waits for the kubeconfig for the workload cluster to be available and then writes it to disk.
 func (w *WorkloadCluster) WaitForKubeconfig() {
 	ctx := context.Background()
@@ -65,7 +79,7 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 	}
 
 	w.T.Logf("Waiting for workload cluster %s control plane to be ready", w.ClusterName)
-	if err := w.KubectlClient.WaitForControlPlaneReady(ctx, w.managementCluster(), "10m", w.ClusterName); err != nil {
+	if err := w.KubectlClient.WaitForControlPlaneReady(ctx, w.managementCluster(), "15m", w.ClusterName); err != nil {
 		w.T.Errorf("Failed waiting for control plane ready: %s", err)
 	}
 }
@@ -104,4 +118,35 @@ func (w *WorkloadCluster) writeKubeconfigToDisk(ctx context.Context) error {
 		return fmt.Errorf("failed to write kubeconfig to disk: %v", err)
 	}
 	return err
+}
+
+func (w *WorkloadCluster) availableHardware(ctx context.Context) error {
+	hardwareList, err := w.KubectlClient.GetUnprovisionedTinkerbellHardware(ctx, w.ManagementClusterKubeconfigFile(), constants.EksaSystemNamespace)
+	if err != nil {
+		return fmt.Errorf("failed to get unprovisioned hardware: %s", err)
+	}
+
+	cpHardwareRequired := w.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.Count
+	var workerHardwareRequired int
+	for _, workerNodeGroup := range w.ClusterConfig.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerHardwareRequired += *workerNodeGroup.Count
+	}
+
+	var cpHardwareAvailable int
+	var workerHardwareAvailable int
+
+	for _, hardware := range hardwareList {
+		switch hardware.Labels[api.HardwareLabelTypeKeyName] {
+		case api.ControlPlane:
+			cpHardwareAvailable++
+		case api.Worker:
+			workerHardwareAvailable++
+		}
+	}
+
+	if cpHardwareAvailable < cpHardwareRequired || workerHardwareAvailable < workerHardwareRequired {
+		return errors.New("Insufficient hardware available for cluster")
+	}
+
+	return nil
 }
