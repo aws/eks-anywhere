@@ -7,6 +7,7 @@ type HostOSConfiguration struct {
 	// +optional
 	NTPConfiguration *NTPConfiguration `json:"ntpConfiguration,omitempty"`
 
+	// BottlerocketConfiguration for additional bottlerocket settings
 	// +optional
 	BottlerocketConfiguration *BottlerocketConfiguration `json:"bottlerocketConfiguration,omitempty"`
 }

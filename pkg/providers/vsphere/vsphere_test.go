@@ -3500,7 +3500,6 @@ func TestProviderGenerateDeploymentFileForBottlerocketWithKernelConfig(t *testin
 	if err != nil {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
-
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_kernel_config_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_kernel_config_md.yaml")
 }
