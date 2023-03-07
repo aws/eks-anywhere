@@ -296,7 +296,7 @@ webhooks:
       namespace: system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-nutanixdatacenterconfig
   failurePolicy: Fail
-  name: nutanixdatacenterconfig.kb.io
+  name: validation.nutanixdatacenterconfig.anywhere.amazonaws.com
   rules:
   - apiGroups:
     - anywhere.eks.amazonaws.com

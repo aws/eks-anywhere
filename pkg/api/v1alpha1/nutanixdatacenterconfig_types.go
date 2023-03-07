@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,7 +40,6 @@ type NutanixDatacenterConfigSpec struct {
 
 	// CredentialRef is the reference to the secret name that contains the credentials
 	// for the Nutanix Prism Central. The namespace for the secret is assumed to be a constant i.e. eksa-system.
-	// +kubebuilder:validation:Optional
 	// +optional
 	CredentialRef *Ref `json:"credentialRef,omitempty"`
 }
@@ -130,7 +130,7 @@ func (in *NutanixDatacenterConfig) Validate() error {
 	}
 
 	if in.Spec.CredentialRef != nil {
-		if in.Spec.CredentialRef.Kind != "Secret" {
+		if in.Spec.CredentialRef.Kind != constants.SecretKind {
 			return fmt.Errorf("NutanixDatacenterConfig credentialRef Kind (%s) is not a secret", in.Spec.CredentialRef.Kind)
 		}
 
