@@ -1,11 +1,14 @@
-package v1alpha1
+package v1alpha1_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/internal/test/envtest"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -35,7 +38,7 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateInvalidOldObject(t *testin
 	g := NewWithT(t)
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
-	g.Expect(newConf.ValidateUpdate(&NutanixMachineConfig{})).To(MatchError("old object is not a NutanixDatacenterConfig"))
+	g.Expect(newConf.ValidateUpdate(&v1alpha1.NutanixMachineConfig{})).To(MatchError("old object is not a NutanixDatacenterConfig"))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateCredentialRefRemoved(t *testing.T) {
@@ -47,18 +50,37 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateCredentialRefRemoved(t *te
 	g.Expect(newConf.ValidateUpdate(oldConf)).To(MatchError("credentialRef cannot be removed from an existing NutanixDatacenterConfig"))
 }
 
-func nutanixDatacenterConfig() *NutanixDatacenterConfig {
-	return &NutanixDatacenterConfig{
+func TestNutanixDatacenterConfigWebhooksValidateDelete(t *testing.T) {
+	g := NewWithT(t)
+	dcConf := nutanixDatacenterConfig()
+	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	g.Expect(dcConf.ValidateDelete()).To(Succeed())
+}
+
+func TestNutanixDatacenterConfigSetupWebhookWithManager(t *testing.T) {
+	g := NewWithT(t)
+	dcConf := nutanixDatacenterConfig()
+	g.Expect(dcConf.SetupWebhookWithManager(env.Manager())).To(Succeed())
+}
+
+func nutanixDatacenterConfig() *v1alpha1.NutanixDatacenterConfig {
+	return &v1alpha1.NutanixDatacenterConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "nutanix-datacenter-config",
 		},
-		Spec: NutanixDatacenterConfigSpec{
+		Spec: v1alpha1.NutanixDatacenterConfigSpec{
 			Endpoint: "prism.nutanix.com",
 			Port:     9440,
-			CredentialRef: &Ref{
+			CredentialRef: &v1alpha1.Ref{
 				Kind: constants.SecretKind,
 				Name: constants.NutanixCredentialsName,
 			},
 		},
 	}
+}
+
+var env *envtest.Environment
+
+func TestMain(m *testing.M) {
+	os.Exit(envtest.RunWithEnvironment(m, envtest.WithAssignment(&env)))
 }

@@ -180,7 +180,6 @@ func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementClus
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	clusterSpec.NutanixDatacenter.SetDefaults()
 	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}

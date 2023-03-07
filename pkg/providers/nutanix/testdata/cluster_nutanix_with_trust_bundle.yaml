@@ -45,6 +45,9 @@ metadata:
 spec:
   endpoint: "prism.nutanix.com"
   port: 9440
+  credentialRef:
+    kind: Secret
+    name: "nutanix-credentials"
   additionalTrustBundle: |
     -----BEGIN CERTIFICATE-----
     MIIDajCCAlKgAwIBAgIUZOD4pznfHyCO8gMvP87F+PnhGHMwDQYJKoZIhvcNAQEL
