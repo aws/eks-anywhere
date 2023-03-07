@@ -39,7 +39,7 @@ When upgrading without an extra machine, keep in mind that your control plane an
 
 Each machine should include the following features:
 
-* Network Interface Cards: At least one NIC is required. It must be capable of netbooting from PXE. 
+* Network Interface Cards: At least one NIC is required. It must be capable of network booting.
 * BMC integration (recommended): An IPMI or Redfish implementation (such a Dell iDRAC, RedFish-compatible, legacy or HP iLO) on the computer's motherboard or on a separate expansion card. This feature is used to allow remote management of the machine, such as turning the machine on and off.
 
 >**_NOTE_**: BMC integration is not required for an EKS Anywhere cluster. However, without BMC integration, upgrades are not supported and you will have to physically turn machines off and on when appropriate.

@@ -56,7 +56,7 @@ Use the following to access the SSH service on the worker nodes:
 
 ## Bare Metal provider
 
-On the Admin machine for a Bare Metal provider, the following ports need to be accessible to all the nodes in the cluster, from the same level 2 network, for initially PXE booting:
+On the Admin machine for a Bare Metal provider, the following ports need to be accessible to all the nodes in the cluster, from the same level 2 network, for initially network booting:
 
 | Protocol | Direction | Port Range | Purpose                 | Used By                       |
 |----------|-----------|------------|-------------------------|------------------------------ |
