@@ -8,9 +8,10 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // NutanixDatacenterConfigSpec defines the desired state of NutanixDatacenterConfig.

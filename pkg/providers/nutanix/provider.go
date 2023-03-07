@@ -238,7 +238,7 @@ func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, cl
 		return fmt.Errorf("loading secrets object: %v", err)
 	}
 
-	eksaSecretContents, err := p.templateBuilder.GenerateEKSASpecSecret()
+	eksaSecretContents, err := p.templateBuilder.GenerateEKSASpecSecret(clusterSpec)
 	if err != nil {
 		return err
 	}
