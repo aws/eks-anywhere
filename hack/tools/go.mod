@@ -11,6 +11,6 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20230301194117-e2d8821b277f // indirect
 )
