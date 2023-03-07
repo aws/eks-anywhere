@@ -96,6 +96,10 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return err
 	}
 
+	if err := validateHostOSConfig(config.Spec.HostOSConfiguration, config.Spec.OSFamily); err != nil {
+		return fmt.Errorf("SnowMachineConfig HostOSConfiguration is invalid: %v", err)
+	}
+
 	return validateSnowMachineConfigNonRootVolumes(config.Spec.NonRootVolumes)
 }
 
