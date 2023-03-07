@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.10.0
-	helm.sh/helm/v3 v3.11.0
+	helm.sh/helm/v3 v3.11.1
 	k8s.io/apimachinery v0.26.0
 	k8s.io/helm v2.17.0+incompatible
 	sigs.k8s.io/controller-runtime v0.13.1
