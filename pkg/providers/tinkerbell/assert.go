@@ -259,7 +259,7 @@ func (v *ValidatableTinkerbellClusterSpec) WorkerNodeHardwareGroups() []WorkerNo
 
 	workerNodeGroupConfigs := make([]WorkerNodeHardware, 0, len(v.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroup := range v.Cluster.Spec.WorkerNodeGroupConfigurations {
-		fmt.Println(workerNodeGroup)
+		fmt.Printf("%#v\n", v.WorkerNodeGroupMachineConfig(workerNodeGroup))
 		workerNodeGroupConfig := &WorkerNodeHardware{
 			MachineDeploymentName: machineDeploymentName(v.Cluster.Name, workerNodeGroup.Name),
 			Replicas:              *workerNodeGroup.Count,
