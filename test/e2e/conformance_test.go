@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -314,6 +315,7 @@ func TestNutanixKubernetes126ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewNutanix(t, framework.WithUbuntu126Nutanix()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithClusterFiller(features.K8s126SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
