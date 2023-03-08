@@ -195,7 +195,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	tt.createAllObjs()
 	scope := tt.buildScope()
 	logger := test.NewNullLogger()
-	scope.ControlPlane = tinkerbellCP()
+	scope.ControlPlane = tinkerbellCP(workloadClusterName)
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -383,11 +383,11 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 	scope := tt.buildScope()
 	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
 	logger := test.NewNullLogger()
-	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	_, err = tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
+	scope.ControlPlane = tinkerbellCP(tt.cluster.Name)
+	scope.Workers = tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.Spec.Replicas = ptr.Int32(2)
+	})
+	_, err := tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
 
@@ -478,7 +478,7 @@ func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
 }
 
-func TestReconcilerValidateHardwareCountFail(t *testing.T) {
+func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 
@@ -493,6 +493,28 @@ func TestReconcilerValidateHardwareCountFail(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+}
+
+func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
 }
 
 func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
@@ -577,13 +599,26 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 	result, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP()))
-	tt.Expect(scope.Workers).To(Equal(tinkWorker()))
+	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
+	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
+}
+
+func TestReconcilerGenerateSpecFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	tt.reconciler()
+	result, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
+	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
 }
 
 func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt := newReconcilerTest(t)
-	w := tinkWorker(func(w *tinkerbell.Workers) {
+	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
 		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
@@ -599,7 +634,26 @@ func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt.Expect(op).To(Equal(reconciler.K8sVersionUpgradeOperation))
 }
 
-func TestReconciler_DetectOperationScaleUpdate(t *testing.T) {
+func TestReconciler_DetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
+	tt := newReconcilerTest(t)
+	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
+		w.Groups[0].MachineDeployment.Spec.Replicas = ptr.Int32(2)
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
+
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+}
+
+func TestReconciler_DetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -628,7 +682,7 @@ func TestReconciler_DetectOperationFail(t *testing.T) {
 
 func TestReconciler_DetectOperationInvalidOperation(t *testing.T) {
 	tt := newReconcilerTest(t)
-	w := tinkWorker(func(w *tinkerbell.Workers) {
+	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
 		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
@@ -970,8 +1024,10 @@ func tinkHardware(hardwareName, labelType string) *tinkv1alpha1.Hardware {
 	}
 }
 
-func tinkerbellCP() *tinkerbell.ControlPlane {
-	return &tinkerbell.ControlPlane{
+type cpOpt func(plane *tinkerbell.ControlPlane)
+
+func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
+	cp := &tinkerbell.ControlPlane{
 		BaseControlPlane: tinkerbell.BaseControlPlane{
 			Cluster: &clusterv1.Cluster{
 				TypeMeta: metav1.TypeMeta{
@@ -979,7 +1035,7 @@ func tinkerbellCP() *tinkerbell.ControlPlane {
 					APIVersion: "cluster.x-k8s.io/v1beta1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      workloadClusterName,
+					Name:      clusterName,
 					Namespace: constants.EksaSystemNamespace,
 					Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": workloadClusterName},
 				},
@@ -998,12 +1054,12 @@ func tinkerbellCP() *tinkerbell.ControlPlane {
 					},
 					ControlPlaneRef: &corev1.ObjectReference{
 						Kind:       "KubeadmControlPlane",
-						Name:       workloadClusterName,
+						Name:       clusterName,
 						APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
 					},
 					InfrastructureRef: &corev1.ObjectReference{
 						Kind:       "TinkerbellCluster",
-						Name:       workloadClusterName,
+						Name:       clusterName,
 						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 					},
 				},
@@ -1015,7 +1071,7 @@ func tinkerbellCP() *tinkerbell.ControlPlane {
 					APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      workloadClusterName,
+					Name:      clusterName,
 					Namespace: constants.EksaSystemNamespace,
 				},
 				Spec: controlplanev1.KubeadmControlPlaneSpec{
@@ -1100,7 +1156,7 @@ func tinkerbellCP() *tinkerbell.ControlPlane {
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      workloadClusterName,
+					Name:      clusterName,
 					Namespace: constants.EksaSystemNamespace,
 				},
 				Spec: tinkerbellv1.TinkerbellClusterSpec{
@@ -1134,11 +1190,15 @@ func tinkerbellCP() *tinkerbell.ControlPlane {
 			},
 		},
 	}
+	for _, opt := range opts {
+		opt(cp)
+	}
+	return cp
 }
 
 type workerOpt func(*tinkerbell.Workers)
 
-func tinkWorker(opts ...workerOpt) *tinkerbell.Workers {
+func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 	w := &tinkerbell.Workers{
 		Groups: []clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 			{
@@ -1148,7 +1208,7 @@ func tinkWorker(opts ...workerOpt) *tinkerbell.Workers {
 						APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "workload-cluster-md-0-1",
+						Name:      clusterName + "-md-0-1",
 						Namespace: constants.EksaSystemNamespace,
 					},
 					Spec: bootstrapv1.KubeadmConfigTemplateSpec{
@@ -1206,11 +1266,11 @@ func tinkWorker(opts ...workerOpt) *tinkerbell.Workers {
 						APIVersion: "cluster.x-k8s.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "workload-cluster-md-0",
+						Name:      clusterName + "-md-0",
 						Namespace: constants.EksaSystemNamespace,
 						Labels: map[string]string{
 							"pool":                          "md-0",
-							"cluster.x-k8s.io/cluster-name": "workload-cluster",
+							"cluster.x-k8s.io/cluster-name": clusterName,
 						},
 					},
 					Spec: clusterv1.MachineDeploymentSpec{
@@ -1223,21 +1283,21 @@ func tinkWorker(opts ...workerOpt) *tinkerbell.Workers {
 							ObjectMeta: clusterv1.ObjectMeta{
 								Labels: map[string]string{
 									"pool":                          "md-0",
-									"cluster.x-k8s.io/cluster-name": workloadClusterName,
+									"cluster.x-k8s.io/cluster-name": clusterName,
 								},
 							},
 							Spec: clusterv1.MachineSpec{
-								ClusterName: workloadClusterName,
+								ClusterName: clusterName,
 								Bootstrap: clusterv1.Bootstrap{
 									ConfigRef: &corev1.ObjectReference{
 										Kind:       "KubeadmConfigTemplate",
-										Name:       "workload-cluster-md-0-1",
+										Name:       clusterName + "-md-0-1",
 										APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
 									},
 								},
 								InfrastructureRef: corev1.ObjectReference{
 									Kind:       "TinkerbellMachineTemplate",
-									Name:       "workload-cluster-md-0-1",
+									Name:       clusterName + "-md-0-1",
 									APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 								},
 								Version: ptr.String("v1.19.8"),
@@ -1251,12 +1311,12 @@ func tinkWorker(opts ...workerOpt) *tinkerbell.Workers {
 						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "workload-cluster-md-0-1",
+						Name:      clusterName + "-md-0-1",
 						Namespace: constants.EksaSystemNamespace,
 					},
 					Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
 						Template: tinkerbellv1.TinkerbellMachineTemplateResource{Spec: tinkerbellv1.TinkerbellMachineSpec{
-							TemplateOverride: "global_timeout: 6000\nid: \"\"\nname: workload-cluster\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: '{{ index .Hardware.Disks 0 }}'\n      IMG_URL: \"\"\n    image: \"\"\n    name: stream-image\n    timeout: 600\n  - environment:\n      BOOTCONFIG_CONTENTS: kernel {}\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /bootconfig.data\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-bootconfig\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /user-data.toml\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-user-data\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /net.toml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      IFNAME: eno1\n      MODE: \"0644\"\n      STATIC_BOTTLEROCKET: \"true\"\n      UID: \"0\"\n    image: \"\"\n    name: write-netplan\n    pid: host\n    timeout: 90\n  - image: \"\"\n    name: reboot-image\n    pid: host\n    timeout: 90\n    volumes:\n    - /worker:/worker\n  name: workload-cluster\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n",
+							TemplateOverride: "global_timeout: 6000\nid: \"\"\nname: " + clusterName + "\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: '{{ index .Hardware.Disks 0 }}'\n      IMG_URL: \"\"\n    image: \"\"\n    name: stream-image\n    timeout: 600\n  - environment:\n      BOOTCONFIG_CONTENTS: kernel {}\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /bootconfig.data\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-bootconfig\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /user-data.toml\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-user-data\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /net.toml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      IFNAME: eno1\n      MODE: \"0644\"\n      STATIC_BOTTLEROCKET: \"true\"\n      UID: \"0\"\n    image: \"\"\n    name: write-netplan\n    pid: host\n    timeout: 90\n  - image: \"\"\n    name: reboot-image\n    pid: host\n    timeout: 90\n    volumes:\n    - /worker:/worker\n  name: workload-cluster\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n",
 							HardwareAffinity: &tinkerbellv1.HardwareAffinity{
 								Required: []tinkerbellv1.HardwareAffinityTerm{
 									{

@@ -141,7 +141,7 @@ func (r *Reconciler) GenerateSpec(ctx context.Context, log logr.Logger, tinkerbe
 
 	cp, err := tinkerbell.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
 	if err != nil {
-		return controller.Result{}, err
+		return controller.Result{}, errors.Wrap(err, "generating control plane spec")
 	}
 	tinkerbellScope.ControlPlane = cp
 
@@ -366,11 +366,6 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue()))
 	case NewClusterOperation:
 		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
-	case ScaleOperation:
-		v.Register(tinkerbell.AssertionsForScaleUpDown(kubeReader.GetCatalogue(), &tinkerbell.ValidatableTinkerbellCAPI{
-			ControlPlane: tinkerbellScope.ControlPlane,
-			Workers:      tinkerbellScope.Workers,
-		}, false))
 	}
 
 	tinkClusterSpec := tinkerbell.NewClusterSpec(
