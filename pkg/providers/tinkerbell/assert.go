@@ -254,6 +254,7 @@ func (v *ValidatableTinkerbellClusterSpec) ControlPlaneHardwareSelector() v1alph
 
 // WorkerNodeHardwareGroups retrieves a list of WorkerNodeHardwares for a ValidatableTinkerbellClusterSpec.
 func (v *ValidatableTinkerbellClusterSpec) WorkerNodeHardwareGroups() []WorkerNodeHardware {
+	fmt.Printf("%#v\n", v)
 	workerNodeGroupConfigs := make([]WorkerNodeHardware, 0, len(v.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroup := range v.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupConfig := &WorkerNodeHardware{
