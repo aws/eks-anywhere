@@ -221,7 +221,6 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 type WorkerNodeHardware struct {
 	MachineDeploymentName string
 	Replicas              int
-	HardwareSelector      v1alpha1.HardwareSelector
 }
 
 // ValidatableCluster allows assertions to pull worker node and control plane information.
@@ -259,7 +258,6 @@ func (v *ValidatableTinkerbellClusterSpec) WorkerNodeHardwareGroups() []WorkerNo
 		workerNodeGroupConfig := &WorkerNodeHardware{
 			MachineDeploymentName: machineDeploymentName(v.Cluster.Name, workerNodeGroup.Name),
 			Replicas:              *workerNodeGroup.Count,
-			HardwareSelector:      v.WorkerNodeGroupMachineConfig(workerNodeGroup).Spec.HardwareSelector,
 		}
 		workerNodeGroupConfigs = append(workerNodeGroupConfigs, *workerNodeGroupConfig)
 	}
@@ -289,7 +287,6 @@ func (v *ValidatableTinkerbellCAPI) WorkerNodeHardwareGroups() []WorkerNodeHardw
 		workerNodeHardware := &WorkerNodeHardware{
 			MachineDeploymentName: workerGroup.MachineDeployment.Name,
 			Replicas:              int(*workerGroup.MachineDeployment.Spec.Replicas),
-			HardwareSelector:      HardwareSelector(*workerGroup.ProviderMachineTemplate),
 		}
 		workerNodeHardwareList = append(workerNodeHardwareList, *workerNodeHardware)
 	}
@@ -322,16 +319,14 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 		// will account for the same selector being specified on different groups.
 		requirements := minimumHardwareRequirements{}
 
-		desired := &ValidatableTinkerbellClusterSpec{spec}
-
-		if current.ControlPlaneReplicaCount() != desired.ControlPlaneReplicaCount() {
+		if current.ControlPlaneReplicaCount() != spec.Cluster.Spec.ControlPlaneConfiguration.Count {
 			if rollingUpgrade {
 				return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 			}
-			if current.ControlPlaneReplicaCount() < desired.ControlPlaneReplicaCount() {
+			if current.ControlPlaneReplicaCount() < spec.Cluster.Spec.ControlPlaneConfiguration.Count {
 				err := requirements.Add(
-					desired.ControlPlaneHardwareSelector(),
-					desired.ControlPlaneReplicaCount()-current.ControlPlaneReplicaCount(),
+					spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+					spec.Cluster.Spec.ControlPlaneConfiguration.Count-current.ControlPlaneReplicaCount(),
 				)
 				if err != nil {
 					return fmt.Errorf("error during scale up: %v", err)
@@ -344,16 +339,17 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 			workerNodeHardwareMap[workerNodeHardware.MachineDeploymentName] = workerNodeHardware
 		}
 
-		for _, workerNodeHardwareNewSpec := range desired.WorkerNodeHardwareGroups() {
-			if workerNodeHardwareOldSpec, ok := workerNodeHardwareMap[workerNodeHardwareNewSpec.MachineDeploymentName]; ok {
-				if workerNodeHardwareNewSpec.Replicas != workerNodeHardwareOldSpec.Replicas {
+		for _, nodeGroupNewSpec := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+			nodeGroupMachineDeploymentNameNewSpec := machineDeploymentName(spec.Cluster.Name, nodeGroupNewSpec.Name)
+			if workerNodeGroupOldSpec, ok := workerNodeHardwareMap[nodeGroupMachineDeploymentNameNewSpec]; ok {
+				if *nodeGroupNewSpec.Count != workerNodeGroupOldSpec.Replicas {
 					if rollingUpgrade {
 						return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 					}
-					if workerNodeHardwareNewSpec.Replicas > workerNodeHardwareOldSpec.Replicas {
+					if *nodeGroupNewSpec.Count > workerNodeGroupOldSpec.Replicas {
 						err := requirements.Add(
-							workerNodeHardwareNewSpec.HardwareSelector,
-							workerNodeHardwareNewSpec.Replicas-workerNodeHardwareOldSpec.Replicas,
+							spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
+							*nodeGroupNewSpec.Count-workerNodeGroupOldSpec.Replicas,
 						)
 						if err != nil {
 							return fmt.Errorf("error during scale up: %v", err)
@@ -365,8 +361,8 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 					return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 				}
 				err := requirements.Add(
-					workerNodeHardwareNewSpec.HardwareSelector,
-					workerNodeHardwareNewSpec.Replicas,
+					spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
+					*nodeGroupNewSpec.Count,
 				)
 				if err != nil {
 					return fmt.Errorf("error during scale up: %v", err)

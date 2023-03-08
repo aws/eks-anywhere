@@ -466,7 +466,6 @@ func TestValidatableClusterWorkerNodeGroupConfigs(t *testing.T) {
 
 	g.Expect(workerConfigs[0].MachineDeploymentName).To(gomega.Equal("cluster-worker-node-group-0"))
 	g.Expect(workerConfigs[0].Replicas).To(gomega.Equal(1))
-	g.Expect(workerConfigs[0].HardwareSelector).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "worker"}))
 }
 
 func TestValidatableTinkerbellCAPIControlPlaneReplicaCount(t *testing.T) {
@@ -494,7 +493,6 @@ func TestValidatableTinkerbellCAPIWorkerNodeGroupConfigs(t *testing.T) {
 
 	g.Expect(workerConfigs[0].MachineDeploymentName).To(gomega.Equal("cluster-worker-node-group-0"))
 	g.Expect(workerConfigs[0].Replicas).To(gomega.Equal(1))
-	g.Expect(workerConfigs[0].HardwareSelector).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "worker"}))
 }
 
 func TestAssertionsForScaleUpDown_Success(t *testing.T) {
