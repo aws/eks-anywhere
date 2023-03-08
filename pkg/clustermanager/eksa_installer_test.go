@@ -35,7 +35,7 @@ type installerTest struct {
 	cluster     *types.Cluster
 }
 
-func newInstallerTest(t *testing.T) *installerTest {
+func newInstallerTest(t *testing.T, opts ...clustermanager.EKSAInstallerOpt) *installerTest {
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockKubernetesClient(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
@@ -56,7 +56,7 @@ func newInstallerTest(t *testing.T) *installerTest {
 		ctx:         context.Background(),
 		log:         test.NewNullLogger(),
 		client:      client,
-		installer:   clustermanager.NewEKSAInstaller(client, files.NewReader()),
+		installer:   clustermanager.NewEKSAInstaller(client, files.NewReader(), opts...),
 		currentSpec: currentSpec,
 		newSpec:     currentSpec.DeepCopy(),
 		cluster: &types.Cluster{
@@ -71,7 +71,7 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt.newSpec.VersionsBundle.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(33) // there are 33 objects in the manifest
-	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
 }
@@ -138,7 +138,17 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, wantDeployment)
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, wantNamespace)
-	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
+
+	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
+}
+
+func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
+	tt := newInstallerTest(t, clustermanager.WithEKSAInstallerNoTimeouts())
+	tt.newSpec.VersionsBundle.Eksa.Components.URI = "../../config/manifest/eksa-components.yaml"
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
+	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(33) // there are 33 objects in the manifest
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, maxTime.String(), "Available", "eksa-controller-manager", "eksa-system")
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newSpec)).To(Succeed())
 }
@@ -176,7 +186,7 @@ func TestInstallerUpgradeSuccess(t *testing.T) {
 
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&unstructured.Unstructured{}))
-	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
 	tt.Expect(tt.installer.Upgrade(tt.ctx, tt.log, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
