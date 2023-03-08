@@ -143,6 +143,16 @@ func (in *NutanixDatacenterConfig) Validate() error {
 	return nil
 }
 
+// SetDefaults sets default values for the NutanixDatacenterConfig object.
+func (c *NutanixDatacenterConfig) SetDefaults() {
+	if c.Spec.CredentialRef == nil {
+		c.Spec.CredentialRef = &Ref{
+			Kind: constants.SecretKind,
+			Name: constants.NutanixCredentialsName,
+		}
+	}
+}
+
 // NutanixDatacenterConfigGenerate is same as NutanixDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
 //
 // +kubebuilder:object:generate=false

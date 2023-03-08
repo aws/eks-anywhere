@@ -30,21 +30,32 @@ func (r *NutanixDatacenterConfig) ValidateCreate() error {
 		return fmt.Errorf("credentialRef is required to be set to create a new NutanixDatacenterConfig")
 	}
 
+	if r.IsReconcilePaused() {
+		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing create", "name", r.Name)
+		return nil
+	}
+
 	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *NutanixDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	nutanixdatacenterconfiglog.Info("validate update", "name", r.Name)
+	oldNutanixDatacenterConfig, ok := old.(*NutanixDatacenterConfig)
+	if !ok {
+		return fmt.Errorf("old object is not a NutanixDatacenterConfig")
+	}
+
 	if r.Spec.CredentialRef == nil {
 		// check if the old object has a credentialRef set
-		oldNutanixDatacenterConfig, ok := old.(*NutanixDatacenterConfig)
-		if !ok {
-			return fmt.Errorf("old object is not a NutanixDatacenterConfig")
-		}
 		if oldNutanixDatacenterConfig.Spec.CredentialRef != nil {
 			return fmt.Errorf("credentialRef cannot be removed from an existing NutanixDatacenterConfig")
 		}
+	}
+
+	if oldNutanixDatacenterConfig.IsReconcilePaused() {
+		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing update", "name", r.Name)
+		return nil
 	}
 
 	return r.Validate()

@@ -50,13 +50,3 @@ func GetNutanixDatacenterConfig(fileName string) (*NutanixDatacenterConfig, erro
 	}
 	return &clusterConfig, nil
 }
-
-// SetDefaults sets default values for the NutanixDatacenterConfig object.
-func (c *NutanixDatacenterConfig) SetDefaults() {
-	if c.Spec.CredentialRef == nil {
-		c.Spec.CredentialRef = &Ref{
-			Kind: constants.SecretKind,
-			Name: constants.NutanixCredentialsName,
-		}
-	}
-}
