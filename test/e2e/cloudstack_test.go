@@ -94,14 +94,14 @@ func TestCloudStackKubernetes121RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 }
 
 // Labels
-func TestCloudStackKubernetes121LabelsAndNodeNameRedhat(t *testing.T) {
+func TestCloudStackKubernetes123LabelsAndNodeNameRedhat(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t,
-			framework.WithCloudStackRedhat121(),
+			framework.WithCloudStackRedhat123(),
 		),
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithKubernetesVersion(v1alpha1.Kube123),
 			api.WithControlPlaneLabel(constants.FailureDomainLabelName, constants.CloudstackFailureDomainPlaceholder),
 			api.WithWorkerNodeGroup(constants.DefaultWorkerNodeGroupName,
 				api.WithCount(1),
@@ -117,15 +117,15 @@ func TestCloudStackKubernetes121LabelsAndNodeNameRedhat(t *testing.T) {
 }
 
 // Multicluster
-func TestCloudStackKubernetes121WorkloadCluster(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
+func TestCloudStackKubernetes123WorkloadCluster(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
 			t,
 			provider,
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithKubernetesVersion(v1alpha1.Kube123),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
@@ -135,7 +135,7 @@ func TestCloudStackKubernetes121WorkloadCluster(t *testing.T) {
 			t,
 			provider,
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithKubernetesVersion(v1alpha1.Kube123),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
