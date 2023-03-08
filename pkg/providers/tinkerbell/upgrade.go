@@ -134,27 +134,24 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	return nil
 }
 
-func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, currentSpec, newClusterSpec *cluster.Spec) (err error) {
-	clusterSpecValidator := NewClusterSpecValidator(
+func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, current, desired *cluster.Spec) (err error) {
+	validator := NewClusterSpecValidator(
 		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
 	)
 
 	rollingUpgrade := false
-	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
-		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue))
+	if current.Cluster.Spec.KubernetesVersion != desired.Cluster.Spec.KubernetesVersion {
+		validator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue))
 		rollingUpgrade = true
 	}
 
-	currentTinkerbellSpec := NewClusterSpec(currentSpec, currentSpec.TinkerbellMachineConfigs, currentSpec.TinkerbellDatacenter)
-	clusterSpecValidator.Register(AssertionsForScaleUpDown(p.catalogue, &ValidatableTinkerbellClusterSpec{currentTinkerbellSpec}, rollingUpgrade))
+	currentCluster := NewClusterSpec(current, current.TinkerbellMachineConfigs, current.TinkerbellDatacenter)
+	vCurrentCluster := &ValidatableTinkerbellClusterSpec{currentCluster}
+	validator.Register(AssertionsForScaleUpDown(p.catalogue, vCurrentCluster, rollingUpgrade))
 
-	tinkerbellClusterSpec := NewClusterSpec(newClusterSpec, p.machineConfigs, p.datacenterConfig)
+	desiredCluster := NewClusterSpec(desired, p.machineConfigs, p.datacenterConfig)
 
-	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
-		return err
-	}
-
-	return nil
+	return validator.Validate(desiredCluster)
 }
 
 func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
