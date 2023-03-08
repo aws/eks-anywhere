@@ -15,13 +15,17 @@ const (
 	cloudstackDomainVar                = "T_CLOUDSTACK_DOMAIN"
 	cloudstackZoneVar                  = "T_CLOUDSTACK_ZONE"
 	cloudstackZone2Var                 = "T_CLOUDSTACK_ZONE_2"
+	cloudstackZone3Var                 = "T_CLOUDSTACK_ZONE_3"
 	cloudstackAccountVar               = "T_CLOUDSTACK_ACCOUNT"
 	cloudstackNetworkVar               = "T_CLOUDSTACK_NETWORK"
 	cloudstackNetwork2Var              = "T_CLOUDSTACK_NETWORK_2"
+	cloudstackNetwork3Var              = "T_CLOUDSTACK_NETWORK_3"
 	cloudstackCredentialsVar           = "T_CLOUDSTACK_CREDENTIALS"
 	cloudstackCredentials2Var          = "T_CLOUDSTACK_CREDENTIALS_2"
+	cloudstackCredentials3Var          = "T_CLOUDSTACK_CREDENTIALS_3"
 	cloudstackManagementServerVar      = "T_CLOUDSTACK_MANAGEMENT_SERVER"
 	cloudstackManagementServer2Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
+	cloudstackManagementServer3Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_3"
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
 	cloudstackTemplateRedhat121Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_21"
 	cloudstackTemplateRedhat122Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_22"
@@ -41,13 +45,17 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackDomainVar,
 	cloudstackZoneVar,
 	cloudstackZone2Var,
+	cloudstackZone3Var,
 	cloudstackCredentialsVar,
 	cloudstackCredentials2Var,
+	cloudstackCredentials3Var,
 	cloudstackAccountVar,
 	cloudstackNetworkVar,
 	cloudstackNetwork2Var,
+	cloudstackNetwork3Var,
 	cloudstackManagementServerVar,
 	cloudstackManagementServer2Var,
+	cloudstackManagementServer3Var,
 	cloudstackSshAuthorizedKeyVar,
 	cloudstackTemplateRedhat121Var,
 	cloudstackComputeOfferingLargeVar,
@@ -86,6 +94,12 @@ func UpdateRedhatTemplate123Var() api.CloudStackFiller {
 
 func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOfferingForAllMachines)
+}
+
+// UpdateAddCloudStackAz3 add availiability zone 3 to the cluster spec.
+func UpdateAddCloudStackAz3() api.CloudStackFiller {
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone3Var, cloudstackCredentials3Var, cloudstackNetwork3Var,
+		cloudstackManagementServer3Var, api.WithCloudStackAz)
 }
 
 func UpdateAddCloudStackAz2() api.CloudStackFiller {

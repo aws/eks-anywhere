@@ -513,3 +513,27 @@ func TestCloudStackKubernetes123GitopsOptionsFluxLegacy(t *testing.T) {
 		provider.WithProviderUpgradeGit(),
 	)
 }
+
+// This test is skipped as registry mirror was not configured for CloudStack
+func TestCloudStackKubernetes121UbuntuAirgappedRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t,
+			framework.WithCloudStackRedhat121(),
+			framework.WithCloudStackFillers(
+				framework.RemoveAllCloudStackAzs(),
+				framework.UpdateAddCloudStackAz3(),
+			),
+		),
+		framework.WithClusterFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		// framework.WithClusterFiller(api.WithExternalEtcdTopology(1)), there is a bug that the etcd node download etcd from internet
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithRegistryMirrorEndpointAndCert(constants.CloudStackProviderName),
+	)
+
+	runAirgapConfigFlow(test, "10.0.0.1/8")
+}

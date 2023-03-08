@@ -2296,7 +2296,7 @@ func TestVSphereKubernetes125UbuntuAirgappedRegistryMirror(t *testing.T) {
 		framework.WithRegistryMirrorEndpointAndCert(constants.VSphereProviderName),
 	)
 
-	runVSphereAirgapConfigFlow(test, "195.18.0.1/16,196.18.0.1/16")
+	runAirgapConfigFlow(test, "195.18.0.1/16,196.18.0.1/16")
 }
 
 func ubuntu125ProviderWithLabels(t *testing.T) *framework.VSphere {
