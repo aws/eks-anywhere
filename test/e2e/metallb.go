@@ -57,7 +57,6 @@ func (suite *Suite) TestPackagesMetalLB() {
 	suite.cluster.WithCluster(func(test *framework.ClusterE2ETest) {
 		kcfg := kubeconfig.FromClusterName(test.ClusterName)
 		cluster := suite.cluster.Cluster()
-		test.InstallCuratedPackagesController()
 		ctx := context.Background()
 		namespace := "metallb-system"
 		test.CreateNamespace(namespace)
