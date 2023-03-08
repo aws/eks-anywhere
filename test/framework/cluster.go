@@ -1056,30 +1056,6 @@ func (e *ClusterE2ETest) DeleteNamespace(namespace string) {
 	}
 }
 
-func (e *ClusterE2ETest) InstallCuratedPackagesController() {
-	kubeconfig := e.kubeconfigFilePath()
-	// TODO Add a test that installs the controller via the CLI.
-	ctx := context.Background()
-	charts, err := e.PackageConfig.HelmClient.ListCharts(ctx, kubeconfig)
-	if err != nil {
-		e.T.Fatalf("Unable to list charts: %v", err)
-	}
-	installed := false
-	for _, c := range charts {
-		if c == EksaPackagesInstallation {
-			installed = true
-			break
-		}
-	}
-	if !installed {
-		err = e.PackageConfig.HelmClient.InstallChart(ctx, e.PackageConfig.chartName, e.PackageConfig.chartURI, e.PackageConfig.chartVersion, kubeconfig, "eksa-packages", "", e.PackageConfig.chartValues)
-		if err != nil {
-			e.T.Fatalf("Unable to install %s helm chart on the cluster: %v",
-				e.PackageConfig.chartName, err)
-		}
-	}
-}
-
 // SetPackageBundleActive will set the current packagebundle to the active state.
 func (e *ClusterE2ETest) SetPackageBundleActive() {
 	kubeconfig := e.kubeconfigFilePath()
