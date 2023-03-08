@@ -157,12 +157,7 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	if err != nil {
 		return nil, nil, err
 	}
-	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	controlPlaneTmc, err := p.providerKubectlClient.GetEksaTinkerbellMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-	if err != nil {
-		return nil, nil, err
-	}
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, controlPlaneTmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -326,13 +321,7 @@ func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *c
 
 func (p *Provider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		workerTmc, err := p.providerKubectlClient.GetEksaTinkerbellMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, workerTmc, workerMachineConfig)
-		return needsNewWorkloadTemplate, nil
+		return needsNewWorkloadTemplate(currentSpec, newClusterSpec), nil
 	}
 	return true, nil
 }
@@ -340,7 +329,7 @@ func (p *Provider) needsNewMachineTemplate(ctx context.Context, workloadCluster 
 func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
-		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig), nil
+		return needsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig), nil
 	}
 	return true, nil
 }
