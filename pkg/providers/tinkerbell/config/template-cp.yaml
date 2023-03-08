@@ -98,6 +98,29 @@ spec:
             name: awsiamcert
             readOnly: false
 {{- end}}
+{{- /*
+  BottleRocket uses different host paths for kubeconfigs requiring host mount path overwrites for
+  the scheduler and controller-manager static pods.
+*/}}
+{{- if ( eq .format "bottlerocket" ) }}
+      controllerManager:
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/controller-manager.conf
+          mountPath: /etc/kubernetes/controller-manager.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
+{{- end }}
+{{- if ( eq .format "bottlerocket" ) }}
+      scheduler:
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/scheduler.conf
+          mountPath: /etc/kubernetes/scheduler.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
+      certificatesDir: /var/lib/kubeadm/pki
+{{- end }}
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
