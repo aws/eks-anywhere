@@ -3,8 +3,10 @@ package clustermanager
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"golang.org/x/exp/maps"
@@ -23,17 +25,35 @@ import (
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
+// EKSAInstallerOpt updates an EKSAInstaller.
+type EKSAInstallerOpt func(*EKSAInstaller)
+
 // EKSAInstaller allows to install eks-a components in a cluster.
 type EKSAInstaller struct {
-	client KubernetesClient
-	reader manifests.FileReader
+	client                KubernetesClient
+	reader                manifests.FileReader
+	deploymentWaitTimeout time.Duration
 }
 
 // NewEKSAInstaller constructs a new EKSAInstaller.
-func NewEKSAInstaller(client KubernetesClient, reader manifests.FileReader) *EKSAInstaller {
-	return &EKSAInstaller{
-		client: client,
-		reader: reader,
+func NewEKSAInstaller(client KubernetesClient, reader manifests.FileReader, opts ...EKSAInstallerOpt) *EKSAInstaller {
+	i := &EKSAInstaller{
+		client:                client,
+		reader:                reader,
+		deploymentWaitTimeout: DefaultDeploymentWait,
+	}
+
+	for _, o := range opts {
+		o(i)
+	}
+
+	return i
+}
+
+// WithEKSAInstallerNoTimeouts disables the timeout when waiting for a deployment to be ready.
+func WithEKSAInstallerNoTimeouts() EKSAInstallerOpt {
+	return func(i *EKSAInstaller) {
+		i.deploymentWaitTimeout = time.Duration(math.MaxInt64)
 	}
 }
 
@@ -57,7 +77,7 @@ func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *t
 		}
 	}
 
-	if err := i.client.WaitForDeployment(ctx, cluster, deploymentWaitStr, "Available", constants.EksaControllerManagerDeployment, constants.EksaSystemNamespace); err != nil {
+	if err := i.client.WaitForDeployment(ctx, cluster, i.deploymentWaitTimeout.String(), "Available", constants.EksaControllerManagerDeployment, constants.EksaSystemNamespace); err != nil {
 		return fmt.Errorf("waiting for eksa-controller-manager: %v", err)
 	}
 

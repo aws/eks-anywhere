@@ -51,6 +51,18 @@ func TestNewWithMaxRetriesSuccessAfterRetries(t *testing.T) {
 	}
 }
 
+func TestNewWithNoTimeout(t *testing.T) {
+	r := retrier.NewWithNoTimeout()
+	fn := func() error {
+		return nil
+	}
+
+	err := r.Retry(fn)
+	if err != nil {
+		t.Fatalf("Retrier.Retry() error = %v, want nil", err)
+	}
+}
+
 func TestRetry(t *testing.T) {
 	wantRetries := 5
 	gotRetries := 0

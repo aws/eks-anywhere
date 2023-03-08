@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -43,13 +44,18 @@ const (
 	defaultBackOffPeriod   = 5 * time.Second
 	machineBackoff         = 1 * time.Second
 	defaultMachinesMinWait = 30 * time.Minute
-	moveCAPIWait           = 15 * time.Minute
+
 	// DefaultMaxWaitPerMachine is the default max time the cluster manager will wait per a machine.
 	DefaultMaxWaitPerMachine = 10 * time.Minute
-	clusterWaitStr           = "60m"
+	// DefaultClusterWait is the default max time the cluster manager will wait for the capi cluster to be in ready state.
+	DefaultClusterWait = 60 * time.Minute
 	// DefaultControlPlaneWait is the default time the cluster manager will wait for the control plane to be ready.
-	DefaultControlPlaneWait   = 60 * time.Minute
-	deploymentWaitStr         = "30m"
+	DefaultControlPlaneWait = 60 * time.Minute
+	// DefaultControlPlaneWaitAfterMove is the default max time the cluster manager will wait for the control plane to be in ready state after the capi move operation.
+	DefaultControlPlaneWaitAfterMove = 15 * time.Minute
+	// DefaultDeploymentWait is the default max time the cluster manager will wait for the deployment to be available.
+	DefaultDeploymentWait = 30 * time.Minute
+
 	controlPlaneInProgressStr = "1m"
 	etcdInProgressStr         = "1m"
 	// DefaultEtcdWait is the default time the cluster manager will wait for ectd to be ready.
@@ -63,20 +69,24 @@ const (
 var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 
 type ClusterManager struct {
-	eksaComponents          EKSAComponents
-	clusterClient           *RetrierClient
-	writer                  filewriter.FileWriter
-	networking              Networking
-	diagnosticsFactory      diagnostics.DiagnosticBundleFactory
-	Retrier                 *retrier.Retrier
-	machineMaxWait          time.Duration
-	machineBackoff          time.Duration
-	machinesMinWait         time.Duration
-	awsIamAuth              AwsIamAuth
-	controlPlaneWaitTimeout time.Duration
-	externalEtcdWaitTimeout time.Duration
-	unhealthyMachineTimeout time.Duration
-	nodeStartupTimeout      time.Duration
+	eksaComponents     EKSAComponents
+	clusterClient      *RetrierClient
+	Retrier            *retrier.Retrier
+	writer             filewriter.FileWriter
+	networking         Networking
+	diagnosticsFactory diagnostics.DiagnosticBundleFactory
+	awsIamAuth         AwsIamAuth
+
+	machineMaxWait                   time.Duration
+	machineBackoff                   time.Duration
+	machinesMinWait                  time.Duration
+	controlPlaneWaitTimeout          time.Duration
+	controlPlaneWaitAfterMoveTimeout time.Duration
+	externalEtcdWaitTimeout          time.Duration
+	unhealthyMachineTimeout          time.Duration
+	nodeStartupTimeout               time.Duration
+	clusterWaitTimeout               time.Duration
+	deploymentWaitTimeout            time.Duration
 }
 
 type ClusterClient interface {
@@ -154,20 +164,23 @@ func DefaultRetrier() *retrier.Retrier {
 // New constructs a new ClusterManager.
 func New(clusterClient *RetrierClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, eksaComponents EKSAComponents, opts ...ClusterManagerOpt) *ClusterManager {
 	c := &ClusterManager{
-		eksaComponents:          eksaComponents,
-		clusterClient:           clusterClient,
-		writer:                  writer,
-		networking:              networking,
-		Retrier:                 DefaultRetrier(),
-		diagnosticsFactory:      diagnosticBundleFactory,
-		machineMaxWait:          DefaultMaxWaitPerMachine,
-		machineBackoff:          machineBackoff,
-		machinesMinWait:         defaultMachinesMinWait,
-		awsIamAuth:              awsIamAuth,
-		controlPlaneWaitTimeout: DefaultControlPlaneWait,
-		externalEtcdWaitTimeout: DefaultEtcdWait,
-		unhealthyMachineTimeout: DefaultUnhealthyMachineTimeout,
-		nodeStartupTimeout:      DefaultNodeStartupTimeout,
+		eksaComponents:                   eksaComponents,
+		clusterClient:                    clusterClient,
+		writer:                           writer,
+		networking:                       networking,
+		Retrier:                          DefaultRetrier(),
+		diagnosticsFactory:               diagnosticBundleFactory,
+		machineMaxWait:                   DefaultMaxWaitPerMachine,
+		machineBackoff:                   machineBackoff,
+		machinesMinWait:                  defaultMachinesMinWait,
+		awsIamAuth:                       awsIamAuth,
+		controlPlaneWaitTimeout:          DefaultControlPlaneWait,
+		controlPlaneWaitAfterMoveTimeout: DefaultControlPlaneWaitAfterMove,
+		externalEtcdWaitTimeout:          DefaultEtcdWait,
+		unhealthyMachineTimeout:          DefaultUnhealthyMachineTimeout,
+		nodeStartupTimeout:               DefaultNodeStartupTimeout,
+		clusterWaitTimeout:               DefaultClusterWait,
+		deploymentWaitTimeout:            DefaultDeploymentWait,
 	}
 
 	for _, o := range opts {
@@ -228,6 +241,24 @@ func WithRetrier(retrier *retrier.Retrier) ClusterManagerOpt {
 	}
 }
 
+// WithNoTimeouts disables the timeout for all the waits and retries in cluster manager.
+func WithNoTimeouts() ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		noTimeoutRetrier := retrier.NewWithNoTimeout()
+		maxTime := time.Duration(math.MaxInt64)
+
+		c.Retrier = noTimeoutRetrier
+		c.machineMaxWait = maxTime
+		c.controlPlaneWaitTimeout = maxTime
+		c.controlPlaneWaitAfterMoveTimeout = maxTime
+		c.externalEtcdWaitTimeout = maxTime
+		c.unhealthyMachineTimeout = maxTime
+		c.nodeStartupTimeout = maxTime
+		c.clusterWaitTimeout = maxTime
+		c.deploymentWaitTimeout = maxTime
+	}
+}
+
 func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
@@ -236,7 +267,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for all clusters to be ready before move")
-	if err := c.waitForAllClustersReady(ctx, from, clusterWaitStr); err != nil {
+	if err := c.waitForAllClustersReady(ctx, from, c.clusterWaitTimeout.String()); err != nil {
 		return err
 	}
 
@@ -246,7 +277,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for control planes to be ready after move")
-	err = c.waitForAllControlPlanes(ctx, to, moveCAPIWait)
+	err = c.waitForAllControlPlanes(ctx, to, c.controlPlaneWaitAfterMoveTimeout)
 	if err != nil {
 		return err
 	}
@@ -651,19 +682,19 @@ func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.S
 }
 
 func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
-	err := c.clusterClient.waitForDeployments(ctx, internal.CAPIDeployments, cluster)
+	err := c.clusterClient.waitForDeployments(ctx, internal.CAPIDeployments, cluster, c.deploymentWaitTimeout.String())
 	if err != nil {
 		return err
 	}
 
 	if externalEtcdTopology {
-		err := c.clusterClient.waitForDeployments(ctx, internal.ExternalEtcdDeployments, cluster)
+		err := c.clusterClient.waitForDeployments(ctx, internal.ExternalEtcdDeployments, cluster, c.deploymentWaitTimeout.String())
 		if err != nil {
 			return err
 		}
 	}
 
-	err = c.clusterClient.waitForDeployments(ctx, provider.GetDeployments(), cluster)
+	err = c.clusterClient.waitForDeployments(ctx, provider.GetDeployments(), cluster, c.deploymentWaitTimeout.String())
 	if err != nil {
 		return err
 	}
