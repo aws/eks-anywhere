@@ -2,7 +2,6 @@ package reconciler
 
 import (
 	"context"
-
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -22,13 +21,16 @@ import (
 )
 
 const (
-	// ReconcileNewCluster means need to create nodes for a new cluster.
-	ReconcileNewCluster clusterChange = "create-new-cluster"
-	// NeedNewNode means node has k8s version change.
-	NeedNewNode clusterChange = "k8s-version-change"
-	// NeedMoreOrLessNode means node group scales up or scales down.
-	NeedMoreOrLessNode clusterChange = "scale-update"
+	// NewClusterOperation indicates to create a new cluster.
+	NewClusterOperation Operation = "NewCluster"
+	// K8sVersionUpgradeOperation indicates to upgrade all nodes to a new Kubernetes version.
+	K8sVersionUpgradeOperation Operation = "K8sVersionUpgrade"
+	// ScaleOperation indicates to change the node size of the cluster.
+	ScaleOperation Operation = "Scale"
 )
+
+// Operation indicates the desired change on a cluster.
+type Operation string
 
 // CNIReconciler is an interface for reconciling CNI in the Tinkerbell cluster reconciler.
 type CNIReconciler interface {
@@ -45,14 +47,11 @@ type IPValidator interface {
 	ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error)
 }
 
-type clusterChange string
-
 // Scope object for Tinkerbell reconciler.
 type Scope struct {
-	ClusterSpec   *c.Spec
-	ClusterChange clusterChange
-	ControlPlane  *tinkerbell.ControlPlane
-	Workers       *tinkerbell.Workers
+	ClusterSpec  *c.Spec
+	ControlPlane *tinkerbell.ControlPlane
+	Workers      *tinkerbell.Workers
 }
 
 // NewScope creates a new Tinkerbell Reconciler Scope.
@@ -95,7 +94,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateControlPlaneIP,
 		r.ValidateClusterSpec,
 		r.GenerateSpec,
-		r.DetectOperation,
 		r.ValidateHardware,
 		r.OmitMachineTemplate,
 		r.ValidateDatacenterConfig,
@@ -140,7 +138,6 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, t
 func (r *Reconciler) GenerateSpec(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
 	spec := tinkerbellScope.ClusterSpec
 	log = log.WithValues("phase", "GenerateSpec")
-	log.Info("Generating tinkerbell control plane and workers spec")
 
 	cp, err := tinkerbell.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
 	if err != nil {
@@ -158,36 +155,36 @@ func (r *Reconciler) GenerateSpec(ctx context.Context, log logr.Logger, tinkerbe
 }
 
 // DetectOperation detects change type.
-func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
-	log = log.WithValues("phase", "DetectOperation")
+func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (Operation, error) {
 	log.Info("Detecting operation type")
 
 	currentKCP, err := controller.GetKubeadmControlPlane(ctx, r.client, tinkerbellScope.ClusterSpec.Cluster)
 	if err != nil {
-		return controller.Result{}, err
+		return "", err
 	}
 	if currentKCP == nil {
-		tinkerbellScope.ClusterChange = ReconcileNewCluster
-		return controller.Result{}, nil
+		return NewClusterOperation, nil
 	}
 
-	tinkCurrentKCP := tinkerbell.KubeadmControlPlane{KubeadmControlPlane: currentKCP}
-	tinkDesiredKCP := tinkerbell.KubeadmControlPlane{KubeadmControlPlane: tinkerbellScope.ControlPlane.KubeadmControlPlane}
-	wantVersionChange := tinkerbell.HasKubernetesVersionChange(&tinkCurrentKCP, &tinkDesiredKCP)
-	cpWantScaleChange := tinkerbell.ReplicasDiff(&tinkCurrentKCP, &tinkDesiredKCP)
+	wantVersionChange := currentKCP.Spec.Version != tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.Version
+	cpWantScaleChange := *currentKCP.Spec.Replicas != *tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.Replicas
 	workerWantScaleChange := r.workerReplicasDiff(ctx, tinkerbellScope)
+	wantScaleChange := workerWantScaleChange || cpWantScaleChange
 
-	if wantVersionChange {
-		if cpWantScaleChange != 0 || workerWantScaleChange {
-			return controller.Result{}, errors.Errorf("cannot perform scale up or down during k8s version change")
-		}
-		tinkerbellScope.ClusterChange = NeedNewNode
-	} else if cpWantScaleChange != 0 || workerWantScaleChange {
-		tinkerbellScope.ClusterChange = NeedMoreOrLessNode
-	} else {
-		return controller.Result{}, errors.Errorf("cannot detect operation type")
+	// Ensure at least 1 and only 1 operation per request.
+	if wantVersionChange && wantScaleChange {
+		return "", errors.Errorf("cannot perform scale up or down during k8s version change")
 	}
-	return controller.Result{}, nil
+	if !wantScaleChange && !wantVersionChange {
+		return "", errors.Errorf("cannot detect operation type")
+	}
+	switch {
+	case wantScaleChange:
+		return ScaleOperation, nil
+	case wantVersionChange:
+		return K8sVersionUpgradeOperation, nil
+	}
+	return "", errors.Errorf("cannot detect operation type")
 }
 
 func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) bool {
@@ -213,8 +210,11 @@ func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Sc
 // OmitMachineTemplate omits control plane and worker machine template on scaling update.
 func (r *Reconciler) OmitMachineTemplate(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
 	log = log.WithValues("phase", "OmitMachineTemplate")
-	log.Info("Omit machine template on scaling")
-	if tinkerbellScope.ClusterChange == NeedMoreOrLessNode {
+	o, err := r.DetectOperation(ctx, log, tinkerbellScope)
+	if err != nil {
+		return controller.Result{}, err
+	}
+	if o == ScaleOperation {
 		tinkerbell.OmitTinkerbellCPMachineTemplate(tinkerbellScope.ControlPlane)
 		tinkerbell.OmitTinkerbellWorkersMachineTemplate(tinkerbellScope.Workers)
 	}
@@ -248,7 +248,6 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	return controller.NewPhaseRunner[*Scope]().Register(
 		r.ValidateClusterSpec,
 		r.GenerateSpec,
-		r.DetectOperation,
 		r.ValidateHardware,
 		r.ValidateRufioMachines,
 		r.OmitMachineTemplate,
@@ -357,11 +356,21 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	var v tinkerbell.ClusterSpecValidator
 	v.Register(tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(kubeReader.GetCatalogue()))
 
-	switch tinkerbellScope.ClusterChange {
-	case NeedNewNode:
+	o, err := r.DetectOperation(ctx, log, tinkerbellScope)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	switch o {
+	case K8sVersionUpgradeOperation:
 		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue()))
-	case ReconcileNewCluster:
+	case NewClusterOperation:
 		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
+	case ScaleOperation:
+		v.Register(tinkerbell.AssertionsForScaleUpDown(kubeReader.GetCatalogue(), &tinkerbell.ValidatableTinkerbellCAPI{
+			ControlPlane: tinkerbellScope.ControlPlane,
+			Workers:      tinkerbellScope.Workers,
+		}, false))
 	}
 
 	tinkClusterSpec := tinkerbell.NewClusterSpec(

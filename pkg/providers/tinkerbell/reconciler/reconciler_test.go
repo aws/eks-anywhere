@@ -581,7 +581,7 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 	tt.Expect(scope.Workers).To(Equal(tinkWorker()))
 }
 
-func TestReconciler_DetectOperationNeedNewNode(t *testing.T) {
+func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt := newReconcilerTest(t)
 	w := tinkWorker(func(w *tinkerbell.Workers) {
 		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
@@ -594,13 +594,12 @@ func TestReconciler_DetectOperationNeedNewNode(t *testing.T) {
 	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.Expect(scope.ClusterChange).To(Equal(reconciler.NeedNewNode))
+	tt.Expect(op).To(Equal(reconciler.K8sVersionUpgradeOperation))
 }
 
-func TestReconciler_DetectOperationNeedMoreOrLessNode(t *testing.T) {
+func TestReconciler_DetectOperationScaleUpdate(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -608,10 +607,9 @@ func TestReconciler_DetectOperationNeedMoreOrLessNode(t *testing.T) {
 	scope := tt.buildScope()
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.Expect(scope.ClusterChange).To(Equal(reconciler.NeedMoreOrLessNode))
+	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
 }
 
 func TestReconciler_DetectOperationFail(t *testing.T) {
@@ -623,9 +621,26 @@ func TestReconciler_DetectOperationFail(t *testing.T) {
 	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during k8s version change")))
-	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(op).To(Equal(reconciler.Operation("")))
+}
+
+func TestReconciler_DetectOperationInvalidOperation(t *testing.T) {
+	tt := newReconcilerTest(t)
+	w := tinkWorker(func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).To(MatchError(ContainSubstring("cannot detect operation type")))
+	tt.Expect(op).To(Equal(reconciler.Operation("")))
 }
 
 func TestReconciler_DetectOperationNewCluster(t *testing.T) {
@@ -636,10 +651,9 @@ func TestReconciler_DetectOperationNewCluster(t *testing.T) {
 	scope.ClusterSpec.Cluster.Name = "new-cluster"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	result, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.Expect(scope.ClusterChange).To(Equal(reconciler.ReconcileNewCluster))
+	tt.Expect(op).To(Equal(reconciler.NewClusterOperation))
 	tt.cleanup()
 }
 
