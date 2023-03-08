@@ -40,11 +40,13 @@ env:
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23: "nutanix_ci:nutanix_template_ubuntu_1_23"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24: "nutanix_ci:nutanix_template_ubuntu_1_24"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25: "nutanix_ci:nutanix_template_ubuntu_1_25"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26: "nutanix_ci:nutanix_template_ubuntu_1_26"
     T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_21: "nutanix_ci:nutanix_template_uuid_ubuntu_1_21"
     T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_22: "nutanix_ci:nutanix_template_uuid_ubuntu_1_22"
     T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_23: "nutanix_ci:nutanix_template_uuid_ubuntu_1_23"
     T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_24: "nutanix_ci:nutanix_template_uuid_ubuntu_1_24"
     T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_25: "nutanix_ci:nutanix_template_uuid_ubuntu_1_25"
+    T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_26: "nutanix_ci:nutanix_template_uuid_ubuntu_1_26"
 phases:
   pre_build:
     commands:
