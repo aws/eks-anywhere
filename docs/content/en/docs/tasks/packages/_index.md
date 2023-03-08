@@ -132,3 +132,61 @@ eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version
 ```
 
 Available curated packages and troubleshooting guides are listed below.
+
+### Install package controller after installation
+
+If you created a cluster without the package controller or if the package controller was not properly configured, you may need to do some things to enable it.
+
+Make sure you are authenticated with the AWS CLI. Use the credentials you set up for packages. These credentials should have [limited capabilities]({{< relref "../packages/#setup-authentication-to-use-curated-packages" >}}):
+
+```bash
+export AWS_ACCESS_KEY_ID="your*access*id"
+export AWS_SECRET_ACCESS_KEY="your*secret*key"
+export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
+```
+
+Verify your credentials are working:
+```shell
+aws sts get-caller-identity
+```
+Login to docker
+```bash
+aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+```
+
+Verify you can pull an image
+```bash
+docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.0.0-9ded128b4606165b41aca52271abe7fa44fa7109
+```
+If the image downloads successfully, it worked!
+
+If you do not have the package controller installed (it is installed by default), install it now:
+```shell
+eksctl anywhere install packagecontroller -f cluster.yaml
+```
+If you had the package controller disabled, you may need to modify your `cluster.yaml` to enable it.
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: billy
+spec:
+  packages:
+    disable: false
+```
+
+You may need to create or update your credentials which you can do with a command like this. Set the environment variables to the proper values before running the command.
+```bash
+kubectl delete secret -n eksa-packages aws-secret
+kubectl create secret -n eksa-packages generic aws-secret \
+   --from-literal=AWS_ACCESS_KEY_ID=${EKSA_AWS_ACCESS_KEY_ID} \
+   --from-literal=AWS_SECRET_ACCESS_KEY=${EKSA_AWS_SECRET_ACCESS_KEY}  \
+   --from-literal=REGION=${EKSA_AWS_REGION}
+```
+
+If you recreate secrets, you can manually re-enable the cronjob and run the job to update the image pull secrets:
+```bash
+kubectl get cronjob -n eksa-packages cron-ecr-renew -o yaml | yq e '.spec.suspend |= false' - | kubectl apply -f -
+kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
+```
