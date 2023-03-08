@@ -26,6 +26,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
+	github.com/kr/pretty v0.3.0
 	github.com/nutanix-cloud-native/prism-go-client v0.3.0
 	github.com/onsi/gomega v1.24.1
 	github.com/opencontainers/image-spec v1.1.0-rc2
@@ -145,6 +146,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matryer/is v1.4.0 // indirect

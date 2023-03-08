@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/kr/pretty"
 	"github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -254,7 +255,7 @@ func (v *ValidatableTinkerbellClusterSpec) ControlPlaneHardwareSelector() v1alph
 
 // WorkerNodeHardwareGroups retrieves a list of WorkerNodeHardwares for a ValidatableTinkerbellClusterSpec.
 func (v *ValidatableTinkerbellClusterSpec) WorkerNodeHardwareGroups() []WorkerNodeHardware {
-	fmt.Printf("ValidatableTinkerbellClusterSpec\n%#v\n", v)
+	pretty.Printf("ValidatableTinkerbellClusterSpec\n%#v\n", v)
 
 	workerNodeGroupConfigs := make([]WorkerNodeHardware, 0, len(v.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroup := range v.Cluster.Spec.WorkerNodeGroupConfigurations {
