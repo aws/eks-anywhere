@@ -86,7 +86,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 			return nil, fmt.Errorf("failed to get ETCD TinkerbellTemplateConfig: %v", err)
 		}
 	}
-	values := buildTemplateMapCP(clusterSpec, *tb.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString, *tb.datacenterSpec, tb.tinkerbellIP)
+	values, err := buildTemplateMapCP(clusterSpec, *tb.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString, *tb.datacenterSpec, tb.tinkerbellIP)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -113,7 +116,11 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
 		}
 
-		values := buildTemplateMapMD(clusterSpec, tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString, *tb.datacenterSpec, tb.tinkerbellIP)
+		values, err := buildTemplateMapMD(clusterSpec, tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString, *tb.datacenterSpec, tb.tinkerbellIP)
+		if err != nil {
+			return nil, err
+		}
+
 		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		if workloadTemplateNames == nil || !ok {
 			return nil, fmt.Errorf("workloadTemplateNames invalid in GenerateCAPISpecWorkers: %v", err)
@@ -349,7 +356,16 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec, cpTemplateOverride, etcdTemplateOverride string, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec, tinkerbellIP string) map[string]interface{} {
+// nolint:gocyclo
+func buildTemplateMapCP(
+	clusterSpec *cluster.Spec,
+	controlPlaneMachineSpec,
+	etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec,
+	cpTemplateOverride,
+	etcdTemplateOverride string,
+	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
+	tinkerbellIP string,
+) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -437,14 +453,29 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		values["awsIamAuth"] = true
 	}
 
-	if controlPlaneMachineSpec.HostOSConfiguration != nil && controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
-		values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+	if controlPlaneMachineSpec.HostOSConfiguration != nil {
+		if controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+			values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
+
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		values["bottlerocketSettings"] = brSettings
 	}
 
-	return values
+	return values, nil
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, workerTemplateOverride string, datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec, tinkerbellIP string) map[string]interface{} {
+func buildTemplateMapMD(
+	clusterSpec *cluster.Spec,
+	workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec,
+	workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration,
+	workerTemplateOverride string,
+	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
+	tinkerbellIP string,
+) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -489,11 +520,19 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 
 	values["workertemplateOverride"] = workerTemplateOverride
 
-	if workerNodeGroupMachineSpec.HostOSConfiguration != nil && workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
-		values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+	if workerNodeGroupMachineSpec.HostOSConfiguration != nil {
+		if workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+			values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
+
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		values["bottlerocketSettings"] = brSettings
 	}
 
-	return values
+	return values, nil
 }
 
 func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {

@@ -127,7 +127,7 @@ func validateTinkerbellMachineConfig(config *TinkerbellMachineConfig) error {
 		return fmt.Errorf("TinkerbellMachineConfig: missing spec.Users[0].SshAuthorizedKeys: %s for user %s. Please specify a ssh authorized key", config.Name, config.Spec.Users[0])
 	}
 
-	if err := validateHostOSConfig(config.Spec.HostOSConfiguration); err != nil {
+	if err := validateHostOSConfig(config.Spec.HostOSConfiguration, config.Spec.OSFamily); err != nil {
 		return fmt.Errorf("HostOSConfiguration is invalid for TinkerbellMachineConfig %s: %v", config.Name, err)
 	}
 

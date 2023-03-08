@@ -82,6 +82,9 @@ spec:
 {{ .registryCACert | indent 10 }}
         {{- end }}
 {{- end }}
+{{- if .bottlerocketSettings }}
+{{ .bottlerocketSettings | indent 6 }}
+{{- end -}}
 {{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
@@ -160,6 +163,9 @@ spec:
         caCert: |
 {{ .registryCACert | indent 10 }}
         {{- end }}
+{{- end }}
+{{- if .bottlerocketSettings }}
+{{ .bottlerocketSettings | indent 6 }}
 {{- end }}
 {{- if and .proxyConfig (eq .format "bottlerocket") }}
       proxy:
