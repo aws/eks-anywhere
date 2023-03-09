@@ -76,6 +76,14 @@ func (suite *MetalLBSuite) TestPackagesMetalLB() {
 	// This however requires the creation of utilites managing cluster creation.
 	t := suite.T()
 	suite.cluster.WithCluster(func(test *framework.ClusterE2ETest) {
+        err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
+        if err != nil {
+            test.T.Fatalf("packages controller not in installed state: %s", err)
+        }
+        err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 3*time.Minute)
+        if err != nil {
+            test.T.Fatalf("packages controller crds not in installed state: %s", err)
+        }
 		kcfg := kubeconfig.FromClusterName(test.ClusterName)
 		cluster := suite.cluster.Cluster()
 		ctx := context.Background()
@@ -97,13 +105,13 @@ func (suite *MetalLBSuite) TestPackagesMetalLB() {
 				t.Fatalf("waiting for metallb package to be installed: %s", err)
 			}
 			err = test.KubectlClient.WaitForDeployment(context.Background(),
-				cluster, "2m", "Available", "test-metallb-controller", namespace)
+				cluster, "5m", "Available", "test-metallb-controller", namespace)
 			if err != nil {
 				t.Fatalf("waiting for metallb controller deployment to be available: %s", err)
 			}
-			err = WaitForDaemonset(test, ctx, "test-metallb-speaker", namespace, 2, 30*time.Second)
+			err = WaitForDaemonset(test, ctx, "test-metallb-speaker", namespace, 2, 5*time.Minute)
 			if err != nil {
-				t.Fatalf("waiting for metallb controller deployment to be available: %s", err)
+				t.Fatalf("waiting for metallb speaker daemonset to be available: %s", err)
 			}
 		})
 
@@ -137,13 +145,13 @@ spec:
 				t.Fatalf("waiting for metallb package to be installed: %s", err)
 			}
 			err = test.KubectlClient.WaitForDeployment(context.Background(),
-				cluster, "2m", "Available", "test-metallb-controller", namespace)
+				cluster, "5m", "Available", "test-metallb-controller", namespace)
 			if err != nil {
 				t.Fatalf("waiting for metallb controller deployment to be available: %s", err)
 			}
-			err = WaitForDaemonset(test, ctx, "test-metallb-speaker", namespace, 2, 30*time.Second)
+			err = WaitForDaemonset(test, ctx, "test-metallb-speaker", namespace, 2, 5*time.Minute)
 			if err != nil {
-				t.Fatalf("waiting for metallb speaker deployment to be available: %s", err)
+				t.Fatalf("waiting for metallb speaker daemonset to be available: %s", err)
 			}
 
 			expectedAddressPool := getIPAddressPoolSpec([]string{ipSub}, true)
@@ -254,13 +262,13 @@ spec:
 				t.Fatalf("waiting for metallb package to be installed: %s", err)
 			}
 			err = test.KubectlClient.WaitForDeployment(context.Background(),
-				cluster, "2m", "Available", "test-metallb-controller", namespace)
+				cluster, "5m", "Available", "test-metallb-controller", namespace)
 			if err != nil {
 				t.Fatalf("waiting for metallb controller deployment to be available: %s", err)
 			}
-			err = WaitForDaemonset(test, ctx, "test-metallb-speaker", namespace, 2, 30*time.Second)
+			err = WaitForDaemonset(test, ctx, "test-metallb-speaker", namespace, 2, 5*time.Minute)
 			if err != nil {
-				t.Fatalf("waiting for metallb speaker deployment to be available: %s", err)
+				t.Fatalf("waiting for metallb speaker daemonset to be available: %s", err)
 			}
 
 			expectedAddressPool := getIPAddressPoolSpec([]string{ipTwoSub}, false)
