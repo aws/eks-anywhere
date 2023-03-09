@@ -1806,9 +1806,8 @@ func TestInstallMachineHealthChecksWithNoTimeout(t *testing.T) {
 
 func TestInstallMachineHealthChecksApplyError(t *testing.T) {
 	ctx := context.Background()
-	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
-	tt.clusterManager.Retrier = retrier.NewWithMaxRetries(2, 1*time.Microsecond)
 	wantMHC := expectedMachineHealthCheck(clustermanager.DefaultUnhealthyMachineTimeout, clustermanager.DefaultNodeStartupTimeout)
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC).Return(errors.New("apply error")).MaxTimes(2)
 

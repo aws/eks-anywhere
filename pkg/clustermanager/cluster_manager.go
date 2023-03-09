@@ -71,7 +71,7 @@ var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.G
 type ClusterManager struct {
 	eksaComponents     EKSAComponents
 	clusterClient      *RetrierClient
-	Retrier            *retrier.Retrier
+	retrier            *retrier.Retrier
 	writer             filewriter.FileWriter
 	networking         Networking
 	diagnosticsFactory diagnostics.DiagnosticBundleFactory
@@ -168,7 +168,7 @@ func New(clusterClient *RetrierClient, networking Networking, writer filewriter.
 		clusterClient:                    clusterClient,
 		writer:                           writer,
 		networking:                       networking,
-		Retrier:                          DefaultRetrier(),
+		retrier:                          DefaultRetrier(),
 		diagnosticsFactory:               diagnosticBundleFactory,
 		machineMaxWait:                   DefaultMaxWaitPerMachine,
 		machineBackoff:                   machineBackoff,
@@ -236,8 +236,8 @@ func WithNodeStartupTimeout(timeout time.Duration) ClusterManagerOpt {
 
 func WithRetrier(retrier *retrier.Retrier) ClusterManagerOpt {
 	return func(c *ClusterManager) {
-		c.clusterClient.Retrier = retrier
-		c.Retrier = retrier
+		c.clusterClient.retrier = retrier
+		c.retrier = retrier
 	}
 }
 
@@ -247,7 +247,7 @@ func WithNoTimeouts() ClusterManagerOpt {
 		noTimeoutRetrier := retrier.NewWithNoTimeout()
 		maxTime := time.Duration(math.MaxInt64)
 
-		c.Retrier = noTimeoutRetrier
+		c.retrier = noTimeoutRetrier
 		c.machineMaxWait = maxTime
 		c.controlPlaneWaitTimeout = maxTime
 		c.controlPlaneWaitAfterMoveTimeout = maxTime
