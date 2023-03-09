@@ -75,7 +75,7 @@ func MachineHealthCheckForWorkers(clusterSpec *cluster.Spec, unhealthyTimeout, n
 func machineHealthCheckForWorker(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, unhealthyTimeout, nodeStartupTimeout time.Duration) *clusterv1.MachineHealthCheck {
 	mhc := machineHealthCheck(ClusterName(clusterSpec.Cluster), unhealthyTimeout, nodeStartupTimeout)
 	mhc.SetName(WorkerMachineHealthCheckName(clusterSpec, workerNodeGroupConfig))
-	mhc.Spec.Selector.MatchLabels[clusterv1.MachineDeploymentLabelName] = MachineDeploymentName(clusterSpec, workerNodeGroupConfig)
+	mhc.Spec.Selector.MatchLabels[clusterv1.MachineDeploymentLabelName] = MachineDeploymentName(clusterSpec.Cluster, workerNodeGroupConfig)
 	maxUnhealthy := intstr.Parse(maxUnhealthyWorker)
 	mhc.Spec.MaxUnhealthy = &maxUnhealthy
 	return mhc

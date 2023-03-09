@@ -86,6 +86,11 @@ type ClusterE2ETest struct {
 	GitWriter                    filewriter.FileWriter
 	eksaBinaryLocation           string
 	ExpectFailure                bool
+	// PersistentCluster avoids creating the clusters if it finds a kubeconfig
+	// in the corresponding cluster folder. Useful for local development of tests.
+	// When generating a new base cluster config, it will read from disk instead of
+	// using the CLI generate command and will preserve the previous CP endpoint.
+	PersistentCluster bool
 }
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
@@ -205,6 +210,14 @@ func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
 func WithClusterName(name string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterName = name
+	}
+}
+
+// PersistentCluster  avoids creating the clusters if it finds a kubeconfig
+// in the corresponding cluster folder. Useful for local development of tests.
+func PersistentCluster() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.PersistentCluster = true
 	}
 }
 
@@ -505,7 +518,7 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 }
 
 func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
-	e.generateClusterConfigWithCLI()
+	e.generateClusterConfigWithCLI(opts...)
 	config, err := cluster.ParseConfigFromFile(e.ClusterConfigLocation)
 	if err != nil {
 		e.T.Fatalf("Failed parsing generated cluster config: %s", err)
@@ -553,10 +566,25 @@ func (e *ClusterE2ETest) baseClusterConfigUpdates(opts ...CommandOpt) []api.Clus
 	configFillers := []api.ClusterConfigFiller{api.ClusterToConfigFiller(clusterFillers...)}
 	configFillers = append(configFillers, e.Provider.ClusterConfigUpdates()...)
 
+	// If we are persisting an existing cluster, set the control plane endpoint back to the original, since
+	// it is immutable
+	if e.PersistentCluster && e.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
+		endpoint := e.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+		e.T.Logf("Resseting CP endpoint for persistent cluster to %s", endpoint)
+		configFillers = append(configFillers,
+			api.ClusterToConfigFiller(api.WithControlPlaneEndpointIP(endpoint)),
+		)
+	}
+
 	return configFillers
 }
 
 func (e *ClusterE2ETest) generateClusterConfigWithCLI(opts ...CommandOpt) {
+	if e.PersistentCluster && fileExists(e.ClusterConfigLocation) {
+		e.T.Log("Skipping CLI cluster generation since this is a persistent cluster that already had one cluster config generated")
+		return
+	}
+
 	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
 	e.RunEKSA(generateClusterConfigArgs, opts...)
 	e.T.Log("Cluster config generated with CLI")
@@ -652,6 +680,13 @@ func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
+	if e.PersistentCluster {
+		if fileExists(e.kubeconfigFilePath()) {
+			e.T.Logf("Persisent cluster: kubeconfig found for cluster %s, skipping cluster creation", e.ClusterName)
+			return
+		}
+	}
+
 	e.T.Logf("Creating cluster %s", e.ClusterName)
 	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "12"}
 
@@ -720,16 +755,26 @@ func (e *ClusterE2ETest) GetEKSACluster() *v1alpha1.Cluster {
 }
 
 func (e *ClusterE2ETest) GetCapiMachinesForCluster(clusterName string) map[string]types.Machine {
+	machines, err := e.CapiMachinesForCluster(clusterName)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	return machines
+}
+
+// CapiMachinesForCluster reads all the CAPI Machines for a particular cluster and returns them
+// index by their name.
+func (e *ClusterE2ETest) CapiMachinesForCluster(clusterName string) (map[string]types.Machine, error) {
 	ctx := context.Background()
 	capiMachines, err := e.KubectlClient.GetMachines(ctx, e.Cluster(), clusterName)
 	if err != nil {
-		e.T.Fatal(err)
+		return nil, err
 	}
 	machinesMap := make(map[string]types.Machine, 0)
 	for _, machine := range capiMachines {
 		machinesMap[machine.Metadata.Name] = machine
 	}
-	return machinesMap
+	return machinesMap, nil
 }
 
 // ApplyClusterManifest uses client-side logic to create/update objects defined in a cluster yaml manifest.
@@ -872,7 +917,7 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 
 	envPath := os.Getenv("PATH")
 
-	workDir, err := os.Getwd()
+	binDir, err := DefaultLocalEKSABinDir()
 	if err != nil {
 		e.T.Fatalf("Error finding current directory: %v", err)
 	}
@@ -880,7 +925,7 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	var stdoutAndErr bytes.Buffer
 
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s/bin:%s", workDir, envPath))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s:%s", binDir, envPath))
 	cmd.Stderr = io.MultiWriter(os.Stderr, &stdoutAndErr)
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutAndErr)
 

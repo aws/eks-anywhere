@@ -2,7 +2,6 @@ package framework
 
 import (
 	"fmt"
-	"os"
 	"sync"
 	"testing"
 
@@ -15,11 +14,8 @@ type MulticlusterE2ETest struct {
 	WorkloadClusters  WorkloadClusters
 	// MaxConcurrentWorkers defines the max number of workers for concurrent operations.
 	// If it's -1, it will use one worker per job.
-	MaxConcurrentWorkers int
-	// PersistentManagementCluster avoids creating a management cluster if it finds a kubeconfig
-	// in the cluster folder. Useful for local development of tests.
-	PersistentManagementCluster bool
-	workloadClusterNameCount    int
+	MaxConcurrentWorkers     int
+	workloadClusterNameCount int
 }
 
 func NewMulticlusterE2ETest(t *testing.T, managementCluster *ClusterE2ETest, workloadClusters ...*ClusterE2ETest) *MulticlusterE2ETest {
@@ -120,13 +116,6 @@ func (m *MulticlusterE2ETest) CreateManagementClusterWithConfig(opts ...CommandO
 }
 
 func (m *MulticlusterE2ETest) CreateManagementCluster(opts ...CommandOpt) {
-	if m.PersistentManagementCluster {
-		if _, err := os.Stat(m.ManagementCluster.kubeconfigFilePath()); err == nil {
-			m.T.Logf("Persisent cluster: kubeconfig found for management cluster %s, skipping cluster creation", m.ManagementCluster.ClusterName)
-			return
-		}
-	}
-
 	m.ManagementCluster.CreateCluster(opts...)
 }
 
