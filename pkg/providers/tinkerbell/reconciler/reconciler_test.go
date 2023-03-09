@@ -705,32 +705,6 @@ func TestReconciler_DetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
 	tt.cleanup()
 }
 
-func TestReconciler_DetectOperationFail(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.createAllObjs()
-
-	logger := test.NewNullLogger()
-	scope := tt.buildScope()
-	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
-		anywherev1.WorkerNodeGroupConfiguration{
-			Count: ptr.Int(1),
-			MachineGroupRef: &anywherev1.Ref{
-				Kind: anywherev1.TinkerbellMachineConfigKind,
-				Name: tt.machineConfigWorker.Name,
-			},
-			Name:   "md-1",
-			Labels: nil,
-		},
-	)
-	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
-	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
-	tt.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during k8s version change")))
-	tt.Expect(op).To(Equal(reconciler.Operation("")))
-	tt.cleanup()
-}
-
 func TestReconciler_DetectOperationNoChanges(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()

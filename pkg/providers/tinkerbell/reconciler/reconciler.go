@@ -176,20 +176,16 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 	workerWantScaleChange := r.workerReplicasDiff(ctx, tinkerbellScope)
 	wantScaleChange := workerWantScaleChange || cpWantScaleChange
 
-	// Ensure at least 1 and only 1 operation per request.
-	if wantVersionChange && wantScaleChange {
-		return "", errors.Errorf("cannot perform scale up or down during k8s version change")
-	}
-	if !wantScaleChange && !wantVersionChange {
-		return NoChange, nil
-	}
+	// The restriction that not allowing scaling and rolling is covered in webhook.
+	op := NoChange
 	switch {
 	case wantScaleChange:
-		return ScaleOperation, nil
+		op = ScaleOperation
 	case wantVersionChange:
-		return K8sVersionUpgradeOperation, nil
+		op = K8sVersionUpgradeOperation
 	}
-	return NoChange, nil
+	log.V(5).Info("Operation detected", "operation", op)
+	return op, nil
 }
 
 func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) bool {
@@ -223,6 +219,7 @@ func (r *Reconciler) OmitMachineTemplate(ctx context.Context, log logr.Logger, t
 	if o == ScaleOperation {
 		tinkerbell.OmitTinkerbellCPMachineTemplate(tinkerbellScope.ControlPlane)
 		tinkerbell.OmitTinkerbellWorkersMachineTemplate(tinkerbellScope.Workers)
+		log.V(5).Info("Machine Template omitted")
 	}
 	return controller.Result{}, nil
 }
@@ -377,25 +374,21 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		if err != nil {
 			return controller.Result{}, err
 		}
-		var wgs []clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
+		var wgs []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
 		for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 			md := &clusterv1.MachineDeployment{}
 			mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec, wnc)
 			key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
 			err := r.client.Get(ctx, key, md)
 			if err == nil {
-				wgs = append(wgs, clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+				wgs = append(wgs, &clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 					MachineDeployment: md,
 				})
 			}
 		}
 		validatableCAPI := &tinkerbell.ValidatableTinkerbellCAPI{
-			ControlPlane: &tinkerbell.ControlPlane{
-				BaseControlPlane: tinkerbell.BaseControlPlane{
-					KubeadmControlPlane: currentKCP,
-				},
-			},
-			Workers: &tinkerbell.Workers{Groups: wgs},
+			KubeadmControlPlane: currentKCP,
+			WorkerGroups:        wgs,
 		}
 		v.Register(tinkerbell.AssertionsForScaleUpDown(kubeReader.GetCatalogue(), validatableCAPI, false))
 	}

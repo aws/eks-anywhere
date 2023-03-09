@@ -447,15 +447,6 @@ func TestValidatableClusterControlPlaneReplicaCount(t *testing.T) {
 	g.Expect(validatableCluster.ControlPlaneReplicaCount()).To(gomega.Equal(1))
 }
 
-func TestValidatableClusterControlPlaneHardwareSelector(t *testing.T) {
-	g := gomega.NewWithT(t)
-
-	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
-	validatableCluster := &tinkerbell.ValidatableTinkerbellClusterSpec{clusterSpec}
-
-	g.Expect(validatableCluster.ControlPlaneHardwareSelector()).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "cp"}))
-}
-
 func TestValidatableClusterWorkerNodeGroupConfigs(t *testing.T) {
 	g := gomega.NewWithT(t)
 
@@ -474,14 +465,6 @@ func TestValidatableTinkerbellCAPIControlPlaneReplicaCount(t *testing.T) {
 	validatableCAPI := validatableTinkerbellCAPI()
 
 	g.Expect(validatableCAPI.ControlPlaneReplicaCount()).To(gomega.Equal(1))
-}
-
-func TestValidatableTinkerbellCAPIControlPlaneHardwareSelector(t *testing.T) {
-	g := gomega.NewWithT(t)
-
-	validatableCAPI := validatableTinkerbellCAPI()
-
-	g.Expect(validatableCAPI.ControlPlaneHardwareSelector()).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "cp"}))
 }
 
 func TestValidatableTinkerbellCAPIWorkerNodeGroupConfigs(t *testing.T) {
@@ -671,38 +654,23 @@ func mergeHardwareSelectors(m1, m2 map[string]string) map[string]string {
 
 func validatableTinkerbellCAPI() *tinkerbell.ValidatableTinkerbellCAPI {
 	return &tinkerbell.ValidatableTinkerbellCAPI{
-		ControlPlane: &tinkerbell.ControlPlane{
-			BaseControlPlane: tinkerbell.BaseControlPlane{
-				KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
-					Spec: controlplanev1.KubeadmControlPlaneSpec{
-						Replicas: ptr.Int32(1),
-						Version:  "1.22",
-					},
-				},
-				ControlPlaneMachineTemplate: machineTemplate(
-					func(tmt *v1beta1.TinkerbellMachineTemplate) {
-						tmt.Spec.Template.Spec.HardwareAffinity.Required = []tinkerbellv1.HardwareAffinityTerm{
-							{
-								LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{"type": "cp"}},
-							},
-						}
-					},
-				),
+		KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
+			Spec: controlplanev1.KubeadmControlPlaneSpec{
+				Replicas: ptr.Int32(1),
+				Version:  "1.22",
 			},
 		},
-		Workers: workers(),
+		WorkerGroups: workerGroups(),
 	}
 }
 
-func workers() *tinkerbell.Workers {
-	return &tinkerbell.Workers{
-		Groups: []clusterapi.WorkerGroup[*v1beta1.TinkerbellMachineTemplate]{
-			{
-				MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
-					md.Name = "cluster-worker-node-group-0"
-				}),
-				ProviderMachineTemplate: machineTemplate(),
-			},
+func workerGroups() []*clusterapi.WorkerGroup[*v1beta1.TinkerbellMachineTemplate] {
+	return []*clusterapi.WorkerGroup[*v1beta1.TinkerbellMachineTemplate]{
+		{
+			MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+				md.Name = "cluster-worker-node-group-0"
+			}),
+			ProviderMachineTemplate: machineTemplate(),
 		},
 	}
 }
