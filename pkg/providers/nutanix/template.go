@@ -93,7 +93,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, bu
 }
 
 func capxSecretName(spec *cluster.Spec) string {
-	return spec.Cluster.Name
+	return fmt.Sprintf("capx-%s", spec.Cluster.Name)
 }
 
 // GenerateEKSASpecSecret generates the secret containing the credentials for the nutanix prism central and is used by the
@@ -174,6 +174,7 @@ func buildTemplateMapCP(
 		"nutanixPEClusterIDType":       controlPlaneMachineSpec.Cluster.Type,
 		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name,
 		"nutanixPEClusterUUID":         controlPlaneMachineSpec.Cluster.UUID,
+		"secretName":                   capxSecretName(clusterSpec),
 		"subnetIDType":                 controlPlaneMachineSpec.Subnet.Type,
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,

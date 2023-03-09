@@ -656,6 +656,16 @@ func TestNutanixProviderUpdateSecrets(t *testing.T) {
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	err := provider.UpdateSecrets(context.Background(), cluster, clusterSpec)
 	assert.NoError(t, err)
+
+	storedMarshal := jsonMarshal
+	jsonMarshal = fakemarshal
+	err = provider.UpdateSecrets(context.Background(), cluster, clusterSpec)
+	assert.ErrorContains(t, err, "marshalling failed")
+	restoremarshal(storedMarshal)
+
+	clusterSpec.NutanixDatacenter.Spec.CredentialRef.Name = "capx-eksa-unit-test"
+	err = provider.UpdateSecrets(context.Background(), cluster, clusterSpec)
+	assert.ErrorContains(t, err, "NutanixDatacenterConfig CredentialRef name cannot be the same as the NutanixCluster CredentialRef name")
 }
 
 func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {

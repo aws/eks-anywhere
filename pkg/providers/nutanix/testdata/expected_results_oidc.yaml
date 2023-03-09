@@ -9,7 +9,7 @@ spec:
     port: 9440
     insecure: false
     credentialRef:
-      name: "eksa-unit-test"
+      name: "capx-eksa-unit-test"
       kind: Secret
   controlPlaneEndpoint:
     host: "test-ip"

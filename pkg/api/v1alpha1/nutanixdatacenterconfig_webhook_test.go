@@ -20,12 +20,29 @@ func TestNutanixDatacenterConfigWebhooksValidateCreate(t *testing.T) {
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
 }
 
+func TestNutanixDatacenterConfigWebhooksValidateCreateReconcilePaused(t *testing.T) {
+	g := NewWithT(t)
+	dcConf := nutanixDatacenterConfig()
+	dcConf.Annotations = map[string]string{
+		"anywhere.eks.amazonaws.com/paused": "true",
+	}
+	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+}
+
 func TestNutanixDatacenterConfigWebhookValidateCreateNoCredentialRef(t *testing.T) {
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	dcConf.Spec.CredentialRef = nil
 	g.Expect(dcConf.ValidateCreate().Error()).To(ContainSubstring("credentialRef is required to be set to create a new NutanixDatacenterConfig"))
+}
+
+func TestNutanixDatacenterConfigWebhooksValidateCreateValidaitonFailure(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	g := NewWithT(t)
+	dcConf := nutanixDatacenterConfig()
+	dcConf.Spec.Endpoint = ""
+	g.Expect(dcConf.ValidateCreate()).To(Not(Succeed()))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdate(t *testing.T) {
@@ -36,6 +53,28 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdate(t *testing.T) {
 	newSpec := nutanixDatacenterConfig()
 	newSpec.Spec.CredentialRef.Name = "new-credential"
 	g.Expect(dcConf.ValidateUpdate(newSpec)).To(Succeed())
+}
+
+func TestNutanixDatacenterConfigWebhooksValidateUpdateReconcilePaused(t *testing.T) {
+	g := NewWithT(t)
+	dcConf := nutanixDatacenterConfig()
+	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	oldSpec := nutanixDatacenterConfig()
+	oldSpec.Annotations = map[string]string{
+		"anywhere.eks.amazonaws.com/paused": "true",
+	}
+	oldSpec.Spec.CredentialRef.Name = "new-credential"
+	g.Expect(dcConf.ValidateUpdate(oldSpec)).To(Succeed())
+}
+
+func TestNutanixDatacenterConfigWebhooksValidateUpdateValidationFailure(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	g := NewWithT(t)
+	dcConf := nutanixDatacenterConfig()
+	g.Expect(dcConf.ValidateCreate()).To(Succeed())
+	newSpec := nutanixDatacenterConfig()
+	newSpec.Spec.Endpoint = ""
+	g.Expect(dcConf.ValidateUpdate(newSpec)).To(Not(Succeed()))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateInvalidOldObject(t *testing.T) {
