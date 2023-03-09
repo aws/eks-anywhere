@@ -192,7 +192,7 @@ func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Sc
 	workerWantScaleChange := false
 	for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		md := &clusterv1.MachineDeployment{}
-		mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec, wnc)
+		mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec.Cluster, wnc)
 		key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
 		err := r.client.Get(ctx, key, md)
 		if err != nil {
@@ -377,7 +377,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		var wgs []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
 		for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 			md := &clusterv1.MachineDeployment{}
-			mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec, wnc)
+			mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec.Cluster, wnc)
 			key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
 			err := r.client.Get(ctx, key, md)
 			if err == nil {
