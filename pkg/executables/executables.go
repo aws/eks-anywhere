@@ -111,7 +111,7 @@ func execute(ctx context.Context, cli string, in []byte, envVars map[string]stri
 	if err != nil {
 		if stderr.Len() > 0 {
 			if logger.MaxLogging() {
-				logger.V(logger.MaxLoggingLevel()).Info(cli, "stderr", stderr.String())
+				logger.V(logger.MaxLogLevel).Info(cli, "stderr", stderr.String())
 			}
 			return stdout, errors.New(stderr.String())
 		} else {

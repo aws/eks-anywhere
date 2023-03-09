@@ -52,11 +52,11 @@ func initLogger() error {
 	}
 
 	outputFilePath := filepath.Join(".", "eksa-cli-logs", fmt.Sprintf("%s.log", time.Now().Format("2006-01-02T15_04_05")))
-	if err = logger.InitZap(logger.ZapOpts{
+	if err = logger.Init(logger.Options{
 		Level:          viper.GetInt("verbosity"),
 		OutputFilePath: outputFilePath,
 	}); err != nil {
-		return fmt.Errorf("failed init zap logger in root command: %v", err)
+		return fmt.Errorf("root cmd: %v", err)
 	}
 
 	return nil

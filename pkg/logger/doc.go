@@ -9,7 +9,7 @@ All messages should start with a capital letter.
 Log level:
 
 The loggers only support verbosity levels (V-levels) instead of semantic levels.
-Level zero, the default, matters most. Increasing levels matter less and less.
+Level zero, the default, is important for the end user.
   - 0: You always want to see this.
   - 1: Common logging that you don't want to show by default.
   - 2: Useful steady state information about the operation and important log messages that may correlate to significant changes in the system.
