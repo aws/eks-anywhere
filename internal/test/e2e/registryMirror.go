@@ -37,6 +37,10 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		endpoint = e.testEnvVars[e2etests.RegistryEndpointTinkerbellVar]
 		port = e.testEnvVars[e2etests.RegistryPortTinkerbellVar]
 		caCert = e.testEnvVars[e2etests.RegistryCACertTinkerbellVar]
+
+		if err := e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port)); err != nil {
+			return err
+		}
 	}
 
 	// Since Authenticated tests needs to use separate harbor registries.
