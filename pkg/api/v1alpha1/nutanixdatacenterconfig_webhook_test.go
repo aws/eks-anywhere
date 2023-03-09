@@ -10,22 +10,26 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 func TestNutanixDatacenterConfigWebhooksValidateCreate(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
 }
 
 func TestNutanixDatacenterConfigWebhookValidateCreateNoCredentialRef(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	dcConf.Spec.CredentialRef = nil
-	g.Expect(dcConf.ValidateCreate()).To(MatchError("credentialRef is required to be set to create a new NutanixDatacenterConfig"))
+	g.Expect(dcConf.ValidateCreate().Error()).To(ContainSubstring("credentialRef is required to be set to create a new NutanixDatacenterConfig"))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdate(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
@@ -35,22 +39,25 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdate(t *testing.T) {
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateInvalidOldObject(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
-	g.Expect(newConf.ValidateUpdate(&v1alpha1.NutanixMachineConfig{})).To(MatchError("old object is not a NutanixDatacenterConfig"))
+	g.Expect(newConf.ValidateUpdate(&v1alpha1.NutanixMachineConfig{}).Error()).To(ContainSubstring("expected a NutanixDatacenterConfig but got a *v1alpha1.NutanixMachineConfig"))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateCredentialRefRemoved(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	oldConf := nutanixDatacenterConfig()
 	g.Expect(oldConf.ValidateCreate()).To(Succeed())
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
-	g.Expect(newConf.ValidateUpdate(oldConf)).To(MatchError("credentialRef cannot be removed from an existing NutanixDatacenterConfig"))
+	g.Expect(newConf.ValidateUpdate(oldConf).Error()).To(ContainSubstring("credentialRef cannot be removed from an existing NutanixDatacenterConfig"))
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateDelete(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
@@ -58,6 +65,7 @@ func TestNutanixDatacenterConfigWebhooksValidateDelete(t *testing.T) {
 }
 
 func TestNutanixDatacenterConfigSetupWebhookWithManager(t *testing.T) {
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.SetupWebhookWithManager(env.Manager())).To(Succeed())
@@ -70,7 +78,7 @@ func nutanixDatacenterConfig() *v1alpha1.NutanixDatacenterConfig {
 		},
 		Spec: v1alpha1.NutanixDatacenterConfigSpec{
 			Endpoint: "prism.nutanix.com",
-			Port:     9440,
+			Port:     constants.DefaultNutanixPrismCentralPort,
 			CredentialRef: &v1alpha1.Ref{
 				Kind: constants.SecretKind,
 				Name: constants.NutanixCredentialsName,

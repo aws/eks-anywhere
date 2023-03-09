@@ -89,13 +89,21 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 // GenerateCAPISpecSecret generates the secret containing the credentials for the nutanix prism central and is used by the
 // CAPX controller. The secret is named after the cluster name.
 func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	return ntb.generateSpecSecret(clusterSpec.Cluster.Name, ntb.creds, buildOptions...)
+	return ntb.generateSpecSecret(capxSecretName(clusterSpec), ntb.creds, buildOptions...)
+}
+
+func capxSecretName(spec *cluster.Spec) string {
+	return spec.Cluster.Name
 }
 
 // GenerateEKSASpecSecret generates the secret containing the credentials for the nutanix prism central and is used by the
 // EKS-A controller. The secret is named nutanix-credentials.
 func (ntb *TemplateBuilder) GenerateEKSASpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	return ntb.generateSpecSecret(clusterSpec.NutanixDatacenter.Spec.CredentialRef.Name, ntb.creds, buildOptions...)
+	return ntb.generateSpecSecret(eksaSecretName(clusterSpec), ntb.creds, buildOptions...)
+}
+
+func eksaSecretName(spec *cluster.Spec) string {
+	return spec.NutanixDatacenter.Spec.CredentialRef.Name
 }
 
 func (ntb *TemplateBuilder) generateSpecSecret(secretName string, creds credentials.BasicAuthCredential, buildOptions ...providers.BuildMapOption) ([]byte, error) {

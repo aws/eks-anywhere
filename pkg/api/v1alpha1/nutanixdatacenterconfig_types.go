@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -144,9 +143,9 @@ func (in *NutanixDatacenterConfig) Validate() error {
 }
 
 // SetDefaults sets default values for the NutanixDatacenterConfig object.
-func (c *NutanixDatacenterConfig) SetDefaults() {
-	if c.Spec.CredentialRef == nil {
-		c.Spec.CredentialRef = &Ref{
+func (in *NutanixDatacenterConfig) SetDefaults() {
+	if in.Spec.CredentialRef == nil {
+		in.Spec.CredentialRef = &Ref{
 			Kind: constants.SecretKind,
 			Name: constants.NutanixCredentialsName,
 		}

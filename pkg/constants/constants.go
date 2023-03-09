@@ -37,6 +37,8 @@ const (
 	TinkerbellProviderName = "tinkerbell"
 	CloudStackProviderName = "cloudstack"
 	NutanixProviderName    = "nutanix"
+	// DefaultNutanixPrismCentralPort is the default port for Nutanix Prism Central.
+	DefaultNutanixPrismCentralPort = 9440
 
 	VSphereCredentialsName = "vsphere-credentials"
 	NutanixCredentialsName = "nutanix-credentials"

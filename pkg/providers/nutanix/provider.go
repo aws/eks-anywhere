@@ -229,6 +229,12 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.
 }
 
 func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	// check if CAPI Secret name and EKS-A Secret name are not the same
+	// this is to ensure that the EKS-A Secret that is watched and CAPX Secret that is reconciled are not the same
+	if capxSecretName(clusterSpec) == eksaSecretName(clusterSpec) {
+		return fmt.Errorf("NutanixDatacenterConfig CredentialRef name cannot be the same as the EKS-A cluster name")
+	}
+
 	capxSecretContents, err := p.templateBuilder.GenerateCAPISpecSecret(clusterSpec)
 	if err != nil {
 		return err
