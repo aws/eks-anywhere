@@ -106,7 +106,7 @@ func (pc *PackageControllerClient) EnableFullLifecycle(ctx context.Context, log 
 	log.V(6).Info("enabling curated packages full lifecycle")
 	defer func(err *error) {
 		if err != nil && *err != nil {
-			log.Error(*err, "enabling curated packages full lifecycle", "clusterName", clusterName)
+			log.Error(*err, "Enabling curated packages full lifecycle", "clusterName", clusterName)
 		} else {
 			log.Info("Success enabling curated packages full lifecycle")
 		}
