@@ -1,21 +1,9 @@
 skipped_tests:
 # CloudStack
-- TestCloudStackKubernetes121RedhatProxyConfig
-- TestCloudStackKubernetes122ThreeWorkersConformanceFlow
-- TestCloudStackKubernetes123ThreeWorkersConformanceFlow
+- TestCloudStackKubernetes123RedhatProxyConfig
 # CloudStack Registry Mirror endpoint was not set up
-- TestCloudStackKubernetes121RedhatRegistryMirrorAndCert
-- TestCloudStackKubernetes121UbuntuAirgappedRegistryMirror
-# Unskip these after 1.22 and 1.23 CloudStack images are available in CI env
-- TestCloudStackKubernetes123GitopsOptionsFluxLegacy
-- TestCloudStackKubernetes123SimpleFlow
-- TestCloudStackKubernetes123StackedEtcdRedhat
-- TestCloudStackKubernetes123UpgradeFromLatestMinorRelease
-- TestCloudStackKubernetes122To123RedhatUpgrade
-- TestCloudStackKubernetes122To123RedhatUnstackedUpgrade
-- TestCloudStackKubernetes122To123RedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes123RedhatWorkerNodeUpgrade
-- TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy
+- TestCloudStackKubernetes123RedhatRegistryMirrorAndCert
+- TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror
 # Nutanix
 - TestNutanixKubernetes122UbuntuControlPlaneNodeScaleDown3To1
 - TestNutanixKubernetes122UbuntuControlPlaneNodeScaleDown5To3
