@@ -139,6 +139,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
 }
 
 func TestReconcileCNIErrorClientRegistry(t *testing.T) {
@@ -157,6 +158,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
@@ -188,6 +190,7 @@ func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 			g.Expect(kcp.Spec.Replicas).To(HaveValue(BeEquivalentTo(2)))
 		})
 	tt.ShouldEventuallyExist(tt.ctx, controlPlaneMachineTemplate())
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
@@ -221,6 +224,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
 	tt.ShouldEventuallyNotExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "registry-credentials", Namespace: constants.EksaSystemNamespace}})
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *testing.T) {
@@ -263,6 +267,7 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
 	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "registry-credentials", Namespace: constants.EksaSystemNamespace}})
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
@@ -278,6 +283,7 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	_, err = tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("resource name may not be empty")))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
@@ -297,6 +303,7 @@ func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("missing spec.tinkerbellIP field"))
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.cleanup()
 }
 
 func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
@@ -315,6 +322,7 @@ func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("unsupported spec.osFamily (invalidOS); Please use one of the following: ubuntu, redhat, bottlerocket"))
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
@@ -363,6 +371,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 			},
 		},
 	)
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
@@ -409,6 +418,7 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 		func(g Gomega) {
 			g.Expect(md.Spec.Replicas).To(HaveValue(BeEquivalentTo(2)))
 		})
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
@@ -458,6 +468,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 			},
 		},
 	)
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
@@ -476,6 +487,7 @@ func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
 	_, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
@@ -493,14 +505,11 @@ func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 	tt := newReconcilerTest(t)
-	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
-		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -515,6 +524,27 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
@@ -532,6 +562,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
@@ -589,6 +620,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("bmc connection failure"))
+	tt.cleanup()
 }
 
 func TestReconcilerGenerateSpec(t *testing.T) {
@@ -601,6 +633,7 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
 	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
+	tt.cleanup()
 }
 
 func TestReconcilerGenerateSpecFail(t *testing.T) {
@@ -614,14 +647,11 @@ func TestReconcilerGenerateSpecFail(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
 	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
+	tt.cleanup()
 }
 
 func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt := newReconcilerTest(t)
-	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
-		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -632,25 +662,7 @@ func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(op).To(Equal(reconciler.K8sVersionUpgradeOperation))
-}
-
-func TestReconciler_DetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
-	tt := newReconcilerTest(t)
-	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
-		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
-		w.Groups[0].MachineDeployment.Spec.Replicas = ptr.Int32(2)
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
-
-	tt.createAllObjs()
-
-	logger := test.NewNullLogger()
-	scope := tt.buildScope()
-	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.cleanup()
 }
 
 func TestReconciler_DetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.T) {
@@ -659,11 +671,38 @@ func TestReconciler_DetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing
 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
+		anywherev1.WorkerNodeGroupConfiguration{
+			Count: ptr.Int(1),
+			MachineGroupRef: &anywherev1.Ref{
+				Kind: anywherev1.TinkerbellMachineConfigKind,
+				Name: tt.machineConfigWorker.Name,
+			},
+			Name:   "md-1",
+			Labels: nil,
+		},
+	)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.cleanup()
 }
 
 func TestReconciler_DetectOperationFail(t *testing.T) {
@@ -672,20 +711,28 @@ func TestReconciler_DetectOperationFail(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
+		anywherev1.WorkerNodeGroupConfiguration{
+			Count: ptr.Int(1),
+			MachineGroupRef: &anywherev1.Ref{
+				Kind: anywherev1.TinkerbellMachineConfigKind,
+				Name: tt.machineConfigWorker.Name,
+			},
+			Name:   "md-1",
+			Labels: nil,
+		},
+	)
 	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during k8s version change")))
 	tt.Expect(op).To(Equal(reconciler.Operation("")))
+	tt.cleanup()
 }
 
-func TestReconciler_DetectOperationInvalidOperation(t *testing.T) {
+func TestReconciler_DetectOperationNoChanges(t *testing.T) {
 	tt := newReconcilerTest(t)
-	w := tinkWorker(workloadClusterName, func(w *tinkerbell.Workers) {
-		w.Groups[0].MachineDeployment.ObjectMeta.Name = "md-0"
-	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, w.Groups[0].MachineDeployment)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -693,8 +740,9 @@ func TestReconciler_DetectOperationInvalidOperation(t *testing.T) {
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
-	tt.Expect(err).To(MatchError(ContainSubstring("cannot detect operation type")))
-	tt.Expect(op).To(Equal(reconciler.Operation("")))
+	tt.Expect(err).To(BeNil())
+	tt.Expect(op).To(Equal(reconciler.NoChange))
+	tt.cleanup()
 }
 
 func TestReconciler_DetectOperationNewCluster(t *testing.T) {
@@ -1099,6 +1147,29 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 									PeerCertSANs:   nil,
 								},
 							},
+							ControllerManager: bootstrapv1.ControlPlaneComponent{
+								ExtraVolumes: []bootstrapv1.HostPathMount{
+									{
+										Name:      "kubeconfig",
+										HostPath:  "/var/lib/kubeadm/controller-manager.conf",
+										MountPath: "/etc/kubernetes/controller-manager.conf",
+										ReadOnly:  true,
+										PathType:  "File",
+									},
+								},
+							},
+							Scheduler: bootstrapv1.ControlPlaneComponent{
+								ExtraVolumes: []bootstrapv1.HostPathMount{
+									{
+										Name:      "kubeconfig",
+										HostPath:  "/var/lib/kubeadm/scheduler.conf",
+										MountPath: "/etc/kubernetes/scheduler.conf",
+										ReadOnly:  true,
+										PathType:  "File",
+									},
+								},
+							},
+							CertificatesDir: "/var/lib/kubeadm/pki",
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{

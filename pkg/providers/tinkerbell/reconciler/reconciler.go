@@ -2,8 +2,10 @@ package reconciler
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -12,6 +14,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -27,6 +30,8 @@ const (
 	K8sVersionUpgradeOperation Operation = "K8sVersionUpgrade"
 	// ScaleOperation indicates to change the node size of the cluster.
 	ScaleOperation Operation = "Scale"
+	// NoChange indicates no change made to cluster during periodical sync.
+	NoChange Operation = "NoChange"
 )
 
 // Operation indicates the desired change on a cluster.
@@ -176,7 +181,7 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 		return "", errors.Errorf("cannot perform scale up or down during k8s version change")
 	}
 	if !wantScaleChange && !wantVersionChange {
-		return "", errors.Errorf("cannot detect operation type")
+		return NoChange, nil
 	}
 	switch {
 	case wantScaleChange:
@@ -184,14 +189,15 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 	case wantVersionChange:
 		return K8sVersionUpgradeOperation, nil
 	}
-	return "", errors.Errorf("cannot detect operation type")
+	return NoChange, nil
 }
 
 func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) bool {
 	workerWantScaleChange := false
 	for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		md := &clusterv1.MachineDeployment{}
-		key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: wnc.Name}
+		mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec, wnc)
+		key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
 		err := r.client.Get(ctx, key, md)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -366,6 +372,32 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		v.Register(tinkerbell.ExtraHardwareAvailableAssertionForRollingUpgrade(kubeReader.GetCatalogue()))
 	case NewClusterOperation:
 		v.Register(tinkerbell.MinimumHardwareAvailableAssertionForCreate(kubeReader.GetCatalogue()))
+	case ScaleOperation:
+		currentKCP, err := controller.GetKubeadmControlPlane(ctx, r.client, tinkerbellScope.ClusterSpec.Cluster)
+		if err != nil {
+			return controller.Result{}, err
+		}
+		var wgs []clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
+		for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+			md := &clusterv1.MachineDeployment{}
+			mdName := clusterapi.MachineDeploymentName(tinkerbellScope.ClusterSpec, wnc)
+			key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
+			err := r.client.Get(ctx, key, md)
+			if err == nil {
+				wgs = append(wgs, clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+					MachineDeployment: md,
+				})
+			}
+		}
+		validatableCAPI := &tinkerbell.ValidatableTinkerbellCAPI{
+			ControlPlane: &tinkerbell.ControlPlane{
+				BaseControlPlane: tinkerbell.BaseControlPlane{
+					KubeadmControlPlane: currentKCP,
+				},
+			},
+			Workers: &tinkerbell.Workers{Groups: wgs},
+		}
+		v.Register(tinkerbell.AssertionsForScaleUpDown(kubeReader.GetCatalogue(), validatableCAPI, false))
 	}
 
 	tinkClusterSpec := tinkerbell.NewClusterSpec(
