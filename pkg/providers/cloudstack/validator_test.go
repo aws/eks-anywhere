@@ -9,12 +9,16 @@ import (
 	"testing"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
@@ -473,4 +477,85 @@ func TestValidateMachineConfigsWithAffinity(t *testing.T) {
 	// Valid affinity types
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	assert.Nil(t, err)
+}
+
+func TestValidateSecretsUnchangedOnSecretUnchanged(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cmk := mocks.NewMockProviderCmkClient(mockCtrl)
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
+	err := validator.ValidateSecretsUnchanged(ctx, cluster, testExecConfig, kubectl)
+	assert.Nil(t, err)
+}
+
+func TestValidateSecretsUnchangedOnSecretChanged(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cmk := mocks.NewMockProviderCmkClient(mockCtrl)
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+
+	modifiedSecret := expectedSecret.DeepCopy()
+	modifiedSecret.Data["api-key"] = []byte("updated-api-key")
+
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(modifiedSecret, nil)
+	err := validator.ValidateSecretsUnchanged(ctx, cluster, testExecConfig, kubectl)
+	thenErrorExpected(t, "profile 'global' is different from the secret", err)
+}
+
+func TestValidateSecretsUnchangedOnGetSecretFailure(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cmk := mocks.NewMockProviderCmkClient(mockCtrl)
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewBadRequest("test-error"))
+	err := validator.ValidateSecretsUnchanged(ctx, cluster, testExecConfig, kubectl)
+	thenErrorExpected(t, "getting secret for profile global: test-error", err)
+}
+
+func TestValidateSecretsUnchangedOnSecretNotFound(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cmk := mocks.NewMockProviderCmkClient(mockCtrl)
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, notFoundError)
+	err := validator.ValidateSecretsUnchanged(ctx, cluster, testExecConfig, kubectl)
+	assert.Nil(t, err)
+}
+
+var testProfiles = []decoder.CloudStackProfileConfig{
+	{
+		Name:          "global",
+		ApiKey:        "test-key1",
+		SecretKey:     "test-secret1",
+		ManagementUrl: "http://127.16.0.1:8080/client/api",
+		VerifySsl:     "false",
+	},
+}
+
+var testExecConfig = &decoder.CloudStackExecConfig{
+	Profiles: testProfiles,
 }

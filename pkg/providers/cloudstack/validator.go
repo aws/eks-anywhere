@@ -227,7 +227,7 @@ func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterS
 	return nil
 }
 
-// ValidateSecretsUnchanged checks the secret to see if it has not been changed
+// ValidateSecretsUnchanged checks the secret to see if it has not been changed.
 func (v *Validator) ValidateSecretsUnchanged(ctx context.Context, cluster *types.Cluster, execConfig *decoder.CloudStackExecConfig, client ProviderKubectlClient) error {
 	for _, profile := range execConfig.Profiles {
 		secret, err := client.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
