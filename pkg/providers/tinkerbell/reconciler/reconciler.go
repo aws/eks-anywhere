@@ -81,6 +81,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ValidateHardware,
 		r.ValidateDatacenterConfig,
 		r.ValidateRufioMachines,
+		r.CleanupStatusAfterValidate,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
@@ -91,6 +92,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 // ValidateControlPlaneIP passes the cluster spec from tinkerbellScope to the IP Validator.
 func (r *Reconciler) ValidateControlPlaneIP(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
 	return r.ipValidator.ValidateControlPlaneIP(ctx, log, tinkerbellScope.ClusterSpec)
+}
+
+// CleanupStatusAfterValidate removes errors from the cluster status with the tinkerbellScope.
+func (r *Reconciler) CleanupStatusAfterValidate(ctx context.Context, log logr.Logger, tinkerbellScope *Scope) (controller.Result, error) {
+	return clusters.CleanupStatusAfterValidate(ctx, log, tinkerbellScope.ClusterSpec)
 }
 
 // ValidateClusterSpec performs a set of assertions on a cluster spec.
