@@ -282,14 +282,6 @@ func (v *ValidatableTinkerbellCAPI) WorkerNodeHardwareGroups() []WorkerNodeHardw
 	return workerNodeHardwareList
 }
 
-// HardwareSelector returns the HardwareSelector of the first LabelSelector in TinkerbellMachineTemplate hardware affinity.
-func HardwareSelector(machineTemplate tinkerbellv1.TinkerbellMachineTemplate) v1alpha1.HardwareSelector {
-	if len(machineTemplate.Spec.Template.Spec.HardwareAffinity.Required) == 1 {
-		return machineTemplate.Spec.Template.Spec.HardwareAffinity.Required[0].LabelSelector.MatchLabels
-	}
-	return nil
-}
-
 // AssertionsForScaleUpDown asserts that catalogue has sufficient hardware to
 // support the scaling up/down from current ClusterSpec to desired ValidatableCluster.
 // nolint:gocyclo // TODO: Reduce cyclomatic complexity https://github.com/aws/eks-anywhere-internal/issues/1186

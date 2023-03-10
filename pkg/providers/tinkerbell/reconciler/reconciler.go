@@ -173,7 +173,10 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 
 	wantVersionChange := currentKCP.Spec.Version != tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.Version
 	cpWantScaleChange := *currentKCP.Spec.Replicas != *tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.Replicas
-	workerWantScaleChange := r.workerReplicasDiff(ctx, tinkerbellScope)
+	workerWantScaleChange, err := r.workerReplicasDiff(ctx, tinkerbellScope)
+	if err != nil {
+		return "", err
+	}
 	wantScaleChange := workerWantScaleChange || cpWantScaleChange
 
 	// The restriction that not allowing scaling and rolling is covered in webhook.
@@ -188,7 +191,7 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 	return op, nil
 }
 
-func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) bool {
+func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) (bool, error) {
 	workerWantScaleChange := false
 	for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		md := &clusterv1.MachineDeployment{}
@@ -199,6 +202,8 @@ func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Sc
 			if apierrors.IsNotFound(err) {
 				workerWantScaleChange = true
 				break
+			} else {
+				return workerWantScaleChange, errors.Wrap(err, "comparing worker replicas diff")
 			}
 		}
 		if int(*md.Spec.Replicas) != *wnc.Count {
@@ -206,7 +211,7 @@ func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Sc
 			break
 		}
 	}
-	return workerWantScaleChange
+	return workerWantScaleChange, nil
 }
 
 // OmitMachineTemplate omits control plane and worker machine template on scaling update.
@@ -216,7 +221,7 @@ func (r *Reconciler) OmitMachineTemplate(ctx context.Context, log logr.Logger, t
 	if err != nil {
 		return controller.Result{}, err
 	}
-	if o == ScaleOperation {
+	if o == ScaleOperation || o == NoChange {
 		tinkerbell.OmitTinkerbellCPMachineTemplate(tinkerbellScope.ControlPlane)
 		tinkerbell.OmitTinkerbellWorkersMachineTemplate(tinkerbellScope.Workers)
 		log.V(5).Info("Machine Template omitted")
@@ -384,6 +389,8 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 				wgs = append(wgs, &clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 					MachineDeployment: md,
 				})
+			} else if !apierrors.IsNotFound(err) {
+				return controller.Result{}, err
 			}
 		}
 		validatableCAPI := &tinkerbell.ValidatableTinkerbellCAPI{

@@ -9,7 +9,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
 	"github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
-	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -420,22 +419,6 @@ func TestMinimumHardwareAvailableAssertionForCreate_InsufficientFailsWithoutExte
 
 	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
-}
-
-func TestHardwareSelectorWorker(t *testing.T) {
-	g := gomega.NewWithT(t)
-
-	g.Expect(tinkerbell.HardwareSelector(*machineTemplate())).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "worker"}))
-}
-
-func TestHardwareSelectorNil(t *testing.T) {
-	g := gomega.NewWithT(t)
-
-	machineTemplate := machineTemplate(func(mt *tinkerbellv1.TinkerbellMachineTemplate) {
-		mt.Spec.Template.Spec.HardwareAffinity.Required = []tinkerbellv1.HardwareAffinityTerm{}
-	})
-
-	g.Expect(tinkerbell.HardwareSelector(*machineTemplate)).To(gomega.BeNil())
 }
 
 func TestValidatableClusterControlPlaneReplicaCount(t *testing.T) {
