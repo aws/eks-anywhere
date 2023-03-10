@@ -19,7 +19,7 @@ const (
 
 var (
 	pkgLogger    logr.Logger = logr.Discard()
-	pkgLoggerMtx sync.Mutex
+	pkgLoggerMtx sync.RWMutex
 )
 
 func setLogger(l logr.Logger) {
@@ -31,8 +31,8 @@ func setLogger(l logr.Logger) {
 // Get returns the logger instance that has been previously set.
 // If no logger has been set, it returns a null logger.
 func Get() logr.Logger {
-	pkgLoggerMtx.Lock()
-	defer pkgLoggerMtx.Unlock()
+	pkgLoggerMtx.RLock()
+	defer pkgLoggerMtx.RUnlock()
 	return pkgLogger
 }
 
