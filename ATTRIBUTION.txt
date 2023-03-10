@@ -53,7 +53,7 @@ https://github.com/containerd/containerd
 ** github.com/coredns/caddy/caddyfile; version v1.1.0 --
 https://github.com/coredns/caddy
 
-** github.com/coredns/corefile-migration/migration; version v1.0.18 --
+** github.com/coredns/corefile-migration/migration; version v1.0.20 --
 https://github.com/coredns/corefile-migration
 
 ** github.com/docker/cli/cli/config; version v20.10.21+incompatible --
@@ -227,7 +227,7 @@ https://github.com/oras-project/oras-go
 ** oras.land/oras-go/v2; version v2.0.0 --
 https://github.com/oras-project/oras-go
 
-** github.com/abhay-krishna/cluster-api; version v1.3.3-eksa.1 --
+** github.com/abhay-krishna/cluster-api; version v1.3.5-eksa.1 --
 https://github.com/abhay-krishna/cluster-api
 
 ** sigs.k8s.io/cluster-api-provider-cloudstack; version v0.4.8-rc1 --
