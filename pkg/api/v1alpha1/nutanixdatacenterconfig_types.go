@@ -10,6 +10,8 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // NutanixDatacenterConfigSpec defines the desired state of NutanixDatacenterConfig.
@@ -36,6 +38,11 @@ type NutanixDatacenterConfigSpec struct {
 	// Certificate that ships with Prism Central, we allow the user to skip TLS
 	// verification. This is not recommended for production use.
 	Insecure bool `json:"insecure,omitempty"`
+
+	// CredentialRef is the reference to the secret name that contains the credentials
+	// for the Nutanix Prism Central. The namespace for the secret is assumed to be a constant i.e. eksa-system.
+	// +optional
+	CredentialRef *Ref `json:"credentialRef,omitempty"`
 }
 
 // NutanixDatacenterConfigStatus defines the observed state of NutanixDatacenterConfig.
@@ -123,7 +130,27 @@ func (in *NutanixDatacenterConfig) Validate() error {
 		}
 	}
 
+	if in.Spec.CredentialRef != nil {
+		if in.Spec.CredentialRef.Kind != constants.SecretKind {
+			return fmt.Errorf("NutanixDatacenterConfig credentialRef Kind (%s) is not a secret", in.Spec.CredentialRef.Kind)
+		}
+
+		if len(in.Spec.CredentialRef.Name) <= 0 {
+			return errors.New("NutanixDatacenterConfig credentialRef name is not set or is empty")
+		}
+	}
+
 	return nil
+}
+
+// SetDefaults sets default values for the NutanixDatacenterConfig object.
+func (in *NutanixDatacenterConfig) SetDefaults() {
+	if in.Spec.CredentialRef == nil {
+		in.Spec.CredentialRef = &Ref{
+			Kind: constants.SecretKind,
+			Name: constants.NutanixCredentialsName,
+		}
+	}
 }
 
 // NutanixDatacenterConfigGenerate is same as NutanixDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig

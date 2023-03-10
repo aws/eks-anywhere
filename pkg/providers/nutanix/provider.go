@@ -68,6 +68,7 @@ func NewProvider(
 	httpClient *http.Client,
 	now types.NowFunc,
 ) *Provider {
+	datacenterConfig.SetDefaults()
 	for _, machineConfig := range machineConfigs {
 		machineConfig.SetDefaults()
 	}
@@ -228,14 +229,30 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.
 }
 
 func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	contents, err := p.templateBuilder.GenerateCAPISpecSecret(clusterSpec)
+	// check if CAPI Secret name and EKS-A Secret name are not the same
+	// this is to ensure that the EKS-A Secret that is watched and CAPX Secret that is reconciled are not the same
+	if capxSecretName(clusterSpec) == eksaSecretName(clusterSpec) {
+		return fmt.Errorf("NutanixDatacenterConfig CredentialRef name cannot be the same as the NutanixCluster CredentialRef name")
+	}
+
+	capxSecretContents, err := p.templateBuilder.GenerateCAPISpecSecret(clusterSpec)
 	if err != nil {
 		return err
 	}
 
-	if err := p.kubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents); err != nil {
+	if err := p.kubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, capxSecretContents); err != nil {
 		return fmt.Errorf("loading secrets object: %v", err)
 	}
+
+	eksaSecretContents, err := p.templateBuilder.GenerateEKSASpecSecret(clusterSpec)
+	if err != nil {
+		return err
+	}
+
+	if err := p.kubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, eksaSecretContents); err != nil {
+		return fmt.Errorf("loading secrets object: %v", err)
+	}
+
 	return nil
 }
 

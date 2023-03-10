@@ -178,7 +178,8 @@ func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mg
 	factory := controllers.NewFactory(ctrl.Log, mgr).
 		WithClusterReconciler(providers).
 		WithVSphereDatacenterReconciler().
-		WithSnowMachineConfigReconciler()
+		WithSnowMachineConfigReconciler().
+		WithNutanixDatacenterReconciler()
 
 	reconcilers, err := factory.Build(ctx)
 	if err != nil {
@@ -202,6 +203,12 @@ func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mg
 	setupLog.Info("Setting up snowmachineconfig controller")
 	if err := (reconcilers.SnowMachineConfigReconciler).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", anywherev1.SnowMachineConfigKind)
+		failed = true
+	}
+
+	setupLog.Info("Setting up nutanixdatacenter controller")
+	if err := (reconcilers.NutanixDatacenterReconciler).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", anywherev1.NutanixDatacenterKind)
 		failed = true
 	}
 
@@ -232,6 +239,7 @@ func setupWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 	setupCloudstackWebhooks(setupLog, mgr)
 	setupSnowWebhooks(setupLog, mgr)
 	setupTinkerbellWebhooks(setupLog, mgr)
+	setupNutanixWebhooks(setupLog, mgr)
 }
 
 func setupCoreWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
@@ -301,6 +309,13 @@ func setupTinkerbellWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 	}
 	if err := (&anywherev1.TinkerbellMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.TinkerbellMachineConfigKind)
+		os.Exit(1)
+	}
+}
+
+func setupNutanixWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
+	if err := (&anywherev1.NutanixDatacenterConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.NutanixDatacenterKind)
 		os.Exit(1)
 	}
 }
