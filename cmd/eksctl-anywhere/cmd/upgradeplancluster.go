@@ -77,7 +77,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
-		WithClusterManager(newClusterSpec.Cluster).
+		WithClusterManager(newClusterSpec.Cluster, nil).
 		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(newClusterSpec.Cluster, newClusterSpec.FluxConfig, nil).
 		WithCAPIManager().

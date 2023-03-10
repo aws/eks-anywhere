@@ -40,6 +40,11 @@ func NewWithMaxRetries(maxRetries int, backOffPeriod time.Duration) *Retrier {
 	return New(time.Duration(math.MaxInt64), WithMaxRetries(maxRetries, backOffPeriod))
 }
 
+// NewWithNoTimeout creates a new retrier with no global timeout and infinite retries.
+func NewWithNoTimeout() *Retrier {
+	return New(time.Duration(math.MaxInt64))
+}
+
 // WithMaxRetries sets a retry policy that will retry up to maxRetries times
 // with a wait time between retries of backOffPeriod.
 func WithMaxRetries(maxRetries int, backOffPeriod time.Duration) RetrierOpt {
