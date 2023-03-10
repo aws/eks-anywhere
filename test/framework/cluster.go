@@ -803,6 +803,7 @@ func (e *ClusterE2ETest) applyClusterManifest(ctx context.Context) {
 	}
 }
 
+// WithClusterUpgrade adds a cluster upgrade.
 func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.UpdateClusterConfig(api.ClusterToConfigFiller(fillers...))
@@ -1107,6 +1108,7 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 	}
 }
 
+// CreateNamespace creates a namespace.
 func (e *ClusterE2ETest) CreateNamespace(namespace string) {
 	kubeconfig := e.kubeconfigFilePath()
 	err := e.KubectlClient.CreateNamespace(context.Background(), kubeconfig, namespace)
@@ -1115,6 +1117,7 @@ func (e *ClusterE2ETest) CreateNamespace(namespace string) {
 	}
 }
 
+// DeleteNamespace deletes a namespace.
 func (e *ClusterE2ETest) DeleteNamespace(namespace string) {
 	kubeconfig := e.kubeconfigFilePath()
 	err := e.KubectlClient.DeleteNamespace(context.Background(), kubeconfig, namespace)
@@ -1144,7 +1147,7 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 	}
 }
 
-// ValidateNoPackageController make sure there is no package controller.
+// ValidatingNoPackageController make sure there is no package controller.
 func (e *ClusterE2ETest) ValidatingNoPackageController() {
 	kubeconfig := e.kubeconfigFilePath()
 	_, err := e.KubectlClient.GetPackageBundleController(context.Background(), kubeconfig, e.ClusterName)

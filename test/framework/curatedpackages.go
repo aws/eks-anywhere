@@ -1,9 +1,10 @@
 package framework
 
 import (
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"os"
 	"testing"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 type PackageConfig struct {
