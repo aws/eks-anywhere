@@ -25,4 +25,4 @@ docs/.hugo_build.lock
 *-artifacts
 *.log
 pkg/executables/TestDeployTemplate*
-pkg/files/config
+pkg/files/config/bundle-release.yaml
