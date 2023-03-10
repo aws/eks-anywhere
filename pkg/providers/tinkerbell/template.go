@@ -359,7 +359,8 @@ func buildTemplateMapCP(
 	format := "cloud-config"
 
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
-		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig))
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig))
 
 	// LoadBalancerClass is feature gated in K8S v1.21 and needs to be enabled manually
 	if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube121 {
