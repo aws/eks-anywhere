@@ -113,7 +113,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
-	clusterManagerOpts, err := buildClusterManagerOpts(cc.timeoutOptions)
+	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(cc.timeoutOptions)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}
@@ -121,7 +121,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster, clusterManagerOpts...).
+		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
