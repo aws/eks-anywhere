@@ -27,7 +27,6 @@ const (
 	cloudstackManagementServer2Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
 	cloudstackManagementServer3Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_3"
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
-	cloudstackTemplateRedhat121Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_21"
 	cloudstackTemplateRedhat122Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_22"
 	cloudstackTemplateRedhat123Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_23"
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
@@ -57,7 +56,8 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackManagementServer2Var,
 	cloudstackManagementServer3Var,
 	cloudstackSshAuthorizedKeyVar,
-	cloudstackTemplateRedhat121Var,
+	cloudstackTemplateRedhat122Var,
+	cloudstackTemplateRedhat123Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
 	cloudStackCidrVar,
@@ -77,10 +77,6 @@ type CloudStack struct {
 }
 
 type CloudStackOpt func(*CloudStack)
-
-func UpdateRedhatTemplate121Var() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines)
-}
 
 // UpdateRedhatTemplate122Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.22.
 func UpdateRedhatTemplate122Var() api.CloudStackFiller {
@@ -125,7 +121,6 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
 				cloudstackManagementServerVar, api.WithCloudStackAz),
 			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
 			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOfferingForAllMachines),
 		},
 	}
@@ -146,14 +141,6 @@ func WithCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup
 		c.fillers = append(c.fillers, cloudStackMachineConfig(name, fillers...))
 
 		c.clusterFillers = append(c.clusterFillers, buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup))
-	}
-}
-
-func WithCloudStackRedhat121() CloudStackOpt {
-	return func(c *CloudStack) {
-		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
-		)
 	}
 }
 
