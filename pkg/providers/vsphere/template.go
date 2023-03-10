@@ -295,8 +295,16 @@ func buildTemplateMapCP(
 		values["awsIamAuth"] = true
 	}
 
-	if controlPlaneMachineSpec.HostOSConfiguration != nil && controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
-		values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+	if controlPlaneMachineSpec.HostOSConfiguration != nil {
+		if controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+			values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
+
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		values["bottlerocketSettings"] = brSettings
 	}
 
 	return values, nil
@@ -398,8 +406,16 @@ func buildTemplateMapMD(
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
 	}
 
-	if workerNodeGroupMachineSpec.HostOSConfiguration != nil && workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
-		values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+	if workerNodeGroupMachineSpec.HostOSConfiguration != nil {
+		if workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+			values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
+
+		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		values["bottlerocketSettings"] = brSettings
 	}
 
 	return values, nil

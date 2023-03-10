@@ -136,7 +136,7 @@ func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
 	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
 		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", config.Spec.Users[0].Name)
 	}
-	if err := validateHostOSConfig(config.Spec.HostOSConfiguration); err != nil {
+	if err := validateHostOSConfig(config.Spec.HostOSConfiguration, config.Spec.OSFamily); err != nil {
 		return fmt.Errorf("HostOSConfiguration is invalid for VSphereMachineConfig %s: %v", config.Name, err)
 	}
 

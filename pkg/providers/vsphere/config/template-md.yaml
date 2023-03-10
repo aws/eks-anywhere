@@ -30,6 +30,9 @@ spec:
 {{ .registryCACert | indent 12 }}
           {{- end }}
 {{- end }}
+{{- if .bottlerocketSettings }}
+{{ .bottlerocketSettings | indent 8 }}
+{{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
 {{- if .workerNodeGroupTaints }}

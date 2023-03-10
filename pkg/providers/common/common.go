@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh"
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -99,4 +101,35 @@ func WorkerMachineTemplateName(clusterName, workerNodeGroupName string, now type
 func KubeadmConfigTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
 	return fmt.Sprintf("%s-%s-template-%d", clusterName, workerNodeGroupName, t)
+}
+
+// GetCAPIBottlerocketSettingsConfig returns the formatted CAPI Bottlerocket settings config as a YAML marshaled string.
+func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.BottlerocketConfiguration) (string, error) {
+	if config == nil {
+		return "", nil
+	}
+
+	b := &v1beta1.BottlerocketSettings{}
+	if config.Kubernetes != nil {
+		b.Kubernetes = &v1beta1.BottlerocketKubernetesSettings{
+			MaxPods: config.Kubernetes.MaxPods,
+		}
+		if len(config.Kubernetes.AllowedUnsafeSysctls) > 0 {
+			b.Kubernetes.AllowedUnsafeSysctls = config.Kubernetes.AllowedUnsafeSysctls
+		}
+		if len(config.Kubernetes.ClusterDNSIPs) > 0 {
+			b.Kubernetes.ClusterDNSIPs = config.Kubernetes.ClusterDNSIPs
+		}
+	}
+
+	brMap := map[string]*v1beta1.BottlerocketSettings{
+		"bottlerocket": b,
+	}
+
+	marshaledConfig, err := yaml.Marshal(brMap)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal bottlerocket config: %v", err)
+	}
+
+	return strings.Trim(string(marshaledConfig), "\n"), nil
 }

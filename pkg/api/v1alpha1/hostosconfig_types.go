@@ -1,11 +1,26 @@
 package v1alpha1
 
+import "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+
 // HostOSConfiguration defines the configuration settings on the host OS.
 type HostOSConfiguration struct {
+	// +optional
 	NTPConfiguration *NTPConfiguration `json:"ntpConfiguration"`
+
+	// +optional
+	BottlerocketConfiguration *BottlerocketConfiguration `json:"bottlerocketConfiguration"`
 }
 
 // NTPConfiguration defines the NTP configuration on the host OS.
 type NTPConfiguration struct {
+	// Servers defines a list of NTP servers to be configured on the host OS.
 	Servers []string `json:"servers"`
+}
+
+// BottlerocketConfiguration defines the Bottlerocket configuration on the host OS.
+// These settings only take effect when the `osFamily` is bottlerocket.
+type BottlerocketConfiguration struct {
+	// Kubernetes defines the Kubernetes settings on the host OS.
+	// +optional
+	Kubernetes *v1beta1.BottlerocketKubernetesSettings `json:"kubernetes"`
 }

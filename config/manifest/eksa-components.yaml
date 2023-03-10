@@ -5242,19 +5242,46 @@ spec:
                 description: HostOSConfiguration defines the configuration settings
                   on the host OS.
                 properties:
+                  bottlerocketConfiguration:
+                    description: BottlerocketConfiguration defines the Bottlerocket
+                      configuration on the host OS. These settings only take effect
+                      when the `osFamily` is bottlerocket.
+                    properties:
+                      kubernetes:
+                        description: Kubernetes defines the Kubernetes settings on
+                          the host OS.
+                        properties:
+                          allowedUnsafeSysctls:
+                            description: AllowedUnsafeSysctls defines the list of
+                              unsafe sysctls that can be set on a node.
+                            items:
+                              type: string
+                            type: array
+                          clusterDNSIPs:
+                            description: ClusterDNSIPs defines IP addresses of the
+                              DNS servers.
+                            items:
+                              type: string
+                            type: array
+                          maxPods:
+                            description: MaxPods defines the maximum number of pods
+                              that can run on a node.
+                            type: integer
+                        type: object
+                    type: object
                   ntpConfiguration:
                     description: NTPConfiguration defines the NTP configuration on
                       the host OS.
                     properties:
                       servers:
+                        description: Servers defines a list of NTP servers to be configured
+                          on the host OS.
                         items:
                           type: string
                         type: array
                     required:
                     - servers
                     type: object
-                required:
-                - ntpConfiguration
                 type: object
               osFamily:
                 type: string
@@ -5581,19 +5608,46 @@ spec:
                 description: HostOSConfiguration defines the configuration settings
                   on the host OS.
                 properties:
+                  bottlerocketConfiguration:
+                    description: BottlerocketConfiguration defines the Bottlerocket
+                      configuration on the host OS. These settings only take effect
+                      when the `osFamily` is bottlerocket.
+                    properties:
+                      kubernetes:
+                        description: Kubernetes defines the Kubernetes settings on
+                          the host OS.
+                        properties:
+                          allowedUnsafeSysctls:
+                            description: AllowedUnsafeSysctls defines the list of
+                              unsafe sysctls that can be set on a node.
+                            items:
+                              type: string
+                            type: array
+                          clusterDNSIPs:
+                            description: ClusterDNSIPs defines IP addresses of the
+                              DNS servers.
+                            items:
+                              type: string
+                            type: array
+                          maxPods:
+                            description: MaxPods defines the maximum number of pods
+                              that can run on a node.
+                            type: integer
+                        type: object
+                    type: object
                   ntpConfiguration:
                     description: NTPConfiguration defines the NTP configuration on
                       the host OS.
                     properties:
                       servers:
+                        description: Servers defines a list of NTP servers to be configured
+                          on the host OS.
                         items:
                           type: string
                         type: array
                     required:
                     - servers
                     type: object
-                required:
-                - ntpConfiguration
                 type: object
               memoryMiB:
                 type: integer
@@ -6292,6 +6346,27 @@ webhooks:
     service:
       name: eksa-webhook-service
       namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig
+  failurePolicy: Fail
+  name: mutation.cloudstackdatacenterconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackdatacenterconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
       path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster
   failurePolicy: Fail
   name: mutation.cluster.anywhere.amazonaws.com
@@ -6389,27 +6464,6 @@ webhooks:
     - UPDATE
     resources:
     - vspheremachineconfigs
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: eksa-webhook-service
-      namespace: eksa-system
-      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig
-  failurePolicy: Fail
-  name: mutation.cloudstackdatacenterconfig.anywhere.amazonaws.com
-  rules:
-  - apiGroups:
-    - anywhere.eks.amazonaws.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - cloudstackdatacenterconfigs
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
