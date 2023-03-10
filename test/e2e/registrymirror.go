@@ -29,4 +29,5 @@ func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
 	test.StopIfFailed()
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
+	test.CleanupDownloadedArtifactsAndImages()
 }
