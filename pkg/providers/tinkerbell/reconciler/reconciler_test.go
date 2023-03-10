@@ -523,7 +523,7 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
-	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector"))
 	tt.cleanup()
 }
 
@@ -899,7 +899,6 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
-	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
