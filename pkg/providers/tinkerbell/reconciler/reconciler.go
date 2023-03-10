@@ -174,7 +174,7 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 
 	wantVersionChange := currentKCP.Spec.Version != tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.Version
 	cpWantScaleChange := *currentKCP.Spec.Replicas != *tinkerbellScope.ControlPlane.KubeadmControlPlane.Spec.Replicas
-	workerWantScaleChange, err := r.workerReplicasDiff(ctx, tinkerbellScope)
+	workerWantScaleChange, err := r.WorkerReplicasDiff(ctx, tinkerbellScope)
 	if err != nil {
 		return "", err
 	}
@@ -192,7 +192,8 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 	return op, nil
 }
 
-func (r *Reconciler) workerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) (bool, error) {
+// WorkerReplicasDiff indicates if there's difference between current and desired worker node groups.
+func (r *Reconciler) WorkerReplicasDiff(ctx context.Context, tinkerbellScope *Scope) (bool, error) {
 	workerWantScaleChange := false
 	for _, wnc := range tinkerbellScope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		md := &clusterv1.MachineDeployment{}

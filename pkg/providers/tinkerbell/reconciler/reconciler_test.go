@@ -12,6 +12,7 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -636,20 +637,6 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 	tt.cleanup()
 }
 
-func TestReconcilerGenerateSpecFail(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.createAllObjs()
-	logger := test.NewNullLogger()
-	scope := tt.buildScope()
-	tt.reconciler()
-	result, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
-	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
-	tt.cleanup()
-}
-
 func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
@@ -731,6 +718,36 @@ func TestReconciler_DetectOperationNewCluster(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(op).To(Equal(reconciler.NewClusterOperation))
 	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+	_, err := tt.reconciler().DetectOperation(tt.ctx, test.NewNullLogger(), &reconciler.Scope{ClusterSpec: &clusterspec.Spec{Config: &clusterspec.Config{Cluster: &anywherev1.Cluster{}}}})
+	tt.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
+}
+
+func TestWorkerReplicasDiffFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+	scope := &reconciler.Scope{
+		ClusterSpec: &clusterspec.Spec{
+			Config: &clusterspec.Config{
+				Cluster: &anywherev1.Cluster{
+					Spec: anywherev1.ClusterSpec{
+						WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+							{
+								Name: "md-0",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err := tt.reconciler().WorkerReplicasDiff(tt.ctx, scope)
+	tt.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
 }
 
 func (tt *reconcilerTest) withFakeClient() {
