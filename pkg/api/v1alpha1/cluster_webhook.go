@@ -86,6 +86,10 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	var allErrs field.ErrorList
 
+	if r.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
+		allErrs = append(allErrs, validateUpgradeRequestTinkerbell(r, oldCluster)...)
+	}
+
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
 
 	allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
@@ -113,6 +117,44 @@ func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	return allErrs
+}
+
+func validateUpgradeRequestTinkerbell(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	path := field.NewPath("spec")
+
+	if old.Spec.KubernetesVersion != new.Spec.KubernetesVersion {
+		if old.Spec.ControlPlaneConfiguration.Count != new.Spec.ControlPlaneConfiguration.Count {
+			allErrs = append(
+				allErrs,
+				field.Invalid(path, new.Spec.ControlPlaneConfiguration, fmt.Sprintf("cannot perform scale up or down during rolling upgrades. Previous control plane node count %v", old.Spec.ControlPlaneConfiguration.Count)))
+		}
+
+		if len(old.Spec.WorkerNodeGroupConfigurations) != len(new.Spec.WorkerNodeGroupConfigurations) {
+			allErrs = append(
+				allErrs,
+				field.Invalid(path, new.Spec.WorkerNodeGroupConfigurations, "cannot perform scale up or down during rolling upgrades. Please revert to the previous worker node groups."))
+		}
+		workerNodeGroupMap := make(map[string]*WorkerNodeGroupConfiguration)
+		for _, workerNodeGroupConfiguration := range old.Spec.WorkerNodeGroupConfigurations {
+			workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+		}
+		for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
+			workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]
+			if ok && *nodeGroupNewSpec.Count != *workerNodeGrpOldSpec.Count {
+				allErrs = append(
+					allErrs,
+					field.Invalid(path, new.Spec.WorkerNodeGroupConfigurations, fmt.Sprintf("cannot perform scale up or down during rolling upgrades. Previous worker node count %v", *workerNodeGrpOldSpec.Count)))
+			}
+			if !ok {
+				allErrs = append(
+					allErrs,
+					field.Invalid(path, new.Spec.WorkerNodeGroupConfigurations, fmt.Sprintf("cannot perform scale up or down during rolling upgrades. Please remove the new worker node group %s", nodeGroupNewSpec.Name)))
+			}
+		}
 	}
 
 	return allErrs

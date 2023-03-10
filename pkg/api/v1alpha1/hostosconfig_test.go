@@ -72,7 +72,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 				BottlerocketConfiguration: &BottlerocketConfiguration{},
 			},
 			osFamily: Bottlerocket,
-			wantErr: "",
+			wantErr:  "",
 		},
 		{
 			name: "empty Bottlerocket.Kuberentes config",
