@@ -520,6 +520,17 @@ func TestTinkerbellKubernetes125UbuntuSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes126SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes122RedHatSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

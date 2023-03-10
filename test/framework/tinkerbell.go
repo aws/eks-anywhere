@@ -17,6 +17,7 @@ const (
 	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
 	tinkerbellImageUbuntu124EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_24"
 	tinkerbellImageUbuntu125EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_25"
+	tinkerbellImageUbuntu126EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_26"
 	tinkerbellImageRedHat122EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_22"
 	tinkerbellImageRedHat123EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_23"
 	tinkerbellImageRedHat124EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_24"
@@ -32,6 +33,7 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu123EnvVar,
 	tinkerbellImageUbuntu124EnvVar,
 	tinkerbellImageUbuntu125EnvVar,
+	tinkerbellImageUbuntu126EnvVar,
 	tinkerbellImageRedHat122EnvVar,
 	tinkerbellImageRedHat123EnvVar,
 	tinkerbellImageRedHat124EnvVar,
@@ -171,6 +173,16 @@ func WithUbuntu125Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu125EnvVar, api.WithTinkerbellOSImageURL),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+// WithUbuntu126Tinkerbell tink test with ubuntu 1.26.
+func WithUbuntu126Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu126EnvVar, api.WithTinkerbellOSImageURL),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
 	}
