@@ -68,7 +68,7 @@ func UpdateTinkerbellUbuntuTemplate124Var() api.TinkerbellFiller {
 	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu124EnvVar, api.WithTinkerbellOSImageURL)
 }
 
-// UpdateTinkerbellUbuntuTemplate124Var updates the tinkerbell template.
+// UpdateTinkerbellUbuntuTemplate125Var updates the tinkerbell template.
 func UpdateTinkerbellUbuntuTemplate125Var() api.TinkerbellFiller {
 	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu125EnvVar, api.WithTinkerbellOSImageURL)
 }
