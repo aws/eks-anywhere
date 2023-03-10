@@ -5,10 +5,10 @@ import "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 // HostOSConfiguration defines the configuration settings on the host OS.
 type HostOSConfiguration struct {
 	// +optional
-	NTPConfiguration *NTPConfiguration `json:"ntpConfiguration"`
+	NTPConfiguration *NTPConfiguration `json:"ntpConfiguration,omitempty"`
 
 	// +optional
-	BottlerocketConfiguration *BottlerocketConfiguration `json:"bottlerocketConfiguration"`
+	BottlerocketConfiguration *BottlerocketConfiguration `json:"bottlerocketConfiguration,omitempty"`
 }
 
 // NTPConfiguration defines the NTP configuration on the host OS.
@@ -22,5 +22,5 @@ type NTPConfiguration struct {
 type BottlerocketConfiguration struct {
 	// Kubernetes defines the Kubernetes settings on the host OS.
 	// +optional
-	Kubernetes *v1beta1.BottlerocketKubernetesSettings `json:"kubernetes"`
+	Kubernetes *v1beta1.BottlerocketKubernetesSettings `json:"kubernetes,omitempty"`
 }

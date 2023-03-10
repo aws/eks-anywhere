@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -408,7 +409,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 
 	if err := v.Validate(tinkClusterSpec); err != nil {
 		log.Error(err, "Hardware validation failure")
-		failureMessage := err.Error()
+		failureMessage := fmt.Errorf("hardware validation failure: %v", err).Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 
 		return controller.ResultWithReturn(), nil
