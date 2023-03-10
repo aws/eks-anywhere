@@ -40,6 +40,14 @@ func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(runCuratedPackageInstall)
 }
 
+func runDisabledCuratedPackage(test *framework.ClusterE2ETest) {
+	test.ValidatingNoPackageController()
+}
+
+func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
+	test.WithCluster(runDisabledCuratedPackage)
+}
+
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {

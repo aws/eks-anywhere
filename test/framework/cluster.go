@@ -850,6 +850,10 @@ func (e *ClusterE2ETest) generateClusterConfigYaml() []byte {
 	childObjs := e.ClusterConfig.ChildObjects()
 	yamlB := make([][]byte, 0, len(childObjs)+1)
 
+	if e.PackageConfig != nil {
+		e.ClusterConfig.Cluster.Spec.Packages = e.PackageConfig.packageConfiguration
+	}
+
 	// This is required because Flux requires a namespace be specified for objects
 	// to be able to reconcile right.
 	if e.ClusterConfig.Cluster.Namespace == "" {
@@ -1137,6 +1141,15 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
 			"--cluster=" + e.ClusterName,
 		})
+	}
+}
+
+// ValidateNoPackageController make sure there is no package controller.
+func (e *ClusterE2ETest) ValidatingNoPackageController() {
+	kubeconfig := e.kubeconfigFilePath()
+	_, err := e.KubectlClient.GetPackageBundleController(context.Background(), kubeconfig, e.ClusterName)
+	if err == nil {
+		e.T.Fatalf("Error unexpected PackageBundleController: %v", err)
 	}
 }
 

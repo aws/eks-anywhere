@@ -193,7 +193,7 @@ func TestVSphereKubernetes122CuratedPackagesSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -205,7 +205,7 @@ func TestVSphereKubernetes122CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -216,7 +216,7 @@ func TestVSphereKubernetes122BottleRocketCuratedPackagesSimpleFlow(t *testing.T)
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -228,7 +228,7 @@ func TestVSphereKubernetes122BottleRocketCuratedPackagesEmissarySimpleFlow(t *te
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -240,7 +240,7 @@ func TestVSphereKubernetes123CuratedPackagesSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -251,7 +251,7 @@ func TestVSphereKubernetes123BottleRocketCuratedPackagesSimpleFlow(t *testing.T)
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -263,7 +263,7 @@ func TestVSphereKubernetes124CuratedPackagesSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -275,7 +275,7 @@ func TestVSphereKubernetes124BottleRocketCuratedPackagesSimpleFlow(t *testing.T)
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -287,7 +287,7 @@ func TestVSphereKubernetes125CuratedPackagesSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -299,7 +299,7 @@ func TestVSphereKubernetes125BottleRocketCuratedPackagesSimpleFlow(t *testing.T)
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 
 	runCuratedPackageInstallSimpleFlow(test)
@@ -400,7 +400,7 @@ func TestVSphereKubernetes122BottleRocketCuratedPackagesAdotUpdateFlow(t *testin
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -412,7 +412,7 @@ func TestVSphereKubernetes123UbuntuCuratedPackagesAdotUpdateFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -426,7 +426,7 @@ func TestVSphereKubernetes125UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
@@ -440,7 +440,7 @@ func TestVSphereKubernetes125BottleRocketCuratedPackagesClusterAutoscalerSimpleF
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
@@ -452,7 +452,7 @@ func TestVSphereKubernetes122UbuntuCuratedPackagesPrometheusSimpleFlow(t *testin
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -464,7 +464,7 @@ func TestVSphereKubernetes123BottleRocketCuratedPackagesPrometheusSimpleFlow(t *
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }

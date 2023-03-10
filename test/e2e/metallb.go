@@ -51,7 +51,7 @@ func (suite *MetalLBSuite) SetupSuite() {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 		kubeVersionNameDiscriminator(suite.kubernetesVersion),
 	)
 }
@@ -76,14 +76,14 @@ func (suite *MetalLBSuite) TestPackagesMetalLB() {
 	// This however requires the creation of utilites managing cluster creation.
 	t := suite.T()
 	suite.cluster.WithCluster(func(test *framework.ClusterE2ETest) {
-        err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
-        if err != nil {
-            test.T.Fatalf("packages controller not in installed state: %s", err)
-        }
-        err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 3*time.Minute)
-        if err != nil {
-            test.T.Fatalf("packages controller crds not in installed state: %s", err)
-        }
+		err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
+		if err != nil {
+			test.T.Fatalf("packages controller not in installed state: %s", err)
+		}
+		err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 3*time.Minute)
+		if err != nil {
+			test.T.Fatalf("packages controller crds not in installed state: %s", err)
+		}
 		kcfg := kubeconfig.FromClusterName(test.ClusterName)
 		cluster := suite.cluster.Cluster()
 		ctx := context.Background()

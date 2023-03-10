@@ -1,17 +1,19 @@
 package framework
 
 import (
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"os"
 	"testing"
 )
 
 type PackageConfig struct {
 	*HelmInstallConfig
-	bundleURI string
+	bundleURI            string
+	packageConfiguration *v1alpha1.PackageConfiguration
 }
 
 func WithPackageConfig(t *testing.T, bundleURI, chartName, chartURI,
-	chartVersion string, chartValues []string,
+	chartVersion string, chartValues []string, packageConfiguration *v1alpha1.PackageConfiguration,
 ) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.PackageConfig = &PackageConfig{
@@ -22,7 +24,8 @@ func WithPackageConfig(t *testing.T, bundleURI, chartName, chartURI,
 				chartValues:  chartValues,
 				HelmClient:   buildHelm(t),
 			},
-			bundleURI: bundleURI,
+			packageConfiguration: packageConfiguration,
+			bundleURI:            bundleURI,
 		}
 	}
 }
