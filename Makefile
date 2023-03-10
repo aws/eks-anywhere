@@ -48,7 +48,7 @@ $(info    Using standard BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_
 LATEST=latest
 endif
 
-CUSTOM_GIT_VERSION:=v0.0.0-custom
+CUSTOM_GIT_VERSION:=v0.15.0-custom
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
 AWS_REGION=us-west-2
@@ -167,7 +167,6 @@ eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster s
 	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) files_embed_fs'
 
 .PHONY: eks-a-cross-platform-embed-latest-config
-eks-a-cross-platform-embed-latest-config:
 eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release versions of eks-a with the latest bundle-release.yaml embedded in cluster spec config
 	curl -L $(BUNDLE_MANIFEST_URL) --output $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
 	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
@@ -181,14 +180,13 @@ eks-a-custom-embed-config:
 	$(MAKE) eks-a-binary GIT_VERSION=$(CUSTOM_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true' BUILD_TAGS='$(BUILD_TAGS) files_embed_fs'
 
 .PHONY: eks-a-cross-platform-custom-embed-latest-config
-eks-a-cross-platform-custom-embed-latest-config:
 eks-a-cross-platform-custom-embed-latest-config: ## Build custom binary with latest dev release bundle that embeds config and builds it as a release binary for all os/arch
 	curl -L $(BUNDLE_MANIFEST_URL) --output $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
 	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
 	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
 	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
 	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
-	rm $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
+	#rm $(EMBED_CONFIG_FOLDER)/bundle-release.yaml
 
 .PHONY: eks-a-custom-release-zip
 eks-a-custom-release-zip: eks-a-cross-platform-custom-embed-latest-config ## Build from linux/amd64
