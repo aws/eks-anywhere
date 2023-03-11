@@ -636,6 +636,12 @@ func (e *ClusterE2ETest) ExtractDownloadedArtifacts(opts ...CommandOpt) {
 	e.Run("tar", "-xf", defaultDownloadArtifactsOutputLocation)
 }
 
+// CleanupDownloadedArtifactsAndImages cleans up the downloaded artifacts and images.
+func (e *ClusterE2ETest) CleanupDownloadedArtifactsAndImages(opts ...CommandOpt) {
+	e.T.Log("Cleaning up downloaded artifacts and images")
+	e.Run("rm", "-rf", defaultDownloadArtifactsOutputLocation, defaultDownloadImagesOutputLocation)
+}
+
 // DownloadImages runs the EKS-A `download images` command with appropriate args.
 func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
 	downloadImagesArgs := []string{"download", "images", "-o", defaultDownloadImagesOutputLocation}
