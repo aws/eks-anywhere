@@ -51,7 +51,7 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 	signals.On(func() {
 		resume := stdout.Pause()
 
-		fmt.Println("Warning: Terminating this operation may leave the cluster in an irrecoverable state.")
+		logger.Info("Warning: Terminating this operation may leave the cluster in an irrecoverable state.")
 		if console.Confirm("Are you sure you want to exit?", os.Stdout, os.Stdin) {
 			os.Exit(-1)
 		}
@@ -66,6 +66,13 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Failed to resume stdout logging: %s", err)
 		}
 	}, syscall.SIGINT)
+
+	// We've historically performed a forceful process termination on SIGTERM. We should be able to
+	// improve this and trigger a graceful shutdown instead.
+	signals.On(func() {
+		logger.Info("Warning: Terminating may have left your cluster in an irrecoverable state.")
+		os.Exit(-1)
+	}, syscall.SIGTERM)
 }
 
 func initLogger(consoleWriter io.Writer) error {
