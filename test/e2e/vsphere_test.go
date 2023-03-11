@@ -1196,6 +1196,20 @@ func TestVSphereKubernetes125UbuntuWithNTP(t *testing.T) {
 	runNTPFlow(test, v1alpha1.Ubuntu)
 }
 
+// Bottlerocket Configuration test
+func TestVSphereKubernetes125BottlerocketWithBottlerocketKuberentesSettings(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(
+			t, framework.WithBottleRocket125(),
+			framework.WithBottlerocketKuberentesSettingsForAllMachines(),
+			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
+		),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+	)
+	runBottlerocketConfigurationFlow(test)
+}
+
 // Stacked etcd
 func TestVSphereKubernetes122StackedEtcdUbuntu(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,

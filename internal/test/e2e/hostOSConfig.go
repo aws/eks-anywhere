@@ -20,3 +20,17 @@ func (e *E2ESession) setupNTPEnv(testRegex string) error {
 	}
 	return nil
 }
+
+func (e *E2ESession) setupBottlerocketKubernetesSettingsEnv(testRegex string) error {
+	re := regexp.MustCompile(`^.*BottlerocketKuberentesSettings.*$`)
+	if !re.MatchString(testRegex) {
+		return nil
+	}
+
+	for _, eVar := range e2etests.RequiredBottlerocketKubernetesSettingsEnvVars() {
+		if val, ok := os.LookupEnv(eVar); ok {
+			e.testEnvVars[eVar] = val
+		}
+	}
+	return nil
+}
