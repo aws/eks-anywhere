@@ -68,12 +68,25 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    export EKSA_AWS_REGION="us-west-2" 
    ```
      
-1. Create the cluster, using the `hardware.csv` file you made in [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}}):
+1. Create the cluster, using the `hardware.csv` file you made in [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}}).
+
+   For a regular cluster create (with internet access), type the following:
+
    ```bash
    eksctl anywhere create cluster \
       --hardware-csv hardware.csv \
       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
       -f eksa-mgmt-cluster.yaml
+   ```
+   
+   For an airgapped cluster create, follow [Preparation for airgapped deployments]({{< relref "../install/#prepare-for-airgapped-deployments-optional" >}}) instructions, then type the following:
+
+   ```bash
+   eksctl anywhere create cluster
+      --hardware-csv hardware.csv \
+      # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+      -f $CLUSTER_NAME.yaml \
+      --bundles-override ./eks-anywhere-downloads/bundle-release.yaml
    ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
@@ -160,6 +173,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
        -f eksa-w01-cluster.yaml  \
        # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
        --hardware-csv <hardware.csv>
+       # --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \ # uncomment for airgapped install
        --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
    ```
    ##### Without hardware CSV
@@ -167,6 +181,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    eksctl anywhere create cluster \
        -f eksa-w01-cluster.yaml  \
        # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+       # --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \ # uncomment for airgapped install
        --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
    ```
 
