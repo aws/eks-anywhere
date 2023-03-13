@@ -207,11 +207,11 @@ func replaceTag(uri, tag string) string {
 
 // getTag is used to replace get the tag of an ImageURI
 func getTag(uri string) string {
-	NewURIList := strings.Split(uri, ":")
-	if len(NewURIList) < 2 {
+	newURIList := strings.Split(uri, ":")
+	if len(newURIList) < 2 {
 		return uri
 	}
-	return NewURIList[len(NewURIList)-1]
+	return newURIList[len(newURIList)-1]
 }
 
 // recoverBundle is a function used if we have a helm error to revert the bundle back to it's original state using Git Tag version.
