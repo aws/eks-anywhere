@@ -479,7 +479,7 @@ func TestValidateMachineConfigsWithAffinity(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestValidateSecretsUnchangedOnSecretUnchanged(t *testing.T) {
+func TestValidateSecretsUnchangedSuccess(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -495,7 +495,7 @@ func TestValidateSecretsUnchangedOnSecretUnchanged(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestValidateSecretsUnchangedOnSecretChanged(t *testing.T) {
+func TestValidateSecretsUnchangedFailureSecretChanged(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -514,7 +514,7 @@ func TestValidateSecretsUnchangedOnSecretChanged(t *testing.T) {
 	thenErrorExpected(t, "profile 'global' is different from the secret", err)
 }
 
-func TestValidateSecretsUnchangedOnGetSecretFailure(t *testing.T) {
+func TestValidateSecretsUnchangedFailureGettingSecret(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -530,7 +530,7 @@ func TestValidateSecretsUnchangedOnGetSecretFailure(t *testing.T) {
 	thenErrorExpected(t, "getting secret for profile global: test-error", err)
 }
 
-func TestValidateSecretsUnchangedOnSecretNotFound(t *testing.T) {
+func TestValidateSecretsUnchangedFailureSecretNotFound(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
