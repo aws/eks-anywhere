@@ -119,10 +119,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		return anywherev1alpha1.TinkerbellBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-tinkerbell")
 	}
 
-	// TODO: remove these 2 lines when CAPT releases a new git tag
-	_ = version
-	version = "v0.1.0"
-
 	bundle := anywherev1alpha1.TinkerbellBundle{
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
