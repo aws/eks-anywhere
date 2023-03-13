@@ -62,3 +62,6 @@ metadata:
 spec:
   endpoint: "prism.nutanix.com"
   port: 9440
+  credentialRef:
+    name: eksa-unit-test
+    kind: Secret

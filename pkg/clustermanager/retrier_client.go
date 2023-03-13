@@ -13,20 +13,20 @@ import (
 // RetrierClient wraps around a ClusterClient, offering retry functionality for some operations.
 type RetrierClient struct {
 	*client
-	*retrier.Retrier
+	retrier *retrier.Retrier
 }
 
 // NewRetrierClient constructs a new RetrierClient.
 func NewRetrierClient(client ClusterClient, retrier *retrier.Retrier) *RetrierClient {
 	return &RetrierClient{
 		client:  NewClient(client),
-		Retrier: retrier,
+		retrier: retrier,
 	}
 }
 
 // ApplyKubeSpecFromBytes creates/updates the objects defined in a yaml manifest against the api server following a client side apply mechanism.
 func (c *RetrierClient) ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.ApplyKubeSpecFromBytes(ctx, cluster, data)
 		},
@@ -35,7 +35,7 @@ func (c *RetrierClient) ApplyKubeSpecFromBytes(ctx context.Context, cluster *typ
 
 // Apply creates/updates an object against the api server following a client side apply mechanism.
 func (c *RetrierClient) Apply(ctx context.Context, kubeconfigPath string, obj runtime.Object) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.Apply(ctx, kubeconfigPath, obj)
 		},
@@ -45,7 +45,7 @@ func (c *RetrierClient) Apply(ctx context.Context, kubeconfigPath string, obj ru
 // ApplyKubeSpecFromBytesForce creates/updates the objects defined in a yaml manifest against the api server following a client side apply mechanism.
 // It forces the operation, so if api validation failed, it will delete and re-create the object.
 func (c *RetrierClient) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.ApplyKubeSpecFromBytesForce(ctx, cluster, data)
 		},
@@ -55,7 +55,7 @@ func (c *RetrierClient) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster
 // ApplyKubeSpecFromBytesWithNamespace creates/updates the objects defined in a yaml manifest against the api server following a client side apply mechanism.
 // It applies all objects in the given namespace.
 func (c *RetrierClient) ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, data, namespace)
 		},
@@ -64,7 +64,7 @@ func (c *RetrierClient) ApplyKubeSpecFromBytesWithNamespace(ctx context.Context,
 
 // UpdateAnnotationInNamespace adds/updates an annotation for the given kubernetes resource.
 func (c *RetrierClient) UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.UpdateAnnotationInNamespace(ctx, resourceType, objectName, annotations, cluster, namespace)
 		},
@@ -73,7 +73,7 @@ func (c *RetrierClient) UpdateAnnotationInNamespace(ctx context.Context, resourc
 
 // RemoveAnnotationInNamespace deletes an annotation for the given kubernetes resource if present.
 func (c *RetrierClient) RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.RemoveAnnotationInNamespace(ctx, resourceType, objectName, key, cluster, namespace)
 		},
@@ -82,7 +82,7 @@ func (c *RetrierClient) RemoveAnnotationInNamespace(ctx context.Context, resourc
 
 // ListObjects reads all Objects of a particular resource type in a namespace.
 func (c *RetrierClient) ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.ListObjects(ctx, resourceType, namespace, kubeconfig, list)
 		},
@@ -91,7 +91,7 @@ func (c *RetrierClient) ListObjects(ctx context.Context, resourceType, namespace
 
 // DeleteGitOpsConfig deletes a GitOpsConfigObject from the cluster.
 func (c *RetrierClient) DeleteGitOpsConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteGitOpsConfig(ctx, cluster, name, namespace)
 		},
@@ -100,7 +100,7 @@ func (c *RetrierClient) DeleteGitOpsConfig(ctx context.Context, cluster *types.C
 
 // DeleteEKSACluster deletes an EKSA Cluster object from the cluster.
 func (c *RetrierClient) DeleteEKSACluster(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteEKSACluster(ctx, cluster, name, namespace)
 		},
@@ -109,7 +109,7 @@ func (c *RetrierClient) DeleteEKSACluster(ctx context.Context, cluster *types.Cl
 
 // DeleteAWSIamConfig deletes an AWSIamConfig object from the cluster.
 func (c *RetrierClient) DeleteAWSIamConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteAWSIamConfig(ctx, cluster, name, namespace)
 		},
@@ -118,7 +118,7 @@ func (c *RetrierClient) DeleteAWSIamConfig(ctx context.Context, cluster *types.C
 
 // DeleteOIDCConfig deletes a OIDCConfig object from the cluster.
 func (c *RetrierClient) DeleteOIDCConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteOIDCConfig(ctx, cluster, name, namespace)
 		},
@@ -127,7 +127,7 @@ func (c *RetrierClient) DeleteOIDCConfig(ctx context.Context, cluster *types.Clu
 
 // DeleteCluster deletes a CAPI Cluster from the cluster.
 func (c *RetrierClient) DeleteCluster(ctx context.Context, cluster, clusterToDelete *types.Cluster) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.ClusterClient.DeleteCluster(ctx, cluster, clusterToDelete)
 		},

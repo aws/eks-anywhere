@@ -134,6 +134,9 @@ spec:
 {{ .registryCACert | indent 10 }}
         {{- end }}
 {{- end }}
+{{- if .bottlerocketSettings }}
+{{ .bottlerocketSettings | indent 6 }}
+{{- end }}
       apiServer:
         extraArgs:
           cloud-provider: external
@@ -378,6 +381,9 @@ spec:
         caCert: |
 {{ .registryCACert | indent 10 }}
         {{- end }}
+{{- end }}
+{{- if .bottlerocketSettings }}
+{{ .bottlerocketSettings | indent 6 }}
 {{- end }}
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock

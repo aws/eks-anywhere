@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -186,7 +187,7 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithCliConfig(&tt.cliConfig).
-		WithClusterManager(tt.clusterSpec.Cluster).
+		WithClusterManager(tt.clusterSpec.Cluster, nil).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -197,7 +198,7 @@ func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithClusterManager(tt.clusterSpec.Cluster).
+		WithClusterManager(tt.clusterSpec.Cluster, nil).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -207,6 +208,10 @@ func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	configString := test.ReadFile(t, "testdata/cloudstack_config_multiple_profiles.ini")
 	encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
+	timeoutOpts := &dependencies.ClusterManagerTimeoutOptions{
+		NoTimeouts:       true,
+		ControlPlaneWait: 10 * time.Minute,
+	}
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
 
 	tt := newTest(t, vsphere)
@@ -214,7 +219,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithLocalExecutables().
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
-		WithClusterManager(tt.clusterSpec.Cluster).
+		WithClusterManager(tt.clusterSpec.Cluster, timeoutOpts).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 		WithGitOpsFlux(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().

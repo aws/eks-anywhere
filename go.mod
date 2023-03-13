@@ -101,7 +101,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/containerd v1.6.19 // indirect
 	github.com/coredns/caddy v1.1.0 // indirect
-	github.com/coredns/corefile-migration v1.0.18 // indirect
+	github.com/coredns/corefile-migration v1.0.20 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v20.10.21+incompatible // indirect
@@ -220,5 +220,5 @@ replace (
 	k8s.io/component-base => k8s.io/component-base v0.25.6
 
 	// need the modifications eksa made to the capi api structs
-	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.3.3-eksa.1
+	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.3.5-eksa.1
 )

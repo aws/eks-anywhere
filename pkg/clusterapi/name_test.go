@@ -133,7 +133,7 @@ func TestKubeadmControlPlaneName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
-			g.Expect(clusterapi.KubeadmControlPlaneName(g.clusterSpec)).To(Equal(tt.want))
+			g.Expect(clusterapi.KubeadmControlPlaneName(g.clusterSpec.Cluster)).To(Equal(tt.want))
 		})
 	}
 }
@@ -151,7 +151,7 @@ func TestMachineDeploymentName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
-			g.Expect(clusterapi.MachineDeploymentName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
+			g.Expect(clusterapi.MachineDeploymentName(g.clusterSpec.Cluster, *g.workerNodeGroupConfig)).To(Equal(tt.want))
 		})
 	}
 }

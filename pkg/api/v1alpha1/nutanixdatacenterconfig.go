@@ -2,6 +2,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const NutanixDatacenterKind = "NutanixDatacenterConfig"
@@ -19,6 +21,10 @@ func NewNutanixDatacenterConfigGenerate(clusterName string) *NutanixDatacenterCo
 		Spec: NutanixDatacenterConfigSpec{
 			Endpoint: "<enter Prism Central Endpoint (FQDN or IP) here>",
 			Port:     9440,
+			CredentialRef: &Ref{
+				Kind: constants.SecretKind,
+				Name: constants.NutanixCredentialsName,
+			},
 		},
 	}
 }

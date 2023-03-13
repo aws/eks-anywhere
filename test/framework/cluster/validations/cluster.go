@@ -184,7 +184,7 @@ func filterWorkerNodes(nodes []corev1.Node, ms []v1beta1.MachineSet, w v1alpha1.
 }
 
 func getWorkerNodeMachineSets(ctx context.Context, vc clusterf.StateValidationConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
-	mdName := clusterapi.MachineDeploymentName(vc.ClusterSpec, w)
+	mdName := clusterapi.MachineDeploymentName(vc.ClusterSpec.Cluster, w)
 	ms := &v1beta1.MachineSetList{}
 	err := vc.ManagementClusterClient.List(ctx, ms, client.InNamespace(constants.EksaSystemNamespace), client.MatchingLabels{
 		"cluster.x-k8s.io/deployment-name": mdName,

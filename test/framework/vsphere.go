@@ -150,6 +150,17 @@ func WithRedHat123VSphere() VSphereOpt {
 	}
 }
 
+// WithUbuntu126 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.26
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu126() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube126)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
 // WithUbuntu125 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.25
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu125() VSphereOpt {

@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/aws/eks-anywhere/internal/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
@@ -28,14 +30,67 @@ func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error)
 		return GetLatestMinorReleaseFromMain()
 	}
 
-	majorMinor := getMajorMinorFromTestBranch(testBranch)
-	testBranchFirstVersion := fmt.Sprintf("%s.0", majorMinor)
-	testBranchFirstSemver, err := semver.New(testBranchFirstVersion)
+	testBranchFirstSemver, err := semverForReleaseBranch(testBranch)
 	if err != nil {
-		return nil, fmt.Errorf("can't extract semver from release branch [%s]: %v", testBranch, err)
+		return nil, err
 	}
 
 	return GetLatestMinorReleaseFromVersion(testBranchFirstSemver)
+}
+
+// EKSAVersionForTestBinary returns the "future" EKS-A version for the tested binary based on the TEST_BRANCH name.
+// For main, it returns the next minor version.
+// For a release branch, it returns the next path version for that release minor version.
+func EKSAVersionForTestBinary() (string, error) {
+	if testBranch := testBranch(); testBranch != "main" {
+		return eksaVersionForReleaseBranch(testBranch)
+	}
+	return eksaVersionForMain()
+}
+
+func eksaVersionForMain() (string, error) {
+	latestRelease, err := GetLatestMinorReleaseFromMain()
+	if err != nil {
+		return "", err
+	}
+
+	latestReleaseSemVer, err := semver.New(latestRelease.Version)
+	if err != nil {
+		return "", errors.Wrapf(err, "parsing version for release %s", latestRelease.Version)
+	}
+
+	localVersion := *latestReleaseSemVer
+	localVersion.Patch = 0
+	localVersion.Minor++
+
+	return localVersion.String(), nil
+}
+
+func eksaVersionForReleaseBranch(branch string) (string, error) {
+	semVer, err := semverForReleaseBranch(branch)
+	if err != nil {
+		return "", err
+	}
+
+	releases, err := prodReleases()
+	if err != nil {
+		return "", err
+	}
+
+	latestRelease, err := getLatestPathReleaseForMinor(releases, semVer)
+	if err != nil {
+		return "", err
+	}
+
+	latestReleaseSemVer, err := semver.New(latestRelease.Version)
+	if err != nil {
+		return "", errors.Wrapf(err, "parsing version for release %s", latestRelease.Version)
+	}
+
+	localVersion := *latestReleaseSemVer
+	localVersion.Patch++
+
+	return localVersion.String(), nil
 }
 
 func getLatestDevRelease() (*releasev1alpha1.EksARelease, error) {
@@ -58,6 +113,17 @@ func GetLatestMinorReleaseFromMain() (*releasev1alpha1.EksARelease, error) {
 	}
 
 	return latestRelease(releases)
+}
+
+func semverForReleaseBranch(branch string) (*semver.Version, error) {
+	majorMinor := getMajorMinorFromTestBranch(branch)
+	testBranchFirstVersion := fmt.Sprintf("%s.0", majorMinor)
+	testBranchFirstSemver, err := semver.New(testBranchFirstVersion)
+	if err != nil {
+		return nil, fmt.Errorf("can't extract semver from release branch [%s]: %v", branch, err)
+	}
+
+	return testBranchFirstSemver, nil
 }
 
 func latestRelease(releases *releasev1alpha1.Release) (*releasev1alpha1.EksARelease, error) {
@@ -114,6 +180,26 @@ func GetReleaseBinaryFromVersion(version *semver.Version) (binaryPath string, er
 	}
 
 	return binaryPath, nil
+}
+
+// NewEKSAReleasePackagedBinary builds a new EKSAReleasePackagedBinary.
+func NewEKSAReleasePackagedBinary(release *releasev1alpha1.EksARelease) *EKSAReleasePackagedBinary {
+	return &EKSAReleasePackagedBinary{release}
+}
+
+// EKSAReleasePackagedBinary decorates an EKSA release with extra functionality.
+type EKSAReleasePackagedBinary struct {
+	*releasev1alpha1.EksARelease
+}
+
+// BinaryPath implements EKSAPackagedBinary.
+func (b *EKSAReleasePackagedBinary) BinaryPath() (string, error) {
+	return getBinary(b.EksARelease)
+}
+
+// Version returns the eks-a release version.
+func (b *EKSAReleasePackagedBinary) Version() string {
+	return b.EksARelease.Version
 }
 
 func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
@@ -205,6 +291,28 @@ func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchV
 
 	if targetRelease.Version == "" {
 		return nil, fmt.Errorf("releases manifest doesn't contain a version of the previous minor release")
+	}
+
+	return targetRelease, nil
+}
+
+func getLatestPathReleaseForMinor(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version) (*releasev1alpha1.EksARelease, error) {
+	targetRelease := &releasev1alpha1.EksARelease{
+		Version:           "",
+		BundleManifestUrl: "",
+	}
+	latestPrevMinorReleaseVersion := newVersion("0.0.0")
+
+	for _, release := range releases.Spec.Releases {
+		releaseVersion := newVersion(release.Version)
+		if releaseVersion.SameMinor(releaseBranchVersion) && releaseVersion.GreaterThan(latestPrevMinorReleaseVersion) {
+			*targetRelease = release
+			latestPrevMinorReleaseVersion = releaseVersion
+		}
+	}
+
+	if targetRelease.Version == "" {
+		return nil, fmt.Errorf("releases manifest doesn't contain a version for minor release %s", releaseBranchVersion)
 	}
 
 	return targetRelease, nil

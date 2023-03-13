@@ -12,6 +12,7 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -23,10 +24,11 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
 	tinkerbellreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -44,6 +46,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -136,6 +140,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
 }
 
 func TestReconcileCNIErrorClientRegistry(t *testing.T) {
@@ -154,47 +159,56 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.cleanup()
 }
 
-func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
+func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+
 	tt.createAllObjs()
-	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildScope())
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count = 2
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, _ = tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	tt.ShouldEventuallyExist(tt.ctx,
-		&controlplanev1.KubeadmControlPlane{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName,
-				Namespace: constants.EksaSystemNamespace,
-			},
+	kcp := &controlplanev1.KubeadmControlPlane{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName,
+			Namespace: constants.EksaSystemNamespace,
 		},
-	)
+	}
+	tt.ShouldEventuallyMatch(tt.ctx, kcp,
+		func(g Gomega) {
+			g.Expect(kcp.Spec.Replicas).To(HaveValue(BeEquivalentTo(2)))
+		})
+	tt.ShouldEventuallyExist(tt.ctx, controlPlaneMachineTemplate())
+	tt.cleanup()
+}
 
-	tt.ShouldEventuallyExist(tt.ctx,
-		&tinkerbellv1.TinkerbellMachineTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName + "-control-plane-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-			Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
-				Template: tinkerbellv1.TinkerbellMachineTemplateResource{
-					Spec: tinkerbellv1.TinkerbellMachineSpec{
-						HardwareAffinity: &tinkerbellv1.HardwareAffinity{
-							Required: []tinkerbellv1.HardwareAffinityTerm{
-								{
-									LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	)
+func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	scope := tt.buildScope()
+	logger := test.NewNullLogger()
+	scope.ControlPlane = tinkerbellCP(workloadClusterName)
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx, kubeadmControlPlane())
+	tt.ShouldEventuallyExist(tt.ctx, controlPlaneMachineTemplate())
+
 	tt.ShouldEventuallyExist(tt.ctx, &tinkerbellv1.TinkerbellCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "TinkerbellCluster",
@@ -211,6 +225,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
 	tt.ShouldEventuallyNotExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "registry-credentials", Namespace: constants.EksaSystemNamespace}})
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *testing.T) {
@@ -224,42 +239,19 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 		Endpoint:     "1.2.3.4",
 		Port:         "65536",
 	}
-	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), scope)
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	tt.ShouldEventuallyExist(tt.ctx,
-		&controlplanev1.KubeadmControlPlane{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName,
-				Namespace: constants.EksaSystemNamespace,
-			},
-		},
-	)
-
-	tt.ShouldEventuallyExist(tt.ctx,
-		&tinkerbellv1.TinkerbellMachineTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      workloadClusterName + "-control-plane-1",
-				Namespace: constants.EksaSystemNamespace,
-			},
-			Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
-				Template: tinkerbellv1.TinkerbellMachineTemplateResource{
-					Spec: tinkerbellv1.TinkerbellMachineSpec{
-						HardwareAffinity: &tinkerbellv1.HardwareAffinity{
-							Required: []tinkerbellv1.HardwareAffinityTerm{
-								{
-									LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	)
+	tt.ShouldEventuallyExist(tt.ctx, kubeadmControlPlane())
+	tt.ShouldEventuallyExist(tt.ctx, controlPlaneMachineTemplate())
 	tt.ShouldEventuallyExist(tt.ctx, &tinkerbellv1.TinkerbellCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "TinkerbellCluster",
@@ -276,6 +268,7 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
 	tt.ShouldEventuallyExist(tt.ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "registry-credentials", Namespace: constants.EksaSystemNamespace}})
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
@@ -284,10 +277,14 @@ func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	scope := tt.buildScope()
 	scope.ClusterSpec.Cluster = scope.ClusterSpec.Cluster.DeepCopy()
 	scope.ClusterSpec.Cluster.Name = ""
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
 
-	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), scope)
+	_, err = tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("resource name may not be empty")))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
@@ -307,6 +304,7 @@ func TestReconcilerValidateClusterSpecInvalidDatacenterConfig(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("missing spec.tinkerbellIP field"))
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.cleanup()
 }
 
 func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
@@ -325,6 +323,7 @@ func TestReconcilerValidateClusterSpecInvalidOSFamily(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("unsupported spec.osFamily (invalidOS); Please use one of the following: ubuntu, redhat, bottlerocket"))
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
@@ -335,6 +334,8 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -371,6 +372,54 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 			},
 		},
 	)
+	tt.cleanup()
+}
+
+func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	mt := &tinkerbellv1.TinkerbellMachineTemplate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tt.cluster.Name + "-md-0-1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+	tt.createAllObjs()
+
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
+	logger := test.NewNullLogger()
+	scope.ControlPlane = tinkerbellCP(tt.cluster.Name)
+	scope.Workers = tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.Spec.Replicas = ptr.Int32(2)
+	})
+	_, err := tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx, mt)
+	md := &clusterv1.MachineDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tt.cluster.Name + "-md-0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: clusterv1.MachineDeploymentSpec{
+			Replicas: ptr.Int32(2),
+		},
+	}
+	tt.ShouldEventuallyMatch(tt.ctx, md,
+		func(g Gomega) {
+			g.Expect(md.Spec.Replicas).To(HaveValue(BeEquivalentTo(2)))
+		})
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
@@ -382,7 +431,13 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, test.NewNullLogger(), tt.buildScope())
+	scope := tt.buildScope()
+	logger := test.NewNullLogger()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -414,6 +469,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 			},
 		},
 	)
+	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
@@ -432,30 +488,15 @@ func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
 	_, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
+	tt.cleanup()
 }
 
-func TestReconcilerValidateHardwareCountFail(t *testing.T) {
+func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
 	tt := newReconcilerTest(t)
 	logger := test.NewNullLogger()
 
 	tt.cluster.Name = "invalidCluster"
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &tinkv1alpha1.Hardware{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "hw1",
-			Namespace: constants.EksaSystemNamespace,
-			Labels: map[string]string{
-				"type": "cp",
-			},
-		},
-		Spec: tinkv1alpha1.HardwareSpec{
-			Metadata: &tinkv1alpha1.HardwareMetadata{
-				Instance: &tinkv1alpha1.MetadataInstance{
-					ID: "foo",
-				},
-			},
-		},
-	},
-	)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
 
 	tt.withFakeClient()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
@@ -465,6 +506,46 @@ func TestReconcilerValidateHardwareCountFail(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector"))
+	tt.cleanup()
+}
+
+func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
@@ -472,23 +553,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 	logger := test.NewNullLogger()
 
 	tt.cluster.Name = "invalidCluster"
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &tinkv1alpha1.Hardware{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "hw1",
-			Labels: map[string]string{
-				hardware.OwnerNameLabel: "cluster",
-				"type":                  "cp",
-			},
-		},
-		Spec: tinkv1alpha1.HardwareSpec{
-			Metadata: &tinkv1alpha1.HardwareMetadata{
-				Instance: &tinkv1alpha1.MetadataInstance{
-					ID: "foo",
-				},
-			},
-		},
-	},
-	)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "worker"))
 
 	tt.withFakeClient()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
@@ -498,6 +563,7 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
+	tt.cleanup()
 }
 
 func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
@@ -544,6 +610,8 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 			},
 		},
 	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
 
 	tt.withFakeClient()
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, gomock.Any()).Return(controller.Result{}, nil)
@@ -553,6 +621,133 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("bmc connection failure"))
+	tt.cleanup()
+}
+
+func TestReconcilerGenerateSpec(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	result, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
+	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
+	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "1.23"
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.K8sVersionUpgradeOperation))
+	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(2)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
+		anywherev1.WorkerNodeGroupConfiguration{
+			Count: ptr.Int(1),
+			MachineGroupRef: &anywherev1.Ref{
+				Kind: anywherev1.TinkerbellMachineConfigKind,
+				Name: tt.machineConfigWorker.Name,
+			},
+			Name:   "md-1",
+			Labels: nil,
+		},
+	)
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationNoChanges(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(op).To(Equal(reconciler.NoChange))
+	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationNewCluster(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	scope.ClusterSpec.Cluster.Name = "new-cluster"
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(op).To(Equal(reconciler.NewClusterOperation))
+	tt.cleanup()
+}
+
+func TestReconciler_DetectOperationFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+	_, err := tt.reconciler().DetectOperation(tt.ctx, test.NewNullLogger(), &reconciler.Scope{ClusterSpec: &clusterspec.Spec{Config: &clusterspec.Config{Cluster: &anywherev1.Cluster{}}}})
+	tt.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
+}
+
+func TestWorkerReplicasDiffFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+	scope := &reconciler.Scope{
+		ClusterSpec: &clusterspec.Spec{
+			Config: &clusterspec.Config{
+				Cluster: &anywherev1.Cluster{
+					Spec: anywherev1.ClusterSpec{
+						WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+							{
+								Name: "md-0",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err := tt.reconciler().WorkerReplicasDiff(tt.ctx, scope)
+	tt.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
 }
 
 func (tt *reconcilerTest) withFakeClient() {
@@ -719,6 +914,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
+	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
 }
@@ -808,4 +1006,395 @@ func machineConfig(opts ...tinkerbellMachineOpt) *anywherev1.TinkerbellMachineCo
 	}
 
 	return m
+}
+
+func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
+	return &controlplanev1.KubeadmControlPlane{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+}
+
+func controlPlaneMachineTemplate() *tinkerbellv1.TinkerbellMachineTemplate {
+	return &tinkerbellv1.TinkerbellMachineTemplate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workloadClusterName + "-control-plane-1",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
+			Template: tinkerbellv1.TinkerbellMachineTemplateResource{
+				Spec: tinkerbellv1.TinkerbellMachineSpec{
+					HardwareAffinity: &tinkerbellv1.HardwareAffinity{
+						Required: []tinkerbellv1.HardwareAffinityTerm{
+							{
+								LabelSelector: metav1.LabelSelector{MatchLabels: map[string]string{}},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func tinkHardware(hardwareName, labelType string) *tinkv1alpha1.Hardware {
+	return &tinkv1alpha1.Hardware{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Hardware",
+			APIVersion: "tinkerbell.org/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      hardwareName,
+			Namespace: constants.EksaSystemNamespace,
+			Labels: map[string]string{
+				"type": labelType,
+			},
+		},
+		Spec: tinkv1alpha1.HardwareSpec{
+			Metadata: &tinkv1alpha1.HardwareMetadata{
+				Instance: &tinkv1alpha1.MetadataInstance{
+					ID: "foo",
+				},
+			},
+		},
+	}
+}
+
+type cpOpt func(plane *tinkerbell.ControlPlane)
+
+func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
+	cp := &tinkerbell.ControlPlane{
+		BaseControlPlane: tinkerbell.BaseControlPlane{
+			Cluster: &clusterv1.Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Cluster",
+					APIVersion: "cluster.x-k8s.io/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      clusterName,
+					Namespace: constants.EksaSystemNamespace,
+					Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": workloadClusterName},
+				},
+				Spec: clusterv1.ClusterSpec{
+					ClusterNetwork: &clusterv1.ClusterNetwork{
+						Services: &clusterv1.NetworkRanges{
+							CIDRBlocks: []string{"0.0.0.0"},
+						},
+						Pods: &clusterv1.NetworkRanges{
+							CIDRBlocks: []string{"0.0.0.0"},
+						},
+					},
+					ControlPlaneEndpoint: clusterv1.APIEndpoint{
+						Host: "1.1.1.1",
+						Port: 6443,
+					},
+					ControlPlaneRef: &corev1.ObjectReference{
+						Kind:       "KubeadmControlPlane",
+						Name:       clusterName,
+						APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+					},
+					InfrastructureRef: &corev1.ObjectReference{
+						Kind:       "TinkerbellCluster",
+						Name:       clusterName,
+						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					},
+				},
+				Status: clusterv1.ClusterStatus{},
+			},
+			KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "KubeadmControlPlane",
+					APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      clusterName,
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: controlplanev1.KubeadmControlPlaneSpec{
+					Replicas: ptr.Int32(1),
+					Version:  "v1.19.8",
+					MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+						InfrastructureRef: corev1.ObjectReference{
+							Kind:       "TinkerbellMachineTemplate",
+							Name:       "workload-cluster-control-plane-1",
+							APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+						},
+					},
+					KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
+						ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+							ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
+							Etcd: bootstrapv1.Etcd{
+								Local: &bootstrapv1.LocalEtcd{
+									ImageMeta: bootstrapv1.ImageMeta{
+										ImageRepository: "",
+										ImageTag:        "",
+									},
+									DataDir:        "",
+									ExtraArgs:      nil,
+									ServerCertSANs: nil,
+									PeerCertSANs:   nil,
+								},
+							},
+							ControllerManager: bootstrapv1.ControlPlaneComponent{
+								ExtraVolumes: []bootstrapv1.HostPathMount{
+									{
+										Name:      "kubeconfig",
+										HostPath:  "/var/lib/kubeadm/controller-manager.conf",
+										MountPath: "/etc/kubernetes/controller-manager.conf",
+										ReadOnly:  true,
+										PathType:  "File",
+									},
+								},
+							},
+							Scheduler: bootstrapv1.ControlPlaneComponent{
+								ExtraVolumes: []bootstrapv1.HostPathMount{
+									{
+										Name:      "kubeconfig",
+										HostPath:  "/var/lib/kubeadm/scheduler.conf",
+										MountPath: "/etc/kubernetes/scheduler.conf",
+										ReadOnly:  true,
+										PathType:  "File",
+									},
+								},
+							},
+							CertificatesDir: "/var/lib/kubeadm/pki",
+						},
+						InitConfiguration: &bootstrapv1.InitConfiguration{
+							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+								KubeletExtraArgs: map[string]string{
+									"read-only-port":    "0",
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"anonymous-auth":    "false",
+									"provider-id":       "PROVIDER_ID",
+								},
+							},
+						},
+						JoinConfiguration: &bootstrapv1.JoinConfiguration{
+							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+								KubeletExtraArgs: map[string]string{
+									"anonymous-auth":    "false",
+									"provider-id":       "PROVIDER_ID",
+									"read-only-port":    "0",
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								},
+								IgnorePreflightErrors: []string{"DirAvailable--etc-kubernetes-manifests"},
+							},
+							CACertPath:                            "",
+							Discovery:                             bootstrapv1.Discovery{},
+							ControlPlane:                          nil,
+							SkipPhases:                            nil,
+							Patches:                               nil,
+							BottlerocketCustomHostContainers:      nil,
+							BottlerocketCustomBootstrapContainers: nil,
+						},
+						Files: []bootstrapv1.File{
+							{
+								Path:        "/etc/kubernetes/manifests/kube-vip.yaml",
+								Owner:       "root:root",
+								Permissions: "",
+								Encoding:    "",
+								Append:      false,
+								Content:     "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: 1.1.1.1\n    image: \n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /etc/kubernetes/admin.conf\n    name: kubeconfig\nstatus: {}\n",
+								ContentFrom: nil,
+							},
+						},
+						Users: []bootstrapv1.User{
+							{
+								Name:              "user",
+								Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
+								SSHAuthorizedKeys: []string{"[ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZ bottlerocket@ip-10-2-0-6]"},
+							},
+						},
+						Format: "bottlerocket",
+					},
+				},
+			},
+			ProviderCluster: &tinkerbellv1.TinkerbellCluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "TinkerbellCluster",
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      clusterName,
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: tinkerbellv1.TinkerbellClusterSpec{
+					ImageLookupFormat:       "--kube-v1.19.8.raw.gz",
+					ImageLookupBaseRegistry: "/",
+				},
+			},
+			ControlPlaneMachineTemplate: &tinkerbellv1.TinkerbellMachineTemplate{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "TinkerbellMachineTemplate",
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "workload-cluster-control-plane-1",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
+					Template: tinkerbellv1.TinkerbellMachineTemplateResource{
+						Spec: tinkerbellv1.TinkerbellMachineSpec{
+							TemplateOverride: "global_timeout: 6000\nid: \"\"\nname: workload-cluster\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: '{{ index .Hardware.Disks 0 }}'\n      IMG_URL: \"\"\n    image: \"\"\n    name: stream-image\n    timeout: 600\n  - environment:\n      BOOTCONFIG_CONTENTS: kernel {}\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /bootconfig.data\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-bootconfig\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /user-data.toml\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-user-data\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /net.toml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      IFNAME: eno1\n      MODE: \"0644\"\n      STATIC_BOTTLEROCKET: \"true\"\n      UID: \"0\"\n    image: \"\"\n    name: write-netplan\n    pid: host\n    timeout: 90\n  - image: \"\"\n    name: reboot-image\n    pid: host\n    timeout: 90\n    volumes:\n    - /worker:/worker\n  name: workload-cluster\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n",
+							HardwareAffinity: &tinkerbellv1.HardwareAffinity{
+								Required: []tinkerbellv1.HardwareAffinityTerm{
+									{LabelSelector: metav1.LabelSelector{
+										MatchLabels: map[string]string{"type": "cp"},
+									}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, opt := range opts {
+		opt(cp)
+	}
+	return cp
+}
+
+type workerOpt func(*tinkerbell.Workers)
+
+func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
+	w := &tinkerbell.Workers{
+		Groups: []clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+			{
+				KubeadmConfigTemplate: &bootstrapv1.KubeadmConfigTemplate{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "KubeadmConfigTemplate",
+						APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      clusterName + "-md-0-1",
+						Namespace: constants.EksaSystemNamespace,
+					},
+					Spec: bootstrapv1.KubeadmConfigTemplateSpec{
+						Template: bootstrapv1.KubeadmConfigTemplateResource{
+							Spec: bootstrapv1.KubeadmConfigSpec{
+								Users: []bootstrapv1.User{
+									{
+										Name:              "user",
+										Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
+										SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZ bottlerocket@ip-10-2-0-6"},
+									},
+								},
+								Format: "bottlerocket",
+								JoinConfiguration: &bootstrapv1.JoinConfiguration{
+									Pause: bootstrapv1.Pause{
+										ImageMeta: bootstrapv1.ImageMeta{
+											ImageRepository: "",
+											ImageTag:        "",
+										},
+									},
+									BottlerocketBootstrap: bootstrapv1.BottlerocketBootstrap{
+										ImageMeta: bootstrapv1.ImageMeta{
+											ImageRepository: "",
+											ImageTag:        "",
+										},
+									},
+									BottlerocketAdmin: bootstrapv1.BottlerocketAdmin{
+										ImageMeta: bootstrapv1.ImageMeta{
+											ImageRepository: "",
+											ImageTag:        "",
+										},
+									},
+									BottlerocketControl: bootstrapv1.BottlerocketControl{
+										ImageMeta: bootstrapv1.ImageMeta{
+											ImageRepository: "",
+											ImageTag:        "",
+										},
+									},
+									NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+										KubeletExtraArgs: map[string]string{
+											"anonymous-auth":    "false",
+											"provider-id":       "PROVIDER_ID",
+											"read-only-port":    "0",
+											"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				MachineDeployment: &clusterv1.MachineDeployment{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "MachineDeployment",
+						APIVersion: "cluster.x-k8s.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      clusterName + "-md-0",
+						Namespace: constants.EksaSystemNamespace,
+						Labels: map[string]string{
+							"pool":                          "md-0",
+							"cluster.x-k8s.io/cluster-name": clusterName,
+						},
+					},
+					Spec: clusterv1.MachineDeploymentSpec{
+						ClusterName: workloadClusterName,
+						Replicas:    ptr.Int32(1),
+						Selector: metav1.LabelSelector{
+							MatchLabels: map[string]string{},
+						},
+						Template: clusterv1.MachineTemplateSpec{
+							ObjectMeta: clusterv1.ObjectMeta{
+								Labels: map[string]string{
+									"pool":                          "md-0",
+									"cluster.x-k8s.io/cluster-name": clusterName,
+								},
+							},
+							Spec: clusterv1.MachineSpec{
+								ClusterName: clusterName,
+								Bootstrap: clusterv1.Bootstrap{
+									ConfigRef: &corev1.ObjectReference{
+										Kind:       "KubeadmConfigTemplate",
+										Name:       clusterName + "-md-0-1",
+										APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+									},
+								},
+								InfrastructureRef: corev1.ObjectReference{
+									Kind:       "TinkerbellMachineTemplate",
+									Name:       clusterName + "-md-0-1",
+									APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+								},
+								Version: ptr.String("v1.19.8"),
+							},
+						},
+					},
+				},
+				ProviderMachineTemplate: &tinkerbellv1.TinkerbellMachineTemplate{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "TinkerbellMachineTemplate",
+						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      clusterName + "-md-0-1",
+						Namespace: constants.EksaSystemNamespace,
+					},
+					Spec: tinkerbellv1.TinkerbellMachineTemplateSpec{
+						Template: tinkerbellv1.TinkerbellMachineTemplateResource{Spec: tinkerbellv1.TinkerbellMachineSpec{
+							TemplateOverride: "global_timeout: 6000\nid: \"\"\nname: " + clusterName + "\ntasks:\n- actions:\n  - environment:\n      COMPRESSED: \"true\"\n      DEST_DISK: '{{ index .Hardware.Disks 0 }}'\n      IMG_URL: \"\"\n    image: \"\"\n    name: stream-image\n    timeout: 600\n  - environment:\n      BOOTCONFIG_CONTENTS: kernel {}\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /bootconfig.data\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-bootconfig\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /user-data.toml\n      DIRMODE: \"0700\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061\n      MODE: \"0644\"\n      UID: \"0\"\n    image: \"\"\n    name: write-user-data\n    pid: host\n    timeout: 90\n  - environment:\n      DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 12 }}'\n      DEST_PATH: /net.toml\n      DIRMODE: \"0755\"\n      FS_TYPE: ext4\n      GID: \"0\"\n      IFNAME: eno1\n      MODE: \"0644\"\n      STATIC_BOTTLEROCKET: \"true\"\n      UID: \"0\"\n    image: \"\"\n    name: write-netplan\n    pid: host\n    timeout: 90\n  - image: \"\"\n    name: reboot-image\n    pid: host\n    timeout: 90\n    volumes:\n    - /worker:/worker\n  name: workload-cluster\n  volumes:\n  - /dev:/dev\n  - /dev/console:/dev/console\n  - /lib/firmware:/lib/firmware:ro\n  worker: '{{.device_1}}'\nversion: \"0.1\"\n",
+							HardwareAffinity: &tinkerbellv1.HardwareAffinity{
+								Required: []tinkerbellv1.HardwareAffinityTerm{
+									{
+										LabelSelector: metav1.LabelSelector{
+											MatchLabels: map[string]string{"type": "worker"},
+										},
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	}
+	for _, opt := range opts {
+		opt(w)
+	}
+	return w
 }

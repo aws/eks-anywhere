@@ -2,6 +2,7 @@ package clusters
 
 import (
 	"context"
+	"reflect"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/pkg/errors"
@@ -44,7 +45,10 @@ type ControlPlane struct {
 // AllObjects returns all the control plane objects.
 func (cp *ControlPlane) AllObjects() []client.Object {
 	objs := make([]client.Object, 0, 6+len(cp.Other))
-	objs = append(objs, cp.Cluster, cp.ProviderCluster, cp.KubeadmControlPlane, cp.ControlPlaneMachineTemplate)
+	objs = append(objs, cp.Cluster, cp.ProviderCluster, cp.KubeadmControlPlane)
+	if !reflect.ValueOf(cp.ControlPlaneMachineTemplate).IsNil() {
+		objs = append(objs, cp.ControlPlaneMachineTemplate)
+	}
 	if cp.EtcdCluster != nil {
 		objs = append(objs, cp.EtcdCluster, cp.EtcdMachineTemplate)
 	}

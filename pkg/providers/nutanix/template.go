@@ -86,22 +86,32 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
+// GenerateCAPISpecSecret generates the secret containing the credentials for the nutanix prism central and is used by the
+// CAPX controller. The secret is named after the cluster name.
 func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	encodedCreds, err := jsonMarshal(ntb.creds)
+	return ntb.generateSpecSecret(capxSecretName(clusterSpec), ntb.creds, buildOptions...)
+}
+
+func capxSecretName(spec *cluster.Spec) string {
+	return fmt.Sprintf("capx-%s", spec.Cluster.Name)
+}
+
+// GenerateEKSASpecSecret generates the secret containing the credentials for the nutanix prism central and is used by the
+// EKS-A controller. The secret is named nutanix-credentials.
+func (ntb *TemplateBuilder) GenerateEKSASpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	return ntb.generateSpecSecret(eksaSecretName(clusterSpec), ntb.creds, buildOptions...)
+}
+
+func eksaSecretName(spec *cluster.Spec) string {
+	return spec.NutanixDatacenter.Spec.CredentialRef.Name
+}
+
+func (ntb *TemplateBuilder) generateSpecSecret(secretName string, creds credentials.BasicAuthCredential, buildOptions ...providers.BuildMapOption) ([]byte, error) {
+	values, err := buildTemplateMapSecret(secretName, creds)
 	if err != nil {
 		return nil, err
 	}
 
-	nutanixCreds := []credentials.Credential{{
-		Type: credentials.BasicAuthCredentialType,
-		Data: encodedCreds,
-	}}
-	credsJSON, err := jsonMarshal(nutanixCreds)
-	if err != nil {
-		return nil, err
-	}
-
-	values := buildTemplateMapSecret(clusterSpec, credsJSON)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -164,6 +174,7 @@ func buildTemplateMapCP(
 		"nutanixPEClusterIDType":       controlPlaneMachineSpec.Cluster.Type,
 		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name,
 		"nutanixPEClusterUUID":         controlPlaneMachineSpec.Cluster.UUID,
+		"secretName":                   capxSecretName(clusterSpec),
 		"subnetIDType":                 controlPlaneMachineSpec.Subnet.Type,
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
@@ -209,11 +220,26 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	return values
 }
 
-func buildTemplateMapSecret(clusterSpec *cluster.Spec, creds []byte) map[string]interface{} {
-	values := map[string]interface{}{
-		"clusterName":              clusterSpec.Cluster.Name,
-		"eksaSystemNamespace":      constants.EksaSystemNamespace,
-		"base64EncodedCredentials": base64.StdEncoding.EncodeToString(creds),
+func buildTemplateMapSecret(secretName string, creds credentials.BasicAuthCredential) (map[string]interface{}, error) {
+	encodedCreds, err := jsonMarshal(creds)
+	if err != nil {
+		return nil, err
 	}
-	return values
+
+	nutanixCreds := []credentials.Credential{{
+		Type: credentials.BasicAuthCredentialType,
+		Data: encodedCreds,
+	}}
+	credsJSON, err := jsonMarshal(nutanixCreds)
+	if err != nil {
+		return nil, err
+	}
+
+	values := map[string]interface{}{
+		"secretName":               secretName,
+		"eksaSystemNamespace":      constants.EksaSystemNamespace,
+		"base64EncodedCredentials": base64.StdEncoding.EncodeToString(credsJSON),
+	}
+
+	return values, nil
 }

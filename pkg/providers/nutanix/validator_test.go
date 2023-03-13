@@ -33,6 +33,15 @@ var nutanixDatacenterConfigSpecWithInvalidEndpoint string
 //go:embed testdata/datacenterConfig_with_insecure.yaml
 var nutanixDatacenterConfigSpecWithInsecure string
 
+//go:embed testdata/datacenterConfig_no_credentialRef.yaml
+var nutanixDatacenterConfigSpecWithNoCredentialRef string
+
+//go:embed testdata/datacenterConfig_invalid_credentialRef_kind.yaml
+var nutanixDatacenterConfigSpecWithInvalidCredentialRefKind string
+
+//go:embed testdata/datacenterConfig_empty_credentialRef_name.yaml
+var nutanixDatacenterConfigSpecWithEmptyCredentialRefName string
+
 func fakeClusterList() *v3.ClusterListIntentResponse {
 	return &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
@@ -360,6 +369,21 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 		{
 			name:       "valid datacenter config with invalid endpoint",
 			dcConfFile: nutanixDatacenterConfigSpecWithInvalidEndpoint,
+			expectErr:  true,
+		},
+		{
+			name:       "nil credentialRef",
+			dcConfFile: nutanixDatacenterConfigSpecWithNoCredentialRef,
+			expectErr:  true,
+		},
+		{
+			name:       "invalid credentialRef kind",
+			dcConfFile: nutanixDatacenterConfigSpecWithInvalidCredentialRefKind,
+			expectErr:  true,
+		},
+		{
+			name:       "empty credentialRef name",
+			dcConfFile: nutanixDatacenterConfigSpecWithEmptyCredentialRefName,
 			expectErr:  true,
 		},
 	}

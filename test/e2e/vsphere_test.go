@@ -1080,6 +1080,15 @@ func TestVSphereKubernetes125SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes126SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu126()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes122RedHatSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2296,7 +2305,7 @@ func TestVSphereKubernetes125UbuntuAirgappedRegistryMirror(t *testing.T) {
 		framework.WithRegistryMirrorEndpointAndCert(constants.VSphereProviderName),
 	)
 
-	runVSphereAirgapConfigFlow(test, "195.18.0.1/16,196.18.0.1/16")
+	runAirgapConfigFlow(test, "195.18.0.1/16,196.18.0.1/16")
 }
 
 func ubuntu125ProviderWithLabels(t *testing.T) *framework.VSphere {

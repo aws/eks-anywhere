@@ -1730,6 +1730,72 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration: Forbidden: field is immutable")))
 }
 
+func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.IsManaged()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	cOld.Spec.KubernetesVersion = "1.22"
+
+	cNew := cOld.DeepCopy()
+	cNew.Spec.KubernetesVersion = "1.23"
+	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 1
+	g := NewWithT(t)
+	err := cNew.ValidateUpdate(cOld)
+	g.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during rolling upgrades. Previous control plane node count")))
+}
+
+func TestClusterValidateUpdateAddWNConfig(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.IsManaged()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	cOld.Spec.KubernetesVersion = "1.22"
+
+	cNew := cOld.DeepCopy()
+	cNew.Spec.KubernetesVersion = "1.23"
+	addWNC := v1alpha1.WorkerNodeGroupConfiguration{
+		Name:  "md-1",
+		Count: ptr.Int(1),
+	}
+	cNew.Spec.WorkerNodeGroupConfigurations = append(cNew.Spec.WorkerNodeGroupConfigurations, addWNC)
+	g := NewWithT(t)
+	err := cNew.ValidateUpdate(cOld)
+	g.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during rolling upgrades. Please remove the new worker node group")))
+}
+
+func TestClusterValidateUpdateAddWNCount(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.IsManaged()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	cOld.Spec.KubernetesVersion = "1.22"
+
+	cNew := cOld.DeepCopy()
+	cNew.Spec.KubernetesVersion = "1.23"
+	cNew.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
+	g := NewWithT(t)
+	err := cNew.ValidateUpdate(cOld)
+	g.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during rolling upgrades. Previous worker node count")))
+}
+
+func TestClusterValidateUpdateRollingTinkerbellRequest(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.Spec.ManagementCluster.Name = "test"
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	cOld.Spec.KubernetesVersion = "1.22"
+
+	cNew := cOld.DeepCopy()
+	cNew.Spec.KubernetesVersion = "1.23"
+	g := NewWithT(t)
+	g.Expect(cNew.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
 	c := createCluster()
 	for _, o := range opts {

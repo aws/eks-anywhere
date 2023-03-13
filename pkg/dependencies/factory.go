@@ -51,6 +51,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflow/task/workload"
@@ -98,6 +99,7 @@ type Dependencies struct {
 	VSphereValidator            *vsphere.Validator
 	VSphereDefaulter            *vsphere.Defaulter
 	NutanixPrismClient          *v3.Client
+	NutanixDefaulter            *nutanix.Defaulter
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
 }
@@ -345,7 +347,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	case v1alpha1.NutanixDatacenterKind:
-		f.WithKubectl().WithPrismClient(clusterConfigFile)
+		f.WithKubectl().WithPrismClient(clusterConfigFile).WithNutanixDefaulter()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -831,7 +833,43 @@ type clusterManagerClient struct {
 	*executables.Kubectl
 }
 
-func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
+// ClusterManagerTimeoutOptions maintains the timeout options for cluster manager.
+type ClusterManagerTimeoutOptions struct {
+	NoTimeouts bool
+
+	ControlPlaneWait, ExternalEtcdWait, MachineWait, UnhealthyMachineWait, NodeStartupWait time.Duration
+}
+
+func eksaInstallerOpts(timeoutOpts *ClusterManagerTimeoutOptions) []clustermanager.EKSAInstallerOpt {
+	if timeoutOpts == nil || !timeoutOpts.NoTimeouts {
+		return nil
+	}
+
+	return []clustermanager.EKSAInstallerOpt{clustermanager.WithEKSAInstallerNoTimeouts()}
+}
+
+func clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) []clustermanager.ClusterManagerOpt {
+	if timeoutOpts == nil {
+		return nil
+	}
+
+	o := []clustermanager.ClusterManagerOpt{
+		clustermanager.WithControlPlaneWaitTimeout(timeoutOpts.ControlPlaneWait),
+		clustermanager.WithExternalEtcdWaitTimeout(timeoutOpts.ExternalEtcdWait),
+		clustermanager.WithMachineMaxWait(timeoutOpts.MachineWait),
+		clustermanager.WithUnhealthyMachineTimeout(timeoutOpts.UnhealthyMachineWait),
+		clustermanager.WithNodeStartupTimeout(timeoutOpts.NodeStartupWait),
+	}
+
+	if timeoutOpts.NoTimeouts {
+		o = append(o, clustermanager.WithNoTimeouts())
+	}
+
+	return o
+}
+
+// WithClusterManager builds a cluster manager based on the cluster config and timeout options.
+func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpts *ClusterManagerTimeoutOptions) *Factory {
 	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithFileReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -839,14 +877,22 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...cl
 			return nil
 		}
 
+		var r *retrier.Retrier
+		if timeoutOpts != nil && timeoutOpts.NoTimeouts {
+			r = retrier.NewWithNoTimeout()
+		} else {
+			r = clustermanager.DefaultRetrier()
+		}
+
 		client := clustermanager.NewRetrierClient(
 			&clusterManagerClient{
 				f.dependencies.Clusterctl,
 				f.dependencies.Kubectl,
 			},
-			clustermanager.DefaultRetrier(),
+			r,
 		)
-		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader)
+
+		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, eksaInstallerOpts(timeoutOpts)...)
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			client,
@@ -855,7 +901,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...cl
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
 			installer,
-			opts...,
+			clusterManagerOpts(timeoutOpts)...,
 		)
 		return nil
 	})
@@ -1226,6 +1272,22 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 	return f
 }
 
+// WithNutanixDefaulter adds a new NutanixDefaulter to the factory.
+func (f *Factory) WithNutanixDefaulter() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.NutanixDefaulter != nil {
+			return nil
+		}
+
+		f.dependencies.NutanixDefaulter = nutanix.NewDefaulter()
+
+		return nil
+	})
+
+	return f
+}
+
+// WithPrismClient adds a new PrismClient to the factory.
 func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
 	if f.dependencies.NutanixPrismClient != nil {
 		return f

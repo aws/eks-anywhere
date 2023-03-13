@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -29,6 +30,7 @@ type timeoutOptions struct {
 	perMachineWaitTimeout   string
 	unhealthyMachineTimeout string
 	nodeStartupTimeout      string
+	noTimeouts              bool
 }
 
 func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
@@ -46,9 +48,11 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 
 	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, clustermanager.DefaultNodeStartupTimeout.String(), "Override the default node startup timeout (10m) ")
 	markFlagHidden(flagSet, nodeStartupTimeoutFlag)
+
+	flagSet.BoolVar(&t.noTimeouts, noTimeoutsFlag, false, "Disable timeout for all wait operations")
 }
 
-func buildClusterManagerOpts(t timeoutOptions) ([]clustermanager.ClusterManagerOpt, error) {
+func buildClusterManagerOpts(t timeoutOptions) (*dependencies.ClusterManagerTimeoutOptions, error) {
 	cpWaitTimeout, err := time.ParseDuration(t.cpWaitTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(timeoutErrorTemplate, cpWaitTimeoutFlag, err)
@@ -74,12 +78,13 @@ func buildClusterManagerOpts(t timeoutOptions) ([]clustermanager.ClusterManagerO
 		return nil, fmt.Errorf(timeoutErrorTemplate, nodeStartupTimeoutFlag, err)
 	}
 
-	return []clustermanager.ClusterManagerOpt{
-		clustermanager.WithControlPlaneWaitTimeout(cpWaitTimeout),
-		clustermanager.WithExternalEtcdWaitTimeout(externalEtcdWaitTimeout),
-		clustermanager.WithMachineMaxWait(perMachineWaitTimeout),
-		clustermanager.WithUnhealthyMachineTimeout(unhealthyMachineTimeout),
-		clustermanager.WithNodeStartupTimeout(nodeStartupTimeout),
+	return &dependencies.ClusterManagerTimeoutOptions{
+		ControlPlaneWait:     cpWaitTimeout,
+		ExternalEtcdWait:     externalEtcdWaitTimeout,
+		MachineWait:          perMachineWaitTimeout,
+		UnhealthyMachineWait: unhealthyMachineTimeout,
+		NodeStartupWait:      nodeStartupTimeout,
+		NoTimeouts:           t.noTimeouts,
 	}, nil
 }
 

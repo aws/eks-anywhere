@@ -72,8 +72,9 @@ func DefaultObjectName(baseName string) string {
 	return ObjectName(baseName, 1)
 }
 
-func KubeadmControlPlaneName(clusterSpec *cluster.Spec) string {
-	return clusterSpec.Cluster.GetName()
+// KubeadmControlPlaneName generates the kubeadmControlPlane name for an EKSA Cluster.
+func KubeadmControlPlaneName(cluster *v1alpha1.Cluster) string {
+	return cluster.GetName()
 }
 
 // EtcdClusterName sets the default EtcdCluster object name.
@@ -81,18 +82,19 @@ func EtcdClusterName(clusterName string) string {
 	return fmt.Sprintf("%s-etcd", clusterName)
 }
 
-func MachineDeploymentName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+// MachineDeploymentName returns the name for the corresponding MachineDeployment to an EKS-A worker node group.
+func MachineDeploymentName(cluster *v1alpha1.Cluster, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
 	// Adding cluster name prefix guarantees the machine deployment name uniqueness
 	// among clusters under the same management cluster setting.
-	return clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig)
+	return clusterWorkerNodeGroupName(cluster, workerNodeGroupConfig)
 }
 
 func DefaultKubeadmConfigTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
-	return DefaultObjectName(clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig))
+	return DefaultObjectName(clusterWorkerNodeGroupName(clusterSpec.Cluster, workerNodeGroupConfig))
 }
 
-func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
-	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
+func clusterWorkerNodeGroupName(cluster *v1alpha1.Cluster, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+	return fmt.Sprintf("%s-%s", cluster.Name, workerNodeGroupConfig.Name)
 }
 
 // ControlPlaneMachineTemplateName sets the default object name on the control plane machine template.
@@ -110,11 +112,11 @@ func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig 
 }
 
 func ControlPlaneMachineHealthCheckName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(clusterSpec))
+	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(clusterSpec.Cluster))
 }
 
 func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
-	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec, workerNodeGroupConfig))
+	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec.Cluster, workerNodeGroupConfig))
 }
 
 // EnsureNewNameIfChanged updates an object's name if such object is different from its current state in the cluster.

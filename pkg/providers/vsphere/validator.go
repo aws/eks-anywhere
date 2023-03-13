@@ -140,6 +140,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		if !v.sameTemplate(vsphereClusterSpec.VSphereMachineConfigs) {
 			return errors.New("all VSphereMachineConfigs must have the same template specified")
 		}
+		if etcdMachineConfig.Spec.HostOSConfiguration != nil && etcdMachineConfig.Spec.HostOSConfiguration.BottlerocketConfiguration != nil && etcdMachineConfig.Spec.HostOSConfiguration.BottlerocketConfiguration.Kubernetes != nil {
+			logger.Info("Bottlerocket Kubernetes settings are not supported for etcd machines. Ignoring Kubernetes settings for etcd machines.", "etcdMachineConfig", etcdMachineConfig.Name)
+		}
 	}
 
 	// TODO: move this to api Cluster validations

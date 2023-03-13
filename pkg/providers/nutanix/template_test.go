@@ -81,9 +81,16 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	expectedSecret, err := os.ReadFile("testdata/templated_secret.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, expectedSecret, secretSpec)
+
+	secretSpec, err = builder.GenerateEKSASpecSecret(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, secretSpec)
+	expectedSecret, err = os.ReadFile("testdata/templated_secret_eksa.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedSecret, secretSpec)
 }
 
-func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
+func TestNewNutanixTemplateBuilderGenerateSpecSecretFailure(t *testing.T) {
 	storedMarshal := jsonMarshal
 	jsonMarshal = fakemarshal
 	defer restoremarshal(storedMarshal)
@@ -97,6 +104,10 @@ func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
 	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 
 	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
+	assert.Nil(t, secretSpec)
+	assert.Error(t, err)
+
+	secretSpec, err = builder.GenerateEKSASpecSecret(buildSpec)
 	assert.Nil(t, secretSpec)
 	assert.Error(t, err)
 }

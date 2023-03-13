@@ -6,4 +6,7 @@ metadata:
 spec:
   endpoint: "prism.nutanix.com"
   port: 9440
+  credentialRef:
+    kind: Secret
+    name: "nutanix-credentials"
   insecure: true
