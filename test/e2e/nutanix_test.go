@@ -5,6 +5,7 @@
 package e2e
 
 import (
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -774,4 +775,42 @@ func TestNutanixKubernetes126OIDC(t *testing.T) {
 		framework.WithEnvVar(features.K8s126SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
+}
+
+// Registry Mirror Tests
+func TestNutanixKubernetes124UbuntuRegistryMirrorAndCert(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu124(), framework.WithPrivateNetwork()),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithRegistryMirrorEndpointAndCert(constants.NutanixProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
+func TestNutanixKubernetes125UbuntuRegistryMirrorAndCert(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu125(), framework.WithPrivateNetwork()),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithRegistryMirrorEndpointAndCert(constants.NutanixProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
+func TestNutanixKubernetes126UbuntuRegistryMirrorAndCert(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t, framework.WithUbuntu126(), framework.WithPrivateNetwork()),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithRegistryMirrorEndpointAndCert(constants.NutanixProviderName),
+		framework.WithEnvVar(features.K8s126SupportEnvVar, "true"),
+	)
+	runRegistryMirrorConfigFlow(test)
 }

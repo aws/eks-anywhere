@@ -88,66 +88,91 @@ spec:
           imageTag: {{.etcdImageTag}}
 {{- end }}
     files:
-      - content: |
-          apiVersion: v1
-          kind: Pod
-          metadata:
-            creationTimestamp: null
-            name: kube-vip
-            namespace: kube-system
-          spec:
-            containers:
-              - name: kube-vip
-                image: {{.kubeVipImage}}
-                imagePullPolicy: IfNotPresent
-                args:
-                  - manager
-                env:
-                  - name: vip_arp
-                    value: "true"
-                  - name: address
-                    value: "{{.controlPlaneEndpointIp}}"
-                  - name: port
-                    value: "6443"
-                  - name: vip_cidr
-                    value: "32"
-                  - name: cp_enable
-                    value: "true"
-                  - name: cp_namespace
-                    value: kube-system
-                  - name: vip_ddns
-                    value: "false"
-                  - name: vip_leaderelection
-                    value: "true"
-                  - name: vip_leaseduration
-                    value: "15"
-                  - name: vip_renewdeadline
-                    value: "10"
-                  - name: vip_retryperiod
-                    value: "2"
-                  - name: svc_enable
-                    value: "{{.kubeVipSvcEnable}}"
-                  - name: lb_enable
-                    value: "{{.kubeVipLBEnable}}"
-                securityContext:
-                  capabilities:
-                    add:
-                      - NET_ADMIN
-                      - SYS_TIME
-                      - NET_RAW
-                volumeMounts:
-                  - mountPath: /etc/kubernetes/admin.conf
-                    name: kubeconfig
-                resources: {}
-            hostNetwork: true
-            volumes:
-              - name: kubeconfig
-                hostPath:
-                  type: FileOrCreate
-                  path: /etc/kubernetes/admin.conf
-          status: {}
-        owner: root:root
-        path: /etc/kubernetes/manifests/kube-vip.yaml
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+            - name: kube-vip
+              image: {{.kubeVipImage}}
+              imagePullPolicy: IfNotPresent
+              args:
+                - manager
+              env:
+                - name: vip_arp
+                  value: "true"
+                - name: address
+                  value: "{{.controlPlaneEndpointIp}}"
+                - name: port
+                  value: "6443"
+                - name: vip_cidr
+                  value: "32"
+                - name: cp_enable
+                  value: "true"
+                - name: cp_namespace
+                  value: kube-system
+                - name: vip_ddns
+                  value: "false"
+                - name: vip_leaderelection
+                  value: "true"
+                - name: vip_leaseduration
+                  value: "15"
+                - name: vip_renewdeadline
+                  value: "10"
+                - name: vip_retryperiod
+                  value: "2"
+                - name: svc_enable
+                  value: "{{.kubeVipSvcEnable}}"
+                - name: lb_enable
+                  value: "{{.kubeVipLBEnable}}"
+              securityContext:
+                capabilities:
+                  add:
+                    - NET_ADMIN
+                    - SYS_TIME
+                    - NET_RAW
+              volumeMounts:
+                - mountPath: /etc/kubernetes/admin.conf
+                  name: kubeconfig
+              resources: {}
+          hostNetwork: true
+          volumes:
+            - name: kubeconfig
+              hostPath:
+                type: FileOrCreate
+                path: /etc/kubernetes/admin.conf
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
+{{- if .registryCACert }}
+    - content: |
+{{ .registryCACert | indent 8 }}
+      owner: root:root
+      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .registryMirrorMap }}
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          {{- range $orig, $mirror := .registryMirrorMap }}
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+            endpoint = ["https://{{ $mirror }}"]
+          {{- end }}
+{{- if .registryCACert }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .registryAuth }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
+            username = "{{.registryUsername}}"
+            password = "{{.registryPassword}}"
+{{- end }}
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
+{{- end }}
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
@@ -155,6 +180,17 @@ spec:
           # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
           #cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+        name: "{{`{{ ds.meta_data.hostname }}`}}"
     users:
       - name: "{{.controlPlaneSshUsername }}"
         lockPassword: false
@@ -162,6 +198,11 @@ spec:
         sshAuthorizedKeys:
           - "{{.controlPlaneSshAuthorizedKey}}"
     preKubeadmCommands:
+{{- if and .registryMirrorMap }}
+      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+      - sudo systemctl daemon-reload
+      - sudo systemctl restart containerd
+{{- end }}
       - hostnamectl set-hostname "{{`{{ ds.meta_data.hostname }}`}}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -211,3 +252,16 @@ spec:
         - type: uuid
           uuid: "{{.subnetUUID}}"
 {{ end }}
+---
+{{- if .registryAuth }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "{{.registryUsername}}"
+  password: "{{.registryPassword}}"
+{{- end }}

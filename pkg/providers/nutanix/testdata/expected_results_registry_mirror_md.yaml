@@ -5,12 +5,9 @@ metadata:
     cluster.x-k8s.io/cluster-name: "eksa-unit-test"
   name: "eksa-unit-test-eksa-unit-test"
   namespace: "eksa-system"
-  annotations:
-    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "3"
-    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "5"
 spec:
   clusterName: "eksa-unit-test"
-  replicas: 3
+  replicas: 4
   selector:
     matchLabels: {}
   template:
@@ -63,6 +60,9 @@ spec:
   template:
     spec:
       preKubeadmCommands:
+        - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+        - sudo systemctl daemon-reload
+        - sudo systemctl restart containerd
         - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
       joinConfiguration:
         nodeRegistration:
@@ -79,5 +79,12 @@ spec:
           sudo: ALL=(ALL) NOPASSWD:ALL
           sshAuthorizedKeys:
             - "mySshAuthorizedKey"
+      files:
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
 
 ---
