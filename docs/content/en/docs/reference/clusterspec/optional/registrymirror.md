@@ -43,7 +43,8 @@ spec:
 * __Example__: ```port: 443```
 ### __caCertContent__ (optional)
 * __Description__: Certificate Authority (CA) Certificate for the private registry . When using 
-  self-signed certificates it is necessary to pass this parameter in the cluster spec.<br/>
+  self-signed certificates it is necessary to pass this parameter in the cluster spec. This __must__ be the individual public CA cert used to sign the registry certificate. This will be added to the cluster nodes so that they are able to pull images from the private registry.
+
   It is also possible to configure CACertContent by exporting an environment variable:<br/>
   `export EKSA_REGISTRY_MIRROR_CA="/path/to/certificate-file"`
 * __Type__: string
