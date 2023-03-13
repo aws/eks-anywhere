@@ -232,7 +232,6 @@ func (f *Factory) withNutanixClusterReconciler() *Factory {
 		f.nutanixClusterReconciler = nutanixreconciler.New(
 			f.manager.GetClient(),
 			f.deps.NutanixValidator,
-			f.deps.NutanixDefaulter,
 			f.cniReconciler,
 			f.tracker,
 			f.ipValidator,

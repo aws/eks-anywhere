@@ -321,7 +321,7 @@ func setupNutanixWebhooks(setupLog logr.Logger, mgr ctrl.Manager) {
 		os.Exit(1)
 	}
 	if err := (&anywherev1.NutanixMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.NutanixMachineConfig{})
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.NutanixMachineConfigKind)
 		os.Exit(1)
 	}
 }

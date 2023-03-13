@@ -45,7 +45,7 @@ func NewValidator(clientCache *ClientCache, certValidator crypto.TlsValidator, h
 
 // ValidateClusterSpec validates the cluster spec.
 func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec, creds credentials.BasicAuthCredential) error {
-	fmt.Printf("ValidateClusterSpec for Nutanix datacenter %s\n", spec.NutanixDatacenter.Name)
+	logger.Info("ValidateClusterSpec for Nutanix datacenter", spec.NutanixDatacenter.Name)
 	client, err := v.clientCache.GetNutanixClient(spec.NutanixDatacenter, creds)
 	if err != nil {
 		return err

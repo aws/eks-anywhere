@@ -6693,6 +6693,27 @@ webhooks:
     service:
       name: eksa-webhook-service
       namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-nutanixmachineconfig
+  failurePolicy: Fail
+  name: validation.nutanixmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - nutanixmachineconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-oidcconfig
   failurePolicy: Fail
   name: validation.oidcconfig.anywhere.amazonaws.com

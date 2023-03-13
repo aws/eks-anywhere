@@ -23,15 +23,11 @@ func (in *NutanixMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error 
 
 var _ webhook.Validator = &NutanixMachineConfig{}
 
+//+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-nutanixmachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=nutanixmachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.nutanixmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (in *NutanixMachineConfig) ValidateCreate() error {
 	nutanixmachineconfiglog.Info("validate create", "name", in.Name)
-
-	if in.IsReconcilePaused() {
-		nutanixmachineconfiglog.Info("NutanixMachineConfig is paused, so allowing create", "name", in.Name)
-		return nil
-	}
-
 	if err := in.Validate(); err != nil {
 		return apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixMachineConfigKind).GroupKind(),
@@ -54,18 +50,24 @@ func (in *NutanixMachineConfig) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a NutanixMachineConfig but got a %T", old))
 	}
 
-	if oldNutanixMachineConfig.IsReconcilePaused() {
-		nutanixmachineconfiglog.Info("NutanixMachineConfig is paused, so allowing create", "name", in.Name)
-		return nil
-	}
-
 	var allErrs field.ErrorList
-	allErrs = append(allErrs, validateImmutableFieldsNutantixMachineConfig(in, oldNutanixMachineConfig)...)
-
 	if err := in.Validate(); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), in.Spec, err.Error()))
 	}
 
+	if oldNutanixMachineConfig.IsReconcilePaused() {
+		nutanixmachineconfiglog.Info("NutanixMachineConfig is paused, so allowing create", "name", in.Name)
+		if len(allErrs) > 0 {
+			return apierrors.NewInvalid(
+				GroupVersion.WithKind(NutanixMachineConfigKind).GroupKind(),
+				in.Name,
+				allErrs,
+			)
+		}
+		return nil
+	}
+
+	allErrs = append(allErrs, validateImmutableFieldsNutantixMachineConfig(in, oldNutanixMachineConfig)...)
 	if len(allErrs) > 0 {
 		return apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixMachineConfigKind).GroupKind(),
@@ -100,8 +102,42 @@ func validateImmutableFieldsNutantixMachineConfig(new, old *NutanixMachineConfig
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("Subnet"), "field is immutable"))
 	}
 
-	if !reflect.DeepEqual(new.Spec.Image, old.Spec.Image) {
-		allErrs = append(allErrs, field.Forbidden(specPath.Child("Image"), "field is immutable"))
+	if old.IsManaged() {
+		nutanixmachineconfiglog.Info("Machine config is associated with workload cluster", "name", old.Name)
+		return allErrs
+	}
+
+	if !old.IsEtcd() && !old.IsControlPlane() {
+		nutanixmachineconfiglog.Info("Machine config is associated with management cluster's worker nodes", "name", old.Name)
+		return allErrs
+	}
+
+	nutanixmachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd", "name", old.Name)
+
+	if err := validateImmutableFieldsControlPlane(new, old); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func validateImmutableFieldsControlPlane(new, old *NutanixMachineConfig) field.ErrorList {
+	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
+	if !reflect.DeepEqual(new.Spec.VCPUSockets, old.Spec.VCPUSockets) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("vCPUSockets"), "field is immutable"))
+	}
+	if !reflect.DeepEqual(new.Spec.VCPUsPerSocket, old.Spec.VCPUsPerSocket) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("vCPUsPerSocket"), "field is immutable"))
+	}
+	if !reflect.DeepEqual(new.Spec.MemorySize, old.Spec.MemorySize) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("memorySize"), "field is immutable"))
+	}
+	if !reflect.DeepEqual(new.Spec.SystemDiskSize, old.Spec.SystemDiskSize) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("systemDiskSize"), "field is immutable"))
+	}
+	if !reflect.DeepEqual(new.Spec.Users, old.Spec.Users) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("users"), "field is immutable"))
 	}
 
 	return allErrs

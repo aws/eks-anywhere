@@ -4,8 +4,6 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,6 +69,9 @@ func (in *NutanixMachineConfig) IsReconcilePaused() bool {
 
 // SetControlPlane sets the NutanixMachineConfig as a control plane node.
 func (in *NutanixMachineConfig) SetControlPlane() {
+	if in.Annotations == nil {
+		in.Annotations = map[string]string{}
+	}
 	in.Annotations[controlPlaneAnnotation] = "true"
 }
 
@@ -84,6 +85,9 @@ func (in *NutanixMachineConfig) IsControlPlane() bool {
 
 // SetEtcd sets the NutanixMachineConfig as an etcd node.
 func (in *NutanixMachineConfig) SetEtcd() {
+	if in.Annotations == nil {
+		in.Annotations = map[string]string{}
+	}
 	in.Annotations[etcdAnnotation] = "true"
 }
 
@@ -188,90 +192,6 @@ func (in *NutanixMachineConfig) Marshallable() Marshallable {
 // Validate validates the NutanixMachineConfig.
 func (in *NutanixMachineConfig) Validate() error {
 	return validateNutanixMachineConfig(in)
-}
-
-func validateNutanixMachineConfig(c *NutanixMachineConfig) error {
-	if err := validateObjectMeta(c.ObjectMeta); err != nil {
-		return fmt.Errorf("NutanixMachineConfig: %v", err)
-	}
-
-	if err := validateNutanixReferences(c); err != nil {
-		return fmt.Errorf("NutanixMachineConfig: %v", err)
-	}
-
-	if err := validateMinimumNutanixMachineSpecs(c); err != nil {
-		return fmt.Errorf("NutanixMachineConfig: %v", err)
-	}
-
-	if c.Spec.OSFamily != Ubuntu && c.Spec.OSFamily != Bottlerocket {
-		return fmt.Errorf(
-			"NutanixMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s",
-			c.Spec.OSFamily,
-			Ubuntu,
-			Bottlerocket,
-		)
-	}
-
-	if len(c.Spec.Users) <= 0 {
-		return fmt.Errorf("NutanixMachineConfig: missing spec.Users: %s", c.Name)
-	}
-
-	return nil
-}
-
-func validateMinimumNutanixMachineSpecs(c *NutanixMachineConfig) error {
-	if c.Spec.VCPUSockets <= 0 {
-		return fmt.Errorf("NutanixMachineConfig: vcpu sockets must be greater than 0")
-	}
-
-	if c.Spec.VCPUsPerSocket <= 0 {
-		return fmt.Errorf("NutanixMachineConfig: vcpu per socket must be greater than 0")
-	}
-
-	if c.Spec.MemorySize.Value() <= 0 {
-		return fmt.Errorf("NutanixMachineConfig: memory size must be greater than 0")
-	}
-
-	if c.Spec.SystemDiskSize.Value() <= 0 {
-		return fmt.Errorf("NutanixMachineConfig: system disk size must be greater than 0")
-	}
-
-	return nil
-}
-
-func validateNutanixReferences(c *NutanixMachineConfig) error {
-	if err := validateNutanixResourceIdentifierType(&c.Spec.Subnet); err != nil {
-		return err
-	}
-
-	if c.Spec.Subnet.Name == nil && c.Spec.Subnet.UUID == nil {
-		return fmt.Errorf("NutanixMachineConfig: missing subnet name or uuid: %s", c.Name)
-	}
-
-	if err := validateNutanixResourceIdentifierType(&c.Spec.Cluster); err != nil {
-		return err
-	}
-
-	if c.Spec.Cluster.Name == nil && c.Spec.Cluster.UUID == nil {
-		return fmt.Errorf("NutanixMachineConfig: missing cluster name or uuid: %s", c.Name)
-	}
-
-	if err := validateNutanixResourceIdentifierType(&c.Spec.Image); err != nil {
-		return err
-	}
-
-	if c.Spec.Image.Name == nil && c.Spec.Image.UUID == nil {
-		return fmt.Errorf("NutanixMachineConfig: missing image name or uuid: %s", c.Name)
-	}
-
-	return nil
-}
-
-func validateNutanixResourceIdentifierType(i *NutanixResourceIdentifier) error {
-	if i.Type != NutanixIdentifierName && i.Type != NutanixIdentifierUUID {
-		return fmt.Errorf("NutanixMachineConfig: invalid identifier type: %s", i.Type)
-	}
-	return nil
 }
 
 // NutanixMachineConfigGenerate is same as NutanixMachineConfig except stripped down for generation of yaml file during

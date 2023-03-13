@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net"
+	"strconv"
 
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
@@ -45,7 +47,7 @@ func (cb *ClientCache) GetNutanixClient(datacenterConfig *anywherev1.NutanixData
 
 	endpoint := datacenterConfig.Spec.Endpoint
 	port := datacenterConfig.Spec.Port
-	url := fmt.Sprintf("%s:%d", endpoint, port)
+	url := net.JoinHostPort(endpoint, strconv.Itoa(port))
 	nutanixCreds := prismgoclient.Credentials{
 		URL:      url,
 		Username: creds.PrismCentral.Username,

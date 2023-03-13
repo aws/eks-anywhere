@@ -40,7 +40,6 @@ type IPValidator interface {
 type Reconciler struct {
 	client               client.Client
 	validator            *nutanix.Validator
-	defaulter            *nutanix.Defaulter
 	cniReconciler        CNIReconciler
 	remoteClientRegistry RemoteClientRegistry
 	ipValidator          IPValidator
@@ -48,11 +47,10 @@ type Reconciler struct {
 }
 
 // New defines a new Nutanix reconciler.
-func New(client client.Client, validator *nutanix.Validator, defaulter *nutanix.Defaulter, cniReconciler CNIReconciler, registry RemoteClientRegistry, ipValidator IPValidator) *Reconciler {
+func New(client client.Client, validator *nutanix.Validator, cniReconciler CNIReconciler, registry RemoteClientRegistry, ipValidator IPValidator) *Reconciler {
 	return &Reconciler{
 		client:               client,
 		validator:            validator,
-		defaulter:            defaulter,
 		cniReconciler:        cniReconciler,
 		remoteClientRegistry: registry,
 		ipValidator:          ipValidator,
@@ -170,8 +168,6 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 
 // ValidateClusterSpec performs additional, context-aware validations on the cluster spec.
 func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
-	fmt.Println("Validating cluster spec")
-	fmt.Printf("%+v", clusterSpec.Config.Cluster.Spec.DatacenterRef)
 	log = log.WithValues("phase", "validateClusterSpec")
 
 	creds, err := GetNutanixCredsFromSecret(ctx, r.client, clusterSpec.NutanixDatacenter.Spec.CredentialRef.Name, "eksa-system")
@@ -180,7 +176,7 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, c
 	}
 
 	if err := r.validator.ValidateClusterSpec(ctx, clusterSpec, creds); err != nil {
-		log.Error(err, "Invalid cluster spec")
+		log.Error(err, "Invalid cluster spec", "cluster", clusterSpec.Cluster.Name)
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 		return controller.ResultWithReturn(), nil

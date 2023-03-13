@@ -132,7 +132,6 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 			WithLocalExecutables().
 			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 			WithNutanixValidator().
-			WithNutanixDefaulter().
 			Build(context.Background())
 
 		tt.Expect(err).To(BeNil())
