@@ -56,14 +56,20 @@ var _ webhook.Validator = &TinkerbellMachineConfig{}
 func (r *TinkerbellMachineConfig) ValidateCreate() error {
 	tinkerbellmachineconfiglog.Info("validate create", "name", r.Name)
 
+	var allErrs field.ErrorList
+
 	if err := r.Validate(); err != nil {
-		return apierrors.NewInvalid(
-			GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(),
-			r.Name,
-			field.ErrorList{
-				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
-			},
-		)
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(r.Spec.Users) > 0 {
+		if len(r.Spec.Users[0].SshAuthorizedKeys) == 0 || r.Spec.Users[0].SshAuthorizedKeys[0] == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, fmt.Sprintf("TinkerbellMachineConfig: missing spec.Users[0].SshAuthorizedKeys: %s for user %s. Please specify a ssh authorized key", r.Name, r.Spec.Users[0])))
+		}
+	}
+
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
 	if r.IsReconcilePaused() {
