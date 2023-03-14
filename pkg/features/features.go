@@ -2,12 +2,13 @@ package features
 
 // These are environment variables used as flags to enable/disable features.
 const (
-	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
-	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
-	FullLifecycleGate               = "FullLifecycleAPI"
-	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
-	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
-	K8s126SupportEnvVar             = "K8S_1_26_SUPPORT"
+	CloudStackKubeVipDisabledEnvVar                = "CLOUDSTACK_KUBE_VIP_DISABLED"
+	FullLifecycleAPIEnvVar                         = "FULL_LIFECYCLE_API"
+	FullLifecycleGate                              = "FullLifecycleAPI"
+	CheckpointEnabledEnvVar                        = "CHECKPOINT_ENABLED"
+	UseNewWorkflowsEnvVar                          = "USE_NEW_WORKFLOWS"
+	K8s126SupportEnvVar                            = "K8S_1_26_SUPPORT"
+	RegistryMirrrorInsecureSkipVerifySupportEnvVar = "REGISTRY_MIRROR_INSECURE_SKIP_VERIFY_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -61,5 +62,13 @@ func K8s126Support() Feature {
 	return Feature{
 		Name:     "Kubernetes version 1.26 support",
 		IsActive: globalFeatures.isActiveForEnvVar(K8s126SupportEnvVar),
+	}
+}
+
+// RegistryMirrorInsecureSkipVerifySupport is a feature flag that enables registry mirror InsecureSkipVerify option support for all providers to pass preflight validations.
+func RegistryMirrorInsecureSkipVerifySupport() Feature {
+	return Feature{
+		Name:     "Insecure skip verify supported for all providers",
+		IsActive: globalFeatures.isActiveForEnvVar(RegistryMirrrorInsecureSkipVerifySupportEnvVar),
 	}
 }
