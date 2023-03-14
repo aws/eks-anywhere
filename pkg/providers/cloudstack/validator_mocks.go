@@ -9,6 +9,8 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	decoder "github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -75,4 +77,18 @@ func (m *MockProviderValidator) ValidateControlPlaneEndpointUniqueness(arg0 stri
 func (mr *MockProviderValidatorMockRecorder) ValidateControlPlaneEndpointUniqueness(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneEndpointUniqueness", reflect.TypeOf((*MockProviderValidator)(nil).ValidateControlPlaneEndpointUniqueness), arg0)
+}
+
+// ValidateSecretsUnchanged mocks base method.
+func (m *MockProviderValidator) ValidateSecretsUnchanged(arg0 context.Context, arg1 *types.Cluster, arg2 *decoder.CloudStackExecConfig, arg3 ProviderKubectlClient) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateSecretsUnchanged", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateSecretsUnchanged indicates an expected call of ValidateSecretsUnchanged.
+func (mr *MockProviderValidatorMockRecorder) ValidateSecretsUnchanged(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateSecretsUnchanged", reflect.TypeOf((*MockProviderValidator)(nil).ValidateSecretsUnchanged), arg0, arg1, arg2, arg3)
 }

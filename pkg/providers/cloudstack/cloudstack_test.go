@@ -407,7 +407,8 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *test
 	validator := givenWildcardValidator(mockCtrl, clusterSpec)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, validator)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewBadRequest("test-error"))
+	secretFailureMsg := "getting secret for profile global: test-error"
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(apierrors.NewBadRequest(secretFailureMsg))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err.Error()).To(Equal("validating secrets unchanged: getting secret for profile global: test-error"))
@@ -427,7 +428,7 @@ func TestProviderSetupAndValidateUpgradeClusterSuccessOnSecretNotFound(t *testin
 	validator := givenWildcardValidator(mockCtrl, clusterSpec)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, validator)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, notFoundError)
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).To(BeNil())
@@ -449,7 +450,8 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing
 	modifiedSecret := expectedSecret.DeepCopy()
 	modifiedSecret.Data["api-key"] = []byte("updated-api-key")
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(modifiedSecret, nil)
+	changedSecretMsg := "profile global is different from secret"
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf(changedSecretMsg))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
@@ -1461,14 +1463,15 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cluster := &types.Cluster{}
-	provider := givenProvider(t)
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
+	validator := givenWildcardValidator(mockCtrl, clusterSpec)
+	provider := newProviderWithKubectl(t, clusterSpec.CloudStackDatacenter, clusterSpec.CloudStackMachineConfigs, clusterSpec.Cluster,
+		kubectl, validator)
 	setupContext(t)
 
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
@@ -1478,18 +1481,20 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
+	validator := givenWildcardValidator(mockCtrl, clusterSpec)
+	provider := newProviderWithKubectl(t, clusterSpec.CloudStackDatacenter, clusterSpec.CloudStackMachineConfigs, clusterSpec.Cluster,
+		kubectl, validator)
 
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
+
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
@@ -1499,18 +1504,19 @@ func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	provider := givenProvider(t)
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
+	validator := givenWildcardValidator(mockCtrl, clusterSpec)
+	provider := newProviderWithKubectl(t, clusterSpec.CloudStackDatacenter, clusterSpec.CloudStackMachineConfigs, clusterSpec.Cluster,
+		kubectl, validator)
+	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
@@ -1521,18 +1527,19 @@ func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
+	validator := givenWildcardValidator(mockCtrl, clusterSpec)
+	provider := newProviderWithKubectl(t, clusterSpec.CloudStackDatacenter, clusterSpec.CloudStackMachineConfigs, clusterSpec.Cluster,
+		kubectl, validator)
+	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {

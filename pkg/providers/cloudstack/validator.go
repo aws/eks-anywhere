@@ -7,9 +7,15 @@ import (
 	"net"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type Validator struct {
@@ -219,4 +225,29 @@ func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterS
 		return fmt.Errorf("host %s has an invalid port", pHost)
 	}
 	return nil
+}
+
+// ValidateSecretsUnchanged checks the secret to see if it has not been changed.
+func (v *Validator) ValidateSecretsUnchanged(ctx context.Context, cluster *types.Cluster, execConfig *decoder.CloudStackExecConfig, client ProviderKubectlClient) error {
+	for _, profile := range execConfig.Profiles {
+		secret, err := client.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
+		if apierrors.IsNotFound(err) {
+			// When the secret is not found we allow for new secrets
+			continue
+		}
+		if err != nil {
+			return fmt.Errorf("getting secret for profile %s: %v", profile.Name, err)
+		}
+		if secretDifferentFromProfile(secret, profile) {
+			return fmt.Errorf("profile '%s' is different from the secret", profile.Name)
+		}
+	}
+	return nil
+}
+
+func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
+	return string(secret.Data[decoder.APIUrlKey]) != profile.ManagementUrl ||
+		string(secret.Data[decoder.APIKeyKey]) != profile.ApiKey ||
+		string(secret.Data[decoder.SecretKeyKey]) != profile.SecretKey ||
+		string(secret.Data[decoder.VerifySslKey]) != profile.VerifySsl
 }

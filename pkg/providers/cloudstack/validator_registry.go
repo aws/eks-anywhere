@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 // ValidatorRegistry exposes a single method for retrieving the CloudStack validator, and abstracts away how they are injected.
@@ -32,6 +33,7 @@ type ProviderValidator interface {
 	ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error
 	ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error
 	ValidateControlPlaneEndpointUniqueness(endpoint string) error
+	ValidateSecretsUnchanged(ctx context.Context, cluster *types.Cluster, execConfig *decoder.CloudStackExecConfig, client ProviderKubectlClient) error
 }
 
 // NewValidatorFactory initializes a factory for the CloudStack provider validator.
