@@ -2,11 +2,10 @@ package docker_test
 
 import (
 	"context"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdadmbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -22,6 +21,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -89,7 +90,7 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
 	g.Expect(cp.Cluster).To(Equal(capiCluster()))
-	kubeadmControlPlaneExpectEqual(t, cp.KubeadmControlPlane, kubeadmControlPlane())
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane()))
 	g.Expect(cp.EtcdCluster).To(Equal(etcdCluster()))
 	g.Expect(cp.ProviderCluster).To(Equal(dockerCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(wantCPMachineTemplate))
@@ -155,7 +156,7 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
 	g.Expect(cp.Cluster).To(Equal(capiCluster()))
-	kubeadmControlPlaneExpectEqual(t, cp.KubeadmControlPlane, wantKCP)
+	g.Expect(cp.KubeadmControlPlane).To(Equal(wantKCP))
 	g.Expect(cp.EtcdCluster).To(Equal(wantEtcd))
 	g.Expect(cp.ProviderCluster).To(Equal(dockerCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(wantCPtemplate))
@@ -200,7 +201,7 @@ func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
 	g.Expect(cp.Cluster).To(Equal(capiCluster()))
-	kubeadmControlPlaneExpectEqual(t, cp.KubeadmControlPlane, wantKCP)
+	g.Expect(cp.KubeadmControlPlane).To(Equal(wantKCP))
 	g.Expect(cp.EtcdCluster).To(Equal(wantEtcd))
 	g.Expect(cp.ProviderCluster).To(Equal(dockerCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(wantCPtemplate))
@@ -218,18 +219,64 @@ func TestControPlaneSpecErrorFromClient(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("updating docker immutable object names")))
 }
 
-func kubeadmControlPlaneExpectEqual(t *testing.T, kcp, wantKCP *controlplanev1.KubeadmControlPlane) {
-	g := NewWithT(t)
-	stripKubeadmConfigSpecFilesWhitespace(kcp)
-	stripKubeadmConfigSpecFilesWhitespace(wantKCP)
-	g.Expect(kcp).To(Equal(wantKCP))
+func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+
+	tests := []struct {
+		name         string
+		mirrorConfig *anywherev1.RegistryMirrorConfiguration
+		files        []bootstrapv1.File
+	}{
+		{
+			name:         "insecure skip verify",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabled(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerify(),
+		},
+		{
+			name:         "insecure skip verify with ca cert",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := testClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
+			})
+			wantCPMachineTemplate := dockerMachineTemplate("test-control-plane-1")
+			wantEtcdMachineTemplate := dockerMachineTemplate("test-etcd-1")
+			cp, err := docker.ControlPlaneSpec(ctx, logger, client, spec)
+
+			g := NewWithT(t)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(cp).NotTo(BeNil())
+			g.Expect(cp.Cluster).To(Equal(capiCluster()))
+			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
+				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
+			})))
+			g.Expect(cp.EtcdCluster).To(Equal(etcdCluster(func(ec *etcdv1.EtcdadmCluster) {
+				ec.Spec.EtcdadmConfigSpec.RegistryMirror = &etcdadmbootstrapv1.RegistryMirrorConfiguration{
+					Endpoint: containerd.ToAPIEndpoint(registrymirror.FromClusterRegistryMirrorConfiguration(tt.mirrorConfig).CoreEKSAMirror()),
+					CACert:   tt.mirrorConfig.CACertContent,
+				}
+			})))
+			g.Expect(cp.ProviderCluster).To(Equal(dockerCluster()))
+			g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(wantCPMachineTemplate))
+			g.Expect(cp.EtcdMachineTemplate).To(Equal(wantEtcdMachineTemplate))
+		})
+	}
 }
 
-func testClusterSpec() *cluster.Spec {
+func testClusterSpec(opts ...test.ClusterSpecOpt) *cluster.Spec {
 	name := "test"
 	namespace := "test-namespace"
 
-	return test.NewClusterSpec(func(s *cluster.Spec) {
+	clusterOpts := make([]test.ClusterSpecOpt, 0)
+	clusterOpts = append(clusterOpts, func(s *cluster.Spec) {
 		s.Cluster = &anywherev1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
@@ -297,6 +344,8 @@ func testClusterSpec() *cluster.Spec {
 			},
 		}
 	})
+	clusterOpts = append(clusterOpts, opts...)
+	return test.NewClusterSpec(clusterOpts...)
 }
 
 func capiCluster() *clusterv1.Cluster {
@@ -383,19 +432,7 @@ func dockerMachineTemplate(name string) *dockerv1.DockerMachineTemplate {
 	}
 }
 
-func stripKubeadmConfigSpecFilesWhitespace(kcp *controlplanev1.KubeadmControlPlane) {
-	files := []bootstrapv1.File{}
-	space := regexp.MustCompile(`\s`)
-
-	for _, file := range kcp.Spec.KubeadmConfigSpec.Files {
-		file.Content = space.ReplaceAllString(file.Content, "")
-		files = append(files, file)
-	}
-
-	kcp.Spec.KubeadmConfigSpec.Files = files
-}
-
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
+func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
 	kcp := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
@@ -484,156 +521,157 @@ kind: Policy
 rules:
 # Log aws-auth configmap changes
 - level: RequestResponse
-namespaces: ["kube-system"]
-verbs: ["update", "patch", "delete"]
-resources:
-- group: "" # core
-	resources: ["configmaps"]
-	resourceNames: ["aws-auth"]
-omitStages:
-- "RequestReceived"
+  namespaces: ["kube-system"]
+  verbs: ["update", "patch", "delete"]
+  resources:
+  - group: "" # core
+    resources: ["configmaps"]
+    resourceNames: ["aws-auth"]
+  omitStages:
+  - "RequestReceived"
 # The following requests were manually identified as high-volume and low-risk,
 # so drop them.
 - level: None
-users: ["system:kube-proxy"]
-verbs: ["watch"]
-resources:
-- group: "" # core
-	resources: ["endpoints", "services", "services/status"]
+  users: ["system:kube-proxy"]
+  verbs: ["watch"]
+  resources:
+  - group: "" # core
+    resources: ["endpoints", "services", "services/status"]
 - level: None
-users: ["kubelet"] # legacy kubelet identity
-verbs: ["get"]
-resources:
-- group: "" # core
-	resources: ["nodes", "nodes/status"]
+  users: ["kubelet"] # legacy kubelet identity
+  verbs: ["get"]
+  resources:
+  - group: "" # core
+    resources: ["nodes", "nodes/status"]
 - level: None
-userGroups: ["system:nodes"]
-verbs: ["get"]
-resources:
-- group: "" # core
-	resources: ["nodes", "nodes/status"]
+  userGroups: ["system:nodes"]
+  verbs: ["get"]
+  resources:
+  - group: "" # core
+    resources: ["nodes", "nodes/status"]
 - level: None
-users:
-- system:kube-controller-manager
-- system:kube-scheduler
-- system:serviceaccount:kube-system:endpoint-controller
-verbs: ["get", "update"]
-namespaces: ["kube-system"]
-resources:
-- group: "" # core
-	resources: ["endpoints"]
+  users:
+  - system:kube-controller-manager
+  - system:kube-scheduler
+  - system:serviceaccount:kube-system:endpoint-controller
+  verbs: ["get", "update"]
+  namespaces: ["kube-system"]
+  resources:
+  - group: "" # core
+    resources: ["endpoints"]
 - level: None
-users: ["system:apiserver"]
-verbs: ["get"]
-resources:
-- group: "" # core
-	resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+  users: ["system:apiserver"]
+  verbs: ["get"]
+  resources:
+  - group: "" # core
+    resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
 # Don't log HPA fetching metrics.
 - level: None
-users:
-- system:kube-controller-manager
-verbs: ["get", "list"]
-resources:
-- group: "metrics.k8s.io"
+  users:
+  - system:kube-controller-manager
+  verbs: ["get", "list"]
+  resources:
+  - group: "metrics.k8s.io"
 # Don't log these read-only URLs.
 - level: None
-nonResourceURLs:
-- /healthz*
-- /version
-- /swagger*
+  nonResourceURLs:
+  - /healthz*
+  - /version
+  - /swagger*
 # Don't log events requests.
 - level: None
-resources:
-- group: "" # core
-	resources: ["events"]
+  resources:
+  - group: "" # core
+    resources: ["events"]
 # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
 - level: Request
-users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
-verbs: ["update","patch"]
-resources:
-- group: "" # core
-	resources: ["nodes/status", "pods/status"]
-omitStages:
-- "RequestReceived"
+  users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
+  verbs: ["update","patch"]
+  resources:
+  - group: "" # core
+    resources: ["nodes/status", "pods/status"]
+  omitStages:
+  - "RequestReceived"
 - level: Request
-userGroups: ["system:nodes"]
-verbs: ["update","patch"]
-resources:
-- group: "" # core
-	resources: ["nodes/status", "pods/status"]
-omitStages:
-- "RequestReceived"
+  userGroups: ["system:nodes"]
+  verbs: ["update","patch"]
+  resources:
+  - group: "" # core
+    resources: ["nodes/status", "pods/status"]
+  omitStages:
+  - "RequestReceived"
 # deletecollection calls can be large, don't log responses for expected namespace deletions
 - level: Request
-users: ["system:serviceaccount:kube-system:namespace-controller"]
-verbs: ["deletecollection"]
-omitStages:
-- "RequestReceived"
+  users: ["system:serviceaccount:kube-system:namespace-controller"]
+  verbs: ["deletecollection"]
+  omitStages:
+  - "RequestReceived"
 # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
 # so only log at the Metadata level.
 - level: Metadata
-resources:
-- group: "" # core
-	resources: ["secrets", "configmaps"]
-- group: authentication.k8s.io
-	resources: ["tokenreviews"]
-omitStages:
-	- "RequestReceived"
+  resources:
+  - group: "" # core
+    resources: ["secrets", "configmaps"]
+  - group: authentication.k8s.io
+    resources: ["tokenreviews"]
+  omitStages:
+    - "RequestReceived"
 - level: Request
-resources:
-- group: ""
-	resources: ["serviceaccounts/token"]
+  resources:
+  - group: ""
+    resources: ["serviceaccounts/token"]
 # Get repsonses can be large; skip them.
 - level: Request
-verbs: ["get", "list", "watch"]
-resources:
-- group: "" # core
-- group: "admissionregistration.k8s.io"
-- group: "apiextensions.k8s.io"
-- group: "apiregistration.k8s.io"
-- group: "apps"
-- group: "authentication.k8s.io"
-- group: "authorization.k8s.io"
-- group: "autoscaling"
-- group: "batch"
-- group: "certificates.k8s.io"
-- group: "extensions"
-- group: "metrics.k8s.io"
-- group: "networking.k8s.io"
-- group: "policy"
-- group: "rbac.authorization.k8s.io"
-- group: "scheduling.k8s.io"
-- group: "settings.k8s.io"
-- group: "storage.k8s.io"
-omitStages:
-- "RequestReceived"
+  verbs: ["get", "list", "watch"]
+  resources:
+  - group: "" # core
+  - group: "admissionregistration.k8s.io"
+  - group: "apiextensions.k8s.io"
+  - group: "apiregistration.k8s.io"
+  - group: "apps"
+  - group: "authentication.k8s.io"
+  - group: "authorization.k8s.io"
+  - group: "autoscaling"
+  - group: "batch"
+  - group: "certificates.k8s.io"
+  - group: "extensions"
+  - group: "metrics.k8s.io"
+  - group: "networking.k8s.io"
+  - group: "policy"
+  - group: "rbac.authorization.k8s.io"
+  - group: "scheduling.k8s.io"
+  - group: "settings.k8s.io"
+  - group: "storage.k8s.io"
+  omitStages:
+  - "RequestReceived"
 # Default level for known APIs
 - level: RequestResponse
-resources:
-- group: "" # core
-- group: "admissionregistration.k8s.io"
-- group: "apiextensions.k8s.io"
-- group: "apiregistration.k8s.io"
-- group: "apps"
-- group: "authentication.k8s.io"
-- group: "authorization.k8s.io"
-- group: "autoscaling"
-- group: "batch"
-- group: "certificates.k8s.io"
-- group: "extensions"
-- group: "metrics.k8s.io"
-- group: "networking.k8s.io"
-- group: "policy"
-- group: "rbac.authorization.k8s.io"
-- group: "scheduling.k8s.io"
-- group: "settings.k8s.io"
-- group: "storage.k8s.io"
-omitStages:
-- "RequestReceived"
+  resources:
+  - group: "" # core
+  - group: "admissionregistration.k8s.io"
+  - group: "apiextensions.k8s.io"
+  - group: "apiregistration.k8s.io"
+  - group: "apps"
+  - group: "authentication.k8s.io"
+  - group: "authorization.k8s.io"
+  - group: "autoscaling"
+  - group: "batch"
+  - group: "certificates.k8s.io"
+  - group: "extensions"
+  - group: "metrics.k8s.io"
+  - group: "networking.k8s.io"
+  - group: "policy"
+  - group: "rbac.authorization.k8s.io"
+  - group: "scheduling.k8s.io"
+  - group: "settings.k8s.io"
+  - group: "storage.k8s.io"
+  omitStages:
+  - "RequestReceived"
 # Default level for all other requests.
 - level: Metadata
-omitStages:
-- "RequestReceived"`,
+  omitStages:
+  - "RequestReceived"
+`,
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
@@ -661,11 +699,13 @@ omitStages:
 			Version:  "v1.23.12-eks-1-23-6",
 		},
 	}
-
+	for _, opt := range opts {
+		opt(kcp)
+	}
 	return kcp
 }
 
-func etcdCluster() *etcdv1.EtcdadmCluster {
+func etcdCluster(opts ...func(*etcdv1.EtcdadmCluster)) *etcdv1.EtcdadmCluster {
 	var etcdCluster *etcdv1.EtcdadmCluster = &etcdv1.EtcdadmCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "EtcdadmCluster",
@@ -676,9 +716,9 @@ func etcdCluster() *etcdv1.EtcdadmCluster {
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: etcdv1.EtcdadmClusterSpec{
-			EtcdadmConfigSpec: v1beta1.EtcdadmConfigSpec{
+			EtcdadmConfigSpec: etcdadmbootstrapv1.EtcdadmConfigSpec{
 				EtcdadmBuiltin: true,
-				CloudInitConfig: &v1beta1.CloudInitConfig{
+				CloudInitConfig: &etcdadmbootstrapv1.CloudInitConfig{
 					Version: "3.5.4",
 				},
 				CipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -692,6 +732,8 @@ func etcdCluster() *etcdv1.EtcdadmCluster {
 			Replicas: ptr.Int32(3),
 		},
 	}
-
+	for _, opt := range opts {
+		opt(etcdCluster)
+	}
 	return etcdCluster
 }

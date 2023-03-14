@@ -84,9 +84,14 @@ spec:
             [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
               endpoint = ["https://{{ $mirror }}"]
             {{- end }}
-            {{- if .registryCACert }}
+            {{- if or .registryCACert .insecureSkip }}
             [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+            {{- if .registryCACert }}
               ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+            {{- end }}
+            {{- if .insecureSkip }}
+              insecure_skip_verify = {{.insecureSkip}}
+            {{- end }}
             {{- end }}
             {{- if .registryAuth }}
             [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]

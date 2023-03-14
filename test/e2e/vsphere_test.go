@@ -906,6 +906,20 @@ func TestVSphereKubernetes125BottlerocketProxyConfigFlow(t *testing.T) {
 }
 
 // Registry mirror
+func TestVSphereKubernetes125UbuntuRegistryMirrorInsecureSkipVerify(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu125(), framework.WithPrivateNetwork()),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithRegistryMirrorInsecureSkipVerify(constants.VSphereProviderName),
+		framework.WithEnvVar(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar, "true"),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
 func TestVSphereKubernetes125UbuntuRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

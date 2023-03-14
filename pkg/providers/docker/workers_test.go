@@ -13,6 +13,7 @@ import (
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -268,6 +269,69 @@ func TestWorkersSpecMachineTemplateNotFound(t *testing.T) {
 	client := test.NewFakeKubeClient(machineDeployment())
 	_, err := docker.WorkersSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
+}
+
+func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+
+	tests := []struct {
+		name         string
+		mirrorConfig *anywherev1.RegistryMirrorConfiguration
+		files        []bootstrapv1.File
+	}{
+		{
+			name:         "insecure skip verify",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabled(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerify(),
+		},
+		{
+			name:         "insecure skip verify with ca cert",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := testClusterSpec()
+			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
+			workers, err := docker.WorkersSpec(ctx, logger, client, spec)
+
+			g := NewWithT(t)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(workers).NotTo(BeNil())
+			g.Expect(workers.Groups).To(HaveLen(2))
+			g.Expect(workers.Groups).To(ConsistOf(
+				clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
+					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
+						kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
+					}),
+					MachineDeployment:       machineDeployment(),
+					ProviderMachineTemplate: dockerMachineTemplate("test-md-0-1"),
+				},
+				clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
+					KubeadmConfigTemplate: kubeadmConfigTemplate(
+						func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-1-1"
+							kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
+							kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
+						},
+					),
+					MachineDeployment: machineDeployment(
+						func(md *clusterv1.MachineDeployment) {
+							md.Name = "test-md-1"
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+						},
+					),
+					ProviderMachineTemplate: dockerMachineTemplate("test-md-1-1"),
+				},
+			))
+		})
+	}
 }
 
 func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bootstrapv1.KubeadmConfigTemplate {

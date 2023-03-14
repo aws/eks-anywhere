@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -359,6 +360,18 @@ func TestDockerKubernetes125AirgappedRegistryMirrorAndCert(t *testing.T) {
 		framework.WithRegistryMirrorEndpointAndCert(constants.DockerProviderName),
 	)
 	runDockerAirgapConfigFlow(test)
+}
+
+func TestDockerKubernetes125RegistryMirrorInsecureSkipVerify(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithEnvVar(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar, "true"),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithRegistryMirrorInsecureSkipVerify(constants.DockerProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
 }
 
 // Simple flow
