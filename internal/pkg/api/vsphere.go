@@ -195,6 +195,18 @@ func WithNTPServersForAllMachines(servers []string) VSphereFiller {
 	}
 }
 
+// WithBottlerocketConfigurationForAllMachines sets Bottlerocket configuration for all VSphereMachineConfigs.
+func WithBottlerocketConfigurationForAllMachines(value *anywherev1.BottlerocketConfiguration) VSphereFiller {
+	return func(config VSphereConfig) {
+		for _, m := range config.machineConfigs {
+			if m.Spec.HostOSConfiguration == nil {
+				m.Spec.HostOSConfiguration = &anywherev1.HostOSConfiguration{}
+			}
+			m.Spec.HostOSConfiguration.BottlerocketConfiguration = value
+		}
+	}
+}
+
 func WithVSphereStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar))
 }

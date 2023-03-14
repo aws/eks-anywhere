@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -369,6 +371,27 @@ func WithNTPServersForAllMachines() VSphereOpt {
 		checkRequiredEnvVars(v.t, RequiredNTPServersEnvVars())
 		v.fillers = append(v.fillers,
 			api.WithNTPServersForAllMachines(GetNTPServersFromEnv()),
+		)
+	}
+}
+
+// WithBottlerocketKuberentesSettingsForAllMachines sets Bottlerocket Kubernetes settings for all the machines.
+func WithBottlerocketKuberentesSettingsForAllMachines() VSphereOpt {
+	return func(v *VSphere) {
+		checkRequiredEnvVars(v.t, RequiredBottlerocketKubernetesSettingsEnvVars())
+		unsafeSysctls, clusterDNSIPS, maxPods, err := GetBottlerocketKubernetesSettingsFromEnv()
+		if err != nil {
+			v.t.Fatalf("failed to get bottlerocket kubernetes settings from env: %v", err)
+		}
+		config := &anywherev1.BottlerocketConfiguration{
+			Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
+				AllowedUnsafeSysctls: unsafeSysctls,
+				ClusterDNSIPs:        clusterDNSIPS,
+				MaxPods:              maxPods,
+			},
+		}
+		v.fillers = append(v.fillers,
+			api.WithBottlerocketConfigurationForAllMachines(config),
 		)
 	}
 }

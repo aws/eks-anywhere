@@ -14,3 +14,10 @@ func runNTPFlow(test *framework.ClusterE2ETest, osFamily v1alpha1.OSFamily) {
 	test.ValidateNTPConfig(osFamily)
 	test.DeleteCluster()
 }
+
+func runBottlerocketConfigurationFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.ValidateBottlerocketKubernetesSettings()
+	test.DeleteCluster()
+}

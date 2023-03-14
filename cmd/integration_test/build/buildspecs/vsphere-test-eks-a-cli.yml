@@ -24,6 +24,9 @@ env:
     T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_21_EKS_18: "/SDDC-Datacenter/vm/Templates/kubernetes-1-21-eks-18-3269b26c66-bottlerocket"
     T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_22_EKS_10: "/SDDC-Datacenter/vm/Templates/kubernetes-1-22-eks-10-79708da478-bottlerocket"
     T_VSPHERE_TEMPLATE_BOTTLEROCKET_KUBERNETES_1_23_EKS_5: "/SDDC-Datacenter/vm/Templates/kubernetes-1-23-eks-5-9fd2167080-bottlerocket"
+    T_BR_K8S_SETTINGS_MAX_PODS: "80"
+    T_BR_K8S_SETTINGS_CLUSTER_DNS_IPS: "10.96.0.10"
+    T_BR_K8S_SETTINGS_ALLOWED_UNSAFE_SYSCTLS: "net.core.somaxconn,net.ipv4.ip_local_port_range"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
