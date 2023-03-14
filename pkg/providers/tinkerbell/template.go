@@ -525,19 +525,6 @@ func buildTemplateMapMD(
 	return values, nil
 }
 
-// OmitTinkerbellCPMachineTemplate omits control plane machine template on scale update.
-func OmitTinkerbellCPMachineTemplate(cp *ControlPlane) {
-	cp.ControlPlaneMachineTemplate = nil
-}
-
-// OmitTinkerbellWorkersMachineTemplate omits workers machine template on scale update.
-func OmitTinkerbellWorkersMachineTemplate(w *Workers) {
-	wg := w.Groups
-	for _, w := range wg {
-		w.ProviderMachineTemplate = nil
-	}
-}
-
 func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
 	var outSpec []unstructured.Unstructured
 	resources := strings.Split(string(inputSpec), "---")
