@@ -1626,5 +1626,4 @@ func TestTinkerbellProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.
 	}
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_tinkerbell_pod_iam_config.yaml")
-
 }
