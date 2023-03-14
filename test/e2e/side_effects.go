@@ -26,12 +26,10 @@ type eksaPackagedBinary interface {
 // and checks that this doesn't cause any side effects (machine rollout) in the workload clusters.
 func runFlowUpgradeManagementClusterCheckForSideEffects(test *framework.MulticlusterE2ETest, currentEKSA, newEKSA eksaPackagedBinary) {
 	test.T.Logf("Creating management cluster with EKS-A version %s", currentEKSA.Version())
-	test.ManagementCluster.GenerateClusterConfigForVersion(currentEKSA.Version(), framework.ExecuteWithBinary(currentEKSA))
 	test.CreateManagementCluster(framework.ExecuteWithBinary(currentEKSA))
 
 	test.T.Logf("Creating workload clusters with EKS-A version %s", currentEKSA.Version())
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfigForVersion(currentEKSA.Version(), framework.ExecuteWithBinary(currentEKSA))
 		w.CreateCluster(framework.ExecuteWithBinary(currentEKSA))
 	})
 

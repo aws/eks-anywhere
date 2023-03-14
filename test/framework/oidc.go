@@ -10,8 +10,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/oidc"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
 )
 
@@ -31,29 +29,19 @@ var oidcRequiredEnvVars = []string{
 
 func WithOIDC() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, oidcRequiredEnvVars)
-		if e.ClusterConfig.OIDCConfigs == nil {
-			e.ClusterConfig.OIDCConfigs = make(map[string]*anywherev1.OIDCConfig, 1)
-		}
-		e.ClusterConfig.OIDCConfigs[defaultClusterName] = api.NewOIDCConfig(defaultClusterName,
-			api.WithOIDCRequiredClaims("kubernetesAccess", "true"),
-			api.WithOIDCGroupsPrefix("s3-oidc:"),
-			api.WithOIDCGroupsClaim("groups"),
-			api.WithOIDCUsernamePrefix("s3-oidc:"),
-			api.WithOIDCUsernameClaim("email"),
-			api.WithStringFromEnvVarOIDCConfig(OIDCIssuerUrlVar, api.WithOIDCIssuerUrl),
-			api.WithStringFromEnvVarOIDCConfig(OIDCClientIdVar, api.WithOIDCClientId),
-		)
-		e.clusterFillers = append(e.clusterFillers,
-			api.WithOIDCIdentityProviderRef(defaultClusterName),
-		)
+		e.addClusterConfigFillers(WithOIDCClusterConfig(e.T))
 	}
 }
 
-// WithOIDCConfig sets oidc in cluster config.
-func WithOIDCConfig() api.ClusterConfigFiller {
-	return api.JoinClusterConfigFillers(func(config *cluster.Config) {
-		config.OIDCConfigs[defaultClusterName] = api.NewOIDCConfig(defaultClusterName,
+// WithOIDCClusterConfig returns a ClusterConfigFiller that adds the default
+// OIDCConfig for E2E tests to the cluster Config and links it by name in the
+// Cluster resource.
+func WithOIDCClusterConfig(t T) api.ClusterConfigFiller {
+	checkRequiredEnvVars(t, oidcRequiredEnvVars)
+	name := defaultClusterName
+
+	return api.JoinClusterConfigFillers(
+		api.WithOIDCConfig(name,
 			api.WithOIDCRequiredClaims("kubernetesAccess", "true"),
 			api.WithOIDCGroupsPrefix("s3-oidc:"),
 			api.WithOIDCGroupsClaim("groups"),
@@ -61,8 +49,11 @@ func WithOIDCConfig() api.ClusterConfigFiller {
 			api.WithOIDCUsernameClaim("email"),
 			api.WithStringFromEnvVarOIDCConfig(OIDCIssuerUrlVar, api.WithOIDCIssuerUrl),
 			api.WithStringFromEnvVarOIDCConfig(OIDCClientIdVar, api.WithOIDCClientId),
-		)
-	}, api.ClusterToConfigFiller(api.WithOIDCIdentityProviderRef(defaultClusterName)))
+		),
+		api.ClusterToConfigFiller(
+			api.WithOIDCIdentityProviderRef(name),
+		),
+	)
 }
 
 func (e *ClusterE2ETest) ValidateOIDC() {

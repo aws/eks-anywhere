@@ -83,15 +83,17 @@ type ClusterE2ETest struct {
 	ClusterConfig                *cluster.Config
 	clusterStateValidationConfig *clusterf.StateValidationConfig
 	Provider                     Provider
-	clusterFillers               []api.ClusterFiller
-	KubectlClient                *executables.Kubectl
-	GitProvider                  git.ProviderClient
-	GitClient                    git.Client
-	HelmInstallConfig            *HelmInstallConfig
-	PackageConfig                *PackageConfig
-	GitWriter                    filewriter.FileWriter
-	eksaBinaryLocation           string
-	ExpectFailure                bool
+	// TODO(g-gaston): migrate uses of clusterFillers to clusterConfigFillers
+	clusterFillers       []api.ClusterFiller
+	clusterConfigFillers []api.ClusterConfigFiller
+	KubectlClient        *executables.Kubectl
+	GitProvider          git.ProviderClient
+	GitClient            git.Client
+	HelmInstallConfig    *HelmInstallConfig
+	PackageConfig        *PackageConfig
+	GitWriter            filewriter.FileWriter
+	eksaBinaryLocation   string
+	ExpectFailure        bool
 	// PersistentCluster avoids creating the clusters if it finds a kubeconfig
 	// in the corresponding cluster folder. Useful for local development of tests.
 	// When generating a new base cluster config, it will read from disk instead of
@@ -555,7 +557,9 @@ func (e *ClusterE2ETest) baseClusterConfigUpdates(opts ...CommandOpt) []api.Clus
 		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
 	)
 	clusterFillers = append(clusterFillers, e.clusterFillers...)
-	configFillers := []api.ClusterConfigFiller{api.ClusterToConfigFiller(clusterFillers...)}
+	configFillers := make([]api.ClusterConfigFiller, 0, len(e.clusterConfigFillers)+1)
+	configFillers = append(configFillers, api.ClusterToConfigFiller(clusterFillers...))
+	configFillers = append(configFillers, e.clusterConfigFillers...)
 	configFillers = append(configFillers, e.Provider.ClusterConfigUpdates()...)
 
 	// If we are persisting an existing cluster, set the control plane endpoint back to the original, since
@@ -2211,4 +2215,8 @@ func (e *ClusterE2ETest) CreateCloudStackCredentialsSecretFromEnvVar(name string
 		e.T.Fatalf("error applying credentials secret to cluster %s: %v", e.Cluster().Name, err)
 		return
 	}
+}
+
+func (e *ClusterE2ETest) addClusterConfigFillers(fillers ...api.ClusterConfigFiller) {
+	e.clusterConfigFillers = append(e.clusterConfigFillers, fillers...)
 }
