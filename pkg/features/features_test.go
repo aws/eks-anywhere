@@ -77,3 +77,11 @@ func TestWithK8s126FeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(K8s126SupportEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(K8s126Support())).To(BeTrue())
 }
+
+func TestWithRegistryMirrorInsecureSkipVerifySupportFeatureFlag(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	g.Expect(os.Setenv(RegistryMirrrorInsecureSkipVerifySupportEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(RegistryMirrorInsecureSkipVerifySupport())).To(BeTrue())
+}

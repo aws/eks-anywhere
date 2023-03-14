@@ -2628,7 +2628,7 @@ func TestValidateMirrorConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			features.ClearCache()
 			if tt.insecureSkipVerifySupport {
-				os.Setenv("REGISTRY_MIRROR_INSECURE_SKIP_VERIFY_SUPPORT", "true")
+				os.Setenv(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar, "true")
 			}
 			g := NewWithT(t)
 			err := validateMirrorConfig(tt.cluster)
@@ -2638,7 +2638,7 @@ func TestValidateMirrorConfig(t *testing.T) {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 			if tt.insecureSkipVerifySupport {
-				os.Unsetenv("REGISTRY_MIRROR_INSECURE_SKIP_VERIFY_SUPPORT")
+				os.Unsetenv(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar)
 			}
 		})
 	}
