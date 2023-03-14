@@ -40,6 +40,7 @@ var (
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	expectedPauseAnnotation           = map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
 	maxTime                           = time.Duration(math.MaxInt64)
+	managementStatePath               = fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05"))
 )
 
 func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
@@ -1311,6 +1312,34 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 
 	if err := tt.clusterManager.UpgradeCluster(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.mocks.provider); err == nil {
 		t.Error("ClusterManager.UpgradeCluster() error = nil, wantErr not nil")
+	}
+}
+
+func TestClusterManagerBackupCAPISuccess(t *testing.T) {
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
+
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath)
+
+	if err := c.BackupCAPI(ctx, from, managementStatePath); err != nil {
+		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerBackupCAPIError(t *testing.T) {
+	from := &types.Cluster{}
+
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(errors.New("backing up CAPI resources"))
+
+	if err := c.BackupCAPI(ctx, from, managementStatePath); err == nil {
+		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
 	}
 }
 
