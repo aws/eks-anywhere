@@ -141,6 +141,8 @@ func TestNewNutanixTemplateBuilderOIDCConfig(t *testing.T) {
 }
 
 func TestNewNutanixTemplateBuilderRegistryMirrorConfig(t *testing.T) {
+	t.Setenv(constants.RegistryUsername, "username")
+	t.Setenv(constants.RegistryPassword, "password")
 	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
 
 	t.Setenv(constants.EksaNutanixUsernameKey, "admin")

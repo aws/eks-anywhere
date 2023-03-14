@@ -5,11 +5,11 @@
 package e2e
 
 import (
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -263,7 +263,7 @@ func TestNutanixKubernetes122SimpleFlowWithUUID(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu122NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
-			framework.WithSubnetUUID()),
+			framework.WithNutanixSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 	)
 	runSimpleFlow(test)
@@ -274,7 +274,7 @@ func TestNutanixKubernetes123SimpleFlowWithUUID(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu123NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
-			framework.WithSubnetUUID()),
+			framework.WithNutanixSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 	)
 	runSimpleFlow(test)
@@ -285,7 +285,7 @@ func TestNutanixKubernetes124SimpleFlowWithUUID(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu124NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
-			framework.WithSubnetUUID()),
+			framework.WithNutanixSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 	)
 	runSimpleFlow(test)
@@ -296,7 +296,7 @@ func TestNutanixKubernetes125SimpleFlowWithUUID(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu125NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
-			framework.WithSubnetUUID()),
+			framework.WithNutanixSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 	)
 	runSimpleFlow(test)
@@ -307,7 +307,7 @@ func TestNutanixKubernetes126SimpleFlowWithUUID(t *testing.T) {
 		t,
 		framework.NewNutanix(t, framework.WithUbuntu126NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
-			framework.WithSubnetUUID()),
+			framework.WithNutanixSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithEnvVar(features.K8s126SupportEnvVar, "true"),
 	)
@@ -781,7 +781,7 @@ func TestNutanixKubernetes126OIDC(t *testing.T) {
 func TestNutanixKubernetes124UbuntuRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu124(), framework.WithPrivateNetwork()),
+		framework.NewNutanix(t, framework.WithUbuntu124Nutanix(), framework.WithNutanixPrivateSubnetUUID()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
@@ -793,7 +793,7 @@ func TestNutanixKubernetes124UbuntuRegistryMirrorAndCert(t *testing.T) {
 func TestNutanixKubernetes125UbuntuRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu125(), framework.WithPrivateNetwork()),
+		framework.NewNutanix(t, framework.WithUbuntu125Nutanix(), framework.WithNutanixPrivateSubnetUUID()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
@@ -805,7 +805,7 @@ func TestNutanixKubernetes125UbuntuRegistryMirrorAndCert(t *testing.T) {
 func TestNutanixKubernetes126UbuntuRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu126(), framework.WithPrivateNetwork()),
+		framework.NewNutanix(t, framework.WithUbuntu126Nutanix(), framework.WithNutanixPrivateSubnetUUID()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
