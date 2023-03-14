@@ -526,7 +526,6 @@ func TestUpgradeRunFailedBackupManagementUpgrade(t *testing.T) {
 	test.expectBackupManagementToBootstrapFailed()
 	test.expectSaveLogs(test.workloadCluster)
 	test.expectWriteCheckpointFile()
-	test.expectPreCoreComponentsUpgrade()
 
 	err := test.run()
 	if err == nil {

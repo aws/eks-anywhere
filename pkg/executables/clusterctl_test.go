@@ -259,14 +259,14 @@ func TestClusterctlBackupManagement(t *testing.T) {
 				Name:           clusterName,
 				KubeconfigFile: "cluster.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"backup", "--directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace},
 		},
 		{
 			testName: "no kubeconfig file",
 			cluster: &types.Cluster{
 				Name: clusterName,
 			},
-			wantMoveArgs: []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"backup", "--directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
 		},
 	}
 
@@ -291,7 +291,7 @@ func TestClusterctlBackupManagementFailed(t *testing.T) {
 		KubeconfigFile: "cluster.kubeconfig",
 	}
 
-	wantMoveArgs := []interface{}{"move", "--to-directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}
+	wantMoveArgs := []interface{}{"backup", "--directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}
 
 	tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, fmt.Errorf("error backing up management cluster resources"))
 	if err := tt.clusterctl.BackupManagement(tt.ctx, cluster, managementClusterState); err == nil {

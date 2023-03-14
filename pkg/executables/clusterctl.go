@@ -181,8 +181,8 @@ func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluste
 	}
 
 	_, err = c.Execute(
-		ctx, "move",
-		"--to-directory", filePath,
+		ctx, "backup",
+		"--directory", filePath,
 		"--kubeconfig", cluster.KubeconfigFile,
 		"--namespace", constants.EksaSystemNamespace,
 	)
