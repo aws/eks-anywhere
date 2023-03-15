@@ -308,6 +308,7 @@ func MachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig, cap
 					PhysicalNetworkConnectorType: &networkConnector,
 					Devices:                      machineConfig.Spec.Devices,
 					ContainersVolume:             machineConfig.Spec.ContainersVolume,
+					NonRootVolumes:               machineConfig.Spec.NonRootVolumes,
 					Network: snowv1.AWSSnowNetwork{
 						DirectNetworkInterfaces: dnis,
 					},
