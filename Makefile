@@ -26,6 +26,7 @@ GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
+UNIT_TEST_PACKAGES ?= $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=release-0.15
@@ -422,7 +423,7 @@ unit-test: ## Run unit tests
 unit-test: $(SETUP_ENVTEST) 
 unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(UNIT_TEST_PACKAGES) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
 
 
 # unit-test-patch is a convenience target that restricts test runs to modified

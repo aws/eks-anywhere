@@ -1845,6 +1845,88 @@ func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("spec.WorkerNodeConfiguration.taints: Forbidden: field is immutable")))
 }
 
+func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
+	tests := []struct {
+		Name  string
+		Old   *v1alpha1.Cluster
+		New   *v1alpha1.Cluster
+		Error bool
+	}{
+		{
+			Name: "NilToFalse",
+			Old: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = nil
+			}),
+			New: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(false)
+			}),
+		},
+		{
+			Name: "FalseToNil",
+			Old: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(false)
+			}),
+			New: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = nil
+			}),
+		},
+		{
+			Name: "NilToTrue",
+			Old: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = nil
+			}),
+			New: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(true)
+			}),
+		},
+		{
+			Name: "FalseToTrue",
+			Old: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(false)
+			}),
+			New: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(true)
+			}),
+		},
+		{
+			Name: "TrueToNil",
+			Old: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(true)
+			}),
+			New: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = nil
+			}),
+			Error: true,
+		},
+		{
+			Name: "TrueToFalse",
+			Old: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(true)
+			}),
+			New: createCluster(func(c *v1alpha1.Cluster) {
+				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(false)
+			}),
+			Error: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.Name, func(t *testing.T) {
+			g := NewWithT(t)
+
+			err := tc.New.ValidateUpdate(tc.Old)
+			if !tc.Error {
+				g.Expect(err).To(Succeed())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(
+					"spec.clusterNetwork.cniConfig.cilium.skipUpgrade: Forbidden: cannot toggle " +
+						"off skipUpgrade once enabled",
+				)))
+			}
+		})
+	}
+}
+
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
 	c := createCluster()
 	for _, o := range opts {

@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -39,17 +40,62 @@ func New(templater Templater) *Reconciler {
 	}
 }
 
-// Reconcile takes the Cilium CNI in a cluster to the desired state defined in a cluster Spec
-// It uses a controller.Result to indicate when requeues are needed
-// Intended to be used in a kubernetes controller.
+// Reconcile takes the Cilium CNI in a cluster to the desired state defined in a cluster Spec.
+// It uses a controller.Result to indicate when requeues are needed. client is connected to the
+// target Kubernetes cluster, not the management cluster.
 func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
 	installation, err := getInstallation(ctx, client)
 	if err != nil {
 		return controller.Result{}, err
 	}
 
-	if !installation.Installed() {
-		return r.install(ctx, logger, client, spec)
+	// We use a marker to detect if EKS-A Cilium has ever been installed. If it has never been
+	// installed and isn't currently installed we always attempt to install it regardless of whether
+	// the user is skipping EKS-A Cilium management. This satsifies criteria for successful cluster
+	// creation.
+	//
+	// If EKS-A Cilium was previously installed, as denoted by the marker, we only want to
+	// manage it if its still installed and the user still wants us to manage the installation (as
+	// denoted by the API skip flag).
+	//
+	// In the event a user uninstalls EKS-A Cilium, updates the cluster spec to skip EKS-A Cilium
+	// management, then tries to upgrade, we will attempt to install EKS-A Cilium. This is because
+	// reconciliation has no operational context (create vs upgrade) and can only observe that no
+	// installation is present and there is no marker indicating it was ever present which is
+	// equivilent to a typical create scenario where we must install a CNI to satisfy cluster
+	// create success criteria.
+
+	// To accommodate upgrades of cluster cerated prior to introducing markers, we check for
+	// an existing installation and try to mark the cluster as having already had EKS-A
+	// Cilium installed.
+	if !ciliumWasInstalled(ctx, spec.Cluster) && installation.Installed() {
+		logger.Info(fmt.Sprintf(
+			"Cilium installed but missing %v annotation; applying annotation",
+			EKSACiliumInstalledAnnotation,
+		))
+		markCiliumInstalled(ctx, spec.Cluster)
+	}
+
+	ciliumCfg := spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium
+
+	if !installation.Installed() &&
+		(ciliumCfg.IsManaged() || !ciliumWasInstalled(ctx, spec.Cluster)) {
+		if err := r.install(ctx, logger, client, spec); err != nil {
+			return controller.Result{}, err
+		}
+
+		logger.Info(fmt.Sprintf(
+			"Applying %v annotation to Cluster object",
+			EKSACiliumInstalledAnnotation,
+		))
+		markCiliumInstalled(ctx, spec.Cluster)
+
+		return controller.Result{}, nil
+	}
+
+	if !ciliumCfg.IsManaged() {
+		logger.Info("Cilium configured as unmanaged, skipping upgrade")
+		return controller.Result{}, nil
 	}
 
 	logger.Info("Cilium is already installed, checking if it needs upgrade")
@@ -75,13 +121,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	return r.deletePreflightIfExists(ctx, client, spec)
 }
 
-func (r *Reconciler) install(ctx context.Context, log logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
+func (r *Reconciler) install(ctx context.Context, log logr.Logger, client client.Client, spec *cluster.Spec) error {
 	log.Info("Installing Cilium")
 	if err := r.applyFullManifest(ctx, client, spec); err != nil {
-		return controller.Result{}, errors.Wrap(err, "installing Cilium")
+		return errors.Wrap(err, "installing Cilium")
 	}
 
-	return controller.Result{}, nil
+	return nil
 }
 
 func (r *Reconciler) upgrade(ctx context.Context, logger logr.Logger, client client.Client, installation *cilium.Installation, spec *cluster.Spec) (controller.Result, error) {
