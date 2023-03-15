@@ -79,6 +79,11 @@ spec:
   template:
     spec:
       preKubeadmCommands:
+{{- if .registryMirrorMap }}
+        - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+        - sudo systemctl daemon-reload
+        - sudo systemctl restart containerd
+{{- end }}
         - hostnamectl set-hostname "{{`{{ ds.meta_data.hostname }}`}}"
       joinConfiguration:
         nodeRegistration:
@@ -87,9 +92,46 @@ spec:
             # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
             #cgroup-driver: cgroupfs
             eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
+          name: '{{`{{ ds.meta_data.hostname }}`}}'
       users:
         - name: "{{.workerSshUsername}}"
           lockPassword: false
           sudo: ALL=(ALL) NOPASSWD:ALL
           sshAuthorizedKeys:
             - "{{.workerSshAuthorizedKey}}"
+{{- if .registryMirrorMap }}
+      files:
+{{- end }}
+{{- if .registryCACert }}
+      - content: |
+{{ .registryCACert | indent 10 }}
+        owner: root:root
+        path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .registryMirrorMap }}
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            {{- range $orig, $mirror := .registryMirrorMap }}
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+              endpoint = ["https://{{ $mirror }}"]
+{{- end }}
+{{- if or .registryCACert .insecureSkip }}
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+{{- if .registryCACert }}
+              ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .insecureSkip }}
+              insecure_skip_verify = {{ .insecureSkip }}
+{{- end }}
+{{- end }}
+{{- if .registryAuth }}
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
+              username = "{{.registryUsername}}"
+              password = "{{.registryPassword}}"
+{{- end }}
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
+{{- end }}

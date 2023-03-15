@@ -68,6 +68,8 @@ const (
 	NutanixPasswordKey     = "NUTANIX_PASSWORD"
 	EksaNutanixUsernameKey = "EKSA_NUTANIX_USERNAME"
 	EksaNutanixPasswordKey = "EKSA_NUTANIX_PASSWORD"
+	RegistryUsername       = "REGISTRY_USERNAME"
+	RegistryPassword       = "REGISTRY_PASSWORD"
 
 	SecretKind             = "Secret"
 	ConfigMapKind          = "ConfigMap"

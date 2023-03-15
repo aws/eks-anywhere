@@ -25,9 +25,6 @@ var nutanixDatacenterConfigSpec string
 //go:embed testdata/machineConfig.yaml
 var nutanixMachineConfigSpec string
 
-//go:embed testdata/eksa-cluster-autoscaler.yaml
-var nutanixClusterConfigSpecWithAutoscaler string
-
 func fakemarshal(v interface{}) ([]byte, error) {
 	return []byte{}, errors.New("marshalling failed")
 }
@@ -37,21 +34,7 @@ func restoremarshal(replace func(v interface{}) ([]byte, error)) {
 }
 
 func TestNewNutanixTemplateBuilder(t *testing.T) {
-	clusterConf := &anywherev1.Cluster{}
-	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
-	require.NoError(t, err)
-
-	dcConf := &anywherev1.NutanixDatacenterConfig{}
-	err = yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)
-	require.NoError(t, err)
-
-	machineConf := &anywherev1.NutanixMachineConfig{}
-	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConf)
-	require.NoError(t, err)
-
-	workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
-		"eksa-unit-test": machineConf.Spec,
-	}
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
 
 	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
 	t.Setenv(constants.EksaNutanixPasswordKey, "password")
@@ -113,21 +96,7 @@ func TestNewNutanixTemplateBuilderGenerateSpecSecretFailure(t *testing.T) {
 }
 
 func TestNutanixTemplateBuilderGenerateCAPISpecForCreateWithAutoscalingConfiguration(t *testing.T) {
-	clusterConf := &anywherev1.Cluster{}
-	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpecWithAutoscaler), clusterConf)
-	require.NoError(t, err)
-
-	dcConf := &anywherev1.NutanixDatacenterConfig{}
-	err = yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)
-	require.NoError(t, err)
-
-	machineConf := &anywherev1.NutanixMachineConfig{}
-	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConf)
-	require.NoError(t, err)
-
-	workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
-		"eksa-unit-test": machineConf.Spec,
-	}
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
 
 	t.Setenv(constants.NutanixUsernameKey, "admin")
 	t.Setenv(constants.NutanixPasswordKey, "password")
@@ -152,21 +121,7 @@ func TestNutanixTemplateBuilderGenerateCAPISpecForCreateWithAutoscalingConfigura
 }
 
 func TestNewNutanixTemplateBuilderOIDCConfig(t *testing.T) {
-	clusterConf := &anywherev1.Cluster{}
-	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
-	require.NoError(t, err)
-
-	dcConf := &anywherev1.NutanixDatacenterConfig{}
-	err = yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)
-	require.NoError(t, err)
-
-	machineConf := &anywherev1.NutanixMachineConfig{}
-	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConf)
-	require.NoError(t, err)
-
-	workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
-		"eksa-unit-test": machineConf.Spec,
-	}
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
 
 	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
 	t.Setenv(constants.EksaNutanixPasswordKey, "password")
@@ -183,4 +138,80 @@ func TestNewNutanixTemplateBuilderOIDCConfig(t *testing.T) {
 	expectedControlPlaneSpec, err := os.ReadFile("testdata/expected_results_oidc.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, expectedControlPlaneSpec, cpSpec)
+}
+
+func TestNewNutanixTemplateBuilderRegistryMirrorConfig(t *testing.T) {
+	t.Setenv(constants.RegistryUsername, "username")
+	t.Setenv(constants.RegistryPassword, "password")
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-registry-mirror.yaml")
+
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	expectedControlPlaneSpec, err := os.ReadFile("testdata/expected_results_registry_mirror.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedControlPlaneSpec, cpSpec)
+
+	workloadTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	kubeadmconfigTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	assert.NoError(t, err)
+	assert.NotNil(t, workerSpec)
+
+	expectedWorkersSpec, err := os.ReadFile("testdata/expected_results_registry_mirror_md.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedWorkersSpec, workerSpec)
+}
+
+func TestNewNutanixTemplateBuilderRegistryMirrorConfigNoRegistryCredsSet(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-registry-mirror.yaml")
+
+	_, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.Error(t, err)
+
+	workloadTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	kubeadmconfigTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	_, err = builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	assert.Error(t, err)
+}
+
+func minimalNutanixConfigSpec(t *testing.T) (*anywherev1.NutanixDatacenterConfig, *anywherev1.NutanixMachineConfig, map[string]anywherev1.NutanixMachineConfigSpec) {
+	dcConf := &anywherev1.NutanixDatacenterConfig{}
+	err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)
+	require.NoError(t, err)
+
+	machineConf := &anywherev1.NutanixMachineConfig{}
+	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConf)
+	require.NoError(t, err)
+
+	workerConfs := map[string]anywherev1.NutanixMachineConfigSpec{
+		"eksa-unit-test": machineConf.Spec,
+	}
+
+	return dcConf, machineConf, workerConfs
 }

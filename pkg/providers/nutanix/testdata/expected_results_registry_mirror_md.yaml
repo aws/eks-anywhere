@@ -1,0 +1,120 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+  name: "eksa-unit-test-eksa-unit-test"
+  namespace: "eksa-system"
+spec:
+  clusterName: "eksa-unit-test"
+  replicas: 4
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "eksa-unit-test"
+      clusterName: "eksa-unit-test"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "eksa-unit-test"
+      version: "v1.19.8-eks-1-19-4"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://eksa-unit-test-m1"
+      vcpusPerSocket: 1
+      vcpuSockets: 4
+      memorySize: 8Gi
+      systemDiskSize: 40Gi
+      image:
+        type: name
+        name: "prism-image"
+
+      cluster:
+        type: name
+        name: "prism-cluster"
+      subnet:
+        - type: name
+          name: "prism-subnet"
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
+spec:
+  template:
+    spec:
+      preKubeadmCommands:
+        - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+        - sudo systemctl daemon-reload
+        - sudo systemctl restart containerd
+        - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+            #cgroup-driver: cgroupfs
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          name: '{{ ds.meta_data.hostname }}'
+      users:
+        - name: "mySshUsername"
+          lockPassword: false
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          sshAuthorizedKeys:
+            - "mySshAuthorizedKey"
+      files:
+      - content: |
+          -----BEGIN CERTIFICATE-----
+          MIIDajCCAlKgAwIBAgIUZOD4pznfHyCO8gMvP87F+PnhGHMwDQYJKoZIhvcNAQEL
+          BQAwNDELMAkGA1UEBhMCREUxFDASBgNVBAgMC0xhbmQgQmVybGluMQ8wDQYDVQQH
+          DAZCZXJsaW4wHhcNMjIwODI1MTYxNzI5WhcNMzIwODIyMTYxNzI5WjA0MQswCQYD
+          VQQGEwJERTEUMBIGA1UECAwLTGFuZCBCZXJsaW4xDzANBgNVBAcMBkJlcmxpbjCC
+          ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAO280znVj6qLpCqAeNgpw7gw
+          0OE54gBW8Y9gBtEYxBux6hXBl+doj+JNZLcfIoDoqdTlgZX13Y//WakfMuvuhYUN
+          53fpwsiup3pqqL+JHhKy+Bq/BSQcHkLGi/aUGph7qK/wQMZBGBbbBXaCwnhjYovl
+          nRq4p+Cm5wm4S/QUhgyvqyoeNWAc6+2AHniuIzo6Q1MU9ktaSAdL8ZdW5g6el5iA
+          oHjDHNjTwyTeybKFScEQvFqO6qfzTRn8eV6dwH4gOYec1IdDwSp8PSv9R7J9AC+1
+          DtAjsYtqO4i6qRpgf0zyGQb+uNKXdz/ovOGa58twfMKYU7Z2crPj3K7NOJVelZEC
+          AwEAAaN0MHIwHQYDVR0OBBYEFPlcZspynb+2DwRN5K3slRyEV0nxMB8GA1UdIwQY
+          MBaAFPlcZspynb+2DwRN5K3slRyEV0nxMA4GA1UdDwEB/wQEAwIFoDAgBgNVHSUB
+          Af8EFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggEBACXY
+          FH72svBSALkqmTyU9rsh4rRK9yo7tmNJkFkRQ/cjYycpNKZ6Cg9+wGwN6o6pXdqb
+          JfeuePclDdGcgYe8SbGr0T7pFXdUIVmuO/jjatKCftXQQZK5zHCkUTLhVlAbnNpC
+          3NIU4wWjx/QLtk+zEqjl5kyDgXD5GwxXbgzzY+7wi4QZO8VRyLG5lawZVKer3gkt
+          +NGIOtoyz4RjnWIKV34Z6HUDhdgbVyX1uPG/a5mLmcbLjuSf39WdAgv9bFGkUHZk
+          2dU0bIXepIZ5Mz3aovl35EjbGAbpI8tpKWlsHNoiVNQm1vojfKvKVibVS2FNo0cD
+          gu45O/O1hxzezDKiKKU=
+          -----END CERTIFICATE-----
+        owner: root:root
+        path: "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".tls]
+              ca_file = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
+              insecure_skip_verify = true
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".auth]
+              username = "username"
+              password = "password"
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
+
+---

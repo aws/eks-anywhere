@@ -300,8 +300,8 @@ func WithPrismElementClusterUUID() NutanixOpt {
 	}
 }
 
-// WithSubnetUUID returns a NutanixOpt that adds API fillers to use a Subnet UUID.
-func WithSubnetUUID() NutanixOpt {
+// WithNutanixSubnetUUID returns a NutanixOpt that adds API fillers to use a Subnet UUID.
+func WithNutanixSubnetUUID() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
 			api.WithNutanixStringFromEnvVar(nutanixSubnetUUID, api.WithNutanixSubnetUUID),

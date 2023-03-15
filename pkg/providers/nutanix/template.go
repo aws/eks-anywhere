@@ -10,9 +10,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -55,7 +58,10 @@ func (ntb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Sp
 		etcdMachineSpec = *ntb.etcdMachineSpec
 	}
 
-	values := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
+	values, err := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
+	if err != nil {
+		return nil, err
+	}
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -71,7 +77,10 @@ func (ntb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Sp
 func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, ntb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values, err := buildTemplateMapMD(clusterSpec, ntb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
@@ -133,11 +142,14 @@ func buildTemplateMapCP(
 	clusterSpec *cluster.Spec,
 	controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec,
 	etcdMachineSpec v1alpha1.NutanixMachineConfigSpec,
-) map[string]interface{} {
+) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig)
 
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
 	values := map[string]interface{}{
 		"apiServerExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
 		"clusterName":                  clusterSpec.Cluster.Name,
@@ -155,6 +167,7 @@ func buildTemplateMapCP(
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
+		"kubeletExtraArgs":             kubeletExtraArgs.ToPartialYaml(),
 		"kubeVipImage":                 bundle.Nutanix.KubeVip.VersionedImage(),
 		"kubeVipSvcEnable":             false,
 		"kubeVipLBEnable":              false,
@@ -180,19 +193,43 @@ func buildTemplateMapCP(
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,
 	}
 
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
+		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
+		values["insecureSkip"] = registryMirror.InsecureSkipVerify
+		if len(registryMirror.CACertContent) > 0 {
+			values["registryCACert"] = registryMirror.CACertContent
+		}
+
+		if registryMirror.Auth {
+			values["registryAuth"] = registryMirror.Auth
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return values, err
+			}
+			values["registryUsername"] = username
+			values["registryPassword"] = password
+		}
+	}
+
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 	}
 
-	return values
+	return values, nil
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.NutanixMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.NutanixMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration))
 	values := map[string]interface{}{
 		"clusterName":            clusterSpec.Cluster.Name,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
@@ -209,6 +246,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"imageIDType":            workerNodeGroupMachineSpec.Image.Type,
 		"imageName":              workerNodeGroupMachineSpec.Image.Name,
 		"imageUUID":              workerNodeGroupMachineSpec.Image.UUID,
+		"kubeletExtraArgs":       kubeletExtraArgs.ToPartialYaml(),
 		"nutanixPEClusterIDType": workerNodeGroupMachineSpec.Cluster.Type,
 		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name,
 		"nutanixPEClusterUUID":   workerNodeGroupMachineSpec.Cluster.UUID,
@@ -217,7 +255,29 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"subnetUUID":             workerNodeGroupMachineSpec.Subnet.UUID,
 		"workerNodeGroupName":    fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 	}
-	return values
+
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
+		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
+		values["insecureSkip"] = registryMirror.InsecureSkipVerify
+		if len(registryMirror.CACertContent) > 0 {
+			values["registryCACert"] = registryMirror.CACertContent
+		}
+
+		if registryMirror.Auth {
+			values["registryAuth"] = registryMirror.Auth
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return values, err
+			}
+			values["registryUsername"] = username
+			values["registryPassword"] = password
+		}
+	}
+
+	return values, nil
 }
 
 func buildTemplateMapSecret(secretName string, creds credentials.BasicAuthCredential) (map[string]interface{}, error) {
