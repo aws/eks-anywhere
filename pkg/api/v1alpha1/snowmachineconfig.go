@@ -20,6 +20,7 @@ const (
 	DefaultOSFamily                         = Ubuntu
 	MinimumContainerVolumeSizeUbuntu        = 8
 	MinimumContainerVolumeSizeBottlerocket  = 25
+	MinimumNonRootVolumeSize                = 8
 )
 
 var snowInstanceTypesRegex = regexp.MustCompile(`^sbe-[cg]\.\d*x?large$`)
@@ -137,6 +138,10 @@ func validateSnowMachineConfigNonRootVolumes(volumes []*snowv1.Volume) error {
 
 		if strings.HasPrefix(v.DeviceName, "/dev/sda") {
 			return fmt.Errorf("SnowMachineConfig NonRootVolumes[%d].DeviceName [%s] is invalid. Device name with prefix /dev/sda* is reserved for root volume and containers volume, please use another name", i, v.DeviceName)
+		}
+
+		if v.Size < MinimumNonRootVolumeSize {
+			return fmt.Errorf("SnowMachineConfig NonRootVolumes[%d].Size must be no smaller than %d Gi", i, MinimumNonRootVolumeSize)
 		}
 	}
 
