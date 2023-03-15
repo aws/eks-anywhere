@@ -176,6 +176,30 @@ func TestNewNutanixTemplateBuilderRegistryMirrorConfig(t *testing.T) {
 	assert.Equal(t, expectedWorkersSpec, workerSpec)
 }
 
+func TestNewNutanixTemplateBuilderRegistryMirrorConfigNoRegistryCredsSet(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-registry-mirror.yaml")
+
+	_, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.Error(t, err)
+
+	workloadTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	kubeadmconfigTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	_, err = builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	assert.Error(t, err)
+}
+
 func minimalNutanixConfigSpec(t *testing.T) (*anywherev1.NutanixDatacenterConfig, *anywherev1.NutanixMachineConfig, map[string]anywherev1.NutanixMachineConfigSpec) {
 	dcConf := &anywherev1.NutanixDatacenterConfig{}
 	err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)
