@@ -244,6 +244,61 @@ func TestClusterctlInitInfrastructureInvalidClusterNameError(t *testing.T) {
 	}
 }
 
+func TestClusterctlBackupManagement(t *testing.T) {
+	managementClusterState := fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05"))
+	clusterName := "cluster"
+
+	tests := []struct {
+		testName     string
+		cluster      *types.Cluster
+		wantMoveArgs []interface{}
+	}{
+		{
+			testName: "backup success",
+			cluster: &types.Cluster{
+				Name:           clusterName,
+				KubeconfigFile: "cluster.kubeconfig",
+			},
+			wantMoveArgs: []interface{}{"backup", "--directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+		},
+		{
+			testName: "no kubeconfig file",
+			cluster: &types.Cluster{
+				Name: clusterName,
+			},
+			wantMoveArgs: []interface{}{"backup", "--directory", fmt.Sprintf("%s/%s", clusterName, managementClusterState), "--kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			tc := newClusterctlTest(t)
+			tc.e.EXPECT().Execute(tc.ctx, tt.wantMoveArgs...)
+
+			if err := tc.clusterctl.BackupManagement(tc.ctx, tt.cluster, managementClusterState); err != nil {
+				t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
+			}
+		})
+	}
+}
+
+func TestClusterctlBackupManagementFailed(t *testing.T) {
+	managementClusterState := fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05"))
+	tt := newClusterctlTest(t)
+
+	cluster := &types.Cluster{
+		Name:           "cluster",
+		KubeconfigFile: "cluster.kubeconfig",
+	}
+
+	wantMoveArgs := []interface{}{"backup", "--directory", fmt.Sprintf("%s/%s", cluster.Name, managementClusterState), "--kubeconfig", "cluster.kubeconfig", "--namespace", constants.EksaSystemNamespace}
+
+	tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, fmt.Errorf("error backing up management cluster resources"))
+	if err := tt.clusterctl.BackupManagement(tt.ctx, cluster, managementClusterState); err == nil {
+		t.Fatalf("Clusterctl.BackupManagement() error = %v, want nil", err)
+	}
+}
+
 func TestClusterctlMoveManagement(t *testing.T) {
 	tests := []struct {
 		testName     string

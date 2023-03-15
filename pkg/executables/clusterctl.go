@@ -172,6 +172,26 @@ func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait ti
 	return false, 0
 }
 
+// BackupManagement save CAPI resources of a workload cluster before moving it to the bootstrap cluster during upgrade.
+func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
+	filePath := filepath.Join(".", cluster.Name, managementStatePath)
+	err := os.MkdirAll(filePath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("could not create backup file for CAPI objects: %v", err)
+	}
+
+	_, err = c.Execute(
+		ctx, "backup",
+		"--directory", filePath,
+		"--kubeconfig", cluster.KubeconfigFile,
+		"--namespace", constants.EksaSystemNamespace,
+	)
+	if err != nil {
+		return fmt.Errorf("failed taking backup of CAPI objects: %v", err)
+	}
+	return nil
+}
+
 func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster) error {
 	params := []string{"move", "--to-kubeconfig", to.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	if from.KubeconfigFile != "" {

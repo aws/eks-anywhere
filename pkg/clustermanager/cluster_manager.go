@@ -91,6 +91,7 @@ type ClusterManager struct {
 
 type ClusterClient interface {
 	KubernetesClient
+	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
 	MoveManagement(ctx context.Context, org, target *types.Cluster) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -257,6 +258,16 @@ func WithNoTimeouts() ClusterManagerOpt {
 		c.clusterWaitTimeout = maxTime
 		c.deploymentWaitTimeout = maxTime
 	}
+}
+
+// BackupCAPI takes backup of management cluster's resources during uograde process.
+func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
+	err := c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
+	if err != nil {
+		return fmt.Errorf("backing up CAPI resources of management cluster before moving to bootstrap cluster: %v", err)
+	}
+
+	return nil
 }
 
 func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error {

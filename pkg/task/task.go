@@ -27,24 +27,25 @@ type Task interface {
 
 // Command context maintains the mutable and shared entities.
 type CommandContext struct {
-	Bootstrapper       interfaces.Bootstrapper
-	Provider           providers.Provider
-	ClusterManager     interfaces.ClusterManager
-	GitOpsManager      interfaces.GitOpsManager
-	Validations        interfaces.Validator
-	Writer             filewriter.FileWriter
-	EksdInstaller      interfaces.EksdInstaller
-	PackageInstaller   interfaces.PackageInstaller
-	EksdUpgrader       interfaces.EksdUpgrader
-	CAPIManager        interfaces.CAPIManager
-	ClusterSpec        *cluster.Spec
-	CurrentClusterSpec *cluster.Spec
-	UpgradeChangeDiff  *types.ChangeDiff
-	BootstrapCluster   *types.Cluster
-	ManagementCluster  *types.Cluster
-	WorkloadCluster    *types.Cluster
-	Profiler           *Profiler
-	OriginalError      error
+	Bootstrapper              interfaces.Bootstrapper
+	Provider                  providers.Provider
+	ClusterManager            interfaces.ClusterManager
+	GitOpsManager             interfaces.GitOpsManager
+	Validations               interfaces.Validator
+	Writer                    filewriter.FileWriter
+	EksdInstaller             interfaces.EksdInstaller
+	PackageInstaller          interfaces.PackageInstaller
+	EksdUpgrader              interfaces.EksdUpgrader
+	CAPIManager               interfaces.CAPIManager
+	ClusterSpec               *cluster.Spec
+	CurrentClusterSpec        *cluster.Spec
+	UpgradeChangeDiff         *types.ChangeDiff
+	BootstrapCluster          *types.Cluster
+	ManagementCluster         *types.Cluster
+	WorkloadCluster           *types.Cluster
+	Profiler                  *Profiler
+	OriginalError             error
+	ManagementClusterStateDir string
 }
 
 func (c *CommandContext) SetError(err error) {
@@ -127,6 +128,7 @@ func (tr *taskRunner) RunTask(ctx context.Context, commandContext *CommandContex
 	var checkpointInfo CheckpointInfo
 	var err error
 
+	commandContext.ManagementClusterStateDir = fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05"))
 	commandContext.Profiler = &Profiler{
 		metrics: make(map[string]map[string]time.Duration),
 		starts:  make(map[string]map[string]time.Time),
