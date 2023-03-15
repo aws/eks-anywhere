@@ -42,6 +42,11 @@ type NutanixMachineConfigSpec struct {
 	// or using the Prism Central API.
 	// +kubebuilder:validation:Required
 	Subnet NutanixResourceIdentifier `json:"subnet"`
+	// Project is an optional property that specifies the Prism Central project so that machine resources
+	// can be linked to it. The project identifier (uuid or name) can be obtained from the Prism Central console
+	// or using the Prism Central API.
+	// +optional
+	Project *NutanixResourceIdentifier `json:"project,omitempty"`
 
 	// systemDiskSize is size (in Quantity format) of the system disk of the VM
 	// The minimum systemDiskSize is 20Gi bytes
