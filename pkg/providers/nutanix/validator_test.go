@@ -19,6 +19,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	mockCrypto "github.com/aws/eks-anywhere/pkg/crypto/mocks"
 	mocknutanix "github.com/aws/eks-anywhere/pkg/providers/nutanix/mocks"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 //go:embed testdata/datacenterConfig_with_trust_bundle.yaml
@@ -88,6 +89,21 @@ func fakeImageList() *v3.ImageListIntentResponse {
 				},
 				Spec: &v3.Image{
 					Name: utils.StringPtr("prism-image"),
+				},
+			},
+		},
+	}
+}
+
+func fakeProjectList() *v3.ProjectListResponse {
+	return &v3.ProjectListResponse{
+		Entities: []*v3.Project{
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("5c9a0641-1025-40ed-9e1d-0d0a23043e57"),
+				},
+				Spec: &v3.ProjectSpec{
+					Name: "prism-image",
 				},
 			},
 		},
@@ -345,6 +361,95 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "",
+		},
+		{
+			name: "empty project name",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
+					Type: anywherev1.NutanixIdentifierName,
+					Name: nil,
+				}
+				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "missing project name",
+		},
+		{
+			name: "empty project uuid",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
+					Type: anywherev1.NutanixIdentifierUUID,
+					UUID: nil,
+				}
+				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "missing project uuid",
+		},
+		{
+			name: "invalid project identifier type",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
+					Type: "notatype",
+					UUID: nil,
+				}
+				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "invalid project identifier type",
+		},
+		{
+			name: "list project request failed",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(nil, errors.New("project not found"))
+				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
+					Type: anywherev1.NutanixIdentifierName,
+					Name: ptr.String("notaproject"),
+				}
+				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "failed to find project by name",
+		},
+		{
+			name: "list project request did not find match",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(&v3.ProjectListResponse{}, nil)
+				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
+					Type: anywherev1.NutanixIdentifierName,
+					Name: ptr.String("notaproject"),
+				}
+				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "failed to find project by name",
+		},
+		{
+			name: "duplicate project found",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				projects := fakeProjectList()
+				projects.Entities = append(projects.Entities, projects.Entities[0])
+				mockClient.EXPECT().ListProject(gomock.Any(), gomock.Any()).Return(projects, nil)
+				machineConf.Spec.Project = &anywherev1.NutanixResourceIdentifier{
+					Type: anywherev1.NutanixIdentifierName,
+					Name: ptr.String("project"),
+				}
+				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "found more than one (2) project with name",
 		},
 	}
 

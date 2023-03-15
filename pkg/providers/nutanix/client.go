@@ -13,5 +13,7 @@ type Client interface {
 	ListImage(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ImageListIntentResponse, error)
 	GetCluster(ctx context.Context, uuid string) (*v3.ClusterIntentResponse, error)
 	ListCluster(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ClusterListIntentResponse, error)
+	GetProject(ctx context.Context, uuid string) (*v3.Project, error)
+	ListProject(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ProjectListResponse, error)
 	GetCurrentLoggedInUser(ctx context.Context) (*v3.UserIntentResponse, error)
 }

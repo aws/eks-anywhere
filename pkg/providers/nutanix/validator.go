@@ -190,6 +190,12 @@ func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, co
 		return err
 	}
 
+	if config.Spec.Project != nil {
+		if err := v.validateProjectConfig(ctx, *config.Spec.Project); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -274,6 +280,31 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, ide
 	return nil
 }
 
+func (v *Validator) validateProjectConfig(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier) error {
+	switch identifier.Type {
+	case anywherev1.NutanixIdentifierName:
+		if identifier.Name == nil || *identifier.Name == "" {
+			return fmt.Errorf("missing project name")
+		}
+		projectName := *identifier.Name
+		if _, err := findProjectUUIDByName(ctx, v.client, projectName); err != nil {
+			return fmt.Errorf("failed to find project with name %q: %v", projectName, err)
+		}
+	case anywherev1.NutanixIdentifierUUID:
+		if identifier.UUID == nil || *identifier.UUID == "" {
+			return fmt.Errorf("missing project uuid")
+		}
+		projectUUID := *identifier.UUID
+		if _, err := v.client.GetProject(ctx, projectUUID); err != nil {
+			return fmt.Errorf("failed to find project with uuid %s: %v", projectUUID, err)
+		}
+	default:
+		return fmt.Errorf("invalid project identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
+	}
+
+	return nil
+}
+
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name.
 func findSubnetUUIDByName(ctx context.Context, v3Client Client, subnetName string) (*string, error) {
 	res, err := v3Client.ListSubnet(ctx, &v3.DSMetadata{
@@ -336,6 +367,22 @@ func findImageUUIDByName(ctx context.Context, v3Client Client, imageName string)
 
 	if len(res.Entities) > 1 {
 		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(res.Entities), imageName)
+	}
+
+	return res.Entities[0].Metadata.UUID, nil
+}
+
+// findProjectUUIDByName retrieves the project uuid by the given image name.
+func findProjectUUIDByName(ctx context.Context, v3Client Client, projectName string) (*string, error) {
+	res, err := v3Client.ListProject(ctx, &v3.DSMetadata{
+		Filter: utils.StringPtr(fmt.Sprintf("name==%s", projectName)),
+	})
+	if err != nil || len(res.Entities) == 0 {
+		return nil, fmt.Errorf("failed to find project by name %q: %v", projectName, err)
+	}
+
+	if len(res.Entities) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) project with name %q", len(res.Entities), projectName)
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
