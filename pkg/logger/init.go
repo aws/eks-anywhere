@@ -49,7 +49,7 @@ func Init(opts Options) error {
 	consoleEncoder := zapcore.NewConsoleEncoder(encoderCfg)
 	core := zapcore.NewTee(
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), logrAtomicLevel(opts.Level)),
-		zapcore.NewCore(fileEncoder, logFile, logrAtomicLevel(9)),
+		zapcore.NewCore(fileEncoder, logFile, logrAtomicLevel(MaxLogLevel)),
 	)
 	logger := zap.New(core)
 
