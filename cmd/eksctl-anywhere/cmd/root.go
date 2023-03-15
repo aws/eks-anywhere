@@ -44,19 +44,21 @@ func rootPersistentPreRun(cmd *cobra.Command, args []string) {
 }
 
 func initLogger() error {
-	logsFolder := filepath.Join(".", "eksa-cli-logs")
+	logsFolder := filepath.Join(".", "eksctl-anywhere-logs")
 	err := os.MkdirAll(logsFolder, 0o750)
 	if err != nil {
 		return fmt.Errorf("failed to create logs folder: %v", err)
 	}
 
-	outputFilePath := filepath.Join(".", "eksa-cli-logs", fmt.Sprintf("%s.log", time.Now().Format("2006-01-02T15_04_05")))
+	outputFilePath := filepath.Join(logsFolder, fmt.Sprintf("%s.log", time.Now().Format("2006-01-02T15_04_05")))
 	if err = logger.Init(logger.Options{
 		Level:          viper.GetInt("verbosity"),
 		OutputFilePath: outputFilePath,
 	}); err != nil {
 		return fmt.Errorf("root cmd: %v", err)
 	}
+
+	logger.Info(fmt.Sprintf("Log file created at %s", outputFilePath))
 
 	return nil
 }
