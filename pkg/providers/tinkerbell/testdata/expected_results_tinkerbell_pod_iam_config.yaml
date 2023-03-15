@@ -1,0 +1,298 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+  name: test
+  namespace: eksa-system
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: [192.168.0.0/16]
+    services:
+      cidrBlocks: [10.96.0.0/12]
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: test
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: TinkerbellCluster
+    name: test
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: test
+  namespace: eksa-system
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+      etcd:
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.16-eks-1-21-4
+      dns:
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.3-eks-1-21-4
+      apiServer:
+        extraArgs:
+          authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
+          feature-gates: ServiceLoadBalancerClass=true
+          service-account-issuer: https://test
+        extraVolumes:
+          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+            mountPath: /etc/kubernetes/aws-iam-authenticator/
+            name: authconfig
+            readOnly: false
+          - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+            mountPath: /var/aws-iam-authenticator/
+            name: awsiamcert
+            readOnly: false
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          provider-id: PROVIDER_ID
+          read-only-port: "0"
+          anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    joinConfiguration:
+      nodeRegistration:
+        ignorePreflightErrors:
+        - DirAvailable--etc-kubernetes-manifests
+        kubeletExtraArgs:
+          provider-id: PROVIDER_ID
+          read-only-port: "0"
+          anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    files:
+      - content: |
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            creationTimestamp: null
+            name: kube-vip
+            namespace: kube-system
+          spec:
+            containers:
+            - args:
+              - manager
+              env:
+              - name: vip_arp
+                value: "true"
+              - name: port
+                value: "6443"
+              - name: vip_cidr
+                value: "32"
+              - name: cp_enable
+                value: "true"
+              - name: cp_namespace
+                value: kube-system
+              - name: vip_ddns
+                value: "false"
+              - name: vip_leaderelection
+                value: "true"
+              - name: vip_leaseduration
+                value: "15"
+              - name: vip_renewdeadline
+                value: "10"
+              - name: vip_retryperiod
+                value: "2"
+              - name: address
+                value: 1.2.3.4
+              image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+              imagePullPolicy: IfNotPresent
+              name: kube-vip
+              resources: {}
+              securityContext:
+                capabilities:
+                  add:
+                  - NET_ADMIN
+                  - NET_RAW
+              volumeMounts:
+              - mountPath: /etc/kubernetes/admin.conf
+                name: kubeconfig
+            hostNetwork: true
+            volumes:
+            - hostPath:
+                path: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          status: {}
+        owner: root:root
+        path: /etc/kubernetes/manifests/kube-vip.yaml
+      - content: |
+          # clusters refers to the remote service.
+          clusters:
+            - name: aws-iam-authenticator
+              cluster:
+                certificate-authority: /var/aws-iam-authenticator/cert.pem
+                server: https://localhost:21362/authenticate
+          # users refers to the API Server's webhook configuration
+          # (we don't need to authenticate the API server).
+          users:
+            - name: apiserver
+          # kubeconfig files require a context. Provide one for the API Server.
+          current-context: webhook
+          contexts:
+          - name: webhook
+            context:
+              cluster: aws-iam-authenticator
+              user: apiserver
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
+      - contentFrom:
+          secret:
+            name: test-aws-iam-authenticator-ca
+            key: cert.pem
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
+      - contentFrom:
+          secret:
+            name: test-aws-iam-authenticator-ca
+            key: key.pem
+        permissions: "0640"
+        owner: root:root
+        path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
+    users:
+    - name: tink-user
+      sshAuthorizedKeys:
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+      sudo: ALL=(ALL) NOPASSWD:ALL
+    format: cloud-config
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: TinkerbellMachineTemplate
+      name: test-control-plane-template-1234567890000
+  replicas: 1
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+  version: v1.21.2-eks-1-21-4
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: TinkerbellMachineTemplate
+metadata:
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: cp
+      templateOverride: |
+        global_timeout: 6000
+        id: ""
+        name: tink-test
+        tasks:
+        - actions:
+          - environment:
+              COMPRESSED: "true"
+              DEST_DISK: /dev/sda
+              IMG_URL: ""
+            image: image2disk:v1.0.0
+            name: stream-image
+            timeout: 360
+          - environment:
+              BLOCK_DEVICE: /dev/sda2
+              CHROOT: "y"
+              CMD_LINE: apt -y update && apt -y install openssl
+              DEFAULT_INTERPRETER: /bin/sh -c
+              FS_TYPE: ext4
+            image: cexec:v1.0.0
+            name: install-openssl
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                network:
+                  version: 2
+                  renderer: networkd
+                  ethernets:
+                      eno1:
+                          dhcp4: true
+                      eno2:
+                          dhcp4: true
+                      eno3:
+                          dhcp4: true
+                      eno4:
+                          dhcp4: true
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/netplan/config.yaml
+              DIRMODE: "0755"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0644"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: write-netplan
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                datasource:
+                  Ec2:
+                    metadata_urls: []
+                    strict_id: false
+                system_info:
+                  default_user:
+                    name: tink
+                    groups: [wheel, adm]
+                    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                    shell: /bin/bash
+                manage_etc_hosts: localhost
+                warnings:
+                  dsid_missing_source: off
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0600"
+            image: writefile:v1.0.0
+            name: add-tink-cloud-init-config
+            timeout: 90
+          - environment:
+              CONTENTS: |
+                datasource: Ec2
+              DEST_DISK: /dev/sda2
+              DEST_PATH: /etc/cloud/ds-identify.cfg
+              DIRMODE: "0700"
+              FS_TYPE: ext4
+              GID: "0"
+              MODE: "0600"
+              UID: "0"
+            image: writefile:v1.0.0
+            name: add-tink-cloud-init-ds-config
+            timeout: 90
+          - environment:
+              BLOCK_DEVICE: /dev/sda2
+              FS_TYPE: ext4
+            image: kexec:v1.0.0
+            name: kexec-image
+            pid: host
+            timeout: 90
+          name: tink-test
+          volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+          worker: '{{.device_1}}'
+        version: "0.1"
+        
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: TinkerbellCluster
+metadata:
+  name:  test
+  namespace: eksa-system
+spec:
+  imageLookupFormat: --kube-v1.21.2-eks-1-21-4.raw.gz
+  imageLookupBaseRegistry: /
