@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -12,7 +11,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -2479,10 +2477,9 @@ func TestValidateCNIConfig(t *testing.T) {
 
 func TestValidateMirrorConfig(t *testing.T) {
 	tests := []struct {
-		name                      string
-		wantErr                   string
-		cluster                   *Cluster
-		insecureSkipVerifySupport bool
+		name    string
+		wantErr string
+		cluster *Cluster
 	}{
 		{
 			name:    "registry mirror not specified",
@@ -2575,8 +2572,8 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
-			name:    "insecureSkipVerify on non snow provider",
-			wantErr: "insecureSkipVerify is only supported for snow provider",
+			name:    "insecureSkipVerify on an unsupported provider",
+			wantErr: "insecureSkipVerify is only supported for docker, vsphere and snow providers",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
@@ -2589,23 +2586,6 @@ func TestValidateMirrorConfig(t *testing.T) {
 					},
 				},
 			},
-		},
-		{
-			name:    "insecureSkipVerify on non snow provider with support env enabled",
-			wantErr: "",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint:           "1.2.3.4",
-						Port:               "443",
-						InsecureSkipVerify: true,
-					},
-					DatacenterRef: Ref{
-						Kind: "nonsnow",
-					},
-				},
-			},
-			insecureSkipVerifySupport: true,
 		},
 		{
 			name:    "insecureSkipVerify on snow provider",
@@ -2626,19 +2606,12 @@ func TestValidateMirrorConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			features.ClearCache()
-			if tt.insecureSkipVerifySupport {
-				os.Setenv(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar, "true")
-			}
 			g := NewWithT(t)
 			err := validateMirrorConfig(tt.cluster)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
-			}
-			if tt.insecureSkipVerifySupport {
-				os.Unsetenv(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar)
 			}
 		})
 	}

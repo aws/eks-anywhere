@@ -6,6 +6,7 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
@@ -13,6 +14,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -211,6 +213,75 @@ func TestWorkersSpecMachineTemplateNotFound(t *testing.T) {
 	client := test.NewFakeKubeClient(machineDeployment())
 	_, err := vsphere.WorkersSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
+}
+
+func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_multiple_worker_node_groups.yaml")
+	client := test.NewFakeKubeClient()
+
+	tests := []struct {
+		name         string
+		mirrorConfig *anywherev1.RegistryMirrorConfiguration
+		files        []bootstrapv1.File
+	}{
+		{
+			name:         "insecure skip verify",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabled(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerify(),
+		},
+		{
+			name:         "insecure skip verify with ca cert",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			format.MaxLength = 40000
+
+			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
+			workers, err := vsphere.WorkersSpec(ctx, logger, client, spec)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(workers).NotTo(BeNil())
+			g.Expect(workers.Groups).To(HaveLen(2))
+			g.Expect(workers.Groups).To(ConsistOf(
+				clusterapi.WorkerGroup[*vspherev1.VSphereMachineTemplate]{
+					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
+						kct.Spec.Template.Spec.PreKubeadmCommands = append(test.RegistryMirrorSudoPreKubeadmCommands(), kct.Spec.Template.Spec.PreKubeadmCommands...)
+					}),
+					MachineDeployment:       machineDeployment(),
+					ProviderMachineTemplate: machineTemplate(),
+				},
+				clusterapi.WorkerGroup[*vspherev1.VSphereMachineTemplate]{
+					KubeadmConfigTemplate: kubeadmConfigTemplate(
+						func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-1-1"
+							kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
+							kct.Spec.Template.Spec.PreKubeadmCommands = append(test.RegistryMirrorSudoPreKubeadmCommands(), kct.Spec.Template.Spec.PreKubeadmCommands...)
+						},
+					),
+					MachineDeployment: machineDeployment(
+						func(md *clusterv1.MachineDeployment) {
+							md.Name = "test-md-1"
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+							md.Spec.Replicas = ptr.Int32(2)
+						},
+					),
+					ProviderMachineTemplate: machineTemplate(
+						func(vmt *vspherev1.VSphereMachineTemplate) {
+							vmt.Name = "test-md-1-1"
+						},
+					),
+				},
+			))
+		})
+	}
 }
 
 func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.MachineDeployment {

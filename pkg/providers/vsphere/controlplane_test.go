@@ -5,21 +5,27 @@ import (
 	"testing"
 	"time"
 
+	etcdadmbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 )
 
 const (
@@ -167,7 +173,6 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 
 	wantEtcdTemplate.Name = "test-etcd-3"
 	wantEtcdTemplate.Spec.Template.Spec.Datastore = "new-datastore"
-
 	cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
@@ -235,6 +240,55 @@ func TestControlPlaneSpecErrorFromClient(t *testing.T) {
 	client := test.NewFakeKubeClientAlwaysError()
 	_, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).To(MatchError(ContainSubstring("updating vsphere immutable object names")))
+}
+
+func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+	spec := test.NewFullClusterSpec(t, testClusterConfigMainFilename)
+	tests := []struct {
+		name         string
+		mirrorConfig *anywherev1.RegistryMirrorConfiguration
+		files        []bootstrapv1.File
+	}{
+		{
+			name:         "insecure skip verify",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabled(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerify(),
+		},
+		{
+			name:         "insecure skip verify with ca cert",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert(),
+		},
+	}
+
+	format.MaxLength = 40000
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
+
+			cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(cp).NotTo(BeNil())
+			g.Expect(cp.Cluster).To(Equal(capiCluster()))
+			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
+				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(test.RegistryMirrorSudoPreKubeadmCommands(), kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands...)
+			})))
+			g.Expect(cp.EtcdCluster.Spec.EtcdadmConfigSpec.RegistryMirror).To(Equal(etcdCluster(func(ec *etcdv1.EtcdadmCluster) {
+				ec.Spec.EtcdadmConfigSpec.RegistryMirror = &etcdadmbootstrapv1.RegistryMirrorConfiguration{
+					Endpoint: containerd.ToAPIEndpoint(registrymirror.FromClusterRegistryMirrorConfiguration(tt.mirrorConfig).CoreEKSAMirror()),
+					CACert:   tt.mirrorConfig.CACertContent,
+				}
+			}).Spec.EtcdadmConfigSpec.RegistryMirror))
+			g.Expect(cp.ProviderCluster).To(Equal(vsphereCluster()))
+			g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
+			g.Expect(cp.EtcdMachineTemplate.Name).To(Equal("test-etcd-1"))
+		})
+	}
 }
 
 func capiCluster() *clusterv1.Cluster {
@@ -392,7 +446,7 @@ func clusterResourceSet() *addons.ClusterResourceSet {
 	}
 }
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
+func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
 	var kcp *controlplanev1.KubeadmControlPlane
 	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -696,10 +750,13 @@ spec:
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
 		return nil
 	}
+	for _, opt := range opts {
+		opt(kcp)
+	}
 	return kcp
 }
 
-func etcdCluster() *etcdv1.EtcdadmCluster {
+func etcdCluster(opts ...func(*etcdv1.EtcdadmCluster)) *etcdv1.EtcdadmCluster {
 	var etcdCluster *etcdv1.EtcdadmCluster
 	b := []byte(`kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
@@ -732,6 +789,9 @@ spec:
     name: test-etcd-1`)
 	if err := yaml.UnmarshalStrict(b, &etcdCluster); err != nil {
 		return nil
+	}
+	for _, opt := range opts {
+		opt(etcdCluster)
 	}
 	return etcdCluster
 }

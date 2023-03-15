@@ -361,6 +361,17 @@ func TestDockerKubernetes125AirgappedRegistryMirrorAndCert(t *testing.T) {
 	runDockerAirgapConfigFlow(test)
 }
 
+func TestDockerKubernetes125RegistryMirrorInsecureSkipVerify(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithRegistryMirrorInsecureSkipVerify(constants.DockerProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
 // Simple flow
 func TestDockerKubernetes122SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(

@@ -43,53 +43,17 @@ var (
 	privateRegistryMirrorTinkerbellRequiredEnvVars = []string{PrivateRegistryEndpointTinkerbellVar, PrivateRegistryPortTinkerbellVar, PrivateRegistryUsernameTinkerbellVar, PrivateRegistryPasswordTinkerbellVar, PrivateRegistryCACertTinkerbellVar}
 )
 
+// WithRegistryMirrorInsecureSkipVerify sets up e2e for registry mirrors with InsecureSkipVerify option.
+func WithRegistryMirrorInsecureSkipVerify(providerName string) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		setupRegistryMirrorEndpointAndCert(e, providerName, true)
+	}
+}
+
+// WithRegistryMirrorEndpointAndCert sets up e2e for registry mirrors.
 func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		var endpoint, hostPort, username, password, registryCert string
-		port := "443"
-
-		switch providerName {
-		case constants.TinkerbellProviderName:
-			checkRequiredEnvVars(e.T, registryMirrorTinkerbellRequiredEnvVars)
-			endpoint = os.Getenv(RegistryEndpointTinkerbellVar)
-			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortTinkerbellVar))
-			username = os.Getenv(RegistryUsernameTinkerbellVar)
-			password = os.Getenv(RegistryPasswordTinkerbellVar)
-			registryCert = os.Getenv(RegistryCACertTinkerbellVar)
-			if os.Getenv(RegistryPortTinkerbellVar) != "" {
-				port = os.Getenv(RegistryPortTinkerbellVar)
-			}
-		default:
-			checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
-			endpoint = os.Getenv(RegistryEndpointVar)
-			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
-			username = os.Getenv(RegistryUsernameVar)
-			password = os.Getenv(RegistryPasswordVar)
-			registryCert = os.Getenv(RegistryCACertVar)
-			if os.Getenv(RegistryPortVar) != "" {
-				port = os.Getenv(RegistryPortVar)
-			}
-		}
-
-		err := buildDocker(e.T).Login(context.Background(), hostPort, username, password)
-		if err != nil {
-			e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
-		}
-		certificate, err := base64.StdEncoding.DecodeString(registryCert)
-		if err == nil {
-			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(endpoint, port, string(certificate), false),
-			)
-		}
-		// Set env vars for helm login/push
-		err = os.Setenv("REGISTRY_USERNAME", username)
-		if err != nil {
-			e.T.Fatalf("unable to set REGISTRY_USERNAME: %v", err)
-		}
-		err = os.Setenv("REGISTRY_PASSWORD", password)
-		if err != nil {
-			e.T.Fatalf("unable to set REGISTRY_PASSWORD: %v", err)
-		}
+		setupRegistryMirrorEndpointAndCert(e, providerName, false)
 	}
 }
 
@@ -139,7 +103,7 @@ func WithAuthenticatedRegistryMirror(providerName string) ClusterE2ETestOpt {
 		certificate, err := base64.StdEncoding.DecodeString(registryCert)
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(endpoint, port, string(certificate), true),
+				api.WithRegistryMirror(endpoint, port, string(certificate), true, false),
 			)
 		}
 	}
@@ -150,4 +114,53 @@ func RequiredRegistryMirrorEnvVars() []string {
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorRequiredEnvVars...)
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorTinkerbellRequiredEnvVars...)
 	return append(registryMirrorRequiredEnvVars, registryMirrorDockerAirgappedRequiredEnvVars...)
+}
+
+func setupRegistryMirrorEndpointAndCert(e *ClusterE2ETest, providerName string, insecureSkipVerify bool) {
+	var endpoint, hostPort, username, password, registryCert string
+	port := "443"
+
+	switch providerName {
+	case constants.TinkerbellProviderName:
+		checkRequiredEnvVars(e.T, registryMirrorTinkerbellRequiredEnvVars)
+		endpoint = os.Getenv(RegistryEndpointTinkerbellVar)
+		hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortTinkerbellVar))
+		username = os.Getenv(RegistryUsernameTinkerbellVar)
+		password = os.Getenv(RegistryPasswordTinkerbellVar)
+		registryCert = os.Getenv(RegistryCACertTinkerbellVar)
+		if os.Getenv(RegistryPortTinkerbellVar) != "" {
+			port = os.Getenv(RegistryPortTinkerbellVar)
+		}
+	default:
+		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
+		endpoint = os.Getenv(RegistryEndpointVar)
+		hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
+		username = os.Getenv(RegistryUsernameVar)
+		password = os.Getenv(RegistryPasswordVar)
+		registryCert = os.Getenv(RegistryCACertVar)
+		if os.Getenv(RegistryPortVar) != "" {
+			port = os.Getenv(RegistryPortVar)
+		}
+	}
+
+	err := buildDocker(e.T).Login(context.Background(), hostPort, username, password)
+	if err != nil {
+		e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
+	}
+	certificate, err := base64.StdEncoding.DecodeString(registryCert)
+	if err == nil {
+		e.clusterFillers = append(e.clusterFillers,
+			api.WithRegistryMirror(endpoint, port, string(certificate), false, insecureSkipVerify),
+		)
+	}
+
+	// Set env vars for helm login/push
+	err = os.Setenv("REGISTRY_USERNAME", username)
+	if err != nil {
+		e.T.Fatalf("unable to set REGISTRY_USERNAME: %v", err)
+	}
+	err = os.Setenv("REGISTRY_PASSWORD", password)
+	if err != nil {
+		e.T.Fatalf("unable to set REGISTRY_PASSWORD: %v", err)
+	}
 }
