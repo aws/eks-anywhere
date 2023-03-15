@@ -436,7 +436,7 @@ func (f *Factory) withPackageControllerClient() *Factory {
 		if f.packageControllerClient != nil {
 			return nil
 		}
-		f.packageControllerClient = curatedpackages.NewPackageControllerClientFullLifecycle(f.logger, f.deps.Helm, f.deps.Helm, f.deps.Kubectl, f.tracker)
+		f.packageControllerClient = curatedpackages.NewPackageControllerClientFullLifecycle(f.logger, f.deps.Helm, f.deps.Kubectl, f.tracker)
 		return nil
 	})
 

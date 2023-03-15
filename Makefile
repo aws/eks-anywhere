@@ -575,7 +575,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/curatedpackages/mocks/bundlemanager.go -package=mocks -source "pkg/curatedpackages/bundlemanager.go" Manager
 	${MOCKGEN} -destination=pkg/clients/kubernetes/mocks/kubectl.go -package=mocks -source "pkg/clients/kubernetes/unauth.go"
 	${MOCKGEN} -destination=pkg/clients/kubernetes/mocks/kubeconfig.go -package=mocks -source "pkg/clients/kubernetes/kubeconfig.go"
-	${MOCKGEN} -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartInstaller ChartUninstaller ClientBuilder
+	${MOCKGEN} -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartManager ClientBuilder
 	${MOCKGEN} -destination=pkg/curatedpackages/mocks/kube_client.go -package=mocks -mock_names Client=MockKubeClient sigs.k8s.io/controller-runtime/pkg/client Client
 	${MOCKGEN} -destination=pkg/cluster/mocks/client_builder.go -package=mocks -source "pkg/cluster/client_builder.go"
 	${MOCKGEN} -destination=controllers/mocks/factory.go -package=mocks "github.com/aws/eks-anywhere/controllers" Manager

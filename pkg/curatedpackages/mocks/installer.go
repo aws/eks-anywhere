@@ -125,6 +125,57 @@ func (mr *MockChartUninstallerMockRecorder) Delete(ctx, kubeconfigFilePath, inst
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockChartUninstaller)(nil).Delete), ctx, kubeconfigFilePath, installName, namespace)
 }
 
+// MockChartManager is a mock of ChartManager interface.
+type MockChartManager struct {
+	ctrl     *gomock.Controller
+	recorder *MockChartManagerMockRecorder
+}
+
+// MockChartManagerMockRecorder is the mock recorder for MockChartManager.
+type MockChartManagerMockRecorder struct {
+	mock *MockChartManager
+}
+
+// NewMockChartManager creates a new mock instance.
+func NewMockChartManager(ctrl *gomock.Controller) *MockChartManager {
+	mock := &MockChartManager{ctrl: ctrl}
+	mock.recorder = &MockChartManagerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockChartManager) EXPECT() *MockChartManagerMockRecorder {
+	return m.recorder
+}
+
+// Delete mocks base method.
+func (m *MockChartManager) Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, kubeconfigFilePath, installName, namespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockChartManagerMockRecorder) Delete(ctx, kubeconfigFilePath, installName, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockChartManager)(nil).Delete), ctx, kubeconfigFilePath, installName, namespace)
+}
+
+// InstallChart mocks base method.
+func (m *MockChartManager) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallChart", ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InstallChart indicates an expected call of InstallChart.
+func (mr *MockChartManagerMockRecorder) InstallChart(ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockChartManager)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath, skipCRDs, values)
+}
+
 // MockKubeDeleter is a mock of KubeDeleter interface.
 type MockKubeDeleter struct {
 	ctrl     *gomock.Controller

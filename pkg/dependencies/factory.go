@@ -1049,8 +1049,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			return err
 		}
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
-			f.dependencies.Helm, // installer
-			f.dependencies.Helm, // uninstaller (sometimes these need to be different)
+			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
 			mgmtKubeConfig,
