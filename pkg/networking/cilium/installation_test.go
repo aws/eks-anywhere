@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 )
@@ -18,14 +19,42 @@ func TestInstallationInstalled(t *testing.T) {
 		{
 			name: "installed",
 			installation: cilium.Installation{
-				DaemonSet: &appsv1.DaemonSet{},
-				Operator:  &appsv1.Deployment{},
+				DaemonSet: &appsv1.DaemonSet{
+					Spec: appsv1.DaemonSetSpec{
+						Template: v1.PodTemplateSpec{
+							Spec: v1.PodSpec{
+								Containers: []v1.Container{
+									{Image: "cilium-eksa"},
+								},
+							},
+						},
+					},
+				},
+				Operator: &appsv1.Deployment{},
 			},
 			want: true,
 		},
 		{
 			name: "ds not installed",
 			installation: cilium.Installation{
+				Operator: &appsv1.Deployment{},
+			},
+			want: false,
+		},
+		{
+			name: "ds not installed with eksa cilium",
+			installation: cilium.Installation{
+				DaemonSet: &appsv1.DaemonSet{
+					Spec: appsv1.DaemonSetSpec{
+						Template: v1.PodTemplateSpec{
+							Spec: v1.PodSpec{
+								Containers: []v1.Container{
+									{Image: "cilium"},
+								},
+							},
+						},
+					},
+				},
 				Operator: &appsv1.Deployment{},
 			},
 			want: false,
