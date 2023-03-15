@@ -366,7 +366,6 @@ func TestDockerKubernetes125RegistryMirrorInsecureSkipVerify(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
-		framework.WithEnvVar(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar, "true"),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithRegistryMirrorInsecureSkipVerify(constants.DockerProviderName),

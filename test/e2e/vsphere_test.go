@@ -915,7 +915,6 @@ func TestVSphereKubernetes125UbuntuRegistryMirrorInsecureSkipVerify(t *testing.T
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
 		framework.WithRegistryMirrorInsecureSkipVerify(constants.VSphereProviderName),
-		framework.WithEnvVar(features.RegistryMirrrorInsecureSkipVerifySupportEnvVar, "true"),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
