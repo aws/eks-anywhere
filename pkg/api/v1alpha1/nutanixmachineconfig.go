@@ -191,11 +191,11 @@ func validateNutanixMachineConfig(c *NutanixMachineConfig) error {
 }
 
 func validateMinimumNutanixMachineSpecs(c *NutanixMachineConfig) error {
-	if c.Spec.VCPUSockets <= defaultNutanixVCPUSockets {
+	if c.Spec.VCPUSockets < defaultNutanixVCPUSockets {
 		return fmt.Errorf("NutanixMachineConfig: vcpu sockets must be greater than or equal to %d", defaultNutanixVCPUSockets)
 	}
 
-	if c.Spec.VCPUsPerSocket <= defaultNutanixVCPUsPerSocket {
+	if c.Spec.VCPUsPerSocket < defaultNutanixVCPUsPerSocket {
 		return fmt.Errorf("NutanixMachineConfig: vcpu per socket must be greater than or equal to %d", defaultNutanixVCPUsPerSocket)
 	}
 
