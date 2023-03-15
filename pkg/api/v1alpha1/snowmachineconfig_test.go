@@ -437,6 +437,68 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 			},
 			wantErr: "SnowMachineConfig Network.DirectNetworkInterfaces list must contain one and only one primary DNI",
 		},
+		{
+			name: "invalid nonRootVolumes, device name empty",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:                    "ami-1",
+					InstanceType:             DefaultSnowInstanceType,
+					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					Devices:                  []string{"1.2.3.4"},
+					OSFamily:                 Bottlerocket,
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
+					NonRootVolumes: []*snowv1.Volume{
+						{
+							DeviceName: "",
+							Size:       25,
+						},
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig NonRootVolumes[0].DeviceName must be specified",
+		},
+		{
+			name: "invalid nonRootVolumes, device name prefix /dev/sda",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:                    "ami-1",
+					InstanceType:             DefaultSnowInstanceType,
+					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+					Devices:                  []string{"1.2.3.4"},
+					OSFamily:                 Bottlerocket,
+					Network: SnowNetwork{
+						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
+							{
+								Index:   1,
+								DHCP:    true,
+								Primary: true,
+							},
+						},
+					},
+					ContainersVolume: &snowv1.Volume{
+						Size: 25,
+					},
+					NonRootVolumes: []*snowv1.Volume{
+						{
+							DeviceName: "/dev/sda1",
+							Size:       25,
+						},
+					},
+				},
+			},
+			wantErr: "SnowMachineConfig NonRootVolumes[0].DeviceName [/dev/sda1] is invalid. Device name with prefix /dev/sda* is reserved for root volume and containers volume, please use another name",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

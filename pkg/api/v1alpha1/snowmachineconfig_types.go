@@ -41,6 +41,9 @@ type SnowMachineConfigSpec struct {
 	// ContainersVolume provides the configuration options for the containers data storage volume.
 	ContainersVolume *snowv1.Volume `json:"containersVolume,omitempty"`
 
+	// NonRootVolumes provides the configuration options for the non root storage volumes.
+	NonRootVolumes []*snowv1.Volume `json:"nonRootVolumes,omitempty"`
+
 	// OSFamily is the node instance OS.
 	// Valid values: "bottlerocket" and "ubuntu".
 	OSFamily OSFamily `json:"osFamily,omitempty"`

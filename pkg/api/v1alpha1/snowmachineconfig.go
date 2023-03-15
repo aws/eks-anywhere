@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 const (
@@ -89,7 +91,11 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return err
 	}
 
-	return validateSnowMachineConfigContainerVolume(config)
+	if err := validateSnowMachineConfigContainerVolume(config); err != nil {
+		return err
+	}
+
+	return validateSnowMachineConfigNonRootVolumes(config.Spec.NonRootVolumes)
 }
 
 func validateSnowMachineConfigInstanceType(instanceType string) error {
@@ -114,6 +120,24 @@ func validateSnowMachineConfigContainerVolume(config *SnowMachineConfig) error {
 
 	if config.Spec.OSFamily == Ubuntu && config.Spec.ContainersVolume != nil && config.Spec.ContainersVolume.Size < MinimumContainerVolumeSizeUbuntu {
 		return fmt.Errorf("SnowMachineConfig ContainersVolume.Size must be no smaller than %d Gi for Ubuntu OS", MinimumContainerVolumeSizeUbuntu)
+	}
+
+	return nil
+}
+
+func validateSnowMachineConfigNonRootVolumes(volumes []*snowv1.Volume) error {
+	for i, v := range volumes {
+		if v == nil {
+			continue
+		}
+
+		if len(v.DeviceName) <= 0 {
+			return fmt.Errorf("SnowMachineConfig NonRootVolumes[%d].DeviceName must be specified", i)
+		}
+
+		if strings.HasPrefix(v.DeviceName, "/dev/sda") {
+			return fmt.Errorf("SnowMachineConfig NonRootVolumes[%d].DeviceName [%s] is invalid. Device name with prefix /dev/sda* is reserved for root volume and containers volume, please use another name", i, v.DeviceName)
+		}
 	}
 
 	return nil

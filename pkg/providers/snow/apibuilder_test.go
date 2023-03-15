@@ -848,10 +848,18 @@ func wantSnowIPPool() *snowv1.AWSSnowIPPool {
 
 func TestSnowMachineTemplate(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := snow.MachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"], nil)
+	mc := tt.machineConfigs["test-cp"]
+	mc.Spec.NonRootVolumes = []*snowv1.Volume{
+		{
+			DeviceName: "/dev/sdc",
+			Size:       10,
+		},
+	}
+	got := snow.MachineTemplate("snow-test-control-plane-1", mc, nil)
 	want := wantSnowMachineTemplate()
 	want.SetName("snow-test-control-plane-1")
 	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
+	want.Spec.Template.Spec.NonRootVolumes = mc.Spec.NonRootVolumes
 	tt.Expect(got).To(Equal(want))
 }
 
