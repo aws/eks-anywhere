@@ -28,10 +28,8 @@ const (
 	nutanixPrismElementClusterUUID = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_UUID"
 	nutanixSSHAuthorizedKey        = "T_NUTANIX_SSH_AUTHORIZED_KEY"
 
-	nutanixSubnetName        = "T_NUTANIX_SUBNET_NAME"
-	nutanixSubnetUUID        = "T_NUTANIX_SUBNET_UUID"
-	nutanixPrivateSubnetName = "T_NUTANIX_PRIVATE_SUBNET_NAME"
-	nutanixPrivateSubnetUUID = "T_NUTANIX_PRIVATE_SUBNET_UUID"
+	nutanixSubnetName = "T_NUTANIX_SUBNET_NAME"
+	nutanixSubnetUUID = "T_NUTANIX_SUBNET_UUID"
 
 	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
 	nutanixControlPlaneCidrVar    = "T_NUTANIX_CONTROL_PLANE_CIDR"
@@ -67,8 +65,6 @@ var requiredNutanixEnvVars = []string{
 	nutanixSSHAuthorizedKey,
 	nutanixSubnetName,
 	nutanixSubnetUUID,
-	nutanixPrivateSubnetName,
-	nutanixPrivateSubnetUUID,
 	nutanixPodCidrVar,
 	nutanixServiceCidrVar,
 	nutanixTemplateNameUbuntu122Var,
@@ -118,8 +114,6 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterUUID, api.WithNutanixPrismElementClusterUUID),
 			api.WithNutanixStringFromEnvVar(nutanixSubnetName, api.WithNutanixSubnetName),
 			api.WithNutanixStringFromEnvVar(nutanixSubnetUUID, api.WithNutanixSubnetUUID),
-			api.WithNutanixStringFromEnvVar(nutanixPrivateSubnetName, api.WithNutanixSubnetName),
-			api.WithNutanixStringFromEnvVar(nutanixPrivateSubnetUUID, api.WithNutanixSubnetUUID),
 		},
 	}
 
@@ -311,15 +305,6 @@ func WithNutanixSubnetUUID() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
 			api.WithNutanixStringFromEnvVar(nutanixSubnetUUID, api.WithNutanixSubnetUUID),
-		)
-	}
-}
-
-// WithNutanixPrivateSubnetUUID returns a NutanixOpt that adds API fillers to use a Private Subnet UUID.
-func WithNutanixPrivateSubnetUUID() NutanixOpt {
-	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixPrivateSubnetUUID, api.WithNutanixSubnetUUID),
 		)
 	}
 }

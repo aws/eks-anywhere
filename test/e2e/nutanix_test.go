@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -775,42 +774,4 @@ func TestNutanixKubernetes126OIDC(t *testing.T) {
 		framework.WithEnvVar(features.K8s126SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
-}
-
-// Registry Mirror Tests
-func TestNutanixKubernetes124UbuntuRegistryMirrorAndCert(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewNutanix(t, framework.WithUbuntu124Nutanix(), framework.WithNutanixPrivateSubnetUUID()),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithRegistryMirrorEndpointAndCert(constants.NutanixProviderName),
-	)
-	runRegistryMirrorConfigFlow(test)
-}
-
-func TestNutanixKubernetes125UbuntuRegistryMirrorAndCert(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewNutanix(t, framework.WithUbuntu125Nutanix(), framework.WithNutanixPrivateSubnetUUID()),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithRegistryMirrorEndpointAndCert(constants.NutanixProviderName),
-	)
-	runRegistryMirrorConfigFlow(test)
-}
-
-func TestNutanixKubernetes126UbuntuRegistryMirrorAndCert(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewNutanix(t, framework.WithUbuntu126Nutanix(), framework.WithNutanixPrivateSubnetUUID()),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithRegistryMirrorEndpointAndCert(constants.NutanixProviderName),
-		framework.WithEnvVar(features.K8s126SupportEnvVar, "true"),
-	)
-	runRegistryMirrorConfigFlow(test)
 }
