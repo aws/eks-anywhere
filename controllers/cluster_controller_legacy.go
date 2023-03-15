@@ -60,6 +60,13 @@ func NewClusterReconcilerLegacy(client client.Client, log logr.Logger, scheme *r
 // +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=delete;
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=bmc.tinkerbell.org,resources=machines;machines/status,verbs=get;list;watch
+//
+// For the full cluster lifecycle to support Curated Packages, the controller
+// must be able to create, delete, update, and patch package bundle controller
+// resources, which will trigger the curated packages controller to do the
+// rest.
+//
+// +kubebuilder:rbac:groups=packages.eks.amazonaws.com,resources=packagebundlecontrollers,verbs=create;delete;get;list;patch;update;watch;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

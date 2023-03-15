@@ -9,7 +9,8 @@ import (
 )
 
 type PackageController interface {
-	EnableCuratedPackages(ctx context.Context) error
+	// Enable curated packages support.
+	Enable(ctx context.Context) error
 	IsInstalled(ctx context.Context) bool
 }
 
@@ -68,7 +69,7 @@ func (pi *Installer) installPackagesController(ctx context.Context) error {
 		logger.Info("  Package controller disabled")
 		return nil
 	}
-	err := pi.packageController.EnableCuratedPackages(ctx)
+	err := pi.packageController.Enable(ctx)
 	if err != nil {
 		return err
 	}

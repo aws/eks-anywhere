@@ -7,10 +7,19 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -32,9 +41,11 @@ const (
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
-	kubeConfig            string
-	chart                 *releasev1.Image
-	chartInstaller        ChartInstaller
+	kubeConfig     string
+	chart          *releasev1.Image
+	chartInstaller ChartInstaller
+	// uninstaller of helm charts.
+	uninstaller           ChartUninstaller
 	clusterName           string
 	clusterSpec           *v1alpha1.ClusterSpec
 	managementClusterName string
@@ -49,19 +60,104 @@ type PackageControllerClient struct {
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
 	valuesFileWriter    filewriter.FileWriter
+	// skipWaitForPackageBundle indicates whether the installer should wait
+	// until a package bundle is activated.
+	//
+	// Skipping the wait is desirable for full cluster lifecycle use cases,
+	// where resource creation and error reporting are asynchronous in nature.
+	skipWaitForPackageBundle bool
+	// tracker creates k8s clients for workload clusters managed via full
+	// cluster lifecycle API.
+	clientBuilder ClientBuilder
+
+	// mu provides some thread-safety.
+	mu sync.Mutex
+}
+
+// ClientBuilder returns a k8s client for the specified cluster.
+type ClientBuilder interface {
+	GetClient(context.Context, types.NamespacedName) (client.Client, error)
 }
 
 type ChartInstaller interface {
-	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, values []string) error
+	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error
+}
+
+// ChartUninstaller handles deleting chart installations.
+type ChartUninstaller interface {
+	Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error
+}
+
+// NewPackageControllerClientFullLifecycle creates a PackageControllerClient
+// for the Full Cluster Lifecycle controller.
+//
+// It differs because the CLI use case has far more information available at
+// instantiation, while the FCL use case has less information at
+// instantiation, and the rest when cluster creation is triggered.
+func NewPackageControllerClientFullLifecycle(logger logr.Logger, chartInstaller ChartInstaller, uninstaller ChartUninstaller, kubectl KubectlRunner, clientBuilder ClientBuilder) *PackageControllerClient {
+	return &PackageControllerClient{
+		chartInstaller:           chartInstaller,
+		uninstaller:              uninstaller,
+		kubectl:                  kubectl,
+		skipWaitForPackageBundle: true,
+		eksaRegion:               eksaDefaultRegion,
+		clientBuilder:            clientBuilder,
+	}
+}
+
+// EnableFullLifecycle wraps Enable to handle run-time arguments.
+//
+// This method fills in the gaps between the original CLI use case, where all
+// information is known at PackageControllerClient initialization, and the
+// Full Cluster Lifecycle use case, where there's limited information at
+// initialization. Basically any parameter here isn't known at instantiation
+// of the PackageControllerClient during full cluster lifecycle usage, hence
+// why this method exists.
+func (pc *PackageControllerClient) EnableFullLifecycle(ctx context.Context, log logr.Logger, clusterName, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) (err error) {
+	log.V(6).Info("enabling curated packages full lifecycle")
+	defer func(err *error) {
+		if err != nil && *err != nil {
+			log.Error(*err, "Enabling curated packages full lifecycle", "clusterName", clusterName)
+		} else {
+			log.Info("Successfully enabled curated packages full lifecycle")
+		}
+	}(&err)
+	pc.mu.Lock()
+	// This anonymous function ensures that the pc.mu is unlocked before
+	// Enable is called, preventing deadlocks in the event that Enable tries
+	// to acquire pc.mu.
+	err = func() error {
+		defer pc.mu.Unlock()
+		pc.skipWaitForPackageBundle = true
+		pc.clusterName = clusterName
+		pc.kubeConfig = kubeConfig
+		pc.chart = chart
+		pc.registryMirror = registryMirror
+		writer, err := filewriter.NewWriter(clusterName)
+		if err != nil {
+			return fmt.Errorf("creating file writer for helm values: %w", err)
+		}
+		options = append(options, WithValuesFileWriter(writer))
+		for _, o := range options {
+			o(pc)
+		}
+		return nil
+	}()
+	if err != nil {
+		return err
+	}
+
+	return pc.Enable(ctx)
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName string, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, uninstaller ChartUninstaller, kubectl KubectlRunner, clusterName, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		clusterName:    clusterName,
 		chart:          chart,
 		chartInstaller: chartInstaller,
+		uninstaller:    uninstaller,
 		kubectl:        kubectl,
 		registryMirror: registryMirror,
 		eksaRegion:     eksaDefaultRegion,
@@ -73,7 +169,8 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 	return pcc
 }
 
-// EnableCuratedPackages enables curated packages in a cluster
+// Enable curated packages in a cluster
+//
 // In case the cluster is management cluster, it performs the following actions:
 //   - Installation of Package Controller through helm chart installation
 //   - Creation of secret credentials
@@ -82,7 +179,7 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 //
 // In case the cluster is a workload cluster, it performs the following actions:
 //   - Creation of package bundle controller (PBC) custom resource in management cluster
-func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) error {
+func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 	ociURI := fmt.Sprintf("%s%s", "oci://", pc.registryMirror.ReplaceRegistry(pc.chart.Image()))
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
 	sourceRegistry, defaultRegistry, defaultImageRegistry := pc.GetCuratedPackagesRegistries()
@@ -110,17 +207,23 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return err
 	}
 
+	skipCRDs := false
 	chartName := pc.chart.Name
 	if pc.managementClusterName != pc.clusterName {
 		values = append(values, "workloadOnly=true")
 		chartName = chartName + "-" + pc.clusterName
+		skipCRDs = true
 	}
 
-	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, "eksa-packages", valueFilePath, values); err != nil {
+	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, constants.EksaPackagesName, valueFilePath, skipCRDs, values); err != nil {
 		return err
 	}
 
-	return pc.waitForActiveBundle(ctx)
+	if !pc.skipWaitForPackageBundle {
+		return pc.waitForActiveBundle(ctx)
+	}
+
+	return nil
 }
 
 // GetCuratedPackagesRegistries gets value for configurable registries from PBC.
@@ -350,6 +453,73 @@ func (pc *PackageControllerClient) GetPackageControllerConfiguration() (result s
 	result += formatCronJob(clusterSpec.Packages.CronJob)
 
 	return result, err
+}
+
+// Reconcile installs resources when a full cluster lifecycle cluster is created.
+func (pc *PackageControllerClient) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, cluster *anywherev1.Cluster) error {
+	image, err := pc.getBundleFromCluster(ctx, client, cluster)
+	if err != nil {
+		return err
+	}
+
+	registry := registrymirror.FromCluster(cluster)
+
+	// No Kubeconfig is passed. This is intentional. The helm executable will
+	// get that configuration from its environment.
+	if err := pc.EnableFullLifecycle(ctx, logger, cluster.Name, "", image, registry); err != nil {
+		return fmt.Errorf("packages client error: %w", err)
+	}
+
+	return nil
+}
+
+// getBundleFromCluster based on the cluster's k8s version.
+func (pc *PackageControllerClient) getBundleFromCluster(ctx context.Context, client client.Client, clusterObj *anywherev1.Cluster) (*releasev1.Image, error) {
+	bundles := &releasev1.Bundles{}
+	nn := types.NamespacedName{
+		Name:      clusterObj.Spec.BundlesRef.Name,
+		Namespace: clusterObj.Spec.BundlesRef.Namespace,
+	}
+	if err := client.Get(ctx, nn, bundles); err != nil {
+		return nil, fmt.Errorf("retrieving bundle: %w", err)
+	}
+
+	verBundle, err := cluster.GetVersionsBundle(clusterObj, bundles)
+	if err != nil {
+		return nil, err
+	}
+
+	return &verBundle.PackageController.HelmChart, nil
+}
+
+// KubeDeleter abstracts client.Client so mocks can be substituted in tests.
+type KubeDeleter interface {
+	Delete(context.Context, client.Object, ...client.DeleteOption) error
+}
+
+// ReconcileDelete removes resources after a full cluster lifecycle cluster is
+// deleted.
+func (pc *PackageControllerClient) ReconcileDelete(ctx context.Context, logger logr.Logger, client KubeDeleter, cluster *anywherev1.Cluster) error {
+	namespace := "eksa-packages-" + cluster.Name
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+	if err := client.Delete(ctx, ns); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("deleting workload cluster curated packages namespace %q %w", namespace, err)
+		}
+		logger.V(6).Info("not found", "namespace", namespace)
+	}
+
+	name := "eks-anywhere-packages-" + pc.clusterName
+	if err := pc.uninstaller.Delete(ctx, pc.kubeConfig, name, constants.EksaPackagesName); err != nil {
+		if !strings.Contains(err.Error(), "release: not found") {
+			return err
+		}
+		logger.V(6).Info("not found", "release", name)
+	}
+
+	logger.Info("Removed curated packages installation", "clusterName")
+
+	return nil
 }
 
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
