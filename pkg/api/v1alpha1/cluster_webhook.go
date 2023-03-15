@@ -16,6 +16,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -235,6 +236,40 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("GitOpsRef"), fmt.Sprintf("field is immutable %v", new.Spec.GitOpsRef)))
+	}
+
+	if new.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
+		if !reflect.DeepEqual(new.Spec.ControlPlaneConfiguration.Labels, old.Spec.ControlPlaneConfiguration.Labels) {
+			allErrs = append(
+				allErrs,
+				field.Forbidden(specPath.Child("ControlPlaneConfiguration.labels"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Labels)))
+		}
+
+		if !reflect.DeepEqual(new.Spec.ControlPlaneConfiguration.Taints, old.Spec.ControlPlaneConfiguration.Taints) {
+			allErrs = append(
+				allErrs,
+				field.Forbidden(specPath.Child("ControlPlaneConfiguration.taints"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Taints)))
+		}
+
+		workerNodeGroupMap := make(map[string]*WorkerNodeGroupConfiguration)
+		for _, workerNodeGroupConfiguration := range old.Spec.WorkerNodeGroupConfigurations {
+			workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+		}
+		for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
+			if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
+				if !reflect.DeepEqual(workerNodeGrpOldSpec.Labels, nodeGroupNewSpec.Labels) {
+					allErrs = append(
+						allErrs,
+						field.Forbidden(specPath.Child("WorkerNodeConfiguration.labels"), fmt.Sprintf("field is immutable %v", nodeGroupNewSpec.Labels)))
+				}
+
+				if !reflect.DeepEqual(workerNodeGrpOldSpec.Taints, nodeGroupNewSpec.Taints) {
+					allErrs = append(
+						allErrs,
+						field.Forbidden(specPath.Child("WorkerNodeConfiguration.taints"), fmt.Sprintf("field is immutable %v", nodeGroupNewSpec.Taints)))
+				}
+			}
+		}
 	}
 
 	if !old.IsSelfManaged() {

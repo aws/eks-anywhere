@@ -188,7 +188,7 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 	case wantVersionChange:
 		op = K8sVersionUpgradeOperation
 	}
-	log.V(5).Info("Operation detected", "operation", op)
+	log.Info("Operation detected", "operation", op)
 	return op, nil
 }
 
@@ -226,7 +226,7 @@ func (r *Reconciler) OmitMachineTemplate(ctx context.Context, log logr.Logger, t
 	if o == ScaleOperation || o == NoChange {
 		tinkerbell.OmitTinkerbellCPMachineTemplate(tinkerbellScope.ControlPlane)
 		tinkerbell.OmitTinkerbellWorkersMachineTemplate(tinkerbellScope.Workers)
-		log.V(5).Info("Machine Template omitted")
+		log.Info("Machine Template omitted")
 	}
 	return controller.Result{}, nil
 }

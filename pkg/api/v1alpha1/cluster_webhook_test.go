@@ -1796,6 +1796,55 @@ func TestClusterValidateUpdateRollingTinkerbellRequest(t *testing.T) {
 	g.Expect(cNew.ValidateUpdate(cOld)).To(Succeed())
 }
 
+func TestClusterValidateUpdateLabelTaintsCPTinkerbellRequest(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.Spec.ManagementCluster.Name = "test"
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+
+	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
+	var cpTaints []v1.Taint
+
+	cpTaints = append(cpTaints, v1.Taint{Key: "key1", Value: "val1", Effect: "NoSchedule", TimeAdded: nil})
+	cOld.Spec.ControlPlaneConfiguration.Labels = nodeLabels
+	cOld.Spec.ControlPlaneConfiguration.Taints = cpTaints
+
+	cNew := cOld.DeepCopy()
+	cNew.Spec.ControlPlaneConfiguration.Labels = map[string]string{}
+	cNew.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{}
+	g := NewWithT(t)
+	err := cNew.ValidateUpdate(cOld)
+	g.Expect(err).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.labels: Forbidden: field is immutable")))
+	g.Expect(err).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.taints: Forbidden: field is immutable")))
+}
+
+func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.Spec.ManagementCluster.Name = "test"
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+
+	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
+
+	var wnTaints []v1.Taint
+
+	wnTaints = append(wnTaints, v1.Taint{Key: "key1", Value: "val1", Effect: "NoSchedule", TimeAdded: nil})
+
+	cOld.Spec.WorkerNodeGroupConfigurations[0].Labels = nodeLabels
+	cOld.Spec.WorkerNodeGroupConfigurations[0].Taints = wnTaints
+
+	cNew := cOld.DeepCopy()
+	cNew.Spec.WorkerNodeGroupConfigurations[0].Labels = map[string]string{}
+	cNew.Spec.WorkerNodeGroupConfigurations[0].Taints = []v1.Taint{}
+
+	g := NewWithT(t)
+	err := cNew.ValidateUpdate(cOld)
+	g.Expect(err).To(MatchError(ContainSubstring("spec.WorkerNodeConfiguration.labels: Forbidden: field is immutable")))
+	g.Expect(err).To(MatchError(ContainSubstring("spec.WorkerNodeConfiguration.taints: Forbidden: field is immutable")))
+}
+
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
 	c := createCluster()
 	for _, o := range opts {
