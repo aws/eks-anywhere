@@ -202,7 +202,7 @@ type AWSSnowDirectNetworkInterface struct {
 	// +optional
 	VlanID *int32 `json:"vlanID,omitempty"`
 	// DHCP shows whether we assign ip using DHCP for this DNI
-	// If DHCP is true, CAPAS will alloacate ip address to this DNI using DHCP
+	// If DHCP is true, CAPAS will allocate ip address to this DNI using DHCP
 	// +optional
 	DHCP bool `json:"dhcp,omitempty"`
 	// IPPool is an ip pool which provides a range of ip addresses
