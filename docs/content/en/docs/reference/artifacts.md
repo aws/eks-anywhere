@@ -487,7 +487,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
      "root_device_name": "<The device name used by EC2 for the root EBS volume attached to the instance>",
      "subnet_id": "<The ID of the subnet where Packer will launch the EC2 instance. This field is required when using a non-default VPC>",
      "volume_size": "<The size of the root EBS volume in GiB>",
-     "volume_type": "<The type of root EBS volume. Currently only gp3 is supported>",
+     "volume_type": "<The type of root EBS volume, such as gp2, gp3, io1, etc.>"
    }
    ```
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
