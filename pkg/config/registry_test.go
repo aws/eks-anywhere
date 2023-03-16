@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,8 @@ import (
 )
 
 func TestReadConfig(t *testing.T) {
+	os.Unsetenv(constants.RegistryUsername)
+	os.Unsetenv(constants.RegistryPassword)
 	_, _, err := ReadCredentials()
 	assert.Error(t, err)
 
