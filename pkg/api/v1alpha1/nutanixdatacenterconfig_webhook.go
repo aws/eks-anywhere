@@ -9,8 +9,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // nutanixdatacenterconfiglog is for logging in this package.
@@ -33,10 +31,6 @@ func (r *NutanixDatacenterConfig) ValidateCreate() error {
 	if r.IsReconcilePaused() {
 		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing create", "name", r.Name)
 		return nil
-	}
-
-	if !features.IsActive(features.FullLifecycleAPI()) {
-		return apierrors.NewBadRequest("Creating new NutanixDatacenterConfig on existing cluster is not supported")
 	}
 
 	if r.Spec.CredentialRef == nil {
