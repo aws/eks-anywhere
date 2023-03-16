@@ -92,6 +92,38 @@ func TestFactoryBuildAllCloudStackReconciler(t *testing.T) {
 	g.Expect(reconcilers.CloudStackDatacenterReconciler).NotTo(BeNil())
 }
 
+func TestFactoryBuildAllNutanixReconciler(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	logger := nullLog()
+	ctrl := gomock.NewController(t)
+	manager := mocks.NewMockManager(ctrl)
+	manager.EXPECT().GetClient().AnyTimes()
+	manager.EXPECT().GetScheme().AnyTimes()
+
+	f := controllers.NewFactory(logger, manager).
+		WithNutanixDatacenterReconciler().
+		WithClusterReconciler([]clusterctlv1.Provider{
+			{
+				Type:         string(clusterctlv1.InfrastructureProviderType),
+				ProviderName: "nutanix",
+			},
+		})
+
+	// testing idempotence
+	f.WithNutanixDatacenterReconciler().
+		WithClusterReconciler([]clusterctlv1.Provider{
+			{
+				Type:         string(clusterctlv1.InfrastructureProviderType),
+				ProviderName: "nutanix",
+			},
+		})
+
+	reconcilers, err := f.Build(ctx)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(reconcilers.NutanixDatacenterReconciler).NotTo(BeNil())
+}
+
 func TestFactoryBuildClusterReconciler(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

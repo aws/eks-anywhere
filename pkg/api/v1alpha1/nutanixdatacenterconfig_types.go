@@ -22,7 +22,7 @@ type NutanixDatacenterConfigSpec struct {
 
 	// Port is the Port of Nutanix Prism Central
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum=9440
+	// +kubebuilder:validation:Default=9440
 	Port int `json:"port"`
 
 	// AdditionalTrustBundle is the optional PEM-encoded certificate bundle for

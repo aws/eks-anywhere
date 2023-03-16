@@ -98,20 +98,24 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 // GenerateCAPISpecSecret generates the secret containing the credentials for the nutanix prism central and is used by the
 // CAPX controller. The secret is named after the cluster name.
 func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	return ntb.generateSpecSecret(capxSecretName(clusterSpec), ntb.creds, buildOptions...)
+	return ntb.generateSpecSecret(CAPXSecretName(clusterSpec), ntb.creds, buildOptions...)
 }
 
-func capxSecretName(spec *cluster.Spec) string {
+// CAPXSecretName returns the name of the secret containing the credentials for the nutanix prism central and is used by the
+// CAPX controller.
+func CAPXSecretName(spec *cluster.Spec) string {
 	return fmt.Sprintf("capx-%s", spec.Cluster.Name)
 }
 
 // GenerateEKSASpecSecret generates the secret containing the credentials for the nutanix prism central and is used by the
 // EKS-A controller. The secret is named nutanix-credentials.
 func (ntb *TemplateBuilder) GenerateEKSASpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	return ntb.generateSpecSecret(eksaSecretName(clusterSpec), ntb.creds, buildOptions...)
+	return ntb.generateSpecSecret(EKSASecretName(clusterSpec), ntb.creds, buildOptions...)
 }
 
-func eksaSecretName(spec *cluster.Spec) string {
+// EKSASecretName returns the name of the secret containing the credentials for the nutanix prism central and is used by the
+// EKS-Anywhere controller.
+func EKSASecretName(spec *cluster.Spec) string {
 	return spec.NutanixDatacenter.Spec.CredentialRef.Name
 }
 
@@ -187,7 +191,7 @@ func buildTemplateMapCP(
 		"nutanixPEClusterIDType":       controlPlaneMachineSpec.Cluster.Type,
 		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name,
 		"nutanixPEClusterUUID":         controlPlaneMachineSpec.Cluster.UUID,
-		"secretName":                   capxSecretName(clusterSpec),
+		"secretName":                   CAPXSecretName(clusterSpec),
 		"subnetIDType":                 controlPlaneMachineSpec.Subnet.Type,
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,
 		"subnetUUID":                   controlPlaneMachineSpec.Subnet.UUID,

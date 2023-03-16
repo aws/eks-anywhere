@@ -44,8 +44,7 @@ type packageControllerTest struct {
 	*WithT
 	ctx            context.Context
 	kubectl        *mocks.MockKubectlRunner
-	chartInstaller *mocks.MockChartInstaller
-	uninstaller    *mocks.MockChartUninstaller
+	chartManager   *mocks.MockChartManager
 	command        *curatedpackages.PackageControllerClient
 	clusterName    string
 	kubeConfig     string
@@ -64,8 +63,7 @@ type packageControllerTest struct {
 func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 	ctrl := gomock.NewController(t)
 	k := mocks.NewMockKubectlRunner(ctrl)
-	ci := mocks.NewMockChartInstaller(ctrl)
-	del := mocks.NewMockChartUninstaller(ctrl)
+	cm := mocks.NewMockChartManager(ctrl)
 	kubeConfig := "kubeconfig.kubeconfig"
 	chart := &artifactsv1.Image{
 		Name: "test_controller",
@@ -113,12 +111,12 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 	}
 	return []*packageControllerTest{
 		{
-			WithT:          NewWithT(t),
-			ctx:            context.Background(),
-			kubectl:        k,
-			chartInstaller: ci,
+			WithT:        NewWithT(t),
+			ctx:          context.Background(),
+			kubectl:      k,
+			chartManager: cm,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, del, k, clusterName, kubeConfig, chart, registryMirror,
+				cm, k, clusterName, kubeConfig, chart, registryMirror,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
 				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
@@ -140,12 +138,12 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			wantValueFile:  "testdata/values_test.yaml",
 		},
 		{
-			WithT:          NewWithT(t),
-			ctx:            context.Background(),
-			kubectl:        k,
-			chartInstaller: ci,
+			WithT:        NewWithT(t),
+			ctx:          context.Background(),
+			kubectl:      k,
+			chartManager: cm,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, del, k, clusterName, kubeConfig, chart,
+				cm, k, clusterName, kubeConfig, chart,
 				nil,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
@@ -167,12 +165,12 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
 		},
 		{
-			WithT:          NewWithT(t),
-			ctx:            context.Background(),
-			kubectl:        k,
-			chartInstaller: ci,
+			WithT:        NewWithT(t),
+			ctx:          context.Background(),
+			kubectl:      k,
+			chartManager: cm,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, del, k, clusterName, kubeConfig, chartDev,
+				cm, k, clusterName, kubeConfig, chartDev,
 				nil,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
@@ -194,12 +192,12 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
 		},
 		{
-			WithT:          NewWithT(t),
-			ctx:            context.Background(),
-			kubectl:        k,
-			chartInstaller: ci,
+			WithT:        NewWithT(t),
+			ctx:          context.Background(),
+			kubectl:      k,
+			chartManager: cm,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, del, k, clusterName, kubeConfig, chartStaging,
+				cm, k, clusterName, kubeConfig, chartStaging,
 				nil,
 				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 				curatedpackages.WithEksaRegion(eksaRegion),
@@ -221,12 +219,12 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			wantValueFile:  "testdata/values_empty_registrymirrorsecret.yaml",
 		},
 		{
-			WithT:          NewWithT(t),
-			ctx:            context.Background(),
-			kubectl:        k,
-			chartInstaller: ci,
+			WithT:        NewWithT(t),
+			ctx:          context.Background(),
+			kubectl:      k,
+			chartManager: cm,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, del, k, clusterName, kubeConfig, chart, registryMirrorInsecure,
+				cm, k, clusterName, kubeConfig, chart, registryMirrorInsecure,
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
 			),
@@ -244,12 +242,12 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			wantValueFile:  "testdata/values_empty_awssecret.yaml",
 		},
 		{
-			WithT:          NewWithT(t),
-			ctx:            context.Background(),
-			kubectl:        k,
-			chartInstaller: ci,
+			WithT:        NewWithT(t),
+			ctx:          context.Background(),
+			kubectl:      k,
+			chartManager: cm,
 			command: curatedpackages.NewPackageControllerClient(
-				ci, del, k, clusterName, kubeConfig, chart, nil,
+				cm, k, clusterName, kubeConfig, chart, nil,
 				curatedpackages.WithManagementClusterName(clusterName),
 				curatedpackages.WithValuesFileWriter(writer),
 			),
@@ -286,7 +284,7 @@ func TestEnableSuccess(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -306,7 +304,7 @@ func TestEnableSuccess(t *testing.T) {
 func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion("us-west-2"),
@@ -330,7 +328,7 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		values = append(values, "workloadOnly=true")
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -366,7 +364,7 @@ func getPBCFail(t *testing.T) func(context.Context, string, string, string, stri
 func TestEnableWithProxy(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -400,7 +398,7 @@ func TestEnableWithProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -420,7 +418,7 @@ func TestEnableWithProxy(t *testing.T) {
 func TestEnableWithEmptyProxy(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -451,7 +449,7 @@ func TestEnableWithEmptyProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -485,7 +483,7 @@ func TestEnableFail(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(errors.New("login failed"))
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(errors.New("login failed"))
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -515,7 +513,7 @@ func TestEnableFailNoActiveBundle(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCFail(t)).
@@ -545,7 +543,7 @@ func TestEnableSuccessWhenCronJobFails(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -589,7 +587,7 @@ func TestIsInstalledFalse(t *testing.T) {
 func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -618,7 +616,7 @@ func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -652,7 +650,7 @@ func TestEnableActiveBundleWaitLoops(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCLoops(t, 3)).
@@ -688,7 +686,7 @@ func getPBCLoops(t *testing.T, loops int) func(context.Context, string, string, 
 func TestEnableActiveBundleTimesOut(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -717,7 +715,7 @@ func TestEnableActiveBundleTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCDelay(t, time.Second)).
@@ -734,7 +732,7 @@ func TestEnableActiveBundleTimesOut(t *testing.T) {
 func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -763,7 +761,7 @@ func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -820,7 +818,7 @@ func TestCreateHelmOverrideValuesYamlFail(t *testing.T) {
 func TestCreateHelmOverrideValuesYamlFailWithNoWriter(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 			curatedpackages.WithEksaRegion(tt.eksaRegion),
@@ -846,7 +844,7 @@ func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
 	writer := writermocks.NewMockFileWriter(ctrl)
 	for _, tt := range newPackageControllerTests(t) {
 		tt.command = curatedpackages.NewPackageControllerClient(
-			tt.chartInstaller, tt.uninstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.chartManager, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
 			tt.registryMirror,
 			curatedpackages.WithValuesFileWriter(writer),
 		)
@@ -865,7 +863,7 @@ func TestCreateHelmOverrideValuesYamlFailWithWriteError(t *testing.T) {
 
 func TestGetPackageControllerConfigurationNil(t *testing.T) {
 	g := NewWithT(t)
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, nil, "billy", "", nil, nil)
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil)
 	result, err := sut.GetPackageControllerConfiguration()
 	g.Expect(result).To(Equal(""))
 	g.Expect(err).To(BeNil())
@@ -902,7 +900,7 @@ func TestGetPackageControllerConfigurationAll(t *testing.T) {
 	}
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
 	g := NewWithT(t)
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
 	result, err := sut.GetPackageControllerConfiguration()
 	g.Expect(result).To(Equal(expectedAllValues))
 	g.Expect(err).To(BeNil())
@@ -916,7 +914,7 @@ func TestGetPackageControllerConfigurationNothing(t *testing.T) {
 	}
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
 	result, err := sut.GetPackageControllerConfiguration()
 	g.Expect(result).To(Equal(""))
 	g.Expect(err).To(BeNil())
@@ -934,7 +932,7 @@ func TestGetCuratedPackagesRegistriesDefaultRegion(t *testing.T) {
 	}
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster))
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster))
 	_, _, img := sut.GetCuratedPackagesRegistries()
 	g.Expect(img).To(Equal("783794618700.dkr.ecr.us-west-2.amazonaws.com"))
 }
@@ -951,7 +949,7 @@ func TestGetCuratedPackagesRegistriesCustomRegion(t *testing.T) {
 	}
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster), curatedpackages.WithEksaRegion("test"))
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", chart, nil, curatedpackages.WithClusterSpec(&cluster), curatedpackages.WithEksaRegion("test"))
 	_, _, img := sut.GetCuratedPackagesRegistries()
 	g.Expect(img).To(Equal("783794618700.dkr.ecr.test.amazonaws.com"))
 }
@@ -967,7 +965,7 @@ func TestGetPackageControllerConfigurationError(t *testing.T) {
 	}
 	g := NewWithT(t)
 	cluster := cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: clusterSpec}}}
-	sut := curatedpackages.NewPackageControllerClient(nil, nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
+	sut := curatedpackages.NewPackageControllerClient(nil, nil, "billy", "", nil, nil, curatedpackages.WithClusterSpec(&cluster))
 	_, err := sut.GetPackageControllerConfiguration()
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(err.Error()).To(Equal("invalid environment in specification <AB>"))
@@ -984,10 +982,10 @@ func TestReconcileDeleteGoldenPath(t *testing.T) {
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: nsName}}
 	client := fake.NewClientBuilder().WithRuntimeObjects(ns).Build()
 	ctrl := gomock.NewController(t)
-	deleter := mocks.NewMockChartUninstaller(ctrl)
-	deleter.EXPECT().Delete(ctx, kubeconfig, "eks-anywhere-packages-"+cluster.Name, constants.EksaPackagesName)
+	chartManager := mocks.NewMockChartManager(ctrl)
+	chartManager.EXPECT().Delete(ctx, kubeconfig, "eks-anywhere-packages-"+cluster.Name, constants.EksaPackagesName)
 
-	sut := curatedpackages.NewPackageControllerClient(nil, deleter, nil, "billy", kubeconfig, nil, nil)
+	sut := curatedpackages.NewPackageControllerClient(chartManager, nil, "billy", kubeconfig, nil, nil)
 
 	err := sut.ReconcileDelete(ctx, log, client, cluster)
 	g.Expect(err).To(BeNil())
@@ -1005,10 +1003,10 @@ func TestReconcileDeleteNamespaceErrorHandling(s *testing.T) {
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "eksa-packages-" + cluster.Name}}
 		notFoundErr := apierrors.NewNotFound(schema.GroupResource{}, "NOT FOUND: test error")
 		client.EXPECT().Delete(ctx, ns).Return(notFoundErr)
-		helmDeleter := mocks.NewMockChartUninstaller(ctrl)
-		helmDeleter.EXPECT().Delete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+		chartManager := mocks.NewMockChartManager(ctrl)
+		chartManager.EXPECT().Delete(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
-		sut := curatedpackages.NewPackageControllerClient(nil, helmDeleter, nil, "billy", kubeconfig, nil, nil)
+		sut := curatedpackages.NewPackageControllerClient(chartManager, nil, "billy", kubeconfig, nil, nil)
 
 		err := sut.ReconcileDelete(ctx, log, client, cluster)
 		g.Expect(err).ShouldNot(HaveOccurred())
@@ -1024,9 +1022,9 @@ func TestReconcileDeleteNamespaceErrorHandling(s *testing.T) {
 		ctrl := gomock.NewController(t)
 		client := mocks.NewMockKubeDeleter(ctrl)
 		client.EXPECT().Delete(ctx, gomock.Any()).Return(testErr)
-		helmDeleter := mocks.NewMockChartUninstaller(ctrl)
+		chartManager := mocks.NewMockChartManager(ctrl)
 
-		sut := curatedpackages.NewPackageControllerClient(nil, helmDeleter, nil, "billy", kubeconfig, nil, nil)
+		sut := curatedpackages.NewPackageControllerClient(chartManager, nil, "billy", kubeconfig, nil, nil)
 
 		err := sut.ReconcileDelete(ctx, log, client, cluster)
 		g.Expect(err).Should(HaveOccurred())
@@ -1044,14 +1042,14 @@ func TestReconcileDeleteHelmErrorsHandling(t *testing.T) {
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: nsName}}
 	client := fake.NewClientBuilder().WithRuntimeObjects(ns).Build()
 	ctrl := gomock.NewController(t)
-	deleter := mocks.NewMockChartUninstaller(ctrl)
+	chartManager := mocks.NewMockChartManager(ctrl)
 	// TODO this namespace should no longer be empty, following PR 5081
 	testErr := fmt.Errorf("test error")
-	deleter.EXPECT().
+	chartManager.EXPECT().
 		Delete(ctx, kubeconfig, "eks-anywhere-packages-"+cluster.Name, constants.EksaPackagesName).
 		Return(testErr)
 
-	sut := curatedpackages.NewPackageControllerClient(nil, deleter, nil, "billy", kubeconfig, nil, nil)
+	sut := curatedpackages.NewPackageControllerClient(chartManager, nil, "billy", kubeconfig, nil, nil)
 
 	err := sut.ReconcileDelete(ctx, log, client, cluster)
 	g.Expect(err).Should(HaveOccurred())
@@ -1062,8 +1060,7 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 	log := testr.New(t)
 	ctrl := gomock.NewController(t)
 	k := mocks.NewMockKubectlRunner(ctrl)
-	ci := mocks.NewMockChartInstaller(ctrl)
-	del := mocks.NewMockChartUninstaller(ctrl)
+	cm := mocks.NewMockChartManager(ctrl)
 	kubeConfig := "kubeconfig.kubeconfig"
 	chart := &artifactsv1.Image{
 		Name: "test_controller",
@@ -1076,8 +1073,8 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 		WithT:          NewWithT(t),
 		ctx:            context.Background(),
 		kubectl:        k,
-		chartInstaller: ci,
-		command:        curatedpackages.NewPackageControllerClientFullLifecycle(log, ci, del, k, nil),
+		chartManager:   cm,
+		command:        curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil),
 		clusterName:    clusterName,
 		kubeConfig:     kubeConfig,
 		chart:          chart,
@@ -1100,7 +1097,7 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 		"cronjob.suspend=true",
 	}
 
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-"+clusterName, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
+	tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-"+clusterName, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
 	tt.kubectl.EXPECT().
 		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(getPBCSuccess(t)).
@@ -1124,8 +1121,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 	s.Run("substitutes a region if set", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		k := mocks.NewMockKubectlRunner(ctrl)
-		ci := mocks.NewMockChartInstaller(ctrl)
-		del := mocks.NewMockChartUninstaller(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
 		kubeConfig := "kubeconfig.kubeconfig"
 		chart := &artifactsv1.Image{
 			Name: "test_controller",
@@ -1135,7 +1131,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 		clusterName := "billy"
 		writer, _ := filewriter.NewWriter(clusterName)
 		client := curatedpackages.NewPackageControllerClient(
-			ci, del, k, clusterName, kubeConfig, chart, nil,
+			cm, k, clusterName, kubeConfig, chart, nil,
 			curatedpackages.WithManagementClusterName(clusterName),
 			curatedpackages.WithValuesFileWriter(writer),
 			curatedpackages.WithEksaRegion("testing"),
@@ -1152,8 +1148,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 	s.Run("won't substitute a blank region", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		k := mocks.NewMockKubectlRunner(ctrl)
-		ci := mocks.NewMockChartInstaller(ctrl)
-		del := mocks.NewMockChartUninstaller(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
 		kubeConfig := "kubeconfig.kubeconfig"
 		chart := &artifactsv1.Image{
 			Name: "test_controller",
@@ -1163,7 +1158,7 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 		clusterName := "billy"
 		writer, _ := filewriter.NewWriter(clusterName)
 		client := curatedpackages.NewPackageControllerClient(
-			ci, del, k, clusterName, kubeConfig, chart, nil,
+			cm, k, clusterName, kubeConfig, chart, nil,
 			curatedpackages.WithManagementClusterName(clusterName),
 			curatedpackages.WithValuesFileWriter(writer),
 		)
@@ -1178,19 +1173,46 @@ func TestGetCuratedPackagesRegistries(s *testing.T) {
 }
 
 func TestReconcile(s *testing.T) {
+	s.Run("golden path", func(t *testing.T) {
+		ctx := context.Background()
+		log := testr.New(t)
+		cluster := newReconcileTestCluster()
+		ctrl := gomock.NewController(t)
+		k := mocks.NewMockKubectlRunner(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
+		bundles := createBundle(cluster)
+		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
+		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
+		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: constants.EksaSystemNamespace,
+				Name:      cluster.Name + "-kubeconfig",
+			},
+		}
+		objs := []runtime.Object{cluster, bundles, secret}
+		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+		cm.EXPECT().InstallChart(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
+		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
+		if err != nil {
+			t.Errorf("expected nil error, got %s", err)
+		}
+	})
+
 	s.Run("errors when bundles aren't found", func(t *testing.T) {
 		ctx := context.Background()
 		log := testr.New(t)
 		cluster := newReconcileTestCluster()
 		ctrl := gomock.NewController(t)
 		k := mocks.NewMockKubectlRunner(ctrl)
-		ci := mocks.NewMockChartInstaller(ctrl)
-		del := mocks.NewMockChartUninstaller(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
 
 		objs := []runtime.Object{cluster}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
-		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, ci, del, k, nil)
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
 		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
 		if err == nil || !apierrors.IsNotFound(err) {
 			t.Errorf("expected not found err getting cluster resource, got %s", err)
@@ -1204,15 +1226,14 @@ func TestReconcile(s *testing.T) {
 		cluster.Spec.KubernetesVersion = "non-existent"
 		ctrl := gomock.NewController(t)
 		k := mocks.NewMockKubectlRunner(ctrl)
-		ci := mocks.NewMockChartInstaller(ctrl)
-		del := mocks.NewMockChartUninstaller(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
 		bundles := createBundle(cluster)
 		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
 		bundles.ObjectMeta.Namespace = cluster.Spec.BundlesRef.Namespace
 		objs := []runtime.Object{cluster, bundles}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
-		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, ci, del, k, nil)
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
 		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
 		if err == nil || !strings.Contains(err.Error(), "kubernetes version non-existent") {
 			t.Errorf("expected \"kubernetes version non-existent\" error, got %s", err)
@@ -1225,8 +1246,7 @@ func TestReconcile(s *testing.T) {
 		cluster := newReconcileTestCluster()
 		ctrl := gomock.NewController(t)
 		k := mocks.NewMockKubectlRunner(ctrl)
-		ci := mocks.NewMockChartInstaller(ctrl)
-		del := mocks.NewMockChartUninstaller(ctrl)
+		cm := mocks.NewMockChartManager(ctrl)
 		bundles := createBundle(cluster)
 		bundles.Spec.VersionsBundles[0].KubeVersion = string(cluster.Spec.KubernetesVersion)
 		bundles.ObjectMeta.Name = cluster.Spec.BundlesRef.Name
@@ -1239,9 +1259,9 @@ func TestReconcile(s *testing.T) {
 		}
 		objs := []runtime.Object{cluster, bundles, secret}
 		fakeClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
-		ci.EXPECT().InstallChart(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("test error"))
+		cm.EXPECT().InstallChart(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("test error"))
 
-		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, ci, del, k, nil)
+		pcc := curatedpackages.NewPackageControllerClientFullLifecycle(log, cm, k, nil)
 		err := pcc.Reconcile(ctx, log, fakeClient, cluster)
 		if err == nil || !strings.Contains(err.Error(), "packages client error: test error") {
 			t.Errorf("expected packages client error, got %s", err)

@@ -106,7 +106,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "invalid vcpu sockets",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.VCPUSockets = 0
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "vCPU sockets 0 must be greater than or equal to 1",
 		},
@@ -114,7 +115,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "invalid vcpus per socket",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.VCPUsPerSocket = 0
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "vCPUs per socket 0 must be greater than or equal to 1",
 		},
@@ -122,7 +124,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "memory size less than min required",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.MemorySize = resource.MustParse("100Mi")
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "MemorySize must be greater than or equal to 2048Mi",
 		},
@@ -130,7 +133,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "invalid system size",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.SystemDiskSize = resource.MustParse("100Mi")
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "SystemDiskSize must be greater than or equal to 20Gi",
 		},
@@ -138,7 +142,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "empty cluster name",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.Cluster.Name = nil
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing cluster name",
 		},
@@ -147,7 +152,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.Cluster.Type = anywherev1.NutanixIdentifierUUID
 				machineConf.Spec.Cluster.UUID = nil
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing cluster uuid",
 		},
@@ -155,7 +161,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "invalid cluster identifier type",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.Cluster.Type = "notanidentifier"
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "invalid cluster identifier type",
 		},
@@ -163,7 +170,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "list cluster request failed",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(nil, errors.New("cluster not found"))
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find cluster by name",
 		},
@@ -171,7 +179,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			name: "list cluster request did not find match",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(&v3.ClusterListIntentResponse{}, nil)
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find cluster by name",
 		},
@@ -181,7 +190,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				clusters := fakeClusterList()
 				clusters.Entities = append(clusters.Entities, clusters.Entities[0])
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil)
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "found more than one (2) cluster with name",
 		},
@@ -190,7 +200,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				machineConf.Spec.Subnet.Name = nil
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing subnet name",
 		},
@@ -200,7 +211,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				machineConf.Spec.Subnet.Type = anywherev1.NutanixIdentifierUUID
 				machineConf.Spec.Subnet.UUID = nil
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing subnet uuid",
 		},
@@ -209,7 +221,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				machineConf.Spec.Subnet.Type = "notanidentifier"
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "invalid subnet identifier type",
 		},
@@ -218,7 +231,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(nil, errors.New("subnet not found"))
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find subnet by name",
 		},
@@ -227,7 +241,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(&v3.SubnetListIntentResponse{}, nil)
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find subnet by name",
 		},
@@ -238,7 +253,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				subnets := fakeSubnetList()
 				subnets.Entities = append(subnets.Entities, subnets.Entities[0])
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(subnets, nil)
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "found more than one (2) subnet with name",
 		},
@@ -248,7 +264,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				machineConf.Spec.Image.Name = nil
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing image name",
 		},
@@ -259,7 +276,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				machineConf.Spec.Image.Type = anywherev1.NutanixIdentifierUUID
 				machineConf.Spec.Image.UUID = nil
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing image uuid",
 		},
@@ -269,7 +287,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				machineConf.Spec.Image.Type = "notanidentifier"
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "invalid image identifier type",
 		},
@@ -279,7 +298,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(nil, errors.New("image not found"))
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find image by name",
 		},
@@ -289,7 +309,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(&v3.ImageListIntentResponse{}, nil)
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find image by name",
 		},
@@ -301,7 +322,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				images := fakeImageList()
 				images.Entities = append(images.Entities, images.Entities[0])
 				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil)
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "found more than one (2) image with name",
 		},
@@ -319,7 +341,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil)
 				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
 				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "",
 		},
@@ -333,7 +356,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 
 			mockClient := mocknutanix.NewMockClient(ctrl)
 			validator := tc.setup(machineConfig, mockClient, mockCrypto.NewMockTlsValidator(ctrl), mocknutanix.NewMockRoundTripper(ctrl))
-			err = validator.ValidateMachineConfig(context.Background(), machineConfig)
+			err = validator.ValidateMachineConfig(context.Background(), mockClient, machineConfig)
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
 			} else {
@@ -399,7 +422,8 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	validator := NewValidator(mockClient, mockTLSValidator, mockHTTPClient)
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
 	require.NotNil(t, validator)
 
 	for _, tc := range tests {
@@ -408,7 +432,7 @@ func TestNutanixValidatorValidateDatacenterConfig(t *testing.T) {
 			err := yaml.Unmarshal([]byte(tc.dcConfFile), dcConf)
 			require.NoError(t, err)
 
-			err = validator.ValidateDatacenterConfig(context.Background(), dcConf)
+			err = validator.ValidateDatacenterConfig(context.Background(), clientCache.clients["test"], dcConf)
 			if tc.expectErr {
 				assert.Error(t, err, tc.name)
 			} else {
@@ -442,7 +466,8 @@ func TestNutanixValidatorValidateDatacenterConfigWithInvalidCreds(t *testing.T) 
 	mockTransport.EXPECT().RoundTrip(gomock.Any()).Return(&http.Response{}, nil).AnyTimes()
 
 	mockHTTPClient := &http.Client{Transport: mockTransport}
-	validator := NewValidator(mockClient, mockTLSValidator, mockHTTPClient)
+	clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+	validator := NewValidator(clientCache, mockTLSValidator, mockHTTPClient)
 	require.NotNil(t, validator)
 
 	for _, tc := range tests {
@@ -451,7 +476,7 @@ func TestNutanixValidatorValidateDatacenterConfigWithInvalidCreds(t *testing.T) 
 			err := yaml.Unmarshal([]byte(tc.dcConfFile), dcConf)
 			require.NoError(t, err)
 
-			err = validator.ValidateDatacenterConfig(context.Background(), dcConf)
+			err = validator.ValidateDatacenterConfig(context.Background(), clientCache.clients["test"], dcConf)
 			if tc.expectErr {
 				assert.Error(t, err, tc.name)
 			} else {

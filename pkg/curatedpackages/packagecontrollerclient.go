@@ -41,11 +41,10 @@ const (
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
-	kubeConfig     string
-	chart          *releasev1.Image
-	chartInstaller ChartInstaller
-	// uninstaller of helm charts.
-	uninstaller           ChartUninstaller
+	kubeConfig string
+	chart      *releasev1.Image
+	// chartManager installs and deletes helm charts.
+	chartManager          ChartManager
 	clusterName           string
 	clusterSpec           *v1alpha1.ClusterSpec
 	managementClusterName string
@@ -88,16 +87,21 @@ type ChartUninstaller interface {
 	Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error
 }
 
+// ChartManager installs and uninstalls helm charts.
+type ChartManager interface {
+	ChartInstaller
+	ChartUninstaller
+}
+
 // NewPackageControllerClientFullLifecycle creates a PackageControllerClient
 // for the Full Cluster Lifecycle controller.
 //
 // It differs because the CLI use case has far more information available at
 // instantiation, while the FCL use case has less information at
 // instantiation, and the rest when cluster creation is triggered.
-func NewPackageControllerClientFullLifecycle(logger logr.Logger, chartInstaller ChartInstaller, uninstaller ChartUninstaller, kubectl KubectlRunner, clientBuilder ClientBuilder) *PackageControllerClient {
+func NewPackageControllerClientFullLifecycle(logger logr.Logger, chartManager ChartManager, kubectl KubectlRunner, clientBuilder ClientBuilder) *PackageControllerClient {
 	return &PackageControllerClient{
-		chartInstaller:           chartInstaller,
-		uninstaller:              uninstaller,
+		chartManager:             chartManager,
 		kubectl:                  kubectl,
 		skipWaitForPackageBundle: true,
 		eksaRegion:               eksaDefaultRegion,
@@ -151,13 +155,12 @@ func (pc *PackageControllerClient) EnableFullLifecycle(ctx context.Context, log 
 }
 
 // NewPackageControllerClient instantiates a new instance of PackageControllerClient.
-func NewPackageControllerClient(chartInstaller ChartInstaller, uninstaller ChartUninstaller, kubectl KubectlRunner, clusterName, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartManager ChartManager, kubectl KubectlRunner, clusterName, kubeConfig string, chart *releasev1.Image, registryMirror *registrymirror.RegistryMirror, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		clusterName:    clusterName,
 		chart:          chart,
-		chartInstaller: chartInstaller,
-		uninstaller:    uninstaller,
+		chartManager:   chartManager,
 		kubectl:        kubectl,
 		registryMirror: registryMirror,
 		eksaRegion:     eksaDefaultRegion,
@@ -215,7 +218,7 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 		skipCRDs = true
 	}
 
-	if err := pc.chartInstaller.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, constants.EksaPackagesName, valueFilePath, skipCRDs, values); err != nil {
+	if err := pc.chartManager.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, constants.EksaPackagesName, valueFilePath, skipCRDs, values); err != nil {
 		return err
 	}
 
@@ -510,7 +513,7 @@ func (pc *PackageControllerClient) ReconcileDelete(ctx context.Context, logger l
 	}
 
 	name := "eks-anywhere-packages-" + pc.clusterName
-	if err := pc.uninstaller.Delete(ctx, pc.kubeConfig, name, constants.EksaPackagesName); err != nil {
+	if err := pc.chartManager.Delete(ctx, pc.kubeConfig, name, constants.EksaPackagesName); err != nil {
 		if !strings.Contains(err.Error(), "release: not found") {
 			return err
 		}

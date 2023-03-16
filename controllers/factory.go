@@ -19,6 +19,7 @@ import (
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	cloudstackreconciler "github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 	dockerreconciler "github.com/aws/eks-anywhere/pkg/providers/docker/reconciler"
+	nutanixreconciler "github.com/aws/eks-anywhere/pkg/providers/nutanix/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	tinkerbellreconciler "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/reconciler"
@@ -40,6 +41,7 @@ type Factory struct {
 	tinkerbellClusterReconciler *tinkerbellreconciler.Reconciler
 	snowClusterReconciler       *snowreconciler.Reconciler
 	cloudstackClusterReconciler *cloudstackreconciler.Reconciler
+	nutanixClusterReconciler    *nutanixreconciler.Reconciler
 	cniReconciler               *cnireconciler.Reconciler
 	ipValidator                 *clusters.IPValidator
 	awsIamConfigReconciler      *awsiamconfigreconciler.Reconciler
@@ -220,6 +222,30 @@ func (f *Factory) WithNutanixDatacenterReconciler() *Factory {
 	return f
 }
 
+// withNutanixClusterReconciler adds the NutanixClusterReconciler to the controller factory.
+func (f *Factory) withNutanixClusterReconciler() *Factory {
+	f.dependencyFactory.WithNutanixDefaulter().WithNutanixValidator()
+	f.withTracker().withCNIReconciler().withIPValidator()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.nutanixClusterReconciler != nil {
+			return nil
+		}
+
+		f.nutanixClusterReconciler = nutanixreconciler.New(
+			f.manager.GetClient(),
+			f.deps.NutanixValidator,
+			f.cniReconciler,
+			f.tracker,
+			f.ipValidator,
+		)
+		f.registryBuilder.Add(anywherev1.NutanixDatacenterKind, f.nutanixClusterReconciler)
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) withTracker() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tracker != nil {
@@ -251,6 +277,7 @@ const (
 	vSphereProviderName    = "vsphere"
 	tinkerbellProviderName = "tinkerbell"
 	cloudstackProviderName = "cloudstack"
+	nutanixProviderName    = "nutanix"
 )
 
 func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterctlv1.Provider) *Factory {
@@ -272,6 +299,8 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 			f.withTinkerbellClusterReconciler()
 		case cloudstackProviderName:
 			f.withCloudStackClusterReconciler()
+		case nutanixProviderName:
+			f.withNutanixClusterReconciler()
 		default:
 			f.logger.Info("Found unknown CAPI provider, ignoring", "providerName", p.ProviderName)
 		}
@@ -458,7 +487,7 @@ func (f *Factory) withPackageControllerClient() *Factory {
 		if f.packageControllerClient != nil {
 			return nil
 		}
-		f.packageControllerClient = curatedpackages.NewPackageControllerClientFullLifecycle(f.logger, f.deps.Helm, f.deps.Helm, f.deps.Kubectl, f.tracker)
+		f.packageControllerClient = curatedpackages.NewPackageControllerClientFullLifecycle(f.logger, f.deps.Helm, f.deps.Kubectl, f.tracker)
 		return nil
 	})
 

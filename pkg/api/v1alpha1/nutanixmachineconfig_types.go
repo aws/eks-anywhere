@@ -50,14 +50,16 @@ type NutanixMachineConfigSpec struct {
 }
 
 // SetDefaults sets defaults to NutanixMachineConfig if user has not provided.
-func (c *NutanixMachineConfig) SetDefaults() {
-	setNutanixMachineConfigDefaults(c)
+func (in *NutanixMachineConfig) SetDefaults() {
+	setNutanixMachineConfigDefaults(in)
 }
 
+// PauseReconcile pauses the reconciliation of the NutanixMachineConfig.
 func (in *NutanixMachineConfig) PauseReconcile() {
 	in.Annotations[pausedAnnotation] = "true"
 }
 
+// IsReconcilePaused returns true if the NutanixMachineConfig is paused.
 func (in *NutanixMachineConfig) IsReconcilePaused() bool {
 	if s, ok := in.Annotations[pausedAnnotation]; ok {
 		return s == "true"
@@ -65,10 +67,15 @@ func (in *NutanixMachineConfig) IsReconcilePaused() bool {
 	return false
 }
 
+// SetControlPlane sets the NutanixMachineConfig as a control plane node.
 func (in *NutanixMachineConfig) SetControlPlane() {
+	if in.Annotations == nil {
+		in.Annotations = map[string]string{}
+	}
 	in.Annotations[controlPlaneAnnotation] = "true"
 }
 
+// IsControlPlane returns true if the NutanixMachineConfig is a control plane node.
 func (in *NutanixMachineConfig) IsControlPlane() bool {
 	if s, ok := in.Annotations[controlPlaneAnnotation]; ok {
 		return s == "true"
@@ -76,10 +83,15 @@ func (in *NutanixMachineConfig) IsControlPlane() bool {
 	return false
 }
 
+// SetEtcd sets the NutanixMachineConfig as an etcd node.
 func (in *NutanixMachineConfig) SetEtcd() {
+	if in.Annotations == nil {
+		in.Annotations = map[string]string{}
+	}
 	in.Annotations[etcdAnnotation] = "true"
 }
 
+// IsEtcd returns true if the NutanixMachineConfig is an etcd node.
 func (in *NutanixMachineConfig) IsEtcd() bool {
 	if s, ok := in.Annotations[etcdAnnotation]; ok {
 		return s == "true"
@@ -87,6 +99,7 @@ func (in *NutanixMachineConfig) IsEtcd() bool {
 	return false
 }
 
+// SetManagedBy sets the cluster name that manages the NutanixMachineConfig.
 func (in *NutanixMachineConfig) SetManagedBy(clusterName string) {
 	if in.Annotations == nil {
 		in.Annotations = map[string]string{}
@@ -94,6 +107,7 @@ func (in *NutanixMachineConfig) SetManagedBy(clusterName string) {
 	in.Annotations[managementAnnotation] = clusterName
 }
 
+// IsManaged returns true if the NutanixMachineConfig is managed by a cluster.
 func (in *NutanixMachineConfig) IsManaged() bool {
 	if s, ok := in.Annotations[managementAnnotation]; ok {
 		return s != ""
@@ -101,14 +115,17 @@ func (in *NutanixMachineConfig) IsManaged() bool {
 	return false
 }
 
+// OSFamily returns the OSFamily of the NutanixMachineConfig.
 func (in *NutanixMachineConfig) OSFamily() OSFamily {
 	return in.Spec.OSFamily
 }
 
+// GetNamespace returns the namespace of the NutanixMachineConfig.
 func (in *NutanixMachineConfig) GetNamespace() string {
 	return in.Namespace
 }
 
+// GetName returns the name of the NutanixMachineConfig.
 func (in *NutanixMachineConfig) GetName() string {
 	return in.Name
 }
@@ -148,6 +165,7 @@ type NutanixMachineConfig struct {
 	Status NutanixMachineConfigStatus `json:"status,omitempty"`
 }
 
+// ConvertConfigToConfigGenerateStruct converts the NutanixMachineConfig to NutanixMachineConfigGenerate.
 func (in *NutanixMachineConfig) ConvertConfigToConfigGenerateStruct() *NutanixMachineConfigGenerate {
 	namespace := defaultEksaNamespace
 	if in.Namespace != "" {
@@ -166,8 +184,14 @@ func (in *NutanixMachineConfig) ConvertConfigToConfigGenerateStruct() *NutanixMa
 	return config
 }
 
+// Marshallable returns a Marshallable version of the NutanixMachineConfig.
 func (in *NutanixMachineConfig) Marshallable() Marshallable {
 	return in.ConvertConfigToConfigGenerateStruct()
+}
+
+// Validate validates the NutanixMachineConfig.
+func (in *NutanixMachineConfig) Validate() error {
+	return validateNutanixMachineConfig(in)
 }
 
 // NutanixMachineConfigGenerate is same as NutanixMachineConfig except stripped down for generation of yaml file during
