@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
+	cloudstackreconciler "github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 	dockerreconciler "github.com/aws/eks-anywhere/pkg/providers/docker/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
@@ -38,6 +39,7 @@ type Factory struct {
 	vsphereClusterReconciler    *vspherereconciler.Reconciler
 	tinkerbellClusterReconciler *tinkerbellreconciler.Reconciler
 	snowClusterReconciler       *snowreconciler.Reconciler
+	cloudstackClusterReconciler *cloudstackreconciler.Reconciler
 	cniReconciler               *cnireconciler.Reconciler
 	ipValidator                 *clusters.IPValidator
 	awsIamConfigReconciler      *awsiamconfigreconciler.Reconciler
@@ -248,6 +250,7 @@ const (
 	snowProviderName       = "snow"
 	vSphereProviderName    = "vsphere"
 	tinkerbellProviderName = "tinkerbell"
+	cloudstackProviderName = "cloudstack"
 )
 
 func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterctlv1.Provider) *Factory {
@@ -267,6 +270,8 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 			f.withVSphereClusterReconciler()
 		case tinkerbellProviderName:
 			f.withTinkerbellClusterReconciler()
+		case cloudstackProviderName:
+			f.withCloudStackClusterReconciler()
 		default:
 			f.logger.Info("Found unknown CAPI provider, ignoring", "providerName", p.ProviderName)
 		}
@@ -366,6 +371,23 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 			f.ipValidator,
 		)
 		f.registryBuilder.Add(anywherev1.TinkerbellDatacenterKind, f.tinkerbellClusterReconciler)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withCloudStackClusterReconciler() *Factory {
+	f.withCNIReconciler().withTracker().withIPValidator()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.cloudstackClusterReconciler != nil {
+			return nil
+		}
+
+		f.cloudstackClusterReconciler = cloudstackreconciler.New()
+		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
 
 		return nil
 	})

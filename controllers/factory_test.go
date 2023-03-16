@@ -124,6 +124,10 @@ func TestFactoryBuildClusterReconciler(t *testing.T) {
 		},
 		{
 			Type:         string(clusterctlv1.InfrastructureProviderType),
+			ProviderName: "cloudstack",
+		},
+		{
+			Type:         string(clusterctlv1.InfrastructureProviderType),
 			ProviderName: "unknown-provider",
 		},
 	}
