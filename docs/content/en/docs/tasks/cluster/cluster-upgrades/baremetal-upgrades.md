@@ -216,7 +216,8 @@ Example configuration:
 
 ```bash
 upgradeRolloutStrategy:
-  rollingUpgradeParams:
+  type: RollingUpdate
+  rollingUpdate:
     maxSurge: 1
     maxUnavailable: 0    # only configurable for worker nodes
 ```
@@ -245,8 +246,9 @@ spec:
     machineGroupRef:
       kind: TinkerbellMachineConfig
       name: my-cluster-name-cp
-  upgradeRolloutStrategy:
-      rollingUpgradeParams:
+    upgradeRolloutStrategy:
+      type: RollingUpdate
+      rollingUpdate:
         maxSurge: 1
   datacenterRef:
     kind: TinkerbellDatacenterConfig
@@ -260,8 +262,9 @@ spec:
       kind: TinkerbellMachineConfig
       name: my-cluster-name 
     name: md-0
-  upgradeRolloutStrategy:
-      rollingUpgradeParams:
+    upgradeRolloutStrategy:
+      type: RollingUpdate
+      rollingUpdate:
         maxSurge: 1
         maxUnavailable: 0
 
@@ -272,10 +275,13 @@ spec:
 #### upgradeRolloutStrategy
 Configuration parameters for upgrade strategy.
 
-#### rollingUpgradeParams
-This field accepts configuration parameters for customizing rolling upgrade behavior.
+#### upgradeRolloutStrategy.type
+Type of rollout strategy. Currently only `RollingUpdate` is supported.
 
-#### maxSurge
+#### upgradeRolloutStrategy.rollingUpdate
+Configuration parameters for customizing rolling upgrade behavior.
+
+#### upgradeRolloutStrategy.rollingUpdate.maxSurge
 Default: 1
 
 This can not be 0 if maxUnavailable is 0.
@@ -284,7 +290,7 @@ The maximum number of machines that can be scheduled above the desired number of
 
 Example: When this is set to n, the new worker node group can be scaled up immediately by n when the rolling upgrade starts. Total number of machines in the cluster (old + new) never exceeds (desired number of machines + n). Once scale down happens and old machines are brought down, the new worker node group can be scaled up further ensuring that the total number of machines running at any time does not exceed the desired number of machines + n.
 
-#### maxUnavailable
+#### upgradeRolloutStrategy.rollingUpdate.maxUnavailable
 Default: 0
 
 This can not be 0 if MaxSurge is 0.
