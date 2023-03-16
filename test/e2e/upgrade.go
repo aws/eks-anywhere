@@ -48,6 +48,18 @@ func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, fillers ...api.Cluste
 	test.DeleteCluster()
 }
 
+func runUpgradeFlowForBareMetalWithAPI(test *framework.ClusterE2ETest, fillers ...api.ClusterConfigFiller) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.UpgradeClusterWithKubectl(fillers...)
+	test.ValidateClusterState()
+	test.StopIfFailed()
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 func runWorkloadClusterUpgradeFlowAPI(test *framework.MulticlusterE2ETest, filler ...api.ClusterConfigFiller) {
 	test.CreateManagementCluster()
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
