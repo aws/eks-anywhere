@@ -191,7 +191,7 @@ func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, co
 	}
 
 	if config.Spec.Project != nil {
-		if err := v.validateProjectConfig(ctx, *config.Spec.Project); err != nil {
+		if err := v.validateProjectConfig(ctx, client, *config.Spec.Project); err != nil {
 			return err
 		}
 	}
@@ -280,14 +280,14 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, ide
 	return nil
 }
 
-func (v *Validator) validateProjectConfig(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier) error {
+func (v *Validator) validateProjectConfig(ctx context.Context, client Client, identifier anywherev1.NutanixResourceIdentifier) error {
 	switch identifier.Type {
 	case anywherev1.NutanixIdentifierName:
 		if identifier.Name == nil || *identifier.Name == "" {
 			return fmt.Errorf("missing project name")
 		}
 		projectName := *identifier.Name
-		if _, err := findProjectUUIDByName(ctx, v.client, projectName); err != nil {
+		if _, err := findProjectUUIDByName(ctx, client, projectName); err != nil {
 			return fmt.Errorf("failed to find project with name %q: %v", projectName, err)
 		}
 	case anywherev1.NutanixIdentifierUUID:
@@ -295,7 +295,7 @@ func (v *Validator) validateProjectConfig(ctx context.Context, identifier anywhe
 			return fmt.Errorf("missing project uuid")
 		}
 		projectUUID := *identifier.UUID
-		if _, err := v.client.GetProject(ctx, projectUUID); err != nil {
+		if _, err := client.GetProject(ctx, projectUUID); err != nil {
 			return fmt.Errorf("failed to find project with uuid %s: %v", projectUUID, err)
 		}
 	default:

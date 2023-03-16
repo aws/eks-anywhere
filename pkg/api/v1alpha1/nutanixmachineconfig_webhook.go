@@ -56,7 +56,7 @@ func (in *NutanixMachineConfig) ValidateUpdate(old runtime.Object) error {
 	}
 
 	if oldNutanixMachineConfig.IsReconcilePaused() {
-		nutanixmachineconfiglog.Info("NutanixMachineConfig is paused, so allowing create", "name", in.Name)
+		nutanixmachineconfiglog.Info("NutanixMachineConfig is paused, so allowing update", "name", in.Name)
 		if len(allErrs) > 0 {
 			return apierrors.NewInvalid(
 				GroupVersion.WithKind(NutanixMachineConfigKind).GroupKind(),

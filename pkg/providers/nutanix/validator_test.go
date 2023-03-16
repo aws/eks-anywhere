@@ -372,7 +372,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 					Type: anywherev1.NutanixIdentifierName,
 					Name: nil,
 				}
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing project name",
 		},
@@ -386,7 +387,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 					Type: anywherev1.NutanixIdentifierUUID,
 					UUID: nil,
 				}
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "missing project uuid",
 		},
@@ -400,7 +402,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 					Type: "notatype",
 					UUID: nil,
 				}
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "invalid project identifier type",
 		},
@@ -415,7 +418,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 					Type: anywherev1.NutanixIdentifierName,
 					Name: ptr.String("notaproject"),
 				}
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find project by name",
 		},
@@ -430,7 +434,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 					Type: anywherev1.NutanixIdentifierName,
 					Name: ptr.String("notaproject"),
 				}
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "failed to find project by name",
 		},
@@ -447,7 +452,8 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 					Type: anywherev1.NutanixIdentifierName,
 					Name: ptr.String("project"),
 				}
-				return NewValidator(mockClient, validator, &http.Client{Transport: transport})
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
 			},
 			expectedError: "found more than one (2) project with name",
 		},

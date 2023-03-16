@@ -223,6 +223,12 @@ func validateNutanixReferences(c *NutanixMachineConfig) error {
 		return err
 	}
 
+	if c.Spec.Project != nil {
+		if err := validateNutanixResourceReference(c.Spec.Project, "project", c.Name); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
