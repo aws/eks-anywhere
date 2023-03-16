@@ -161,3 +161,81 @@ func setNutanixMachineConfigDefaults(machineConfig *NutanixMachineConfig) {
 		machineConfig.Spec.OSFamily = defaultNutanixOSFamily
 	}
 }
+
+func validateNutanixMachineConfig(c *NutanixMachineConfig) error {
+	if err := validateObjectMeta(c.ObjectMeta); err != nil {
+		return fmt.Errorf("NutanixMachineConfig: %v", err)
+	}
+
+	if err := validateNutanixReferences(c); err != nil {
+		return fmt.Errorf("NutanixMachineConfig: %v", err)
+	}
+
+	if err := validateMinimumNutanixMachineSpecs(c); err != nil {
+		return fmt.Errorf("NutanixMachineConfig: %v", err)
+	}
+
+	if c.Spec.OSFamily != Ubuntu {
+		return fmt.Errorf(
+			"NutanixMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s",
+			c.Spec.OSFamily,
+			Ubuntu,
+		)
+	}
+
+	if len(c.Spec.Users) <= 0 {
+		return fmt.Errorf("NutanixMachineConfig: missing spec.Users: %s", c.Name)
+	}
+
+	return nil
+}
+
+func validateMinimumNutanixMachineSpecs(c *NutanixMachineConfig) error {
+	if c.Spec.VCPUSockets < defaultNutanixVCPUSockets {
+		return fmt.Errorf("NutanixMachineConfig: vcpu sockets must be greater than or equal to %d", defaultNutanixVCPUSockets)
+	}
+
+	if c.Spec.VCPUsPerSocket < defaultNutanixVCPUsPerSocket {
+		return fmt.Errorf("NutanixMachineConfig: vcpu per socket must be greater than or equal to %d", defaultNutanixVCPUsPerSocket)
+	}
+
+	if c.Spec.MemorySize.Cmp(resource.MustParse(defaultNutanixMemorySizeGi)) < 0 {
+		return fmt.Errorf("NutanixMachineConfig: memory size must be greater than or equal to %s", defaultNutanixMemorySizeGi)
+	}
+
+	if c.Spec.SystemDiskSize.Cmp(resource.MustParse(defaultNutanixSystemDiskSizeGi)) < 0 {
+		return fmt.Errorf("NutanixMachineConfig: system disk size must be greater than %s", defaultNutanixSystemDiskSizeGi)
+	}
+
+	return nil
+}
+
+func validateNutanixReferences(c *NutanixMachineConfig) error {
+	if err := validateNutanixResourceReference(&c.Spec.Subnet, "subnet", c.Name); err != nil {
+		return err
+	}
+
+	if err := validateNutanixResourceReference(&c.Spec.Cluster, "cluster", c.Name); err != nil {
+		return err
+	}
+
+	if err := validateNutanixResourceReference(&c.Spec.Image, "image", c.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateNutanixResourceReference(i *NutanixResourceIdentifier, resource string, mcName string) error {
+	if i.Type != NutanixIdentifierName && i.Type != NutanixIdentifierUUID {
+		return fmt.Errorf("NutanixMachineConfig: invalid identifier type for %s: %s", resource, i.Type)
+	}
+
+	if i.Type == NutanixIdentifierName && i.Name == nil {
+		return fmt.Errorf("NutanixMachineConfig: missing %s name: %s", resource, mcName)
+	} else if i.Type == NutanixIdentifierUUID && i.UUID == nil {
+		return fmt.Errorf("NutanixMachineConfig: missing %s UUID: %s", resource, mcName)
+	}
+
+	return nil
+}

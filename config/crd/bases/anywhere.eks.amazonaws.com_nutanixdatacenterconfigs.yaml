@@ -68,7 +68,6 @@ spec:
                 type: boolean
               port:
                 description: Port is the Port of Nutanix Prism Central
-                minimum: 9440
                 type: integer
             required:
             - endpoint
