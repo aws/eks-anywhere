@@ -10,11 +10,9 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 func TestNutanixDatacenterConfigWebhooksValidateCreate(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
@@ -30,7 +28,6 @@ func TestNutanixDatacenterConfigWebhooksValidateCreateReconcilePaused(t *testing
 }
 
 func TestNutanixDatacenterConfigWebhookValidateCreateNoCredentialRef(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	dcConf.Spec.CredentialRef = nil
@@ -38,7 +35,6 @@ func TestNutanixDatacenterConfigWebhookValidateCreateNoCredentialRef(t *testing.
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateCreateValidaitonFailure(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	dcConf.Spec.Endpoint = ""
@@ -46,7 +42,6 @@ func TestNutanixDatacenterConfigWebhooksValidateCreateValidaitonFailure(t *testi
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdate(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
@@ -68,7 +63,6 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateReconcilePaused(t *testing
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateValidationFailure(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
@@ -78,7 +72,6 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateValidationFailure(t *testi
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateInvalidOldObject(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
@@ -86,7 +79,6 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateInvalidOldObject(t *testin
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateUpdateCredentialRefRemoved(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	oldConf := nutanixDatacenterConfig()
 	g.Expect(oldConf.ValidateCreate()).To(Succeed())
@@ -96,7 +88,6 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateCredentialRefRemoved(t *te
 }
 
 func TestNutanixDatacenterConfigWebhooksValidateDelete(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.ValidateCreate()).To(Succeed())
@@ -104,7 +95,6 @@ func TestNutanixDatacenterConfigWebhooksValidateDelete(t *testing.T) {
 }
 
 func TestNutanixDatacenterConfigSetupWebhookWithManager(t *testing.T) {
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	g := NewWithT(t)
 	dcConf := nutanixDatacenterConfig()
 	g.Expect(dcConf.SetupWebhookWithManager(env.Manager())).To(Succeed())
