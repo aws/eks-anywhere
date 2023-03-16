@@ -259,18 +259,9 @@ The field is optional for Ubuntu and if specified, the size must be no smaller t
 Containers volume device name.
 
 ### containersVolume.type (optional)
-Type of the containers volume.
+Type of the containers volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1`) 
 
-### containersVolume.iops (optional)
-Number of IOPS requested for the disk of the containers volume. Not applicable to all types.
-
-### containersVolume.encrypted (optional)
-Whether the containers volume should be encrypted or not. Default: `false`
-
-### containersVolume.encryptionKey (optional)
-The KMS key to use to encrypt the containers volume. Can be either a KMS key ID or ARN.
-
-If Encrypted is set and this is omitted, the default AWS key will be used. The key must already exist and be accessible by the controller.
+`sbp1` stands for capacity-optimized HDD. `sbg1` is performance-optimized SSD.
 
 ### nonRootVolumes (optional)
 Configuration options for the non root storage volumes.
@@ -282,18 +273,9 @@ Non root volume device name. Must be specified and cannot have prefix "/dev/sda"
 Size of the storage device for the non root volume. Must be no smaller than 8 Gi.
 
 ### nonRootVolumes[0].type (optional)
-Type of the non root volume.
+Type of the non root volume. Permitted values: `sbp1`, `sbg1`. (Default: `sbp1`) 
 
-### nonRootVolumes[0].iops (optional)
-Number of IOPS requested for the disk of the non root volume. Not applicable to all types.
-
-### nonRootVolumes[0].encrypted (optional)
-Whether the non root volume should be encrypted or not. Default: `false`
-
-### nonRootVolumes[0].encryptionKey (optional)
-The KMS key to use to encrypt the non root volume. Can be either a KMS key ID or ARN.
-
-If Encrypted is set and this is omitted, the default AWS key will be used. The key must already exist and be accessible by the controller.
+`sbp1` stands for capacity-optimized HDD. `sbg1` is performance-optimized SSD.
 
 ## SnowIPPool Fields
 
