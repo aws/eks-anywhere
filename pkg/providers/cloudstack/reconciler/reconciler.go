@@ -10,10 +10,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
-// Reconciler for CloudStack
+// Reconciler for CloudStack.
 type Reconciler struct{}
 
-// New defines a new CloudStack reconciler
+// New defines a new CloudStack reconciler.
 func New() *Reconciler {
 	return &Reconciler{}
 }
