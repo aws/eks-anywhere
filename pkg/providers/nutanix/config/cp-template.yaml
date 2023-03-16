@@ -185,6 +185,17 @@ spec:
           # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
           #cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -194,6 +205,17 @@ spec:
           anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
 {{- end }}
         name: "{{`{{ ds.meta_data.hostname }}`}}"
     users:
@@ -240,7 +262,7 @@ spec:
 {{ else if (eq .imageIDType "uuid") }}
         type: uuid
         uuid: "{{.imageUUID}}"
-{{ end }}
+{{- end }}
       cluster:
 {{- if (eq .nutanixPEClusterIDType "name") }}
         type: name
@@ -248,7 +270,7 @@ spec:
 {{- else if (eq .nutanixPEClusterIDType "uuid") }}
         type: uuid
         uuid: "{{.nutanixPEClusterUUID}}"
-{{ end }}
+{{- end }}
       subnet:
 {{- if (eq .subnetIDType "name") }}
         - type: name
