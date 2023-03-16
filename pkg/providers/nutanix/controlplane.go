@@ -51,17 +51,12 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 	ndcs := spec.NutanixDatacenter.Spec
 	machineConfigs := spec.NutanixMachineConfigs
 	controlPlaneMachineSpec, etcdMachineSpec := getControlPlaneMachineSpecs(machineConfigs, &spec.Cluster.Spec.ControlPlaneConfiguration, spec.Cluster.Spec.ExternalEtcdConfiguration)
-
-	wnmcs := make(map[string]v1alpha1.NutanixMachineConfigSpec)
 	for _, machineConfig := range machineConfigs {
 		machineConfig.SetDefaults()
 	}
 
 	creds := GetCredsFromEnv()
-	templateBuilder := NewNutanixTemplateBuilder(&ndcs, controlPlaneMachineSpec, etcdMachineSpec, wnmcs, creds, time.Now)
-	for _, workerNodeGroupConfiguration := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
-	}
+	templateBuilder := NewNutanixTemplateBuilder(&ndcs, controlPlaneMachineSpec, etcdMachineSpec, nil, creds, time.Now)
 
 	controlPlaneYaml, err := generateControlPlaneYAML(templateBuilder, spec)
 	if err != nil {

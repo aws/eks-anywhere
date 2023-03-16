@@ -30,7 +30,6 @@ type (
 func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*Workers, error) {
 	ndcs := spec.NutanixDatacenter.Spec
 	machineConfigs := spec.NutanixMachineConfigs
-	controlPlaneMachineSpec, etcdMachineSpec := getControlPlaneAndEtcdMachineSpecs(spec, machineConfigs)
 
 	wnmcs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(spec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, machineConfig := range machineConfigs {
@@ -38,8 +37,7 @@ func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Clie
 	}
 
 	creds := GetCredsFromEnv()
-	templateBuilder := NewNutanixTemplateBuilder(&ndcs, controlPlaneMachineSpec, etcdMachineSpec, wnmcs, creds, time.Now)
-
+	templateBuilder := NewNutanixTemplateBuilder(&ndcs, nil, nil, wnmcs, creds, time.Now)
 	workloadTemplateNames, kubeadmconfigTemplateNames := getTemplateNames(spec, templateBuilder, machineConfigs)
 
 	workersYaml, err := templateBuilder.GenerateCAPISpecWorkers(spec, workloadTemplateNames, kubeadmconfigTemplateNames)
@@ -57,22 +55,6 @@ func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Clie
 	}
 
 	return workers, nil
-}
-
-func getControlPlaneAndEtcdMachineSpecs(spec *cluster.Spec, machineConfigs map[string]*v1alpha1.NutanixMachineConfig) (*v1alpha1.NutanixMachineConfigSpec, *v1alpha1.NutanixMachineConfigSpec) {
-	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
-
-	if spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &machineConfigs[spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-
-	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		if spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &machineConfigs[spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-		}
-	}
-
-	return controlPlaneMachineSpec, etcdMachineSpec
 }
 
 func getTemplateNames(spec *cluster.Spec, templateBuilder *TemplateBuilder, machineConfigs map[string]*v1alpha1.NutanixMachineConfig) (map[string]string, map[string]string) {

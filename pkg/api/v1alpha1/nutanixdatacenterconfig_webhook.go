@@ -108,6 +108,11 @@ func validateImmutableFieldsNutanixDatacenterConfig(new, old *NutanixDatacenterC
 	var allErrs field.ErrorList
 	specPath := field.NewPath("spec")
 
+	if old.IsReconcilePaused() {
+		nutanixmachineconfiglog.Info("Reconciliation is paused")
+		return nil
+	}
+
 	if new.Spec.Endpoint != old.Spec.Endpoint {
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("endpoint"), "field is immutable"))
 	}
