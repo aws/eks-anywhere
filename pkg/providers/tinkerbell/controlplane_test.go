@@ -9,11 +9,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -150,7 +151,7 @@ func TestControlPlaneSpecRegistryMirrorAuthentication(t *testing.T) {
 	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
 	t.Setenv("REGISTRY_USERNAME", "username")
 	t.Setenv("REGISTRY_PASSWORD", "password")
-	spec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+	spec.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 		Authenticate: true,
 	}
 	cp, err := ControlPlaneSpec(ctx, logger, client, spec)
@@ -160,6 +161,46 @@ func TestControlPlaneSpecRegistryMirrorAuthentication(t *testing.T) {
 	g.Expect(cp.ProviderCluster).To(Equal(tinkerbellCluster()))
 	g.Expect(cp.Secrets).To(Equal(secret()))
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
+}
+
+func TestControlPlaneSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	tests := []struct {
+		name         string
+		mirrorConfig *anywherev1.RegistryMirrorConfiguration
+		files        []bootstrapv1.File
+	}{
+		{
+			name:         "insecure skip verify",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabled(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerify(),
+		},
+		{
+			name:         "insecure skip verify with cacert",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
+			cp, err := ControlPlaneSpec(ctx, logger, client, spec)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(cp.Cluster).To(Equal(capiCluster()))
+			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
+				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, test.RegistryMirrorSudoPreKubeadmCommands()...)
+			})))
+			g.Expect(cp.ProviderCluster).To(Equal(tinkerbellCluster()))
+			g.Expect(cp.Secrets).To(BeNil())
+			g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
+		})
+	}
 }
 
 func tinkerbellCluster() *tinkerbellv1.TinkerbellCluster {
@@ -179,7 +220,7 @@ func tinkerbellCluster() *tinkerbellv1.TinkerbellCluster {
 	}
 }
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
+func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
 	var kcp *controlplanev1.KubeadmControlPlane
 	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -334,6 +375,9 @@ spec:
   version: v1.21.2-eks-1-21-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
 		return nil
+	}
+	for _, opt := range opts {
+		opt(kcp)
 	}
 	return kcp
 }

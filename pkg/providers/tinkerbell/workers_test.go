@@ -14,6 +14,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -151,6 +152,82 @@ func TestWorkersSpecErrorFromClient(t *testing.T) {
 
 	_, err := tinkerbell.WorkersSpec(ctx, logger, client, spec)
 	g.Expect(err).To(HaveOccurred())
+}
+
+func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_tinkerbell_multiple_node_groups.yaml")
+	client := test.NewFakeKubeClient()
+	tests := []struct {
+		name         string
+		mirrorConfig *anywherev1.RegistryMirrorConfiguration
+		files        []bootstrapv1.File
+	}{
+		{
+			name:         "insecure skip verify",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabled(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerify(),
+		},
+		{
+			name:         "insecure skip verify with cacert",
+			mirrorConfig: test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert(),
+			files:        test.RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
+			workers, err := tinkerbell.WorkersSpec(ctx, logger, client, spec)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(workers).NotTo(BeNil())
+			g.Expect(workers.Groups).To(HaveLen(2))
+			g.Expect(workers.Groups).To(ConsistOf(
+				clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
+						kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorSudoPreKubeadmCommands()...)
+					}),
+					MachineDeployment:       machineDeployment(),
+					ProviderMachineTemplate: machineTemplate(),
+				},
+				clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
+					KubeadmConfigTemplate: kubeadmConfigTemplate(
+						func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-1-1"
+							kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
+							kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorSudoPreKubeadmCommands()...)
+						},
+					),
+					MachineDeployment: machineDeployment(
+						func(md *clusterv1.MachineDeployment) {
+							md.Name = "test-md-1"
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+							md.Spec.Replicas = ptr.Int32(1)
+							md.Labels["pool"] = "md-1"
+							md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
+							md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+								Type: "",
+								RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+									MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
+									MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
+									DeletePolicy:   nil,
+								},
+							}
+						},
+					),
+					ProviderMachineTemplate: machineTemplate(
+						func(tmt *tinkerbellv1.TinkerbellMachineTemplate) {
+							tmt.Name = "test-md-1-1"
+						},
+					),
+				},
+			))
+		})
+	}
 }
 
 func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.MachineDeployment {
