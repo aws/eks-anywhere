@@ -568,6 +568,61 @@ func TestProviderGenerateCAPISpecForCreateWithMirrorAndCertConfig(t *testing.T) 
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_with_cert_md.yaml")
 }
 
+func TestProviderGenerateCAPISpecForCreateWithMirrorConfigInsecureSkipVerify(t *testing.T) {
+	clusterSpecManifest := "cluster_mirror_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = test.RegistryMirrorInsecureSkipVerifyEnabled()
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	validator := givenWildcardValidator(mockCtrl, clusterSpec)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, validator)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	fmt.Println(string(md))
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_config_with_insecure_skip_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_with_insecure_skip_md.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateWithMirrorConfigInsecureSkipVerifyAndCert(t *testing.T) {
+	clusterSpecManifest := "cluster_mirror_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = test.RegistryMirrorInsecureSkipVerifyEnabledAndCACert()
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	validator := givenWildcardValidator(mockCtrl, clusterSpec)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, validator)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_config_with_insecure_skip_and_cert_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_with_insecure_skip_and_cert_md.yaml")
+}
+
 func TestProviderGenerateCAPISpecForCreateWithProxyConfig(t *testing.T) {
 	clusterSpecManifest := "cluster_minimal_proxy.yaml"
 	mockCtrl := gomock.NewController(t)
