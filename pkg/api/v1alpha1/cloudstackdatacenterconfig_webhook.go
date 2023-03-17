@@ -128,22 +128,23 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 	for _, az := range new.Spec.AvailabilityZones {
 		newAzMap[az.Name] = az
 	}
-	atLeastOneAzOverlap := false
+	allAzOverlap := true
 	for _, oldAz := range old.Spec.AvailabilityZones {
 		if newAz, ok := newAzMap[oldAz.Name]; ok {
-			atLeastOneAzOverlap = true
 			if !newAz.Equal(&oldAz) {
 				allErrs = append(
 					allErrs,
 					field.Forbidden(specPath.Child("availabilityZone", oldAz.Name), "availabilityZone is immutable"),
 				)
 			}
+		} else {
+			allAzOverlap = false
 		}
 	}
-	if !atLeastOneAzOverlap {
+	if !allAzOverlap {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "availabilityZone"), new.Spec.AvailabilityZones, "at least one AvailabilityZone must be shared between new and old CloudStackDatacenterConfig specs"),
+			field.Invalid(field.NewPath("spec", "availabilityZone"), new.Spec.AvailabilityZones, "all AvailabilityZones must be shared between new and old CloudStackDatacenterConfig specs"),
 		)
 	}
 
