@@ -7,7 +7,6 @@ type HostOSConfiguration struct {
 	// +optional
 	NTPConfiguration *NTPConfiguration `json:"ntpConfiguration,omitempty"`
 
-	// BottlerocketConfiguration for additional bottlerocket settings
 	// +optional
 	BottlerocketConfiguration *BottlerocketConfiguration `json:"bottlerocketConfiguration,omitempty"`
 }
@@ -27,4 +26,7 @@ type BottlerocketConfiguration struct {
 
 	// Kernel defines the kernel settings for bottlerocket.
 	Kernel *v1beta1.BottlerocketKernelSettings `json:"kernel,omitempty"`
+
+	// Boot defines the boot settings for bottlerocket.
+	Boot *v1beta1.BottlerocketBootSettings `json:"boot,omitempty"`
 }

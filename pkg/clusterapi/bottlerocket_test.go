@@ -244,3 +244,131 @@ func TestSetBottlerocketKernelSettingsInEtcdCluster(t *testing.T) {
 	})
 	g.Expect(got).To(Equal(want))
 }
+
+func TestSetBottlerocketBootSettingsInKubeadmControlPlane(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmControlPlane()
+	want := got.DeepCopy()
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Bottlerocket = &bootstrapv1.BottlerocketSettings{
+		Boot: &bootstrapv1.BottlerocketBootSettings{
+			BootKernelParameters: map[string][]string{
+				"foo": {
+					"abc",
+					"def",
+				},
+			},
+		},
+	}
+	want.Spec.KubeadmConfigSpec.JoinConfiguration.Bottlerocket = &bootstrapv1.BottlerocketSettings{
+		Boot: &bootstrapv1.BottlerocketBootSettings{
+			BootKernelParameters: map[string][]string{
+				"foo": {
+					"abc",
+					"def",
+				},
+			},
+		},
+	}
+
+	clusterapi.SetBottlerocketHostConfigInKubeadmControlPlane(got, &anywherev1.HostOSConfiguration{
+		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
+			Boot: &bootstrapv1.BottlerocketBootSettings{
+				BootKernelParameters: map[string][]string{
+					"foo": {
+						"abc",
+						"def",
+					},
+				},
+			},
+		},
+	})
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketBootSettingsInKubeadmConfigTemplate(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmConfigTemplate()
+	want := got.DeepCopy()
+	want.Spec.Template.Spec.JoinConfiguration.Bottlerocket = &bootstrapv1.BottlerocketSettings{
+		Kernel: &bootstrapv1.BottlerocketKernelSettings{
+			SysctlSettings: map[string]string{
+				"foo": "bar",
+				"abc": "def",
+			},
+		},
+		Boot: &bootstrapv1.BottlerocketBootSettings{
+			BootKernelParameters: map[string][]string{
+				"foo": {
+					"abc",
+					"def",
+				},
+			},
+		},
+	}
+
+	clusterapi.SetBottlerocketHostConfigInKubeadmConfigTemplate(got, &anywherev1.HostOSConfiguration{
+		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
+			Boot: &bootstrapv1.BottlerocketBootSettings{
+				BootKernelParameters: map[string][]string{
+					"foo": {
+						"abc",
+						"def",
+					},
+				},
+			},
+			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+				SysctlSettings: map[string]string{
+					"foo": "bar",
+					"abc": "def",
+				},
+			},
+		},
+	})
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketBootSettingsInEtcdCluster(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantEtcdCluster()
+	got.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
+		EtcdImage:      "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
+		BootstrapImage: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+		PauseImage:     "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+	}
+	want := got.DeepCopy()
+	want.Spec.EtcdadmConfigSpec.BottlerocketConfig.Kernel = &bootstrapv1.BottlerocketKernelSettings{
+		SysctlSettings: map[string]string{
+			"foo": "bar",
+			"abc": "def",
+		},
+	}
+	want.Spec.EtcdadmConfigSpec.BottlerocketConfig.Boot = &bootstrapv1.BottlerocketBootSettings{
+		BootKernelParameters: map[string][]string{
+			"foo": {
+				"abc",
+				"def",
+			},
+		},
+	}
+
+	clusterapi.SetBottlerocketHostConfigInEtcdCluster(got, &anywherev1.HostOSConfiguration{
+		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
+			Boot: &bootstrapv1.BottlerocketBootSettings{
+				BootKernelParameters: map[string][]string{
+					"foo": {
+						"abc",
+						"def",
+					},
+				},
+			},
+			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+				SysctlSettings: map[string]string{
+					"foo": "bar",
+					"abc": "def",
+				},
+			},
+		},
+	})
+
+	g.Expect(got).To(Equal(want))
+}

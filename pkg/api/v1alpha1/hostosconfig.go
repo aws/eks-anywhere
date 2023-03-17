@@ -65,7 +65,11 @@ func validateBotterocketConfig(config *BottlerocketConfiguration, osFamily OSFam
 		return err
 	}
 
-	return validateBottlerocketKernelConfiguration(config.Kernel)
+	if err := validateBottlerocketKernelConfiguration(config.Kernel); err != nil {
+		return err
+	}
+
+	return validateBottlerocketBootSettingsConfiguration(config.Boot)
 }
 
 func validateBottlerocketKubernetesConfig(config *v1beta1.BottlerocketKubernetesSettings) error {
@@ -102,5 +106,19 @@ func validateBottlerocketKernelConfiguration(config *v1beta1.BottlerocketKernelS
 			return errors.New("sysctlSettings key cannot be empty")
 		}
 	}
+	return nil
+}
+
+func validateBottlerocketBootSettingsConfiguration(config *v1beta1.BottlerocketBootSettings) error {
+	if config == nil {
+		return nil
+	}
+
+	for key := range config.BootKernelParameters {
+		if key == "" {
+			return fmt.Errorf("bootKernelParameters key cannot be empty")
+		}
+	}
+
 	return nil
 }

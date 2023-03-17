@@ -2,7 +2,6 @@ package vsphere
 
 import (
 	"fmt"
-	"strings"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -17,7 +16,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"gopkg.in/yaml.v2"
 )
 
 func NewVsphereTemplateBuilder(
@@ -287,6 +285,10 @@ func buildTemplateMapCP(
 					etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel.SysctlSettings != nil {
 					values["etcdKernelSettings"] = etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel.SysctlSettings
 				}
+				if etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot != nil &&
+					etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot.BootKernelParameters != nil {
+					values["etcdBootParameters"] = etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot.BootKernelParameters
+				}
 			}
 		}
 	}
@@ -317,21 +319,9 @@ func buildTemplateMapCP(
 			return nil, err
 		}
 		values["bottlerocketSettings"] = brSettings
-		// if controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration != nil {
-		// 	if controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration.KernelConfiguration != nil {
-		// 		values["cpKernelSettings"], err = mapKernelSettingsToYaml(controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration.KernelConfiguration)
-		// 		if err != nil {
-		// 			return values, err
-		// 		}
-		// 	}
-		// }
 	}
 
 	return values, nil
-}
-
-func GetEtcdBottlerocketSettingsConfig(hostOSConfiguration *anywherev1.HostOSConfiguration) {
-	panic("unimplemented")
 }
 
 func buildTemplateMapMD(
@@ -456,18 +446,4 @@ func initialNamesForWorkers(spec *cluster.Spec) (machineTemplateNames, kubeadmCo
 	}
 
 	return machineTemplateNames, kubeadmConfigTemplateNames
-}
-
-func mapKernelSettingsToYaml(m map[string]string) (string, error) {
-	if len(m) == 0 {
-		return "", nil
-	}
-	b, err := yaml.Marshal(m)
-	if err != nil {
-		return "", fmt.Errorf("marshalling bottlerocket kernel settings: %v", err)
-	}
-	s := string(b)
-	s = strings.TrimSuffix(s, "\n")
-
-	return s, nil
 }

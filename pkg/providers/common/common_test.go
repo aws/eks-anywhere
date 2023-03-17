@@ -37,6 +37,13 @@ const (
   kernel:
     sysctlSettings:
       foo: bar`
+
+	bootKernelConfig = `bottlerocket:
+  boot:
+    bootKernelParameters:
+      foo:
+      - abc
+      - def`
 )
 
 func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
@@ -100,6 +107,20 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 				},
 			},
 			expected: kernelSysctlConfig,
+		},
+		{
+			name: "with boot kernel parameters",
+			config: &v1alpha1.BottlerocketConfiguration{
+				Boot: &v1beta1.BottlerocketBootSettings{
+					BootKernelParameters: map[string][]string{
+						"foo": {
+							"abc",
+							"def",
+						},
+					},
+				},
+			},
+			expected: bootKernelConfig,
 		},
 	}
 	for _, tt := range tests {
