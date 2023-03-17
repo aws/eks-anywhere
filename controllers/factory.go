@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
+	cloudstackreconciler "github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 	dockerreconciler "github.com/aws/eks-anywhere/pkg/providers/docker/reconciler"
 	nutanixreconciler "github.com/aws/eks-anywhere/pkg/providers/nutanix/reconciler"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
@@ -39,6 +40,7 @@ type Factory struct {
 	vsphereClusterReconciler    *vspherereconciler.Reconciler
 	tinkerbellClusterReconciler *tinkerbellreconciler.Reconciler
 	snowClusterReconciler       *snowreconciler.Reconciler
+	cloudstackClusterReconciler *cloudstackreconciler.Reconciler
 	nutanixClusterReconciler    *nutanixreconciler.Reconciler
 	cniReconciler               *cnireconciler.Reconciler
 	ipValidator                 *clusters.IPValidator
@@ -274,6 +276,7 @@ const (
 	snowProviderName       = "snow"
 	vSphereProviderName    = "vsphere"
 	tinkerbellProviderName = "tinkerbell"
+	cloudstackProviderName = "cloudstack"
 	nutanixProviderName    = "nutanix"
 )
 
@@ -294,6 +297,8 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 			f.withVSphereClusterReconciler()
 		case tinkerbellProviderName:
 			f.withTinkerbellClusterReconciler()
+		case cloudstackProviderName:
+			f.withCloudStackClusterReconciler()
 		case nutanixProviderName:
 			f.withNutanixClusterReconciler()
 		default:
@@ -395,6 +400,23 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 			f.ipValidator,
 		)
 		f.registryBuilder.Add(anywherev1.TinkerbellDatacenterKind, f.tinkerbellClusterReconciler)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withCloudStackClusterReconciler() *Factory {
+	f.withCNIReconciler().withTracker().withIPValidator()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.cloudstackClusterReconciler != nil {
+			return nil
+		}
+
+		f.cloudstackClusterReconciler = cloudstackreconciler.New()
+		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
 
 		return nil
 	})
