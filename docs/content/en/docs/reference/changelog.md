@@ -6,7 +6,14 @@ weight: 35
 
 ## Unreleased
 
-## [v0.14.3](https://github.com/aws/eks-anywhere/releases/tag/v0.14.3)
+## [v0.14.4](https://github.com/aws/eks-anywhere/releases/tag/v0.14.4)
+
+### Added
+
+- `--disable-timeout` flag in create and upgrade commands
+- Management resources backup procedure with clusterctl
+
+## [v1.14.3](https://github.com/aws/eks-anywhere/releases/tag/v0.14.3)
 
 ### Added
 
