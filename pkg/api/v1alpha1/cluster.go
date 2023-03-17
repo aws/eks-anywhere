@@ -725,10 +725,10 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify {
 		switch clusterConfig.Spec.DatacenterRef.Kind {
-		case DockerDatacenterKind, NutanixDatacenterKind, VSphereDatacenterKind, SnowDatacenterKind:
+		case DockerDatacenterKind, NutanixDatacenterKind, VSphereDatacenterKind, TinkerbellDatacenterKind, SnowDatacenterKind:
 			break
 		default:
-			return fmt.Errorf("insecureSkipVerify is only supported for docker, nutanix, snow and vsphere providers")
+			return fmt.Errorf("insecureSkipVerify is only supported for docker, nutanix, snow, tinkerbell, and vsphere providers")
 		}
 	}
 
