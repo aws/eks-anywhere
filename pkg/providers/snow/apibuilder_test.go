@@ -622,6 +622,44 @@ var bottlerocketAdditionalSettingsTests = []struct {
 			},
 		},
 	},
+	{
+		name: "with boot kernel settings",
+		settings: &v1alpha1.HostOSConfiguration{
+			BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
+				Boot: &bootstrapv1.BottlerocketBootSettings{
+					BootKernelParameters: map[string][]string{
+						"foo": {
+							"abc",
+							"def",
+						},
+					},
+				},
+			},
+		},
+		wantConfig: &bootstrapv1.BottlerocketSettings{
+			Boot: &bootstrapv1.BottlerocketBootSettings{
+				BootKernelParameters: map[string][]string{
+					"foo": {
+						"abc",
+						"def",
+					},
+				},
+			},
+		},
+	},
+	{
+		name: "with both empty",
+		settings: &v1alpha1.HostOSConfiguration{
+			BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
+				Boot:   &bootstrapv1.BottlerocketBootSettings{},
+				Kernel: &bootstrapv1.BottlerocketKernelSettings{},
+			},
+		},
+		wantConfig: &bootstrapv1.BottlerocketSettings{
+			Boot:   &bootstrapv1.BottlerocketBootSettings{},
+			Kernel: &bootstrapv1.BottlerocketKernelSettings{},
+		},
+	},
 }
 
 func TestKubeadmControlPlaneWithBottlerocketAdditionalSettings(t *testing.T) {
@@ -1050,6 +1088,14 @@ func wantEtcdClusterBottlerocket() *etcdv1.EtcdadmCluster {
 				"foo": "bar",
 			},
 		},
+		Boot: &bootstrapv1.BottlerocketBootSettings{
+			BootKernelParameters: map[string][]string{
+				"foo": {
+					"abc",
+					"def",
+				},
+			},
+		},
 	}
 	return etcd
 }
@@ -1100,6 +1146,14 @@ func TestEtcdadmClusterBottlerocket(t *testing.T) {
 					Kernel: &bootstrapv1.BottlerocketKernelSettings{
 						SysctlSettings: map[string]string{
 							"foo": "bar",
+						},
+					},
+					Boot: &bootstrapv1.BottlerocketBootSettings{
+						BootKernelParameters: map[string][]string{
+							"foo": {
+								"abc",
+								"def",
+							},
 						},
 					},
 				},

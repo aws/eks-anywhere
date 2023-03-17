@@ -184,6 +184,40 @@ func TestValidateHostOSConfig(t *testing.T) {
 			osFamily: Bottlerocket,
 			wantErr:  "sysctlSettings key cannot be empty",
 		},
+		{
+			name: "valid bootSettings config",
+			hostOSConfig: &HostOSConfiguration{
+				BottlerocketConfiguration: &BottlerocketConfiguration{
+					Boot: &v1beta1.BottlerocketBootSettings{
+						BootKernelParameters: map[string][]string{
+							"console": {
+								"tty0",
+								"ttyS0,115200n8",
+							},
+						},
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "",
+		},
+		{
+			name: "invalid bootSettings config",
+			hostOSConfig: &HostOSConfiguration{
+				BottlerocketConfiguration: &BottlerocketConfiguration{
+					Boot: &v1beta1.BottlerocketBootSettings{
+						BootKernelParameters: map[string][]string{
+							"": {
+								"tty0",
+								"ttyS0,115200n8",
+							},
+						},
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "bootKernelParameters key cannot be empty",
+		},
 	}
 
 	for _, tt := range tests {

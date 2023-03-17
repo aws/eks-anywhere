@@ -128,6 +128,13 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.BottlerocketConfiguratio
 			}
 		}
 	}
+	if config.Boot != nil {
+		if config.Boot.BootKernelParameters != nil {
+			b.Boot = &v1beta1.BottlerocketBootSettings{
+				BootKernelParameters: config.Boot.BootKernelParameters,
+			}
+		}
+	}
 
 	brMap := map[string]*v1beta1.BottlerocketSettings{
 		"bottlerocket": b,
