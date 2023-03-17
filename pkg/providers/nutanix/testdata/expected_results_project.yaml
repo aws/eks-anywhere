@@ -1,92 +1,76 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixCluster
 metadata:
-  name: "{{.clusterName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
 spec:
   prismCentral:
-{{- if .nutanixAdditionalTrustBundle }}
-    additionalTrustBundle:
-      kind: String
-      data: |
-{{ .nutanixAdditionalTrustBundle | indent 8 }}
-{{- end }}
-    address: "{{.nutanixEndpoint}}"
-    port: {{.nutanixPort}}
-    insecure: {{.nutanixInsecure}}
+    address: "prism.nutanix.com"
+    port: 9440
+    insecure: false
     credentialRef:
-      name: "{{.secretName}}"
+      name: "capx-eksa-unit-test"
       kind: Secret
   controlPlaneEndpoint:
-    host: "{{.controlPlaneEndpointIp}}"
+    host: "test-ip"
     port: 6443
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   labels:
-    cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
-  name: "{{.clusterName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+    cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
 spec:
   clusterNetwork:
     services:
-      cidrBlocks: {{.serviceCidrs}}
+      cidrBlocks: [10.96.0.0/12]
     pods:
-      cidrBlocks: {{.podCidrs}}
+      cidrBlocks: [192.168.0.0/16]
     serviceDomain: "cluster.local"
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: "{{.clusterName}}"
+    name: "eksa-unit-test"
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: NutanixCluster
-    name: "{{.clusterName}}"
+    name: "eksa-unit-test"
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: "{{.clusterName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
 spec:
-  replicas: {{.controlPlaneReplicas}}
-  version: "{{.kubernetesVersion}}"
+  replicas: 3
+  version: "v1.19.8-eks-1-19-4"
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
-      name: "{{.controlPlaneTemplateName}}"
+      name: "<no value>"
   kubeadmConfigSpec:
     clusterConfiguration:
-      imageRepository: "{{.kubernetesRepository}}"
+      imageRepository: "public.ecr.aws/eks-distro/kubernetes"
       apiServer:
         certSANs:
           - localhost
           - 127.0.0.1
           - 0.0.0.0
-{{- if .apiServerExtraArgs }}
-        extraArgs:
-{{ .apiServerExtraArgs.ToYaml | indent 10 }}
-{{- end }}
       controllerManager:
         extraArgs:
           enable-hostpath-provisioner: "true"
       dns:
-        imageRepository: {{.corednsRepository}}
-        imageTag: {{.corednsVersion}}
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.0-eks-1-19-4
       etcd:
-{{- if .externalEtcd }}
         external:
           endpoints: []
           caFile: "/etc/kubernetes/pki/etcd/ca.crt"
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
-{{- else }}
-        local:
-          imageRepository: {{.etcdRepository}}
-          imageTag: {{.etcdImageTag}}
-{{- end }}
     files:
     - content: |
         apiVersion: v1
@@ -98,7 +82,7 @@ spec:
         spec:
           containers:
             - name: kube-vip
-              image: {{.kubeVipImage}}
+              image: 
               imagePullPolicy: IfNotPresent
               args:
                 - manager
@@ -106,7 +90,7 @@ spec:
                 - name: vip_arp
                   value: "true"
                 - name: address
-                  value: "{{.controlPlaneEndpointIp}}"
+                  value: "test-ip"
                 - name: port
                   value: "6443"
                 - name: vip_cidr
@@ -126,9 +110,9 @@ spec:
                 - name: vip_retryperiod
                   value: "2"
                 - name: svc_enable
-                  value: "{{.kubeVipSvcEnable}}"
+                  value: "false"
                 - name: lb_enable
-                  value: "{{.kubeVipLBEnable}}"
+                  value: "false"
               securityContext:
                 capabilities:
                   add:
@@ -148,36 +132,6 @@ spec:
         status: {}
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
-{{- if .registryCACert }}
-    - content: |
-{{ .registryCACert | indent 8 }}
-      owner: root:root
-      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-{{- end }}
-{{- if .registryMirrorMap }}
-    - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          {{- range $orig, $mirror := .registryMirrorMap }}
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
-            endpoint = ["https://{{ $mirror }}"]
-          {{- end }}
-{{- if or .registryCACert .insecureSkip }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
-{{- if .registryCACert }}
-            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-{{- end }}
-{{- if .insecureSkip }}
-            insecure_skip_verify = {{ .insecureSkip }}
-{{- end }}
-{{- end }}
-{{- if .registryAuth }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
-            username = "{{.registryUsername}}"
-            password = "{{.registryPassword}}"
-{{- end }}
-      owner: root:root
-      path: "/etc/containerd/config_append.toml"
-{{- end }}
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
@@ -192,26 +146,19 @@ spec:
           cloud-provider: external
           read-only-port: "0"
           anonymous-auth: "false"
-{{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
-{{- end }}
-        name: "{{`{{ ds.meta_data.hostname }}`}}"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        name: "{{ ds.meta_data.hostname }}"
     users:
-      - name: "{{.controlPlaneSshUsername }}"
+      - name: "mySshUsername"
         lockPassword: false
         sudo: ALL=(ALL) NOPASSWD:ALL
         sshAuthorizedKeys:
-          - "{{.controlPlaneSshAuthorizedKey}}"
+          - "mySshAuthorizedKey"
     preKubeadmCommands:
-{{- if and .registryMirrorMap }}
-      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
-      - sudo systemctl daemon-reload
-      - sudo systemctl restart containerd
-{{- end }}
-      - hostnamectl set-hostname "{{`{{ ds.meta_data.hostname }}`}}"
+      - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >> /etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >> /etc/hosts
       # This section should be removed once these packages are added to the image builder process
       - apt update
       - apt install -y nfs-common open-iscsi
@@ -223,60 +170,28 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate
 metadata:
-  name: "{{.controlPlaneTemplateName}}"
-  namespace: "{{.eksaSystemNamespace}}"
+  name: "<no value>"
+  namespace: "eksa-system"
 spec:
   template:
     spec:
-      providerID: "nutanix://{{.clusterName}}-m1"
-      vcpusPerSocket: {{.vcpusPerSocket}}
-      vcpuSockets: {{.vcpuSockets}}
-      memorySize: {{.memorySize}}
-      systemDiskSize: {{.systemDiskSize}}
+      providerID: "nutanix://eksa-unit-test-m1"
+      vcpusPerSocket: 1
+      vcpuSockets: 4
+      memorySize: 8Gi
+      systemDiskSize: 40Gi
       image:
-{{- if (eq .imageIDType "name") }}
         type: name
-        name: "{{.imageName}}"
-{{ else if (eq .imageIDType "uuid") }}
-        type: uuid
-        uuid: "{{.imageUUID}}"
-{{ end }}
+        name: "prism-image"
+
       cluster:
-{{- if (eq .nutanixPEClusterIDType "name") }}
         type: name
-        name: "{{.nutanixPEClusterName}}"
-{{- else if (eq .nutanixPEClusterIDType "uuid") }}
-        type: uuid
-        uuid: "{{.nutanixPEClusterUUID}}"
-{{ end }}
+        name: "prism-cluster"
       subnet:
-{{- if (eq .subnetIDType "name") }}
         - type: name
-          name: "{{.subnetName}}"
-{{- else if (eq .subnetIDType "uuid") }}
-        - type: uuid
-          uuid: "{{.subnetUUID}}"
-{{ end }}
-{{- if .projectIDType}}
+          name: "prism-subnet"
       project:
-{{- if (eq .projectIDType "name") }}
         type: name
-        name: "{{.projectName}}"
-{{- else if (eq .projectIDType "uuid") }}
-        type: uuid
-        uuid: "{{.projectUUID}}"
-{{ end }}
-{{ end }}
+        name: "prism-project"
+
 ---
-{{- if .registryAuth }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: registry-credentials
-  namespace: {{.eksaSystemNamespace}}
-  labels:
-    clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.registryUsername}}"
-  password: "{{.registryPassword}}"
-{{- end }}

@@ -4534,6 +4534,27 @@ spec:
                 x-kubernetes-int-or-string: true
               osFamily:
                 type: string
+              project:
+                description: Project is an optional property that specifies the Prism
+                  Central project so that machine resources can be linked to it. The
+                  project identifier (uuid or name) can be obtained from the Prism
+                  Central console or using the Prism Central API.
+                properties:
+                  name:
+                    description: name is the resource name in the PC
+                    type: string
+                  type:
+                    description: Type is the identifier type to use for this resource.
+                    enum:
+                    - uuid
+                    - name
+                    type: string
+                  uuid:
+                    description: uuid is the UUID of the resource in the PC.
+                    type: string
+                required:
+                - type
+                type: object
               subnet:
                 description: subnet is to identify the cluster's network subnet to
                   use for the Machine's VM The cluster identifier (uuid or name) can

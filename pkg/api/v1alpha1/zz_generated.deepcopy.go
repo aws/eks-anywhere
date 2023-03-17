@@ -1630,6 +1630,11 @@ func (in *NutanixMachineConfigSpec) DeepCopyInto(out *NutanixMachineConfigSpec) 
 	in.Image.DeepCopyInto(&out.Image)
 	in.Cluster.DeepCopyInto(&out.Cluster)
 	in.Subnet.DeepCopyInto(&out.Subnet)
+	if in.Project != nil {
+		in, out := &in.Project, &out.Project
+		*out = new(NutanixResourceIdentifier)
+		(*in).DeepCopyInto(*out)
+	}
 	out.SystemDiskSize = in.SystemDiskSize.DeepCopy()
 }
 

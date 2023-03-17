@@ -69,6 +69,16 @@ spec:
         - type: uuid
           uuid: "{{.subnetUUID}}"
 {{ end }}
+{{- if .projectIDType}}
+      project:
+{{- if (eq .projectIDType "name") }}
+        type: name
+        name: "{{.projectName}}"
+{{- else if (eq .projectIDType "uuid") }}
+        type: uuid
+        uuid: "{{.projectUUID}}"
+{{ end }}
+{{ end }}
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate

@@ -80,6 +80,21 @@ func (mr *MockClientMockRecorder) GetImage(ctx, uuid interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*MockClient)(nil).GetImage), ctx, uuid)
 }
 
+// GetProject mocks base method.
+func (m *MockClient) GetProject(ctx context.Context, uuid string) (*v3.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProject", ctx, uuid)
+	ret0, _ := ret[0].(*v3.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProject indicates an expected call of GetProject.
+func (mr *MockClientMockRecorder) GetProject(ctx, uuid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProject", reflect.TypeOf((*MockClient)(nil).GetProject), ctx, uuid)
+}
+
 // GetSubnet mocks base method.
 func (m *MockClient) GetSubnet(ctx context.Context, uuid string) (*v3.SubnetIntentResponse, error) {
 	m.ctrl.T.Helper()
@@ -123,6 +138,21 @@ func (m *MockClient) ListImage(ctx context.Context, getEntitiesRequest *v3.DSMet
 func (mr *MockClientMockRecorder) ListImage(ctx, getEntitiesRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImage", reflect.TypeOf((*MockClient)(nil).ListImage), ctx, getEntitiesRequest)
+}
+
+// ListProject mocks base method.
+func (m *MockClient) ListProject(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ProjectListResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProject", ctx, getEntitiesRequest)
+	ret0, _ := ret[0].(*v3.ProjectListResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProject indicates an expected call of ListProject.
+func (mr *MockClientMockRecorder) ListProject(ctx, getEntitiesRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProject", reflect.TypeOf((*MockClient)(nil).ListProject), ctx, getEntitiesRequest)
 }
 
 // ListSubnet mocks base method.

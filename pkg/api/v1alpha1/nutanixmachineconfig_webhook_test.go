@@ -34,6 +34,10 @@ func nutanixMachineConfig() *v1alpha1.NutanixMachineConfig {
 				Type: v1alpha1.NutanixIdentifierName,
 				Name: ptr.String("subnet-1"),
 			},
+			Project: &v1alpha1.NutanixResourceIdentifier{
+				Type: v1alpha1.NutanixIdentifierName,
+				Name: ptr.String("project-1"),
+			},
 			SystemDiskSize: resource.MustParse("100Gi"),
 			Users: []v1alpha1.UserConfiguration{
 				{
