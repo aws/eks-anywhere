@@ -47,6 +47,22 @@ func runTinkerbellWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.DeleteTinkerbellManagementCluster()
 }
 
+func runTinkerbellWorkloadClusterAPIFlow(test *framework.MulticlusterE2ETest) {
+	test.CreateTinkerbellManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfig()
+		w.WaitForAvailableHardware()
+		w.PowerOffHardware()
+		w.ApplyClusterManifest()
+		w.WaitForKubeconfig()
+		w.ValidateClusterState()
+		w.DeleteClusterWithKubectl()
+		w.ValidateClusterDelete()
+		w.ValidateHardwareDecommissioned()
+	})
+	test.DeleteTinkerbellManagementCluster()
+}
+
 func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
