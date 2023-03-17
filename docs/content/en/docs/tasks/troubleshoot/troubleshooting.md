@@ -211,40 +211,25 @@ kind delete cluster --name cluster-name
 
 If a cluster upgrade of a management (or self managed) cluster fails or is halted in the middle, you may be left in a
 state where the management resources (CAPI) are still on the KinD bootstrap cluster on the Admin machine. Right now, you will have to
-manually move the management resources from the KinD cluster back to the management cluster.
+manually restore the management resources from the backup directory to the management cluster.
 
-First create a backup:
+Find the backup directory:
+
+From EKS-A v0.14.4 onwards, the CAPI records are persisted to the ${CLUSTER_NAME}/cluster-state-backup-<date> directory location 
+on the eksctl CLI host, where the ${CLUSTER_NAME} is the name of the management cluster.
+
+Restore the management cluster:
 ```shell
-CLUSTER_NAME=squid
-KINDKUBE=${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
 MGMTKUBE=${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-DIRECTORY=backup
-# Substitute the version with whatever version you are using
-CONTAINER=public.ecr.aws/eks-anywhere/cli-tools:v0.12.0-eks-a-19
-
-rm -rf ${DIRECTORY}
-mkdir ${DIRECTORY}
-
-docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} backup \
+DIRECTORY=${CLUSTER_NAME}/cluster-state-backup-<date>
+docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} restore \
+        --directory  ${DIRECTORY} \
         --namespace eksa-system \
-        --kubeconfig $KINDKUBE \
-        --directory ${DIRECTORY}
-
-#After the backup, move the management cluster back
-docker run -i --network host -w $(pwd) -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/$(pwd) --entrypoint clusterctl ${CONTAINER} move \
-        --to-kubeconfig $MGMTKUBE \
-        --namespace eksa-system \
-        --kubeconfig $KINDKUBE
+        --kubeconfig ${MGMTKUBE}
 ```
 
-Before you delete your bootstrap KinD cluster, verify there are no import custom resources left on it:
-```shell
-kubectl get crds | grep eks | while read crd rol
-do
-  echo $crd
-  kubectl get $crd -A
-done
-```
+Delete the kind cluster and run the upgrade command again.
+
 ## Bare Metal troubleshooting
 
 ### Creating new workload cluster hangs or fails
