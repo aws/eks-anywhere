@@ -1,2 +1,5 @@
 documentation:
 - docs/**/*
+
+area/docs:
+- docs/**/*
