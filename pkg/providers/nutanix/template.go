@@ -161,6 +161,7 @@ func buildTemplateMapCP(
 		"controlPlaneReplicas":         clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
 		"controlPlaneSshAuthorizedKey": controlPlaneMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"controlPlaneSshUsername":      controlPlaneMachineSpec.Users[0].Name,
+		"controlPlaneTaints":           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
 		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
@@ -264,6 +265,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,
 		"subnetUUID":             workerNodeGroupMachineSpec.Subnet.UUID,
 		"workerNodeGroupName":    fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
+		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {

@@ -139,7 +139,12 @@ spec:
           # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
           #cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          node-labels: key1-cp=value1-cp,key2-cp=value2-cp
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        taints:
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -147,7 +152,12 @@ spec:
           cloud-provider: external
           read-only-port: "0"
           anonymous-auth: "false"
+          node-labels: key1-cp=value1-cp,key2-cp=value2-cp
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        taints:
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
         name: "{{ ds.meta_data.hostname }}"
     users:
       - name: "mySshUsername"
@@ -191,8 +201,4 @@ spec:
       subnet:
         - type: name
           name: "prism-subnet"
-      project:
-        type: name
-        name: "prism-project"
-
 ---

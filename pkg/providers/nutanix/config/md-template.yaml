@@ -105,6 +105,17 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
+{{- if .workerNodeGroupTaints }}
+          taints:
+ {{- range .workerNodeGroupTaints}}
+            - key: {{ .Key }}
+              value: {{ .Value }}
+              effect: {{ .Effect }}
+ {{- if .TimeAdded }}
+              timeAdded: {{ .TimeAdded }}
+ {{- end }}
+ {{- end }}
+ {{- end }}
           name: '{{`{{ ds.meta_data.hostname }}`}}'
       users:
         - name: "{{.workerSshUsername}}"
