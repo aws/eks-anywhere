@@ -47,38 +47,27 @@ func (c *Catalogue) InsertHardware(hardware *tinkv1alpha1.Hardware) error {
 	return nil
 }
 
-// RemoveHardware removes a specific hardware at a given index from the catalogue.
-func (c *Catalogue) RemoveHardware(hardware *tinkv1alpha1.Hardware, index int) error {
-	if err := c.hardwareIndex.Remove(hardware); err != nil {
-		return err
-	}
-
-	if index >= len(c.hardware) {
-		return fmt.Errorf("index out of range: %d", index)
-	}
-	c.hardware[index] = c.hardware[len(c.hardware)-1]
-	c.hardware[len(c.hardware)-1] = nil
-	c.hardware = c.hardware[:len(c.hardware)-1]
-
-	return nil
-}
-
 // RemoveHardwares removes a slice of hardwares from the catalogue.
 func (c *Catalogue) RemoveHardwares(hardware []tinkv1alpha1.Hardware) error {
-	m := make(map[string]int, len(c.hardware))
-	for i, hw := range c.hardware {
-		m[hw.Name+":"+hw.Namespace] = i
+	m := make(map[string]bool, len(hardware))
+	for _, hw := range hardware {
+		m[hw.Name+":"+hw.Namespace] = true
 	}
 
-	for _, hw := range hardware {
+	diff := []*tinkv1alpha1.Hardware{}
+	for i, hw := range c.hardware {
 		key := hw.Name + ":" + hw.Namespace
-		if _, ok := m[key]; ok {
-			if err := c.RemoveHardware(c.hardware[m[key]], m[key]); err != nil {
+		if _, ok := m[key]; !ok {
+			diff = append(diff, c.hardware[i])
+		} else {
+			if err := c.hardwareIndex.Remove(c.hardware[i]); err != nil {
 				return err
 			}
 			delete(m, key)
 		}
 	}
+
+	c.hardware = diff
 	return nil
 }
 
