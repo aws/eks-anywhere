@@ -1,6 +1,6 @@
 ---
-title: "IAM for Pods configuration"
-linkTitle: "IAM for pods"
+title: "IAM Roles for Service Accounts configuration"
+linkTitle: "IAM Roles for Serivce Accounts"
 weight: 20
 description: >
   EKS Anywhere cluster spec for Pod IAM (IRSA)
@@ -136,7 +136,7 @@ Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as requ
 
 1. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster.
 
-1. Update `amazon-eks-pod-identity-webhook/deploy/auth.yaml` with `OIDC_IAM_ROLE` and other annotations as mentioned in sample below.
+1. Create `my-service-account.yaml` with `OIDC_IAM_ROLE` and other annotations as mentioned in sample below.
     ```yaml
     apiVersion: v1
     kind: ServiceAccount
@@ -157,11 +157,18 @@ Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as requ
         eks.amazonaws.com/token-expiration: "86400"
     ```
 
-1. Run the following command:
+1. Run the following command to apply the manifests for the amazon-eks-pod-identity-webhook. The image used here will be pulled from docker.io. Optionally, the image can be imported into (or proxied through) your private registry. Change the IMAGE= argument here to your private registry if needed.
 
     ```bash
     make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:latest
     ```
+
+2. Finally, apply the `my-service-account.yaml` file to create your service account.
+
+    ```bash
+    kubectl apply -f my-service-account.yaml
+    ```
+
 1. You can validate IRSA by using test steps mentioned [here](https://anywhere.eks.amazonaws.com/docs/workshops/packages/adot/adot_amp_amg/#irsa-set-up-test). Ensure awscli pod is deployed in same namespace of ServiceAccount pod-identity-webhook.
 
 
