@@ -1177,7 +1177,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string, namespace s
 	errCh := make(chan error, 1)
 	okCh := make(chan string, 1)
 
-	time.Sleep(3 * time.Minute)
+	time.Sleep(5 * time.Minute)
 
 	for _, name := range deployments {
 		go func(name string) {
