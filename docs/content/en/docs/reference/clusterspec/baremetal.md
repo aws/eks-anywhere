@@ -279,6 +279,10 @@ ssh -i <private-key-file> <user>@<machine-IP>
 
 The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value.
 
+### hostOSConfig (optional)
+Optional host OS configurations for the EKS Anywhere Kubernetes nodes.
+More information in the [Host OS Configuration]({{< relref "./optional/hostOSConfig.md" >}}) section.
+
 ## Advanced Bare Metal cluster configuration
 
 When you generate a Bare Metal cluster configuration, the `TinkerbellTemplateConfig` is kept internally and not shown in the generated configuration file.

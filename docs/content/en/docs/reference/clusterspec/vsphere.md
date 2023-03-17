@@ -353,6 +353,10 @@ Example:
   - urn:vmomi:InventoryServiceTag:8e0ce079-0675-47d6-8665-16ada4e6dabd:GLOBAL
 ```
 
+### hostOSConfig (optional)
+Optional host OS configurations for the EKS Anywhere Kubernetes nodes.
+More information in the [Host OS Configuration]({{< relref "./optional/hostOSConfig.md" >}}) section.
+
 ## Optional VSphere Credentials 
 Use the following environment variables to configure Cloud Provider and CSI Driver with different credentials.
 
