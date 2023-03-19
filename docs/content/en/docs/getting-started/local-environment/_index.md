@@ -323,6 +323,11 @@ Follow these steps to have your management cluster create and manage separate wo
    * **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 
    * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
+
+   * **kubectl CLI**: The cluster lifecycle feature lets you use `kubectl`, or other tools that that can talk to the Kubernetes API, to create a workload cluster. To use `kubectl`, run:
+      ```bash
+      kubectl apply -f eksa-w01-cluster.yaml 
+      ```
      
    * **eksctl CLI**: Useful for temporary cluster configurations. To create a workload cluster with `eksctl`, do one of the following.
      For a regular cluster create (with internet access), type the following:
