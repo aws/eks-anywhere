@@ -658,12 +658,24 @@ func validateCNIConfig(cniConfig *CNIConfig) error {
 }
 
 func validateCiliumConfig(cilium *CiliumConfig) error {
+	if cilium == nil {
+		return nil
+	}
+
+	if !cilium.IsManaged() {
+		if cilium.PolicyEnforcementMode != "" {
+			return errors.New("when using skipUpgrades for cilium all other fields must be empty")
+		}
+	}
+
 	if cilium.PolicyEnforcementMode == "" {
 		return nil
 	}
+
 	if !validCiliumPolicyEnforcementModes[cilium.PolicyEnforcementMode] {
 		return fmt.Errorf("cilium policyEnforcementMode \"%s\" not supported", cilium.PolicyEnforcementMode)
 	}
+
 	return nil
 }
 
