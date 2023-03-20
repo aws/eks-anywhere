@@ -75,6 +75,11 @@ func UpdateTinkerbellUbuntuTemplate125Var() api.TinkerbellFiller {
 	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu125EnvVar, api.WithTinkerbellOSImageURL)
 }
 
+// UpdateTinkerbellUbuntuTemplate126Var updates the tinkerbell template.
+func UpdateTinkerbellUbuntuTemplate126Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu126EnvVar, api.WithTinkerbellOSImageURL)
+}
+
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
 	cidr := os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)

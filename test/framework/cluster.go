@@ -828,6 +828,11 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 	}
 	e.buildClusterConfigFile()
 
+	if unreleasedK8sVersion == e.ClusterConfig.Cluster.Spec.KubernetesVersion {
+		// Set feature flag for the new k8s version support
+		os.Setenv(features.K8s126SupportEnvVar, "true")
+	}
+
 	e.UpgradeCluster(commandOpts...)
 }
 
