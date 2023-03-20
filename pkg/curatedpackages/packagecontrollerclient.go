@@ -213,6 +213,7 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 	skipCRDs := false
 	chartName := pc.chart.Name
 	if pc.managementClusterName != pc.clusterName {
+		values = append(values, "workloadPackageOnly=true")
 		values = append(values, "workloadOnly=true")
 		chartName = chartName + "-" + pc.clusterName
 		skipCRDs = true
