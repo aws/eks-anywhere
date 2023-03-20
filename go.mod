@@ -211,7 +211,7 @@ replace (
 	// It has already been patched upstream (https://github.com/kubernetes-sigs/cluster-api/pull/6199)
 	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.5
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
 	// These 3 replaces are needed because v0.26.0 needs controller-runtime v0.14
 	// Once the rest of dependencies we have that use controller-runtime
