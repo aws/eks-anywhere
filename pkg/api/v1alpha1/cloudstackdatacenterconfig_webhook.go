@@ -136,9 +136,11 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 					allErrs,
 					field.Forbidden(specPath.Child("availabilityZone", oldAz.Name), "availabilityZone is immutable"),
 				)
+				break
 			}
 		} else {
 			allAzOverlap = false
+			break
 		}
 	}
 	if !allAzOverlap {
