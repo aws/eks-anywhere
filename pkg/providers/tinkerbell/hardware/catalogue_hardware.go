@@ -51,24 +51,28 @@ func (c *Catalogue) InsertHardware(hardware *tinkv1alpha1.Hardware) error {
 func (c *Catalogue) RemoveHardwares(hardware []tinkv1alpha1.Hardware) error {
 	m := make(map[string]bool, len(hardware))
 	for _, hw := range hardware {
-		m[hw.Name+":"+hw.Namespace] = true
+		m[getRemoveKey(hw)] = true
 	}
 
 	diff := []*tinkv1alpha1.Hardware{}
 	for i, hw := range c.hardware {
-		key := hw.Name + ":" + hw.Namespace
+		key := getRemoveKey(*hw)
 		if _, ok := m[key]; !ok {
 			diff = append(diff, c.hardware[i])
 		} else {
 			if err := c.hardwareIndex.Remove(c.hardware[i]); err != nil {
 				return err
 			}
-			delete(m, key)
 		}
 	}
 
 	c.hardware = diff
 	return nil
+}
+
+// getRemoveKey returns key used to search and remove hardware.
+func getRemoveKey(hardware tinkv1alpha1.Hardware) string {
+	return hardware.Name + ":" + hardware.Namespace
 }
 
 // AllHardware retrieves a copy of the catalogued Hardware instances.
