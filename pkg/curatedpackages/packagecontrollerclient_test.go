@@ -328,7 +328,8 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 			values = append(values, "cronjob.suspend=true")
 		}
 		values = append(values, "workloadOnly=true")
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
+		values = append(values, "workloadPackageOnly=true")
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCSuccess(t)).
@@ -1091,6 +1092,7 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 	values := []string{
 		"clusterName=" + clusterName,
 		"workloadOnly=true",
+		"workloadPackageOnly=true",
 		"sourceRegistry=public.ecr.aws/eks-anywhere",
 		"defaultRegistry=public.ecr.aws/eks-anywhere",
 		"defaultImageRegistry=783794618700.dkr.ecr.us-west-2.amazonaws.com",
