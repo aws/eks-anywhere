@@ -71,6 +71,12 @@ spec:
                               allowed between pods. Accepted values are default, always,
                               never.
                             type: string
+                          skipUpgrade:
+                            default: false
+                            description: SkipUpgrade indicicates that Cilium maintenance
+                              should be skipped during upgrades. This can be used
+                              when operators wish to self manage the Cilium installation.
+                            type: boolean
                         type: object
                       kindnetd:
                         type: object

@@ -678,6 +678,12 @@ type CNIConfig struct {
 type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
+
+	// SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
+	// be used when operators wish to self manage the Cilium installation.
+	// +kubebuilder:default=false
+	// +optional
+	SkipUpgrade *bool `json:"skipUpgrade,omitempty"`
 }
 
 type KindnetdConfig struct{}
