@@ -30,19 +30,25 @@ However, see [Building node images]({{< relref "#building-node-images">}}) for i
 
 Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image. You can also get the download URIs for Bottlerocket Baremetal images from the bundle release by running the following command:
 ```bash
-curl -s https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/manifest.yaml | yq ".spec.versionsBundles[].eksD.raw.bottlerocket.uri"
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.raw.bottlerocket.uri"
 ```
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].tinkerbell.tinkerbellStack.hook.vmlinuz.amd.uri"
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].tinkerbell.tinkerbellStack.hook.initramfs.amd.uri"
 ```
 
 ## vSphere artifacts
@@ -51,7 +57,9 @@ https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d4
 
 Bottlerocket vends its VMware variant OVAs using a secure distribution tool called `tuftool`. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket OVA. You can also get the download URIs for Bottlerocket OVAs from the bundle release by running the following command:
 ```bash
-curl -s https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/manifest.yaml | yq ".spec.versionsBundles[].eksD.ova.bottlerocket.uri"
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.ova.bottlerocket.uri"
 ```
 
 #### Bottlerocket Template Tags
@@ -249,9 +257,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-   tar xvf image-builder*.tar.gz
-   sudo cp image-builder /usr/local/bin
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
    cd -
    ```
 1. Get the latest version of `govc`:
@@ -341,12 +351,15 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
-    ```bash
-    cd /tmp
-    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
-      sudo tar -xzC /usr/local/bin ./image-builder
-    cd -
-    ```
+   ```bash
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 
 1. Create an Ubuntu or Red Hat image.
 
@@ -429,13 +442,15 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
-    ```bash
-    cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-    tar xvf image-builder*.tar.gz
-    sudo cp image-builder /usr/local/bin
-    cd -
-    ```
+   ```bash
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
    {
@@ -487,12 +502,14 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    ```
 1. Get `image-builder`:
    ```bash
-    cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-    tar xvf image-builder*.tar.gz
-    sudo cp image-builder /usr/local/bin
-    cd -
-    ```
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters.
    ```json
    {
@@ -561,13 +578,15 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
-    ```bash
-    cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-    tar xvf image-builder*.tar.gz
-    sudo cp image-builder /usr/local/bin
-    cd -
-    ```
+   ```bash
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 1. Create a `nutanix-connection.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
    {
