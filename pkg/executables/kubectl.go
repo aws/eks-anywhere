@@ -92,6 +92,31 @@ type Kubectl struct {
 	Executable
 }
 
+type capiMachinesResponse struct {
+	Items []clusterv1.Machine
+}
+
+// GetCAPIMachines returns all the CAPI machines for the provided clusterName.
+func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]clusterv1.Machine, error) {
+	params := []string{
+		"get", capiMachinesType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
+		"--namespace", constants.EksaSystemNamespace,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting machines: %v", err)
+	}
+
+	response := &capiMachinesResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing get machines response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
 func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
 	params := []string{
 		"get", eksaCloudStackMachineResourceType, "-o", "json", "--kubeconfig",

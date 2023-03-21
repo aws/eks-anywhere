@@ -97,6 +97,64 @@ func newKubectlTest(t *testing.T) *kubectlTest {
 	}
 }
 
+func TestKubectlGetCAPIMachines(t *testing.T) {
+	g := NewWithT(t)
+	k, ctx, cluster, e := newKubectl(t)
+
+	machinesResponseBuffer := bytes.Buffer{}
+	machinesResponseBuffer.WriteString(test.ReadFile(t, "testdata/kubectl_machines_no_conditions.json"))
+
+	tests := []struct {
+		name          string
+		buffer        bytes.Buffer
+		machineLength int
+		execErr       error
+		expectedErr   error
+	}{
+		{
+			name:          "GetCAPIMachines_Success",
+			buffer:        machinesResponseBuffer,
+			machineLength: 2,
+			execErr:       nil,
+			expectedErr:   nil,
+		},
+		{
+			name:          "GetCAPIMachines_Success",
+			buffer:        bytes.Buffer{},
+			machineLength: 0,
+			execErr:       nil,
+			expectedErr:   errors.New("parsing get machines response: unexpected end of JSON input"),
+		},
+		{
+			name:          "GetCAPIMachines_Success",
+			buffer:        bytes.Buffer{},
+			machineLength: 0,
+			execErr:       errors.New("exec error"),
+			expectedErr:   errors.New("getting machines: exec error"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			e.EXPECT().Execute(ctx,
+				"get", "machines.cluster.x-k8s.io",
+				"-o", "json",
+				"--kubeconfig", cluster.KubeconfigFile,
+				"--selector=cluster.x-k8s.io/cluster-name="+cluster.Name,
+				"--namespace", constants.EksaSystemNamespace,
+			).Return(test.buffer, test.execErr)
+
+			machines, err := k.GetCAPIMachines(ctx, cluster, cluster.Name)
+			if test.expectedErr != nil {
+				g.Expect(err).To(MatchError(test.expectedErr))
+			} else {
+				g.Expect(err).To(Not(HaveOccurred()))
+			}
+			g.Expect(len(machines)).To(Equal(test.machineLength))
+		})
+	}
+}
+
 func TestKubectlApplyManifestSuccess(t *testing.T) {
 	spec := "specfile"
 
