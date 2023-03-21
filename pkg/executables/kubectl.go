@@ -54,15 +54,21 @@ const (
 
 var (
 	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
+	capiProvidersResourceType            = fmt.Sprintf("providers.clusterctl.%s", clusterv1.GroupVersion.Group)
+	capiMachinesType                     = fmt.Sprintf("machines.%s", clusterv1.GroupVersion.Group)
+	capiMachineDeploymentsType           = fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group)
+	capiMachineSetsType                  = fmt.Sprintf("machinesets.%s", clusterv1.GroupVersion.Group)
 	eksaClusterResourceType              = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType    = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType       = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	vsphereMachineTemplatesType          = fmt.Sprintf("vspheremachinetemplates.infrastructure.%s", clusterv1.GroupVersion.Group)
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	TinkerbellHardwareResourceType       = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
 	rufioMachineResourceType             = fmt.Sprintf("machines.%s", rufiov1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	cloudstackMachineTemplatesType       = fmt.Sprintf("cloudstackmachinetemplates.infrastructure.%s", clusterv1.GroupVersion.Group)
 	eksaNutanixDatacenterResourceType    = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixMachineResourceType       = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -76,38 +82,14 @@ var (
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 	eksaPackagesType                     = fmt.Sprintf("packages.%s", packagesv1.GroupVersion.Group)
-	capiProvidersResourceType            = fmt.Sprintf("providers.clusterctl.%s", clusterv1.GroupVersion.Group)
+	eksaPackagesBundleControllerType     = fmt.Sprintf("packagebundlecontroller.%s", packagesv1.GroupVersion.Group)
+	eksaPackageBundlesType               = fmt.Sprintf("packagebundles.%s", packagesv1.GroupVersion.Group)
 	kubectlConnectionRefusedRegex        = regexp.MustCompile("The connection to the server .* was refused")
 	kubectlIoTimeoutRegex                = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
 )
 
 type Kubectl struct {
 	Executable
-}
-
-type capiMachinesResponse struct {
-	Items []clusterv1.Machine
-}
-
-// GetCAPIMachines returns all the CAPI machines for the provided clusterName.
-func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]clusterv1.Machine, error) {
-	params := []string{
-		"get", "machines.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
-		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
-		"--namespace", constants.EksaSystemNamespace,
-	}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("getting machines: %v", err)
-	}
-
-	response := &capiMachinesResponse{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("parsing get machines response: %v", err)
-	}
-
-	return response.Items, nil
 }
 
 func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
@@ -344,7 +326,7 @@ func (k *Kubectl) WaitForManagedExternalEtcdNotReady(ctx context.Context, cluste
 }
 
 func (k *Kubectl) WaitForMachineDeploymentReady(ctx context.Context, cluster *types.Cluster, timeout string, machineDeploymentName string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready=true", fmt.Sprintf("machinedeployments.%s/%s", clusterv1.GroupVersion.Group, machineDeploymentName), constants.EksaSystemNamespace)
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready=true", fmt.Sprintf("%s/%s", capiMachineDeploymentsType, machineDeploymentName), constants.EksaSystemNamespace)
 }
 
 // WaitForService blocks until an IP address is assigned.
@@ -643,7 +625,7 @@ func (k *Kubectl) DeleteFluxConfig(ctx context.Context, managementCluster *types
 
 // GetPackageBundleController will retrieve the packagebundlecontroller from eksa-packages namespace and return the object.
 func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile, clusterName string) (packagesv1.PackageBundleController, error) {
-	params := []string{"get", "pbc", clusterName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	params := []string{"get", eksaPackagesBundleControllerType, clusterName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", constants.EksaPackagesName, "--ignore-not-found=true"}
 	stdOut, _ := k.Execute(ctx, params...)
 	response := &packagesv1.PackageBundleController{}
 	err := json.Unmarshal(stdOut.Bytes(), response)
@@ -655,11 +637,11 @@ func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile
 
 // GetPackageBundleList will retrieve the packagebundle list from eksa-packages namespace and return the list.
 func (k *Kubectl) GetPackageBundleList(ctx context.Context, kubeconfigFile string) ([]packagesv1.PackageBundle, error) {
-	err := k.WaitJSONPathLoop(ctx, kubeconfigFile, "5m", "items", "PackageBundle", "packagebundles", "eksa-packages")
+	err := k.WaitJSONPathLoop(ctx, kubeconfigFile, "5m", "items", "PackageBundle", eksaPackageBundlesType, constants.EksaPackagesName)
 	if err != nil {
 		return nil, fmt.Errorf("waiting on package bundle resource to exist %v", err)
 	}
-	params := []string{"get", "packagebundle", "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	params := []string{"get", eksaPackageBundlesType, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", constants.EksaPackagesName, "--ignore-not-found=true"}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("getting package bundle resource %v", err)
@@ -673,7 +655,7 @@ func (k *Kubectl) GetPackageBundleList(ctx context.Context, kubeconfigFile strin
 }
 
 func (k *Kubectl) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
-	params := []string{"delete", "pbc", clusterName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	params := []string{"delete", eksaPackagesBundleControllerType, clusterName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", constants.EksaPackagesName, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("deleting package resources for %s: %v", clusterName, err)
@@ -877,7 +859,7 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 		return nil, err
 	}
 
-	params := []string{"get", "vspheremachinetemplates", machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	params := []string{"get", vsphereMachineTemplatesType, machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
 	buffer, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, err
@@ -895,7 +877,7 @@ func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clus
 		return nil, err
 	}
 
-	params := []string{"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	params := []string{"get", cloudstackMachineTemplatesType, machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
 	buffer, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, err
@@ -909,7 +891,7 @@ func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clus
 
 func (k *Kubectl) MachineTemplateName(ctx context.Context, clusterName string, kubeconfig string, opts ...KubectlOpt) (string, error) {
 	template := "{{.spec.template.spec.infrastructureRef.name}}"
-	params := []string{"get", "MachineDeployment", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
+	params := []string{"get", capiMachineDeploymentsType, fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
 	applyOpts(&params, opts...)
 	buffer, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1031,7 +1013,7 @@ type machinesResponse struct {
 
 func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error) {
 	params := []string{
-		"get", "machines.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"get", capiMachinesType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
 		"--namespace", constants.EksaSystemNamespace,
 	}
@@ -1055,7 +1037,7 @@ type machineSetResponse struct {
 
 func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1.MachineSet, error) {
 	params := []string{
-		"get", "machinesets", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"get", capiMachineSetsType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 		"--selector=cluster.x-k8s.io/deployment-name=" + machineDeploymentName,
 		"--namespace", constants.EksaSystemNamespace,
 	}
@@ -1121,7 +1103,7 @@ type NutanixMachineConfigResponse struct {
 }
 
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
-	params := []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
+	params := []string{"get", "customresourcedefinition", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("getting clusters crd: %v", err)
@@ -1130,7 +1112,7 @@ func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluste
 }
 
 func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error {
-	params := []string{"get", "crd", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}
+	params := []string{"get", "customresourcedefinition", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("getting eksa clusters crd: %v", err)
@@ -1140,7 +1122,7 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 
 func (k *Kubectl) RolloutRestartDaemonSet(ctx context.Context, dsName, dsNamespace, kubeconfig string) error {
 	params := []string{
-		"rollout", "restart", "ds", dsName,
+		"rollout", "restart", "daemonset", dsName,
 		"--kubeconfig", kubeconfig, "--namespace", dsNamespace,
 	}
 	_, err := k.Execute(ctx, params...)
@@ -1369,7 +1351,7 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 }
 
 func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "-o", "json"}
+	params := []string{"get", capiMachineDeploymentsType, workerNodeGroupName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1387,7 +1369,7 @@ func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName 
 
 // GetMachineDeployments retrieves all Machine Deployments.
 func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), "-o", "json"}
+	params := []string{"get", capiMachineDeploymentsType, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -2241,7 +2223,7 @@ func (k *Kubectl) AllTinkerbellHardware(ctx context.Context, kubeconfig string) 
 
 // HasCRD checks if the given CRD exists in the cluster specified by kubeconfig.
 func (k *Kubectl) HasCRD(ctx context.Context, crd, kubeconfig string) (bool, error) {
-	_, err := k.Execute(ctx, "get", "crd", crd, "--kubeconfig", kubeconfig)
+	_, err := k.Execute(ctx, "get", "customresourcedefinition", crd, "--kubeconfig", kubeconfig)
 
 	if err == nil {
 		return true, nil
@@ -2256,7 +2238,7 @@ func (k *Kubectl) HasCRD(ctx context.Context, crd, kubeconfig string) (bool, err
 
 // DeleteCRD removes the given CRD from the cluster specified in kubeconfig.
 func (k *Kubectl) DeleteCRD(ctx context.Context, crd, kubeconfig string) error {
-	_, err := k.Execute(ctx, "delete", "crd", crd, "--kubeconfig", kubeconfig)
+	_, err := k.Execute(ctx, "delete", "customresourcedefinition", crd, "--kubeconfig", kubeconfig)
 	if err != nil && !strings.Contains(err.Error(), "NotFound") {
 		return err
 	}
