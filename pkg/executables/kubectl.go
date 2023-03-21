@@ -1858,7 +1858,7 @@ func (k *Kubectl) CheckProviderExists(ctx context.Context, kubeconfigFile, name,
 		return false, nil
 	}
 
-	params = []string{"get", "provider", "--namespace", namespace, fmt.Sprintf("--field-selector=metadata.name=%s", name), "--kubeconfig", kubeconfigFile}
+	params = []string{"get", "providers.clusterctl.cluster.x-k8s.io", "--namespace", namespace, fmt.Sprintf("--field-selector=metadata.name=%s", name), "--kubeconfig", kubeconfigFile}
 	stdOut, err = k.Execute(ctx, params...)
 	if err != nil {
 		return false, fmt.Errorf("checking whether provider exists: %v", err)
