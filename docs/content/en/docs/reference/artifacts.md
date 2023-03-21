@@ -175,34 +175,61 @@ To use `image-builder`, you must meet the following prerequisites:
 * **Ubuntu only:** cdimage.ubuntu.com (to download Ubuntu server ISOs for Ubuntu image builds)
 
 #### vSphere requirements
-The following vSphere permissions are required to build  OVA images using `image-builder`:
-* Inventory:
-   * Create new
-* Configuration:
-   * Change configuration
-   * Add new disk
-   * Add or remove device
-   * Change memory
-   * Change settings
-   * Set annotation
-* Interaction:
-   * Power on
-   * Power off
-   * Console interaction
-   * Configure CD media
-   * Device connection
-* Snapshot management:
-   * Create snapshot
-* Provisioning
-   * Mark as template
-* Resource Pool
-   * Assign VM to resource pool
-* Datastore
-   * Allocate space
-   * Browse data
-   * Low level file operations
-* Network
-   * Assign network to VM
+
+image-builder uses the Hashicorp [vsphere-iso](https://developer.hashicorp.com/packer/plugins/builders/vsphere/vsphere-iso#packer-builder-for-vmware-vsphere) Packer Builder for building vSphere OVAs.
+
+##### Permissions
+
+Configure a user with a role containing the following permissions.
+
+The role can be configured programmatically with the `govc` command below, or configured in the vSphere UI using the table below as reference.
+
+Note that no matter how the role is created, it must be assigned to the user or user group at the **Global Permissions** level.
+
+Unfortunately there is no API for managing vSphere Global Permissions, so they must be set on the user via the UI under `Administration > Access Control > Global Permissions`.
+
+To generate a role named EKSAImageBuilder with the required privileges via `govc`, run the following:
+```bash
+govc role.create "EKSAImageBuilder" $(curl https://raw.githubusercontent.com/aws/eks-anywhere/main/pkg/config/static/imageBuilderPrivs.json | jq .[] | tr '\n' ' ' | tr -d '"')
+```
+
+If creating a role with these privileges via the UI, refer to the table below.
+
+| Category | UI Privilege | Programmatic Privilege |
+| --- | ----------- | ---- |
+| Content Library | Add library item | ContentLibrary.AddLibraryItem |
+| Content Library | Delete library item | ContentLibrary.DeleteLibraryItem |
+| Content Library | Download files | ContentLibrary.DownloadSession |
+| Content Library | Evict library item | ContentLibrary.EvictLibraryItem |
+| Content Library | Update library item | ContentLibrary.UpdateLibraryItem |
+| Datastore | Allocate space | Datastore.AllocateSpace |
+| Datastore | Browse datastore | Datastore.Browse |
+| Datastore | Low level file operations | Datastore.FileManagement |
+| Network | Assign network | Network.Assign |
+| Resource | Assign virtual machine to resource pool | Resource.AssignVMToPool |
+| vApp | Export | vApp.Export |
+| VirtualMachine | Configuration > Add new disk | VirtualMachine.Config.AddNewDisk |
+| VirtualMachine | Configuration > Add or remove device | VirtualMachine.Config.AddRemoveDevice |
+| VirtualMachine | Configuration > Advanced configuration | VirtualMachine.Config.AdvancedConfiguration |
+| VirtualMachine | Configuration > Change CPU count | VirtualMachine.Config.CPUCount |
+| VirtualMachine | Configuration > Change memory | VirtualMachine.Config.Memory |
+| VirtualMachine | Configuration > Change settings | VirtualMachine.Config.Settings |
+| VirtualMachine | Configuration > Change Resource | VirtualMachine.Config.Resource |
+| VirtualMachine | Configuration > Set annotation | VirtualMachine.Config.Annotation |
+| VirtualMachine | Edit Inventory > Create from existing | VirtualMachine.Inventory.CreateFromExisting |
+| VirtualMachine | Edit Inventory > Create new | VirtualMachine.Inventory.Create |
+| VirtualMachine | Edit Inventory > Remove | VirtualMachine.Inventory.Delete |
+| VirtualMachine | Interaction > Configure CD media | VirtualMachine.Interact.SetCDMedia |
+| VirtualMachine | Interaction > Configure floppy media | VirtualMachine.Interact.SetFloppyMedia |
+| VirtualMachine | Interaction > Connect devices | VirtualMachine.Interact.DeviceConnection |
+| VirtualMachine | Interaction > Inject USB HID scan codes | VirtualMachine.Interact.PutUsbScanCodes |
+| VirtualMachine | Interaction > Power off | VirtualMachine.Interact.PowerOff |
+| VirtualMachine | Interaction > Power on | VirtualMachine.Interact.PowerOn |
+| VirtualMachine | Interaction > Create template from virtual machine | VirtualMachine.Provisioning.CreateTemplateFromVM |
+| VirtualMachine | Interaction > Mark as template | VirtualMachine.Provisioning.MarkAsTemplate |
+| VirtualMachine | Interaction > Mark as virtual machine | VirtualMachine.Provisioning.MarkAsVM |
+| VirtualMachine | State > Create snapshot | VirtualMachine.State.CreateSnapshot |
+
 
 #### CloudStack requirements
 Refer to the [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) doc for required CloudStack user permissions.
