@@ -2464,6 +2464,41 @@ func TestValidateCNIConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "CiliumSkipUpgradeWithoutOtherFields",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						SkipUpgrade: ptr.Bool(true),
+					},
+				},
+			},
+		},
+		{
+			name: "CiliumSkipUpgradeWithOtherFields",
+			wantErr: fmt.Errorf("validating cniConfig: when using skipUpgrades for cilium all " +
+				"other fields must be empty"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						SkipUpgrade:           ptr.Bool(true),
+						PolicyEnforcementMode: "never",
+					},
+				},
+			},
+		},
+		{
+			name: "CiliumSkipUpgradeExplicitFalseWithOtherFields",
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						SkipUpgrade:           ptr.Bool(false),
+						PolicyEnforcementMode: "never",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
