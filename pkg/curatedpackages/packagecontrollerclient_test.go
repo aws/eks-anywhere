@@ -327,7 +327,7 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		values = append(values, "workloadOnly=true")
+		values = append(values, "managementClusterName=mgmt")
 		values = append(values, "workloadPackageOnly=true")
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
 		tt.kubectl.EXPECT().
@@ -1091,7 +1091,7 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 	// determined its chart.
 	values := []string{
 		"clusterName=" + clusterName,
-		"workloadOnly=true",
+		"managementClusterName=mgmt",
 		"workloadPackageOnly=true",
 		"sourceRegistry=public.ecr.aws/eks-anywhere",
 		"defaultRegistry=public.ecr.aws/eks-anywhere",
@@ -1113,7 +1113,9 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
 	}
 
-	err := tt.command.EnableFullLifecycle(tt.ctx, log, clusterName, kubeConfig, chartImage, tt.registryMirror, curatedpackages.WithEksaRegion("us-west-2"))
+	err := tt.command.EnableFullLifecycle(tt.ctx, log, clusterName, kubeConfig, chartImage, tt.registryMirror,
+		curatedpackages.WithEksaRegion("us-west-2"),
+		curatedpackages.WithManagementClusterName("mgmt"))
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
