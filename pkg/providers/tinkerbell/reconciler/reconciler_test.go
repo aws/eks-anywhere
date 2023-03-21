@@ -39,6 +39,20 @@ const (
 	clusterNamespace    = "test-namespace"
 )
 
+func TestReconcilerGenerateSpec(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+	result, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
+	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
+	tt.cleanup()
+}
+
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 
@@ -173,7 +187,6 @@ func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	_, _ = tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -397,8 +410,6 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 	scope.Workers = tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
 		w.Groups[0].MachineDeployment.Spec.Replicas = ptr.Int32(2)
 	})
-	_, err := tt.reconciler().OmitMachineTemplate(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
 	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, scope)
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -539,7 +550,7 @@ func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.Expect(op).To(Equal(reconciler.NoChange))
 	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
 
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
@@ -624,20 +635,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt.cleanup()
 }
 
-func TestReconcilerGenerateSpec(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.createAllObjs()
-	logger := test.NewNullLogger()
-	scope := tt.buildScope()
-	result, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
-	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(result).To(Equal(controller.Result{}))
-	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
-	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
-	tt.cleanup()
-}
-
-func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
+func TestReconcilerDetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -652,7 +650,7 @@ func TestReconciler_DetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt.cleanup()
 }
 
-func TestReconciler_DetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.T) {
+func TestReconcilerDetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -663,11 +661,11 @@ func TestReconciler_DetectOperationExistingWorkerNodeGroupScaleUpdate(t *testing
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.Expect(op).To(Equal(reconciler.NoChange))
 	tt.cleanup()
 }
 
-func TestReconciler_DetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
+func TestReconcilerDetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -688,11 +686,11 @@ func TestReconciler_DetectOperationNewWorkerNodeGroupScaleUpdate(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	op, err := tt.reconciler().DetectOperation(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.Expect(op).To(Equal(reconciler.ScaleOperation))
+	tt.Expect(op).To(Equal(reconciler.NoChange))
 	tt.cleanup()
 }
 
-func TestReconciler_DetectOperationNoChanges(t *testing.T) {
+func TestReconcilerDetectOperationNoChanges(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 
@@ -706,7 +704,7 @@ func TestReconciler_DetectOperationNoChanges(t *testing.T) {
 	tt.cleanup()
 }
 
-func TestReconciler_DetectOperationNewCluster(t *testing.T) {
+func TestReconcilerDetectOperationNewCluster(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
@@ -720,33 +718,10 @@ func TestReconciler_DetectOperationNewCluster(t *testing.T) {
 	tt.cleanup()
 }
 
-func TestReconciler_DetectOperationFail(t *testing.T) {
+func TestReconcilerDetectOperationFail(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
 	_, err := tt.reconciler().DetectOperation(tt.ctx, test.NewNullLogger(), &reconciler.Scope{ClusterSpec: &clusterspec.Spec{Config: &clusterspec.Config{Cluster: &anywherev1.Cluster{}}}})
-	tt.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
-}
-
-func TestWorkerReplicasDiffFail(t *testing.T) {
-	tt := newReconcilerTest(t)
-	tt.client = fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
-	scope := &reconciler.Scope{
-		ClusterSpec: &clusterspec.Spec{
-			Config: &clusterspec.Config{
-				Cluster: &anywherev1.Cluster{
-					Spec: anywherev1.ClusterSpec{
-						WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
-							{
-								Name: "md-0",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	_, err := tt.reconciler().WorkerReplicasDiff(tt.ctx, scope)
 	tt.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
 }
 
