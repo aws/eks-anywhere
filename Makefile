@@ -295,6 +295,10 @@ build-cross-platform: eks-a-cross-platform
 eks-a-tool: ## Build eks-a-tool
 	$(GO) build -o bin/eks-a-tool github.com/aws/eks-anywhere/cmd/eks-a-tool
 
+.PHONY: docgen
+docgen: eks-a-tool ## generate eksctl anywhere commands doc from code
+	bin/eks-a-tool docgen
+
 .PHONY: eks-a-cluster-controller
 eks-a-cluster-controller: ## Build eks-a-cluster-controller
 	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./manager
