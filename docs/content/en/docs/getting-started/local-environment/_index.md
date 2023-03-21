@@ -324,7 +324,7 @@ Follow these steps to have your management cluster create and manage separate wo
 
    * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
-   * **kubectl CLI**: The cluster lifecycle feature lets you use `kubectl`, or other tools that that can talk to the Kubernetes API, to create a workload cluster. To use `kubectl`, run:
+   * **Kubernetes CLI**: The cluster lifecycle feature lets you use `kubectl` to manage a workload cluster. For example:
       ```bash
       kubectl apply -f eksa-w01-cluster.yaml 
       ```

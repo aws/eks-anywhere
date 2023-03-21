@@ -40,7 +40,7 @@ Supported workload cluster creation tools include:
 * `eksctl` CLI
 * Terraform
 * GitOps
-* `kubectl` CLI or similar tools that can communicate with the Kubernetes API
+* `kubectl` CLI to communicate with the Kubernetes API
 
 ## What’s the difference between a management cluster and a bootstrap cluster for EKS Anywhere?
 
