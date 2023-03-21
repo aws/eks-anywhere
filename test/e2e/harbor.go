@@ -20,7 +20,7 @@ func runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test *frame
 			"--set expose.tls.certSource=auto",
 			"--set expose.tls.auto.commonName=localhost",
 			"--set persistence.persistentVolumeClaim.registry.storageClass=local-path",
-			"--set persistence.persistentVolumeClaim.jobservice.storageClass=local-path",
+			"--set persistence.persistentVolumeClaim.jobservice.jobLog.storageClass=local-path",
 			"--set persistence.persistentVolumeClaim.database.storageClass=local-path",
 			"--set persistence.persistentVolumeClaim.redis.storageClass=local-path",
 			"--set persistence.persistentVolumeClaim.trivy.storageClass=local-path",
