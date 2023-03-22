@@ -346,8 +346,7 @@ spec:
                   insecureSkipVerify:
                     description: InsecureSkipVerify skips the registry certificate
                       verification. Only use this solution for isolated testing or
-                      in a tightly controlled, air-gapped environment. Currently only
-                      supported for snow provider
+                      in a tightly controlled, air-gapped environment.
                     type: boolean
                   ociNamespaces:
                     description: OCINamespaces defines the mapping from an upstream

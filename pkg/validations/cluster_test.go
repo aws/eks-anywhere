@@ -15,6 +15,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers"
+	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
@@ -25,6 +27,7 @@ type clusterTest struct {
 	*WithT
 	tlsValidator *mocks.MockTlsValidator
 	kubectl      *mocks.MockKubectlClient
+	provider     *providermocks.MockProvider
 	clusterSpec  *cluster.Spec
 	certContent  string
 	host, port   string
@@ -33,9 +36,11 @@ type clusterTest struct {
 type clusterTestOpt func(t *testing.T, ct *clusterTest)
 
 func newTest(t *testing.T, opts ...clusterTestOpt) *clusterTest {
+	ctrl := gomock.NewController(t)
 	cTest := &clusterTest{
 		WithT:       NewWithT(t),
 		clusterSpec: test.NewClusterSpec(),
+		provider:    providermocks.NewMockProvider(ctrl),
 	}
 	for _, opt := range opts {
 		opt(t, cTest)
@@ -151,6 +156,94 @@ func TestValidateAuthenticationForRegistryMirrorAuthValid(t *testing.T) {
 	t.Setenv("REGISTRY_PASSWORD", "password")
 
 	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateOSForRegistryMirrorNoRegistryMirror(t *testing.T) {
+	tt := newTest(t, withTLS())
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = nil
+	tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(Succeed())
+}
+
+func TestValidateOSForRegistryMirrorInsecureSkipVerifyDisabled(t *testing.T) {
+	tt := newTest(t, withTLS())
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = false
+	tt.provider.EXPECT().MachineConfigs(tt.clusterSpec).Return([]providers.MachineConfig{})
+	tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(Succeed())
+}
+
+func TestValidateOSForRegistryMirrorInsecureSkipVerifyEnabled(t *testing.T) {
+	tests := []struct {
+		name           string
+		mirrorConfig   *anywherev1.RegistryMirrorConfiguration
+		machineConfigs func() []providers.MachineConfig
+		wantErr        string
+	}{
+		{
+			name: "insecureSkipVerify no machine configs",
+			machineConfigs: func() []providers.MachineConfig {
+				return nil
+			},
+			wantErr: "",
+		},
+		{
+			name: "insecureSkipVerify on provider with ubuntu",
+			machineConfigs: func() []providers.MachineConfig {
+				configs := make([]providers.MachineConfig, 0, 1)
+				configs = append(configs, &anywherev1.VSphereMachineConfig{
+					Spec: anywherev1.VSphereMachineConfigSpec{
+						OSFamily: anywherev1.Ubuntu,
+					},
+				})
+				return configs
+			},
+			wantErr: "",
+		},
+		{
+			name: "insecureSkipVerify on provider with bottlerocket",
+			machineConfigs: func() []providers.MachineConfig {
+				configs := make([]providers.MachineConfig, 0, 1)
+				configs = append(configs, &anywherev1.SnowMachineConfig{
+					Spec: anywherev1.SnowMachineConfigSpec{
+						OSFamily: anywherev1.Bottlerocket,
+					},
+				})
+				return configs
+			},
+			wantErr: "InsecureSkipVerify is not supported for bottlerocket",
+		},
+		{
+			name: "insecureSkipVerify on provider with redhat",
+			machineConfigs: func() []providers.MachineConfig {
+				configs := make([]providers.MachineConfig, 0, 1)
+				configs = append(configs, &anywherev1.VSphereMachineConfig{
+					Spec: anywherev1.VSphereMachineConfigSpec{
+						OSFamily: anywherev1.RedHat,
+					},
+				})
+				return configs
+			},
+			wantErr: "",
+		},
+	}
+
+	validationTest := newTest(t, func(t *testing.T, ct *clusterTest) {
+		ct.clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
+			s.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+				InsecureSkipVerify: true,
+			}
+		})
+	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			validationTest.provider.EXPECT().MachineConfigs(validationTest.clusterSpec).Return(test.machineConfigs())
+			err := validations.ValidateOSForRegistryMirror(validationTest.clusterSpec, validationTest.provider)
+			if test.wantErr != "" {
+				validationTest.Expect(err).To(MatchError(test.wantErr))
+			} else {
+				validationTest.Expect(err).To(BeNil())
+			}
+		})
+	}
 }
 
 func TestValidateManagementClusterNameValid(t *testing.T) {
