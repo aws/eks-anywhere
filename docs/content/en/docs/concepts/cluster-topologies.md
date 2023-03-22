@@ -35,7 +35,7 @@ This shows examples of a management cluster that deploys and manages multiple wo
 
 With the management cluster in place, you have a choice of tools for creating, upgrading, and deleting workload clusters.
 Check each provider to see which tools it currently supports.
-Supported workload cluster creation tools include:
+Supported workload cluster creation, upgrade and deletion tools include:
 
 * `eksctl` CLI
 * Terraform
