@@ -214,7 +214,7 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 	chartName := pc.chart.Name
 	if pc.managementClusterName != pc.clusterName {
 		values = append(values, "workloadPackageOnly=true")
-		values = append(values, "workloadOnly=true")
+		values = append(values, "managementClusterName="+pc.managementClusterName)
 		chartName = chartName + "-" + pc.clusterName
 		skipCRDs = true
 	}
@@ -470,7 +470,8 @@ func (pc *PackageControllerClient) Reconcile(ctx context.Context, logger logr.Lo
 
 	// No Kubeconfig is passed. This is intentional. The helm executable will
 	// get that configuration from its environment.
-	if err := pc.EnableFullLifecycle(ctx, logger, cluster.Name, "", image, registry); err != nil {
+	if err := pc.EnableFullLifecycle(ctx, logger, cluster.Name, "", image, registry,
+		WithManagementClusterName(cluster.ManagedBy())); err != nil {
 		return fmt.Errorf("packages client error: %w", err)
 	}
 
