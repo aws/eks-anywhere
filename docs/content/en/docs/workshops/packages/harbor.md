@@ -84,7 +84,7 @@ This use case is to use Harbor to proxy and cache images from a private ECR repo
 
         ![Harbor private ecr user](/images/harbor-private_ecr_user.png)
 
-    Navigate to `Registries` on the left panel, and then click on `NEW ENDPOINT` button. Choose `Aws ECR` as Provider, and enter `private-ecr` as Name, `https://api.ecr.[REGION].amazonaws.com/` as Endpoint URL, use the access key ID part of the generated access key as Access ID, and use the secret access key part of the generated access key as Access Secret. Save it by click on OK.
+    Navigate to `Registries` on the left panel, and then click on `NEW ENDPOINT` button. Choose `Aws ECR` as Provider, and enter `private-ecr` as Name, `https://[ACCOUNT NUMBER].dkr.ecr.us-west-2.amazonaws.com/` as Endpoint URL, use the access key ID part of the generated access key as Access ID, and use the secret access key part of the generated access key as Access Secret. Save it by click on OK.
 
     ![Harbor private ecr proxy](/images/harbor-private_ecr_proxy.png)
 
@@ -159,7 +159,7 @@ This use case is to use Harbor to replicate local images and charts to a private
 
         ![Harbor private ecr user](/images/harbor-private_ecr_user.png)
 
-    Navigate to `Registries` on the left panel, and then click on the `NEW ENDPOINT` button. Choose `Aws ECR` as the Provider, and enter `private-ecr` as the Name, `https://api.ecr.[REGION].amazonaws.com/` as the Endpoint URL, use the access key ID part of the generated access key as Access ID, and use the secret access key part of the generated access key as Access Secret. Save it by clicking on OK.
+    Navigate to `Registries` on the left panel, and then click on the `NEW ENDPOINT` button. Choose `Aws ECR` as the Provider, and enter `private-ecr` as the Name, `https://[ACCOUNT NUMBER].dkr.ecr.us-west-2.amazonaws.com/` as the Endpoint URL, use the access key ID part of the generated access key as Access ID, and use the secret access key part of the generated access key as Access Secret. Save it by clicking on OK.
 
     ![Harbor private ecr proxy](/images/harbor-private_ecr_proxy.png)
 
