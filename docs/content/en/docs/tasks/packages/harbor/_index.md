@@ -88,7 +88,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
    Example command output
    ```
    NAME        PACKAGE   AGE     STATE       CURRENTVERSION             TARGETVERSION        DETAIL
-   my-harbor   harbor    5m34s   installed   v2.5.0                     v2.5.0 (latest)
+   my-harbor   harbor    5m34s   installed   v2.5.1                     v2.5.1 (latest)
    ```
 
    Harbor web portal is accessible at whatever `externalURL` is set to. See [complete configuration options]({{< relref "../../../reference/packagespec/harbor" >}}) for all default values.
@@ -113,13 +113,13 @@ eksctl anywhere apply package -f harbor.yaml
    Example command output
    ```bash
    NAME         VERSION   STATE
-   v1.21-1000   1.21      active (upgrade available)
-   v1.21-1001   1.21      inactive
+   v1.25-120    1.25      active (upgrade available)
+   v1.26-120    1.26      inactive
    ```
 
 1. Upgrade Harbor
    ```bash
-   eksctl anywhere upgrade packages --bundle-version v1.21-1001
+   eksctl anywhere upgrade packages --bundle-version v1.26-120
    ```
 
 1. Check Harbor
@@ -131,7 +131,7 @@ eksctl anywhere apply package -f harbor.yaml
    Example command output
    ```
    NAME        PACKAGE   AGE     STATE       CURRENTVERSION             TARGETVERSION        DETAIL
-   my-harbor   Harbor    14m     installed   v2.5.1                     v2.5.1 (latest)
+   my-harbor   Harbor    14m     installed   v2.7.1                     v2.7.1 (latest)
    ```
 
 ## Uninstall
