@@ -40,7 +40,17 @@ type VersionsBundle struct {
 	KubeDistro *KubeDistro
 }
 
+// EKSD represents an eks-d release.
+type EKSD struct {
+	// Channel is the minor Kubernetes version for the eks-d release (eg. "1.23", "1.24", etc.)
+	Channel string
+	// Number is the monotonically increasing number that distinguishes the different eks-d releases
+	// for the same Kubernetes minor version (channel).
+	Number int
+}
+
 type KubeDistro struct {
+	EKSD                EKSD
 	Kubernetes          VersionedRepository
 	CoreDNS             VersionedRepository
 	Etcd                VersionedRepository
@@ -52,6 +62,7 @@ type KubeDistro struct {
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
 	AwsIamAuthImage     v1alpha1.Image
+	KubeProxy           v1alpha1.Image
 }
 
 func (k *KubeDistro) deepCopy() *KubeDistro {
@@ -115,7 +126,12 @@ func (s *Spec) KubeDistroImages() []v1alpha1.Image {
 }
 
 func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
-	kubeDistro := &KubeDistro{}
+	kubeDistro := &KubeDistro{
+		EKSD: EKSD{
+			Channel: eksd.Spec.Channel,
+			Number:  eksd.Spec.Number,
+		},
+	}
 	assets := make(map[string]*eksdv1alpha1.AssetImage)
 	for _, component := range eksd.Status.Components {
 		for _, asset := range component.Assets {
@@ -136,6 +152,7 @@ func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 		"pause-image":                 &kubeDistro.Pause,
 		"etcd-image":                  &kubeDistro.EtcdImage,
 		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthImage,
+		"kube-proxy-image":            &kubeDistro.KubeProxy,
 	}
 
 	for assetName, image := range kubeDistroComponents {

@@ -217,6 +217,24 @@ func (cor *clusterReconciler) applyTemplates(ctx context.Context, cs *anywherev1
 		fetch, err := cor.Fetch(ctx, resource.GetName(), resource.GetNamespace(), resource.GetKind(), resource.GetAPIVersion())
 		if err == nil {
 			resource.SetResourceVersion(fetch.GetResourceVersion())
+
+			// We want to preserve annotations. It's possible that some CAPI objects have extra annotations
+			// that were added manually to handle difficult upgrade/recovery scenarios and we don't want the
+			// controller to remove them.
+			// Ideally we would use something like server side apply instead of an plain replace, which would
+			// extend this to labels, etc. But given this is a legacy controller and will be removed shortly,
+			// this is the path of least resistance.
+			annotations := fetch.GetAnnotations()
+			if annotations == nil {
+				annotations = make(map[string]string)
+			}
+
+			for k, v := range resource.GetAnnotations() {
+				annotations[k] = v
+			}
+
+			resource.SetAnnotations(annotations)
+
 			if err := cor.ApplyUpdatedTemplate(ctx, resource, dryRun); err != nil {
 				return err
 			}

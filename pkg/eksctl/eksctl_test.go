@@ -1,6 +1,7 @@
 package eksctl_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/pkg/eksctl"
@@ -15,6 +16,7 @@ func TestValidateVersionSuccess(t *testing.T) {
 }
 
 func TestValidateVersionError(t *testing.T) {
+	os.Unsetenv(eksctl.VersionEnvVar)
 	expected := "unable to retrieve version. Please use the 'eksctl anywhere' command to use EKS-A"
 	err := eksctl.ValidateVersion()
 	if err == nil {

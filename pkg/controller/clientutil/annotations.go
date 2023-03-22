@@ -12,3 +12,14 @@ func AddAnnotation(o client.Object, key, value string) {
 	a[key] = value
 	o.SetAnnotations(a)
 }
+
+// AddLabel adds a label to the given object.
+// If the label already exists, it overwrites its value.
+func AddLabel(o client.Object, key, value string) {
+	l := o.GetLabels()
+	if l == nil {
+		l = make(map[string]string, 1)
+	}
+	l[key] = value
+	o.SetLabels(l)
+}

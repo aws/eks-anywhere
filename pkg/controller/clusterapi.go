@@ -46,17 +46,25 @@ func CapiClusterObjectKey(cluster *anywherev1.Cluster) client.ObjectKey {
 // GetKubeadmControlPlane reads a cluster-api KubeadmControlPlane for an eks-a cluster using a kube client
 // If the KubeadmControlPlane is not found, the method returns (nil, nil).
 func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
+	kubeadmControlPlane, err := KubeadmControlPlane(ctx, client, cluster)
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return kubeadmControlPlane, nil
+}
+
+// KubeadmControlPlane reads a cluster-api KubeadmControlPlane for an eks-a cluster using a kube client.
+func KubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
 	kubeadmControlPlaneName := clusterapi.KubeadmControlPlaneName(cluster)
 
 	kubeadmControlPlane := &controlplanev1.KubeadmControlPlane{}
 	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: kubeadmControlPlaneName}
 
-	err := client.Get(ctx, key, kubeadmControlPlane)
-	if apierrors.IsNotFound(err) {
-		return nil, nil
-	}
-
-	if err != nil {
+	if err := client.Get(ctx, key, kubeadmControlPlane); err != nil {
 		return nil, err
 	}
 	return kubeadmControlPlane, nil

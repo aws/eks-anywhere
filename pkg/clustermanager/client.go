@@ -20,15 +20,15 @@ type KubernetesClient interface {
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 }
 
-type client struct {
+type clusterManagerClient struct {
 	ClusterClient
 }
 
-func NewClient(clusterClient ClusterClient) *client {
-	return &client{ClusterClient: clusterClient}
+func newClient(clusterClient ClusterClient) *clusterManagerClient {
+	return &clusterManagerClient{ClusterClient: clusterClient}
 }
 
-func (c *client) waitForDeployments(ctx context.Context, deploymentsByNamespace map[string][]string, cluster *types.Cluster, timeout string) error {
+func (c *clusterManagerClient) waitForDeployments(ctx context.Context, deploymentsByNamespace map[string][]string, cluster *types.Cluster, timeout string) error {
 	for namespace, deployments := range deploymentsByNamespace {
 		for _, deployment := range deployments {
 			err := c.WaitForDeployment(ctx, cluster, timeout, "Available", deployment, namespace)
