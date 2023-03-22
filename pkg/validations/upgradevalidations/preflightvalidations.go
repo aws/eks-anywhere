@@ -24,6 +24,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 	upgradeValidations := []validations.Validation{
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
+				Name:        "validate OS is compatible with registry mirror configuration",
+				Remediation: "please use a valid OS for your registry mirror configuration",
+				Err:         validations.ValidateOSForRegistryMirror(u.Opts.Spec, u.Opts.Provider),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
 				Name:        "validate certificate for registry mirror",
 				Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
 				Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),

@@ -735,15 +735,6 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
-	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify {
-		switch clusterConfig.Spec.DatacenterRef.Kind {
-		case DockerDatacenterKind, NutanixDatacenterKind, VSphereDatacenterKind, TinkerbellDatacenterKind, CloudStackDatacenterKind, SnowDatacenterKind:
-			break
-		default:
-			return fmt.Errorf("insecureSkipVerify is only supported for docker, nutanix, snow, tinkerbell, cloudstack and vsphere providers")
-		}
-	}
-
 	mirrorCount := 0
 	ociNamespaces := clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces
 	for _, ociNamespace := range ociNamespaces {

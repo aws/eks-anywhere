@@ -2,6 +2,7 @@ package validations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -9,8 +10,29 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
+
+// ValidateOSForRegistryMirror checks if the OS is valid for the provided registry mirror configuration.
+func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.Provider) error {
+	cluster := clusterSpec.Cluster
+	if cluster.Spec.RegistryMirrorConfiguration == nil {
+		return nil
+	}
+
+	machineConfigs := provider.MachineConfigs(clusterSpec)
+	if !cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify || machineConfigs == nil {
+		return nil
+	}
+
+	for _, mc := range machineConfigs {
+		if mc.OSFamily() == v1alpha1.Bottlerocket {
+			return errors.New("InsecureSkipVerify is not supported for bottlerocket")
+		}
+	}
+	return nil
+}
 
 func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsValidator) error {
 	cluster := clusterSpec.Cluster

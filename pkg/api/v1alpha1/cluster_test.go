@@ -2607,22 +2607,6 @@ func TestValidateMirrorConfig(t *testing.T) {
 			},
 		},
 		{
-			name:    "insecureSkipVerify on an unsupported provider",
-			wantErr: "insecureSkipVerify is only supported for docker, nutanix, snow, tinkerbell, cloudstack and vsphere providers",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint:           "1.2.3.4",
-						Port:               "443",
-						InsecureSkipVerify: true,
-					},
-					DatacenterRef: Ref{
-						Kind: "nonsnow",
-					},
-				},
-			},
-		},
-		{
 			name:    "insecureSkipVerify on snow provider",
 			wantErr: "",
 			cluster: &Cluster{
