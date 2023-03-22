@@ -204,6 +204,10 @@ Follow these steps if you want to use your initial cluster to create and manage 
       ```
       As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
+   * **kubectl CLI**: The cluster lifecycle feature lets you use `kubectl`, or other tools that that can talk to the Kubernetes API, to create a workload cluster. To use `kubectl`, run:
+      ```bash
+      kubectl apply -f eksa-w01-cluster.yaml
+      ```
 1. Check the workload cluster:
 
    You can now use the workload cluster as you would any Kubernetes cluster.
