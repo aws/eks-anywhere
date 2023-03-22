@@ -6,8 +6,6 @@ package e2e
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -187,7 +185,7 @@ func TestDockerKubernetes124CuratedPackagesAdotSimpleFlow(t *testing.T) {
 }
 
 func TestDockerCuratedPackagesMetalLB(t *testing.T) {
-	suite.Run(t, new(Suite))
+	RunMetalLBDockerTests(t)
 }
 
 // AWS IAM Auth
