@@ -13,10 +13,10 @@ Use this page as a reference to useful `eksctl anywhere` command examples for wo
 Available `eksctl anywhere` commands include:
 
 * `create cluster` To create an EKS Anywhere cluster
-* `delete cluster`  To delete an EKS Anywhere cluster
-* `generate` [`clusterconfig` | `support-bundle` | `support-bundle-config`] To generate cluster and support configs
-* `help`  To get help information
 * `upgrade` To upgrade a workload cluster
+* `delete cluster`  To delete an EKS Anywhere cluster
+* `generate` [`clusterconfig` | `support-bundle` | `support-bundle-config` | `packages` | `hardware`] To generate cluster, support configs, package configs, and tinkerbell hardware files
+* `help`  To get help information
 * `version` To get the EKS Anywhere version
 
 Options used with multiple commands include:
