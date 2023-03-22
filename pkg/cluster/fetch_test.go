@@ -491,6 +491,12 @@ func wantKubeDistroForEksdRelease() (*eksdv1.Release, *cluster.KubeDistro) {
 								URI: "public.ecr.aws/eks-distro/kubernetes/kube-apiserver:v1.19.8",
 							},
 						},
+						{
+							Name: "kube-proxy-image",
+							Image: &eksdv1.AssetImage{
+								URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.19.8",
+							},
+						},
 					},
 				},
 			},
@@ -530,6 +536,9 @@ func wantKubeDistroForEksdRelease() (*eksdv1.Release, *cluster.KubeDistro) {
 		},
 		AwsIamAuthImage: releasev1.Image{
 			URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2",
+		},
+		KubeProxy: releasev1.Image{
+			URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.19.8",
 		},
 		EtcdVersion: "3.4.14",
 	}

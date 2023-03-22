@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
 
@@ -55,6 +56,7 @@ import (
 )
 
 type Dependencies struct {
+	Logger                      logr.Logger
 	Provider                    providers.Provider
 	ClusterAwsCli               *executables.Clusterawsadm
 	DockerClient                *executables.Docker
@@ -80,6 +82,7 @@ type Dependencies struct {
 	Git                         *gitfactory.GitTools
 	EksdInstaller               *eksd.Installer
 	EksdUpgrader                *eksd.Upgrader
+	KubeProxyCLIUpgrader        clustermanager.KubeProxyCLIUpgrader
 	AnalyzerFactory             diagnostics.AnalyzerFactory
 	CollectorFactory            diagnostics.CollectorFactory
 	DignosticCollectorFactory   diagnostics.DiagnosticBundleFactory
@@ -952,6 +955,41 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 		return nil
 	})
 
+	return f
+}
+
+// KubeProxyCLIUpgraderOptions allows to configure the WithKubeProxyCLIUpgrader.
+type KubeProxyCLIUpgraderOptions struct {
+	NoTimouts bool
+}
+
+// WithKubeProxyCLIUpgrader builds a KubeProxyCLIUpgrader.
+func (f *Factory) WithKubeProxyCLIUpgrader(o KubeProxyCLIUpgraderOptions) *Factory {
+	f.WithLogger()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		var opts []clustermanager.KubeProxyCLIUpgraderOpt
+		if o.NoTimouts {
+			opts = append(opts, clustermanager.KubeProxyCLIUpgraderRetrier(*retrier.NewWithNoTimeout()))
+		}
+
+		f.dependencies.KubeProxyCLIUpgrader = clustermanager.NewKubeProxyCLIUpgrader(
+			f.dependencies.Logger,
+			kubernetes.ClientFactory{},
+			opts...,
+		)
+		return nil
+	})
+	return f
+}
+
+// WithLogger setups a logger to be injected in constructors. It uses the logger
+// package level logger.
+func (f *Factory) WithLogger() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		f.dependencies.Logger = logger.Get()
+		return nil
+	})
 	return f
 }
 
