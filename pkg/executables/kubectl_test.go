@@ -632,6 +632,27 @@ func TestCloudStackWorkerNodesMachineTemplate(t *testing.T) {
 	}
 }
 
+func TestVsphereWorkerNodesMachineTemplate(t *testing.T) {
+	var kubeconfig, namespace, clusterName, machineTemplateName string
+	machineTemplateNameBuffer := bytes.NewBufferString(machineTemplateName)
+	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+	expectedParam1 := []string{
+		"get", "machinedeployments.cluster.x-k8s.io", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template",
+		"--template", "{{.spec.template.spec.infrastructureRef.name}}", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	expectedParam2 := []string{
+		"get", "vspheremachinetemplates.infrastructure.cluster.x-k8s.io", machineTemplateName, "-o", "go-template", "--template",
+		"{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam1)).Return(*machineTemplateNameBuffer, nil)
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam2)).Return(*machineTemplatesBuffer, nil)
+	_, err := k.VsphereWorkerNodesMachineTemplate(ctx, clusterName, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.GetNamespace() error = %v, want nil", err)
+	}
+}
+
 func TestKubectlSaveLogSuccess(t *testing.T) {
 	filename := "testfile"
 	_, writer := test.NewWriter(t)
@@ -1994,6 +2015,24 @@ func TestKubectlValidateClustersCRDNotFound(t *testing.T) {
 	err := k.ValidateClustersCRD(ctx, cluster)
 	if err == nil {
 		t.Fatalf("Kubectl.ValidateClustersCRD() error == nil, want CRD not found")
+	}
+}
+
+func TestKubectlValidateEKSAClustersCRDSuccess(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.anywhere.eks.amazonaws.com", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, nil)
+	err := k.ValidateEKSAClustersCRD(ctx, cluster)
+	if err != nil {
+		t.Fatalf("Kubectl.ValidateEKSAClustersCRD() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlValidateEKSAClustersCRDNotFound(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.anywhere.eks.amazonaws.com", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, errors.New("CRD not found"))
+	err := k.ValidateEKSAClustersCRD(ctx, cluster)
+	if err == nil {
+		t.Fatalf("Kubectl.ValidateEKSAClustersCRD() error == nil, want CRD not found")
 	}
 }
 
