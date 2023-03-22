@@ -78,7 +78,7 @@ func TestCloudStackKubernetes123RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
-	runAutoscalerWitMetricsServerSimpleFlow(test)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
 func TestCloudStackKubernetes123RedhatCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
