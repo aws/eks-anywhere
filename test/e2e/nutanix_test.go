@@ -175,7 +175,7 @@ func TestNutanixKubernetes124CuratedPackagesClusterAutoscalerUbuntuSimpleFlow(t 
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runAutoscalerWitMetricsServerSimpleFlow(test)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
 func TestNutanixKubernetes125CuratedPackagesClusterAutoscalerUbuntuSimpleFlow(t *testing.T) {
@@ -189,7 +189,7 @@ func TestNutanixKubernetes125CuratedPackagesClusterAutoscalerUbuntuSimpleFlow(t 
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runAutoscalerWitMetricsServerSimpleFlow(test)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
 func TestNutanixKubernetes126CuratedPackagesClusterAutoscalerUbuntuSimpleFlow(t *testing.T) {
@@ -203,7 +203,7 @@ func TestNutanixKubernetes126CuratedPackagesClusterAutoscalerUbuntuSimpleFlow(t 
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
-	runAutoscalerWitMetricsServerSimpleFlow(test)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
 // Simpleflow
