@@ -114,6 +114,62 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 		)
 	}
 
+	if !old.Spec.Template.Equal(&new.Spec.Template) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "Template"), new.Spec.Template, "field is immutable"))
+	}
+
+	if !old.Spec.ComputeOffering.Equal(&new.Spec.ComputeOffering) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "ComputeOffering"), new.Spec.ComputeOffering, "field is immutable"),
+		)
+	}
+
+	if !old.Spec.DiskOffering.Equal(new.Spec.DiskOffering) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "DiskOffering"), new.Spec.DiskOffering, "field is immutable"),
+		)
+	}
+
+	userCustomerDetailsMutated := false
+	if len(old.Spec.UserCustomDetails) != len(new.Spec.UserCustomDetails) {
+		userCustomerDetailsMutated = true
+	} else {
+		for key, value := range old.Spec.UserCustomDetails {
+			if value != new.Spec.UserCustomDetails[key] {
+				userCustomerDetailsMutated = true
+				break
+			}
+		}
+	}
+
+	if userCustomerDetailsMutated {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "UserCustomerDetails"), new.Spec.UserCustomDetails, "field is immutable"),
+		)
+	}
+
+	symlinksMutated := false
+	if len(old.Spec.Symlinks) != len(new.Spec.Symlinks) {
+		symlinksMutated = true
+	} else {
+		for key, value := range old.Spec.Symlinks {
+			if value != new.Spec.Symlinks[key] {
+				symlinksMutated = true
+				break
+			}
+		}
+	}
+
+	if symlinksMutated {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "Symlinks"), new.Spec.Symlinks, "field is immutable"),
+		)
+	}
+
 	return allErrs
 }
 
