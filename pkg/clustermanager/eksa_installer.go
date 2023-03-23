@@ -177,7 +177,8 @@ func fullLifeCycleControllerForProvider(cluster *anywherev1.Cluster) bool {
 	return cluster.Spec.DatacenterRef.Kind == anywherev1.VSphereDatacenterKind ||
 		cluster.Spec.DatacenterRef.Kind == anywherev1.DockerDatacenterKind ||
 		cluster.Spec.DatacenterRef.Kind == anywherev1.SnowDatacenterKind ||
-		cluster.Spec.DatacenterRef.Kind == anywherev1.NutanixDatacenterKind
+		cluster.Spec.DatacenterRef.Kind == anywherev1.NutanixDatacenterKind ||
+		cluster.Spec.DatacenterRef.Kind == anywherev1.TinkerbellDatacenterKind
 }
 
 func (g *EKSAComponentGenerator) parseEKSAComponentsSpec(spec *cluster.Spec) (*eksaComponents, error) {

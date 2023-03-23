@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 )
 
@@ -35,6 +36,15 @@ var controlContainer = bootstrapv1.BottlerocketControl{
 	ImageMeta: bootstrapv1.ImageMeta{
 		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-control",
 		ImageTag:        "0.0.1",
+	},
+}
+
+var kernel = &bootstrapv1.BottlerocketSettings{
+	Kernel: &bootstrapv1.BottlerocketKernelSettings{
+		SysctlSettings: map[string]string{
+			"foo": "bar",
+			"abc": "def",
+		},
 	},
 }
 
@@ -164,5 +174,73 @@ func TestSetBottlerocketControlContainerImageInEtcdCluster(t *testing.T) {
 	want := got.DeepCopy()
 	want.Spec.EtcdadmConfigSpec.BottlerocketConfig.ControlImage = "public.ecr.aws/eks-anywhere/bottlerocket-control:0.0.1"
 	clusterapi.SetBottlerocketControlContainerImageInEtcdCluster(got, g.clusterSpec.VersionsBundle.BottleRocketHostContainers.Control)
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketHostConfigInKubeadmControlPlane(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmControlPlane()
+	want := got.DeepCopy()
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Bottlerocket = kernel
+	want.Spec.KubeadmConfigSpec.JoinConfiguration.Bottlerocket = kernel
+
+	clusterapi.SetBottlerocketHostConfigInKubeadmControlPlane(got, &anywherev1.HostOSConfiguration{
+		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
+			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+				SysctlSettings: map[string]string{
+					"foo": "bar",
+					"abc": "def",
+				},
+			},
+		},
+	})
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketHostConfigInKubeadmConfigTemplate(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmConfigTemplate()
+	want := got.DeepCopy()
+	want.Spec.Template.Spec.JoinConfiguration.Bottlerocket = kernel
+
+	clusterapi.SetBottlerocketHostConfigInKubeadmConfigTemplate(got, &anywherev1.HostOSConfiguration{
+		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
+			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+				SysctlSettings: map[string]string{
+					"foo": "bar",
+					"abc": "def",
+				},
+			},
+		},
+	})
+	g.Expect(got).To(Equal(want))
+}
+
+func TestSetBottlerocketKernelSettingsInEtcdCluster(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantEtcdCluster()
+	got.Spec.EtcdadmConfigSpec.BottlerocketConfig = &etcdbootstrapv1.BottlerocketConfig{
+		EtcdImage:      "public.ecr.aws/eks-distro/etcd-io/etcd:0.0.1",
+		BootstrapImage: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap:0.0.1",
+		PauseImage:     "public.ecr.aws/eks-distro/kubernetes/pause:0.0.1",
+	}
+	want := got.DeepCopy()
+	want.Spec.EtcdadmConfigSpec.BottlerocketConfig.Kernel = &bootstrapv1.BottlerocketKernelSettings{
+		SysctlSettings: map[string]string{
+			"foo": "bar",
+			"abc": "def",
+		},
+	}
+
+	clusterapi.SetBottlerocketHostConfigInEtcdCluster(got, &anywherev1.HostOSConfiguration{
+		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
+			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+				SysctlSettings: map[string]string{
+					"foo": "bar",
+					"abc": "def",
+				},
+			},
+		},
+	})
 	g.Expect(got).To(Equal(want))
 }

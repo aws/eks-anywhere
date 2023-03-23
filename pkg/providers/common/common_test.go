@@ -32,6 +32,11 @@ const (
     clusterDNSIPs:
     - 1.2.3.4
     - 5.6.7.8`
+
+	kernelSysctlConfig = `bottlerocket:
+  kernel:
+    sysctlSettings:
+      foo: bar`
 )
 
 func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
@@ -84,6 +89,17 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 				},
 			},
 			expected: maxPodsConfig,
+		},
+		{
+			name: "with kernel sysctl config",
+			config: &v1alpha1.BottlerocketConfiguration{
+				Kernel: &v1beta1.BottlerocketKernelSettings{
+					SysctlSettings: map[string]string{
+						"foo": "bar",
+					},
+				},
+			},
+			expected: kernelSysctlConfig,
 		},
 	}
 	for _, tt := range tests {

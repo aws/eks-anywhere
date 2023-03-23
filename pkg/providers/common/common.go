@@ -121,6 +121,13 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.BottlerocketConfiguratio
 			b.Kubernetes.ClusterDNSIPs = config.Kubernetes.ClusterDNSIPs
 		}
 	}
+	if config.Kernel != nil {
+		if config.Kernel.SysctlSettings != nil {
+			b.Kernel = &v1beta1.BottlerocketKernelSettings{
+				SysctlSettings: config.Kernel.SysctlSettings,
+			}
+		}
+	}
 
 	brMap := map[string]*v1beta1.BottlerocketSettings{
 		"bottlerocket": b,

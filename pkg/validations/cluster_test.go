@@ -13,16 +13,21 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers"
+	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type clusterTest struct {
 	*WithT
 	tlsValidator *mocks.MockTlsValidator
 	kubectl      *mocks.MockKubectlClient
+	provider     *providermocks.MockProvider
 	clusterSpec  *cluster.Spec
 	certContent  string
 	host, port   string
@@ -31,9 +36,11 @@ type clusterTest struct {
 type clusterTestOpt func(t *testing.T, ct *clusterTest)
 
 func newTest(t *testing.T, opts ...clusterTestOpt) *clusterTest {
+	ctrl := gomock.NewController(t)
 	cTest := &clusterTest{
 		WithT:       NewWithT(t),
 		clusterSpec: test.NewClusterSpec(),
+		provider:    providermocks.NewMockProvider(ctrl),
 	}
 	for _, opt := range opts {
 		opt(t, cTest)
@@ -151,6 +158,94 @@ func TestValidateAuthenticationForRegistryMirrorAuthValid(t *testing.T) {
 	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(Succeed())
 }
 
+func TestValidateOSForRegistryMirrorNoRegistryMirror(t *testing.T) {
+	tt := newTest(t, withTLS())
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = nil
+	tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(Succeed())
+}
+
+func TestValidateOSForRegistryMirrorInsecureSkipVerifyDisabled(t *testing.T) {
+	tt := newTest(t, withTLS())
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = false
+	tt.provider.EXPECT().MachineConfigs(tt.clusterSpec).Return([]providers.MachineConfig{})
+	tt.Expect(validations.ValidateOSForRegistryMirror(tt.clusterSpec, tt.provider)).To(Succeed())
+}
+
+func TestValidateOSForRegistryMirrorInsecureSkipVerifyEnabled(t *testing.T) {
+	tests := []struct {
+		name           string
+		mirrorConfig   *anywherev1.RegistryMirrorConfiguration
+		machineConfigs func() []providers.MachineConfig
+		wantErr        string
+	}{
+		{
+			name: "insecureSkipVerify no machine configs",
+			machineConfigs: func() []providers.MachineConfig {
+				return nil
+			},
+			wantErr: "",
+		},
+		{
+			name: "insecureSkipVerify on provider with ubuntu",
+			machineConfigs: func() []providers.MachineConfig {
+				configs := make([]providers.MachineConfig, 0, 1)
+				configs = append(configs, &anywherev1.VSphereMachineConfig{
+					Spec: anywherev1.VSphereMachineConfigSpec{
+						OSFamily: anywherev1.Ubuntu,
+					},
+				})
+				return configs
+			},
+			wantErr: "",
+		},
+		{
+			name: "insecureSkipVerify on provider with bottlerocket",
+			machineConfigs: func() []providers.MachineConfig {
+				configs := make([]providers.MachineConfig, 0, 1)
+				configs = append(configs, &anywherev1.SnowMachineConfig{
+					Spec: anywherev1.SnowMachineConfigSpec{
+						OSFamily: anywherev1.Bottlerocket,
+					},
+				})
+				return configs
+			},
+			wantErr: "InsecureSkipVerify is not supported for bottlerocket",
+		},
+		{
+			name: "insecureSkipVerify on provider with redhat",
+			machineConfigs: func() []providers.MachineConfig {
+				configs := make([]providers.MachineConfig, 0, 1)
+				configs = append(configs, &anywherev1.VSphereMachineConfig{
+					Spec: anywherev1.VSphereMachineConfigSpec{
+						OSFamily: anywherev1.RedHat,
+					},
+				})
+				return configs
+			},
+			wantErr: "",
+		},
+	}
+
+	validationTest := newTest(t, func(t *testing.T, ct *clusterTest) {
+		ct.clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
+			s.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
+				InsecureSkipVerify: true,
+			}
+		})
+	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			validationTest.provider.EXPECT().MachineConfigs(validationTest.clusterSpec).Return(test.machineConfigs())
+			err := validations.ValidateOSForRegistryMirror(validationTest.clusterSpec, validationTest.provider)
+			if test.wantErr != "" {
+				validationTest.Expect(err).To(MatchError(test.wantErr))
+			} else {
+				validationTest.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
 func TestValidateManagementClusterNameValid(t *testing.T) {
 	mgmtName := "test"
 	tt := newTest(t, withKubectl())
@@ -231,4 +326,107 @@ func TestValidateK8s126SupportActive(t *testing.T) {
 	features.ClearCache()
 	os.Setenv(features.K8s126SupportEnvVar, "true")
 	tt.Expect(validations.ValidateK8s126Support(tt.clusterSpec)).To(Succeed())
+}
+
+func TestValidateManagementClusterBundlesVersion(t *testing.T) {
+	type testParam struct {
+		mgmtBundlesName   string
+		mgmtBundlesNumber int
+		wkBundlesName     string
+		wkBundlesNumber   int
+		wantErr           string
+		errGetEksaCluster error
+		errGetBundles     error
+	}
+
+	testParams := []testParam{
+		{
+			mgmtBundlesName:   "bundles-28",
+			mgmtBundlesNumber: 28,
+			wkBundlesName:     "bundles-27",
+			wkBundlesNumber:   27,
+			wantErr:           "",
+		},
+		{
+			mgmtBundlesName:   "bundles-28",
+			mgmtBundlesNumber: 28,
+			wkBundlesName:     "bundles-29",
+			wkBundlesNumber:   29,
+			wantErr:           "cannot upgrade workload cluster with bundle spec.number 29 while management cluster management-cluster is on older bundle spec.number 28",
+		},
+		{
+			mgmtBundlesName:   "bundles-28",
+			mgmtBundlesNumber: 28,
+			wkBundlesName:     "bundles-27",
+			wkBundlesNumber:   27,
+			wantErr:           "failed to reach cluster",
+			errGetEksaCluster: errors.New("failed to reach cluster"),
+		},
+		{
+			mgmtBundlesName:   "bundles-28",
+			mgmtBundlesNumber: 28,
+			wkBundlesName:     "bundles-27",
+			wkBundlesNumber:   27,
+			wantErr:           "failed to reach cluster",
+			errGetBundles:     errors.New("failed to reach cluster"),
+		},
+	}
+
+	for _, p := range testParams {
+		tt := newTest(t, withKubectl())
+		mgmtName := "management-cluster"
+		mgmtCluster := managementCluster(mgmtName)
+		mgmtClusterObject := anywhereCluster(mgmtName)
+
+		mgmtClusterObject.Spec.BundlesRef = &anywherev1.BundlesRef{
+			Name:      p.mgmtBundlesName,
+			Namespace: constants.EksaSystemNamespace,
+		}
+
+		tt.clusterSpec.Config.Cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
+			Name:      p.wkBundlesName,
+			Namespace: constants.EksaSystemNamespace,
+		}
+		wkBundle := &releasev1alpha1.Bundles{
+			Spec: releasev1alpha1.BundlesSpec{
+				Number: p.wkBundlesNumber,
+			},
+		}
+		tt.clusterSpec.Bundles = wkBundle
+
+		mgmtBundle := &releasev1alpha1.Bundles{
+			Spec: releasev1alpha1.BundlesSpec{
+				Number: p.mgmtBundlesNumber,
+			},
+		}
+
+		ctx := context.Background()
+		tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, p.errGetEksaCluster)
+		if p.errGetEksaCluster == nil {
+			tt.kubectl.EXPECT().GetBundles(ctx, mgmtCluster.KubeconfigFile, mgmtClusterObject.Spec.BundlesRef.Name, mgmtClusterObject.Spec.BundlesRef.Namespace).Return(mgmtBundle, p.errGetBundles)
+		}
+
+		if p.wantErr == "" {
+			err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
+			tt.Expect(err).To(BeNil())
+		} else {
+			err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
+			tt.Expect(err.Error()).To(Equal(p.wantErr))
+		}
+	}
+}
+
+func TestValidateManagementClusterBundlesVersionMissingBundlesRef(t *testing.T) {
+	tt := newTest(t, withKubectl())
+	wantErr := "management cluster bundlesRef cannot be nil"
+	mgmtName := "management-cluster"
+	mgmtCluster := managementCluster(mgmtName)
+	mgmtClusterObject := anywhereCluster(mgmtName)
+
+	mgmtClusterObject.Spec.BundlesRef = nil
+	ctx := context.Background()
+	tt.kubectl.EXPECT().GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name).Return(mgmtClusterObject, nil)
+
+	err := validations.ValidateManagementClusterBundlesVersion(ctx, tt.kubectl, mgmtCluster, tt.clusterSpec)
+	tt.Expect(err.Error()).To(Equal(wantErr))
 }

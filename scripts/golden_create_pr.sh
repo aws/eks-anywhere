@@ -22,11 +22,11 @@ REPO="eks-anywhere"
 ORIGIN_ORG="eks-distro-pr-bot"
 UPSTREAM_ORG="aws"
 
-PR_TITLE="Generate release test file"
-COMMIT_MESSAGE="[PR BOT] Generate release test file"
+PR_TITLE="Generate release testdata files"
+COMMIT_MESSAGE="[PR BOT] Generate release testdata files"
 
 PR_BODY=$(cat <<EOF
-Generate release test file.
+Generate release testdata files.
 
 By submitting this pull request, I confirm that you can use, modify, copy, and redistribute this contribution, under the terms of your choice.
 EOF
@@ -43,7 +43,7 @@ git remote add upstream git@github.com:${UPSTREAM_ORG}/${REPO}.git
 git checkout -b $PR_BRANCH
 
 git diff
-git add release/pkg/test/testdata/main-bundle-release.yaml
+git add release/pkg/test/testdata/*.yaml
 # If some other files get modified, the changes should be ignored
 git restore .
 FILES_ADDED=$(git diff --staged --name-only)

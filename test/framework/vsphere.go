@@ -273,6 +273,18 @@ func (v *VSphere) WithUbuntu125() api.ClusterConfigFiller {
 	)
 }
 
+// WithUbuntu126 returns a cluster config filler that sets the kubernetes version of the cluster to 1.26
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu126() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube126)),
+		api.VSphereToConfigFiller(
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube126)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+	)
+}
+
 // WithBottleRocket122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
 // as well as the right botllerocket template and osFamily for all VSphereMachaineConfigs.
 func (v *VSphere) WithBottleRocket122() api.ClusterConfigFiller {
@@ -513,6 +525,11 @@ func (v *VSphere) Ubuntu124Template() api.VSphereFiller {
 // Ubuntu125Template returns vsphere filler for 1.25 Ubuntu.
 func (v *VSphere) Ubuntu125Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube125))
+}
+
+// Ubuntu126Template returns vsphere filler for 1.26 Ubuntu.
+func (v *VSphere) Ubuntu126Template() api.VSphereFiller {
+	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube126))
 }
 
 // Bottlerocket122Template returns vsphere filler for 1.22 BR.
