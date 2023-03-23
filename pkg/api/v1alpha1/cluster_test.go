@@ -2464,6 +2464,41 @@ func TestValidateCNIConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "CiliumSkipUpgradeWithoutOtherFields",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						SkipUpgrade: ptr.Bool(true),
+					},
+				},
+			},
+		},
+		{
+			name: "CiliumSkipUpgradeWithOtherFields",
+			wantErr: fmt.Errorf("validating cniConfig: when using skipUpgrades for cilium all " +
+				"other fields must be empty"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						SkipUpgrade:           ptr.Bool(true),
+						PolicyEnforcementMode: "never",
+					},
+				},
+			},
+		},
+		{
+			name: "CiliumSkipUpgradeExplicitFalseWithOtherFields",
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						SkipUpgrade:           ptr.Bool(false),
+						PolicyEnforcementMode: "never",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2567,22 +2602,6 @@ func TestValidateMirrorConfig(t *testing.T) {
 								Namespace: "",
 							},
 						},
-					},
-				},
-			},
-		},
-		{
-			name:    "insecureSkipVerify on an unsupported provider",
-			wantErr: "insecureSkipVerify is only supported for docker, nutanix, snow, tinkerbell, cloudstack and vsphere providers",
-			cluster: &Cluster{
-				Spec: ClusterSpec{
-					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
-						Endpoint:           "1.2.3.4",
-						Port:               "443",
-						InsecureSkipVerify: true,
-					},
-					DatacenterRef: Ref{
-						Kind: "nonsnow",
 					},
 				},
 			},

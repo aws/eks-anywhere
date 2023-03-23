@@ -2471,3 +2471,136 @@ func TestPackageControllerCronJob_Equal(t *testing.T) {
 		})
 	}
 }
+
+func TestCiliumConfigEquality(t *testing.T) {
+	tests := []struct {
+		Name  string
+		A     *v1alpha1.CiliumConfig
+		B     *v1alpha1.CiliumConfig
+		Equal bool
+	}{
+		{
+			Name:  "Nils",
+			A:     nil,
+			B:     nil,
+			Equal: true,
+		},
+		{
+			Name:  "NilA",
+			A:     nil,
+			B:     &v1alpha1.CiliumConfig{},
+			Equal: false,
+		},
+		{
+			Name:  "NilB",
+			A:     &v1alpha1.CiliumConfig{},
+			B:     nil,
+			Equal: false,
+		},
+		{
+			Name:  "ZeroValues",
+			A:     &v1alpha1.CiliumConfig{},
+			B:     &v1alpha1.CiliumConfig{},
+			Equal: true,
+		},
+		{
+			Name: "EqualPolicyEnforcement",
+			A: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode: "always",
+			},
+			B: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode: "always",
+			},
+			Equal: true,
+		},
+		{
+			Name: "DiffPolicyEnforcement",
+			A: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode: "always",
+			},
+			B: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode: "default",
+			},
+			Equal: false,
+		},
+		{
+			Name: "NilSkipUpgradeAFalse",
+			A: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(false),
+			},
+			B:     &v1alpha1.CiliumConfig{},
+			Equal: true,
+		},
+		{
+			Name: "NilSkipUpgradeBFalse",
+			A:    &v1alpha1.CiliumConfig{},
+			B: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(false),
+			},
+			Equal: true,
+		},
+		{
+			Name: "SkipUpgradeBothFalse",
+			A: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(false),
+			},
+			B: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(false),
+			},
+			Equal: true,
+		},
+		{
+			Name: "NilSkipUpgradeATrue",
+			A: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(true),
+			},
+			B:     &v1alpha1.CiliumConfig{},
+			Equal: false,
+		},
+		{
+			Name: "NilSkipUpgradeBTrue",
+			A:    &v1alpha1.CiliumConfig{},
+			B: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(true),
+			},
+			Equal: false,
+		},
+		{
+			Name: "SkipUpgradeBothTrue",
+			A: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(true),
+			},
+			B: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(true),
+			},
+			Equal: true,
+		},
+		{
+			Name: "SkipUpgradeAFalseBTrue",
+			A: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(false),
+			},
+			B: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(true),
+			},
+			Equal: false,
+		},
+		{
+			Name: "SkipUpgradeATrueBFalse",
+			A: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(true),
+			},
+			B: &v1alpha1.CiliumConfig{
+				SkipUpgrade: ptr.Bool(false),
+			},
+			Equal: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.Name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tc.A.Equal(tc.B)).To(Equal(tc.Equal))
+		})
+	}
+}

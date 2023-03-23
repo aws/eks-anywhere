@@ -2,6 +2,7 @@ package validations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -9,8 +10,29 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
+
+// ValidateOSForRegistryMirror checks if the OS is valid for the provided registry mirror configuration.
+func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.Provider) error {
+	cluster := clusterSpec.Cluster
+	if cluster.Spec.RegistryMirrorConfiguration == nil {
+		return nil
+	}
+
+	machineConfigs := provider.MachineConfigs(clusterSpec)
+	if !cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify || machineConfigs == nil {
+		return nil
+	}
+
+	for _, mc := range machineConfigs {
+		if mc.OSFamily() == v1alpha1.Bottlerocket {
+			return errors.New("InsecureSkipVerify is not supported for bottlerocket")
+		}
+	}
+	return nil
+}
 
 func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsValidator) error {
 	cluster := clusterSpec.Cluster
@@ -77,5 +99,29 @@ func ValidateK8s126Support(clusterSpec *cluster.Spec) error {
 			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube126, features.K8s126SupportEnvVar)
 		}
 	}
+	return nil
+}
+
+// ValidateManagementClusterBundlesVersion checks if management cluster's bundle version
+// is greater than or equal to the bundle version used to upgrade a workload cluster.
+func ValidateManagementClusterBundlesVersion(ctx context.Context, k KubectlClient, mgmtCluster *types.Cluster, workload *cluster.Spec) error {
+	cluster, err := k.GetEksaCluster(ctx, mgmtCluster, mgmtCluster.Name)
+	if err != nil {
+		return err
+	}
+
+	if cluster.Spec.BundlesRef == nil {
+		return fmt.Errorf("management cluster bundlesRef cannot be nil")
+	}
+
+	mgmtBundles, err := k.GetBundles(ctx, mgmtCluster.KubeconfigFile, cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace)
+	if err != nil {
+		return err
+	}
+
+	if mgmtBundles.Spec.Number < workload.Bundles.Spec.Number {
+		return fmt.Errorf("cannot upgrade workload cluster with bundle spec.number %d while management cluster %s is on older bundle spec.number %d", workload.Bundles.Spec.Number, mgmtCluster.Name, mgmtBundles.Spec.Number)
+	}
+
 	return nil
 }

@@ -64,3 +64,8 @@ func initLogger() error {
 func Execute() error {
 	return rootCmd.ExecuteContext(context.Background())
 }
+
+// RootCmd returns the eksctl-anywhere root cmd.
+func RootCmd() *cobra.Command {
+	return rootCmd
+}

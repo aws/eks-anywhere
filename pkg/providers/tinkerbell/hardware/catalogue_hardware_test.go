@@ -51,7 +51,7 @@ func TestCatalogue_Hardwares_Remove(t *testing.T) {
 	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
 }
 
-func TestCatalogue_Hardware_RemoveFail(t *testing.T) {
+func TestCatalogue_Hardwares_RemoveDuplicates(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	catalogue := hardware.NewCatalogue()
@@ -63,19 +63,118 @@ func TestCatalogue_Hardware_RemoveFail(t *testing.T) {
 		},
 	})
 	g.Expect(err).ToNot(gomega.HaveOccurred())
-	g.Expect(catalogue.RemoveHardware(&v1alpha1.Hardware{
+	err = catalogue.InsertHardware(&v1alpha1.Hardware{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "hw2",
 			Namespace: "namespace",
 		},
-	}, 1)).To(gomega.HaveOccurred())
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	err = catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw2",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.RemoveHardwares([]v1alpha1.Hardware{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "hw2",
+				Namespace: "namespace",
+			},
+		},
+	})).ToNot(gomega.HaveOccurred())
 	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
-	g.Expect(catalogue.RemoveHardware(&v1alpha1.Hardware{
+}
+
+func TestCatalogue_Hardwares_RemoveExtraHw(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+
+	err := catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw1",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	err = catalogue.InsertHardware(&v1alpha1.Hardware{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "hw2",
 			Namespace: "namespace",
 		},
-	}, 2)).To(gomega.HaveOccurred())
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	err = catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw3",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.RemoveHardwares([]v1alpha1.Hardware{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "hw2",
+				Namespace: "namespace",
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "hw3",
+				Namespace: "namespace",
+			},
+		},
+	})).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
+}
+
+func TestCatalogue_Hardwares_RemoveNothing(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+
+	err := catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw1",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.RemoveHardwares([]v1alpha1.Hardware{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "hw2",
+				Namespace: "namespace",
+			},
+		},
+	})).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
+}
+
+func TestCatalogue_Hardwares_RemoveEverything(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+
+	err := catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw1",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.RemoveHardwares([]v1alpha1.Hardware{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "hw1",
+				Namespace: "namespace",
+			},
+		},
+	})).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(0))
 }
 
 func TestCatalogue_Hardware_UnknownIndexErrors(t *testing.T) {

@@ -275,8 +275,17 @@ func buildTemplateMapCP(
 		values["etcdSshUsername"] = firstEtcdMachinesUser.Name
 		values["vsphereEtcdSshAuthorizedKey"] = etcdSSHKey
 
-		if etcdMachineSpec.HostOSConfiguration != nil && etcdMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
-			values["etcdNtpServers"] = etcdMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		if etcdMachineSpec.HostOSConfiguration != nil {
+			if etcdMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
+				values["etcdNtpServers"] = etcdMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+			}
+
+			if etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration != nil {
+				if etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel != nil &&
+					etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel.SysctlSettings != nil {
+					values["etcdKernelSettings"] = etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel.SysctlSettings
+				}
+			}
 		}
 	}
 

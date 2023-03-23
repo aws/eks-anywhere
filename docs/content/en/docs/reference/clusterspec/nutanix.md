@@ -75,6 +75,9 @@ spec:
    name: vm-network
    type: name
  systemDiskSize: 40Gi
+ project:
+   type: name
+   name: my-project
  users:
    - name: eksa
      sshAuthorizedKeys:
@@ -100,6 +103,9 @@ spec:
    name: vm-network
    type: name
  systemDiskSize: 40Gi
+ project:
+   type: name
+   name: my-project
  users:
    - name: eksa
      sshAuthorizedKeys:
@@ -185,6 +191,17 @@ The PEM encoded CA trust bundle.
 
 The `additionalTrustBundle` needs to be populated with the PEM-encoded x509 certificate of the Root CA that issued the certificate for Prism Central. Suggestions on how to obtain this certificate are [here]({{< relref "../nutanix/nutanix-prereq/#prepare-a-nutanix-environment" >}}).
 
+__Example__:</br>
+```yaml
+ additionalTrustBundle: |
+    -----BEGIN CERTIFICATE-----
+    <certificate string>
+    -----END CERTIFICATE-----
+    -----BEGIN CERTIFICATE-----
+    <certificate string>
+    -----END CERTIFICATE-----
+```
+
 ## NutanixMachineConfig Fields
 
 ### cluster
@@ -238,6 +255,19 @@ Amount of vCPU sockets. (Default: `2`)
 ### vcpusPerSocket
 Amount of vCPUs per socket. (Default: `1`)
  
+### project	(optional)
+Reference to an existing project used for the virtual machines.
+ 
+### project.type
+Type to identify the project. (Permitted values: `name` or `uuid`)
+ 
+### project.name (`name` or `UUID` required)
+Name of the project
+ 
+### project.uuid (`name` or `UUID` required)
+UUID of the project
+ 
+
 ### users (optional)
 The users you want to configure to access your virtual machines. Only one is permitted at this time.
 

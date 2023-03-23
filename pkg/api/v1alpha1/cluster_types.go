@@ -174,7 +174,6 @@ type RegistryMirrorConfiguration struct {
 
 	// InsecureSkipVerify skips the registry certificate verification.
 	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
-	// Currently only supported for snow provider
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
@@ -489,7 +488,22 @@ func (n *CiliumConfig) Equal(o *CiliumConfig) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.PolicyEnforcementMode == o.PolicyEnforcementMode
+
+	if n.PolicyEnforcementMode != o.PolicyEnforcementMode {
+		return false
+	}
+
+	oSkipUpgradeIsFalse := o.SkipUpgrade == nil || !*o.SkipUpgrade
+	nSkipUpgradeIsFalse := n.SkipUpgrade == nil || !*n.SkipUpgrade
+
+	// We consider nil to be false in equality checks. Here we're checking if o is false then
+	// n must be false and vice-versa. If neither of these are true, then both o and n must be
+	// true so we don't need an explicit check.
+	if oSkipUpgradeIsFalse && !nSkipUpgradeIsFalse || !oSkipUpgradeIsFalse && nSkipUpgradeIsFalse {
+		return false
+	}
+
+	return true
 }
 
 func (n *KindnetdConfig) Equal(o *KindnetdConfig) bool {
@@ -678,6 +692,18 @@ type CNIConfig struct {
 type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
+
+	// SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
+	// be used when operators wish to self manage the Cilium installation.
+	// +kubebuilder:default=false
+	// +optional
+	SkipUpgrade *bool `json:"skipUpgrade,omitempty"`
+}
+
+// IsManaged returns true if SkipUpgrade is nil or false indicating EKS-A is responsible for
+// the Cilium installation.
+func (n *CiliumConfig) IsManaged() bool {
+	return n.SkipUpgrade == nil || !*n.SkipUpgrade
 }
 
 type KindnetdConfig struct{}
