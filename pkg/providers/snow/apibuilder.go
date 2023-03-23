@@ -53,7 +53,9 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 
 	addStackedEtcdExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
 
-	osFamily := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name).OSFamily()
+	machineConfig := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+
+	osFamily := machineConfig.OSFamily()
 	switch osFamily {
 	case v1alpha1.Bottlerocket:
 		clusterapi.SetProxyConfigInKubeadmControlPlaneForBottlerocket(kcp, clusterSpec.Cluster)
@@ -63,6 +65,7 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		clusterapi.SetBottlerocketControlContainerImageInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle)
 		clusterapi.SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
 		addBottlerocketBootstrapSnowInKubeadmControlPlane(kcp, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
+		clusterapi.SetBottlerocketHostConfigInKubeadmControlPlane(kcp, machineConfig.Spec.HostOSConfiguration)
 
 	case v1alpha1.Ubuntu:
 		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
@@ -100,7 +103,8 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
-	osFamily := clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name).OSFamily()
+	machineConfig := clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name)
+	osFamily := machineConfig.OSFamily()
 	switch osFamily {
 	case v1alpha1.Bottlerocket:
 		clusterapi.SetProxyConfigInKubeadmConfigTemplateForBottlerocket(kct, clusterSpec.Cluster)
@@ -109,6 +113,7 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 		clusterapi.SetBottlerocketAdminContainerImageInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
 		clusterapi.SetBottlerocketControlContainerImageInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle)
 		addBottlerocketBootstrapSnowInKubeadmConfigTemplate(kct, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
+		clusterapi.SetBottlerocketHostConfigInKubeadmConfigTemplate(kct, machineConfig.Spec.HostOSConfiguration)
 
 	case v1alpha1.Ubuntu:
 		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
@@ -139,13 +144,15 @@ func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 func EtcdadmCluster(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *etcdv1.EtcdadmCluster {
 	etcd := clusterapi.EtcdadmCluster(clusterSpec, snowMachineTemplate)
 
-	osFamily := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name).OSFamily()
+	machineConfig := clusterSpec.SnowMachineConfig(clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
+	osFamily := machineConfig.OSFamily()
 	switch osFamily {
 	case v1alpha1.Bottlerocket:
 		clusterapi.SetBottlerocketInEtcdCluster(etcd, clusterSpec.VersionsBundle)
 		clusterapi.SetBottlerocketAdminContainerImageInEtcdCluster(etcd, clusterSpec.VersionsBundle.BottleRocketHostContainers.Admin)
 		clusterapi.SetBottlerocketControlContainerImageInEtcdCluster(etcd, clusterSpec.VersionsBundle.BottleRocketHostContainers.Control)
 		addBottlerocketBootstrapSnowInEtcdCluster(etcd, clusterSpec.VersionsBundle.Snow.BottlerocketBootstrapSnow)
+		clusterapi.SetBottlerocketHostConfigInEtcdCluster(etcd, machineConfig.Spec.HostOSConfiguration)
 
 	case v1alpha1.Ubuntu:
 		clusterapi.SetUbuntuConfigInEtcdCluster(etcd, clusterSpec.VersionsBundle.KubeDistro.EtcdVersion)

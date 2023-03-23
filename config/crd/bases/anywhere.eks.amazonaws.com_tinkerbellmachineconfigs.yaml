@@ -53,6 +53,16 @@ spec:
                       configuration on the host OS. These settings only take effect
                       when the `osFamily` is bottlerocket.
                     properties:
+                      kernel:
+                        description: Kernel defines the kernel settings for bottlerocket.
+                        properties:
+                          sysctlSettings:
+                            additionalProperties:
+                              type: string
+                            description: SysctlSettings defines the kernel sysctl
+                              settings to set for bottlerocket nodes.
+                            type: object
+                        type: object
                       kubernetes:
                         description: Kubernetes defines the Kubernetes settings on
                           the host OS.
