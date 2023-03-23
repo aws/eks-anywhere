@@ -505,7 +505,7 @@ capd-test-%: build-all-test-binaries ## Run CAPD tests
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
 
-PACKAGES_E2E_TESTS ?= TestDockerKubernetes121CuratedPackagesSimpleFlow
+PACKAGES_E2E_TESTS ?= TestDockerKubernetes125CuratedPackagesSimpleFlow
 ifeq ($(PACKAGES_E2E_TESTS),all)
 PACKAGES_E2E_TESTS='Test.*CuratedPackages'
 endif
@@ -650,7 +650,7 @@ build-integration-test-binary:
 .PHONY: conformance
 conformance:
 	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
-	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
+	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes.*ThreeWorkersConformanceFlow'
 
 .PHONY: conformance-tests
 conformance-tests: build-eks-a-for-e2e build-integration-test-binary ## Build e2e conformance tests
