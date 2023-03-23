@@ -4,6 +4,13 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
+## [v0.14.5](https://github.com/aws/eks-anywhere/releases/tag/v0.14.5)
+
+### Fixed
+
+- Fix kubectl get call to point to full API name ([#5342](https://github.com/aws/eks-anywhere/pull/5342))
+- Expand all kubectl calls to fully qualified names ([#5347](https://github.com/aws/eks-anywhere/pull/5347))
+
 ## [v0.14.4](https://github.com/aws/eks-anywhere/releases/tag/v0.14.4)
 
 ### Added
