@@ -44,6 +44,9 @@ skipped_tests:
 - TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleup
 - TestTinkerbellUpgrade125MulticlusterWorkloadClusterCPScaleup
 - TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleDown
+#Tinkerbell - BR
+- TestTinkerbellKubernetes125BottlerocketWorkloadClusterSimpleFlow
+- TestTinkerbellKubernetes125BottlerocketWorkerNodeGroupsTaintsAndLabels
 # Tinkerbell - Redhat
 - TestTinkerbellKubernetes122RedHatSimpleFlow
 - TestTinkerbellKubernetes123RedHatSimpleFlow
