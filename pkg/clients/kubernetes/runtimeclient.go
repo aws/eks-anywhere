@@ -11,6 +11,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// ClientFactory builds clients from a kubeconfig file by
+// wrapping around NewRuntimeClientFromFileName to facilitate mocking.
+type ClientFactory struct{}
+
+// BuildClientFromKubeconfig builds a K8s client from a kubeconfig file.
+func (f ClientFactory) BuildClientFromKubeconfig(kubeconfigPath string) (client.Client, error) {
+	return NewRuntimeClientFromFileName(kubeconfigPath)
+}
+
 // NewRuntimeClientFromFileName creates a new controller runtime client given a kubeconfig filename.
 func NewRuntimeClientFromFileName(kubeConfigFilename string) (client.Client, error) {
 	data, err := os.ReadFile(kubeConfigFilename)

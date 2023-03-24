@@ -28,12 +28,18 @@ type Upgrade struct {
 	capiManager       interfaces.CAPIManager
 	eksdInstaller     interfaces.EksdInstaller
 	eksdUpgrader      interfaces.EksdUpgrader
+	clusterUpgrader   interfaces.ClusterUpgrader
 	upgradeChangeDiff *types.ChangeDiff
 }
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	capiManager interfaces.CAPIManager,
-	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager, writer filewriter.FileWriter, eksdUpgrader interfaces.EksdUpgrader, eksdInstaller interfaces.EksdInstaller,
+	clusterManager interfaces.ClusterManager,
+	gitOpsManager interfaces.GitOpsManager,
+	writer filewriter.FileWriter,
+	eksdUpgrader interfaces.EksdUpgrader,
+	eksdInstaller interfaces.EksdInstaller,
+	clusterUpgrader interfaces.ClusterUpgrader,
 ) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
@@ -45,6 +51,7 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 		capiManager:       capiManager,
 		eksdUpgrader:      eksdUpgrader,
 		eksdInstaller:     eksdInstaller,
+		clusterUpgrader:   clusterUpgrader,
 		upgradeChangeDiff: upgradeChangeDiff,
 	}
 }
@@ -71,6 +78,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		CAPIManager:       c.capiManager,
 		EksdInstaller:     c.eksdInstaller,
 		EksdUpgrader:      c.eksdUpgrader,
+		ClusterUpgrader:   c.clusterUpgrader,
 		UpgradeChangeDiff: c.upgradeChangeDiff,
 	}
 	if features.IsActive(features.CheckpointEnabled()) {
@@ -497,9 +505,29 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 		eksaManagementCluster = commandContext.ManagementCluster
 	}
 
+	if err := commandContext.ClusterUpgrader.PrepareUpgrade(
+		ctx,
+		commandContext.ClusterSpec,
+		commandContext.ManagementCluster.KubeconfigFile,
+		commandContext.WorkloadCluster.KubeconfigFile,
+	); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
 	logger.Info("Upgrading workload cluster")
 	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
+	if err := commandContext.ClusterUpgrader.CleanupAfterUpgrade(
+		ctx,
+		commandContext.ClusterSpec,
+		commandContext.ManagementCluster.KubeconfigFile,
+		commandContext.WorkloadCluster.KubeconfigFile,
+	); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}

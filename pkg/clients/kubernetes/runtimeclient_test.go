@@ -61,3 +61,10 @@ func TestNewRuntimeClientFromFilename(t *testing.T) {
 	_, err := kubernetes.NewRuntimeClientFromFileName("file-does-not-exist.txt")
 	g.Expect(err).To(MatchError(ContainSubstring("open file-does-not-exist.txt: no such file or directory")))
 }
+
+func TestClientFactoryBuildClientFromKubeconfigNoFile(t *testing.T) {
+	g := NewWithT(t)
+	f := kubernetes.ClientFactory{}
+	_, err := f.BuildClientFromKubeconfig("file-does-not-exist.txt")
+	g.Expect(err).To(MatchError(ContainSubstring("open file-does-not-exist.txt: no such file or directory")))
+}

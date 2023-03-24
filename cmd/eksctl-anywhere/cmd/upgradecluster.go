@@ -100,6 +100,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
+		WithKubeProxyCLIUpgrader(kubeProxyCLIUpgraderOptions(uc)).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -122,6 +123,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		deps.Writer,
 		deps.EksdUpgrader,
 		deps.EksdInstaller,
+		deps.KubeProxyCLIUpgrader,
 	)
 
 	workloadCluster := &types.Cluster{

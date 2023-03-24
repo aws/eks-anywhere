@@ -12,15 +12,15 @@ import (
 
 // RetrierClient wraps around a ClusterClient, offering retry functionality for some operations.
 type RetrierClient struct {
-	*client
+	*clusterManagerClient
 	retrier *retrier.Retrier
 }
 
 // NewRetrierClient constructs a new RetrierClient.
 func NewRetrierClient(client ClusterClient, retrier *retrier.Retrier) *RetrierClient {
 	return &RetrierClient{
-		client:  NewClient(client),
-		retrier: retrier,
+		clusterManagerClient: newClient(client),
+		retrier:              retrier,
 	}
 }
 

@@ -83,6 +83,12 @@ func EksdRelease() *eksdv1.Release {
 								URI: "public.ecr.aws/eks-distro/kubernetes/kube-apiserver:v1.19.8",
 							},
 						},
+						{
+							Name: "kube-proxy-image",
+							Image: &eksdv1.AssetImage{
+								URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.19.8-eks-1-19-18",
+							},
+						},
 					},
 				},
 			},
