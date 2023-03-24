@@ -695,7 +695,6 @@ type CiliumConfig struct {
 
 	// SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
 	// be used when operators wish to self manage the Cilium installation.
-	// +kubebuilder:default=false
 	// +optional
 	SkipUpgrade *bool `json:"skipUpgrade,omitempty"`
 }
