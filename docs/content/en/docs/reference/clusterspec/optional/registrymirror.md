@@ -20,6 +20,10 @@ spec:
   registryMirrorConfiguration:
     endpoint: <private registry IP or hostname>
     port: <private registry port>
+    ociNamespaces:
+      - registry: <upstream registry IP or hostname>
+        namespace: <namespace in private registry>
+      ...
     caCertContent: |
       -----BEGIN CERTIFICATE-----
       MIIF1DCCA...
@@ -42,6 +46,18 @@ spec:
   is not specified, the default HTTPS port `443` is used
 * __Type__: string
 * __Example__: ```port: 443```
+
+### __ociNamespaces__ (optional)
+* __Description__: mapping from upstream registries to the locations of the private registry. When specified, the artifacts pulled from an upstream registry will be put in its corresponding location/namespace in the private registry. The target location/namespace must be already existing.
+* __Type__: array
+* __Example__: <br/>
+  ```yaml
+  OCINamespaces:
+    - registry: "public.ecr.aws"
+      namespace: "eks-anywhere"
+    - registry: "875320726801.dkr.ecr.us-west-2.amazonaws.com"
+      namespace: "curated-packages"
+  ```
 
 ### __caCertContent__ (optional)
 * __Description__: certificate Authority (CA) Certificate for the private registry . When using 
