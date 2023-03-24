@@ -20,6 +20,10 @@ spec:
   registryMirrorConfiguration:
     endpoint: <private registry IP or hostname>
     port: <private registry port>
+    ociNamespaces:
+      - registry: <upstream registry IP or hostname>
+        namespace: <namespace in private registry>
+      ...
     caCertContent: |
       -----BEGIN CERTIFICATE-----
       MIIF1DCCA...
@@ -41,6 +45,19 @@ spec:
   is not specified, the default HTTPS port `443` is used
 * __Type__: string
 * __Example__: ```port: 443```
+
+### __ociNamespaces__ (optional)
+* __Description__: mapping from upstream registries to the locations of the private registry. When specified, the artifacts pulled from an upstream registry will be put in its corresponding location/namespace in the private registry. The target location/namespace must be already existing.
+* __Type__: array
+* __Example__: <br/>
+  ```yaml
+  ociNamespaces:
+    - registry: "public.ecr.aws"
+      namespace: "eks-anywhere"
+    - registry: "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+      namespace: "curated-packages"
+  ```
+
 ### __caCertContent__ (optional)
 * __Description__: Certificate Authority (CA) Certificate for the private registry . When using 
   self-signed certificates it is necessary to pass this parameter in the cluster spec. This __must__ be the individual public CA cert used to sign the registry certificate. This will be added to the cluster nodes so that they are able to pull images from the private registry.
