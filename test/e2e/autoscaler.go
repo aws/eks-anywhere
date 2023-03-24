@@ -7,7 +7,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runAutoscalerWitMetricsServerSimpleFlow(test *framework.ClusterE2ETest) {
+func runAutoscalerWithMetricsServerSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(func(e *framework.ClusterE2ETest) {
 		autoscalerName := "cluster-autoscaler"
 		metricServerName := "metrics-server"
