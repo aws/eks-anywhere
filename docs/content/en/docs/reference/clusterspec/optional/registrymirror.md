@@ -52,7 +52,7 @@ spec:
 * __Type__: array
 * __Example__: <br/>
   ```yaml
-  OCINamespaces:
+  ociNamespaces:
     - registry: "public.ecr.aws"
       namespace: "eks-anywhere"
     - registry: "875320726801.dkr.ecr.us-west-2.amazonaws.com"
