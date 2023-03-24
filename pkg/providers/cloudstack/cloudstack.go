@@ -555,6 +555,19 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 // CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
 // new CloudStackMachineTemplates.
 func NeedNewMachineTemplate(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatacenterConfig, generatedCsmc, actualCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
+	if notMatch := compareDatacenterConfig(generatedCsdc, actualCsdc, log); notMatch {
+		return true
+	}
+
+	if err := v1alpha1.ValidateImmutableFieldsCloudStackMachineConfig(generatedCsmc, actualCsmc); len(err) > 0 {
+		log.V(4).Info(err.ToAggregate().Error())
+		return true
+	}
+
+	return compareMachineConfig(generatedCsmc, actualCsmc, log)
+}
+
+func compareDatacenterConfig(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatacenterConfig, log logr.Logger) bool {
 	if len(generatedCsdc.Spec.AvailabilityZones) != len(actualCsdc.Spec.AvailabilityZones) {
 		log.V(4).Info("Generated and actual CloudStackDatacenterConfigs do not match", "generatedAvailabilityZones", generatedCsdc.Spec.AvailabilityZones,
 			"actualAvailabilityZones", actualCsdc.Spec.AvailabilityZones)
@@ -577,7 +590,10 @@ func NeedNewMachineTemplate(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatace
 			return true
 		}
 	}
+	return false
+}
 
+func compareMachineConfig(generatedCsmc, actualCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
 	if !generatedCsmc.Spec.Template.Equal(&actualCsmc.Spec.Template) {
 		log.V(4).Info("Old and new CloudStackMachineConfig Templates do not match", "machineConfig", generatedCsmc.Name, "oldTemplate", generatedCsmc.Spec.Template,
 			"newTemplate", actualCsmc.Spec.Template)
@@ -617,12 +633,6 @@ func NeedNewMachineTemplate(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatace
 			return true
 		}
 	}
-
-	if err := v1alpha1.ValidateImmutableFieldsCloudStackMachineConfig(generatedCsmc, actualCsmc); len(err) > 0 {
-		log.V(4).Info(err.ToAggregate().Error())
-		return true
-	}
-
 	return false
 }
 
