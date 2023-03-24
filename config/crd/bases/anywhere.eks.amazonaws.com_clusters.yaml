@@ -72,7 +72,6 @@ spec:
                               never.
                             type: string
                           skipUpgrade:
-                            default: false
                             description: SkipUpgrade indicicates that Cilium maintenance
                               should be skipped during upgrades. This can be used
                               when operators wish to self manage the Cilium installation.
