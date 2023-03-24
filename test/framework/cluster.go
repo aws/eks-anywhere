@@ -1889,7 +1889,7 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 	}
 
 	e.T.Log("Waiting for machinedeployment to finish scaling up")
-	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.phase", "Running",
+	err = e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "15m", "status.phase", "Running",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
 		e.T.Fatalf("Failed to get Running phase for machinedeployment: %s", err)
