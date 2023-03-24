@@ -55,7 +55,7 @@ spec:
   ociNamespaces:
     - registry: "public.ecr.aws"
       namespace: "eks-anywhere"
-    - registry: "875320726801.dkr.ecr.us-west-2.amazonaws.com"
+    - registry: "783794618700.dkr.ecr.us-west-2.amazonaws.com"
       namespace: "curated-packages"
   ```
 
