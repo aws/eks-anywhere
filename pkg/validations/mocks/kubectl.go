@@ -11,7 +11,6 @@ import (
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	types "github.com/aws/eks-anywhere/pkg/types"
-	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -37,21 +36,6 @@ func NewMockKubectlClient(ctrl *gomock.Controller) *MockKubectlClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockKubectlClient) EXPECT() *MockKubectlClientMockRecorder {
 	return m.recorder
-}
-
-// GetBundles mocks base method.
-func (m *MockKubectlClient) GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*v1alpha10.Bundles, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBundles", ctx, kubeconfigFile, name, namespace)
-	ret0, _ := ret[0].(*v1alpha10.Bundles)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBundles indicates an expected call of GetBundles.
-func (mr *MockKubectlClientMockRecorder) GetBundles(ctx, kubeconfigFile, name, namespace interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBundles", reflect.TypeOf((*MockKubectlClient)(nil).GetBundles), ctx, kubeconfigFile, name, namespace)
 }
 
 // GetClusters mocks base method.

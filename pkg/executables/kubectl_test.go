@@ -617,37 +617,16 @@ func TestCloudStackWorkerNodesMachineTemplate(t *testing.T) {
 	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
 	k, ctx, _, e := newKubectl(t)
 	expectedParam1 := []string{
-		"get", "machinedeployments.cluster.x-k8s.io", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template",
+		"get", "MachineDeployment", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template",
 		"--template", "{{.spec.template.spec.infrastructureRef.name}}", "--kubeconfig", kubeconfig, "--namespace", namespace,
 	}
 	expectedParam2 := []string{
-		"get", "cloudstackmachinetemplates.infrastructure.cluster.x-k8s.io", machineTemplateName, "-o", "go-template", "--template",
+		"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template",
 		"{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace,
 	}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam1)).Return(*machineTemplateNameBuffer, nil)
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam2)).Return(*machineTemplatesBuffer, nil)
 	_, err := k.CloudstackWorkerNodesMachineTemplate(ctx, clusterName, kubeconfig, namespace)
-	if err != nil {
-		t.Errorf("Kubectl.GetNamespace() error = %v, want nil", err)
-	}
-}
-
-func TestVsphereWorkerNodesMachineTemplate(t *testing.T) {
-	var kubeconfig, namespace, clusterName, machineTemplateName string
-	machineTemplateNameBuffer := bytes.NewBufferString(machineTemplateName)
-	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
-	k, ctx, _, e := newKubectl(t)
-	expectedParam1 := []string{
-		"get", "machinedeployments.cluster.x-k8s.io", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template",
-		"--template", "{{.spec.template.spec.infrastructureRef.name}}", "--kubeconfig", kubeconfig, "--namespace", namespace,
-	}
-	expectedParam2 := []string{
-		"get", "vspheremachinetemplates.infrastructure.cluster.x-k8s.io", machineTemplateName, "-o", "go-template", "--template",
-		"{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace,
-	}
-	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam1)).Return(*machineTemplateNameBuffer, nil)
-	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam2)).Return(*machineTemplatesBuffer, nil)
-	_, err := k.VsphereWorkerNodesMachineTemplate(ctx, clusterName, kubeconfig, namespace)
 	if err != nil {
 		t.Errorf("Kubectl.GetNamespace() error = %v, want nil", err)
 	}
@@ -1446,7 +1425,7 @@ func TestKubectlRolloutRestartDaemonSetSuccess(t *testing.T) {
 	e.EXPECT().Execute(
 		ctx,
 		[]string{
-			"rollout", "restart", "daemonset", "cilium",
+			"rollout", "restart", "ds", "cilium",
 			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.KubeSystemNamespace,
 		},
 	).Return(bytes.Buffer{}, nil)
@@ -1462,7 +1441,7 @@ func TestKubectlRolloutRestartDaemonSetError(t *testing.T) {
 	e.EXPECT().Execute(
 		ctx,
 		[]string{
-			"rollout", "restart", "daemonset", "cilium",
+			"rollout", "restart", "ds", "cilium",
 			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.KubeSystemNamespace,
 		},
 	).Return(bytes.Buffer{}, fmt.Errorf("error"))
@@ -2002,7 +1981,7 @@ func TestKubectlVersion(t *testing.T) {
 
 func TestKubectlValidateClustersCRDSuccess(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
-	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.cluster.x-k8s.io", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, nil)
+	e.EXPECT().Execute(ctx, []string{"get", "crd", "clusters.cluster.x-k8s.io", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, nil)
 	err := k.ValidateClustersCRD(ctx, cluster)
 	if err != nil {
 		t.Fatalf("Kubectl.ValidateClustersCRD() error = %v, want nil", err)
@@ -2011,28 +1990,10 @@ func TestKubectlValidateClustersCRDSuccess(t *testing.T) {
 
 func TestKubectlValidateClustersCRDNotFound(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
-	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.cluster.x-k8s.io", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, errors.New("CRD not found"))
+	e.EXPECT().Execute(ctx, []string{"get", "crd", "clusters.cluster.x-k8s.io", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, errors.New("CRD not found"))
 	err := k.ValidateClustersCRD(ctx, cluster)
 	if err == nil {
 		t.Fatalf("Kubectl.ValidateClustersCRD() error == nil, want CRD not found")
-	}
-}
-
-func TestKubectlValidateEKSAClustersCRDSuccess(t *testing.T) {
-	k, ctx, cluster, e := newKubectl(t)
-	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.anywhere.eks.amazonaws.com", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, nil)
-	err := k.ValidateEKSAClustersCRD(ctx, cluster)
-	if err != nil {
-		t.Fatalf("Kubectl.ValidateEKSAClustersCRD() error = %v, want nil", err)
-	}
-}
-
-func TestKubectlValidateEKSAClustersCRDNotFound(t *testing.T) {
-	k, ctx, cluster, e := newKubectl(t)
-	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.anywhere.eks.amazonaws.com", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, errors.New("CRD not found"))
-	err := k.ValidateEKSAClustersCRD(ctx, cluster)
-	if err == nil {
-		t.Fatalf("Kubectl.ValidateEKSAClustersCRD() error == nil, want CRD not found")
 	}
 }
 
@@ -2221,7 +2182,7 @@ func TestKubectlCheckCAPIProviderExistsInstalled(t *testing.T) {
 		[]string{"get", "namespace", fmt.Sprintf("--field-selector=metadata.name=%s", providerNs), "--kubeconfig", tt.cluster.KubeconfigFile}).Return(*bytes.NewBufferString("namespace"), nil)
 
 	tt.e.EXPECT().Execute(tt.ctx,
-		[]string{"get", "providers.clusterctl.cluster.x-k8s.io", "--namespace", providerNs, fmt.Sprintf("--field-selector=metadata.name=%s", providerName), "--kubeconfig", tt.cluster.KubeconfigFile})
+		[]string{"get", "provider", "--namespace", providerNs, fmt.Sprintf("--field-selector=metadata.name=%s", providerName), "--kubeconfig", tt.cluster.KubeconfigFile})
 
 	tt.Expect(tt.k.CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, providerName, providerNs))
 }
@@ -2813,7 +2774,7 @@ func TestKubectlDeletePackageResources(t *testing.T) {
 		tt := newKubectlTest(t)
 		tt.e.EXPECT().Execute(
 			tt.ctx,
-			"delete", "packagebundlecontroller.packages.eks.amazonaws.com", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
 		).Return(*bytes.NewBufferString("//"), nil)
 		tt.e.EXPECT().Execute(
 			tt.ctx,
@@ -2827,7 +2788,7 @@ func TestKubectlDeletePackageResources(t *testing.T) {
 		tt := newKubectlTest(t)
 		tt.e.EXPECT().Execute(
 			tt.ctx,
-			"delete", "packagebundlecontroller.packages.eks.amazonaws.com", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
 		).Return(*bytes.NewBufferString("//"), fmt.Errorf("bam"))
 
 		tt.Expect(tt.k.DeletePackageResources(tt.ctx, tt.cluster, "clusterName")).To(MatchError(ContainSubstring("bam")))
@@ -2837,7 +2798,7 @@ func TestKubectlDeletePackageResources(t *testing.T) {
 		tt := newKubectlTest(t)
 		tt.e.EXPECT().Execute(
 			tt.ctx,
-			"delete", "packagebundlecontroller.packages.eks.amazonaws.com", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
 		).Return(*bytes.NewBufferString("//"), nil)
 		tt.e.EXPECT().Execute(
 			tt.ctx,
@@ -3132,7 +3093,7 @@ func TestGetPackageBundleController(t *testing.T) {
 		t.Errorf("marshaling test service: %s", err)
 	}
 	ret := bytes.NewBuffer(respJSON)
-	expectedParam := []string{"get", "packagebundlecontroller.packages.eks.amazonaws.com", "testcluster", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	expectedParam := []string{"get", "pbc", "testcluster", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
 	if _, err := tt.k.GetPackageBundleController(tt.ctx, tt.cluster.KubeconfigFile, "testcluster"); err != nil {
 		t.Errorf("Kubectl.GetPackageBundleController() error = %v, want nil", err)
@@ -3151,9 +3112,9 @@ func TestGetPackageBundleList(t *testing.T) {
 		t.Errorf("marshaling test service: %s", err)
 	}
 	ret := bytes.NewBuffer(respJSON)
-	expectedParam := []string{"get", "packagebundles.packages.eks.amazonaws.com", "-o", "jsonpath='{.items}'", "--kubeconfig", "c.kubeconfig", "-n", "eksa-packages"}
+	expectedParam := []string{"get", "packagebundles", "-o", "jsonpath='{.items}'", "--kubeconfig", "c.kubeconfig", "-n", "eksa-packages"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
-	expectedParam = []string{"get", "packagebundles.packages.eks.amazonaws.com", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	expectedParam = []string{"get", "packagebundle", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
 	if _, err := tt.k.GetPackageBundleList(tt.ctx, tt.cluster.KubeconfigFile); err != nil {
 		t.Errorf("Kubectl.GetPackageBundleList() error = %v, want nil", err)
@@ -3358,7 +3319,7 @@ func TestKubectlHasCRD(t *testing.T) {
 			const kubeconfig = "kubeconfig"
 			var b bytes.Buffer
 
-			params := []string{"get", "customresourcedefinition", crd, "--kubeconfig", kubeconfig}
+			params := []string{"get", "crd", crd, "--kubeconfig", kubeconfig}
 			e.EXPECT().Execute(ctx, gomock.Eq(params)).Return(b, tt.Error)
 
 			r, err := k.HasCRD(context.Background(), crd, kubeconfig)
@@ -3401,7 +3362,7 @@ func TestKubectlDeleteCRD(t *testing.T) {
 			const kubeconfig = "kubeconfig"
 			var b bytes.Buffer
 
-			params := []string{"delete", "customresourcedefinition", crd, "--kubeconfig", kubeconfig}
+			params := []string{"delete", "crd", crd, "--kubeconfig", kubeconfig}
 			e.EXPECT().Execute(ctx, gomock.Eq(params)).Return(b, tt.Error)
 
 			err := k.DeleteCRD(context.Background(), crd, kubeconfig)

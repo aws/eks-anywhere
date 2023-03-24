@@ -36,15 +36,13 @@ spec:
 * __Description__: IP address or hostname of the private registry for pulling images
 * __Type__: string
 * __Example__: ```endpoint: 192.168.0.1```
-
 ### __port__ (optional)
-* __Description__: port for the private registry. This is an optional field. If a port
+* __Description__: Port for the private registry. This is an optional field. If a port
   is not specified, the default HTTPS port `443` is used
 * __Type__: string
 * __Example__: ```port: 443```
-
 ### __caCertContent__ (optional)
-* __Description__: certificate Authority (CA) Certificate for the private registry . When using 
+* __Description__: Certificate Authority (CA) Certificate for the private registry . When using 
   self-signed certificates it is necessary to pass this parameter in the cluster spec. This __must__ be the individual public CA cert used to sign the registry certificate. This will be added to the cluster nodes so that they are able to pull images from the private registry.
 
   It is also possible to configure CACertContent by exporting an environment variable:<br/>
@@ -59,10 +57,9 @@ spec:
     es6RXmsCj...
     -----END CERTIFICATE-----
   ```
-
 ### __authenticate__ (optional)
 
-* __Description__: optional field to authenticate with a private registry. When using private registries that 
+* __Description__: Optional field to authenticate with a private registry. When using private registries that 
   require authentication, it is necessary to set this parameter to ```true``` in the cluster spec.
 * __Type__: boolean
 * __Example__: ```authenticate: true```
@@ -72,10 +69,6 @@ To use an authenticated private registry, please also set the following environm
 export REGISTRY_USERNAME=<username>
 export REGISTRY_PASSWORD=<password>
 ```
-
-### __insecureSkipVerify__ (optional)
-* __Description__: optional field to skip the registry certificate verification. Only use this solution for isolated testing or in a tightly controlled, air-gapped environment. Currenly only supported for Ubuntu OS.
-* __Type__: boolean
 
 ## Import images into a private registry
 You can use the `download images` and `import images` commands to pull images from `public.ecr.aws` and push them to your

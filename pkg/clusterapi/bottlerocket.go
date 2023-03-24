@@ -47,14 +47,6 @@ func pause(image v1alpha1.Image) bootstrapv1.Pause {
 	}
 }
 
-func hostConfig(config *anywherev1.HostOSConfiguration) *bootstrapv1.BottlerocketSettings {
-	return &bootstrapv1.BottlerocketSettings{
-		Kernel: &bootstrapv1.BottlerocketKernelSettings{
-			SysctlSettings: config.BottlerocketConfiguration.Kernel.SysctlSettings,
-		},
-	}
-}
-
 // SetBottlerocketInKubeadmControlPlane adds bottlerocket bootstrap image metadata in kubeadmControlPlane.
 func SetBottlerocketInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, versionsBundle *cluster.VersionsBundle) {
 	b := bottlerocketBootstrap(versionsBundle.BottleRocketHostContainers.KubeadmBootstrap)
@@ -118,27 +110,6 @@ func SetBottlerocketControlContainerImageInKubeadmConfigTemplate(kct *bootstrapv
 	kct.Spec.Template.Spec.JoinConfiguration.BottlerocketControl = bottlerocketControl(versionsBundle.BottleRocketHostContainers.Control)
 }
 
-// SetBottlerocketHostConfigInKubeadmControlPlane sets bottlerocket specific kernel settings in kubeadmControlPlane.
-func SetBottlerocketHostConfigInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, hostOSConfig *anywherev1.HostOSConfiguration) {
-	if hostOSConfig == nil || hostOSConfig.BottlerocketConfiguration == nil || hostOSConfig.BottlerocketConfiguration.Kernel == nil ||
-		hostOSConfig.BottlerocketConfiguration.Kernel.SysctlSettings == nil {
-		return
-	}
-
-	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Bottlerocket = hostConfig(hostOSConfig)
-	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.Bottlerocket = hostConfig(hostOSConfig)
-}
-
-// SetBottlerocketHostConfigInKubeadmConfigTemplate sets bottlerocket specific kernel settings in kubeadmConfigTemplate.
-func SetBottlerocketHostConfigInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, hostOSConfig *anywherev1.HostOSConfiguration) {
-	if hostOSConfig == nil || hostOSConfig.BottlerocketConfiguration == nil || hostOSConfig.BottlerocketConfiguration.Kernel == nil ||
-		hostOSConfig.BottlerocketConfiguration.Kernel.SysctlSettings == nil {
-		return
-	}
-
-	kct.Spec.Template.Spec.JoinConfiguration.Bottlerocket = hostConfig(hostOSConfig)
-}
-
 // SetBottlerocketInEtcdCluster adds bottlerocket config in etcdadmCluster.
 func SetBottlerocketInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *cluster.VersionsBundle) {
 	etcd.Spec.EtcdadmConfigSpec.Format = etcdbootstrapv1.Format(anywherev1.Bottlerocket)
@@ -157,16 +128,4 @@ func SetBottlerocketAdminContainerImageInEtcdCluster(etcd *etcdv1.EtcdadmCluster
 // SetBottlerocketControlContainerImageInEtcdCluster overrides the default bottlerocket control container image metadata in etcdadmCluster.
 func SetBottlerocketControlContainerImageInEtcdCluster(etcd *etcdv1.EtcdadmCluster, controlImage v1alpha1.Image) {
 	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig.ControlImage = controlImage.VersionedImage()
-}
-
-// SetBottlerocketHostConfigInEtcdCluster sets bottlerocket specific kernel settings in etcdadmCluster.
-func SetBottlerocketHostConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, hostOSConfig *anywherev1.HostOSConfiguration) {
-	if hostOSConfig == nil || hostOSConfig.BottlerocketConfiguration == nil || hostOSConfig.BottlerocketConfiguration.Kernel == nil ||
-		hostOSConfig.BottlerocketConfiguration.Kernel.SysctlSettings == nil {
-		return
-	}
-
-	etcd.Spec.EtcdadmConfigSpec.BottlerocketConfig.Kernel = &bootstrapv1.BottlerocketKernelSettings{
-		SysctlSettings: hostOSConfig.BottlerocketConfiguration.Kernel.SysctlSettings,
-	}
 }

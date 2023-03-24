@@ -61,20 +61,3 @@ func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *
 	}
 	return kubeadmControlPlane, nil
 }
-
-// GetMachineDeployment reads a cluster-api MachineDeployment for an eks-a cluster using a kube client.
-// If the MachineDeployment is not found, the method returns (nil, nil).
-func GetMachineDeployment(ctx context.Context, client client.Client, machineDeploymentName string) (*clusterv1.MachineDeployment, error) {
-	machineDeployment := &clusterv1.MachineDeployment{}
-	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: machineDeploymentName}
-
-	err := client.Get(ctx, key, machineDeployment)
-	if apierrors.IsNotFound(err) {
-		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	return machineDeployment, nil
-}

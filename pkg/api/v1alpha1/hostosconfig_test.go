@@ -154,36 +154,6 @@ func TestValidateHostOSConfig(t *testing.T) {
 			osFamily: Ubuntu,
 			wantErr:  "BottlerocketConfiguration can only be used with osFamily: \"bottlerocket\"",
 		},
-		{
-			name: "valid kernel config",
-			hostOSConfig: &HostOSConfiguration{
-				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kernel: &v1beta1.BottlerocketKernelSettings{
-						SysctlSettings: map[string]string{
-							"vm.max_map_count":         "262144",
-							"fs.file-max":              "65535",
-							"net.ipv4.tcp_mtu_probing": "1",
-						},
-					},
-				},
-			},
-			osFamily: Bottlerocket,
-			wantErr:  "",
-		},
-		{
-			name: "invalid kernel key value",
-			hostOSConfig: &HostOSConfiguration{
-				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kernel: &v1beta1.BottlerocketKernelSettings{
-						SysctlSettings: map[string]string{
-							"": "262144",
-						},
-					},
-				},
-			},
-			osFamily: Bottlerocket,
-			wantErr:  "sysctlSettings key cannot be empty",
-		},
 	}
 
 	for _, tt := range tests {

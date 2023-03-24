@@ -6,13 +6,6 @@ weight: 35
 
 ## Unreleased
 
-## [v0.14.5](https://github.com/aws/eks-anywhere/releases/tag/v0.14.5)
-
-### Fixed
-
-- Fix kubectl get call to point to full API name ([#5342](https://github.com/aws/eks-anywhere/pull/5342))
-- Expand all kubectl calls to fully qualified names ([#5347](https://github.com/aws/eks-anywhere/pull/5347))
-
 ## [v0.14.4](https://github.com/aws/eks-anywhere/releases/tag/v0.14.4)
 
 ### Added
@@ -20,7 +13,7 @@ weight: 35
 - `--no-timeouts` flag in create and upgrade commands to disable timeout for all wait operations
 - Management resources backup procedure with clusterctl
 
-## [v0.14.3](https://github.com/aws/eks-anywhere/releases/tag/v0.14.3)
+## [v1.14.3](https://github.com/aws/eks-anywhere/releases/tag/v0.14.3)
 
 ### Added
 

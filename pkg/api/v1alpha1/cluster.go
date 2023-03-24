@@ -658,24 +658,12 @@ func validateCNIConfig(cniConfig *CNIConfig) error {
 }
 
 func validateCiliumConfig(cilium *CiliumConfig) error {
-	if cilium == nil {
-		return nil
-	}
-
-	if !cilium.IsManaged() {
-		if cilium.PolicyEnforcementMode != "" {
-			return errors.New("when using skipUpgrades for cilium all other fields must be empty")
-		}
-	}
-
 	if cilium.PolicyEnforcementMode == "" {
 		return nil
 	}
-
 	if !validCiliumPolicyEnforcementModes[cilium.PolicyEnforcementMode] {
 		return fmt.Errorf("cilium policyEnforcementMode \"%s\" not supported", cilium.PolicyEnforcementMode)
 	}
-
 	return nil
 }
 
@@ -733,6 +721,15 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
+	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify {
+		switch clusterConfig.Spec.DatacenterRef.Kind {
+		case DockerDatacenterKind, NutanixDatacenterKind, VSphereDatacenterKind, TinkerbellDatacenterKind, CloudStackDatacenterKind, SnowDatacenterKind:
+			break
+		default:
+			return fmt.Errorf("insecureSkipVerify is only supported for docker, nutanix, snow, tinkerbell, cloudstack and vsphere providers")
+		}
 	}
 
 	mirrorCount := 0

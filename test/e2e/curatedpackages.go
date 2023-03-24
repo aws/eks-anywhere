@@ -21,14 +21,6 @@ import (
 
 func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
-	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
-	if err != nil {
-		test.T.Fatalf("packages controller not in installed state: %s", err)
-	}
-	err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 3*time.Minute)
-	if err != nil {
-		test.T.Fatalf("packages controller crds not in installed state: %s", err)
-	}
 	packageName := "hello-eks-anywhere"
 	packagePrefix := "test"
 	packageFile := test.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)
@@ -38,14 +30,6 @@ func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 
 func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(runCuratedPackageInstall)
-}
-
-func runDisabledCuratedPackage(test *framework.ClusterE2ETest) {
-	test.ValidatingNoPackageController()
-}
-
-func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
-	test.WithCluster(runDisabledCuratedPackage)
 }
 
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {

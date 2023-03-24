@@ -3642,12 +3642,6 @@ spec:
                               allowed between pods. Accepted values are default, always,
                               never.
                             type: string
-                          skipUpgrade:
-                            default: false
-                            description: SkipUpgrade indicicates that Cilium maintenance
-                              should be skipped during upgrades. This can be used
-                              when operators wish to self manage the Cilium installation.
-                            type: boolean
                         type: object
                       kindnetd:
                         type: object
@@ -3917,7 +3911,8 @@ spec:
                   insecureSkipVerify:
                     description: InsecureSkipVerify skips the registry certificate
                       verification. Only use this solution for isolated testing or
-                      in a tightly controlled, air-gapped environment.
+                      in a tightly controlled, air-gapped environment. Currently only
+                      supported for snow provider
                     type: boolean
                   ociNamespaces:
                     description: OCINamespaces defines the mapping from an upstream
@@ -5052,61 +5047,6 @@ spec:
                 items:
                   type: string
                 type: array
-              hostOSConfiguration:
-                description: HostOSConfiguration provides OS specific configurations
-                  for the machine
-                properties:
-                  bottlerocketConfiguration:
-                    description: BottlerocketConfiguration defines the Bottlerocket
-                      configuration on the host OS. These settings only take effect
-                      when the `osFamily` is bottlerocket.
-                    properties:
-                      kernel:
-                        description: Kernel defines the kernel settings for bottlerocket.
-                        properties:
-                          sysctlSettings:
-                            additionalProperties:
-                              type: string
-                            description: SysctlSettings defines the kernel sysctl
-                              settings to set for bottlerocket nodes.
-                            type: object
-                        type: object
-                      kubernetes:
-                        description: Kubernetes defines the Kubernetes settings on
-                          the host OS.
-                        properties:
-                          allowedUnsafeSysctls:
-                            description: AllowedUnsafeSysctls defines the list of
-                              unsafe sysctls that can be set on a node.
-                            items:
-                              type: string
-                            type: array
-                          clusterDNSIPs:
-                            description: ClusterDNSIPs defines IP addresses of the
-                              DNS servers.
-                            items:
-                              type: string
-                            type: array
-                          maxPods:
-                            description: MaxPods defines the maximum number of pods
-                              that can run on a node.
-                            type: integer
-                        type: object
-                    type: object
-                  ntpConfiguration:
-                    description: NTPConfiguration defines the NTP configuration on
-                      the host OS.
-                    properties:
-                      servers:
-                        description: Servers defines a list of NTP servers to be configured
-                          on the host OS.
-                        items:
-                          type: string
-                        type: array
-                    required:
-                    - servers
-                    type: object
-                type: object
               instanceType:
                 description: InstanceType is the type of instance to create.
                 type: string
@@ -5355,16 +5295,6 @@ spec:
                       configuration on the host OS. These settings only take effect
                       when the `osFamily` is bottlerocket.
                     properties:
-                      kernel:
-                        description: Kernel defines the kernel settings for bottlerocket.
-                        properties:
-                          sysctlSettings:
-                            additionalProperties:
-                              type: string
-                            description: SysctlSettings defines the kernel sysctl
-                              settings to set for bottlerocket nodes.
-                            type: object
-                        type: object
                       kubernetes:
                         description: Kubernetes defines the Kubernetes settings on
                           the host OS.
@@ -5731,16 +5661,6 @@ spec:
                       configuration on the host OS. These settings only take effect
                       when the `osFamily` is bottlerocket.
                     properties:
-                      kernel:
-                        description: Kernel defines the kernel settings for bottlerocket.
-                        properties:
-                          sysctlSettings:
-                            additionalProperties:
-                              type: string
-                            description: SysctlSettings defines the kernel sysctl
-                              settings to set for bottlerocket nodes.
-                            type: object
-                        type: object
                       kubernetes:
                         description: Kubernetes defines the Kubernetes settings on
                           the host OS.
@@ -6104,7 +6024,7 @@ rules:
 - apiGroups:
   - packages.eks.amazonaws.com
   resources:
-  - packages
+  - packagebundlecontrollers
   verbs:
   - create
   - delete

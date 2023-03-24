@@ -514,13 +514,6 @@ spec:
       etcdImage: {{.etcdImage}}
       bootstrapImage: {{.bottlerocketBootstrapRepository}}:{{.bottlerocketBootstrapVersion}}
       pauseImage: {{.pauseRepository}}:{{.pauseVersion}}
-{{- if .etcdKernelSettings }}
-      kernel:
-        sysctlSettings:
-{{- range $key, $value := .etcdKernelSettings }}
-          {{ $key }}: {{ $value }}
-{{- end }}
-{{- end }}
 {{- else}}
     cloudInitConfig:
       version: {{.externalEtcdVersion}}

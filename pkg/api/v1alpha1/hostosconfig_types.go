@@ -23,7 +23,4 @@ type BottlerocketConfiguration struct {
 	// Kubernetes defines the Kubernetes settings on the host OS.
 	// +optional
 	Kubernetes *v1beta1.BottlerocketKubernetesSettings `json:"kubernetes,omitempty"`
-
-	// Kernel defines the kernel settings for bottlerocket.
-	Kernel *v1beta1.BottlerocketKernelSettings `json:"kernel,omitempty"`
 }

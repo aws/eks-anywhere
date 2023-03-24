@@ -22,7 +22,7 @@ func TestCloudStackKubernetes123RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -35,7 +35,7 @@ func TestCloudStackKubernetes123RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -61,7 +61,7 @@ func TestCloudStackKubernetes123RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -76,7 +76,7 @@ func TestCloudStackKubernetes123RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runAutoscalerWitMetricsServerSimpleFlow(test)
 }
@@ -88,7 +88,7 @@ func TestCloudStackKubernetes123RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
 			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }

@@ -32,9 +32,6 @@ type UpgradeTemplater interface {
 type Upgrader struct {
 	templater UpgradeTemplater
 	client    KubernetesClient
-
-	// skipUpgrade indicates Cilium upgrades should be skipped.
-	skipUpgrade bool
 }
 
 // NewUpgrader constructs a new Upgrader.
@@ -47,11 +44,6 @@ func NewUpgrader(client KubernetesClient, templater UpgradeTemplater) *Upgrader 
 
 // Upgrade configures a Cilium installation to match the desired state in the cluster Spec.
 func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error) {
-	if u.skipUpgrade {
-		logger.V(1).Info("Cilium upgrade skipped")
-		return nil, nil
-	}
-
 	diff := ciliumChangeDiff(currentSpec, newSpec)
 	chartValuesChanged := ciliumHelmChartValuesChanged(currentSpec, newSpec)
 	if diff == nil && !chartValuesChanged {
@@ -182,9 +174,4 @@ func (u *Upgrader) RunPostControlPlaneUpgradeSetup(ctx context.Context, cluster 
 		return fmt.Errorf("restarting cilium daemonset: %v", err)
 	}
 	return nil
-}
-
-// SetSkipUpgrade configures u to skip the upgrade process.
-func (u *Upgrader) SetSkipUpgrade(v bool) {
-	u.skipUpgrade = v
 }

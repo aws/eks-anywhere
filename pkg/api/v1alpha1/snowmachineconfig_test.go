@@ -5,7 +5,6 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
@@ -83,37 +82,6 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 					InstanceType:             DefaultSnowInstanceType,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 					OSFamily:                 Ubuntu,
-				},
-			},
-		},
-		{
-			name: "HostOSConfiguration exists",
-			before: &SnowMachineConfig{
-				Spec: SnowMachineConfigSpec{
-					OSFamily: Bottlerocket,
-					HostOSConfiguration: &HostOSConfiguration{
-						BottlerocketConfiguration: &BottlerocketConfiguration{
-							Kernel: &v1beta1.BottlerocketKernelSettings{
-								SysctlSettings: map[string]string{
-									"foo": "bar",
-								},
-							},
-						},
-					},
-				},
-			},
-			after: &SnowMachineConfig{
-				Spec: SnowMachineConfigSpec{
-					InstanceType:             DefaultSnowInstanceType,
-					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
-					OSFamily:                 Bottlerocket,
-					HostOSConfiguration: &HostOSConfiguration{
-						BottlerocketConfiguration: &BottlerocketConfiguration{
-							Kernel: &v1beta1.BottlerocketKernelSettings{
-								SysctlSettings: map[string]string{"foo": "bar"},
-							},
-						},
-					},
 				},
 			},
 		},
@@ -561,38 +529,6 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 				},
 			},
 			wantErr: "SnowMachineConfig NonRootVolumes[0].Size must be no smaller than 8 Gi",
-		},
-		{
-			name: "invalid HostOSConfiguration",
-			obj: &SnowMachineConfig{
-				Spec: SnowMachineConfigSpec{
-					AMIID:                    "ami-1",
-					InstanceType:             DefaultSnowInstanceType,
-					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
-					Devices:                  []string{"1.2.3.4"},
-					OSFamily:                 Ubuntu,
-					HostOSConfiguration: &HostOSConfiguration{
-						BottlerocketConfiguration: &BottlerocketConfiguration{
-							Kernel: &v1beta1.BottlerocketKernelSettings{
-								SysctlSettings: map[string]string{"foo": "bar"},
-							},
-						},
-					},
-					ContainersVolume: &snowv1.Volume{
-						Size: 25,
-					},
-					Network: SnowNetwork{
-						DirectNetworkInterfaces: []SnowDirectNetworkInterface{
-							{
-								Index:   1,
-								DHCP:    true,
-								Primary: true,
-							},
-						},
-					},
-				},
-			},
-			wantErr: "SnowMachineConfig HostOSConfiguration is invalid: BottlerocketConfiguration can only be used with osFamily: \"bottlerocket\"",
 		},
 	}
 	for _, tt := range tests {

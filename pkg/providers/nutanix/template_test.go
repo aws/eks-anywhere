@@ -98,25 +98,6 @@ func TestNewNutanixTemplateBuilderGenerateSpecSecretFailure(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestNewNutanixTemplateBuilderGenerateSpecSecretDefaultCreds(t *testing.T) {
-	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
-	t.Setenv(constants.NutanixUsernameKey, "admin")
-	t.Setenv(constants.NutanixPasswordKey, "password")
-	creds := GetCredsFromEnv()
-	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
-	assert.NotNil(t, builder)
-
-	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-no-credentialref.yaml")
-
-	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
-	assert.NoError(t, err)
-	assert.NotNil(t, secretSpec)
-
-	secretSpec, err = builder.GenerateEKSASpecSecret(buildSpec)
-	assert.NoError(t, err)
-	assert.NotNil(t, secretSpec)
-}
-
 func TestNutanixTemplateBuilderGenerateCAPISpecForCreateWithAutoscalingConfiguration(t *testing.T) {
 	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
 

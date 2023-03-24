@@ -23,6 +23,7 @@ type RegistryMirror struct {
 	CACertContent string
 	// InsecureSkipVerify skips the registry certificate verification.
 	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
+	// Currently only supported for snow provider
 	InsecureSkipVerify bool
 }
 

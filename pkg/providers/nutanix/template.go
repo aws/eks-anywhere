@@ -116,10 +116,7 @@ func (ntb *TemplateBuilder) GenerateEKSASpecSecret(clusterSpec *cluster.Spec, bu
 // EKSASecretName returns the name of the secret containing the credentials for the nutanix prism central and is used by the
 // EKS-Anywhere controller.
 func EKSASecretName(spec *cluster.Spec) string {
-	if spec.NutanixDatacenter.Spec.CredentialRef != nil {
-		return spec.NutanixDatacenter.Spec.CredentialRef.Name
-	}
-	return constants.NutanixCredentialsName
+	return spec.NutanixDatacenter.Spec.CredentialRef.Name
 }
 
 func (ntb *TemplateBuilder) generateSpecSecret(secretName string, creds credentials.BasicAuthCredential, buildOptions ...providers.BuildMapOption) ([]byte, error) {
