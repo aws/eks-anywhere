@@ -201,6 +201,7 @@ func validateSpecFromSimpleBundle(t *testing.T, gotSpec *cluster.Spec) {
 	validateImageURI(t, gotSpec.VersionsBundle.KubeDistro.ExternalAttacher, "public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0-eks-1-19-4")
 	validateImageURI(t, gotSpec.VersionsBundle.KubeDistro.ExternalProvisioner, "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1-eks-1-19-4")
 	validateImageURI(t, gotSpec.VersionsBundle.KubeDistro.EtcdImage, "public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.14-eks-1-19-4")
+	validateImageURI(t, gotSpec.VersionsBundle.KubeDistro.KubeProxy, "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.19.8-eks-1-19-4")
 	if gotSpec.VersionsBundle.KubeDistro.EtcdVersion != "3.4.14" {
 		t.Errorf("GetNewSpec() = Spec: Invalid etcd version, got %s, want 3.4.14", gotSpec.VersionsBundle.KubeDistro.EtcdVersion)
 	}
