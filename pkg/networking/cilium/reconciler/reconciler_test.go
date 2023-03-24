@@ -306,9 +306,6 @@ func TestReconcilerReconcileUpgradeInvalidCiliumInstalledVersion(t *testing.T) {
 	result, err := tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)
 	tt.Expect(result).To(Equal(controller.Result{}))
 	tt.Expect(err).To(MatchError(ContainSubstring("installed cilium DS has an invalid version tag")))
-	// tt.expectDaemonSetSemanticallyEqual(ds)
-	// tt.expectOperatorSemanticallyEqual(operator)
-	// tt.expectCiliumInstalledAnnotation()
 }
 
 func TestReconcilerReconcileUpgradeErrorGeneratingManifest(t *testing.T) {
