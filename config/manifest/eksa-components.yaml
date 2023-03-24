@@ -5060,6 +5060,16 @@ spec:
                       configuration on the host OS. These settings only take effect
                       when the `osFamily` is bottlerocket.
                     properties:
+                      boot:
+                        description: Boot defines the boot settings for bottlerocket.
+                        properties:
+                          bootKernelParameters:
+                            additionalProperties:
+                              items:
+                                type: string
+                              type: array
+                            type: object
+                        type: object
                       kernel:
                         description: Kernel defines the kernel settings for bottlerocket.
                         properties:
@@ -5354,6 +5364,16 @@ spec:
                       configuration on the host OS. These settings only take effect
                       when the `osFamily` is bottlerocket.
                     properties:
+                      boot:
+                        description: Boot defines the boot settings for bottlerocket.
+                        properties:
+                          bootKernelParameters:
+                            additionalProperties:
+                              items:
+                                type: string
+                              type: array
+                            type: object
+                        type: object
                       kernel:
                         description: Kernel defines the kernel settings for bottlerocket.
                         properties:
@@ -5730,6 +5750,16 @@ spec:
                       configuration on the host OS. These settings only take effect
                       when the `osFamily` is bottlerocket.
                     properties:
+                      boot:
+                        description: Boot defines the boot settings for bottlerocket.
+                        properties:
+                          bootKernelParameters:
+                            additionalProperties:
+                              items:
+                                type: string
+                              type: array
+                            type: object
+                        type: object
                       kernel:
                         description: Kernel defines the kernel settings for bottlerocket.
                         properties:

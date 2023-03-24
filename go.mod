@@ -14,7 +14,7 @@ require (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-anywhere/release v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
-	github.com/aws/etcdadm-bootstrap-provider v1.0.7-rc1
+	github.com/aws/etcdadm-bootstrap-provider v1.0.7-rc3
 	github.com/aws/etcdadm-controller v1.0.5
 	github.com/aws/smithy-go v1.13.2
 	github.com/docker/cli v20.10.21+incompatible
@@ -224,5 +224,5 @@ replace (
 	k8s.io/component-base => k8s.io/component-base v0.25.6
 
 	// need the modifications eksa made to the capi api structs
-	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.3.5-eksa.2
+	sigs.k8s.io/cluster-api => github.com/abhay-krishna/cluster-api v1.3.5-eksa.3
 )

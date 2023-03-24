@@ -285,6 +285,10 @@ func buildTemplateMapCP(
 					etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel.SysctlSettings != nil {
 					values["etcdKernelSettings"] = etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel.SysctlSettings
 				}
+				if etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot != nil &&
+					etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot.BootKernelParameters != nil {
+					values["etcdBootParameters"] = etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot.BootKernelParameters
+				}
 			}
 		}
 	}
