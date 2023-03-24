@@ -50,6 +50,9 @@ type SnowMachineConfigSpec struct {
 
 	// Network provides the custom network setting for the machine.
 	Network SnowNetwork `json:"network"`
+
+	// HostOSConfiguration provides OS specific configurations for the machine
+	HostOSConfiguration *HostOSConfiguration `json:"hostOSConfiguration,omitempty"`
 }
 
 // SnowNetwork specifies the network configurations for snow.

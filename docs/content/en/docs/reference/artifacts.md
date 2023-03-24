@@ -30,19 +30,25 @@ However, see [Building node images]({{< relref "#building-node-images">}}) for i
 
 Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image. You can also get the download URIs for Bottlerocket Baremetal images from the bundle release by running the following command:
 ```bash
-curl -s https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/manifest.yaml | yq ".spec.versionsBundles[].eksD.raw.bottlerocket.uri"
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.raw.bottlerocket.uri"
 ```
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/vmlinuz-x86_64
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].tinkerbell.tinkerbellStack.hook.vmlinuz.amd.uri"
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d43b8b331c7a389f3ffeaa388fa9aa98248d7a2/initramfs-x86_64
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].tinkerbell.tinkerbellStack.hook.initramfs.amd.uri"
 ```
 
 ## vSphere artifacts
@@ -51,7 +57,9 @@ https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/hook/6d4
 
 Bottlerocket vends its VMware variant OVAs using a secure distribution tool called `tuftool`. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket OVA. You can also get the download URIs for Bottlerocket OVAs from the bundle release by running the following command:
 ```bash
-curl -s https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/manifest.yaml | yq ".spec.versionsBundles[].eksD.ova.bottlerocket.uri"
+LATEST_EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[].eksD.ova.bottlerocket.uri"
 ```
 
 #### Bottlerocket Template Tags
@@ -124,73 +132,95 @@ export KUBEVERSION="1.25"
 ## Building node images
 
 The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs, Nutanix qcow2 images, RHEL-based qcow2 images, or Bare Metal gzip images to use in EKS Anywhere clusters.
-When you run `image-builder` it will pull in all components needed to create images to use for nodes in an EKS Anywhere cluster, including the lastest operating system, Kubernetes, and EKS Distro security updates, bug fixes, and patches.
-With this tool, when you build an image you get to choose:
+When you run `image-builder`, it will pull in all components needed to build images to be used as Kubernetes nodes in an EKS Anywhere cluster, including the latest operating system, Kubernetes control plane components, and EKS Distro security updates, bug fixes, and patches.
+When building an image using this tool, you get to choose:
 
-* Operating system type (for example, ubuntu)
-* Provider (vsphere, cloudstack, baremetal, ami, nutanix, snow)
+* Operating system type (for example, ubuntu, redhat)
+* Provider (vsphere, cloudstack, baremetal, ami, nutanix)
 * Release channel for EKS Distro (generally aligning with Kubernetes releases)
-* vSphere only: configuration file providing information needed to access your vSphere setup
-* CloudStack only: configuration file providing information needed to access your Cloudstack setup
-* AMI only: configuration file providing information needed to customize your AMI build parameters
-* Nutanix only: configuration file providing information needed to access Prism Central
+* **vSphere only:** configuration file providing information needed to access your vSphere setup
+* **CloudStack only:** configuration file providing information needed to access your CloudStack setup
+* **Snow AMI only:** configuration file providing information needed to customize your Snow AMI build parameters
+* **Nutanix only:** configuration file providing information needed to access Nutanix Prism Central
 
 Because `image-builder` creates images in the same way that the EKS Anywhere project does for their own testing, images built with that tool are supported.
-The following procedure describes how to use `image-builder` to build images for EKS Anywhere on a vSphere, Bare Metal, Nutanix, or Snow provider.
+
+The table below shows the support matrix for the hypervisor and OS combinations that `image-builder` supports.
+
+|            | vSphere | Baremetal | CloudStack | Nutanix | Snow |
+|:----------:|:-------:|:---------:|:----------:|:-------:|:----:|
+| **Ubuntu** |    ✓    |     ✓     |            |    ✓    |   ✓  |
+|  **RHEL**  |    ✓    |     ✓     |     ✓      |         |      |
+
 
 ### Prerequisites
 
-To use `image-builder` you must meet the following prerequisites:
+To use `image-builder`, you must meet the following prerequisites:
 
-* Run on Ubuntu 22.04 or later (for Ubuntu images) or RHEL 8.4 or later (for RHEL images)
-* Machine requirements:
-  * AMD 64-bit architecture
-  * 50 GB disk space
-  * 2 vCPUs
-  * 8 GB RAM
-  * Bare Metal only: Run on a bare metal machine with virtualization enabled
-* Network access to:
-  * vCenter endpoint (vSphere only)
-  * CloudStack endpoint (CloudStack only)
-  * Prism Central endpoint (Nutanix only)
-  * public.ecr.aws (to download container images from EKS Anywhere)
-  * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)
-  * distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
-  * d2glxqk2uabbnd.cloudfront.net (for EKS Anywhere and EKS Distro ECR container images)
-  * api.ecr.us-west-2.amazonaws.com (for EKS Anywhere package authentication matching your region)
-  * d5l0dvt14r5h8.cloudfront.net (for EKS Anywhere package ECR container)
-* vSphere only:
-  * Required vSphere user permissions:
-    * Inventory:
-      * Create new
-    * Configuration:
-      * Change configuration
-      * Add new disk
-      * Add or remove device
-      * Change memory
-      * Change settings
-      * Set annotation
-    * Interaction:
-      * Power on
-      * Power off
-      * Console interaction
-      * Configure CD media
-      * Device connection
-    * Snapshot management:
-      * Create snapshot
-    * Provisioning
-      * Mark as template
-    * Resource Pool
-      * Assign vm to resource pool
-    * Datastore
-      * Allocate space
-      * Browse data
-      * Low level file operations
-    * Network
-      * Assign network to vm
-* CloudStack only: See [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) for required CloudStack user permissions.
-* AMI only: Packer will require prior authentication with your AWS account to launch EC2 instances for the AMI build. See [Authentication guide for Amazon EBS Packer builder](https://developer.hashicorp.com/packer/plugins/builders/amazon#authentication) for possible modes of authentication. We recommend that you run `image-builder` on a pre-existing Ubuntu EC2 instance and use an [IAM instance role with the required permissions](https://developer.hashicorp.com/packer/plugins/builders/amazon#iam-task-or-instance-role).
-* Nutanix only: Prism Admin permissions
+#### System requirements
+
+`image-builder` has been tested on Ubuntu, RHEL and Amazon Linux 2 machines. The following system requirements should be met for the machine on which `image-builder` is run:
+* AMD 64-bit architecture
+* 50 GB disk space
+* 2 vCPUs
+* 8 GB RAM
+* **Baremetal only:** Run on a bare metal machine with virtualization enabled
+
+#### Network connectivity requirements
+* public.ecr.aws (to download container images from EKS Anywhere)
+* anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere artifacts such as binaries, manifests and OS images)
+* distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
+* d2glxqk2uabbnd.cloudfront.net (to pull the EKS Anywhere and EKS Distro ECR container images)
+* api.ecr.us-west-2.amazonaws.com (for EKS Anywhere package authentication matching your region)
+* d5l0dvt14r5h8.cloudfront.net (for EKS Anywhere package ECR container)
+* github.com (to download binaries and tools required for image builds from GitHub releases)
+* releases.hashicorp.com (to download Packer binary for image builds)
+* galaxy.ansible.com (to download Ansible packages from Ansible Galaxy)
+* **vSphere only:** VMware vCenter endpoint
+* **CloudStack only:** Apache CloudStack endpoint
+* **Nutanix only:** Nutanix Prism Central endpoint
+* **Red Hat only:** dl.fedoraproject.org (to download RPMs and GPG keys for RHEL image builds)
+* **Ubuntu only:** cdimage.ubuntu.com (to download Ubuntu server ISOs for Ubuntu image builds)
+
+#### vSphere requirements
+The following vSphere permissions are required to build  OVA images using `image-builder`:
+* Inventory:
+   * Create new
+* Configuration:
+   * Change configuration
+   * Add new disk
+   * Add or remove device
+   * Change memory
+   * Change settings
+   * Set annotation
+* Interaction:
+   * Power on
+   * Power off
+   * Console interaction
+   * Configure CD media
+   * Device connection
+* Snapshot management:
+   * Create snapshot
+* Provisioning
+   * Mark as template
+* Resource Pool
+   * Assign VM to resource pool
+* Datastore
+   * Allocate space
+   * Browse data
+   * Low level file operations
+* Network
+   * Assign network to VM
+
+#### CloudStack requirements
+Refer to the [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) doc for required CloudStack user permissions.
+
+#### Snow AMI requirements
+Packer will require prior authentication with your AWS account to launch EC2 instances for the Snow AMI build. Refer to the [Authentication guide for Amazon EBS Packer builder](https://developer.hashicorp.com/packer/plugins/builders/amazon#authentication) for possible modes of authentication. We recommend that you run `image-builder` on a pre-existing Ubuntu EC2 instance and use an [IAM instance role with the required permissions](https://developer.hashicorp.com/packer/plugins/builders/amazon#iam-task-or-instance-role).
+
+#### Nutanix permissions
+
+Prism Central Administrator permissions are required to build a Nutanix image using `image-builder`.
 
 ### Optional Proxy configuration
 You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
@@ -202,7 +232,7 @@ You can use a proxy server to route outbound requests to the internet. To config
 
 ### Build vSphere OVA node images
 
-These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere.
+These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for vSphere. Before proceeding, ensure that the above system-level, network-level and vSphere-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
 1. Create a linux user for running image-builder.
    ```bash
@@ -227,9 +257,11 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-   tar xvf image-builder*.tar.gz
-   sudo cp image-builder /usr/local/bin
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
    cd -
    ```
 1. Get the latest version of `govc`:
@@ -248,12 +280,12 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "create_snapshot": "<creates a snapshot on base OVA after building if set to true>",
      "datacenter": "<vsphere datacenter used for image building>",
      "datastore": "<datastore used to store template/for image building>",
-     "folder": "<folder on vsphere to create temporary vm>",
+     "folder": "<folder on vsphere to create temporary VM>",
      "insecure_connection": "true",
      "linked_clone": "false",
      "network": "<vsphere network used for image building>",
      "password": "<vcenter password>",
-     "resource_pool": "<resource pool used for image building vm>",
+     "resource_pool": "<resource pool used for image building VM>",
      "username": "<vcenter username>",
      "vcenter_server": "<vcenter fqdn>",
      "vsphere_library_name": "<vsphere content library name>"
@@ -293,7 +325,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       image-builder build --os redhat --hypervisor vsphere --release-channel 1-25 --vsphere-config vsphere-connection.json
       ```
 ### Build Bare Metal node images
-These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal.
+These steps use `image-builder` to create an Ubuntu-based or RHEL-based image for Bare Metal. Before proceeding, ensure that the above system-level, network-level and baremetal-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
 1. Create a linux user for running image-builder.
    ```bash
@@ -319,12 +351,15 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
-    ```bash
-    cd /tmp
-    curl -#o- https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz | \
-      sudo tar -xzC /usr/local/bin ./image-builder
-    cd -
-    ```
+   ```bash
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 
 1. Create an Ubuntu or Red Hat image.
 
@@ -381,7 +416,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
 ### Build CloudStack node images
 
-These steps use `image-builder` to create a RHEL-based image for CloudStack.
+These steps use `image-builder` to create a RHEL-based image for CloudStack. Before proceeding, ensure that the above system-level, network-level and CloudStack-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
 1. Create a linux user for running image-builder.
    ```bash
@@ -407,13 +442,15 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
-    ```bash
-    cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-    tar xvf image-builder*.tar.gz
-    sudo cp image-builder /usr/local/bin
-    cd -
-    ```
+   ```bash
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
    ```json
    {
@@ -437,11 +474,11 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack.
       image-builder build --os redhat --hypervisor cloudstack --release-channel 1-25 --cloudstack-config cloudstack.json
       ```
 
-1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing Cloudstack]({{< relref "./cloudstack/cloudstack-preparation.md" >}}).
+1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "./cloudstack/cloudstack-preparation.md" >}}).
 
 ### Build Snow node images
 
-These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes for Snow.
+These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes for Snow. Before proceeding, ensure that the above system-level, network-level and AMI-specific [prerequisites]({{< relref "#prerequisites">}}) have been met
 
 1. Create a linux user for running image-builder.
    ```bash
@@ -465,12 +502,14 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    ```
 1. Get `image-builder`:
    ```bash
-    cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-    tar xvf image-builder*.tar.gz
-    sudo cp image-builder /usr/local/bin
-    cd -
-    ```
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters.
    ```json
    {
@@ -494,11 +533,11 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    * `--os`: `ubuntu`
    * `--hypervisor`: For AMI, use `ami`
-   * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23, 1-24 and 1-25.
+   * `--release-channel`: Supported EKS Distro releases include 1-21, 1-22, 1-23 and 1-24.
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1-25 --ami-config ami.json
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1-24 --ami-config ami.json
    ```
 1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a Raw image, you can achieve this using the AWS CLI.
    ```
@@ -514,7 +553,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
 ### Build Nutanix node images
 
-These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV and import it into the AOS Image Service.
+These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV and import it into the AOS Image Service. Before proceeding, ensure that the above system-level, network-level and Nutanix-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
 
 1. Download an [Ubuntu cloud image](https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img) for the build and upload it to the AOS Image Service using Prism. You will need to specify this image name as the `source_image_name` in the `nutanix-connection.json` config file specified below.
 
@@ -539,13 +578,15 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
-    ```bash
-    cd /tmp
-    wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/image-builder/0.1.2/image-builder-linux-amd64.tar.gz
-    tar xvf image-builder*.tar.gz
-    sudo cp image-builder /usr/local/bin
-    cd -
-    ```
+   ```bash
+   cd /tmp
+   LATEST_EKSA_RELEASE_VERSION=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$LATEST_EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
+   curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
+   sudo cp ./image-builder /usr/local/bin
+   cd -
+   ```
 1. Create a `nutanix-connection.json` config file. More details on values can be found in the [image-builder documentation](https://image-builder.sigs.k8s.io/capi/providers/nutanix.html). See example below:
    ```json
    {
