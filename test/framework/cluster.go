@@ -803,7 +803,6 @@ func (e *ClusterE2ETest) applyClusterManifest(ctx context.Context) {
 	}
 }
 
-// WithClusterUpgrade adds a cluster upgrade.
 func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.UpdateClusterConfig(api.ClusterToConfigFiller(fillers...))
@@ -829,11 +828,6 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 	}
 	e.buildClusterConfigFile()
 
-	if unreleasedK8sVersion == e.ClusterConfig.Cluster.Spec.KubernetesVersion {
-		// Set feature flag for the new k8s version support
-		os.Setenv(features.K8s126SupportEnvVar, "true")
-	}
-
 	e.UpgradeCluster(commandOpts...)
 }
 
@@ -850,10 +844,6 @@ func (e *ClusterE2ETest) UpgradeCluster(commandOpts ...CommandOpt) {
 func (e *ClusterE2ETest) generateClusterConfigYaml() []byte {
 	childObjs := e.ClusterConfig.ChildObjects()
 	yamlB := make([][]byte, 0, len(childObjs)+1)
-
-	if e.PackageConfig != nil {
-		e.ClusterConfig.Cluster.Spec.Packages = e.PackageConfig.packageConfiguration
-	}
 
 	// This is required because Flux requires a namespace be specified for objects
 	// to be able to reconcile right.
@@ -1108,7 +1098,6 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 	}
 }
 
-// CreateNamespace creates a namespace.
 func (e *ClusterE2ETest) CreateNamespace(namespace string) {
 	kubeconfig := e.kubeconfigFilePath()
 	err := e.KubectlClient.CreateNamespace(context.Background(), kubeconfig, namespace)
@@ -1117,7 +1106,6 @@ func (e *ClusterE2ETest) CreateNamespace(namespace string) {
 	}
 }
 
-// DeleteNamespace deletes a namespace.
 func (e *ClusterE2ETest) DeleteNamespace(namespace string) {
 	kubeconfig := e.kubeconfigFilePath()
 	err := e.KubectlClient.DeleteNamespace(context.Background(), kubeconfig, namespace)
@@ -1144,15 +1132,6 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 			"--bundle-version", pb[0].ObjectMeta.Name, "-v=9",
 			"--cluster=" + e.ClusterName,
 		})
-	}
-}
-
-// ValidatingNoPackageController make sure there is no package controller.
-func (e *ClusterE2ETest) ValidatingNoPackageController() {
-	kubeconfig := e.kubeconfigFilePath()
-	_, err := e.KubectlClient.GetPackageBundleController(context.Background(), kubeconfig, e.ClusterName)
-	if err == nil {
-		e.T.Fatalf("Error unexpected PackageBundleController: %v", err)
 	}
 }
 

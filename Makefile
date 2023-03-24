@@ -295,10 +295,6 @@ build-cross-platform: eks-a-cross-platform
 eks-a-tool: ## Build eks-a-tool
 	$(GO) build -o bin/eks-a-tool github.com/aws/eks-anywhere/cmd/eks-a-tool
 
-.PHONY: docgen
-docgen: eks-a-tool ## generate eksctl anywhere commands doc from code
-	bin/eks-a-tool docgen
-
 .PHONY: eks-a-cluster-controller
 eks-a-cluster-controller: ## Build eks-a-cluster-controller
 	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./manager
@@ -505,7 +501,7 @@ capd-test-%: build-all-test-binaries ## Run CAPD tests
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
 
-PACKAGES_E2E_TESTS ?= TestDockerKubernetes125CuratedPackagesSimpleFlow
+PACKAGES_E2E_TESTS ?= TestDockerKubernetes121CuratedPackagesSimpleFlow
 ifeq ($(PACKAGES_E2E_TESTS),all)
 PACKAGES_E2E_TESTS='Test.*CuratedPackages'
 endif
@@ -650,7 +646,7 @@ build-integration-test-binary:
 .PHONY: conformance
 conformance:
 	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
-	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes.*ThreeWorkersConformanceFlow'
+	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
 
 .PHONY: conformance-tests
 conformance-tests: build-eks-a-for-e2e build-integration-test-binary ## Build e2e conformance tests

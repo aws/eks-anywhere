@@ -96,8 +96,8 @@ func TestValidateManagementClusterCRDs(t *testing.T) {
 	cluster.Name = testclustername
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
-			e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetClusterCRD).Times(tc.errGetClusterCRDCount)
-			e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetEKSAClusterCRD).Times(tc.errGetEKSAClusterCRDCount)
+			e.EXPECT().Execute(ctx, []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetClusterCRD).Times(tc.errGetClusterCRDCount)
+			e.EXPECT().Execute(ctx, []string{"get", "crd", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetEKSAClusterCRD).Times(tc.errGetEKSAClusterCRDCount)
 			err := createvalidations.ValidateManagementCluster(ctx, k, cluster)
 			if tc.wantErr {
 				assert.Error(tt, err, "expected ValidateManagementCluster to return an error", "test", tc.name)

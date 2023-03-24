@@ -2,7 +2,6 @@ package clusters
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -47,13 +46,11 @@ type WorkerGroup struct {
 }
 
 func (g *WorkerGroup) objects() []client.Object {
-	objs := []client.Object{g.KubeadmConfigTemplate, g.MachineDeployment}
-
-	if !reflect.ValueOf(g.ProviderMachineTemplate).IsNil() {
-		objs = append(objs, g.ProviderMachineTemplate)
+	return []client.Object{
+		g.KubeadmConfigTemplate,
+		g.MachineDeployment,
+		g.ProviderMachineTemplate,
 	}
-
-	return objs
 }
 
 // ToWorkers converts the generic clusterapi Workers definition to the concrete one defined

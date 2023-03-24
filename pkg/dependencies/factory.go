@@ -707,12 +707,10 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	} else {
 		f.WithKubectl().WithCiliumTemplater()
 		networkingBuilder = func() clustermanager.Networking {
-			c := cilium.NewCilium(
+			return cilium.NewCilium(
 				cilium.NewRetrier(f.dependencies.Kubectl),
 				f.dependencies.CiliumTemplater,
 			)
-			c.SetSkipUpgrade(!clusterConfig.Spec.ClusterNetwork.CNIConfig.Cilium.IsManaged())
-			return c
 		}
 	}
 

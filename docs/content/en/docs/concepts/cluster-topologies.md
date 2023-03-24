@@ -33,15 +33,6 @@ This shows examples of a management cluster that deploys and manages multiple wo
 
 ![Management clusters can create and manage multiple workload clusters](/images/eks-a_cluster_management.png)
 
-With the management cluster in place, you have a choice of tools for creating, upgrading, and deleting workload clusters.
-Check each provider to see which tools it currently supports.
-Supported workload cluster creation, upgrade and deletion tools include:
-
-* `eksctl` CLI
-* Terraform
-* GitOps
-* `kubectl` CLI to communicate with the Kubernetes API
-
 ## What’s the difference between a management cluster and a bootstrap cluster for EKS Anywhere?
 
 A management cluster is a long-lived entity you have to actively operate.

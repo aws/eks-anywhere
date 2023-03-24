@@ -8,9 +8,8 @@ description: >
 ---
 
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
-Currently, Bare Metal, CloudStack, Nutanix, Snow, and VMware vSphere are the recommended providers for supported EKS Anywhere clusters.
-Docker is available as an unsupported provider.
-We step through the cluster creation workflow for Bare Metal and vSphere providers here.
+Currently, Bare Metal, CloudStack, and VMware vSphere are the recommended providers for supported EKS Anywhere clusters.
+We step through the cluster creation workflow for those providers here.
 
 
 ## Management and workload clusters

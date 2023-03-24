@@ -47,32 +47,39 @@ func (c *Catalogue) InsertHardware(hardware *tinkv1alpha1.Hardware) error {
 	return nil
 }
 
-// RemoveHardwares removes a slice of hardwares from the catalogue.
-func (c *Catalogue) RemoveHardwares(hardware []tinkv1alpha1.Hardware) error {
-	m := make(map[string]bool, len(hardware))
-	for _, hw := range hardware {
-		m[getRemoveKey(hw)] = true
+// RemoveHardware removes a specific hardware at a given index from the catalogue.
+func (c *Catalogue) RemoveHardware(hardware *tinkv1alpha1.Hardware, index int) error {
+	if err := c.hardwareIndex.Remove(hardware); err != nil {
+		return err
 	}
 
-	diff := []*tinkv1alpha1.Hardware{}
-	for i, hw := range c.hardware {
-		key := getRemoveKey(*hw)
-		if _, ok := m[key]; !ok {
-			diff = append(diff, c.hardware[i])
-		} else {
-			if err := c.hardwareIndex.Remove(c.hardware[i]); err != nil {
-				return err
-			}
-		}
+	if index >= len(c.hardware) {
+		return fmt.Errorf("index out of range: %d", index)
 	}
+	c.hardware[index] = c.hardware[len(c.hardware)-1]
+	c.hardware[len(c.hardware)-1] = nil
+	c.hardware = c.hardware[:len(c.hardware)-1]
 
-	c.hardware = diff
 	return nil
 }
 
-// getRemoveKey returns key used to search and remove hardware.
-func getRemoveKey(hardware tinkv1alpha1.Hardware) string {
-	return hardware.Name + ":" + hardware.Namespace
+// RemoveHardwares removes a slice of hardwares from the catalogue.
+func (c *Catalogue) RemoveHardwares(hardware []tinkv1alpha1.Hardware) error {
+	m := make(map[string]int, len(c.hardware))
+	for i, hw := range c.hardware {
+		m[hw.Name+":"+hw.Namespace] = i
+	}
+
+	for _, hw := range hardware {
+		key := hw.Name + ":" + hw.Namespace
+		if _, ok := m[key]; ok {
+			if err := c.RemoveHardware(c.hardware[m[key]], m[key]); err != nil {
+				return err
+			}
+			delete(m, key)
+		}
+	}
+	return nil
 }
 
 // AllHardware retrieves a copy of the catalogued Hardware instances.

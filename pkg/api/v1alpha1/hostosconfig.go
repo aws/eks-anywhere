@@ -61,11 +61,7 @@ func validateBotterocketConfig(config *BottlerocketConfiguration, osFamily OSFam
 		return fmt.Errorf("BottlerocketConfiguration can only be used with osFamily: \"%s\"", Bottlerocket)
 	}
 
-	if err := validateBottlerocketKubernetesConfig(config.Kubernetes); err != nil {
-		return err
-	}
-
-	return validateBottlerocketKernelConfiguration(config.Kernel)
+	return validateBottlerocketKubernetesConfig(config.Kubernetes)
 }
 
 func validateBottlerocketKubernetesConfig(config *v1beta1.BottlerocketKubernetesSettings) error {
@@ -89,18 +85,5 @@ func validateBottlerocketKubernetesConfig(config *v1beta1.BottlerocketKubernetes
 		return errors.New("BottlerocketConfiguration.Kubernetes.MaxPods can not be negative")
 	}
 
-	return nil
-}
-
-func validateBottlerocketKernelConfiguration(config *v1beta1.BottlerocketKernelSettings) error {
-	if config == nil {
-		return nil
-	}
-
-	for key := range config.SysctlSettings {
-		if key == "" {
-			return errors.New("sysctlSettings key cannot be empty")
-		}
-	}
 	return nil
 }

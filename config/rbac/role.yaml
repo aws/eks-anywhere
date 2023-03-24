@@ -213,7 +213,7 @@ rules:
 - apiGroups:
   - packages.eks.amazonaws.com
   resources:
-  - packages
+  - packagebundlecontrollers
   verbs:
   - create
   - delete

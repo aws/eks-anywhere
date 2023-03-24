@@ -598,81 +598,6 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 	}
 }
 
-var bottlerocketAdditionalSettingsTests = []struct {
-	name       string
-	settings   *v1alpha1.HostOSConfiguration
-	wantConfig *bootstrapv1.BottlerocketSettings
-}{
-	{
-		name: "with kernel sysctl settings",
-		settings: &v1alpha1.HostOSConfiguration{
-			BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-				Kernel: &bootstrapv1.BottlerocketKernelSettings{
-					SysctlSettings: map[string]string{
-						"foo": "bar",
-					},
-				},
-			},
-		},
-		wantConfig: &bootstrapv1.BottlerocketSettings{
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{
-				SysctlSettings: map[string]string{
-					"foo": "bar",
-				},
-			},
-		},
-	},
-}
-
-func TestKubeadmControlPlaneWithBottlerocketAdditionalSettings(t *testing.T) {
-	for _, tt := range bottlerocketAdditionalSettingsTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.SnowMachineConfig("test-cp").Spec.HostOSConfiguration = tt.settings
-			g.clusterSpec.SnowMachineConfig("test-cp").Spec.OSFamily = v1alpha1.Bottlerocket
-			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs["test-cp"], nil)
-			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
-			want.Spec.KubeadmConfigSpec.Format = "bottlerocket"
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{}
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketBootstrap = bootstrap
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketAdmin = admin
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketControl = control
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.BottlerocketCustomBootstrapContainers = bootstrapCustom
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Pause = pause
-			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketBootstrap = bootstrap
-			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketAdmin = admin
-			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketControl = control
-			want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketCustomBootstrapContainers = bootstrapCustom
-			want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Bottlerocket = tt.wantConfig
-			want.Spec.KubeadmConfigSpec.JoinConfiguration.Bottlerocket = tt.wantConfig
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
-				bootstrapv1.HostPathMount{
-					HostPath:  "/var/lib/kubeadm/controller-manager.conf",
-					MountPath: "/etc/kubernetes/controller-manager.conf",
-					Name:      "kubeconfig",
-					PathType:  "File",
-					ReadOnly:  true,
-				},
-			)
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
-				bootstrapv1.HostPathMount{
-					HostPath:  "/var/lib/kubeadm/scheduler.conf",
-					MountPath: "/etc/kubernetes/scheduler.conf",
-					Name:      "kubeconfig",
-					PathType:  "File",
-					ReadOnly:  true,
-				},
-			)
-			want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
-
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
-
 func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 	return &bootstrapv1.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
@@ -1045,11 +970,6 @@ func wantEtcdClusterBottlerocket() *etcdv1.EtcdadmCluster {
 				Mode:      "always",
 			},
 		},
-		Kernel: &bootstrapv1.BottlerocketKernelSettings{
-			SysctlSettings: map[string]string{
-				"foo": "bar",
-			},
-		},
 	}
 	return etcd
 }
@@ -1095,15 +1015,6 @@ func TestEtcdadmClusterBottlerocket(t *testing.T) {
 		},
 		Spec: v1alpha1.SnowMachineConfigSpec{
 			OSFamily: "bottlerocket",
-			HostOSConfiguration: &v1alpha1.HostOSConfiguration{
-				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-					Kernel: &bootstrapv1.BottlerocketKernelSettings{
-						SysctlSettings: map[string]string{
-							"foo": "bar",
-						},
-					},
-				},
-			},
 		},
 	}
 	tt.machineConfigs["test-etcd"] = tt.clusterSpec.SnowMachineConfigs["test-etcd"]

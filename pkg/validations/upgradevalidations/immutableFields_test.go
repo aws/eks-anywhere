@@ -11,12 +11,9 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	pmock "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 func TestValidateGitOpsImmutableFieldsRef(t *testing.T) {
@@ -241,121 +238,6 @@ func TestValidateGitOpsImmutableFieldsFluxConfig(t *testing.T) {
 				g.Expect(err).To(Succeed())
 			} else {
 				g.Expect(err).To(MatchError(ContainSubstring(tc.wantErr)))
-			}
-		})
-	}
-}
-
-func TestValidateImmutableFields(t *testing.T) {
-	tests := []struct {
-		Name             string
-		ConfigureCurrent func(current *v1alpha1.Cluster)
-		ConfigureDesired func(desired *v1alpha1.Cluster)
-		ExpectedError    string
-	}{
-		{
-			Name: "Toggle Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade on",
-			ConfigureCurrent: func(current *v1alpha1.Cluster) {
-				current.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{
-					Cilium: &v1alpha1.CiliumConfig{
-						SkipUpgrade: ptr.Bool(false),
-					},
-				}
-			},
-			ConfigureDesired: func(desired *v1alpha1.Cluster) {
-				desired.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{
-					Cilium: &v1alpha1.CiliumConfig{
-						SkipUpgrade: ptr.Bool(true),
-					},
-				}
-			},
-		},
-		{
-			Name: "Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade unset",
-			ConfigureCurrent: func(current *v1alpha1.Cluster) {
-				current.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{
-					Cilium: &v1alpha1.CiliumConfig{},
-				}
-			},
-			ConfigureDesired: func(desired *v1alpha1.Cluster) {
-				desired.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{
-					Cilium: &v1alpha1.CiliumConfig{},
-				}
-			},
-		},
-		{
-			Name: "Toggle Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade off",
-			ConfigureCurrent: func(current *v1alpha1.Cluster) {
-				current.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{
-					Cilium: &v1alpha1.CiliumConfig{
-						SkipUpgrade: ptr.Bool(true),
-					},
-				}
-			},
-			ConfigureDesired: func(desired *v1alpha1.Cluster) {
-				desired.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{
-					Cilium: &v1alpha1.CiliumConfig{
-						SkipUpgrade: ptr.Bool(false),
-					},
-				}
-			},
-			ExpectedError: "spec.clusterNetwork.cniConfig.cilium.skipUpgrade cannot be toggled off",
-		},
-	}
-
-	clstr := &types.Cluster{}
-
-	for _, tc := range tests {
-		t.Run(tc.Name, func(t *testing.T) {
-			g := NewWithT(t)
-			ctrl := gomock.NewController(t)
-
-			current := &cluster.Spec{
-				Config: &cluster.Config{
-					Cluster: &v1alpha1.Cluster{
-						Spec: v1alpha1.ClusterSpec{
-							WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{}},
-						},
-					},
-				},
-				VersionsBundle: &cluster.VersionsBundle{
-					VersionsBundle: &releasev1alpha1.VersionsBundle{},
-					KubeDistro:     &cluster.KubeDistro{},
-				},
-				Bundles: &releasev1alpha1.Bundles{},
-			}
-			desired := current.DeepCopy()
-
-			tc.ConfigureCurrent(current.Config.Cluster)
-			tc.ConfigureDesired(desired.Config.Cluster)
-
-			client := mocks.NewMockKubectlClient(ctrl)
-			client.EXPECT().
-				GetEksaCluster(gomock.Any(), clstr, current.Cluster.Name).
-				Return(current.Cluster, nil)
-
-			provider := pmock.NewMockProvider(ctrl)
-
-			// The algorithm calls out to the provider to validate the new spec only if it finds
-			// no errors in the generic validation first.
-			if tc.ExpectedError == "" {
-				provider.EXPECT().
-					ValidateNewSpec(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
-			}
-
-			err := upgradevalidations.ValidateImmutableFields(
-				context.Background(),
-				client,
-				clstr,
-				desired,
-				provider,
-			)
-
-			if tc.ExpectedError == "" {
-				g.Expect(err).To(Succeed())
-			} else {
-				g.Expect(err).To(MatchError(ContainSubstring(tc.ExpectedError)))
 			}
 		})
 	}

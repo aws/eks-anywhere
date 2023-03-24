@@ -77,35 +77,6 @@ func TestGetKubeadmControlPlaneError(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
 }
 
-func TestGetMachineDeploymentSuccess(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	eksaCluster := eksaCluster()
-	machineDeployment := machineDeployment()
-	client := fake.NewClientBuilder().WithObjects(eksaCluster, machineDeployment).Build()
-
-	g.Expect(controller.GetMachineDeployment(ctx, client, "my-cluster")).To(Equal(machineDeployment))
-}
-
-func TestGetMachineDeploymentMissingMD(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	eksaCluster := eksaCluster()
-	client := fake.NewClientBuilder().WithObjects(eksaCluster).Build()
-
-	g.Expect(controller.GetMachineDeployment(ctx, client, "test")).To(BeNil())
-}
-
-func TestGetMachineDeploymentError(t *testing.T) {
-	g := NewWithT(t)
-	ctx := context.Background()
-	// This should make the client fail because CRDs are not registered
-	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
-
-	_, err := controller.GetMachineDeployment(ctx, client, "test")
-	g.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
-}
-
 func TestGetCapiClusterObjectKey(t *testing.T) {
 	g := NewWithT(t)
 	eksaCluster := eksaCluster()
@@ -149,19 +120,6 @@ func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
 			APIVersion: controlplanev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "eksa-system",
-		},
-	}
-}
-
-func machineDeployment() *clusterv1.MachineDeployment {
-	return &clusterv1.MachineDeployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "MachineDeployment",
-			APIVersion: clusterv1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
