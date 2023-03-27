@@ -9,7 +9,7 @@ This is a generic template with detailed descriptions below for reference.
 The following additional optional configuration can also be included:
 
 * [CNI]({{< relref "optional/cni.md" >}})
-* [IAM for pods]({{< relref "optional/irsa.md" >}})
+* [IAM Roles for Service Accounts]({{< relref "optional/irsa.md" >}})
 * [IAM Authenticator]({{< relref "optional/iamauth.md" >}})
 * [OIDC]({{< relref "optional/oidc.md" >}})
 * [GitOps]({{< relref "optional/gitops.md" >}})

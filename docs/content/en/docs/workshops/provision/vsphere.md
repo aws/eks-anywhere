@@ -72,7 +72,7 @@ All steps listed below should be executed on the admin machine with reachability
          * [etcd]({{< relref "/docs/reference/clusterspec/optional/etcd" >}}) (comes by default with the generated config file) 
          * [proxy]({{< relref "/docs/reference/clusterspec/optional/proxy" >}}) 
          * [GitOps]({{< relref "/docs/reference/clusterspec/optional/gitops" >}}) 
-         * [IAM for Pods]({{< relref "/docs/reference/clusterspec/optional/irsa" >}}) 
+         * [IAM Roles for Service Accounts]({{< relref "/docs/reference/clusterspec/optional/irsa" >}}) 
          * [IAM Authenticator]({{< relref "/docs/reference/clusterspec/optional/iamauth" >}}) 
          * [container registry mirror]({{< relref "/docs/reference/clusterspec/optional/registrymirror" >}})
 
@@ -149,7 +149,7 @@ All steps listed below should be executed on the admin machine with reachability
 
    {{% alert title="Important" color="warning" %}}
 
-   If you plan to enable other compnents such as, GitOps, oidc, IAM for Pods, etc, Skip creating the cluster now and go ahead adding the configuration for those components to your generated config file first. Or you would need to receate the cluster again as mentioned above.
+   If you plan to enable other compnents such as, GitOps, oidc, IAM Roles for Service Accounts, etc, Skip creating the cluster now and go ahead adding the configuration for those components to your generated config file first. Or you would need to receate the cluster again as mentioned above.
 
    {{% /alert %}}
 
@@ -268,7 +268,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    {{% alert title="Important" color="warning" %}}
 
-   If you plan to enable other compnents such as oidc, IAM for Pods, etc, skip creating the cluster now and go ahead adding the configuration for those components to your generated config file first. Or you would need to receate the cluster again. If GitOps have been enabled on the initial/management cluster, you would not have the option to enable GitOps on the workload cluster, as the goal of using GitOps is to centrally manage all of your clusters. 
+   If you plan to enable other compnents such as oidc, IAM Roles for Service Accounts, etc, skip creating the cluster now and go ahead adding the configuration for those components to your generated config file first. Or you would need to receate the cluster again. If GitOps have been enabled on the initial/management cluster, you would not have the option to enable GitOps on the workload cluster, as the goal of using GitOps is to centrally manage all of your clusters. 
 
    {{% /alert %}}
 
