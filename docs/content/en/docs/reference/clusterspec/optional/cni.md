@@ -134,7 +134,46 @@ EKS Anywhere will create the required NetworkPolicy objects for its core compone
 2. Switching from `always` mode: When switching from `always` to `default` mode, EKS Anywhere
 will not delete any of the existing NetworkPolicy objects, including the ones required
    for EKS Anywhere components (listed above). The user must delete NetworkPolicy objects as needed.
-   
+
+### Use a custom CNI
+
+EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field. `skipUpgrade` 
+can be `true` or `false`. When not set, it defaults to `false`.
+
+When creating a new cluster with `skipUpgrade` enabled, EKS Anywhere Cilium will be installed as it 
+is required to successfully provision an EKS Anywhere cluster. 
+When the cluster successfully provisions, EKS Anywhere Cilium may be uninstalled and replaced with 
+a different CNI.
+Subsequent upgrades to the cluster will not attempt to upgrade or re-install EKS Anywhere Cilium.
+
+Once enabled, `skipUpgrade` cannot be disabled.
+
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster-name
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+    cniConfig:
+      cilium: 
+        skipUpgrade: true
+```
+
+{{% alert title="Warning" color="warning" %}}
+Clusters created using the Full Lifecycle Controller prior to v0.15 that have removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
+
+```
+anywhere.eks.amazonaws.com/eksa-cilium: ""
+```
+{{% /alert %}}
+
 ### Node IPs configuration option
 
 Starting with release v0.10, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options) 
