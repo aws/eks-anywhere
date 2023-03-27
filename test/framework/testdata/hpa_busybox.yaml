@@ -17,9 +17,9 @@ spec:
           image: busybox:1.34
           resources:
             limits:
-              cpu: 500m
+              cpu: 50m
             requests:
-              cpu: 20m
+              cpu: 10m
               memory: 500Mi
           command: ["sh", "-c"]
           args:
