@@ -21,10 +21,10 @@ The Prometheus package creates two components by default:
 - [Node-exporter,](https://github.com/prometheus/node_exporter) which exposes a wide variety of hardware- and kernel-related metrics for prometheus-server (or an equivalent metrics collector, i.e. ADOT collector) to scrape.
 
 The `prometheus-server` is pre-configured to scrape the following targets at `1m` interval:
-- Kuberenetes API servers
-- Kuberenetes nodes
-- Kuberenetes nodes cadvisor
-- Kuberenetes service endpoints
+- Kubernetes API servers
+- Kubernetes nodes
+- Kubernetes nodes cadvisor
+- Kubernetes service endpoints
 - Kubernetes services
 - Kubernetes pods
 - Prometheus-server itself
