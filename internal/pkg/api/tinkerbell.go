@@ -144,7 +144,35 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 	}
 }
 
-func WithCustomTinkerbellMachineConfig(selector string) TinkerbellFiller {
+// WithStringFromEnvVarTinkerbellMachineFiller runs a TinkerbellMachineFiller function with an envVar value.
+func WithStringFromEnvVarTinkerbellMachineFiller(envVar string, opt func(string) TinkerbellMachineFiller) TinkerbellMachineFiller {
+	return opt(os.Getenv(envVar))
+}
+
+// TinkerbellMachineFiller updates a TinkerbellMachineConfig.
+type TinkerbellMachineFiller func(machineConfig *anywherev1.TinkerbellMachineConfig)
+
+// WithSSHAuthorizedKeyForTinkerbellMachineConfig updates the SSHAuthorizedKey for a TinkerbellMachineConfig.
+func WithSSHAuthorizedKeyForTinkerbellMachineConfig(key string) TinkerbellMachineFiller {
+	return func(machineConfig *anywherev1.TinkerbellMachineConfig) {
+		if len(machineConfig.Spec.Users) == 0 {
+			machineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
+		}
+
+		machineConfig.Spec.Users[0].Name = "ec2-user"
+		machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{key}
+	}
+}
+
+// WithOsFamilyForTinkerbellMachineConfig updates the OSFamily of a TinkerbellMachineConfig.
+func WithOsFamilyForTinkerbellMachineConfig(value anywherev1.OSFamily) TinkerbellMachineFiller {
+	return func(machineConfig *anywherev1.TinkerbellMachineConfig) {
+		machineConfig.Spec.OSFamily = value
+	}
+}
+
+// WithCustomTinkerbellMachineConfig generates a TinkerbellMachineConfig from a hardware selector.
+func WithCustomTinkerbellMachineConfig(selector string, machineConfigFillers ...TinkerbellMachineFiller) TinkerbellFiller {
 	return func(config TinkerbellConfig) {
 		if _, ok := config.machineConfigs[selector]; !ok {
 			m := &anywherev1.TinkerbellMachineConfig{
@@ -159,6 +187,11 @@ func WithCustomTinkerbellMachineConfig(selector string) TinkerbellFiller {
 					HardwareSelector: map[string]string{HardwareLabelTypeKeyName: selector},
 				},
 			}
+
+			for _, f := range machineConfigFillers {
+				f(m)
+			}
+
 			config.machineConfigs[selector] = m
 		}
 	}

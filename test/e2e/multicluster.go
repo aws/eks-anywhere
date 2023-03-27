@@ -6,6 +6,7 @@ package e2e
 import (
 	"time"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -47,7 +48,7 @@ func runTinkerbellWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.DeleteTinkerbellManagementCluster()
 }
 
-func runTinkerbellWorkloadClusterAPIFlow(test *framework.MulticlusterE2ETest) {
+func runWorkloadClusterWithAPIFlowForBareMetal(test *framework.MulticlusterE2ETest) {
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
@@ -77,6 +78,26 @@ func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETes
 		w.DeleteCluster()
 		w.ValidateHardwareDecommissioned()
 	})
+	test.DeleteManagementCluster()
+}
+
+func runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test *framework.MulticlusterE2ETest, filler ...api.ClusterConfigFiller) {
+	test.CreateTinkerbellManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateClusterConfig()
+		w.WaitForAvailableHardware()
+		w.PowerOffHardware()
+		w.ApplyClusterManifest()
+		w.WaitForKubeconfig()
+		w.ValidateClusterState()
+		w.UpdateClusterConfig(filler...)
+		w.ApplyClusterManifest()
+		w.ValidateClusterState()
+		w.DeleteClusterWithKubectl()
+		w.ValidateClusterDelete()
+		w.ValidateHardwareDecommissioned()
+	})
+	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
 }
 
