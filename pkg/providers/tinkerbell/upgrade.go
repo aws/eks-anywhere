@@ -444,7 +444,9 @@ func (p *Provider) handleRufioUnreleasedCRDs(ctx context.Context, cluster *types
 	}
 
 	for _, h := range hardware {
-		h.Spec.BMCRef.Kind = "Machine"
+		if h.Spec.BMCRef != nil {
+			h.Spec.BMCRef.Kind = "Machine"
+		}
 	}
 
 	serialized, err = yaml.Serialize(hardware...)
