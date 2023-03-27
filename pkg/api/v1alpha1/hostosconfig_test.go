@@ -75,7 +75,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			wantErr:  "",
 		},
 		{
-			name: "empty Bottlerocket.Kuberentes config",
+			name: "empty Bottlerocket.Kubernetes config",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
 					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{},
@@ -85,7 +85,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			wantErr:  "",
 		},
 		{
-			name: "empty Bottlerocket.Kuberentes full valid config",
+			name: "empty Bottlerocket.Kubernetes full valid config",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
 					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
@@ -105,7 +105,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			wantErr:  "",
 		},
 		{
-			name: "invalid Bottlerocket.Kuberentes.AllowedUnsafeSysctls",
+			name: "invalid Bottlerocket.Kubernetes.AllowedUnsafeSysctls",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
 					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
@@ -120,7 +120,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			wantErr:  "BottlerocketConfiguration.Kubernetes.AllowedUnsafeSysctls can not have an empty string (\"\")",
 		},
 		{
-			name: "invalid Bottlerocket.Kuberentes.ClusterDNSIPs",
+			name: "invalid Bottlerocket.Kubernetes.ClusterDNSIPs",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
 					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
@@ -135,7 +135,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			wantErr:  "IP address [not a valid IP] in BottlerocketConfiguration.Kubernetes.ClusterDNSIPs is not a valid IP",
 		},
 		{
-			name: "invalid Bottlerocket.Kuberentes.MaxPods",
+			name: "invalid Bottlerocket.Kubernetes.MaxPods",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
 					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{

@@ -26,7 +26,7 @@ const (
 
 var (
 	ntpServersRequiredVar   = []string{ntpServersVar}
-	brKuberentesRequiredVar = []string{maxPodsVar, clusterDNSIPSVar, allowedUnsafeSysctlsVar}
+	brKubernetesRequiredVar = []string{maxPodsVar, clusterDNSIPSVar, allowedUnsafeSysctlsVar}
 )
 
 // RequiredNTPServersEnvVars returns a slice of environment variables required for NTP tests.
@@ -36,7 +36,7 @@ func RequiredNTPServersEnvVars() []string {
 
 // RequiredBottlerocketKubernetesSettingsEnvVars returns a slice of environment variables required for Bottlerocket Kubernetes tests.
 func RequiredBottlerocketKubernetesSettingsEnvVars() []string {
-	return brKuberentesRequiredVar
+	return brKubernetesRequiredVar
 }
 
 // GetNTPServersFromEnv returns a slice of NTP servers read from the NTP environment veriables.

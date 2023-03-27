@@ -397,8 +397,8 @@ func WithNTPServersForAllMachines() VSphereOpt {
 	}
 }
 
-// WithBottlerocketKuberentesSettingsForAllMachines sets Bottlerocket Kubernetes settings for all the machines.
-func WithBottlerocketKuberentesSettingsForAllMachines() VSphereOpt {
+// WithBottlerocketKubernetesSettingsForAllMachines sets Bottlerocket Kubernetes settings for all the machines.
+func WithBottlerocketKubernetesSettingsForAllMachines() VSphereOpt {
 	return func(v *VSphere) {
 		checkRequiredEnvVars(v.t, RequiredBottlerocketKubernetesSettingsEnvVars())
 		unsafeSysctls, clusterDNSIPS, maxPods, err := GetBottlerocketKubernetesSettingsFromEnv()
