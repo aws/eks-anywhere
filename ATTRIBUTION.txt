@@ -38,7 +38,7 @@ https://github.com/aws/aws-sdk-go-v2/service/sts
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
 
-** github.com/aws/etcdadm-bootstrap-provider/api/v1beta1; version v1.0.7-rc1 --
+** github.com/aws/etcdadm-bootstrap-provider/api/v1beta1; version v1.0.7-rc3 --
 https://github.com/aws/etcdadm-bootstrap-provider
 
 ** github.com/aws/etcdadm-controller/api/v1beta1; version v1.0.5 --
@@ -230,7 +230,7 @@ https://github.com/oras-project/oras-go
 ** oras.land/oras-go/v2; version v2.0.0 --
 https://github.com/oras-project/oras-go
 
-** github.com/abhay-krishna/cluster-api; version v1.3.5-eksa.2 --
+** github.com/abhay-krishna/cluster-api; version v1.3.5-eksa.3 --
 https://github.com/abhay-krishna/cluster-api
 
 ** sigs.k8s.io/cluster-api-provider-cloudstack; version v0.4.8-rc1 --
