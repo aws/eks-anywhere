@@ -22,7 +22,7 @@ func (e *E2ESession) setupNTPEnv(testRegex string) error {
 }
 
 func (e *E2ESession) setupBottlerocketKubernetesSettingsEnv(testRegex string) error {
-	re := regexp.MustCompile(`^.*BottlerocketKuberentesSettings.*$`)
+	re := regexp.MustCompile(`^.*BottlerocketKubernetesSettings.*$`)
 	if !re.MatchString(testRegex) {
 		return nil
 	}

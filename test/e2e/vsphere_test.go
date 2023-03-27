@@ -206,7 +206,7 @@ func TestVSphereKubernetes125To126AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		provider.WithProviderUpgrade(provider.Ubuntu125Template()),
+		provider.WithProviderUpgrade(provider.Ubuntu126Template()),
 	)
 }
 
@@ -1366,7 +1366,7 @@ func TestVSphereKubernetes126BottlerocketWithBottlerocketKubernetesSettings(t *t
 		t,
 		framework.NewVSphere(
 			t, framework.WithBottleRocket126(),
-			framework.WithBottlerocketKuberentesSettingsForAllMachines(),
+			framework.WithBottlerocketKubernetesSettingsForAllMachines(),
 			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
 		),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
