@@ -50,7 +50,7 @@ skipped_tests:
 - TestTinkerbellKubernetes122BottleRocketSimpleFlow
 - TestTinkerbellKubernetes122UbuntuTo123Upgrade
 - TestTinkerbellKubernetes123UbuntuTo124Upgrade
-- TestTinkerbellAirgappedKubernetes125BottleRocketRegistryMirror
+- TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
 - TestTinkerbellKubernetes123UbuntuSimpleFlow
 - TestTinkerbellKubernetes124UbuntuSimpleFlow
 - TestTinkerbellKubernetes125UbuntuSimpleFlow
