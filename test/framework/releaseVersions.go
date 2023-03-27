@@ -77,20 +77,24 @@ func eksaVersionForReleaseBranch(branch string) (string, error) {
 		return "", err
 	}
 
-	latestRelease, err := getLatestPathReleaseForMinor(releases, semVer)
-	if err != nil {
-		return "", err
+	var latestReleaseSemVer *semver.Version
+
+	latestRelease := getLatestPatchReleaseForMinor(releases, semVer)
+	if latestRelease != nil {
+		latestReleaseSemVer, err = semver.New(latestRelease.Version)
+		if err != nil {
+			return "", errors.Wrapf(err, "parsing version for release %s", latestRelease.Version)
+		}
+
+		localVersion := *latestReleaseSemVer
+		localVersion.Patch++
+	} else {
+		// if no patch version for the release branch, this is an unreleased minor version
+		// so the next version will be x.x.0
+		latestReleaseSemVer = semVer
 	}
 
-	latestReleaseSemVer, err := semver.New(latestRelease.Version)
-	if err != nil {
-		return "", errors.Wrapf(err, "parsing version for release %s", latestRelease.Version)
-	}
-
-	localVersion := *latestReleaseSemVer
-	localVersion.Patch++
-
-	return localVersion.String(), nil
+	return latestReleaseSemVer.String(), nil
 }
 
 func getLatestDevRelease() (*releasev1alpha1.EksARelease, error) {
@@ -296,7 +300,9 @@ func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchV
 	return targetRelease, nil
 }
 
-func getLatestPathReleaseForMinor(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version) (*releasev1alpha1.EksARelease, error) {
+// getLatestPatchReleaseForMinor return the latest patch version for the major-minor release branch version.
+// If no version has been released yet for the branch version, it returns nil.
+func getLatestPatchReleaseForMinor(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version) *releasev1alpha1.EksARelease {
 	targetRelease := &releasev1alpha1.EksARelease{
 		Version:           "",
 		BundleManifestUrl: "",
@@ -312,10 +318,10 @@ func getLatestPathReleaseForMinor(releases *releasev1alpha1.Release, releaseBran
 	}
 
 	if targetRelease.Version == "" {
-		return nil, fmt.Errorf("releases manifest doesn't contain a version for minor release %s", releaseBranchVersion)
+		return nil
 	}
 
-	return targetRelease, nil
+	return targetRelease
 }
 
 func getMajorMinorFromTestBranch(testBranch string) string {
