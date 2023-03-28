@@ -71,7 +71,7 @@ func (w *WorkloadCluster) WaitForAvailableHardware() {
 func (w *WorkloadCluster) WaitForKubeconfig() {
 	ctx := context.Background()
 	w.T.Logf("Waiting for workload cluster %s kubeconfig to be available", w.ClusterName)
-	err := retrier.Retry(60, 5*time.Second, func() error {
+	err := retrier.Retry(120, 5*time.Second, func() error {
 		return w.writeKubeconfigToDisk(ctx)
 	})
 	if err != nil {
