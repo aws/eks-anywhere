@@ -97,7 +97,7 @@ function build::cli::upload() {
   upload_path="$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts
   latest_upload_path="$artifactsbucket"/"$projectpath"/"$latesttag"
   if [ "$CODEBUILD_CI" = "true" ]; then
-    if [[ "$CODEBUILD_BUILD_ID" =~ "aws-staging-eks-a-test" ]]; then
+    if [[ "$CODEBUILD_BUILD_ID" =~ "aws-staging-eks-a-build" ]]; then
       upload_path="$upload_path"/staging
       latest_upload_path="$artifactsbucket"/"$projectpath"/staging/"$latesttag"
     fi
