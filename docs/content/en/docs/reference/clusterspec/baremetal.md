@@ -10,6 +10,7 @@ This is a generic template with detailed descriptions below for reference.
 The following additional optional configuration can also be included:
 
 * [CNI]({{< relref "optional/cni.md" >}})
+* [Host OS Config]({{< relref "optional/hostOSConfig.md" >}})
 
 To generate your own cluster configuration, follow instructions from the Bare Metal [Create production cluster]({{< relref "../../getting-started/production-environment/" >}}) section and modify it using descriptions below.
 For information on how to add cluster configuration settings to this file for advanced node configuration, see [Advanced Bare Metal cluster configuration]({{< relref "#advanced-bare-metal-cluster-configuration" >}}).
