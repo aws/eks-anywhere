@@ -136,37 +136,36 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
 
 
 #### Upgrade cluster command
-* kubectl CLI: The cluster lifecycle feature lets you use kubectl to talks to the Kubernetes API to create a workload cluster. To use kubectl, run:
+* kubectl CLI: The cluster lifecycle feature lets you use kubectl to talk to the Kubernetes API to upgrade a workload cluster. To use kubectl, run:
    ```bash
-   kubectl apply -f eksa-w01-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+   kubectl apply -f eksa-w01-cluster.yaml 
+  --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
    ```
-  As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
-
+  
 * **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 
 * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
   >**NOTE**:For kubectl, GitOps and Terraform:
+  > * Please don't perform scaling and k8s version change at the same request, as the request will be rejected.
+  > * You can't add additional hardware and create workload cluster at the same time. To add more hardware, run:
+  >   ```
+  >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
+  >   kubectl apply -f updated-hardware.yaml
+  >   ```
   >
-  > You can't add additional hardware when updating workload cluster.
-  >
-  >  If you want to update multiple workload clusters, you should update them one by one, and make sure its completely up and running successfully by checking tinkerbell machines, before attempting to update the next workload cluster. Attempting to update multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
+  > *  If you want to update multiple workload clusters, you should update them one by one, and make sure its completely up and running successfully by checking tinkerbell machines, before attempting to update the next workload cluster. Attempting to update multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
   > 
-  > This also applied to sending upgrade requests to the same workload cluster.
+  >  This also applied to sending upgrade requests to the same workload cluster.
 
 * eksctl CLI: To create a workload cluster with eksctl, run:
 
-  ##### With hardware CSV
-  
+  ```bash
+  eksctl anywhere upgrade cluster -f cluster.yaml 
+  # --hardware-csv <hardware.csv> \ # uncomment to add more hardware
+  --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
   ```
-  eksctl anywhere upgrade cluster -f cluster.yaml --hardware-csv <hardware.csv>
-  ```
-  
-  ##### Without hardware CSV
-  
-  ```
-  eksctl anywhere upgrade cluster -f cluster.yaml
-  ```
+  As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
   This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.
 
