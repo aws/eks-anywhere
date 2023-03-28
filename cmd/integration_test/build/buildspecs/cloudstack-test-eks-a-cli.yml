@@ -76,7 +76,7 @@ phases:
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
         -r 'Test'
-        -v 9
+        -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
         --cleanup-vms=true
