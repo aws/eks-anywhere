@@ -80,7 +80,7 @@ spec:
 
 A user may disable the `prometheus-server` when:
 - they would like to use node-exporter to expose hardware- and kernel-related metrics, while
-- they have deployed another metrics collector in the cluster and configured a remote-write storage solution, which fullfills the prometheus-server functionality (check out the [ADOT with Amazon Managed Prometheus and Amazon Managed Grafana workshop]({{< relref "../adot/adot_amp_amg.md" >}}) to learn how to do so).
+- they have deployed another metrics collector in the cluster and configured a remote-write storage solution, which fulfills the prometheus-server functionality (check out the [ADOT with Amazon Managed Prometheus and Amazon Managed Grafana workshop]({{< relref "../adot/adot_amp_amg.md" >}}) to learn how to do so).
 
 The following config allows the user to do such customization:
 ```yaml
