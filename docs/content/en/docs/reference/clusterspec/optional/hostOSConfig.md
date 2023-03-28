@@ -50,7 +50,7 @@ Top level object used for host OS configurations.
 <br>
 
   * #### `bottlerocketConfiguration`
-    Key used for configuring Bottlerocket specific settings on EKS Anywhere cluster nodes. These settings are _only valid_ for Bottlerocket.
+    Key used for configuring Bottlerocket-specific settings on EKS Anywhere cluster nodes. These settings are _only valid_ for Bottlerocket.
 
     * ##### `kubernetes`
       Key used for configuring Bottlerocket Kubernetes settings.
@@ -59,7 +59,7 @@ Top level object used for host OS configurations.
         List of unsafe sysctls that should be enabled on the node.
 
       * ##### `clusterDNSIPs`
-        List of IPs of DNS service/s running in the kubernetes cluster.
+        List of IPs of DNS service(s) running in the kubernetes cluster.
 
       * ##### `maxPods`
         Maximum number of pods that can be scheduled on each node.

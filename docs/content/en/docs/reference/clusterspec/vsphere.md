@@ -107,6 +107,7 @@ The following additional optional configuration can also be included:
 * [gitops]({{< relref "optional/gitops.md" >}})
 * [proxy]({{< relref "optional/proxy.md" >}})
 * [Registry Mirror]({{< relref "optional/registrymirror.md" >}})
+* [Host OS Config]({{< relref "optional/hostOSConfig.md" >}})
 
 ## Cluster Fields
 
