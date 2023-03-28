@@ -55,36 +55,33 @@ If you don't have any available hardware that match this requirement in the clus
 #### Upgrade Cluster Command for Scale Up/Down
 
 1. eksctl CLI: To create a workload cluster with eksctl, run:
-
-    ##### With Hardware CSV File
-    
     ```bash
-    eksctl anywhere upgrade cluster -f cluster.yaml --hardware-csv <hardware.csv>
+    eksctl anywhere upgrade cluster 
+    -f cluster.yaml 
+    # --hardware-csv <hardware.csv> \ # uncomment to add more hardware
+   --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
     ```
-    
-    ##### Without Hardware CSV File
-    
-    ```bash
-    eksctl anywhere upgrade cluster -f cluster.yaml
-    ```
+    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
-2. kubectl CLI: The cluster lifecycle feature lets you use kubectl to talks to the Kubernetes API to create a workload cluster. To use kubectl, run:
+2. kubectl CLI: The cluster lifecycle feature lets you use kubectl to talk to the Kubernetes API to upgrade a workload cluster. To use kubectl, run:
      ```bash
      kubectl apply -f eksa-w01-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
      ```
-    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
-
+   
 3. GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 
 4. Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
    >**NOTE**:For kubectl, GitOps and Terraform:
+   > * Please don't perform scaling and k8s version change at the same request, as the request will be rejected.
+   > * You can't add additional hardware and create workload cluster at the same time. To add more hardware, run:
+   >   ```
+   >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
+   >   kubectl apply -f updated-hardware.yaml
+   >   ```
+   > *  If you want to scale up multiple workload clusters, you should scale them up one by one. Make sure each is completely up and running successfully by checking Tinkerbell machines, before attempting to scale the next workload cluster. Attempting to scale up multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
    >
-   > You can't add additional hardware when scaling workload cluster.
-   >
-   >  If you want to scale up multiple workload clusters, you should scale them up one by one, and make sure its completely up and running successfully by checking tinkerbell machines, before attempting to scale the next workload cluster. Attempting to scale up multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
-   >
-   > This also applied to sending scaling requests to the same workload cluster. 
+   >  This also applied to sending scaling requests to the same workload cluster. 
 
 ### Autoscaling
 
