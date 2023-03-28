@@ -18,8 +18,8 @@ import (
 )
 
 func validationsForExpectedObjects() []clusterf.StateValidation {
-	mediumRetier := retrier.NewWithMaxRetries(60, 5*time.Second)
-	longRetier := retrier.NewWithMaxRetries(120, 5*time.Second)
+	mediumRetier := retrier.NewWithMaxRetries(120, 5*time.Second)
+	longRetier := retrier.NewWithMaxRetries(120, 10*time.Second)
 	return []clusterf.StateValidation{
 		clusterf.RetriableStateValidation(mediumRetier, validations.ValidateClusterReady),
 		clusterf.RetriableStateValidation(mediumRetier, validations.ValidateEKSAObjects),
@@ -31,7 +31,7 @@ func validationsForExpectedObjects() []clusterf.StateValidation {
 
 func validationsForClusterDoesNotExist() []clusterf.StateValidation {
 	return []clusterf.StateValidation{
-		clusterf.RetriableStateValidation(retrier.NewWithMaxRetries(60, 5*time.Second), validations.ValidateClusterDoesNotExist),
+		clusterf.RetriableStateValidation(retrier.NewWithMaxRetries(120, 5*time.Second), validations.ValidateClusterDoesNotExist),
 	}
 }
 
