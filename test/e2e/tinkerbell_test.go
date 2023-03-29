@@ -1071,7 +1071,7 @@ func TestTinkerbellKubernetes126UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel2),
 		),
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube125),
+			api.WithKubernetesVersion(v1alpha1.Kube126),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.NoScheduleTaint()}),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
