@@ -249,7 +249,7 @@ func WithNoTimeouts() ClusterManagerOpt {
 		maxTime := time.Duration(math.MaxInt64)
 
 		c.Retrier = noTimeoutRetrier
-		c.machineMaxWait = maxTime
+		c.machinesMinWait = maxTime
 		c.controlPlaneWaitTimeout = maxTime
 		c.controlPlaneWaitAfterMoveTimeout = maxTime
 		c.externalEtcdWaitTimeout = maxTime
@@ -836,11 +836,7 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 		return nil
 	}
 
-	timeout := time.Duration(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count) * c.machineMaxWait
-	if timeout <= c.machinesMinWait {
-		timeout = c.machinesMinWait
-	}
-
+	timeout := c.totalTimeoutForMachinesReadyWait(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count)
 	r := retrier.New(timeout)
 	if err := r.Retry(isCpReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for controlplane replicas to be ready: %v", err)
@@ -871,16 +867,24 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		return nil
 	}
 
-	timeout := time.Duration(machineDeploymentReplicasCount) * c.machineMaxWait
-	if timeout <= c.machinesMinWait {
-		timeout = c.machinesMinWait
-	}
-
+	timeout := c.totalTimeoutForMachinesReadyWait(machineDeploymentReplicasCount)
 	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
 	if err := r.Retry(areMdReplicasReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
 	}
 	return nil
+}
+
+// totalTimeoutForMachinesReadyWait calculates the total timeout when waiting for machines to be ready.
+// The timeout increases linearly with the number of machines but can never be less than the configured
+// minimun.
+func (c *ClusterManager) totalTimeoutForMachinesReadyWait(replicaCount int) time.Duration {
+	timeout := time.Duration(replicaCount) * c.machineMaxWait
+	if timeout <= c.machinesMinWait {
+		timeout = c.machinesMinWait
+	}
+
+	return timeout
 }
 
 func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) error {
@@ -915,11 +919,7 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 		return nil
 	}
 
-	timeout := time.Duration(totalNodes) * c.machineMaxWait
-	if timeout <= c.machinesMinWait {
-		timeout = c.machinesMinWait
-	}
-
+	timeout := c.totalTimeoutForMachinesReadyWait(totalNodes)
 	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
 	if err := r.Retry(areNodesReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for machines to be ready: %v", err)
