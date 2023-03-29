@@ -136,19 +136,19 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
 
 
 #### Upgrade cluster command
-* kubectl CLI: The cluster lifecycle feature lets you use kubectl to talk to the Kubernetes API to upgrade a workload cluster. To use kubectl, run:
+* **kubectl CLI**: The cluster lifecycle feature lets you use kubectl to talk to the Kubernetes API to upgrade a workload cluster. To use kubectl, run:
    ```bash
    kubectl apply -f eksa-w01-cluster.yaml 
   --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
    ```
   
-* **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
+* **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 
-* **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
+* **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
   >**NOTE**:For kubectl, GitOps and Terraform:
-  > * Please don't perform scaling and k8s version change at the same request, as the request will be rejected.
-  > * You can't add additional hardware and create workload cluster at the same time. To add more hardware, run:
+  > * The baremetal controller does not support scaling upgrades and Kubernetes version upgrades in the same request.
+  > * While scaling a workload cluster if you need to add additional machines, run:
   >   ```
   >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
   >   kubectl apply -f updated-hardware.yaml
@@ -158,7 +158,7 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
   > 
   >  This also applied to sending upgrade requests to the same workload cluster.
 
-* eksctl CLI: To create a workload cluster with eksctl, run:
+* **eksctl CLI**: To create a workload cluster with eksctl, run:
 
   ```bash
   eksctl anywhere upgrade cluster -f cluster.yaml 
