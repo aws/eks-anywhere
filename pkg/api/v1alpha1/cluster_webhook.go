@@ -140,8 +140,8 @@ func validateUpgradeRequestTinkerbell(new, old *Cluster) field.ErrorList {
 				field.Invalid(path, new.Spec.WorkerNodeGroupConfigurations, "cannot perform scale up or down during rolling upgrades. Please revert to the previous worker node groups."))
 		}
 		workerNodeGroupMap := make(map[string]*WorkerNodeGroupConfiguration)
-		for _, workerNodeGroupConfiguration := range old.Spec.WorkerNodeGroupConfigurations {
-			workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+		for i := range old.Spec.WorkerNodeGroupConfigurations {
+			workerNodeGroupMap[old.Spec.WorkerNodeGroupConfigurations[i].Name] = &old.Spec.WorkerNodeGroupConfigurations[i]
 		}
 		for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
 			workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]
@@ -267,8 +267,8 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		}
 
 		workerNodeGroupMap := make(map[string]*WorkerNodeGroupConfiguration)
-		for _, workerNodeGroupConfiguration := range old.Spec.WorkerNodeGroupConfigurations {
-			workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+		for i := range old.Spec.WorkerNodeGroupConfigurations {
+			workerNodeGroupMap[old.Spec.WorkerNodeGroupConfigurations[i].Name] = &old.Spec.WorkerNodeGroupConfigurations[i]
 		}
 		for _, nodeGroupNewSpec := range new.Spec.WorkerNodeGroupConfigurations {
 			if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {

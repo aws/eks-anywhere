@@ -1845,6 +1845,39 @@ func TestClusterValidateUpdateLabelTaintsWNTinkerbellRequest(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("spec.WorkerNodeConfiguration.taints: Forbidden: field is immutable")))
 }
 
+func TestClusterValidateUpdateLabelTaintsMultiWNTinkerbellRequest(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.Spec.ManagementCluster.Name = "test"
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	cOld.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+
+	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
+	nodeLabels2 := map[string]string{"label3": "foo", "label4": "bar"}
+
+	cOld.Spec.WorkerNodeGroupConfigurations[0].Labels = nodeLabels
+	cOld.Spec.WorkerNodeGroupConfigurations[0].Taints = []v1.Taint{{Key: "key1", Value: "val1", Effect: "NoSchedule"}}
+	cOld.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Kind = v1alpha1.TinkerbellMachineConfigKind
+	cOld.Spec.WorkerNodeGroupConfigurations = append(cOld.Spec.WorkerNodeGroupConfigurations,
+		v1alpha1.WorkerNodeGroupConfiguration{
+			Name:  "md-1",
+			Count: ptr.Int(1),
+			MachineGroupRef: &v1alpha1.Ref{
+				Kind: v1alpha1.TinkerbellMachineConfigKind,
+				Name: "eksa-unit-test",
+			},
+		})
+	cOld.Spec.WorkerNodeGroupConfigurations[1].Labels = nodeLabels2
+	cOld.Spec.WorkerNodeGroupConfigurations[1].Taints = []v1.Taint{}
+
+	cNew := cOld.DeepCopy()
+	cNew.Spec.WorkerNodeGroupConfigurations[0].Taints = []v1.Taint{{Key: "key1", Value: "val1", Effect: "NoSchedule", TimeAdded: nil}}
+
+	g := NewWithT(t)
+	err := cNew.ValidateUpdate(cOld)
+	g.Expect(err).To(BeNil())
+}
+
 func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 	tests := []struct {
 		Name  string
