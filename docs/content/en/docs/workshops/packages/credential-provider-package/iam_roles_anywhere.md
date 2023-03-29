@@ -12,7 +12,7 @@ IAM Roles Anywhere enables workloads outside of AWS to access AWS resources by u
 ## Prerequisites 
 1. For setting up the certificate authority later, you will need to obtain your cluster's CA. This can be obtain by:
     ```bash
-    # Assuming CLUSTER_NAME and KUBECONFIG is set
+    # Assuming CLUSTER_NAME and KUBECONFIG are set:
     kubectl get secret -n eksa-system ${CLUSTER_NAME}-ca -o yaml | yq '.data."tls.crt"' | base64 -d
     ```
 1. A role should be created to allow read access for curated packages. This role can be extended to include private registries that you would also like to pull from in your cluster. A sample policy for curated packages would be.
