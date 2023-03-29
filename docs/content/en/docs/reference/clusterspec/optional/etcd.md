@@ -6,6 +6,8 @@ description: >
   EKS Anywhere cluster yaml etcd specification reference
 ---
 
+  >**_NOTE_**: Currently, the Unstacked etcd topology is not supported with the Amazon EKS Anywhere Bare Metal and Nutanix deployment options.
+
 ### Unstacked etcd topology (recommended)
 There are two types of etcd topologies for configuring a Kubernetes cluster:  
 
