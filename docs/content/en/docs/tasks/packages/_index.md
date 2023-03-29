@@ -190,3 +190,28 @@ If you recreate secrets, you can manually re-enable the cronjob and run the job 
 kubectl get cronjob -n eksa-packages cron-ecr-renew -o yaml | yq e '.spec.suspend |= false' - | kubectl apply -f -
 kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
 ```
+
+### Upgrade the packages controller
+
+Starting with EKS-A v0.15.0 (packages controller v0.3.9+) the package controller will upgrade automatically according to the selected bundle. For any version prior to v0.3.X,
+manual steps must be executed to upgrade.
+
+1. Ensure the namespace will be kept
+```
+kubectl annotate namespaces eksa-packages helm.sh/resource-policy=keep
+```
+
+2. Uninstall the eks-anywhere-package helm release
+```
+helm uninstall eks-anywhere-packages
+```
+
+3. Remove the secret called aws-secret (we will need credentials when installing the new version)
+```
+kubectl delete secret -n eksa-package aws-secret
+```
+
+4. Install the new version using the latest eksctl-anywhere binary
+```
+eksctl anywhere install packagecontroller -f ${CLUSTER_NAME}.yaml
+```
