@@ -344,6 +344,52 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 	}
 }
 
+func TestEnableSucceedInWorkloadClusterWhenPackageBundleControllerNotExist(t *testing.T) {
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartManager, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion("us-west-2"),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithManagementClusterName("mgmt"),
+			curatedpackages.WithValuesFileWriter(tt.writer),
+		)
+		clusterName := fmt.Sprintf("clusterName=%s", "billy")
+		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
+		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+		sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries()
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", sourceRegistry)
+		defaultRegistry = fmt.Sprintf("defaultRegistry=%s", defaultRegistry)
+		defaultImageRegistry = fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry)
+		if tt.registryMirror != nil {
+			t.Setenv("REGISTRY_USERNAME", "username")
+			t.Setenv("REGISTRY_PASSWORD", "password")
+		}
+		values := []string{sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName}
+		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
+			values = append(values, "cronjob.suspend=true")
+		}
+		values = append(values, "managementClusterName=mgmt")
+		values = append(values, "workloadPackageOnly=true")
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
+		gomock.InOrder(
+			tt.kubectl.EXPECT().
+				GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(getPBCNotFound(t)),
+			tt.kubectl.EXPECT().
+				GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(getPBCSuccess(t)))
+		tt.kubectl.EXPECT().
+			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
+			AnyTimes()
+
+		err := tt.command.Enable(tt.ctx)
+		tt.Expect(err).To(BeNil())
+	}
+}
+
 func getPBCSuccess(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
 		pbc := &packagesv1.PackageBundleController{
@@ -353,6 +399,15 @@ func getPBCSuccess(t *testing.T) func(context.Context, string, string, string, s
 		}
 		pbc.DeepCopyInto(obj)
 		return nil
+	}
+}
+
+func getPBCNotFound(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
+		return apierrors.NewNotFound(schema.GroupResource{
+			Group:    "test group",
+			Resource: "test resource",
+		}, "test")
 	}
 }
 
