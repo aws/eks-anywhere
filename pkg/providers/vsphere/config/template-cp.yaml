@@ -520,7 +520,7 @@ spec:
 {{- range $key, $value := .etcdBootParameters }}
           {{ $key }}:
 {{- range $val := $value }}
-          - {{ $val }}
+          - "{{ $val }}"
 {{- end }}
 {{- end }}
 {{- end }}
@@ -528,7 +528,7 @@ spec:
       kernel:
         sysctlSettings:
 {{- range $key, $value := .etcdKernelSettings }}
-          {{ $key }}: {{ $value }}
+          {{ $key }}: "{{ $value }}"
 {{- end }}
 {{- end }}
 {{- else}}
