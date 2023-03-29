@@ -90,7 +90,7 @@ export REGISTRY_PASSWORD=<password>
 ```
 
 ### __insecureSkipVerify__ (optional)
-* __Description__: optional field to skip the registry certificate verification. Only use this solution for isolated testing or in a tightly controlled, air-gapped environment. Currenly only supported for Ubuntu OS.
+* __Description__: optional field to skip the registry certificate verification. Only use this solution for isolated testing or in a tightly controlled, air-gapped environment. Currently only supported for Ubuntu OS.
 * __Type__: boolean
 
 ## Import images into a private registry

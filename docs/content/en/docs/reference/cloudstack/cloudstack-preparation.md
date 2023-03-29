@@ -95,7 +95,7 @@ Here is how to get information to go into `CloudStackMachineConfig` sections of 
 
 * template: Select Images -> Templates to see available operating system image templates.
 
-* diskOffering: Select Storage -> Volumes, the select Create Volume, if you want to create disk storage to attach to your nodes (optional). You can use this to store logs or other data you want saved outside of the nodes. When you later create the cluster configuration, you can identify things like where you want the devide mounted the type of file system, labels and other information.
+* diskOffering: Select Storage -> Volumes, the select Create Volume, if you want to create disk storage to attach to your nodes (optional). You can use this to store logs or other data you want saved outside of the nodes. When you later create the cluster configuration, you can identify things like where you want the device mounted, the type of file system, labels and other information.
 
 * AffinityGroupIds: Select Compute -> Affinity Groups, then select Add new affinity group (optional). By creating an affinity group, you can tell all VMs from a set of instances to either all run on different physical hosts (anti-affinity) or just run anywhere they can (affinity).
 
