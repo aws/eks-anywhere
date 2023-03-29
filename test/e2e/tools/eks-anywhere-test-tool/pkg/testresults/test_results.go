@@ -1,4 +1,4 @@
-package testResults
+package testresults
 
 import (
 	"bytes"
