@@ -27,6 +27,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const BaseboardManagementResourceName = "baseboardmanagements.bmc.tinkerbell.org"
+
 // PowerState represents power state the BaseboardManagement.
 type PowerState string
 
