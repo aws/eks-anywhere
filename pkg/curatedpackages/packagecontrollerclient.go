@@ -339,12 +339,12 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 			readyCnt := 0
 			err := pc.kubectl.GetObject(timeoutCtx, packageBundleControllerResource, pc.clusterName,
 				packagesv1.PackageNamespace, pc.kubeConfig, pbc)
-			if err != nil {
+			if err != nil && !apierrors.IsNotFound(err) {
 				done <- fmt.Errorf("getting package bundle controller: %w", err)
 				return
 			}
 
-			if pbc.Spec.ActiveBundle != "" {
+			if pbc != nil && pbc.Spec.ActiveBundle != "" {
 				logger.V(6).Info("found packages bundle controller active bundle",
 					"name", pbc.Spec.ActiveBundle)
 				readyCnt++
