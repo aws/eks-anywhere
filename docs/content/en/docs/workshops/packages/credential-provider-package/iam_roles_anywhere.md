@@ -10,7 +10,7 @@ This tutorial demonstrates how to configure the credential provider package to a
 IAM Roles Anywhere enables workloads outside of AWS to access AWS resources by using X.509 digital certificates to obtain temporary AWS credentials. A trust anchor is used to reference a certificate authority with IAM Roles Anywhere. For this use case, the **Kubernetes Cluster CA** can be registered and each kubelet client's x509 cert can be used to authenticate to get temporary AWS credentials.
 
 ## Prerequisites 
-1. For setting up the certificate authority later you wil need to obtain your cluster's CA. This can be obtain by
+1. For setting up the certificate authority later, you will need to obtain your cluster's CA. This can be obtain by:
     ```bash
     # Assuming CLUSTER_NAME and KUBECONFIG is set
     kubectl get secret -n eksa-system ${CLUSTER_NAME}-ca -o yaml | yq '.data."tls.crt"' | base64 -d
