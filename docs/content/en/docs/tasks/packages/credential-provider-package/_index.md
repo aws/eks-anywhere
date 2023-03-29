@@ -16,7 +16,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
   {{% /alert %}}
 
 ## Install
-By default an instance of this package is installed with the controller to help facilitate authentication for other packages. The following are instructions in case you want to tweek to default values.
+By default an instance of this package is installed with the controller to help facilitate authentication for other packages. The following are instructions in case you want to tweak the default values.
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
