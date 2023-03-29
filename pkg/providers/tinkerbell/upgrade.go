@@ -283,8 +283,8 @@ func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alp
 	}
 
 	workerNodeGroupMap := make(map[string]*v1alpha1.WorkerNodeGroupConfiguration)
-	for _, workerNodeGroupConfiguration := range oldCluster.Spec.WorkerNodeGroupConfigurations {
-		workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+	for i := range oldCluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMap[oldCluster.Spec.WorkerNodeGroupConfigurations[i].Name] = &oldCluster.Spec.WorkerNodeGroupConfigurations[i]
 	}
 
 	for _, nodeGroupNewSpec := range newCluster.Spec.WorkerNodeGroupConfigurations {
