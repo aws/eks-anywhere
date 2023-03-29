@@ -68,7 +68,7 @@ IAM Roles Anywhere enables workloads outside of AWS to access AWS resources by u
     ```
 
 1. Either edit the existing package or delete and create a new credential-provider-package that points towards the new secret. For more information on specific configuration option refer to [installation guide]({{< relref "../../../tasks/packages/credential-provider-package" >}}) for details]  
-   Below example changes the default secret name from aws-secret to newly created aws-config. It also changes the match images to pull from multiple regions as well as across multiple accounts. Make sure to change cluster-name to match your CLUSTER_NAME
+   The example below changes the default secret name from aws-secret to newly created aws-config. It also changes the match images to pull from multiple regions as well as across multiple accounts. Make sure to change cluster-name to match your CLUSTER_NAME
     ```yaml
     apiVersion: packages.eks.amazonaws.com/v1alpha1
     kind: Package
