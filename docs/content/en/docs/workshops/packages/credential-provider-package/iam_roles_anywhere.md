@@ -7,7 +7,7 @@ description: >
 ---
 
 This tutorial demonstrates how to configure the credential provider package to authenticate using [IAM Roles Anywhere](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html) to pull from a private AWS Elastic Container Registry (ECR).  
-IAM Roles Anywhere enables workloads outside of AWS to access AWS resources by using X.509 digital certificates to obtain temporary AWS credentials. A trust anchor is used to reference a certificate authority with IAM Roles Anywhere. For this use case the **Kuberentes Cluster CA** can be registered and each kubelet client's x509 cert can be used to authenticate to get temporary AWS credentials.
+IAM Roles Anywhere enables workloads outside of AWS to access AWS resources by using X.509 digital certificates to obtain temporary AWS credentials. A trust anchor is used to reference a certificate authority with IAM Roles Anywhere. For this use case, the **Kubernetes Cluster CA** can be registered and each kubelet client's x509 cert can be used to authenticate to get temporary AWS credentials.
 
 ## Prerequisites 
 1. For setting up the certificate authority later you wil need to obtain your cluster's CA. This can be obtain by
