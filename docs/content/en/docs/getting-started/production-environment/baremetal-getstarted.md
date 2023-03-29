@@ -168,7 +168,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    * The initial cluster's credentials (this causes the workload cluster to be managed from the management cluster)
 
    Create a workload cluster in one of the following ways:
-   * eksctl CLI: To create a workload cluster with eksctl, run:
+   * **eksctl CLI**: To create a workload cluster with eksctl, run:
 
      ```bash
      eksctl anywhere create cluster \
@@ -180,7 +180,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
      ```
      As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
-   * kubectl CLI: The cluster lifecycle feature lets you use kubectl to talks to the Kubernetes API to create a workload cluster. To use kubectl, run:
+   * **kubectl CLI**: The cluster lifecycle feature lets you use kubectl to talks to the Kubernetes API to create a workload cluster. To use kubectl, run:
       ```bash
       kubectl apply -f eksa-w01-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
       ```
@@ -189,8 +189,8 @@ Follow these steps if you want to use your initial cluster to create and manage 
    * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
      >**NOTE**:For kubectl, GitOps and Terraform:
-     > * Please don't perform scaling and k8s version change at the same request, as the request will be rejected.
-     > * You can't add additional hardware and create workload cluster at the same time. To add more hardware, run:
+     > * The baremetal controller does not support scaling upgrades and Kubernetes version upgrades in the same request.
+     > * While creating a new workload cluster if you need to add additional machines for the target workload cluster, run:
      >   ```
      >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
      >   kubectl apply -f updated-hardware.yaml
