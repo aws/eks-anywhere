@@ -222,6 +222,11 @@ func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
 	}, nil
 }
 
+// SetStackInstaller configures p to use installer for Tinkerbell stack install and upgrade.
+func (p *Provider) SetStackInstaller(installer stack.StackInstaller) {
+	p.stackInstaller = installer
+}
+
 func (p *Provider) GetDeployments() map[string][]string {
 	return map[string][]string{
 		"capt-system": {"capt-controller-manager"},

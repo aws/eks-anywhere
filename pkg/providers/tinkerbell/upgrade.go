@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	rufiov1 "github.com/tinkerbell/rufio/api/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -18,8 +19,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
-
-const baseboardManagementResourceName = "baseboardmanagements.bmc.tinkerbell.org"
 
 func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
@@ -383,7 +382,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 
 	hasBaseboardManagement, err := p.providerKubectlClient.HasCRD(
 		ctx,
-		baseboardManagementResourceName,
+		rufiounreleased.BaseboardManagementResourceName,
 		cluster.KubeconfigFile,
 	)
 	if err != nil {
@@ -402,7 +401,11 @@ func (p *Provider) PreCoreComponentsUpgrade(
 
 		// Remove the unreleased Rufio CRDs from the cluster; this will also remove any residual
 		// resources.
-		err = p.providerKubectlClient.DeleteCRD(ctx, baseboardManagementResourceName, cluster.KubeconfigFile)
+		err = p.providerKubectlClient.DeleteCRD(
+			ctx,
+			rufiounreleased.BaseboardManagementResourceName,
+			cluster.KubeconfigFile,
+		)
 		if err != nil {
 			return fmt.Errorf("could not delete machines crd: %v", err)
 		}
@@ -421,19 +424,21 @@ func (p *Provider) handleRufioUnreleasedCRDs(ctx context.Context, cluster *types
 		return fmt.Errorf("retrieving baseboardmanagement resources: %v", err)
 	}
 
-	serialized, err := yaml.Serialize(toRufioMachines(bm)...)
-	if err != nil {
-		return fmt.Errorf("serializing machines: %v", err)
-	}
+	if len(bm) > 0 {
+		serialized, err := yaml.Serialize(toRufioMachines(bm)...)
+		if err != nil {
+			return fmt.Errorf("serializing machines: %v", err)
+		}
 
-	err = p.providerKubectlClient.ApplyKubeSpecFromBytesWithNamespace(
-		ctx,
-		cluster,
-		yaml.Join(serialized),
-		p.stackInstaller.GetNamespace(),
-	)
-	if err != nil {
-		return fmt.Errorf("applying machines: %v", err)
+		err = p.providerKubectlClient.ApplyKubeSpecFromBytesWithNamespace(
+			ctx,
+			cluster,
+			yaml.Join(serialized),
+			p.stackInstaller.GetNamespace(),
+		)
+		if err != nil {
+			return fmt.Errorf("applying machines: %v", err)
+		}
 	}
 
 	// Secondly, iterate over all Hardwarfe CRs and update the BMCRef to point to the new Machine
@@ -443,20 +448,24 @@ func (p *Provider) handleRufioUnreleasedCRDs(ctx context.Context, cluster *types
 		return fmt.Errorf("retrieving hardware resources: %v", err)
 	}
 
+	var updatedHardware []tinkv1alpha1.Hardware
 	for _, h := range hardware {
 		if h.Spec.BMCRef != nil {
 			h.Spec.BMCRef.Kind = "Machine"
+			updatedHardware = append(updatedHardware, h)
 		}
 	}
 
-	serialized, err = yaml.Serialize(hardware...)
-	if err != nil {
-		return fmt.Errorf("serializing hardware: %v", err)
-	}
+	if len(updatedHardware) > 0 {
+		serialized, err := yaml.Serialize(updatedHardware...)
+		if err != nil {
+			return fmt.Errorf("serializing hardware: %v", err)
+		}
 
-	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, yaml.Join(serialized))
-	if err != nil {
-		return fmt.Errorf("applying hardware: %v", err)
+		err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, yaml.Join(serialized))
+		if err != nil {
+			return fmt.Errorf("applying hardware: %v", err)
+		}
 	}
 
 	return nil
