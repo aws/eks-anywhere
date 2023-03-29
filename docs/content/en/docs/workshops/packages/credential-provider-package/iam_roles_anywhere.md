@@ -15,7 +15,7 @@ IAM Roles Anywhere enables workloads outside of AWS to access AWS resources by u
     # Assuming CLUSTER_NAME and KUBECONFIG are set:
     kubectl get secret -n eksa-system ${CLUSTER_NAME}-ca -o yaml | yq '.data."tls.crt"' | base64 -d
     ```
-1. A role should be created to allow read access for curated packages. This role can be extended to include private registries that you would also like to pull from in your cluster. A sample policy for curated packages would be.
+1. A role should be created to allow read access for curated packages. This role can be extended to include private registries that you would also like to pull from into your cluster. A sample policy for curated packages would be.
    ```
    {
     "Version": "2012-10-17",
