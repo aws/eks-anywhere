@@ -333,20 +333,43 @@ Follow these steps if you want to use your initial cluster to create and manage 
    4. The kubeconfig for your new cluster is stored as a secret on the management cluster.
       You can get credentials and run the test application on your new workload cluster as follows:
       ```bash
-      kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath=‘{.data.value}' | base64 —decode > w01.kubeconfig
+      kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath='{.data.value}' | base64 —decode > w01.kubeconfig
       export KUBECONFIG=w01.kubeconfig
       kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
       ```
 ### Upgrade cluster using Gitops
       
    1. To upgrade the cluster using Gitops, modify the workload cluster yaml file with the desired changes.
+      As an example, to upgrade a cluster with version 1.24 to 1.25 you would change your spec:
+       ```bash
+        apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+        kind: Cluster
+        metadata:
+          name: dev
+          namespace: default
+        spec:
+          controlPlaneConfiguration:
+            count: 1
+            endpoint:
+              host: "198.18.99.49"
+            machineGroupRef:
+              kind: VSphereMachineConfig
+              name: dev
+              ...
+          kubernetesVersion: "1.25"
+          ...
+      ```
+
+        >**_NOTE:_** If you have a custom machine image for your nodes you may also need to update your MachineConfig with a new `template`.
       
    2. Commit the file to your git repository. 
       ```bash 
       git add eksa-cluster.yaml
-      git commit -m 'Scaling nodes on new workload cluster'
+      git commit -m 'Upgrading kubernetes version on new workload cluster'
       git push origin main
       ```
+
+For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-and-cloudstack-upgrades.md#upgradeable-cluster-attributes" >}}).
       
 ### Delete cluster using Gitops
 
