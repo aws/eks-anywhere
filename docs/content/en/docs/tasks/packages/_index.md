@@ -193,7 +193,7 @@ kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
 
 ### Upgrade the packages controller
 
-Starting with EKS-A v0.15.0 (packages controller v0.3.9+) the package controller will upgrade automatically according to the selected bundle. For any version prior to v0.3.X,
+Starting with EKS Anywhere v0.15.0 (packages controller v0.3.9+) the package controller will upgrade automatically according to the selected bundle. For any version prior to v0.3.X,
 manual steps must be executed to upgrade.
 
 1. Ensure the namespace will be kept
