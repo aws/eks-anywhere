@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"context"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/executables/cmk"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
@@ -48,6 +51,7 @@ type Factory struct {
 	logger                      logr.Logger
 	deps                        *dependencies.Dependencies
 	packageControllerClient     *curatedpackages.PackageControllerClient
+	cloudStackValidatorRegistry cloudstack.ValidatorRegistry
 }
 
 type Reconcilers struct {
@@ -189,6 +193,8 @@ func (f *Factory) WithTinkerbellDatacenterReconciler() *Factory {
 
 // WithCloudStackDatacenterReconciler adds the CloudStackDatacenterReconciler to the controller factory.
 func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
+	f.withCloudStackValidatorRegistry()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.CloudStackDatacenterReconciler != nil {
 			return nil
@@ -196,6 +202,7 @@ func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
 
 		f.reconcilers.CloudStackDatacenterReconciler = NewCloudStackDatacenterReconciler(
 			f.manager.GetClient(),
+			f.cloudStackValidatorRegistry,
 		)
 
 		return nil
@@ -417,6 +424,23 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 
 		f.cloudstackClusterReconciler = cloudstackreconciler.New()
 		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withCloudStackValidatorRegistry() *Factory {
+	f.dependencyFactory.WithWriter()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.cloudStackValidatorRegistry != nil {
+			return nil
+		}
+
+		cmkBuilder := cmk.NewCmkBuilder(executables.NewLocalExecutablesBuilder())
+		f.cloudStackValidatorRegistry = cloudstack.NewValidatorFactory(cmkBuilder, f.deps.Writer, false)
 
 		return nil
 	})
