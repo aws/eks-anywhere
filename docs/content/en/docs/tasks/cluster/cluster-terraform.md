@@ -167,17 +167,37 @@ Follow these steps if you want to use your initial cluster to create and manage 
 6. The kubeconfig for your new cluster is stored as a secret on the management cluster.
    You can get the workload cluster credentials and run the test application on your new workload cluster as follows:
    ```bash
-   kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath=‘{.data.value}' | base64 --decode > w01.kubeconfig
+   kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath='{.data.value}' | base64 --decode > w01.kubeconfig
    export KUBECONFIG=w01.kubeconfig
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
    ```
    
 ### Upgrade cluster using Terraform
    
-1. To upgrade a workload cluster using Terraform, modify the desired fields in the Terraform resource file and apply the changes.
+1. To upgrade a workload cluster using Terraform, modify the desired fields in the Terraform resource file.
+   As an example, to upgrade a cluster with version 1.24 to 1.25 you would modify your Terraform cluster resource:
+   ```bash
+    manifest = {
+      "apiVersion" = "anywhere.eks.amazonaws.com/v1alpha1"
+      "kind" = "Cluster"
+      "metadata" = {
+        "name" = "MyClusterName"
+        "namespace" = "default"
+      }
+      "spec" = {
+        "kubernetesVersion" = "1.25"
+         ...
+         ...
+      }
+    ```
+   >**_NOTE:_** If you have a custom machine image for your nodes you may also need to update your MachineConfig with a new `template`.
+   
+2. Apply those changes:
    ```bash
    terraform apply
    ```
+
+For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-and-cloudstack-upgrades.md#upgradeable-cluster-attributes" >}}).
  
 ### Delete cluster using Terraform
 
