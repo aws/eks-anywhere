@@ -17,6 +17,7 @@ package helm
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -34,6 +35,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
+	commandutils "github.com/aws/eks-anywhere/release/pkg/util/command"
 )
 
 var HelmLog = ctrl.Log.WithName("HelmLog")
@@ -164,7 +166,7 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 		return fmt.Errorf("logging into the destination registry: %w", err)
 	}
 
-	err = d.PushHelmChart(packaged, filepath.Dir(helmChart[0]))
+	err = PushHelmChart(packaged, filepath.Dir(helmChart[0]))
 	if err != nil {
 		return fmt.Errorf("pushing the helm chart: %w", err)
 	}
@@ -230,15 +232,17 @@ func (d *helmDriver) PullHelmChart(name, version string) (string, error) {
 }
 
 // PushHelmChart will take in packaged helm chart and push to a remote URI.
-func (d *helmDriver) PushHelmChart(packaged, URI string) error {
-	config := action.WithPushConfig(d.cfg)
-	p := action.NewPushWithOpts(config)
+func PushHelmChart(packaged, URI string) error {
 	if !strings.HasPrefix(URI, "oci://") {
 		URI = fmt.Sprintf("oci://%s", URI)
 	}
-	_, err := p.Run(packaged, URI)
+
+	cmd := exec.Command("helm", "push", packaged, URI)
+	out, err := commandutils.ExecCommand(cmd)
+	fmt.Println(out)
+
 	if err != nil {
-		return fmt.Errorf("running Helm push command on URI %s: %w", URI, err)
+		return fmt.Errorf("running Helm push command on URI %s: %v", URI, err)
 	}
 	return nil
 }
