@@ -6,6 +6,61 @@ weight: 35
 
 ## Unreleased
 
+## [v0.15.0](https://github.com/aws/eks-anywhere/releases/tag/v0.15.0)
+
+### Latest supported OS version details
+|              | vSphere | Baremetal |  Nutanix | Cloudstack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+### Added
+- Kubernetes 1.26 support ([#5079](https://github.com/aws/eks-anywhere/issues/5079))
+- Workload clusters full lifecycle API support for Bare Metal provider ([#5237](https://github.com/aws/eks-anywhere/issues/5237))
+- IRSA support for Bare Metal ([#4361](https://github.com/aws/eks-anywhere/issues/4361))
+- Support for mixed disks within the same node grouping for BareMetal clusters ([#3234](https://github.com/aws/eks-anywhere/issues/3234))
+- Workload clusters full lifecycle API support for Nutanix provider ([#5190](https://github.com/aws/eks-anywhere/pull/5190))
+- OIDC support for Nutanix ([#4711](https://github.com/aws/eks-anywhere/pull/4711))
+- Registry mirror support for Nutanix ([#5236](https://github.com/aws/eks-anywhere/pull/5236))
+- Support for linking EKS Anywhere node VMs to Nutanix projects ([#5266](https://github.com/aws/eks-anywhere/pull/5266))
+- Add `CredentialsRef` to `NutanixDatacenterConfig` to specify Nutanix credentials for workload clusters ([#5114](https://github.com/aws/eks-anywhere/pull/5114))
+- Support for taints and labels for Nutanix provider ([#5172](https://github.com/aws/eks-anywhere/issues/5172))
+- Support for InsecureSkipVerify for RegistryMirrorConfiguration across all providers. Currently only supported for Ubuntu and RHEL OS. ([#1647](https://github.com/aws/eks-anywhere/issues/1647))
+- Support for configuring of Bottlerocket settings. ([#707](https://github.com/aws/eks-anywhere/issues/707))
+- Support for using a custom CNI ([#5217](https://github.com/aws/eks-anywhere/issues/5217))
+- Ability to configure NTP servers on EKS Anywhere nodes for vSphere and Tinkerbell providers ([#4760](https://github.com/aws/eks-anywhere/issues/4760))
+- Support for nonRootVolumes option in SnowMachineConfig ([#5199](https://github.com/aws/eks-anywhere/issues/5199))
+- Validate template disk size with vSphere provider using Bottlerocket ([#1571](https://github.com/aws/eks-anywhere/issues/1571))
+- Allow users to specify `cloneMode` for different `VSphereMachineConfig` ([#4634](https://github.com/aws/eks-anywhere/pull/4634))
+- Validate management cluster bundles version is the same or newer than bundle version used to upgrade a workload cluster([#5105](https://github.com/aws/eks-anywhere/issues/5105))
+- Set hostname for Bottlerocket nodes ([#3629](https://github.com/aws/eks-anywhere/issues/3629))
+- Curated Package controller as a package ([#831](https://github.com/aws/eks-anywhere-packages/pull/831))
+- Curated Package Credentials Package ([#829](https://github.com/aws/eks-anywhere-packages/pull/829))
+- Enable Full Cluster Lifecycle for curated packages ([#807](https://github.com/aws/eks-anywhere-packages/issues/807))
+- Curated Package Controller Configuration in Cluster Spec ([#5031](https://github.com/aws/eks-anywhere/pull/5031))
+- Curated Packages now support Kubernetes 1.26
+
+### Upgraded
+
+- Bottlerocket upgraded from `v1.13.0` to `v1.13.1`
+- Upgrade EKS Anywhere admin AMI to Kernel 5.15
+- Tinkerbell stack upgraded ([#3233](https://github.com/aws/eks-anywhere/issues/3233)):
+  - Cluster API Provider Tinkerbell `v0.4.0`
+  - Hegel `v0.10.1`
+  - Rufio `v0.2.1`
+  - Tink `v0.8.0`
+- Curated Package Harbor upgraded from `2.5.1` to `2.7.1`
+- Curated Package Prometheus upgraded from `2.39.1` to `2.41.0`
+- Curated Package Metallb upgraded from `0.13.5` to `0.13.7`
+- Curated Package Emissary upgraded from `3.3.0` to `3.5.1`
+
+### Fixed
+- Applied a patch that fixes vCenter sessions leak ([#1767](https://github.com/aws/eks-anywhere-build-tooling/issues/2057))
+
+### Breaking changes
+- Removed support for Kubernetes 1.21
+
 ## [v0.14.5](https://github.com/aws/eks-anywhere/releases/tag/v0.14.5)
 
 ### Fixed
