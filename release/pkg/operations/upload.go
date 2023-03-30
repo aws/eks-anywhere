@@ -88,19 +88,19 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 					// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
 					trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 
-					helmDriver, err := helm.NewHelm()
+					sourceHelmDriver, destHelmDriver, err := helm.NewHelm()
 					if err != nil {
 						return fmt.Errorf("creating helm client: %v", err)
 					}
 
 					fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
-					helmDest, err := helm.GetHelmDest(helmDriver, r, artifact.Image.SourceImageURI, trimmedAsset)
+					helmDest, err := helm.GetHelmDest(sourceHelmDriver, r, artifact.Image.SourceImageURI, trimmedAsset)
 					if err != nil {
 						return fmt.Errorf("getting Helm destination: %v", err)
 					}
 
 					fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
-					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, helmDriver, helmDest, eksArtifacts, nil)
+					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, destHelmDriver, helmDest, eksArtifacts, nil)
 					if err != nil {
 						return fmt.Errorf("modifying Chart.yaml and pushing Helm chart to destination: %v", err)
 					}
@@ -118,7 +118,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 			}
 		}
 	}
-	fmt.Printf("%s Successsfully uploaded artifacts\n", constants.SuccessIcon)
+	fmt.Printf("%s Successfully uploaded artifacts\n", constants.SuccessIcon)
 
 	return nil
 }

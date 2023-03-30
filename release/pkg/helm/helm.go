@@ -45,23 +45,30 @@ type helmDriver struct {
 	settings *cli.EnvSettings
 }
 
-func NewHelm() (*helmDriver, error) {
+func NewHelm() (*helmDriver, *helmDriver, error) {
 	settings := cli.New()
 	client, err := registry.NewClient()
 	if err != nil {
-		return nil, fmt.Errorf("creating registry client while initializing helm driver: %w", err)
+		return nil, nil, fmt.Errorf("creating registry client while initializing helm driver: %v", err)
 	}
 	cfg := &action.Configuration{RegistryClient: client}
 	err = cfg.Init(settings.RESTClientGetter(), settings.Namespace(),
 		os.Getenv("HELM_DRIVER"), helmLog(HelmLog))
 	if err != nil {
-		return nil, fmt.Errorf("initializing helm driver: %w", err)
+		return nil, nil, fmt.Errorf("initializing helm driver: %v", err)
 	}
-	return &helmDriver{
+
+	sourceDriver := &helmDriver{
 		cfg:      cfg,
 		log:      HelmLog,
 		settings: settings,
-	}, nil
+	}
+	destDriver := &helmDriver{
+		cfg:      cfg,
+		log:      HelmLog,
+		settings: settings,
+	}
+	return sourceDriver, destDriver, nil
 }
 
 func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, assetName string) (string, error) {
@@ -98,18 +105,6 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	}
 	helmDest := filepath.Join(pwd, assetName, assetName)
 	return helmDest, nil
-}
-
-func GetChartImageTags(d *helmDriver, helmDest string) (*Requires, error) {
-	f, err := HasRequires(helmDest)
-	if err != nil {
-		return &Requires{}, fmt.Errorf("finding the requires.yaml: %w", err)
-	}
-	helmRequires, err := ValidateHelmRequires(f)
-	if err != nil {
-		return &Requires{}, fmt.Errorf("turning requires.yaml to struct: %w", err)
-	}
-	return helmRequires, nil
 }
 
 func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksArtifacts map[string][]releasetypes.Artifact, shaMap map[string]anywherev1alpha1.Image) error {

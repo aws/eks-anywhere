@@ -137,19 +137,19 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 					if strings.HasSuffix(imageArtifact.AssetName, "helm") {
 						trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 						fmt.Printf("trimmedAsset=%v\n\n", trimmedAsset)
-						helmDriver, err := helm.NewHelm()
+						_, destHelmDriver, err := helm.NewHelm()
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "creating helm client")
 						}
 						fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
-						helmDest, err := helm.GetHelmDest(helmDriver, r, imageArtifact.ReleaseImageURI, trimmedAsset)
+						helmDest, err := helm.GetHelmDest(destHelmDriver, r, imageArtifact.ReleaseImageURI, trimmedAsset)
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "getting Helm destination:")
 						}
 						fmt.Printf("helmDest=%v\n", helmDest)
 						fmt.Printf("Pulled helm chart locally to %s\n", helmDest)
 						fmt.Printf("r.sourceClients")
-						err = helm.ModifyAndPushChartYaml(*imageArtifact, r, helmDriver, helmDest, artifacts, bundleImageArtifacts)
+						err = helm.ModifyAndPushChartYaml(*imageArtifact, r, destHelmDriver, helmDest, artifacts, bundleImageArtifacts)
 						if err != nil {
 							return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "modifying Chart.yaml and pushing Helm chart to destination:")
 						}
