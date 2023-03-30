@@ -109,10 +109,7 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	if err != nil {
 		return fmt.Errorf("parsing cloudstack credentials from environment: %v", err)
 	}
-	cmk, err := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig)
-	if err != nil {
-		return fmt.Errorf("building cmk executable: %v", err)
-	}
+	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig)
 	defer cmk.Close(ctx)
 	cleanupRetrier := retrier.NewWithMaxRetries(cleanupRetries, retryBackoff)
 
