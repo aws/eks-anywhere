@@ -1301,8 +1301,9 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 	}
 
 	cpMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	fmt.Println(cpMachineConfigName)
 	if prevSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != cpMachineConfigName {
-		err := p.validateMachineConfigNameUniqueness(ctx, cpMachineConfigName, clusterSpec)
+		err := p.validateMachineConfigNameUniqueness(ctx, cpMachineConfigName, cluster, clusterSpec)
 		if err != nil {
 			return err
 		}
@@ -1311,7 +1312,7 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil && prevSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		if prevSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != etcdMachineConfigName {
-			err := p.validateMachineConfigNameUniqueness(ctx, etcdMachineConfigName, clusterSpec)
+			err := p.validateMachineConfigNameUniqueness(ctx, etcdMachineConfigName, cluster, clusterSpec)
 			if err != nil {
 				return err
 			}
@@ -1321,8 +1322,8 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 	return nil
 }
 
-func (p *cloudstackProvider) validateMachineConfigNameUniqueness(ctx context.Context, machineConfigName string, clusterSpec *cluster.Spec) error {
-	em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, machineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace())
+func (p *cloudstackProvider) validateMachineConfigNameUniqueness(ctx context.Context, machineConfigName string, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, machineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace())
 	if err != nil {
 		return err
 	}
