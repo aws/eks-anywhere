@@ -1,4 +1,4 @@
-package providerProxy
+package providerproxy
 
 import (
 	"strings"

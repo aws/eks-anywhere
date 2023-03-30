@@ -16,7 +16,7 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
 	"github.com/aws/eks-anywhere-test-tool/pkg/s3"
-	"github.com/aws/eks-anywhere-test-tool/pkg/testResults"
+	"github.com/aws/eks-anywhere-test-tool/pkg/testresults"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -109,11 +109,11 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 		return fmt.Errorf("fetching cloudwatch logs: %v", err)
 	}
 
-	_, failedTests, err := testResults.GetFailedTests(logs)
+	_, failedTests, err := testresults.GetFailedTests(logs)
 	if err != nil {
 		return err
 	}
-	failedTestIds := testResults.TestResultsJobIdMap(failedTests)
+	failedTestIds := testresults.TestResultsJobIdMap(failedTests)
 
 	logger.Info("Fetching build artifacts...")
 

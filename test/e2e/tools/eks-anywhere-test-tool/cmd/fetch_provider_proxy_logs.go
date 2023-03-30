@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/awsprofiles"
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
-	"github.com/aws/eks-anywhere-test-tool/pkg/providerProxy"
+	"github.com/aws/eks-anywhere-test-tool/pkg/providerproxy"
 )
 
 type proxyLogsFetchOptions struct {
@@ -41,21 +41,21 @@ var e2eFetchProxyLogsCommand = &cobra.Command{
 			return fmt.Errorf("instantiating CW profile: %v", err)
 		}
 
-		var fetcherOpts []providerProxy.ProxyFetcherOpt
+		var fetcherOpts []providerproxy.ProxyFetcherOpt
 
 		if fs.logTo == logToStdout {
-			fetcherOpts = append(fetcherOpts, providerProxy.WithLogStdout())
+			fetcherOpts = append(fetcherOpts, providerproxy.WithLogStdout())
 		}
 
-		fetcher := providerProxy.New(buildAccountCw, testAccountCw, buildAccountCodebuild, fetcherOpts...)
+		fetcher := providerproxy.New(buildAccountCw, testAccountCw, buildAccountCodebuild, fetcherOpts...)
 
-		var opts []providerProxy.FetchSessionOpts
+		var opts []providerproxy.FetchSessionOpts
 		if fs.forBuildId != "" {
-			opts = append(opts, providerProxy.WithCodebuildBuild(fs.forBuildId))
+			opts = append(opts, providerproxy.WithCodebuildBuild(fs.forBuildId))
 		}
 
 		if fs.forProject != "" {
-			opts = append(opts, providerProxy.WithCodebuildProject(fs.forProject))
+			opts = append(opts, providerproxy.WithCodebuildProject(fs.forProject))
 		}
 
 		return fetcher.FetchProviderProxyLogs(opts...)
