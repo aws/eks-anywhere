@@ -22,13 +22,12 @@ SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source ${SCRIPT_ROOT}/setup-aws-config.sh
 set_aws_config "production"
 
-EKSA_RELEASE_CDN="${1?Specify first argument - EKS-A release assets CDN}"
+EKSA_RELEASE_MANIFEST_URL="${1?Specify first argument - EKS-A release manifest URL}"
 
-EKSA_RELEASE_MANIFEST_URL="${EKSA_RELEASE_CDN}/releases/eks-a/manifest.yaml"
 LATEST_EKSA_VERSION=$(curl $EKSA_RELEASE_MANIFEST_URL | yq e '.spec.latestVersion')
 LATEST_EKSA_RELEASE_NUMBER=$(curl $EKSA_RELEASE_MANIFEST_URL | yq e '.spec.releases[] | select(.version == '\"$LATEST_EKSA_VERSION\"') | .number')
 LATEST_BUNDLE_RELEASE_MANIFEST_URI=$(curl $EKSA_RELEASE_MANIFEST_URL | yq e '.spec.releases[] | select(.version == '\"$LATEST_EKSA_VERSION\"') | .bundleManifestUrl')
-LATEST_EKSA_ADMIN_AMI_URI="$EKSA_RELEASE_CDN/releases/eks-a/$LATEST_EKSA_RELEASE_NUMBER/artifacts/eks-a-admin-ami/$LATEST_EKSA_VERSION/eks-anywhere-admin-ami-$LATEST_EKSA_VERSION-eks-a-$LATEST_EKSA_RELEASE_NUMBER.raw"
+LATEST_EKSA_ADMIN_AMI_URI="https://anywhere-assets.eks.amazonaws.com/releases/eks-a/$LATEST_EKSA_RELEASE_NUMBER/artifacts/eks-a-admin-ami/$LATEST_EKSA_VERSION/eks-anywhere-admin-ami-$LATEST_EKSA_VERSION-eks-a-$LATEST_EKSA_RELEASE_NUMBER.raw"
 
 NOTIFICATION_SUBJECT="New release of EKS Anywhere - version $LATEST_EKSA_VERSION"
 NOTIFICATION_BODY="Amazon EKS Anywhere version $LATEST_EKSA_VERSION has been released. You can get the latest EKS-A CLI tarballs from GitHub releases. The bundle release manifest corresponding to this version of EKS-A is $LATEST_BUNDLE_RELEASE_MANIFEST_URI. This release includes a new build of the EKS-A Admin AMI image which is available at $LATEST_EKSA_ADMIN_AMI_URI"
