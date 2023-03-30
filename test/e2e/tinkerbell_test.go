@@ -236,7 +236,7 @@ func TestTinkerbellKubernetes126BottlerocketWorkloadClusterSimpleFlow(t *testing
 	runTinkerbellWorkloadClusterFlow(test)
 }
 
-func TestTinkerbellKubernetes125BottlerocketWorkloadClusterWithAPI(t *testing.T) {
+func TestTinkerbellKubernetes126BottlerocketWorkloadClusterWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -352,7 +352,7 @@ func TestTinkerbellKubernetes126BottlerocketSingleNodeWorkloadCluster(t *testing
 	runTinkerbellWorkloadClusterFlow(test)
 }
 
-func TestTinkerbellKubernetes125BottlerocketSingleNodeWorkloadClusterWithAPI(t *testing.T) {
+func TestTinkerbellKubernetes126BottlerocketSingleNodeWorkloadClusterWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
