@@ -360,9 +360,9 @@ Follow these steps to have your management cluster create and manage separate wo
       kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
       ```
 
-   * If your workload cluster was created with GitOps or Terraform, you can get credentials and run the test application as follows:
+   * If your workload cluster was created with kubectl, GitOps or Terraform, you can get credentials and run the test application as follows:
       ```bash
-      kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath=‘{.data.value}' | base64 —decode > w01.kubeconfig
+      kubectl get secret -n eksa-system w01-kubeconfig -o jsonpath='{.data.value}' | base64 --decode > w01.kubeconfig
       export KUBECONFIG=w01.kubeconfig
       kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
       ```

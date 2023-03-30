@@ -166,26 +166,36 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    * The workload cluster YAML file
    * The initial cluster's credentials (this causes the workload cluster to be managed from the management cluster)
-   
-   ##### With hardware CSV
-   ```bash
-   eksctl anywhere create cluster \
-       -f eksa-w01-cluster.yaml  \
-       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
-       --hardware-csv <hardware.csv>
-       # --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \ # uncomment for airgapped install
-       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
-   ```
-   ##### Without hardware CSV
-   ```bash
-   eksctl anywhere create cluster \
-       -f eksa-w01-cluster.yaml  \
-       # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
-       # --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \ # uncomment for airgapped install
-       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
-   ```
 
-   As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
+   Create a workload cluster in one of the following ways:
+   * **eksctl CLI**: To create a workload cluster with eksctl, run:
+
+     ```bash
+     eksctl anywhere create cluster \
+         -f eksa-w01-cluster.yaml  \
+         # --install-packages packages.yaml \ # uncomment to install curated packages at cluster creation
+         # --hardware-csv <hardware.csv> \ # uncomment to add more hardware
+         # --bundles-override ./eks-anywhere-downloads/bundle-release.yaml \ # uncomment for airgapped install
+         --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+     ```
+     As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
+
+   * **kubectl CLI**: The cluster lifecycle feature lets you use kubectl to talks to the Kubernetes API to create a workload cluster. To use kubectl, run:
+      ```bash
+      kubectl apply -f eksa-w01-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+      ```
+   * **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
+
+   * **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../../tasks/cluster/cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
+
+     >**NOTE**:For kubectl, GitOps and Terraform:
+     > * The baremetal controller does not support scaling upgrades and Kubernetes version upgrades in the same request.
+     > * While creating a new workload cluster if you need to add additional machines for the target workload cluster, run:
+     >   ```
+     >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
+     >   kubectl apply -f updated-hardware.yaml
+     >   ```
+     > * If you want to create multiple workload clusters, you should create them one by one, and make sure its completely up and running successfully by checking tinkerbell machines, before attempting to create the next workload cluster. Attempting to create multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
 
 1. Check the workload cluster:
 
