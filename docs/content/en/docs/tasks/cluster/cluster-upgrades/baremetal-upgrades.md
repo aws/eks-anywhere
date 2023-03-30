@@ -136,67 +136,84 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
 
 
 #### Upgrade cluster command
+* **kubectl CLI**: The cluster lifecycle feature lets you use kubectl to talk to the Kubernetes API to upgrade a workload cluster. To use kubectl, run:
+   ```bash
+   kubectl apply -f eksa-w01-cluster.yaml 
+  --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+   ```
+  
+* **GitOps**: See [Manage separate workload clusters with GitOps]({{< relref "../cluster-flux.md#manage-separate-workload-clusters-using-gitops" >}})
 
-##### With hardware CSV
+* **Terraform**: See [Manage separate workload clusters with Terraform]({{< relref "../cluster-terraform.md#manage-separate-workload-clusters-using-terraform" >}})
 
-```
-eksctl anywhere upgrade cluster -f cluster.yaml --hardware-csv <hardware.csv>
-```
+  >**NOTE**:For kubectl, GitOps and Terraform:
+  > * The baremetal controller does not support scaling upgrades and Kubernetes version upgrades in the same request.
+  > * While scaling a workload cluster if you need to add additional machines, run:
+  >   ```
+  >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
+  >   kubectl apply -f updated-hardware.yaml
+  >   ```
+  >
+  > *  If you want to update multiple workload clusters, you should update them one by one, and make sure its completely up and running successfully by checking tinkerbell machines, before attempting to update the next workload cluster. Attempting to update multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
+  > 
+  >  This also applied to sending upgrade requests to the same workload cluster.
 
-##### Without hardware CSV
+* **eksctl CLI**: To create a workload cluster with eksctl, run:
 
-```
-eksctl anywhere upgrade cluster -f cluster.yaml
-```
+  ```bash
+  eksctl anywhere upgrade cluster -f cluster.yaml 
+  # --hardware-csv <hardware.csv> \ # uncomment to add more hardware
+  --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+  ```
+  As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
-This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.
+  This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.
 
+  #### Output
+  
+  Example output:
 
-#### Output
-
-Example output:
-
-```
-✅ control plane ready
-✅ worker nodes ready
-✅ nodes ready
-✅ cluster CRDs ready
-✅ cluster object present on workload cluster
-✅ upgrade cluster kubernetes version increment
-✅ validate immutable fields
-🎉 all cluster upgrade preflight validations passed
-Performing provider setup and validations
-Pausing EKS-A cluster controller reconcile
-Pausing Flux kustomization
-GitOps field not specified, pause flux kustomization skipped
-Creating bootstrap cluster
-Installing cluster-api providers on bootstrap cluster
-Moving cluster management from workload to bootstrap cluster
-Upgrading workload cluster
-Moving cluster management from bootstrap to workload cluster
-Applying new EKS-A cluster resource; resuming reconcile
-Resuming EKS-A controller reconciliation
-Updating Git Repo with new EKS-A cluster spec
-GitOps field not specified, update git repo skipped
-Forcing reconcile Git repo with latest commit
-GitOps not configured, force reconcile flux git repo skipped
-Resuming Flux kustomization
-GitOps field not specified, resume flux kustomization skipped
-```
-
-During the upgrade process, EKS Anywhere pauses the cluster controller reconciliation by adding the paused annotation `anywhere.eks.amazonaws.com/paused: true` to the EKS Anywhere cluster, provider datacenterconfig and machineconfig resources, before the components upgrade. After upgrade completes, the annotations are removed so that the cluster controller resumes reconciling the cluster.
-
-Though not recommended, you can manually pause the EKS Anywhere cluster controller reconciliation to perform extended maintenance work or interact with Cluster API objects directly. To do it, you can add the paused annotation to the cluster resource:
-
-```bash
-kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused=true
-```
-
-After finishing the task, make sure you resume the cluster reconciliation by removing the paused annotation, so that EKS Anywhere cluster controller can continue working as expected.
-
-```bash
-kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
-```
+  ```
+  ✅ control plane ready
+  ✅ worker nodes ready
+  ✅ nodes ready
+  ✅ cluster CRDs ready
+  ✅ cluster object present on workload cluster
+  ✅ upgrade cluster kubernetes version increment
+  ✅ validate immutable fields
+  🎉 all cluster upgrade preflight validations passed
+  Performing provider setup and validations
+  Pausing EKS-A cluster controller reconcile
+  Pausing Flux kustomization
+  GitOps field not specified, pause flux kustomization skipped
+  Creating bootstrap cluster
+  Installing cluster-api providers on bootstrap cluster
+  Moving cluster management from workload to bootstrap cluster
+  Upgrading workload cluster
+  Moving cluster management from bootstrap to workload cluster
+  Applying new EKS-A cluster resource; resuming reconcile
+  Resuming EKS-A controller reconciliation
+  Updating Git Repo with new EKS-A cluster spec
+  GitOps field not specified, update git repo skipped
+  Forcing reconcile Git repo with latest commit
+  GitOps not configured, force reconcile flux git repo skipped
+  Resuming Flux kustomization
+  GitOps field not specified, resume flux kustomization skipped
+  ```
+  
+  During the upgrade process, EKS Anywhere pauses the cluster controller reconciliation by adding the paused annotation `anywhere.eks.amazonaws.com/paused: true` to the EKS Anywhere cluster, provider datacenterconfig and machineconfig resources, before the components upgrade. After upgrade completes, the annotations are removed so that the cluster controller resumes reconciling the cluster.
+  
+  Though not recommended, you can manually pause the EKS Anywhere cluster controller reconciliation to perform extended maintenance work or interact with Cluster API objects directly. To do it, you can add the paused annotation to the cluster resource:
+  
+  ```bash
+  kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused=true
+  ```
+  
+  After finishing the task, make sure you resume the cluster reconciliation by removing the paused annotation, so that EKS Anywhere cluster controller can continue working as expected.
+  
+  ```bash
+  kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
+  ```
 
 ### Upgradeable cluster attributes
 
