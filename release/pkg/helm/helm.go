@@ -47,7 +47,12 @@ type helmDriver struct {
 
 func NewHelm() (*helmDriver, error) {
 	settings := cli.New()
-	client, err := registry.NewClient()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("error getting HOME directory: %v", err)
+	}
+	credentialsFile := filepath.Join(homeDir, ".docker", "config.json")
+	client, err := registry.NewClient(registry.ClientOptCredentialsFile(credentialsFile))
 	if err != nil {
 		return nil, fmt.Errorf("creating registry client while initializing helm driver: %w", err)
 	}
