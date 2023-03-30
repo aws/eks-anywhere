@@ -174,6 +174,8 @@ To use `image-builder`, you must meet the following prerequisites:
 * api.ecr.us-west-2.amazonaws.com (for EKS Anywhere package authentication matching your region)
 * d5l0dvt14r5h8.cloudfront.net (for EKS Anywhere package ECR container)
 * github.com (to download binaries and tools required for image builds from GitHub releases)
+* objects.githubusercontent.com (to download binaries and tools required for image builds from GitHub releases)
+* raw.githubusercontent.com (to download binaries and tools required for image builds from GitHub releases)
 * releases.hashicorp.com (to download Packer binary for image builds)
 * galaxy.ansible.com (to download Ansible packages from Ansible Galaxy)
 * **vSphere only:** VMware vCenter endpoint
