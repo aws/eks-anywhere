@@ -7,6 +7,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 type writer struct {
@@ -60,6 +62,11 @@ func (t *writer) Dir() string {
 // This method writes the e2e test artifacts from S3 to files in a directory named after the e2e test name.
 func (t *writer) WriteTestArtifactsS3ToFile(key string, data []byte) error {
 	i := strings.LastIndex(key, "/Test")
+	if i == -1 {
+		logger.Info("Failed writing object to file", "key", key)
+		return nil
+	}
+
 	p := path.Join(t.dir, key[i:])
 
 	err := os.MkdirAll(path.Dir(p), os.ModePerm)
