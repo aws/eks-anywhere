@@ -118,7 +118,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 			}
 		}
 	}
-	fmt.Printf("%s Successsfully uploaded artifacts\n", constants.SuccessIcon)
+	fmt.Printf("%s Successfully uploaded artifacts\n", constants.SuccessIcon)
 
 	return nil
 }
