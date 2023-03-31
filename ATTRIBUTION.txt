@@ -47,7 +47,7 @@ https://github.com/aws/etcdadm-controller
 ** github.com/aws/smithy-go; version v1.13.2 --
 https://github.com/aws/smithy-go
 
-** github.com/containerd/containerd; version v1.6.19 --
+** github.com/containerd/containerd; version v1.7.0 --
 https://github.com/containerd/containerd
 
 ** github.com/coredns/caddy/caddyfile; version v1.1.0 --
@@ -71,7 +71,7 @@ https://github.com/docker/go-connections
 ** github.com/docker/go-metrics; version v0.0.1 --
 https://github.com/docker/go-metrics
 
-** github.com/docker/go-units; version v0.4.0 --
+** github.com/docker/go-units; version v0.5.0 --
 https://github.com/docker/go-units
 
 ** github.com/go-git/go-billy/v5; version v5.3.1 --
@@ -82,6 +82,9 @@ https://github.com/go-git/go-git/v5
 
 ** github.com/go-logr/logr; version v1.2.3 --
 https://github.com/go-logr/logr
+
+** github.com/go-logr/stdr; version v1.2.2 --
+https://github.com/go-logr/stdr
 
 ** github.com/go-logr/zapr; version v1.2.3 --
 https://github.com/go-logr/zapr
@@ -110,7 +113,7 @@ https://github.com/google/gofuzz
 ** github.com/jmespath/go-jmespath; version v0.4.0 --
 https://github.com/jmespath/go-jmespath
 
-** github.com/klauspost/compress; version v1.15.9 --
+** github.com/klauspost/compress; version v1.16.0 --
 https://github.com/klauspost/compress
 
 ** github.com/Masterminds/goutils; version v1.1.1 --
@@ -140,7 +143,7 @@ https://github.com/nutanix-cloud-native/prism-go-client
 ** github.com/opencontainers/go-digest; version v1.0.0 --
 https://github.com/opencontainers/go-digest
 
-** github.com/opencontainers/image-spec/specs-go; version v1.1.0-rc2 --
+** github.com/opencontainers/image-spec/specs-go; version v1.1.0-rc2.0.20221005185240-3a7f492d3f1b --
 https://github.com/opencontainers/image-spec
 
 ** github.com/prometheus/client_golang/prometheus; version v1.14.0 --
@@ -176,13 +179,19 @@ https://github.com/vmware/govmomi
 ** github.com/xanzy/ssh-agent; version v0.3.0 --
 https://github.com/xanzy/ssh-agent
 
+** go.opentelemetry.io/otel; version v1.14.0 --
+https://github.com/open-telemetry/opentelemetry-go
+
+** go.opentelemetry.io/otel/trace; version v1.14.0 --
+https://github.com/open-telemetry/opentelemetry-go
+
 ** gomodules.xyz/jsonpatch/v2; version v2.2.0 --
 https://github.com/gomodules/jsonpatch
 
-** google.golang.org/genproto/googleapis/rpc/status; version v0.0.0-20220829175752-36a9c930ecbf --
+** google.golang.org/genproto/googleapis/rpc/status; version v0.0.0-20230306155012-7f2fa6fef1f4 --
 https://github.com/googleapis/go-genproto
 
-** google.golang.org/grpc; version v1.49.0 --
+** google.golang.org/grpc; version v1.53.0 --
 https://github.com/grpc/grpc-go
 
 ** gopkg.in/ini.v1; version v1.67.0 --
@@ -191,7 +200,7 @@ https://gopkg.in/ini.v1
 ** gopkg.in/yaml.v2; version v2.4.0 --
 https://gopkg.in/yaml.v2
 
-** k8s.io/api; version v0.26.0 --
+** k8s.io/api; version v0.26.2 --
 https://github.com/kubernetes/api
 
 ** k8s.io/apiextensions-apiserver/pkg/apis/apiextensions; version v0.26.0 --
@@ -200,7 +209,7 @@ https://github.com/kubernetes/apiextensions-apiserver
 ** k8s.io/apimachinery/pkg; version v0.25.6 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/apiserver/pkg/apis/audit; version v0.26.0 --
+** k8s.io/apiserver/pkg/apis/audit; version v0.26.2 --
 https://github.com/kubernetes/apiserver
 
 ** k8s.io/client-go; version v0.25.0 --
@@ -212,7 +221,7 @@ https://github.com/kubernetes/cluster-bootstrap
 ** k8s.io/component-base; version v0.25.6 --
 https://github.com/kubernetes/component-base
 
-** k8s.io/klog/v2; version v2.80.1 --
+** k8s.io/klog/v2; version v2.90.1 --
 https://github.com/kubernetes/klog
 
 ** k8s.io/kube-openapi/pkg; version v0.0.0-20221012153701-172d655c2280 --
@@ -221,7 +230,7 @@ https://github.com/kubernetes/kube-openapi
 ** k8s.io/kube-openapi/pkg/validation/spec; version v0.0.0-20221012153701-172d655c2280 --
 https://github.com/kubernetes/kube-openapi
 
-** k8s.io/utils; version v0.0.0-20221128185143-99ec85e7a448 --
+** k8s.io/utils; version v0.0.0-20230220204549-a5ecb0141aa5 --
 https://github.com/kubernetes/utils
 
 ** oras.land/oras-go/pkg; version v1.2.2 --
@@ -1160,7 +1169,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/klauspost/compress/internal/snapref; version v1.15.9 --
+** github.com/klauspost/compress/internal/snapref; version v1.16.0 --
 https://github.com/klauspost/compress
 
 Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
@@ -1304,13 +1313,13 @@ https://go.googlesource.com/exp
 ** golang.org/x/net; version v0.7.0 --
 https://go.googlesource.com/net
 
-** golang.org/x/oauth2; version v0.0.0-20220909003341-f21342109be1 --
+** golang.org/x/oauth2; version v0.4.0 --
 https://go.googlesource.com/oauth2
 
 ** golang.org/x/sync; version v0.1.0 --
 https://go.googlesource.com/sync
 
-** golang.org/x/sys; version v0.5.0 --
+** golang.org/x/sys; version v0.6.0 --
 https://go.googlesource.com/sys
 
 ** golang.org/x/term; version v0.5.0 --
@@ -1455,7 +1464,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** k8s.io/utils/internal/third_party/forked/golang/net; version v0.0.0-20221128185143-99ec85e7a448 --
+** k8s.io/utils/internal/third_party/forked/golang/net; version v0.0.0-20230220204549-a5ecb0141aa5 --
 https://github.com/kubernetes/utils
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
@@ -1517,7 +1526,7 @@ Copyright (C) 2013 Blake Mizerany
 https://github.com/blang/semver
 Copyright (c) 2014 Benedikt Lang <github at benediktlang.de>
 
-** github.com/cespare/xxhash/v2; version v2.1.2 --
+** github.com/cespare/xxhash/v2; version v2.2.0 --
 https://github.com/cespare/xxhash/v2
 Copyright (c) 2016 Caleb Spare
 
@@ -1525,7 +1534,7 @@ Copyright (c) 2016 Caleb Spare
 https://github.com/docker/docker-credential-helpers
 Copyright (c) 2016 David Calavera
 
-** github.com/emicklei/go-restful/v3; version v3.9.0 --
+** github.com/emicklei/go-restful/v3; version v3.10.1 --
 https://github.com/emicklei/go-restful/v3
 Copyright (c) 2012,2013 Ernest Micklei
 
@@ -1561,7 +1570,7 @@ Copyright (c) 2019 Josh Bleecher Snyder
 https://github.com/json-iterator/go
 Copyright (c) 2016 json-iterator
 
-** github.com/klauspost/compress/zstd/internal/xxhash; version v1.15.9 --
+** github.com/klauspost/compress/zstd/internal/xxhash; version v1.16.0 --
 https://github.com/klauspost/compress
 Copyright (c) 2016 Caleb Spare
 
