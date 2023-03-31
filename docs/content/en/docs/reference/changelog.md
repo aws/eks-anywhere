@@ -6,7 +6,7 @@ weight: 35
 
 ## [v0.15.0](https://github.com/aws/eks-anywhere/releases/tag/v0.15.0)
 
-### Latest supported OS version details
+### Supported OS version details
 |              | vSphere | Baremetal |  Nutanix | Cloudstack | Snow  |
 |    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
