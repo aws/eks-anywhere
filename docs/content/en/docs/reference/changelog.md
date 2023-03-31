@@ -4,6 +4,12 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
+## [v0.14.6](https://github.com/aws/eks-anywhere/releases/tag/v0.14.6)
+
+### Fixed
+
+- Fix clustermanager no-timeouts option ([#5445](https://github.com/aws/eks-anywhere/pull/5445))
+
 ## [v0.14.5](https://github.com/aws/eks-anywhere/releases/tag/v0.14.5)
 
 ### Fixed
