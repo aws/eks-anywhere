@@ -57,6 +57,12 @@ weight: 35
 ### Breaking changes
 - Removed support for Kubernetes 1.21
 
+## [v0.14.6](https://github.com/aws/eks-anywhere/releases/tag/v0.14.6)
+
+### Fixed
+
+- Fix clustermanager no-timeouts option ([#5445](https://github.com/aws/eks-anywhere/pull/5445))
+
 ## [v0.14.5](https://github.com/aws/eks-anywhere/releases/tag/v0.14.5)
 
 ### Fixed
