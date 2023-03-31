@@ -4,8 +4,6 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
-## Unreleased
-
 ## [v0.15.0](https://github.com/aws/eks-anywhere/releases/tag/v0.15.0)
 
 ### Latest supported OS version details
