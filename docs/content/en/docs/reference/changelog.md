@@ -16,7 +16,6 @@ weight: 35
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
 
 ### Added
-- Kubernetes 1.26 support ([#5079](https://github.com/aws/eks-anywhere/issues/5079))
 - Workload clusters full lifecycle API support for Bare Metal provider ([#5237](https://github.com/aws/eks-anywhere/issues/5237))
 - IRSA support for Bare Metal ([#4361](https://github.com/aws/eks-anywhere/issues/4361))
 - Support for mixed disks within the same node grouping for BareMetal clusters ([#3234](https://github.com/aws/eks-anywhere/issues/3234))
@@ -39,7 +38,6 @@ weight: 35
 - Curated Package Credentials Package ([#829](https://github.com/aws/eks-anywhere-packages/pull/829))
 - Enable Full Cluster Lifecycle for curated packages ([#807](https://github.com/aws/eks-anywhere-packages/issues/807))
 - Curated Package Controller Configuration in Cluster Spec ([#5031](https://github.com/aws/eks-anywhere/pull/5031))
-- Curated Packages now support Kubernetes 1.26
 
 ### Upgraded
 
