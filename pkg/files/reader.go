@@ -1,6 +1,8 @@
 package files
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"embed"
 	"fmt"
 	"io"
@@ -9,6 +11,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/net/http/httpproxy"
 )
 
 const (
@@ -43,16 +47,58 @@ func WithEKSAUserAgent(eksAComponent, version string) ReaderOpt {
 	return WithUserAgent(eksaUserAgent(eksAComponent, version))
 }
 
-func NewReader(opts ...ReaderOpt) *Reader {
-	transport := &http.Transport{
-		TLSHandshakeTimeout: 60 * time.Second,
+// WithRootCACerts configures the HTTP client's trusted CAs. Note that this will overwrite
+// the defaults so the host's trust will be ignored. This option is only for testing.
+func WithRootCACerts(certs []*x509.Certificate) ReaderOpt {
+	return func(r *Reader) {
+		t := r.httpClient.Transport.(*http.Transport)
+		if t.TLSClientConfig == nil {
+			t.TLSClientConfig = &tls.Config{}
+		}
+
+		if t.TLSClientConfig.RootCAs == nil {
+			t.TLSClientConfig.RootCAs = x509.NewCertPool()
+		}
+
+		for _, c := range certs {
+			t.TLSClientConfig.RootCAs.AddCert(c)
+		}
 	}
+}
+
+// WithNonCachedProxyConfig configures the HTTP client to read the Proxy configuration
+// from the enviroment on every request instead of relying on the default package
+// level cache (implemented in the http package with envProxyFuncValue), which is only
+// read once. If Proxy is not configured in the client's transport, nothing is changed.
+// This is only for testing.
+func WithNonCachedProxyConfig() ReaderOpt {
+	return func(r *Reader) {
+		t := r.httpClient.Transport.(*http.Transport)
+		if t.Proxy == nil {
+			return
+		}
+
+		t.Proxy = func(r *http.Request) (*url.URL, error) {
+			return httpproxy.FromEnvironment().ProxyFunc()(r.URL)
+		}
+	}
+}
+
+func NewReader(opts ...ReaderOpt) *Reader {
+	// In order to modify the TLSHandshakeTimeout we first clone the default transport.
+	// It has some defaults that we want to preserve. In particular Proxy, which is set
+	// to http.ProxyFromEnvironment. This will make the client honor the HTTP_PROXY,
+	// HTTPS_PROXY and NO_PROXY env variables.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSHandshakeTimeout = 60 * time.Second
+	client := &http.Client{
+		Transport: transport,
+	}
+
 	r := &Reader{
-		embedFS: embedFS,
-		httpClient: &http.Client{
-			Transport: transport,
-		},
-		userAgent: eksaUserAgent("unknown", "no-version"),
+		embedFS:    embedFS,
+		httpClient: client,
+		userAgent:  eksaUserAgent("unknown", "no-version"),
 	}
 
 	for _, o := range opts {
