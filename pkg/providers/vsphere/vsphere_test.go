@@ -3245,6 +3245,68 @@ func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
 	}
 }
 
+func TestValidateMachineConfigsNameUniquenessSuccess(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	provider := newProviderWithKubectl(t, dcConfig, clusterSpec.Cluster, kubectl, ipValidator)
+
+	prevSpec := clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, prevSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+	machineConfigs := clusterSpec.VSphereMachineConfigs
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).AnyTimes()
+	}
+
+	err := provider.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
+func TestValidateMachineConfigsNameUniquenessError(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	provider := newProviderWithKubectl(t, dcConfig, clusterSpec.Cluster, kubectl, ipValidator)
+
+	prevSpec := clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	dummyVsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{},
+		Spec: v1alpha1.VSphereMachineConfigSpec{
+			Users: []v1alpha1.UserConfiguration{{Name: "ec2-user"}},
+		},
+		Status: v1alpha1.VSphereMachineConfigStatus{},
+	}
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, prevSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+	machineConfigs := clusterSpec.VSphereMachineConfigs
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{dummyVsphereMachineConfig}, nil).AnyTimes()
+	}
+
+	err := provider.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	thenErrorExpected(t, fmt.Sprintf("control plane VSphereMachineConfig %s already exists", clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name), err)
+}
+
 func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 	tests := []struct {
 		testName   string
