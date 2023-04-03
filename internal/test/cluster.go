@@ -86,7 +86,7 @@ func NewClusterSpecForConfig(tb testing.TB, config *cluster.Config) *cluster.Spe
 
 // Bundles returs a test Bundles. All the paths to referenced manifests are valid and can be read.
 func Bundles(tb testing.TB) *releasev1alpha1.Bundles {
-	content, err := configFS.ReadFile("testdata/bundles_template.yaml")
+	content, err := configFS.ReadFile("testdata/bundles.yaml")
 	if err != nil {
 		tb.Fatalf("Failed to read embed bundles manifest: %s", err)
 	}
