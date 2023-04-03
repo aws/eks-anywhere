@@ -46,6 +46,10 @@ func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController
 
 // InstallCuratedPackages installs curated packages as part of the cluster creation.
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
+	if IsPackageControllerDisabled(pi.spec.Cluster) {
+		logger.Info("  Package controller disabled")
+		return
+	}
 	PrintLicense()
 	err := pi.installPackagesController(ctx)
 	// There is an ask from customers to avoid considering the failure of installing curated packages
@@ -65,10 +69,6 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Enabling curated packages on the cluster")
-	if IsPackageControllerDisabled(pi.spec.Cluster) {
-		logger.Info("  Package controller disabled")
-		return nil
-	}
 	err := pi.packageController.Enable(ctx)
 	if err != nil {
 		return err
