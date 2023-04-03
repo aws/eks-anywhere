@@ -14,7 +14,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -311,21 +310,6 @@ func anywhereCluster(name string) *anywherev1.Cluster {
 			},
 		},
 	}
-}
-
-func TestValidateK8s126Support(t *testing.T) {
-	tt := newTest(t)
-	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube126
-	tt.Expect(validations.ValidateK8s126Support(tt.clusterSpec)).To(
-		MatchError(ContainSubstring("kubernetes version 1.26 is not enabled. Please set the env variable K8S_1_26_SUPPORT")))
-}
-
-func TestValidateK8s126SupportActive(t *testing.T) {
-	tt := newTest(t)
-	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube126
-	features.ClearCache()
-	os.Setenv(features.K8s126SupportEnvVar, "true")
-	tt.Expect(validations.ValidateK8s126Support(tt.clusterSpec)).To(Succeed())
 }
 
 func TestValidateManagementClusterBundlesVersion(t *testing.T) {

@@ -8,7 +8,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -88,16 +87,6 @@ func ValidateManagementClusterName(ctx context.Context, k KubectlClient, mgmtClu
 	}
 	if cluster.IsManaged() {
 		return fmt.Errorf("%s is not a valid management cluster", mgmtClusterName)
-	}
-	return nil
-}
-
-// ValidateK8s126Support checks if the 1.26 feature flag is set when using k8s 1.26.
-func ValidateK8s126Support(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.K8s126Support()) {
-		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube126 {
-			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube126, features.K8s126SupportEnvVar)
-		}
 	}
 	return nil
 }
