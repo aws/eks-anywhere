@@ -660,7 +660,7 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.21.2-eks-d-1-21-4-eks-a-v0.0.0-dev-build.158
       kubeVersion: v1.21.2
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-4.yaml
+      manifestUrl: embed:///testdata/kubernetes-1-21-eks-4.yaml
       name: kubernetes-1-21-eks-4
       ova:
         bottlerocket:
