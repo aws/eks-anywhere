@@ -1749,6 +1749,66 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
+func TestValidateMachineConfigsNameUniquenessSuccess(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	provider := givenProvider(t)
+	prevSpec := clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	setupContext(t)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+	cluster := &types.Cluster{}
+	machineConfigs := clusterSpec.CloudStackMachineConfigs
+
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, prevSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil).AnyTimes()
+	}
+
+	err := provider.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
+func TestValidateMachineConfigsNameUniquenessError(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	provider := givenProvider(t)
+	prevSpec := clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	setupContext(t)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+	cluster := &types.Cluster{}
+	machineConfigs := clusterSpec.CloudStackMachineConfigs
+
+	dummyMachineConfig := &v1alpha1.CloudStackMachineConfig{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{},
+		Spec:       v1alpha1.CloudStackMachineConfigSpec{Users: []v1alpha1.UserConfiguration{{Name: "capc"}}},
+		Status:     v1alpha1.CloudStackMachineConfigStatus{},
+	}
+
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+
+	for _, config := range machineConfigs {
+		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{dummyMachineConfig}, nil).AnyTimes()
+	}
+	mc := []*v1alpha1.CloudStackMachineConfig{dummyMachineConfig}
+	fmt.Println(len(mc))
+	err := provider.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	thenErrorExpected(t, fmt.Sprintf("machineconfig %s already exists", clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name), err)
+}
+
 func TestClusterUpgradeNeededNoChanges(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
