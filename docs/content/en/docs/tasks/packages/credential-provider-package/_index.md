@@ -61,7 +61,7 @@ By default an instance of this package is installed with the controller to help 
 1. Create the namespace (if not installing to eksa-packages)
    (If overriding `targetNamespace`, change `eksa-packages` to the value of `targetNamespace`)
    ```bash
-   kubectl create namespace namespace-name-here
+   kubectl create namespace <namespace-name-here>
    ```
 
 1. Install the credential-provider-package
