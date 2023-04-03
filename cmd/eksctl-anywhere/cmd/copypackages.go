@@ -17,7 +17,7 @@ import (
 
 // copyPackagesCmd is the context for the copy packages command.
 var copyPackagesCmd = &cobra.Command{
-	Use:          "packages",
+	Use:          "packages <destination-registry>",
 	Short:        "Copy curated package images and charts from a source to a destination",
 	Long:         `Copy all the EKS Anywhere curated package images and helm charts from a source to a destination.`,
 	SilenceUsage: true,
@@ -101,6 +101,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry
 		return fmt.Errorf("error with repository %s: %v", c.destination, err)
 	}
 
+	log.Printf("Copying curated packages helm charts from public ECR to %s", c.destination)
 	err = c.copyImages(ctx, dstRegistry, credentialStore, imageList)
 	if err != nil {
 		return err
@@ -111,6 +112,7 @@ func (c CopyPackagesCommand) call(ctx context.Context, credentialStore *registry
 		return err
 	}
 	dstRegistry.SetProject("curated-packages/")
+	log.Printf("Copying curated packages images from private ECR to %s", c.destination)
 	return c.copyImages(ctx, dstRegistry, credentialStore, imageList)
 }
 
