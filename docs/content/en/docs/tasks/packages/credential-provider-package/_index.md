@@ -75,7 +75,7 @@ By default an instance of this package is installed with the controller to help 
    ```
    
 ## Update
-To update package configuration, update credential-provider-package.yaml file, and run the following command:
+To update package configuration, update credential-provider-package.yaml file and run the following command:
 ```bash
 eksctl anywhere apply package -f credential-provider-package.yaml
 ```
