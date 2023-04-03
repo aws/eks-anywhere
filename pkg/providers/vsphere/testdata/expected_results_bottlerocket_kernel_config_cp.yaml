@@ -464,8 +464,8 @@ spec:
       pauseImage: public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4
       kernel:
         sysctlSettings:
-          setting1: foo
-          setting2: bar
+          setting1: "foo"
+          setting2: "bar"
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
       - name: ec2-user
