@@ -86,7 +86,7 @@ Credential-Provider-Package will automatically be upgraded when a new bundle is 
 
 ## Uninstall
 
-To uninstall credential-provider-package, simply delete the package
+To uninstall credential-provider-package, simply delete the package:
 
 ```bash
 eksctl anywhere delete package --cluster <cluster-name> my-credential-provider-package
