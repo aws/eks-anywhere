@@ -139,7 +139,7 @@ export KUBEVERSION="1.25"
 
     a. To download VMware variant Bottlerocket OVA
     ```bash
-    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.31.1.ova"
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.13.1.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
