@@ -100,8 +100,6 @@ func TestPackageInstallerDisabled(t *testing.T) {
 		Disable: true,
 	}
 
-	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(nil)
-
 	tt.command.InstallCuratedPackages(tt.ctx)
 }
 
