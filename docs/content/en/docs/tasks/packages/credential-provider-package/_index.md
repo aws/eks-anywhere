@@ -55,7 +55,7 @@ By default an instance of this package is installed with the controller to help 
             defaultCacheDuration: "5h"
     ```
 
-1. Create the secret (if changing the secret)
+1. Create the secret. If you are changing the secret, see [complete configuration options]({{< relref "../../../reference/packagespec/credential-provider-package" >}}) for the format of the secret.
    see [complete configuration options]({{< relref "../../../reference/packagespec/credential-provider-package" >}}) for format of secret.
 
 1. Create the namespace (if not installing to eksa-packages)
