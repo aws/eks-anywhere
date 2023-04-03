@@ -59,7 +59,7 @@ By default an instance of this package is installed with the controller to help 
    see [complete configuration options]({{< relref "../../../reference/packagespec/credential-provider-package" >}}) for format of secret.
 
 1. Create the namespace (if not installing to eksa-packages)
-   (If overriding `targetNamespace`, change `eksa-packages` to the value of `targetNamespace`)
+   If you are overriding `targetNamespace`, change `eksa-packages` to the value of `targetNamespace`.
    ```bash
    kubectl create namespace <namespace-name-here>
    ```
