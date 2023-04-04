@@ -9,7 +9,7 @@ Currently the only way to manage EKS Anywhere CloudStack cluster is by using CLI
 ### Goals and Objectives
 
 * Create/Upgrade/Delete CloudStack workload clusters using: kubectl apply -f cluster.yaml
-* Create/Update/Upgrade/Delete EKS Anywhere workload clusters using GitOps
+* Create/Update/Upgrade/Delete CloudStack workload clusters using GitOps/Terraform
 
 #### Not in Scope
 
