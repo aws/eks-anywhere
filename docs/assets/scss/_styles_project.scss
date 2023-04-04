@@ -61,3 +61,15 @@
     padding-top: 4rem;
     padding-bottom: 4rem;
 }
+
+.tab-content {
+    margin-top: -1px;
+
+    .tab-pane {
+        max-width: 80%;
+
+        .highlight {
+            margin-top: 0
+        }
+    }
+}
