@@ -212,7 +212,7 @@ Refers to the Kubernetes object with vsphere specific configuration for your etc
 Refers to the Kubernetes object with vsphere environment specific configuration. See `VSphereDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.25`, `1.24`, `1.23`, `1.22`, `1.21`
+The Kubernetes version you want to use for your cluster. Supported values: `1.26`, `1.25`, `1.24`, `1.23`, `1.22`
 
 ## VSphereDatacenterConfig Fields
 
