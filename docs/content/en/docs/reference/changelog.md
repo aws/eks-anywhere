@@ -4,6 +4,14 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
+## [v0.15.1](https://github.com/aws/eks-anywhere/releases/tag/v0.15.1)
+
+### Upgraded
+- Cilium updated from version `v1.11.10` to version `v1.11.15`
+
+### Fixed
+- Fix http client in file reader to honor the provided HTTP_PROXY, HTTPS_PROXY and NO_PROXY env variables ([#5488](https://github.com/aws/eks-anywhere/pull/5488))
+
 ## [v0.15.0](https://github.com/aws/eks-anywhere/releases/tag/v0.15.0)
 
 ### Supported OS version details
