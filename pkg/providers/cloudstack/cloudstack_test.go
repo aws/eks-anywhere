@@ -170,6 +170,59 @@ func setupContext(t *testing.T) {
 	saveContext(t, defaultCloudStackCloudConfigPath)
 }
 
+type providerTest struct {
+	*WithT
+	t                                  *testing.T
+	ctx                                context.Context
+	managementCluster, workloadCluster *types.Cluster
+	provider                           *cloudstackProvider
+	cluster                            *v1alpha1.Cluster
+	clusterSpec                        *cluster.Spec
+	datacenterConfig                   *v1alpha1.CloudStackDatacenterConfig
+	machineConfigs                     map[string]*v1alpha1.CloudStackMachineConfig
+	kubectl                            *mocks.MockProviderKubectlClient
+	validator                          *MockProviderValidator
+}
+
+func newProviderTest(t *testing.T) *providerTest {
+	setupContext(t)
+	ctrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+	spec := givenClusterSpec(t, testClusterConfigMainFilename)
+	p := &providerTest{
+		t:     t,
+		WithT: NewWithT(t),
+		ctx:   context.Background(),
+		managementCluster: &types.Cluster{
+			Name:           "m-cluster",
+			KubeconfigFile: "kubeconfig-m.kubeconfig",
+		},
+		workloadCluster: &types.Cluster{
+			Name:           "test",
+			KubeconfigFile: "kubeconfig-w.kubeconfig",
+		},
+		cluster:          spec.Cluster,
+		clusterSpec:      spec,
+		datacenterConfig: spec.CloudStackDatacenter,
+		machineConfigs:   spec.CloudStackMachineConfigs,
+		kubectl:          kubectl,
+		validator:        givenWildcardValidator(ctrl, spec),
+	}
+	p.buildNewProvider()
+	return p
+}
+
+func (tt *providerTest) buildNewProvider() {
+	tt.provider = newProvider(
+		tt.t,
+		tt.clusterSpec.CloudStackDatacenter,
+		tt.clusterSpec.CloudStackMachineConfigs,
+		tt.clusterSpec.Cluster,
+		tt.kubectl,
+		tt.validator,
+	)
+}
+
 func TestNewProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
@@ -1750,63 +1803,44 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 }
 
 func TestValidateMachineConfigsNameUniquenessSuccess(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	provider := givenProvider(t)
-	prevSpec := clusterSpec.DeepCopy()
+	tt := newProviderTest(t)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	prevSpec := tt.clusterSpec.DeepCopy()
 	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
 	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
-	setupContext(t)
-
-	mockCtrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-	cluster := &types.Cluster{}
-	machineConfigs := clusterSpec.CloudStackMachineConfigs
-
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, prevSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
-
+	machineConfigs := tt.clusterSpec.CloudStackMachineConfigs
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
 	for _, config := range machineConfigs {
-		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil).AnyTimes()
+		tt.kubectl.EXPECT().SearchCloudStackMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil).AnyTimes()
 	}
 
-	err := provider.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	err := tt.provider.validateMachineConfigsNameUniqueness(tt.ctx, cluster, tt.clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
 }
 
 func TestValidateMachineConfigsNameUniquenessError(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	provider := givenProvider(t)
-	prevSpec := clusterSpec.DeepCopy()
+	tt := newProviderTest(t)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	prevSpec := tt.clusterSpec.DeepCopy()
 	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
 	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
-	setupContext(t)
-
-	mockCtrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-	cluster := &types.Cluster{}
-	machineConfigs := clusterSpec.CloudStackMachineConfigs
-
+	machineConfigs := tt.clusterSpec.CloudStackMachineConfigs
 	dummyMachineConfig := &v1alpha1.CloudStackMachineConfig{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Spec:       v1alpha1.CloudStackMachineConfigSpec{Users: []v1alpha1.UserConfiguration{{Name: "capc"}}},
-		Status:     v1alpha1.CloudStackMachineConfigStatus{},
+		Spec: v1alpha1.CloudStackMachineConfigSpec{Users: []v1alpha1.UserConfiguration{{Name: "capc"}}},
 	}
 
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
-
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
 	for _, config := range machineConfigs {
-		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{dummyMachineConfig}, nil).AnyTimes()
+		tt.kubectl.EXPECT().SearchCloudStackMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{dummyMachineConfig}, nil).AnyTimes()
 	}
-	mc := []*v1alpha1.CloudStackMachineConfig{dummyMachineConfig}
-	fmt.Println(len(mc))
-	err := provider.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
-	thenErrorExpected(t, fmt.Sprintf("machineconfig %s already exists", clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name), err)
+	err := tt.provider.validateMachineConfigsNameUniqueness(tt.ctx, cluster, tt.clusterSpec)
+	thenErrorExpected(t, fmt.Sprintf("machineconfig %s already exists", tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name), err)
 }
 
 func TestClusterUpgradeNeededNoChanges(t *testing.T) {
