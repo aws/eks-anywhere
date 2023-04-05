@@ -4,25 +4,44 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 )
 
+// IPValidator is an interface that defines methods to validate the control plane IP.
+type IPValidator interface {
+	ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error)
+}
+
 // Reconciler for CloudStack.
-type Reconciler struct{}
+type Reconciler struct {
+	client      client.Client
+	ipValidator IPValidator
+}
 
 // New defines a new CloudStack reconciler.
-func New() *Reconciler {
-	return &Reconciler{}
+func New(client client.Client, ipValidator IPValidator) *Reconciler {
+	return &Reconciler{
+		client:      client,
+		ipValidator: ipValidator,
+	}
 }
 
 // Reconcile reconciles cluster to desired state.
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	// Implement reconcile all here.
+	log = log.WithValues("provider", "cloudstack")
+	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
+	if err != nil {
+		return controller.Result{}, err
+	}
 
-	return controller.Result{}, nil
+	return controller.NewPhaseRunner[*c.Spec]().Register(
+		r.ipValidator.ValidateControlPlaneIP,
+	).Run(ctx, log, clusterSpec)
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
