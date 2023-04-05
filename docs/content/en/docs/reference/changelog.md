@@ -6,6 +6,13 @@ weight: 35
 
 ## [v0.15.1](https://github.com/aws/eks-anywhere/releases/tag/v0.15.1)
 
+### Supported OS version details
+|              | vSphere | Baremetal |  Nutanix | Cloudstack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
 ### Upgraded
 - Cilium updated from version `v1.11.10` to version `v1.11.15`
 
