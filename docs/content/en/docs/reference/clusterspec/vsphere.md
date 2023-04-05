@@ -80,20 +80,21 @@ kind: VSphereMachineConfig
 metadata:
    name: my-cluster-machines
 spec:
-  diskGiB:  <span style="color:green">25</span>                       <a href="#diskgib-optional"># Size of disk on VMs, if no snapshots</a>
-  datastore: <span style="color:red">"datastore1"</span>            <a href="#datastore-required"># Path to vSphere datastore to deploy EKS Anywhere on (required)</a>
-  folder: <span style="color:red">"folder1"</span>                  <a href="#folder-required"># Path to VM folder for EKS Anywhere cluster VMs (required)</a>
-  numCPUs: <span style="color:green">2</span>                         <a href="#numcpus-optional"># Number of CPUs on virtual machines</a>
-  memoryMiB: <span style="color:green">8192</span>                    <a href="#memorymib-optional"># Size of RAM on VMs</a>
-  osFamily: <span style="color:red">"bottlerocket"</span>           <a href="#osfamily-optional"># Operating system on VMs</a>
-  resourcePool: <span style="color:red">"resourcePool1"</span>      <a href="#resourcepool-required"># vSphere resource pool for EKS Anywhere VMs (required)</a>
-  storagePolicyName: <span style="color:red">"storagePolicy1"</span>    <a href="#storagepolicyname-optional"># Storage policy name associated with VMs</a>
-  template: <span style="color:red">"bottlerocket-kube-v1-25"</span>    <a href="#template-optional"># VM template for EKS Anywhere (required for RHEL/Ubuntu-based OVAs)</a>
-  users:                             <a href="#users-optional"># Add users to access VMs via SSH</a>
-  - name: <span style="color:red">"ec2-user"</span>                 <a href="#users0name-optional"># Name of each user set to access VMs</a>
-    sshAuthorizedKeys:               <a href="#users0sshauthorizedkeys-optional"># SSH keys for user needed to access VMs</a>
+  diskGiB:  <span style="color:green">25</span>                         <a href="#diskgib-optional"># Size of disk on VMs, if no snapshots</a>
+  datastore: <span style="color:red">"datastore1"</span>              <a href="#datastore-required"># Path to vSphere datastore to deploy EKS Anywhere on (required)</a>
+  folder: <span style="color:red">"folder1"</span>                    <a href="#folder-required"># Path to VM folder for EKS Anywhere cluster VMs (required)</a>
+  numCPUs: <span style="color:green">2</span>                           <a href="#numcpus-optional"># Number of CPUs on virtual machines</a>
+  memoryMiB: <span style="color:green">8192</span>                      <a href="#memorymib-optional"># Size of RAM on VMs</a>
+  osFamily: <span style="color:red">"bottlerocket"</span>             <a href="#osfamily-optional"># Operating system on VMs</a>
+  resourcePool: <span style="color:red">"resourcePool1"</span>        <a href="#resourcepool-required"># vSphere resource pool for EKS Anywhere VMs (required)</a>
+  storagePolicyName: <span style="color:red">"storagePolicy1"</span>  <a href="#storagepolicyname-optional"># Storage policy name associated with VMs</a>
+  template: <span style="color:red">"bottlerocket-kube-v1-25"</span>  <a href="#template-optional"># VM template for EKS Anywhere (required for RHEL/Ubuntu-based OVAs)</a>
+  cloneMode: <span style="color:red">"fullClone"</span>               <a href="#clonemode-optional"># Clone mode to use when cloning VMs from the template</a>
+  users:                               <a href="#users-optional"># Add users to access VMs via SSH</a>
+  - name: <span style="color:red">"ec2-user"</span>                   <a href="#users0name-optional"># Name of each user set to access VMs</a>
+    sshAuthorizedKeys:                 <a href="#users0sshauthorizedkeys-optional"># SSH keys for user needed to access VMs</a>
     - <span style="color:red">"ssh-rsa AAAAB3NzaC1yc2E..."</span>
-  tags:                              <a href="#tags-optional"># List of tags to attach to cluster VMs, in URN format</a>
+  tags:                                <a href="#tags-optional"># List of tags to attach to cluster VMs, in URN format</a>
   - <span style="color:red">"urn:vmomi:InventoryServiceTag:5b3e951f-4e1d-4511-95b1-5ba1ea97245c:GLOBAL"</span>
   - <span style="color:red">"urn:vmomi:InventoryServiceTag:cfee03d0-0189-4f27-8c65-fe75086a86cd:GLOBAL"</span>
 </pre>
@@ -318,6 +319,18 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/vsphere-ovas.md" >}}).
 This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
+
+### cloneMode (optional)
+`cloneMode` defines the clone mode to use when creating the cluster VMs from the template. Allowed values are:
+- `fullClone`: With full clone, the cloned VM is a separate independent copy of the template. This makes provisioning the VMs a bit slower at the cost of better customization and performance. 
+- `linkedClone`: With linked clone, the cloned VM shares the parent template's virtual disk. This makes provisioning the VMs faster while also saving the disk space. Linked clone does **not** allow customizing the disk size.
+The template should meet the following properties to use `linkedClone`:
+  - The template needs to have a snapshot
+  - The template's disk size must match the VSphereMachineConfig's diskGiB
+
+If this field is not specified, EKS Anywhere tries to determine the clone mode based on the following criteria:
+- It uses linkedClone if the template has snapshots and the template diskSize matches the machineConfig DiskGiB.
+- Otherwise, it uses use full clone.
 
 ### datastore (required)
 The path to the vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)
