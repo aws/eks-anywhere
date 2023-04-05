@@ -39,7 +39,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.15.0
+EKSA_RELEASE_VERSION=v0.15.1
 ```
 
 ```bash
@@ -57,7 +57,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.15.0
+EKSA_RELEASE_VERSION=v0.15.1
 ```
 
 kernel:
@@ -87,7 +87,7 @@ OR
 
 Using a specific EKS Anywhere version
 ```bash
-EKSA_RELEASE_VERSION=v0.15.0
+EKSA_RELEASE_VERSION=v0.15.1
 ```
 
 ```bash
@@ -101,15 +101,13 @@ OS Family - `os:bottlerocket`
 
 EKS Distro Release
 
-1.26 - `eksdRelease:kubernetes-1-26-eks-5`
+1.25 - `eksdRelease:kubernetes-1-25-eks-10`
 
-1.25 - `eksdRelease:kubernetes-1-25-eks-9`
+1.24 - `eksdRelease:kubernetes-1-24-eks-14`
 
-1.24 - `eksdRelease:kubernetes-1-24-eks-13`
+1.23 - `eksdRelease:kubernetes-1-23-eks-19`
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-18`
-
-1.22 - `eksdRelease:kubernetes-1-22-eks-23`
+1.22 - `eksdRelease:kubernetes-1-22-eks-24`
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
@@ -327,7 +325,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.15.0
+   EKSA_RELEASE_VERSION=v0.15.1
    ```
 
    ```bash
@@ -435,7 +433,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.15.0
+   EKSA_RELEASE_VERSION=v0.15.1
    ```
 
    ```bash
@@ -538,7 +536,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.15.0
+   EKSA_RELEASE_VERSION=v0.15.1
    ```
 
    ```bash
@@ -609,7 +607,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.15.0
+   EKSA_RELEASE_VERSION=v0.15.1
    ```
 
    ```bash
@@ -698,7 +696,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
 
    Using a specific EKS Anywhere version
    ```bash
-   EKSA_RELEASE_VERSION=v0.15.0
+   EKSA_RELEASE_VERSION=v0.15.1
    ```
 
    ```bash
