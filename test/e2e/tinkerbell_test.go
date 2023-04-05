@@ -194,9 +194,12 @@ func TestTinkerbellKubernetes126UbuntuWorkloadClusterWithAPI(t *testing.T) {
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithControlPlaneHardware(2),
 		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+		),
 	)
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -207,13 +210,48 @@ func TestTinkerbellKubernetes126UbuntuWorkloadClusterWithAPI(t *testing.T) {
 			t,
 			provider,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithClusterFiller(
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube126),
 				api.WithManagementCluster(managementCluster.ClusterName),
 			),
 		),
 	)
 	runWorkloadClusterWithAPIFlowForBareMetal(test)
+}
+
+func TestTinkerbellKubernetes126UbuntuWorkloadClusterGithubFluxAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+		framework.WithFluxGithubEnvVarCheck(),
+		framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		framework.WithFluxGithubConfig(),
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube126),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+		),
+	)
+	runWorkloadClusterGitOpsAPIFlowForBareMetal(test)
 }
 
 func TestTinkerbellKubernetes126BottlerocketWorkloadClusterSimpleFlow(t *testing.T) {
@@ -241,9 +279,12 @@ func TestTinkerbellKubernetes126BottlerocketWorkloadClusterWithAPI(t *testing.T)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithControlPlaneHardware(2),
 		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+		),
 	)
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -254,7 +295,8 @@ func TestTinkerbellKubernetes126BottlerocketWorkloadClusterWithAPI(t *testing.T)
 			t,
 			provider,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithClusterFiller(
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube126),
 				api.WithManagementCluster(managementCluster.ClusterName),
 			),
@@ -296,13 +338,14 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeWorkloadClusterWithAPI(t *testin
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(0),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube126),
 			api.WithEtcdCountIfExternal(0),
 			api.RemoveAllWorkerNodeGroups(),
 		),
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(0),
 	)
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -313,7 +356,8 @@ func TestTinkerbellKubernetes126UbuntuSingleNodeWorkloadClusterWithAPI(t *testin
 			t,
 			provider,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithClusterFiller(
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube126),
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithEtcdCountIfExternal(0),
@@ -357,13 +401,14 @@ func TestTinkerbellKubernetes126BottlerocketSingleNodeWorkloadClusterWithAPI(t *
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(0),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube126),
 			api.WithEtcdCountIfExternal(0),
 			api.RemoveAllWorkerNodeGroups(),
 		),
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(0),
 	)
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -374,7 +419,8 @@ func TestTinkerbellKubernetes126BottlerocketSingleNodeWorkloadClusterWithAPI(t *
 			t,
 			provider,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithClusterFiller(
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube126),
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithEtcdCountIfExternal(0),
@@ -439,13 +485,14 @@ func TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI(t *
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube125),
 			api.WithEtcdCountIfExternal(0),
 			api.RemoveAllWorkerNodeGroups(),
 		),
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(2),
 	)
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -456,7 +503,8 @@ func TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI(t *
 			t,
 			provider,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithClusterFiller(
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube125),
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithEtcdCountIfExternal(0),
@@ -464,6 +512,45 @@ func TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI(t *
 		),
 	)
 	runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeCount(2),
+		),
+	)
+}
+
+func TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+		framework.WithFluxGithubEnvVarCheck(),
+		framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		framework.WithFluxGithubConfig(),
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube126),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+		),
+	)
+	runWorkloadClusterGitOpsAPIUpgradeFlowForBareMetal(test,
 		api.ClusterToConfigFiller(
 			api.WithWorkerNodeCount(2),
 		),
@@ -555,9 +642,12 @@ func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade124To125WithAPI(t
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithControlPlaneHardware(3),
 		framework.WithWorkerHardware(1),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube124),
+		),
 	)
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -568,7 +658,8 @@ func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade124To125WithAPI(t
 			t,
 			provider,
 			framework.WithClusterName(test.NewWorkloadClusterName()),
-			framework.WithClusterFiller(
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube124),
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithEtcdCountIfExternal(0),
