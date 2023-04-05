@@ -22,13 +22,11 @@ type BaseControlPlane = clusterapi.ControlPlane[*cloudstackv1.CloudStackCluster,
 // ControlPlane holds the CloudStack specific objects for a CAPI CloudStack control plane.
 type ControlPlane struct {
 	BaseControlPlane
-	Secrets *corev1.Secret
 }
 
 // Objects returns the control plane objects associated with the CloudStack cluster.
 func (p ControlPlane) Objects() []kubernetes.Object {
 	o := p.BaseControlPlane.Objects()
-	o = append(o, p.Secrets)
 
 	return o
 }
@@ -82,11 +80,6 @@ func (b *controlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) erro
 	}
 
 	b.ControlPlane.BaseControlPlane = *b.BaseBuilder.ControlPlane
-	for _, obj := range lookup {
-		if obj.GetObjectKind().GroupVersionKind().Kind == constants.SecretKind {
-			b.ControlPlane.Secrets = obj.(*corev1.Secret)
-		}
-	}
 
 	return nil
 }

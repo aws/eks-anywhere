@@ -12,6 +12,11 @@ import (
 func TestGenerateTemplateBuilder(t *testing.T) {
 	g := NewWithT(t)
 	clusterSpec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	spec := v1alpha1.ClusterSpec{
+		ControlPlaneConfiguration:     clusterSpec.Cluster.Spec.ControlPlaneConfiguration,
+		WorkerNodeGroupConfigurations: clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
+		ExternalEtcdConfiguration:     clusterSpec.Cluster.Spec.ExternalEtcdConfiguration,
+	}
 
 	expectedControlPlaneMachineSpec := &v1alpha1.CloudStackMachineConfigSpec{
 		Template: v1alpha1.CloudStackResourceIdentifier{
@@ -45,7 +50,7 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 		},
 	}
 
-	gotExpectedControlPlaneMachineSpec, err := getControlPlaneMachineSpec(clusterSpec)
+	gotExpectedControlPlaneMachineSpec, err := getControlPlaneMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotExpectedControlPlaneMachineSpec).To(Equal(expectedControlPlaneMachineSpec))
 
@@ -81,11 +86,11 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 			},
 		},
 	}
-	gotWorkerNodeGroupMachineSpec, err := getWorkerNodeGroupMachineSpec(clusterSpec)
+	gotWorkerNodeGroupMachineSpec, err := getWorkerNodeGroupMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotWorkerNodeGroupMachineSpec).To(Equal(expectedWorkerNodeGroupMachineSpec))
 
-	gotEtcdMachineSpec, err := getEtcdMachineSpec(clusterSpec)
+	gotEtcdMachineSpec, err := getEtcdMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	expectedEtcdMachineSpec := &v1alpha1.CloudStackMachineConfigSpec{
 		Template: v1alpha1.CloudStackResourceIdentifier{
 			Id:   "",

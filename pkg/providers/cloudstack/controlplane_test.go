@@ -38,14 +38,12 @@ func TestControlPlaneObjects(t *testing.T) {
 					KubeadmControlPlane:         kubeadmControlPlane(),
 					ControlPlaneMachineTemplate: cloudstackMachineTemplate("controlplane-machinetemplate"),
 				},
-				Secrets: secret(),
 			},
 			expected: []kubernetes.Object{
 				capiCluster(),
 				cloudstackCluster(),
 				kubeadmControlPlane(),
 				cloudstackMachineTemplate("controlplane-machinetemplate"),
-				secret(),
 			},
 		},
 	}
@@ -191,7 +189,6 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(precmds, precmds2...)
 			})))
 			g.Expect(cp.ProviderCluster).To(Equal(cloudstackCluster()))
-			g.Expect(cp.Secrets).To(BeNil())
 			g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
 		})
 	}
@@ -634,25 +631,6 @@ func cloudstackMachineTemplate(name string) *cloudstackv1.CloudStackMachineTempl
 					},
 				},
 			},
-		},
-	}
-}
-
-func secret() *corev1.Secret {
-	return &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "eksa-system",
-			Name:      "test-secret",
-			Labels: map[string]string{
-				"clusterctl.cluster.x-k8s.io/move": "true",
-			},
-		},
-		StringData: map[string]string{
-			"key": "val",
 		},
 	}
 }

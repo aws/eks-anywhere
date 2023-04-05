@@ -11,17 +11,22 @@ import (
 )
 
 func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuilder, error) {
-	controlPlaneMachineSpec, err := getControlPlaneMachineSpec(clusterSpec)
+	spec := v1alpha1.ClusterSpec{
+		ControlPlaneConfiguration:     clusterSpec.Cluster.Spec.ControlPlaneConfiguration,
+		WorkerNodeGroupConfigurations: clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
+		ExternalEtcdConfiguration:     clusterSpec.Cluster.Spec.ExternalEtcdConfiguration,
+	}
+	controlPlaneMachineSpec, err := getControlPlaneMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	if err != nil {
 		return nil, errors.Wrap(err, "generating control plane machine spec")
 	}
 
-	workerNodeGroupMachineSpecs, err := getWorkerNodeGroupMachineSpec(clusterSpec)
+	workerNodeGroupMachineSpecs, err := getWorkerNodeGroupMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	if err != nil {
 		return nil, errors.Wrap(err, "generating worker node group machine specs")
 	}
 
-	etcdMachineSpec, err := getEtcdMachineSpec(clusterSpec)
+	etcdMachineSpec, err := getEtcdMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	if err != nil {
 		return nil, errors.Wrap(err, "generating etcd machine spec")
 	}
@@ -36,34 +41,44 @@ func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuild
 	return templateBuilder, nil
 }
 
-func getEtcdMachineSpec(clusterSpec *cluster.Spec) (*v1alpha1.CloudStackMachineConfigSpec, error) {
+func getEtcdMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) (*v1alpha1.CloudStackMachineConfigSpec, error) {
 	var etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && clusterSpec.CloudStackMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &clusterSpec.CloudStackMachineConfigs[clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
+	if clusterSpec.ExternalEtcdConfiguration != nil {
+		if clusterSpec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterSpec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
+			etcdMachineSpec = &machineConfigs[clusterSpec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
+		} else {
+			return etcdMachineSpec, errors.Errorf("getting MachineGroupRef")
 		}
+	} else {
+		return etcdMachineSpec, errors.Errorf("getting external etcd config")
 	}
 
 	return etcdMachineSpec, nil
 }
 
-func getWorkerNodeGroupMachineSpec(clusterSpec *cluster.Spec) (map[string]v1alpha1.CloudStackMachineConfigSpec, error) {
+func getWorkerNodeGroupMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) (map[string]v1alpha1.CloudStackMachineConfigSpec, error) {
 	var workerNodeGroupMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(clusterSpec.CloudStackMachineConfigs))
-	for _, wnConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if wnConfig.MachineGroupRef != nil && clusterSpec.CloudStackMachineConfigs[wnConfig.MachineGroupRef.Name] != nil {
-			workerNodeGroupMachineSpec = &clusterSpec.CloudStackMachineConfigs[wnConfig.MachineGroupRef.Name].Spec
+	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
+	for _, wnConfig := range clusterSpec.WorkerNodeGroupConfigurations {
+		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
+			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
 			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
 		}
+	}
+
+	if len(workerNodeGroupMachineSpecs) == 0 {
+		return workerNodeGroupMachineSpecs, errors.Errorf("getting worker node group configs")
 	}
 
 	return workerNodeGroupMachineSpecs, nil
 }
 
-func getControlPlaneMachineSpec(clusterSpec *cluster.Spec) (*v1alpha1.CloudStackMachineConfigSpec, error) {
+func getControlPlaneMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) (*v1alpha1.CloudStackMachineConfigSpec, error) {
 	var controlPlaneMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && clusterSpec.CloudStackMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &clusterSpec.CloudStackMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
+	if clusterSpec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterSpec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
+		controlPlaneMachineSpec = &machineConfigs[clusterSpec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
+	} else {
+		return controlPlaneMachineSpec, errors.Errorf("getting MachineGroupRef")
 	}
 
 	return controlPlaneMachineSpec, nil
