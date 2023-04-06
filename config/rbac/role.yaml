@@ -19,6 +19,17 @@ rules:
   - update
   - watch
 - apiGroups:
+  - addons.cluster.x-k8s.io
+  resources:
+  - clusterresourcesets/status
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
   - awsiamconfigs
@@ -39,8 +50,10 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - gitopsconfigs
   - nutanixdatacenterconfigs
   - nutanixmachineconfigs
+  - snowdatacenterconfigs
   - snowippools
   - snowmachineconfigs
   - tinkerbelldatacenterconfigs
@@ -106,18 +119,6 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
-  - gitopsconfigs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
   - oidcconfigs
   verbs:
   - create
@@ -128,28 +129,14 @@ rules:
   - update
   - watch
 - apiGroups:
-  - anywhere.eks.amazonaws.com
+  - apps
   resources:
-  - snowdatacenterconfigs
+  - daemonsets
+  - daemonsets/status
+  - deployments
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - snowmachineconfigs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - bmc.tinkerbell.org
@@ -189,6 +176,17 @@ rules:
   - list
   - watch
 - apiGroups:
+  - etcdcluster.cluster.x-k8s.io
+  resources:
+  - '*'
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
   - awssnowclusters
@@ -223,6 +221,19 @@ rules:
   - update
   - watch
 - apiGroups:
+  - test
+  resources:
+  - test
+  verbs:
+  - create
+  - delete
+  - get
+  - kill
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - tinkerbell.org
   resources:
   - hardware
@@ -245,6 +256,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
+  - configmaps/status
+  - events
+  - namespaces
+  - namespaces/status
   - secrets
+  - secrets/status
+  - services
+  - services/status
   verbs:
-  - delete
+  - get
+  - list
+  - watch
