@@ -238,16 +238,9 @@ type ProviderKubectlClient interface {
 
 // NewProvider initializes the CloudStack provider object.
 func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, validator ProviderValidator, writer filewriter.FileWriter, now types.NowFunc, log logr.Logger) *cloudstackProvider { //nolint:revive
-	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
-	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-		}
-	}
+	controlPlaneMachineSpec, _ := getControlPlaneMachineSpec(clusterConfig.Spec, machineConfigs)
+	etcdMachineSpec, _ := getEtcdMachineSpec(clusterConfig.Spec, machineConfigs)
+	workerNodeGroupMachineSpecs, _ := getWorkerNodeGroupMachineSpec(clusterConfig.Spec, machineConfigs)
 	return &cloudstackProvider{
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
