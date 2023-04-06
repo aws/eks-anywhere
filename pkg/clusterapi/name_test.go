@@ -332,6 +332,34 @@ func TestClusterCASecretName(t *testing.T) {
 	g.Expect(clusterapi.ClusterCASecretName("my-cluster")).To(Equal("my-cluster-ca"))
 }
 
+func TestInitialTemplateNamesForWorkers(t *testing.T) {
+	tests := []struct {
+		name         string
+		wantTNames   map[string]string
+		wantKCTNames map[string]string
+	}{
+		{
+			name: "wng 1",
+			wantTNames: map[string]string{
+				"wng-1": "test-cluster-wng-1-1",
+			},
+			wantKCTNames: map[string]string{
+				"wng-1": "test-cluster-wng-1-1",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			spec := g.clusterSpec.DeepCopy()
+			spec.Cluster.Spec.WorkerNodeGroupConfigurations = append(spec.Cluster.Spec.WorkerNodeGroupConfigurations, *g.workerNodeGroupConfig)
+			workloadTemplateNames, kubeadmConfigTemplateNames := clusterapi.InitialTemplateNamesForWorkers(spec)
+			g.Expect(workloadTemplateNames).To(Equal(tt.wantTNames))
+			g.Expect(kubeadmConfigTemplateNames).To(Equal(tt.wantKCTNames))
+		})
+	}
+}
+
 func dummyRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
 	return dockerMachineTemplate(), nil
 }

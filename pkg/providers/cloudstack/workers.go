@@ -1,11 +1,11 @@
-package tinkerbell
+package cloudstack
 
 import (
 	"context"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -15,24 +15,24 @@ import (
 )
 
 type (
-	// Workers represents the Tinkerbell specific CAPI spec for worker nodes.
-	Workers        = clusterapi.Workers[*tinkerbellv1.TinkerbellMachineTemplate]
-	workersBuilder = capiyaml.WorkersBuilder[*tinkerbellv1.TinkerbellMachineTemplate]
+	// Workers represents the cloudstack specific CAPI spec for worker nodes.
+	Workers        = clusterapi.Workers[*cloudstackv1.CloudStackMachineTemplate]
+	workersBuilder = capiyaml.WorkersBuilder[*cloudstackv1.CloudStackMachineTemplate]
 )
 
-// WorkersSpec generates a Tinkerbell specific CAPI spec for an eks-a cluster worker nodes.
+// WorkersSpec generates a cloudstack specific CAPI spec for an eks-a cluster worker nodes.
 // It talks to the cluster with a client to detect changes in immutable objects and generates new
 // names for them.
 func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*Workers, error) {
 	templateBuilder, err := generateTemplateBuilder(spec)
 	if err != nil {
-		return nil, errors.Wrap(err, "generating tinkerbell template builder")
+		return nil, errors.Wrap(err, "generating cloudstack template builder")
 	}
 
-	workerTemplateNames, kubeadmTemplateNames := clusterapi.InitialTemplateNamesForWorkers(spec)
-	workersYaml, err := templateBuilder.GenerateCAPISpecWorkers(spec, workerTemplateNames, kubeadmTemplateNames)
+	machineTemplateNames, kubeadmConfigTemplateNames := clusterapi.InitialTemplateNamesForWorkers(spec)
+	workersYaml, err := templateBuilder.GenerateCAPISpecWorkers(spec, machineTemplateNames, kubeadmConfigTemplateNames)
 	if err != nil {
-		return nil, errors.Wrap(err, "generating tinkerbell workers yaml spec")
+		return nil, err
 	}
 
 	parser, builder, err := newWorkersParserAndBuilder(logger)
@@ -41,12 +41,12 @@ func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Clie
 	}
 
 	if err = parser.Parse(workersYaml, builder); err != nil {
-		return nil, errors.Wrap(err, "parsing Tinkerbell CAPI workers yaml")
+		return nil, errors.Wrap(err, "parsing cloudstack CAPI workers yaml")
 	}
 
 	workers := builder.Workers
 	if err = workers.UpdateImmutableObjectNames(ctx, client, GetMachineTemplate, machineTemplateEqual); err != nil {
-		return nil, errors.Wrap(err, "updating Tinkerbell worker immutable object names")
+		return nil, errors.Wrap(err, "updating cloudstack worker immutable object names")
 	}
 
 	return workers, nil
@@ -58,17 +58,17 @@ func newWorkersParserAndBuilder(logger logr.Logger) (*yamlutil.Parser, *workersB
 		machineTemplateMapping(),
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "building Tinkerbell workers parser and builder")
+		return nil, nil, errors.Wrap(err, "building cloudstack workers parser and builder")
 	}
 
 	return parser, builder, nil
 }
 
-func machineTemplateMapping() yamlutil.Mapping[*tinkerbellv1.TinkerbellMachineTemplate] {
+func machineTemplateMapping() yamlutil.Mapping[*cloudstackv1.CloudStackMachineTemplate] {
 	return yamlutil.NewMapping(
-		"TinkerbellMachineTemplate",
-		func() *tinkerbellv1.TinkerbellMachineTemplate {
-			return &tinkerbellv1.TinkerbellMachineTemplate{}
+		"CloudStackMachineTemplate",
+		func() *cloudstackv1.CloudStackMachineTemplate {
+			return &cloudstackv1.CloudStackMachineTemplate{}
 		},
 	)
 }

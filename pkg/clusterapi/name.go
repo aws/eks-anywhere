@@ -119,6 +119,19 @@ func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConf
 	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec.Cluster, workerNodeGroupConfig))
 }
 
+// InitialTemplateNamesForWorkers returns the default initial names for workers machine templates and kubeadm config templates.
+func InitialTemplateNamesForWorkers(clusterSpec *cluster.Spec) (machineTemplateNames, kubeadmConfigTemplateNames map[string]string) {
+	workerLen := len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations)
+	workloadTemplateNames := make(map[string]string, workerLen)
+	kubeadmConfigTemplateNames = make(map[string]string, workerLen)
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = WorkerMachineTemplateName(clusterSpec, workerNodeGroupConfiguration)
+		kubeadmConfigTemplateNames[workerNodeGroupConfiguration.Name] = DefaultKubeadmConfigTemplateName(clusterSpec, workerNodeGroupConfiguration)
+	}
+
+	return workloadTemplateNames, kubeadmConfigTemplateNames
+}
+
 // EnsureNewNameIfChanged updates an object's name if such object is different from its current state in the cluster.
 func EnsureNewNameIfChanged[M Object[M]](ctx context.Context,
 	client kubernetes.Client,

@@ -50,8 +50,7 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 		},
 	}
 
-	gotExpectedControlPlaneMachineSpec, err := getControlPlaneMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-	g.Expect(err).NotTo(HaveOccurred())
+	gotExpectedControlPlaneMachineSpec := getControlPlaneMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	g.Expect(gotExpectedControlPlaneMachineSpec).To(Equal(expectedControlPlaneMachineSpec))
 
 	expectedWorkerNodeGroupMachineSpec := map[string]v1alpha1.CloudStackMachineConfigSpec{
@@ -86,11 +85,10 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 			},
 		},
 	}
-	gotWorkerNodeGroupMachineSpec, err := getWorkerNodeGroupMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-	g.Expect(err).NotTo(HaveOccurred())
+	gotWorkerNodeGroupMachineSpec := getWorkerNodeGroupMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	g.Expect(gotWorkerNodeGroupMachineSpec).To(Equal(expectedWorkerNodeGroupMachineSpec))
 
-	gotEtcdMachineSpec, err := getEtcdMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
+	gotEtcdMachineSpec := getEtcdMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
 	expectedEtcdMachineSpec := &v1alpha1.CloudStackMachineConfigSpec{
 		Template: v1alpha1.CloudStackResourceIdentifier{
 			Id:   "",
@@ -122,6 +120,5 @@ func TestGenerateTemplateBuilder(t *testing.T) {
 			"/var/lib/": "/data-small/var/lib",
 		},
 	}
-	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(gotEtcdMachineSpec).To(Equal(expectedEtcdMachineSpec))
 }
