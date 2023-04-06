@@ -5,14 +5,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	yamlcapi "github.com/aws/eks-anywhere/pkg/clusterapi/yaml"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
@@ -102,15 +100,6 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *controlPlaneB
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "building cloudstack control plane parser")
-	}
-
-	err = parser.RegisterMappings(
-		yamlutil.NewMapping(constants.SecretKind, func() yamlutil.APIObject {
-			return &corev1.Secret{}
-		}),
-	)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "registering cloudstack control plane mappings in parser")
 	}
 
 	builder := &controlPlaneBuilder{

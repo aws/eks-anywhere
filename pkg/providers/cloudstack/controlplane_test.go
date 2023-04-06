@@ -55,6 +55,19 @@ func TestControlPlaneObjects(t *testing.T) {
 	}
 }
 
+func TestControlPlaneSpecFail(t *testing.T) {
+	g := NewWithT(t)
+	logger := test.NewNullLogger()
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
+
+	_, err := ControlPlaneSpec(ctx, logger, client, spec)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err).To(MatchError(ContainSubstring("generating cloudstack template builder")))
+}
+
 func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()
