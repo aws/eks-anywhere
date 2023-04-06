@@ -35,6 +35,8 @@ var redactedEnvKeys = []string{
 	constants.SnowCertsKey,
 	constants.NutanixUsernameKey,
 	constants.NutanixPasswordKey,
+	constants.RegistryUsername,
+	constants.RegistryPassword,
 }
 
 type executable struct {
@@ -86,7 +88,9 @@ func (e *executable) Close(ctx context.Context) error {
 func RedactCreds(cmd string, envMap map[string]string) string {
 	redactedEnvs := []string{}
 	for _, redactedEnvKey := range redactedEnvKeys {
-		if env, found := envMap[redactedEnvKey]; found {
+		if env, found := os.LookupEnv(redactedEnvKey); found {
+			redactedEnvs = append(redactedEnvs, env)
+		} else if env, found := envMap[redactedEnvKey]; found {
 			redactedEnvs = append(redactedEnvs, env)
 		}
 	}
