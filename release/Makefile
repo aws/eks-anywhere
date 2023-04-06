@@ -144,7 +144,7 @@ eks-a-release: build ## Perform EKS-A CLI release
 github-bundle-release:
 	scripts/github-bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(WEEKLY_RELEASES_URL_PREFIX)
 
-announce-eks-a-release: EKSA_RELEASE_MANIFEST_URL?=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml"
+announce-eks-a-release: EKSA_RELEASE_MANIFEST_URL?=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml
 announce-eks-a-release:
 	scripts/announce_eksa_release.sh $(EKSA_RELEASE_MANIFEST_URL)
 
