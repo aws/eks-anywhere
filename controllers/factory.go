@@ -415,7 +415,10 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 			return nil
 		}
 
-		f.cloudstackClusterReconciler = cloudstackreconciler.New()
+		f.cloudstackClusterReconciler = cloudstackreconciler.New(
+			f.manager.GetClient(),
+			f.ipValidator,
+		)
 		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
 
 		return nil
