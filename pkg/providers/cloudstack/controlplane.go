@@ -71,7 +71,7 @@ type controlPlaneBuilder struct {
 	ControlPlane *ControlPlane
 }
 
-// BuildFromParsed implements the base yamlcapi.BuildFromParsed and processes any additional objects (secrets) for the CloudStack control plane.
+// BuildFromParsed implements the base yamlcapi.BuildFromParsed and processes any additional objects for the CloudStack control plane.
 func (b *controlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
 	if err := b.BaseBuilder.BuildFromParsed(lookup); err != nil {
 		return err
