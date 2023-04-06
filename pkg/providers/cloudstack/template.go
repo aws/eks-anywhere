@@ -8,7 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
-func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuilder, error) {
+func generateTemplateBuilder(clusterSpec *cluster.Spec) providers.TemplateBuilder {
 	spec := v1alpha1.ClusterSpec{
 		ControlPlaneConfiguration:     clusterSpec.Cluster.Spec.ControlPlaneConfiguration,
 		WorkerNodeGroupConfigurations: clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
@@ -26,7 +26,7 @@ func generateTemplateBuilder(clusterSpec *cluster.Spec) (providers.TemplateBuild
 		workerNodeGroupMachineSpecs,
 		time.Now,
 	)
-	return templateBuilder, nil
+	return templateBuilder
 }
 
 func getEtcdMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) *v1alpha1.CloudStackMachineConfigSpec {

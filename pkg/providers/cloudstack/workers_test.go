@@ -61,6 +61,7 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 		},
 	))
 }
+
 func TestWorkersSpecUpgradeCluster(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()

@@ -31,11 +31,7 @@ func (p ControlPlane) Objects() []kubernetes.Object {
 
 // ControlPlaneSpec builds a CloudStack ControlPlane definition based on an eks-a cluster spec.
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, clusterSpec *cluster.Spec) (*ControlPlane, error) {
-	templateBuilder, err := generateTemplateBuilder(clusterSpec)
-	if err != nil {
-		return nil, errors.Wrap(err, "generating cloudstack template builder")
-	}
-
+	templateBuilder := generateTemplateBuilder(clusterSpec)
 	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(
 		clusterSpec,
 		func(values map[string]interface{}) {
