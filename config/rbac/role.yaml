@@ -7,6 +7,44 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - configmaps/status
+  - events
+  - namespaces
+  - namespaces/status
+  - secrets
+  - secrets/status
+  - services
+  - services/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - persistentvolumes
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - node
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - node/status
+  verbs:
+  - patch
+- apiGroups:
   - addons.cluster.x-k8s.io
   resources:
   - clusterresourcesets
@@ -148,6 +186,18 @@ rules:
   - list
   - watch
 - apiGroups:
+  - bootstrap.cluster.x-k8s.io
+  resources:
+  - kubeadmconfigtemplates
+  - kubeadmconfigtemplates/status
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - cluster.x-k8s.io
   resources:
   - '*'
@@ -166,6 +216,28 @@ rules:
   verbs:
   - get
   - list
+  - watch
+- apiGroups:
+  - controlplane.cluster.x-k8s.io
+  resources:
+  - '*'
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
   - watch
 - apiGroups:
   - distro.eks.amazonaws.com
@@ -196,10 +268,31 @@ rules:
   - cloudstackmachinetemplates
   - dockerclusters
   - dockermachinetemplates
+  - nutanixclusters
+  - nutanixmachinetemplates
   - tinkerbellclusters
   - tinkerbellmachinetemplates
   - vsphereclusters
   - vspheremachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - cloudstackclusters/status
+  - cloudstackmachinetemplates/status
+  - dockerclusters/status
+  - dockermachinetemplates/status
+  - nutanixclusters/status
+  - nutanixmachinetemplates/status
+  - vsphereclusters/status
+  - vspheremachinetemplates/status
   verbs:
   - create
   - delete
@@ -219,6 +312,19 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - clusterrolebindings/status
+  - clusterroles
+  - clusterroles/status
+  - rolebindings
+  - rolebindings/status
+  verbs:
+  - get
+  - list
   - watch
 - apiGroups:
   - test
@@ -256,16 +362,6 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - configmaps
-  - configmaps/status
-  - events
-  - namespaces
-  - namespaces/status
   - secrets
-  - secrets/status
-  - services
-  - services/status
   verbs:
-  - get
-  - list
-  - watch
+  - delete
