@@ -238,9 +238,9 @@ type ProviderKubectlClient interface {
 
 // NewProvider initializes the CloudStack provider object.
 func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, validator ProviderValidator, writer filewriter.FileWriter, now types.NowFunc, log logr.Logger) *cloudstackProvider { //nolint:revive
-	controlPlaneMachineSpec, _ := getControlPlaneMachineSpec(clusterConfig.Spec, machineConfigs)
-	etcdMachineSpec, _ := getEtcdMachineSpec(clusterConfig.Spec, machineConfigs)
-	workerNodeGroupMachineSpecs, _ := getWorkerNodeGroupMachineSpec(clusterConfig.Spec, machineConfigs)
+	controlPlaneMachineSpec := getControlPlaneMachineSpec(clusterConfig.Spec, machineConfigs)
+	etcdMachineSpec := getEtcdMachineSpec(clusterConfig.Spec, machineConfigs)
+	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	return &cloudstackProvider{
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
