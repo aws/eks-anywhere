@@ -170,6 +170,59 @@ func setupContext(t *testing.T) {
 	saveContext(t, defaultCloudStackCloudConfigPath)
 }
 
+type providerTest struct {
+	*WithT
+	t                                  *testing.T
+	ctx                                context.Context
+	managementCluster, workloadCluster *types.Cluster
+	provider                           *cloudstackProvider
+	cluster                            *v1alpha1.Cluster
+	clusterSpec                        *cluster.Spec
+	datacenterConfig                   *v1alpha1.CloudStackDatacenterConfig
+	machineConfigs                     map[string]*v1alpha1.CloudStackMachineConfig
+	kubectl                            *mocks.MockProviderKubectlClient
+	validator                          *MockProviderValidator
+}
+
+func newProviderTest(t *testing.T) *providerTest {
+	setupContext(t)
+	ctrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+	spec := givenClusterSpec(t, testClusterConfigMainFilename)
+	p := &providerTest{
+		t:     t,
+		WithT: NewWithT(t),
+		ctx:   context.Background(),
+		managementCluster: &types.Cluster{
+			Name:           "m-cluster",
+			KubeconfigFile: "kubeconfig-m.kubeconfig",
+		},
+		workloadCluster: &types.Cluster{
+			Name:           "test",
+			KubeconfigFile: "kubeconfig-w.kubeconfig",
+		},
+		cluster:          spec.Cluster,
+		clusterSpec:      spec,
+		datacenterConfig: spec.CloudStackDatacenter,
+		machineConfigs:   spec.CloudStackMachineConfigs,
+		kubectl:          kubectl,
+		validator:        givenWildcardValidator(ctrl, spec),
+	}
+	p.buildNewProvider()
+	return p
+}
+
+func (tt *providerTest) buildNewProvider() {
+	tt.provider = newProvider(
+		tt.t,
+		tt.clusterSpec.CloudStackDatacenter,
+		tt.clusterSpec.CloudStackMachineConfigs,
+		tt.clusterSpec.Cluster,
+		tt.kubectl,
+		tt.validator,
+	)
+}
+
 func TestNewProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
@@ -1747,6 +1800,47 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
+}
+
+func TestValidateMachineConfigsNameUniquenessSuccess(t *testing.T) {
+	tt := newProviderTest(t)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	prevSpec := tt.clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	machineConfigs := tt.clusterSpec.CloudStackMachineConfigs
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+	for _, config := range machineConfigs {
+		tt.kubectl.EXPECT().SearchCloudStackMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil).AnyTimes()
+	}
+
+	err := tt.provider.validateMachineConfigsNameUniqueness(tt.ctx, cluster, tt.clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
+func TestValidateMachineConfigsNameUniquenessError(t *testing.T) {
+	tt := newProviderTest(t)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	prevSpec := tt.clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	machineConfigs := tt.clusterSpec.CloudStackMachineConfigs
+	dummyMachineConfig := &v1alpha1.CloudStackMachineConfig{
+		Spec: v1alpha1.CloudStackMachineConfigSpec{Users: []v1alpha1.UserConfiguration{{Name: "capc"}}},
+	}
+
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+	for _, config := range machineConfigs {
+		tt.kubectl.EXPECT().SearchCloudStackMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{dummyMachineConfig}, nil).AnyTimes()
+	}
+	err := tt.provider.validateMachineConfigsNameUniqueness(tt.ctx, cluster, tt.clusterSpec)
+	thenErrorExpected(t, fmt.Sprintf("machineconfig %s already exists", tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name), err)
 }
 
 func TestClusterUpgradeNeededNoChanges(t *testing.T) {
