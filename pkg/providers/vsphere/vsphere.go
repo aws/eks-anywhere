@@ -899,11 +899,11 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 }
 
 func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.VSphereMachineConfig, *v1alpha1.VSphereMachineConfig, error) {
-	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		oldWorkerMachineConfig := newClusterSpec.VSphereMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		newWorkerMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+	if oldWorkerNodeGroup, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		newWorkerMachineConfig := newClusterSpec.VSphereMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		oldWorkerMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldWorkerNodeGroup.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
-			return oldWorkerMachineConfig, nil, err
+			return nil, newWorkerMachineConfig, err
 		}
 		return oldWorkerMachineConfig, newWorkerMachineConfig, nil
 	}

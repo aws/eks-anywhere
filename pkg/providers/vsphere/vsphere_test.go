@@ -583,6 +583,13 @@ func firstMachineConfig(spec *cluster.Spec) *v1alpha1.VSphereMachineConfig {
 	return mc
 }
 
+func getMachineConfig(spec *cluster.Spec, name string) *v1alpha1.VSphereMachineConfig {
+	if mc, ok := spec.VSphereMachineConfigs[name]; ok {
+		return mc
+	}
+	return nil
+}
+
 func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 	tests := []struct {
 		testName          string
@@ -973,6 +980,62 @@ func TestProviderGenerateCAPISpecForCreateWithMultipleWorkerNodeGroups(t *testin
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_multiple_worker_node_groups.yaml")
+}
+
+func TestProviderGenerateCAPISpecForUpgradeUpdateMachineGroupRefName(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	bootstrapCluster := &types.Cluster{
+		Name: "bootstrap-test",
+	}
+	clusterSpec := givenClusterSpec(t, "cluster_main.yaml")
+	vsphereDatacenter := &v1alpha1.VSphereDatacenterConfig{
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{},
+	}
+	vsphereMachineConfig := firstMachineConfig(clusterSpec).DeepCopy()
+	wnMachineConfig := getMachineConfig(clusterSpec, "test-wn")
+
+	newClusterSpec := clusterSpec.DeepCopy()
+	newMachineConfigName := "new-test-wn"
+	newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = newMachineConfigName
+	newWorkerMachineConfig := wnMachineConfig.DeepCopy()
+	newWorkerMachineConfig.Name = newMachineConfigName
+	newClusterSpec.VSphereMachineConfigs[newMachineConfigName] = newWorkerMachineConfig
+
+	ipValidator := mocks.NewMockIPValidator(mockCtrl)
+	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(nil)
+
+	kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereDatacenter, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(wnMachineConfig, nil).AnyTimes()
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
+	kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster)))
+
+	datacenterConfig := givenDatacenterConfig(t, "cluster_main.yaml")
+	provider := newProviderWithKubectl(t, datacenterConfig, clusterSpec.Cluster, kubectl, ipValidator)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	provider.templateBuilder.now = test.NewFakeNow
+	_, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, newClusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md_update_machine_template.yaml")
 }
 
 func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
