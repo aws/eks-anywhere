@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,12 +37,55 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.withFakeClient()
 
 	logger := test.NewNullLogger()
+	remoteClient := env.Client()
 
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil).Times(1)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcileCNISuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	remoteClient := fake.NewClientBuilder().Build()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcileCNIErrorClientRegistry(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(nil, errors.New("building client"))
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
@@ -58,7 +102,7 @@ func (tt *reconcilerTest) allObjs() []client.Object {
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
-	return reconciler.New(tt.client, tt.ipValidator)
+	return reconciler.New(tt.client, tt.ipValidator, tt.cniReconciler, tt.remoteClientRegistry)
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {
@@ -80,6 +124,8 @@ type reconcilerTest struct {
 	machineConfigControlPlane *anywherev1.CloudStackMachineConfig
 	machineConfigWorker       *anywherev1.CloudStackMachineConfig
 	ipValidator               *cloudstackreconcilermocks.MockIPValidator
+	cniReconciler             *cloudstackreconcilermocks.MockCNIReconciler
+	remoteClientRegistry      *cloudstackreconcilermocks.MockRemoteClientRegistry
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -87,6 +133,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	c := env.Client()
 
 	ipValidator := cloudstackreconcilermocks.NewMockIPValidator(ctrl)
+	cniReconciler := cloudstackreconcilermocks.NewMockCNIReconciler(ctrl)
+	remoteClientRegistry := cloudstackreconcilermocks.NewMockRemoteClientRegistry(ctrl)
 
 	bundle := test.Bundle()
 
@@ -167,6 +215,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		datacenterConfig:          workloadClusterDatacenter,
 		machineConfigControlPlane: machineConfigCP,
 		machineConfigWorker:       machineConfigWN,
+		cniReconciler:             cniReconciler,
+		remoteClientRegistry:      remoteClientRegistry,
 	}
 
 	return tt
