@@ -3308,6 +3308,48 @@ func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
 	}
 }
 
+func TestValidateMachineConfigsNameUniquenessSuccess(t *testing.T) {
+	tt := newProviderTest(t)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	prevSpec := tt.clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+	machineConfigs := tt.clusterSpec.VSphereMachineConfigs
+	for _, config := range machineConfigs {
+		tt.kubectl.EXPECT().SearchVsphereMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).AnyTimes()
+	}
+
+	err := tt.provider.validateMachineConfigsNameUniqueness(tt.ctx, cluster, tt.clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
+func TestValidateMachineConfigsNameUniquenessError(t *testing.T) {
+	tt := newProviderTest(t)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	prevSpec := tt.clusterSpec.DeepCopy()
+	prevSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "prev-test-cp"
+	prevSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "prev-test-etcd"
+	dummyVsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
+		Spec: v1alpha1.VSphereMachineConfigSpec{
+			Users: []v1alpha1.UserConfiguration{{Name: "ec2-user"}},
+		},
+	}
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.Name).Return(prevSpec.Cluster, nil)
+	machineConfigs := tt.clusterSpec.VSphereMachineConfigs
+	for _, config := range machineConfigs {
+		tt.kubectl.EXPECT().SearchVsphereMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{dummyVsphereMachineConfig}, nil).AnyTimes()
+	}
+	err := tt.provider.validateMachineConfigsNameUniqueness(tt.ctx, cluster, tt.clusterSpec)
+	thenErrorExpected(t, fmt.Sprintf("control plane VSphereMachineConfig %s already exists", tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name), err)
+}
+
 func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 	tests := []struct {
 		testName   string
