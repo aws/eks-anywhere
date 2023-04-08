@@ -40,7 +40,7 @@ Below you will find code snippets showing how to add the 2 step process from abo
 
 ### DHCP option: `next server`
 
-Most DHCP services define a `next server` option. This option generally corresponds to either DHCP option 66 or the DHCP header `sname`, [reference](https://www.rfc-editor.org/rfc/rfc2132.html#section-9.4).
+Most DHCP services define a `next server` option. This option generally corresponds to either DHCP option 66 or the DHCP header `sname`, [reference.](https://www.rfc-editor.org/rfc/rfc2132.html#section-9.4) This option is used to tell a machine where to download the initial bootloader, [reference.](https://networkboot.org/fundamentals/)
 
 Special consideration is required for the `next server` value when using EKS Anywhere to create your initial [management cluster]({{< relref "../../concepts/cluster-topologies" >}}). This is because during this initial create phase a temporary [bootstrap cluster]({{< relref "../../concepts/cluster-topologies#whats-the-difference-between-a-management-cluster-and-a-bootstrap-cluster-for-eks-anywhere" >}}) is created and used to provision the management cluster.
 
