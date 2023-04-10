@@ -40,9 +40,9 @@ kubectl get etcdadmcluster -A
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
 # backup certs
 cd /etc/etcd
-sudo mv pki pki.bak
-sudo mkdir pki
-sudo mv pki.bak/ca.* pki
+sudo cp -r pki pki.bak
+sudo rm pki/*
+sudo cp pki.bak/ca.* pki
 
 # run certificates join phase to regenerate the deleted certificates
 sudo etcdadm join phase certificates http://eks-a-etcd-dumb-url
@@ -61,9 +61,9 @@ ctr image pull ${IMAGE_ID}
 
 # backup certs
 cd /var/lib/etcd
-mv pki pki.bak
-mkdir pki
-mv pki.bak/ca.* pki
+cp -r pki pki.bak
+rm pki/*
+cp pki.bak/ca.* pki
 
 # recreate certificates
 ctr run \
