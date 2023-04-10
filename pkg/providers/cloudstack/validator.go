@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	reflect "reflect"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -250,4 +252,39 @@ func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStac
 		string(secret.Data[decoder.APIKeyKey]) != profile.ApiKey ||
 		string(secret.Data[decoder.SecretKeyKey]) != profile.SecretKey ||
 		string(secret.Data[decoder.VerifySslKey]) != profile.VerifySsl
+}
+
+// ValidateControlPlaneDiskOfferingUnchanged checks the control plane disk offerring to see if it has not been chaged.
+func (v *Validator) ValidateControlPlaneDiskOfferingUnchanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, client ProviderKubectlClient) error {
+	machineConfig := clusterSpec.CloudStackMachineConfig(clusterSpec.Config.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+	if machineConfig == nil {
+		return nil
+	}
+
+	kubeadmControlPlane, err := client.GetKubeadmControlPlane(ctx, cluster, clusterSpec.Cluster.Name)
+	if err != nil {
+		return fmt.Errorf("getting kubeadmControlPlane for cluster %s: %v", clusterSpec.Cluster.Name, err)
+	}
+
+	machineConfigDiskMap := make(map[string]string)
+	if machineConfig.Spec.DiskOffering != nil {
+		machineConfigDiskMap["DiskOfferingDevice"] = machineConfig.Spec.DiskOffering.Device
+		machineConfigDiskMap["DiskOfferingFilesystem"] = machineConfig.Spec.DiskOffering.Filesystem
+		machineConfigDiskMap["DiskOfferingLabel"] = machineConfig.Spec.DiskOffering.Label
+		machineConfigDiskMap["DiskOfferingPath"] = machineConfig.Spec.DiskOffering.MountPath
+	}
+
+	kubeadmControlPlaneDiskMap := make(map[string]string)
+	if kubeadmControlPlane.Spec.KubeadmConfigSpec.DiskSetup != nil {
+		kubeadmControlPlaneDiskMap["DiskOfferingDevice"] = kubeadmControlPlane.Spec.KubeadmConfigSpec.DiskSetup.Filesystems[0].Device
+		kubeadmControlPlaneDiskMap["DiskOfferingFilesystem"] = kubeadmControlPlane.Spec.KubeadmConfigSpec.DiskSetup.Filesystems[0].Filesystem
+		kubeadmControlPlaneDiskMap["DiskOfferingLabel"] = kubeadmControlPlane.Spec.KubeadmConfigSpec.DiskSetup.Filesystems[0].Label
+		kubeadmControlPlaneDiskMap["DiskOfferingPath"] = kubeadmControlPlane.Spec.KubeadmConfigSpec.Mounts[0][1]
+	}
+
+	if !reflect.DeepEqual(machineConfigDiskMap, kubeadmControlPlaneDiskMap) {
+		return fmt.Errorf("control plane cloudstack machine config %s disk offering field is immutable", machineConfig.Name)
+	}
+
+	return nil
 }

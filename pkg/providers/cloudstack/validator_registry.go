@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -34,6 +35,7 @@ type ProviderValidator interface {
 	ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error
 	ValidateControlPlaneEndpointUniqueness(endpoint string) error
 	ValidateSecretsUnchanged(ctx context.Context, cluster *types.Cluster, execConfig *decoder.CloudStackExecConfig, client ProviderKubectlClient) error
+	ValidateControlPlaneDiskOfferingUnchanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, client ProviderKubectlClient) error
 }
 
 // NewValidatorFactory initializes a factory for the CloudStack provider validator.

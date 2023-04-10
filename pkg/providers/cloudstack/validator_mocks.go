@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	decoder "github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
@@ -63,6 +64,20 @@ func (m *MockProviderValidator) ValidateClusterMachineConfigs(arg0 context.Conte
 func (mr *MockProviderValidatorMockRecorder) ValidateClusterMachineConfigs(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateClusterMachineConfigs", reflect.TypeOf((*MockProviderValidator)(nil).ValidateClusterMachineConfigs), arg0, arg1)
+}
+
+// ValidateControlPlaneDiskOfferingUnchanged mocks base method.
+func (m *MockProviderValidator) ValidateControlPlaneDiskOfferingUnchanged(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 ProviderKubectlClient) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateControlPlaneDiskOfferingUnchanged", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateControlPlaneDiskOfferingUnchanged indicates an expected call of ValidateControlPlaneDiskOfferingUnchanged.
+func (mr *MockProviderValidatorMockRecorder) ValidateControlPlaneDiskOfferingUnchanged(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneDiskOfferingUnchanged", reflect.TypeOf((*MockProviderValidator)(nil).ValidateControlPlaneDiskOfferingUnchanged), arg0, arg1, arg2, arg3)
 }
 
 // ValidateControlPlaneEndpointUniqueness mocks base method.

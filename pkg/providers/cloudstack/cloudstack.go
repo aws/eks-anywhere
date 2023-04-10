@@ -478,6 +478,10 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 		return fmt.Errorf("validating secrets unchanged: %v", err)
 	}
 
+	if err := p.validator.ValidateControlPlaneDiskOfferingUnchanged(ctx, cluster, clusterSpec, p.providerKubectlClient); err != nil {
+		return fmt.Errorf("failed validating control plane disk offering: %v", err)
+	}
+
 	return nil
 }
 
