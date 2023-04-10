@@ -296,7 +296,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values = populateRegistryMirrorValues(clusterSpec, values)
+		values, err := populateRegistryMirrorValues(clusterSpec, values)
+		if err != nil {
+			return values, err
+		}
 	}
 
 	return values, nil
@@ -328,7 +331,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values = populateRegistryMirrorValues(clusterSpec, values)
+		values, err := populateRegistryMirrorValues(clusterSpec, values)
+		if err != nil {
+			return values, err
+		}
 	}
 
 	return values, nil
@@ -624,7 +630,7 @@ func (p *provider) PreCoreComponentsUpgrade(
 	return nil
 }
 
-func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) map[string]interface{} {
+func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) (map[string]interface{}, error) {
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
@@ -638,10 +644,10 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 		values["registryAuth"] = registryMirror.Auth
 		username, password, err := config.ReadCredentials()
 		if err != nil {
-			return values
+			return values, err
 		}
 		values["registryUsername"] = username
 		values["registryPassword"] = password
 	}
-	return values
+	return values, nil
 }
