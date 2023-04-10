@@ -84,8 +84,12 @@ ${IMAGE_ID} tmp-cert-renew \
 sudo etcdctl --cacert=/etc/etcd/pki/ca.crt --cert=/etc/etcd/pki/etcdctl-etcd-client.crt --key=/etc/etcd/pki/etcdctl-etcd-client.key member list
 {{< /tab >}}
 {{< tab header="Bottlerocket" lang="bash" >}}
-# there should be no error except "connection refused" for the health check
-tail -f -n 100 /var/log/containers/etcd*
+ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1)
+ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
+     --cacert=/var/lib/etcd/pki/ca.crt \
+     --cert=/var/lib/etcd/pki/server.crt \
+     --key=/var/lib/etcd/pki/server.key \
+     member list
 {{< /tab >}}
 {{< /tabpane >}}
 
