@@ -262,7 +262,7 @@ func (v *Validator) ValidateControlPlaneDiskOfferingUnchanged(ctx context.Contex
 		return nil
 	}
 
-	kubeadmControlPlane, err := client.GetKubeadmControlPlane(ctx, cluster, clusterSpec.Cluster.Name, executables.WithCluster(cluster))
+	kubeadmControlPlane, err := client.GetKubeadmControlPlane(ctx, cluster, clusterSpec.Cluster.Name, executables.WithCluster(cluster), executables.WithAllNamespaces())
 	if err != nil {
 		return fmt.Errorf("getting kubeadmControlPlane for cluster %s: %v", clusterSpec.Cluster.Name, err)
 	}
