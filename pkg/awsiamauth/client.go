@@ -2,6 +2,7 @@ package awsiamauth
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -91,7 +92,9 @@ func (c RetrierClient) GetClusterCACert(ctx context.Context, cluster *types.Clus
 	}
 
 	if crt, ok := secret.Data["tls.crt"]; ok {
-		return crt, nil
+		b64EncodedCrt := make([]byte, base64.StdEncoding.EncodedLen(len(crt)))
+		base64.StdEncoding.Encode(b64EncodedCrt, crt)
+		return b64EncodedCrt, nil
 	}
 
 	return nil, fmt.Errorf("tls.crt not found in secret [%s]", secretName)
