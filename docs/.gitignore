@@ -3,3 +3,5 @@ resources/
 node_modules/
 tech-doc-hugo
 /themes/docsy
+bin/
+tmp/

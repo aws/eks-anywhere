@@ -135,11 +135,36 @@ sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241e
 ```bash
 export KUBEVERSION="1.26"
 ```
-5. Download Bottlerocket node image
+5. Programmatically retrieve the Bottlerocket version corresponding to this release of EKS-A and Kubernetes version and export it.
+   
+   Using the latest EKS Anywhere version
+   ```bash
+   EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
+   ```
+
+   OR
+
+   Using a specific EKS Anywhere version
+   ```bash
+   EKSA_RELEASE_VERSION=v0.15.1
+   ```
+
+   Set the Bottlerocket image format to the desired value (`ova` for the VMware variant or `raw` for the Baremetal variant)
+   ```bash
+   export BOTTLEROCKET_IMAGE_FORMAT="ova"
+   ```
+
+   ```bash
+   BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
+   BUILD_TOOLING_COMMIT=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.gitCommit")
+   export BOTTLEROCKET_VERSION=$(curl -sL https://raw.githubusercontent.com/aws/eks-anywhere-build-tooling/$BUILD_TOOLING_COMMIT/projects/kubernetes-sigs/image-builder/BOTTLEROCKET_RELEASES | yq ".$(echo $KUBEVERSION | tr '.' '-').$BOTTLEROCKET_IMAGE_FORMAT-release-version")
+   ```
+
+6. Download Bottlerocket node image
 
     a. To download VMware variant Bottlerocket OVA
     ```bash
-    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.13.1.ova"
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-${BOTTLEROCKET_VERSION}.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -149,7 +174,7 @@ export KUBEVERSION="1.26"
 
     b. To download Baremetal variant Bottlerocket image
     ```bash
-    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.12.0.img.lz4"
+    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-${BOTTLEROCKET_VERSION}.img.lz4"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-metal} --target-name "${IMAGE}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/metal-k8s-${KUBEVERSION}/x86_64/" \
@@ -192,7 +217,7 @@ To use `image-builder`, you must meet the following prerequisites:
 
 #### System requirements
 
-`image-builder` has been tested on Ubuntu, RHEL and Amazon Linux 2 machines. The following system requirements should be met for the machine on which `image-builder` is run:
+`image-builder` has been tested on Ubuntu (20.04, 21.04, 22.04), RHEL 8 and Amazon Linux 2 machines. The following system requirements should be met for the machine on which `image-builder` is run:
 * AMD 64-bit architecture
 * 50 GB disk space
 * 2 vCPUs
@@ -308,14 +333,37 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    cd /home/$USER
    ```
 1. Install packages and prepare environment:
-   ```bash
+   {{< tabpane >}}
+
+   {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
    sudo apt install jq unzip make ansible python3-pip -y
    sudo snap install yq
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   ```
+   {{< /tab >}}
+
+   {{< tab header="RHEL" lang="bash" >}}
+   sudo dnf update -y
+   sudo dnf install jq unzip make python3-pip wget -y
+   python3 -m pip install --user ansible
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo yum update -y
+   sudo yum install jq unzip make python3-pip ansible wget -y
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< /tabpane >}}
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -413,7 +461,9 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    cd /home/$USER
    ```
 1. Install packages and prepare environment:
-   ```bash
+   {{< tabpane >}}
+
+   {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
    sudo apt install jq make python3-pip qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip ansible -y
    sudo snap install yq
@@ -423,7 +473,34 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   ```
+   {{< /tab >}}
+
+   {{< tab header="RHEL" lang="bash" >}}
+   sudo dnf update -y
+   sudo dnf install jq make python3-pip qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
+   python3 -m pip install --user ansible
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   sudo usermod -a -G kvm $USER
+   sudo chmod 666 /dev/kvm
+   sudo chown root:kvm /dev/kvm
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< tab header="Amazon Linux" lang="bash" >}}
+   sudo yum update -y
+   sudo yum install jq make python3-pip qemu-kvm libvirt libvirt-clients libguestfs-tools unzip ansible wget -y
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   sudo usermod -a -G kvm $USER
+   sudo chmod 666 /dev/kvm
+   sudo chown root:kvm /dev/kvm
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< /tabpane >}}
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -516,7 +593,9 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    cd /home/$USER
    ```
 1. Install packages and prepare environment:
-   ```bash
+   {{< tabpane >}}
+
+   {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
    sudo apt install jq make python3-pip qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip ansible -y
    sudo snap install yq
@@ -526,7 +605,34 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   ```
+   {{< /tab >}}
+
+   {{< tab header="RHEL" lang="bash" >}}
+   sudo dnf update -y
+   sudo dnf install jq make python3-pip qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
+   python3 -m pip install --user ansible
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   sudo usermod -a -G kvm $USER
+   sudo chmod 666 /dev/kvm
+   sudo chown root:kvm /dev/kvm
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< tab header="Amazon Linux" lang="bash" >}}
+   sudo yum update -y
+   sudo yum install jq make python3-pip qemu-kvm libvirt libvirt-clients libguestfs-tools unzip ansible wget -y
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   sudo usermod -a -G kvm $USER
+   sudo chmod 666 /dev/kvm
+   sudo chown root:kvm /dev/kvm
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< /tabpane >}}
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -590,14 +696,37 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    cd /home/$USER
    ```
 1. Install packages and prepare environment:
-   ```bash
+   {{< tabpane >}}
+
+   {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
    sudo apt install jq unzip make ansible python3-pip -y
    sudo snap install yq
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   ```
+   {{< /tab >}}
+
+   {{< tab header="RHEL" lang="bash" >}}
+   sudo dnf update -y
+   sudo dnf install jq unzip make python3-pip wget -y
+   python3 -m pip install --user ansible
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo yum update -y
+   sudo yum install jq unzip make python3-pip ansible wget -y
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< /tabpane >}}
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
@@ -679,14 +808,37 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
    cd /home/$USER
    ```
 1. Install packages and prepare environment:
-   ```bash
+   {{< tabpane >}}
+
+   {{< tab header="Ubuntu" lang="bash" >}}
    sudo apt update -y
    sudo apt install jq unzip make ansible python3-pip -y
    sudo snap install yq
    mkdir -p /home/$USER/.ssh
    echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
    echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   ```
+   {{< /tab >}}
+
+   {{< tab header="RHEL" lang="bash" >}}
+   sudo dnf update -y
+   sudo dnf install jq unzip make python3-pip wget -y
+   python3 -m pip install --user ansible
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< tab header="Amazon Linux 2" lang="bash" >}}
+   sudo yum update -y
+   sudo yum install jq unzip make python3-pip ansible wget -y
+   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+   mkdir -p /home/$USER/.ssh
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   {{< /tab >}}
+
+   {{< /tabpane >}}
 1. Get `image-builder`:
 
    Using the latest EKS Anywhere version
