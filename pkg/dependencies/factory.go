@@ -791,7 +791,7 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 		}
 		certgen := crypto.NewCertificateGenerator()
 		clusterId := uuid.New()
-		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(certgen, clusterId, f.dependencies.Kubectl, f.dependencies.Writer)
+		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(certgen, clusterId, awsiamauth.NewRetrierClient(f.dependencies.Kubectl), f.dependencies.Writer)
 		return nil
 	})
 
