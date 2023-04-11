@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-var ClusterctlMoveRetryPolicy = clusterctlMoveRetryPolicy
-
 func KubectlWaitRetryPolicy(k *Kubectl, totalRetries int, err error) (retry bool, wait time.Duration) {
 	return k.kubectlWaitRetryPolicy(totalRetries, err)
 }
