@@ -26,13 +26,7 @@ This will let you create a cluster in multiple providers for local development o
 
 If you are using Ubuntu, use the Docker CE installation instructions to install Docker and not the Snap installation, as described [here.](https://docs.docker.com/engine/install/ubuntu/)
 
-If you are using Ubuntu 21.10 or 22.04, you will need to switch from _cgroups v2_ to _cgroups v1_. For details, see [Troubleshooting Guide.]({{< relref "../../tasks/troubleshoot/troubleshooting.md#cgroups-v2-is-not-supported-in-ubuntu-2110-and-2204" >}})
-
-If you are using Docker Desktop, you need to know that:
-
 * For EKS Anywhere Bare Metal, Docker Desktop is not supported
-* For EKS Anywhere vSphere, if you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
-
 
 ### Install EKS Anywhere CLI tools
 
