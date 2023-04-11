@@ -8,6 +8,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var ClusterctlMoveRetryPolicy = clusterctlMoveRetryPolicy
+
 func TestClusterManager_totalTimeoutForMachinesReadyWait(t *testing.T) {
 	tests := []struct {
 		name     string
