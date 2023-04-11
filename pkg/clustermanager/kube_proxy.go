@@ -71,7 +71,7 @@ type KubeProxyCLIUpgrader struct {
 	retrier       retrier.Retrier
 }
 
-// KubeProxyCLIUpgraderOpt allows to customize a KubeProxyCLIUpgraderOpt
+// KubeProxyCLIUpgraderOpt allows to customize a KubeProxyCLIUpgrader
 // on construction.
 type KubeProxyCLIUpgraderOpt func(*KubeProxyCLIUpgrader)
 

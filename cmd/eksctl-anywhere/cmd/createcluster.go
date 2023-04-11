@@ -128,6 +128,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithEksdInstaller().
 		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig)
 
+	if cc.timeoutOptions.noTimeouts {
+		factory.WithNoTimeouts()
+	}
+
 	deps, err := factory.Build(ctx)
 	if err != nil {
 		return err
