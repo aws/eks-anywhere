@@ -50,6 +50,9 @@ const (
 	kubectlPath        = "kubectl"
 	timeoutPrecision   = 2
 	minimumWaitTimeout = 0.01 // Smallest express-able timeout value given the precision
+
+	networkFaultBaseRetryTime = 10 * time.Second
+	networkFaultBackoffFactor = 1.5
 )
 
 var (
@@ -90,6 +93,47 @@ var (
 
 type Kubectl struct {
 	Executable
+	// networkFaultBackoffFactor drives the exponential backoff wait
+	// for transient network failures during retry operations.
+	networkFaultBackoffFactor float64
+
+	// networkFaultBaseRetryTime drives the base time wait for the
+	// exponential backoff for transient network failures during retry operations.
+	networkFaultBaseRetryTime time.Duration
+}
+
+// KubectlConfigOpt configures Kubectl on construction.
+type KubectlConfigOpt func(*Kubectl)
+
+// NewKubectl builds a new Kubectl.
+func NewKubectl(executable Executable, opts ...KubectlConfigOpt) *Kubectl {
+	k := &Kubectl{
+		Executable:                executable,
+		networkFaultBackoffFactor: networkFaultBackoffFactor,
+		networkFaultBaseRetryTime: networkFaultBaseRetryTime,
+	}
+
+	for _, opt := range opts {
+		opt(k)
+	}
+
+	return k
+}
+
+// WithKubectlNetworkFaultBaseRetryTime configures the base time wait for the
+// exponential backoff for transient network failures during retry operations.
+func WithKubectlNetworkFaultBaseRetryTime(wait time.Duration) KubectlConfigOpt {
+	return func(k *Kubectl) {
+		k.networkFaultBaseRetryTime = wait
+	}
+}
+
+// WithNetworkFaultBackoffFactor configures the exponential backoff wait
+// for transient network failures during retry operations.
+func WithNetworkFaultBackoffFactor(factor float64) KubectlConfigOpt {
+	return func(k *Kubectl) {
+		k.networkFaultBackoffFactor = factor
+	}
 }
 
 type capiMachinesResponse struct {
@@ -196,12 +240,6 @@ func (k *Kubectl) DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudst
 type VersionResponse struct {
 	ClientVersion version.Info `json:"clientVersion"`
 	ServerVersion version.Info `json:"serverVersion"`
-}
-
-func NewKubectl(executable Executable) *Kubectl {
-	return &Kubectl{
-		Executable: executable,
-	}
 }
 
 func (k *Kubectl) GetNamespace(ctx context.Context, kubeconfig string, namespace string) error {
@@ -439,7 +477,7 @@ func (k *Kubectl) WaitForPodCompleted(ctx context.Context, cluster *types.Cluste
 
 func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
-	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
+	// Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
 	if err != nil {
 		return fmt.Errorf("unparsable timeout specified: %w", err)
@@ -449,7 +487,7 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 	}
 	timeoutTime := time.Now().Add(timeoutDuration)
 
-	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
+	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(k.kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
 			return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace, opts...)
@@ -474,7 +512,7 @@ func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 		return fmt.Errorf("negative timeout specified: %w", err)
 	}
 
-	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
+	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(k.kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
 			return k.waitJSONPathLoop(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace, opts...)
@@ -498,7 +536,7 @@ func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout s
 		return fmt.Errorf("negative timeout specified: %w", err)
 	}
 
-	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
+	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(k.kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
 			return k.waitJSONPath(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace, opts...)
@@ -510,16 +548,15 @@ func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout s
 	return nil
 }
 
-func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+func (k *Kubectl) kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
 	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
 
 	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
 	if totalRetries < 1 {
 		totalRetries = 1
 	}
-	const networkFaultBaseRetryTime = 10 * time.Second
-	const backoffFactor = 1.5
-	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
+
+	waitTime := time.Duration(float64(k.networkFaultBaseRetryTime) * math.Pow(k.networkFaultBackoffFactor, float64(totalRetries-1)))
 
 	if match := kubectlConnectionRefusedRegex.MatchString(err.Error()); match {
 		return true, waitTime
