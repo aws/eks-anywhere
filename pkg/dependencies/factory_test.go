@@ -213,7 +213,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithVSphereValidator().
 		WithCiliumTemplater().
 		WithIPValidator().
-		WithKubeProxyCLIUpgrader(dependencies.KubeProxyCLIUpgraderOptions{}).
+		WithKubeProxyCLIUpgrader().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -487,7 +487,8 @@ func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
 func TestFactoryBuildWithKubeProxyCLIUpgraderNoTimeout(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		WithKubeProxyCLIUpgrader(dependencies.KubeProxyCLIUpgraderOptions{NoTimouts: true}).
+		WithNoTimeouts().
+		WithKubeProxyCLIUpgrader().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
