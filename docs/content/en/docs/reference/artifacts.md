@@ -101,6 +101,8 @@ OS Family - `os:bottlerocket`
 
 EKS Distro Release
 
+1.26 - `eksdRelease:kubernetes-1-26-eks-5`
+
 1.25 - `eksdRelease:kubernetes-1-25-eks-10`
 
 1.24 - `eksdRelease:kubernetes-1-24-eks-14`
@@ -129,9 +131,9 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"
 ```
-4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.22, 1.23, 1.24 and 1.25.
+4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.22, 1.23, 1.24, 1.25 and 1.26.
 ```bash
-export KUBEVERSION="1.25"
+export KUBEVERSION="1.26"
 ```
 5. Download Bottlerocket node image
 

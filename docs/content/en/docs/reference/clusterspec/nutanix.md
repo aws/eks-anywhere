@@ -38,7 +38,7 @@ spec:
  datacenterRef:
    kind: NutanixDatacenterConfig
    name: nutanix-cluster
- kubernetesVersion: "1.25"
+ kubernetesVersion: "1.26"
  workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
@@ -70,7 +70,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.25
+   name: eksa-ubuntu-2004-kube-v1.26
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -98,7 +98,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.25
+   name: eksa-ubuntu-2004-kube-v1.26
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -176,7 +176,7 @@ Maximum number of nodes for this node group’s autoscaling configuration.
 Refers to the Kubernetes object with Nutanix environment specific configuration. See `NutanixDatacenterConfig` fields below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.25`, `1.24`, `1.23`, `1.22`, `1.21`
+The Kubernetes version you want to use for your cluster. Supported values: `1.26`, `1.25`, `1.24`, `1.23`, `1.22`
 
 ## NutanixDatacenterConfig Fields
 
