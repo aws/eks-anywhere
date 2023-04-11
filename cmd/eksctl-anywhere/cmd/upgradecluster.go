@@ -96,19 +96,24 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
+	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerTimeoutOpts).
-		WithKubeProxyCLIUpgrader(kubeProxyCLIUpgraderOptions(uc)).
+		WithKubeProxyCLIUpgrader().
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().
 		WithEksdUpgrader().
 		WithEksdInstaller().
-		WithKubectl().
-		Build(ctx)
+		WithKubectl()
+
+	if uc.timeoutOptions.noTimeouts {
+		factory.WithNoTimeouts()
+	}
+
+	deps, err := factory.Build(ctx)
 	if err != nil {
 		return err
 	}
