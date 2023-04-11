@@ -911,25 +911,19 @@ func TestMachineConfigs(t *testing.T) {
 
 func TestDeleteResources(t *testing.T) {
 	tt := newSnowTest(t)
-	tt.kubeUnAuthClient.EXPECT().Delete(
-		tt.ctx,
-		tt.clusterSpec.SnowDatacenter.Name,
-		tt.clusterSpec.SnowDatacenter.Namespace,
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(
 		tt.clusterSpec.ManagementCluster.KubeconfigFile,
+	).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().Delete(
+		tt.ctx,
 		tt.clusterSpec.SnowDatacenter,
 	).Return(nil)
-	tt.kubeUnAuthClient.EXPECT().Delete(
+	tt.kubeconfigClient.EXPECT().Delete(
 		tt.ctx,
-		tt.clusterSpec.SnowMachineConfigs["test-cp"].Name,
-		tt.clusterSpec.SnowMachineConfigs["test-cp"].Namespace,
-		tt.clusterSpec.ManagementCluster.KubeconfigFile,
 		tt.clusterSpec.SnowMachineConfigs["test-cp"],
 	).Return(nil)
-	tt.kubeUnAuthClient.EXPECT().Delete(
+	tt.kubeconfigClient.EXPECT().Delete(
 		tt.ctx,
-		tt.clusterSpec.SnowMachineConfigs["test-wn"].Name,
-		tt.clusterSpec.SnowMachineConfigs["test-wn"].Namespace,
-		tt.clusterSpec.ManagementCluster.KubeconfigFile,
 		tt.clusterSpec.SnowMachineConfigs["test-wn"],
 	).Return(nil)
 

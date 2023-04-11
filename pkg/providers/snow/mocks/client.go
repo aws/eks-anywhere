@@ -50,20 +50,6 @@ func (mr *MockKubeUnAuthClientMockRecorder) Apply(ctx, kubeconfig, obj interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockKubeUnAuthClient)(nil).Apply), ctx, kubeconfig, obj)
 }
 
-// Delete mocks base method.
-func (m *MockKubeUnAuthClient) Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, name, namespace, kubeconfig, obj)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockKubeUnAuthClientMockRecorder) Delete(ctx, name, namespace, kubeconfig, obj interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockKubeUnAuthClient)(nil).Delete), ctx, name, namespace, kubeconfig, obj)
-}
-
 // KubeconfigClient mocks base method.
 func (m *MockKubeUnAuthClient) KubeconfigClient(kubeconfig string) kubernetes.Client {
 	m.ctrl.T.Helper()

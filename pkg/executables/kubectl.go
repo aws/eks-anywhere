@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"regexp"
@@ -16,6 +15,7 @@ import (
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	"github.com/pkg/errors"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -32,6 +32,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
@@ -43,6 +44,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -2007,7 +2009,7 @@ func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig stri
 // HasResource implements KubectlRunner.
 func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
 	throwaway := &unstructured.Unstructured{}
-	err := k.get(ctx, resourceType, kubeconfig, throwaway, withGetResourceName(name), withGetNamespace(namespace))
+	err := k.Get(ctx, resourceType, kubeconfig, throwaway, withGetResourceName(name), withNamespaceOrDefaultForGet(namespace))
 	if err != nil {
 		return false, err
 	}
@@ -2018,64 +2020,65 @@ func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name str
 // and unmarshalls the response into the provided Object
 // If the object is not found, it returns an error implementing apimachinery errors.APIStatus.
 func (k *Kubectl) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
-	return k.get(ctx, resourceType, kubeconfig, obj, withGetResourceName(name), withGetNamespace(namespace))
+	return k.Get(ctx, resourceType, kubeconfig, obj, withGetResourceName(name), withNamespaceOrDefaultForGet(namespace))
 }
 
 // GetClusterObject performs a GET class like above except without namespace required.
 func (k *Kubectl) GetClusterObject(ctx context.Context, resourceType, name, kubeconfig string, obj runtime.Object) error {
-	return k.get(ctx, resourceType, kubeconfig, obj, withGetResourceName(name))
+	return k.Get(ctx, resourceType, kubeconfig, obj, withGetResourceName(name), withClusterScope())
 }
 
 func (k *Kubectl) ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error {
-	return k.get(ctx, resourceType, kubeconfig, list, withGetNamespace(namespace))
+	return k.Get(ctx, resourceType, kubeconfig, list, withNamespaceOrDefaultForGet(namespace))
 }
 
-type (
-	getOption  func(*getOptions)
-	getOptions struct {
-		name      string
-		namespace string
-	}
-)
-
-func withGetResourceName(name string) getOption {
-	return func(o *getOptions) {
-		o.name = name
+func withGetResourceName(name string) kubernetes.KubectlGetOption {
+	return &kubernetes.KubectlGetOptions{
+		Name: name,
 	}
 }
 
-func withGetNamespace(namespace string) getOption {
-	return func(o *getOptions) {
-		o.namespace = namespace
+// withNamespaceOrDefaultForGet returns an option for a get command to use the provided namespace
+// or the default namespace if an empty string is provided.
+// For backwards compatibility, we us the default namespace if this method is called explicitly
+// with an empty namespace since some parts of the code rely on kubectl using the default namespace
+// when no namespace argument is passed.
+func withNamespaceOrDefaultForGet(namespace string) kubernetes.KubectlGetOption {
+	if namespace == "" {
+		namespace = "default"
+	}
+	return &kubernetes.KubectlGetOptions{
+		Namespace: namespace,
 	}
 }
 
-func (k *Kubectl) get(ctx context.Context, resourceType, kubeconfig string, obj runtime.Object, opts ...getOption) error {
-	o := &getOptions{}
+func withClusterScope() kubernetes.KubectlGetOption {
+	return &kubernetes.KubectlGetOptions{
+		ClusterScoped: ptr.Bool(true),
+	}
+}
+
+// Get performs a kubectl get command.
+func (k *Kubectl) Get(ctx context.Context, resourceType, kubeconfig string, obj runtime.Object, opts ...kubernetes.KubectlGetOption) error {
+	o := &kubernetes.KubectlGetOptions{}
 	for _, opt := range opts {
-		opt(o)
+		opt.ApplyToGet(o)
 	}
 
-	params := []string{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", kubeconfig, resourceType}
-	if o.namespace != "" {
-		params = append(params, "--namespace", o.namespace)
-	}
-	if o.name != "" {
-		params = append(params, o.name)
+	clusterScoped := o.ClusterScoped != nil && *o.ClusterScoped
+
+	if o.Name != "" && o.Namespace == "" && !clusterScoped {
+		return errors.New("if Name is specified, Namespace is required")
 	}
 
+	params := getParams(resourceType, kubeconfig, o)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("getting %s with kubectl: %v", resourceType, err)
 	}
 
 	if stdOut.Len() == 0 {
-		resourceTypeSplit := strings.SplitN(resourceType, ".", 2)
-		gr := schema.GroupResource{Resource: resourceTypeSplit[0]}
-		if len(resourceTypeSplit) == 2 {
-			gr.Group = resourceTypeSplit[1]
-		}
-		return apierrors.NewNotFound(gr, o.name)
+		return newNotFoundErrorForTypeAndName(resourceType, o.Name)
 	}
 
 	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
@@ -2083,6 +2086,163 @@ func (k *Kubectl) get(ctx context.Context, resourceType, kubeconfig string, obj 
 	}
 
 	return nil
+}
+
+func getParams(resourceType, kubeconfig string, o *kubernetes.KubectlGetOptions) []string {
+	clusterScoped := o.ClusterScoped != nil && *o.ClusterScoped
+
+	params := []string{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", kubeconfig, resourceType}
+	if o.Namespace != "" {
+		params = append(params, "--namespace", o.Namespace)
+	} else if !clusterScoped {
+		params = append(params, "--all-namespaces")
+	}
+
+	if o.Name != "" {
+		params = append(params, o.Name)
+	}
+
+	return params
+}
+
+// Create performs a kubectl create command.
+func (k *Kubectl) Create(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+	b, err := yaml.Marshal(obj)
+	if err != nil {
+		return errors.Wrap(err, "marshalling object")
+	}
+	_, err = k.ExecuteWithStdin(ctx, b, "create", "-f", "-", "--kubeconfig", kubeconfig)
+	if isKubectlAlreadyExistsError(err) {
+		return newAlreadyExistsErrorForObj(obj)
+	}
+
+	if err != nil {
+		return errors.Wrapf(err, "creating %s object with kubectl", obj.GetObjectKind().GroupVersionKind())
+	}
+	return nil
+}
+
+const alreadyExistsErrorMessageSubString = "AlreadyExists"
+
+func isKubectlAlreadyExistsError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), alreadyExistsErrorMessageSubString)
+}
+
+const notFoundErrorMessageSubString = "NotFound"
+
+func isKubectlNotFoundError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), notFoundErrorMessageSubString)
+}
+
+func newAlreadyExistsErrorForObj(obj runtime.Object) error {
+	return apierrors.NewAlreadyExists(
+		groupResourceFromObj(obj),
+		resourceNameFromObj(obj),
+	)
+}
+
+func groupResourceFromObj(obj runtime.Object) schema.GroupResource {
+	apiObj, ok := obj.(client.Object)
+	if !ok {
+		// If this doesn't implement the client object interface,
+		// we don't know how to process it. This should never happen for
+		// any of the known types.
+		return schema.GroupResource{}
+	}
+
+	k := apiObj.GetObjectKind().GroupVersionKind()
+	return schema.GroupResource{
+		Group:    k.Group,
+		Resource: k.Kind,
+	}
+}
+
+func resourceNameFromObj(obj runtime.Object) string {
+	apiObj, ok := obj.(client.Object)
+	if !ok {
+		// If this doesn't implement the client object interface,
+		// we don't know how to process it. This should never happen for
+		// any of the known types.
+		return ""
+	}
+
+	return apiObj.GetName()
+}
+
+func newNotFoundErrorForTypeAndName(resourceType, name string) error {
+	resourceTypeSplit := strings.SplitN(resourceType, ".", 2)
+	gr := schema.GroupResource{Resource: resourceTypeSplit[0]}
+	if len(resourceTypeSplit) == 2 {
+		gr.Group = resourceTypeSplit[1]
+	}
+	return apierrors.NewNotFound(gr, name)
+}
+
+// Replace performs a kubectl replace command.
+func (k *Kubectl) Replace(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+	b, err := yaml.Marshal(obj)
+	if err != nil {
+		return errors.Wrap(err, "marshalling object")
+	}
+	if _, err := k.ExecuteWithStdin(ctx, b, "replace", "-f", "-", "--kubeconfig", kubeconfig); err != nil {
+		return errors.Wrapf(err, "replacing %s object with kubectl", obj.GetObjectKind().GroupVersionKind())
+	}
+	return nil
+}
+
+// Delete performs a delete command authenticating with a kubeconfig file.
+func (k *Kubectl) Delete(ctx context.Context, resourceType, kubeconfig string, opts ...kubernetes.KubectlDeleteOption) error {
+	o := &kubernetes.KubectlDeleteOptions{}
+	for _, opt := range opts {
+		opt.ApplyToDelete(o)
+	}
+
+	if o.Name != "" && o.Namespace == "" {
+		return errors.New("if Name is specified, Namespace is required")
+	}
+
+	if o.Name != "" && o.HasLabels != nil {
+		return errors.New("options for HasLabels and Name are mutually exclusive")
+	}
+
+	params := deleteParams(resourceType, kubeconfig, o)
+	_, err := k.Execute(ctx, params...)
+	if isKubectlNotFoundError(err) {
+		return newNotFoundErrorForTypeAndName(resourceType, o.Name)
+	}
+
+	if err != nil {
+		return errors.Wrapf(err, "deleting %s", resourceType)
+	}
+	return nil
+}
+
+func deleteParams(resourceType, kubeconfig string, o *kubernetes.KubectlDeleteOptions) []string {
+	params := []string{"delete", "--kubeconfig", kubeconfig, resourceType}
+	if o.Name != "" {
+		params = append(params, o.Name)
+	} else if o.HasLabels == nil {
+		params = append(params, "--all")
+	}
+
+	if o.Namespace != "" {
+		params = append(params, "--namespace", o.Namespace)
+	} else {
+		params = append(params, "--all-namespaces")
+	}
+
+	if len(o.HasLabels) > 0 {
+		labelConstrains := make([]string, 0, len(o.HasLabels))
+		for l, v := range o.HasLabels {
+			labelConstrains = append(labelConstrains, l+"="+v)
+		}
+
+		sort.Strings(labelConstrains)
+
+		params = append(params, "--selector", strings.Join(labelConstrains, ","))
+	}
+
+	return params
 }
 
 func (k *Kubectl) Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error {
@@ -2134,14 +2294,6 @@ func (k *Kubectl) GetStorageClass(ctx context.Context, name, kubeconfig string) 
 
 func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
 	return k.Execute(ctx, opts...)
-}
-
-// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file.
-func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error {
-	if _, err := k.Execute(ctx, "delete", resourceType, name, "--namespace", namespace, "--kubeconfig", kubeconfig); err != nil {
-		return fmt.Errorf("deleting %s %s in namespace %s: %v", name, resourceType, namespace, err)
-	}
-	return nil
 }
 
 // DeleteClusterObject performs a DELETE call like above except without namespace required.

@@ -49,7 +49,6 @@ type SnowProvider struct {
 
 type KubeUnAuthClient interface {
 	KubeconfigClient(kubeconfig string) kubernetes.Client
-	Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error
 	Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error
 }
 
@@ -334,12 +333,15 @@ func (p *SnowProvider) UpgradeNeeded(ctx context.Context, newSpec, oldSpec *clus
 }
 
 func (p *SnowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
+	client := p.kubeUnAuthClient.KubeconfigClient(clusterSpec.ManagementCluster.KubeconfigFile)
+
 	for _, mc := range clusterSpec.SnowMachineConfigs {
-		if err := p.kubeUnAuthClient.Delete(ctx, mc.Name, mc.Namespace, clusterSpec.ManagementCluster.KubeconfigFile, mc); err != nil {
+		if err := client.Delete(ctx, mc); err != nil {
 			return err
 		}
 	}
-	return p.kubeUnAuthClient.Delete(ctx, clusterSpec.SnowDatacenter.GetName(), clusterSpec.SnowDatacenter.GetNamespace(), clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.SnowDatacenter)
+
+	return client.Delete(ctx, clusterSpec.SnowDatacenter)
 }
 
 func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {

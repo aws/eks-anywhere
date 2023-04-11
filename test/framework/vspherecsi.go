@@ -8,6 +8,7 @@ import (
 
 	v1 "k8s.io/api/storage/v1"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -61,7 +62,11 @@ func (e *ClusterE2ETest) DeleteVSphereCSI() {
 	ctx := context.Background()
 	e.deleteVsphereCSIResources(ctx)
 	csiClusterResourceSetName := fmt.Sprintf("%s-csi", e.ClusterName)
-	err := e.KubectlClient.Delete(ctx, "clusterresourceset", csiClusterResourceSetName, constants.EksaSystemNamespace, e.Cluster().KubeconfigFile)
+	opts := &kubernetes.KubectlDeleteOptions{
+		Name:      csiClusterResourceSetName,
+		Namespace: constants.EksaSystemNamespace,
+	}
+	err := e.KubectlClient.Delete(ctx, "clusterresourceset", e.Cluster().KubeconfigFile, opts)
 	if err != nil {
 		e.T.Fatal(err)
 	}
@@ -74,14 +79,24 @@ func (w *WorkloadCluster) DeleteWorkloadVsphereCSI() {
 }
 
 func (e *ClusterE2ETest) deleteVsphereCSIResources(ctx context.Context) {
-	err := e.KubectlClient.Delete(ctx, "deployment", csiDeployment, kubeSystemNameSpace, e.Cluster().KubeconfigFile)
+	opts := &kubernetes.KubectlDeleteOptions{
+		Name:      csiDeployment,
+		Namespace: kubeSystemNameSpace,
+	}
+	err := e.KubectlClient.Delete(ctx, "deployment", e.Cluster().KubeconfigFile, opts)
 	if err != nil {
 		e.T.Fatal(err)
 	}
-	err = e.KubectlClient.Delete(ctx, "daemonset", csiDaemonSet, kubeSystemNameSpace, e.Cluster().KubeconfigFile)
+
+	opts = &kubernetes.KubectlDeleteOptions{
+		Name:      csiDaemonSet,
+		Namespace: kubeSystemNameSpace,
+	}
+	err = e.KubectlClient.Delete(ctx, "daemonset", e.Cluster().KubeconfigFile, opts)
 	if err != nil {
 		e.T.Fatal(err)
 	}
+
 	err = e.KubectlClient.DeleteClusterObject(ctx, "storageclass", csiStorageClassName, e.Cluster().KubeconfigFile)
 	if err != nil {
 		e.T.Fatal(err)
