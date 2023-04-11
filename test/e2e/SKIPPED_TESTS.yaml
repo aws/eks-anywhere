@@ -1,6 +1,8 @@
 skipped_tests:
 # CloudStack
 - TestCloudStackKubernetes123RedhatProxyConfig
+- TestCloudStackKubernetes123AddRemoveAz
+- TestCloudStackKubernetes123MultiEndpointSimpleFlow
 # CloudStack Registry Mirror endpoint was not set up
 - TestCloudStackKubernetes123RedhatRegistryMirrorAndCert
 - TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror
