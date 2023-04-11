@@ -7,8 +7,8 @@ package mocks
 import (
 	reflect "reflect"
 
+	kubernetes "github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	gomock "github.com/golang/mock/gomock"
-	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // MockClientFactory is a mock of ClientFactory interface.
@@ -35,10 +35,10 @@ func (m *MockClientFactory) EXPECT() *MockClientFactoryMockRecorder {
 }
 
 // BuildClientFromKubeconfig mocks base method.
-func (m *MockClientFactory) BuildClientFromKubeconfig(kubeconfigPath string) (client.Client, error) {
+func (m *MockClientFactory) BuildClientFromKubeconfig(kubeconfigPath string) (kubernetes.Client, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BuildClientFromKubeconfig", kubeconfigPath)
-	ret0, _ := ret[0].(client.Client)
+	ret0, _ := ret[0].(kubernetes.Client)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

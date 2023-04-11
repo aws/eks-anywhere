@@ -29,6 +29,7 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
@@ -2433,7 +2434,7 @@ func TestKubectlGetStorageClassSuccess(t *testing.T) {
 
 func TestKubectlGetStorageClassError(t *testing.T) {
 	t.Parallel()
-	newKubectlGetterTest(t).withResourceType(
+	newKubectlGetterTest(t).withoutNamespace().withResourceType(
 		"storageclass",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
 		return tt.k.GetStorageClass(tt.ctx, tt.name, tt.kubeconfig)
@@ -2488,6 +2489,148 @@ func TestKubectlGetObjectNotFound(t *testing.T) {
 			tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	}
+}
+
+func TestKubectlGetObjectWithEMptyNamespace(t *testing.T) {
+	tt := newKubectlTest(t)
+	name := "my-cluster"
+	emptyNamespace := ""
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		// Here we expect the command to have the default namespace set explicitly
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "cluster", "--namespace", "default", name,
+	).Return(bytes.Buffer{}, nil)
+
+	err := tt.k.GetObject(tt.ctx, "cluster", name, emptyNamespace, tt.kubeconfig, &clusterv1.Cluster{})
+	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
+}
+
+func TestKubectlGetAllObjects(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	list := &v1alpha1.ClusterList{}
+	b, err := json.Marshal(list)
+	tt.Expect(err).To(Succeed())
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters", "--all-namespaces",
+	).Return(*bytes.NewBuffer(b), nil)
+
+	got := &v1alpha1.ClusterList{}
+	tt.Expect(tt.k.Get(tt.ctx, "clusters", tt.kubeconfig, got)).To(Succeed())
+	tt.Expect(got).To(BeComparableTo(list))
+}
+
+func TestKubectlGetAllObjectsInNamespace(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	list := &v1alpha1.ClusterList{}
+	b, err := json.Marshal(list)
+	tt.Expect(err).To(Succeed())
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters", "--namespace", tt.namespace,
+	).Return(*bytes.NewBuffer(b), nil)
+
+	opts := &kubernetes.KubectlGetOptions{
+		Namespace: tt.namespace,
+	}
+	got := &v1alpha1.ClusterList{}
+	tt.Expect(tt.k.Get(tt.ctx, "clusters", tt.kubeconfig, got, opts)).To(Succeed())
+	tt.Expect(got).To(BeComparableTo(list))
+}
+
+func TestKubectlGetSingleObject(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	clusterName := "my-cluster"
+	cluster := &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+	}
+	b, err := json.Marshal(cluster)
+	tt.Expect(err).To(Succeed())
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "clusters", "--namespace", tt.namespace, clusterName,
+	).Return(*bytes.NewBuffer(b), nil)
+
+	opts := &kubernetes.KubectlGetOptions{
+		Namespace: tt.namespace,
+		Name:      clusterName,
+	}
+	got := &v1alpha1.Cluster{}
+	tt.Expect(tt.k.Get(tt.ctx, "clusters", tt.kubeconfig, got, opts)).To(Succeed())
+	tt.Expect(got).To(BeComparableTo(cluster))
+}
+
+func TestKubectlGetWithNameAndWithoutNamespace(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	clusterName := "my-cluster"
+
+	opts := &kubernetes.KubectlGetOptions{
+		Name: clusterName,
+	}
+
+	tt.Expect(tt.k.Get(tt.ctx, "clusters", tt.kubeconfig, &v1alpha1.Cluster{}, opts)).To(
+		MatchError(ContainSubstring("if Name is specified, Namespace is required")),
+	)
+}
+
+func TestKubectlCreateSuccess(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	secret := &corev1.Secret{}
+	b, err := yaml.Marshal(secret)
+	tt.Expect(err).To(Succeed())
+
+	tt.e.EXPECT().ExecuteWithStdin(
+		tt.ctx,
+		b,
+		"create", "-f", "-", "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Create(tt.ctx, tt.kubeconfig, secret)).To(Succeed())
+}
+
+func TestKubectlCreateAlreadyExistsError(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	secret := &corev1.Secret{}
+	b, err := yaml.Marshal(secret)
+	tt.Expect(err).To(Succeed())
+
+	tt.e.EXPECT().ExecuteWithStdin(
+		tt.ctx,
+		b,
+		"create", "-f", "-", "--kubeconfig", tt.kubeconfig,
+	).Return(
+		bytes.Buffer{},
+		errors.New("Error from server (AlreadyExists): error when creating \"STDIN\": secret \"my-secret\" already exists\n"), //nolint:revive // The format of the message it's important here since the code checks for its content
+	)
+
+	err = tt.k.Create(tt.ctx, tt.kubeconfig, secret)
+	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(apierrors.IsAlreadyExists(err)).To(BeTrue(), "error should be an AlreadyExists apierror")
+}
+
+func TestKubectlReplaceSuccess(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	secret := &corev1.Secret{}
+	b, err := yaml.Marshal(secret)
+	tt.Expect(err).To(Succeed())
+
+	tt.e.EXPECT().ExecuteWithStdin(
+		tt.ctx,
+		b,
+		"replace", "-f", "-", "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Replace(tt.ctx, tt.kubeconfig, secret)).To(Succeed())
 }
 
 func TestKubectlGetClusterObjectNotFound(t *testing.T) {
@@ -2740,17 +2883,128 @@ func TestGetUnprovisionedTinkerbellHardware_ExecutableErrors(t *testing.T) {
 	tt.Expect(err).NotTo(BeNil())
 }
 
-func TestKubectlDelete(t *testing.T) {
+func TestKubectlDeleteSingleObject(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
 	name := "my-cluster"
 	resourceType := "cluster.x-k8s.io"
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"delete", resourceType, name, "--namespace", tt.namespace, "--kubeconfig", tt.kubeconfig,
+		"delete", "--kubeconfig", tt.kubeconfig, resourceType, name, "--namespace", tt.namespace,
 	).Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.k.Delete(tt.ctx, resourceType, name, tt.namespace, tt.kubeconfig)).To(Succeed())
+	opts := &kubernetes.KubectlDeleteOptions{
+		Name:      name,
+		Namespace: tt.namespace,
+	}
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, tt.kubeconfig, opts)).To(Succeed())
+}
+
+func TestKubectlDeleteAllObjectsInNamespace(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	resourceType := "cluster.x-k8s.io"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", "--kubeconfig", tt.kubeconfig, resourceType, "--all", "--namespace", tt.namespace,
+	).Return(bytes.Buffer{}, nil)
+
+	opts := &kubernetes.KubectlDeleteOptions{
+		Namespace: tt.namespace,
+	}
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, tt.kubeconfig, opts)).To(Succeed())
+}
+
+func TestKubectlDeleteAllObjectsInNamespaceWithLabels(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	resourceType := "cluster.x-k8s.io"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete",
+		"--kubeconfig", tt.kubeconfig,
+		resourceType,
+		"--namespace", tt.namespace,
+		"--selector", "label1=val1,label2=val2",
+	).Return(bytes.Buffer{}, nil)
+
+	opts := &kubernetes.KubectlDeleteOptions{
+		Namespace: tt.namespace,
+		HasLabels: map[string]string{
+			"label2": "val2",
+			"label1": "val1",
+		},
+	}
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, tt.kubeconfig, opts)).To(Succeed())
+}
+
+func TestKubectlDeleteAllObjectsInAllNamespaces(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	resourceType := "cluster.x-k8s.io"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", "--kubeconfig", tt.kubeconfig, resourceType, "--all", "--all-namespaces",
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, tt.kubeconfig)).To(Succeed())
+}
+
+func TestKubectlDeleteObjectWithNoNamespace(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	resourceType := "cluster.x-k8s.io"
+	clusterName := "my-cluster"
+
+	opts := &kubernetes.KubectlDeleteOptions{
+		Name: clusterName,
+	}
+
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, tt.kubeconfig, opts)).To(
+		MatchError(ContainSubstring("if Name is specified, Namespace is required")),
+	)
+}
+
+func TestKubectlDeleteObjectWithHasLabels(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	resourceType := "cluster.x-k8s.io"
+	clusterName := "my-cluster"
+
+	opts := &kubernetes.KubectlDeleteOptions{
+		Name:      clusterName,
+		Namespace: tt.namespace,
+		HasLabels: map[string]string{
+			"mylabel": "value",
+		},
+	}
+
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, tt.kubeconfig, opts)).To(
+		MatchError(ContainSubstring("options for HasLabels and Name are mutually exclusive")),
+	)
+}
+
+func TestKubectlDeleteObjectNotFoundError(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	name := "my-cluster"
+	resourceType := "cluster.x-k8s.io"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", "--kubeconfig", tt.kubeconfig, resourceType, name, "--namespace", tt.namespace,
+	).Return(
+		bytes.Buffer{},
+		errors.New("Error from server (NotFound): cluster \"my-cluster\" not found\n"), //nolint:revive // The format of the message it's important here since the code checks for its content
+	)
+
+	opts := &kubernetes.KubectlDeleteOptions{
+		Name:      name,
+		Namespace: tt.namespace,
+	}
+
+	err := tt.k.Delete(tt.ctx, resourceType, tt.kubeconfig, opts)
+	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(apierrors.IsNotFound(err)).To(BeTrue(), "error should be a NotFound apierror")
 }
 
 func TestKubectlDeleteClusterObject(t *testing.T) {

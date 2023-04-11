@@ -487,6 +487,7 @@ func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
 func TestFactoryBuildWithKubeProxyCLIUpgraderNoTimeout(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
 		WithNoTimeouts().
 		WithKubeProxyCLIUpgrader().
 		Build(context.Background())
