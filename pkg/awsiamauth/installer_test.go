@@ -28,14 +28,14 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 
 	var manifest []byte
 	k8s := NewMockKubernetesClient(ctrl)
-	k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+	k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, cluster *types.Cluster, data []byte) error {
 			manifest = data
 			return nil
 		},
 	)
-	k8s.EXPECT().GetApiServerUrl(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
-	k8s.EXPECT().GetClusterCATlsCert(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("ca-cert"), nil)
+	k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
+	k8s.EXPECT().GetClusterCACert(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("ca-cert"), nil)
 
 	var kubeconfig []byte
 	writer := filewritermock.NewMockFileWriter(ctrl)
@@ -111,32 +111,32 @@ func TestInstallAWSIAMAuthErrors(t *testing.T) {
 		ConfigureMocks func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter)
 	}{
 		{
-			Name: "ApplyKubeSpecFromBytesFails",
+			Name: "ApplyFails",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter) {
-				k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(err)
+				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(err)
 			},
 		},
 		{
-			Name: "GetApiServerUrlFails",
+			Name: "GetAPIServerURLFails",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter) {
-				k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				k8s.EXPECT().GetApiServerUrl(gomock.Any(), gomock.Any()).Return("", err)
+				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("", err)
 			},
 		},
 		{
-			Name: "GetClusterCATlsCertFails",
+			Name: "GetClusterCACertFails",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter) {
-				k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				k8s.EXPECT().GetApiServerUrl(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
-				k8s.EXPECT().GetClusterCATlsCert(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, err)
+				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
+				k8s.EXPECT().GetClusterCACert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, err)
 			},
 		},
 		{
 			Name: "WriteFails",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter) {
-				k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				k8s.EXPECT().GetApiServerUrl(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
-				k8s.EXPECT().GetClusterCATlsCert(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("ca-cert"), nil)
+				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
+				k8s.EXPECT().GetClusterCACert(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("ca-cert"), nil)
 				writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).Return("", err)
 			},
 		},
@@ -222,7 +222,7 @@ func TestCreateAndInstallAWSIAMAuthCASecret(t *testing.T) {
 
 	var manifest []byte
 	k8s := NewMockKubernetesClient(ctrl)
-	k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+	k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, cluster *types.Cluster, data []byte) error {
 			manifest = data
 			return nil
@@ -248,15 +248,15 @@ func TestCreateAndInstallAWSIAMAuthCASecretErrors(t *testing.T) {
 		ConfigureMocks func(err error, k8s *MockKubernetesClient, certs *cryptomocks.MockCertificateGenerator)
 	}{
 		{
-			Name: "ApplyKubeSpecFromBytesError",
+			Name: "ApplyError",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, certs *cryptomocks.MockCertificateGenerator) {
-				k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(err)
+				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(err)
 			},
 		},
 		{
 			Name: "GenerateIamAuthSelfSignCertKeyPairError",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, certs *cryptomocks.MockCertificateGenerator) {
-				k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 				certs.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return(nil, nil, err)
 			},
 		},
@@ -270,7 +270,7 @@ func TestCreateAndInstallAWSIAMAuthCASecretErrors(t *testing.T) {
 			writer := filewritermock.NewMockFileWriter(ctrl)
 
 			k8s := NewMockKubernetesClient(ctrl)
-			k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New(tc.Name))
+			k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New(tc.Name))
 
 			certs := cryptomocks.NewMockCertificateGenerator(ctrl)
 			certs.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte("ca-cert"), []byte("ca-key"), nil)
@@ -300,7 +300,7 @@ func TestUpgradeAWSIAMAuth(t *testing.T) {
 	k8s := NewMockKubernetesClient(ctrl)
 
 	var manifest []byte
-	k8s.EXPECT().ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+	k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, cluster *types.Cluster, data []byte) error {
 			manifest = data
 			return nil
