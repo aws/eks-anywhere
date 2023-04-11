@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -16,14 +15,9 @@ import (
 
 // KubernetesClient provides Kubernetes API access.
 type KubernetesClient interface {
-	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
-	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	GetClusterCATlsCert(
-		ctx context.Context,
-		clusterName string,
-		cluster *types.Cluster,
-		namespace string,
-	) ([]byte, error)
+	Apply(ctx context.Context, cluster *types.Cluster, data []byte) error
+	GetAPIServerURL(ctx context.Context, cluster *types.Cluster) (string, error)
+	GetClusterCACert(ctx context.Context, cluster *types.Cluster, clusterName string) ([]byte, error)
 }
 
 // Installer provides the necessary behavior for installing the AWS IAM Authenticator.
@@ -59,7 +53,7 @@ func (i *Installer) CreateAndInstallAWSIAMAuthCASecret(ctx context.Context, mana
 		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
 	}
 
-	if err = i.k8s.ApplyKubeSpecFromBytes(ctx, managementCluster, secret); err != nil {
+	if err = i.k8s.Apply(ctx, managementCluster, secret); err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator ca secret: %v", err)
 	}
 
@@ -78,7 +72,7 @@ func (i *Installer) InstallAWSIAMAuth(
 		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
 	}
 
-	if err = i.k8s.ApplyKubeSpecFromBytes(ctx, workload, manifest); err != nil {
+	if err = i.k8s.Apply(ctx, workload, manifest); err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
 	}
 
@@ -95,7 +89,7 @@ func (i *Installer) UpgradeAWSIAMAuth(ctx context.Context, cluster *types.Cluste
 		return fmt.Errorf("generating manifest: %v", err)
 	}
 
-	err = i.k8s.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthManifest)
+	err = i.k8s.Apply(ctx, cluster, awsIamAuthManifest)
 	if err != nil {
 		return fmt.Errorf("applying manifest: %v", err)
 	}
@@ -126,16 +120,15 @@ func (i *Installer) generateKubeconfig(
 ) error {
 	fileName := fmt.Sprintf("%s-aws.kubeconfig", workload.Name)
 
-	serverURL, err := i.k8s.GetApiServerUrl(ctx, workload)
+	serverURL, err := i.k8s.GetAPIServerURL(ctx, workload)
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
 	}
 
-	tlsCert, err := i.k8s.GetClusterCATlsCert(
+	tlsCert, err := i.k8s.GetClusterCACert(
 		ctx,
-		workload.Name,
 		management,
-		constants.EksaSystemNamespace,
+		workload.Name,
 	)
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
