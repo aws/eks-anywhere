@@ -527,9 +527,13 @@ func TestKubeProxyCLIUpgraderPrepareUpgradeErrorManagementClusterClient(t *testi
 	workloadKubeConfig := "workload.yaml"
 	ctrl := gomock.NewController(t)
 	factory := mocks.NewMockClientFactory(ctrl)
-	factory.EXPECT().BuildClientFromKubeconfig(managementKubeConfig).Return(nil, errors.New("building management client"))
+	factory.EXPECT().BuildClientFromKubeconfig(managementKubeConfig).Return(nil, errors.New("building management client")).Times(2)
 
-	u := clustermanager.NewKubeProxyCLIUpgrader(test.NewNullLogger(), factory)
+	u := clustermanager.NewKubeProxyCLIUpgrader(
+		test.NewNullLogger(),
+		factory,
+		clustermanager.KubeProxyCLIUpgraderRetrier(*retrier.NewWithMaxRetries(2, 0)),
+	)
 
 	g.Expect(
 		u.PrepareUpgrade(tt.ctx, tt.spec, managementKubeConfig, workloadKubeConfig),
@@ -545,9 +549,13 @@ func TestKubeProxyCLIUpgraderPrepareUpgradeErrorWorkloadClusterClient(t *testing
 	ctrl := gomock.NewController(t)
 	factory := mocks.NewMockClientFactory(ctrl)
 	factory.EXPECT().BuildClientFromKubeconfig(managementKubeConfig).Return(tt.managementClient, nil)
-	factory.EXPECT().BuildClientFromKubeconfig(workloadKubeConfig).Return(nil, errors.New("building workload client"))
+	factory.EXPECT().BuildClientFromKubeconfig(workloadKubeConfig).Return(nil, errors.New("building workload client")).Times(2)
 
-	u := clustermanager.NewKubeProxyCLIUpgrader(test.NewNullLogger(), factory)
+	u := clustermanager.NewKubeProxyCLIUpgrader(
+		test.NewNullLogger(),
+		factory,
+		clustermanager.KubeProxyCLIUpgraderRetrier(*retrier.NewWithMaxRetries(2, 0)),
+	)
 
 	g.Expect(
 		u.PrepareUpgrade(tt.ctx, tt.spec, managementKubeConfig, workloadKubeConfig),
@@ -622,9 +630,13 @@ func TestKubeProxyCLICleanupAfterUpgradeErrorWorkloadClusterClient(t *testing.T)
 	ctrl := gomock.NewController(t)
 	factory := mocks.NewMockClientFactory(ctrl)
 	factory.EXPECT().BuildClientFromKubeconfig(managementKubeConfig).Return(tt.managementClient, nil)
-	factory.EXPECT().BuildClientFromKubeconfig(workloadKubeConfig).Return(nil, errors.New("building workload client"))
+	factory.EXPECT().BuildClientFromKubeconfig(workloadKubeConfig).Return(nil, errors.New("building workload client")).Times(2)
 
-	u := clustermanager.NewKubeProxyCLIUpgrader(test.NewNullLogger(), factory)
+	u := clustermanager.NewKubeProxyCLIUpgrader(
+		test.NewNullLogger(),
+		factory,
+		clustermanager.KubeProxyCLIUpgraderRetrier(*retrier.NewWithMaxRetries(2, 0)),
+	)
 
 	g.Expect(
 		u.CleanupAfterUpgrade(tt.ctx, tt.spec, managementKubeConfig, workloadKubeConfig),
