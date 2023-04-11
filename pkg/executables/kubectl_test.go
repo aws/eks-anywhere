@@ -98,6 +98,7 @@ func newKubectlTest(t *testing.T) *kubectlTest {
 }
 
 func TestKubectlGetCAPIMachines(t *testing.T) {
+	t.Parallel()
 	g := NewWithT(t)
 	k, ctx, cluster, e := newKubectl(t)
 
@@ -156,6 +157,7 @@ func TestKubectlGetCAPIMachines(t *testing.T) {
 }
 
 func TestKubectlApplyManifestSuccess(t *testing.T) {
+	t.Parallel()
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -167,6 +169,7 @@ func TestKubectlApplyManifestSuccess(t *testing.T) {
 }
 
 func TestKubectlApplyManifestError(t *testing.T) {
+	t.Parallel()
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -178,6 +181,7 @@ func TestKubectlApplyManifestError(t *testing.T) {
 }
 
 func TestKubectlApplyKubeSpecFromBytesSuccess(t *testing.T) {
+	t.Parallel()
 	var data []byte
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -189,6 +193,7 @@ func TestKubectlApplyKubeSpecFromBytesSuccess(t *testing.T) {
 }
 
 func TestKubectlApplyKubeSpecFromBytesError(t *testing.T) {
+	t.Parallel()
 	var data []byte
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -200,6 +205,7 @@ func TestKubectlApplyKubeSpecFromBytesError(t *testing.T) {
 }
 
 func TestKubectlDeleteManifestSuccess(t *testing.T) {
+	t.Parallel()
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -211,6 +217,7 @@ func TestKubectlDeleteManifestSuccess(t *testing.T) {
 }
 
 func TestKubectlDeleteManifestError(t *testing.T) {
+	t.Parallel()
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -222,6 +229,7 @@ func TestKubectlDeleteManifestError(t *testing.T) {
 }
 
 func TestKubectlDeleteKubeSpecFromBytesSuccess(t *testing.T) {
+	t.Parallel()
 	var data []byte
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -233,6 +241,7 @@ func TestKubectlDeleteKubeSpecFromBytesSuccess(t *testing.T) {
 }
 
 func TestKubectlDeleteSpecFromBytesError(t *testing.T) {
+	t.Parallel()
 	var data []byte
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -244,6 +253,7 @@ func TestKubectlDeleteSpecFromBytesError(t *testing.T) {
 }
 
 func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
+	t.Parallel()
 	var data []byte = []byte("someData")
 	var namespace string
 
@@ -256,6 +266,7 @@ func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
 }
 
 func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccessWithEmptyInput(t *testing.T) {
+	t.Parallel()
 	var data []byte
 	var namespace string
 
@@ -267,6 +278,7 @@ func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccessWithEmptyInput(t *test
 }
 
 func TestKubectlApplyKubeSpecFromBytesWithNamespaceError(t *testing.T) {
+	t.Parallel()
 	var data []byte = []byte("someData")
 	var namespace string
 
@@ -279,6 +291,7 @@ func TestKubectlApplyKubeSpecFromBytesWithNamespaceError(t *testing.T) {
 }
 
 func TestKubectlCreateNamespaceSuccess(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -290,6 +303,7 @@ func TestKubectlCreateNamespaceSuccess(t *testing.T) {
 }
 
 func TestKubectlCreateNamespaceError(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -301,6 +315,7 @@ func TestKubectlCreateNamespaceError(t *testing.T) {
 }
 
 func TestKubectlCreateNamespaceIfNotPresentSuccessOnNamespacePresent(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -312,6 +327,7 @@ func TestKubectlCreateNamespaceIfNotPresentSuccessOnNamespacePresent(t *testing.
 }
 
 func TestKubectlCreateNamespaceIfNotPresentSuccessOnNamespaceNotPresent(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -325,6 +341,7 @@ func TestKubectlCreateNamespaceIfNotPresentSuccessOnNamespaceNotPresent(t *testi
 }
 
 func TestKubectlCreateNamespaceIfNotPresentFailureOnNamespaceCreationFailure(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -338,6 +355,7 @@ func TestKubectlCreateNamespaceIfNotPresentFailureOnNamespaceCreationFailure(t *
 }
 
 func TestKubectlDeleteNamespaceSuccess(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -349,6 +367,7 @@ func TestKubectlDeleteNamespaceSuccess(t *testing.T) {
 }
 
 func TestKubectlDeleteNamespaceError(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -360,6 +379,7 @@ func TestKubectlDeleteNamespaceError(t *testing.T) {
 }
 
 func TestKubectlDeleteSecretSuccess(t *testing.T) {
+	t.Parallel()
 	var secretName, namespace string
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -371,6 +391,7 @@ func TestKubectlDeleteSecretSuccess(t *testing.T) {
 }
 
 func TestKubectlGetNamespaceSuccess(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -382,6 +403,7 @@ func TestKubectlGetNamespaceSuccess(t *testing.T) {
 }
 
 func TestKubectlGetNamespaceError(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -393,6 +415,7 @@ func TestKubectlGetNamespaceError(t *testing.T) {
 }
 
 func TestKubectlWaitSuccess(t *testing.T) {
+	t.Parallel()
 	var timeout, kubeconfig, forCondition, property, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -410,6 +433,7 @@ func TestKubectlWaitSuccess(t *testing.T) {
 }
 
 func TestKubectlWaitBadTimeout(t *testing.T) {
+	t.Parallel()
 	var timeout, kubeconfig, forCondition, property, namespace string
 
 	k, ctx, _, _ := newKubectl(t)
@@ -426,37 +450,41 @@ func TestKubectlWaitBadTimeout(t *testing.T) {
 }
 
 func TestKubectlWaitRetryPolicy(t *testing.T) {
+	t.Parallel()
 	connectionRefusedError := fmt.Errorf("The connection to the server 127.0.0.1:56789 was refused")
 	ioTimeoutError := fmt.Errorf("Unable to connect to the server 127.0.0.1:56789, i/o timeout\n")
 	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
 
-	_, wait := executables.KubectlWaitRetryPolicy(1, connectionRefusedError)
+	k := executables.NewKubectl(nil)
+
+	_, wait := executables.KubectlWaitRetryPolicy(k, 1, connectionRefusedError)
 	if wait != 10*time.Second {
 		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for connection refused")
 	}
 
-	_, wait = executables.KubectlWaitRetryPolicy(-1, connectionRefusedError)
+	_, wait = executables.KubectlWaitRetryPolicy(k, -1, connectionRefusedError)
 	if wait != 10*time.Second {
 		t.Errorf("kubectlWaitRetryPolicy didn't correctly protect for total retries < 0")
 	}
 
-	_, wait = executables.KubectlWaitRetryPolicy(2, connectionRefusedError)
+	_, wait = executables.KubectlWaitRetryPolicy(k, 2, connectionRefusedError)
 	if wait != 15*time.Second {
 		t.Errorf("kubectlWaitRetryPolicy didn't correctly protect for second retry wait")
 	}
 
-	_, wait = executables.KubectlWaitRetryPolicy(1, ioTimeoutError)
+	_, wait = executables.KubectlWaitRetryPolicy(k, 1, ioTimeoutError)
 	if wait != 10*time.Second {
 		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
 	}
 
-	retry, _ := executables.KubectlWaitRetryPolicy(1, miscellaneousError)
+	retry, _ := executables.KubectlWaitRetryPolicy(k, 1, miscellaneousError)
 	if retry != false {
 		t.Errorf("kubectlWaitRetryPolicy didn't not-retry on non-network error")
 	}
 }
 
 func TestWaitForTimeout(t *testing.T) {
+	t.Parallel()
 	k := executables.Kubectl{}
 	timeoutTime := time.Now()
 	err := executables.CallKubectlPrivateWait(&k, nil, "", timeoutTime, "myCondition", "myProperty", "")
@@ -466,6 +494,7 @@ func TestWaitForTimeout(t *testing.T) {
 }
 
 func TestKubectlWaitForService(t *testing.T) {
+	t.Parallel()
 	testSvc := &corev1.Service{
 		Spec: corev1.ServiceSpec{
 			ClusterIP: "192.168.1.2",
@@ -485,6 +514,7 @@ func TestKubectlWaitForService(t *testing.T) {
 }
 
 func TestKubectlWaitForServiceWithLoadBalancer(t *testing.T) {
+	t.Parallel()
 	testSvc := &corev1.Service{
 		Status: corev1.ServiceStatus{
 			LoadBalancer: corev1.LoadBalancerStatus{
@@ -510,6 +540,7 @@ func TestKubectlWaitForServiceWithLoadBalancer(t *testing.T) {
 }
 
 func TestKubectlWaitForServiceTimedOut(t *testing.T) {
+	t.Parallel()
 	k, ctx, _, e := newKubectl(t)
 	expectedParam := []string{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", "kubeconfig", "service", "--namespace", "eksa-packages", "test"}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil).AnyTimes()
@@ -519,6 +550,7 @@ func TestKubectlWaitForServiceTimedOut(t *testing.T) {
 }
 
 func TestKubectlWaitForServiceBadTimeout(t *testing.T) {
+	t.Parallel()
 	k, ctx, _, _ := newKubectl(t)
 	if err := k.WaitForService(ctx, "kubeconfig", "abc", "test", "eksa-packages"); err == nil {
 		t.Errorf("Kubectl.WaitForService() error = nil, want parsing duration error")
@@ -526,6 +558,7 @@ func TestKubectlWaitForServiceBadTimeout(t *testing.T) {
 }
 
 func TestKubectlWaitError(t *testing.T) {
+	t.Parallel()
 	var timeout, kubeconfig, forCondition, property, namespace string
 
 	k, ctx, _, e := newKubectl(t)
@@ -541,22 +574,26 @@ func TestKubectlWaitError(t *testing.T) {
 }
 
 func TestKubectlWaitNetworkErrorWithRetries(t *testing.T) {
+	t.Parallel()
 	var timeout, kubeconfig, forCondition, property, namespace string
 
-	t.Log("This test tests actual kubectl retries with backoff, and hence is slow running.  Expect approx 25s.")
-
 	k, ctx, _, e := newKubectl(t)
+	// Rebuild the kubectl executable with custom wait params so we avoid extremely long tests.
+	k = executables.NewKubectl(e,
+		executables.WithKubectlNetworkFaultBaseRetryTime(1*time.Millisecond),
+		executables.WithNetworkFaultBackoffFactor(1),
+	)
 
 	timeout = "1m"
 	expectedTimeout := "60.00s"
 
 	expectedParam := []string{"wait", "--timeout", expectedTimeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
-	firstTry := e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("The connection to the server 127.0.0.1:56789 was refused"))
+	firstTry := e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("The connection to the server 127.0.0.1:56789 was refused")) //nolint:revive // The format of the message it's important here since the policy code depends on it
 
-	// Kubectl Wait is intelligently adjusting the timeout param on retries.  This is hard to predict from within the test
-	//  so I'm not having the mock validate params on the retried calls.
+	// Kubectl Wait is intelligently adjusting the timeout param on retries. This is hard to predict from within the test
+	// so I'm not having the mock validate params on the retried calls.
 
-	secondTry := e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("Unable to connect to the server: 127.0.0.1: 56789, i/o timeout.\n"))
+	secondTry := e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("Unable to connect to the server: 127.0.0.1: 56789, i/o timeout.\n")) //nolint:revive // The format of the message it's important here since the policy code depends on it
 
 	thirdTry := e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{}, nil)
 
@@ -572,6 +609,7 @@ func TestKubectlWaitNetworkErrorWithRetries(t *testing.T) {
 }
 
 func TestKubectlSearchCloudStackMachineConfigs(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace, name string
 	buffer := bytes.Buffer{}
 	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
@@ -592,6 +630,7 @@ func TestKubectlSearchCloudStackMachineConfigs(t *testing.T) {
 }
 
 func TestKubectlSearchCloudStackDatacenterConfigs(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace, name string
 	buffer := bytes.Buffer{}
 	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_datacenterconfigs.json"))
@@ -612,6 +651,7 @@ func TestKubectlSearchCloudStackDatacenterConfigs(t *testing.T) {
 }
 
 func TestCloudStackWorkerNodesMachineTemplate(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace, clusterName, machineTemplateName string
 	machineTemplateNameBuffer := bytes.NewBufferString(machineTemplateName)
 	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
@@ -633,6 +673,7 @@ func TestCloudStackWorkerNodesMachineTemplate(t *testing.T) {
 }
 
 func TestVsphereWorkerNodesMachineTemplate(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace, clusterName, machineTemplateName string
 	machineTemplateNameBuffer := bytes.NewBufferString(machineTemplateName)
 	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
@@ -654,6 +695,7 @@ func TestVsphereWorkerNodesMachineTemplate(t *testing.T) {
 }
 
 func TestKubectlSaveLogSuccess(t *testing.T) {
+	t.Parallel()
 	filename := "testfile"
 	_, writer := test.NewWriter(t)
 
@@ -672,6 +714,7 @@ func TestKubectlSaveLogSuccess(t *testing.T) {
 }
 
 func TestKubectlSaveLogError(t *testing.T) {
+	t.Parallel()
 	filename := "testfile"
 	_, writer := test.NewWriter(t)
 
@@ -690,6 +733,7 @@ func TestKubectlSaveLogError(t *testing.T) {
 }
 
 func TestKubectlDeleteClusterSuccess(t *testing.T) {
+	t.Parallel()
 	kubeconfigFile := "c.kubeconfig"
 	managementCluster := &types.Cluster{
 		KubeconfigFile: kubeconfigFile,
@@ -707,6 +751,7 @@ func TestKubectlDeleteClusterSuccess(t *testing.T) {
 }
 
 func TestKubectlDeleteClusterError(t *testing.T) {
+	t.Parallel()
 	kubeconfigFile := "c.kubeconfig"
 	managementCluster := &types.Cluster{
 		KubeconfigFile: kubeconfigFile,
@@ -724,6 +769,7 @@ func TestKubectlDeleteClusterError(t *testing.T) {
 }
 
 func TestKubectlGetMachines(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1024,6 +1070,7 @@ func TestKubectlGetMachines(t *testing.T) {
 }
 
 func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1098,6 +1145,7 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 }
 
 func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1186,6 +1234,7 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 }
 
 func TestKubectlLoadSecret(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName string
 		params   []string
@@ -1217,6 +1266,7 @@ func TestKubectlLoadSecret(t *testing.T) {
 }
 
 func TestKubectlGetSecretFromNamespaceSuccess(t *testing.T) {
+	t.Parallel()
 	newKubectlGetterTest(t).withResourceType(
 		"secret",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
@@ -1247,6 +1297,7 @@ metadata:
 }
 
 func TestKubectlGetSecretFromNamespaceError(t *testing.T) {
+	t.Parallel()
 	newKubectlGetterTest(t).withResourceType(
 		"secret",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
@@ -1255,6 +1306,7 @@ func TestKubectlGetSecretFromNamespaceError(t *testing.T) {
 }
 
 func TestKubectlGetSecret(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName     string
 		responseFile string
@@ -1315,6 +1367,7 @@ metadata:
 }
 
 func TestKubectlGetClusters(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1365,6 +1418,7 @@ func TestKubectlGetClusters(t *testing.T) {
 }
 
 func TestKubectlGetEKSAClusters(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1406,6 +1460,7 @@ func TestKubectlGetEKSAClusters(t *testing.T) {
 }
 
 func TestKubectlGetGetApiServerUrlSuccess(t *testing.T) {
+	t.Parallel()
 	wantUrl := "https://127.0.0.1:37479"
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
@@ -1424,6 +1479,7 @@ func TestKubectlGetGetApiServerUrlSuccess(t *testing.T) {
 }
 
 func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
+	t.Parallel()
 	envVar := "TEST_VAR"
 	envVarValue := "TEST_VALUE"
 	k, ctx, cluster, e := newKubectl(t)
@@ -1442,6 +1498,7 @@ func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
 }
 
 func TestKubectlRolloutRestartDaemonSetSuccess(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
@@ -1458,6 +1515,7 @@ func TestKubectlRolloutRestartDaemonSetSuccess(t *testing.T) {
 }
 
 func TestKubectlRolloutRestartDaemonSetError(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
@@ -1474,6 +1532,7 @@ func TestKubectlRolloutRestartDaemonSetError(t *testing.T) {
 }
 
 func TestKubectlGetGetApiServerUrlError(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
@@ -1487,6 +1546,7 @@ func TestKubectlGetGetApiServerUrlError(t *testing.T) {
 }
 
 func TestKubectlGetPodsWithAllNamespaces(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1538,6 +1598,7 @@ func TestKubectlGetPodsWithAllNamespaces(t *testing.T) {
 }
 
 func TestKubectlGetPodsWithNamespace(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1592,6 +1653,7 @@ func TestKubectlGetPodsWithNamespace(t *testing.T) {
 }
 
 func TestKubectlGetPodsWithServerSkipTLSAndToken(t *testing.T) {
+	t.Parallel()
 	k, ctx, _, e := newKubectl(t)
 	server := "https://127.0.0.1:37479"
 	token := "token"
@@ -1613,6 +1675,7 @@ func TestKubectlGetPodsWithServerSkipTLSAndToken(t *testing.T) {
 }
 
 func TestKubectlGetDeploymentsWithAllNamespaces(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName            string
 		jsonResponseFile    string
@@ -1657,6 +1720,7 @@ func TestKubectlGetDeploymentsWithAllNamespaces(t *testing.T) {
 }
 
 func TestKubectlGetDeploymentsWithServerSkipTLSAndToken(t *testing.T) {
+	t.Parallel()
 	server := "https://127.0.0.1:37479"
 	token := "token"
 	k, ctx, _, e := newKubectl(t)
@@ -1679,6 +1743,7 @@ func TestKubectlGetDeploymentsWithServerSkipTLSAndToken(t *testing.T) {
 }
 
 func TestKubectlGetDeploymentsWithNamespace(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName            string
 		jsonResponseFile    string
@@ -1726,6 +1791,7 @@ func TestKubectlGetDeploymentsWithNamespace(t *testing.T) {
 }
 
 func TestKubectlGetMachineDeployments(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName                   string
 		jsonResponseFile           string
@@ -1770,6 +1836,7 @@ func TestKubectlGetMachineDeployments(t *testing.T) {
 }
 
 func TestKubectlCountMachineDeploymentReplicasReady(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1867,6 +1934,7 @@ func TestKubectlCountMachineDeploymentReplicasReady(t *testing.T) {
 }
 
 func TestKubectlValidateWorkerNodes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1920,6 +1988,7 @@ func TestKubectlValidateWorkerNodes(t *testing.T) {
 }
 
 func TestKubectlGetKubeAdmControlPlanes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		testName         string
 		jsonResponseFile string
@@ -1964,6 +2033,7 @@ func TestKubectlGetKubeAdmControlPlanes(t *testing.T) {
 }
 
 func TestKubectlVersion(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	fileContent := test.ReadFile(t, "testdata/kubectl_version.json")
 	e.EXPECT().Execute(ctx, []string{"version", "-o", "json", "--kubeconfig", cluster.KubeconfigFile}).Return(*bytes.NewBufferString(fileContent), nil)
@@ -2001,6 +2071,7 @@ func TestKubectlVersion(t *testing.T) {
 }
 
 func TestKubectlValidateClustersCRDSuccess(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.cluster.x-k8s.io", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, nil)
 	err := k.ValidateClustersCRD(ctx, cluster)
@@ -2010,6 +2081,7 @@ func TestKubectlValidateClustersCRDSuccess(t *testing.T) {
 }
 
 func TestKubectlValidateClustersCRDNotFound(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.cluster.x-k8s.io", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, errors.New("CRD not found"))
 	err := k.ValidateClustersCRD(ctx, cluster)
@@ -2019,6 +2091,7 @@ func TestKubectlValidateClustersCRDNotFound(t *testing.T) {
 }
 
 func TestKubectlValidateEKSAClustersCRDSuccess(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.anywhere.eks.amazonaws.com", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, nil)
 	err := k.ValidateEKSAClustersCRD(ctx, cluster)
@@ -2028,6 +2101,7 @@ func TestKubectlValidateEKSAClustersCRDSuccess(t *testing.T) {
 }
 
 func TestKubectlValidateEKSAClustersCRDNotFound(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", "clusters.anywhere.eks.amazonaws.com", "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, errors.New("CRD not found"))
 	err := k.ValidateEKSAClustersCRD(ctx, cluster)
@@ -2037,6 +2111,7 @@ func TestKubectlValidateEKSAClustersCRDNotFound(t *testing.T) {
 }
 
 func TestKubectlUpdateEnvironmentVariablesInNamespace(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	envMap := map[string]string{
 		"key": "val",
@@ -2055,6 +2130,7 @@ func TestKubectlUpdateEnvironmentVariablesInNamespace(t *testing.T) {
 }
 
 func TestKubectlUpdateAnnotation(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{
 		"annotate", "gitrepositories", "flux-system",
@@ -2072,6 +2148,7 @@ func TestKubectlUpdateAnnotation(t *testing.T) {
 }
 
 func TestKubectlRemoveAnnotation(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{
 		"annotate", "cluster", "test-cluster", "key1-", "--kubeconfig", cluster.KubeconfigFile,
@@ -2084,6 +2161,7 @@ func TestKubectlRemoveAnnotation(t *testing.T) {
 }
 
 func TestKubectlRemoveAnnotationInNamespace(t *testing.T) {
+	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{
 		"annotate", "cluster", "test-cluster", "key1-", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "",
@@ -2096,6 +2174,7 @@ func TestKubectlRemoveAnnotationInNamespace(t *testing.T) {
 }
 
 func TestKubectlGetBundles(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	wantBundles := test.Bundles(t)
 	bundleName := "Bundle-name"
@@ -2115,6 +2194,7 @@ func TestKubectlGetBundles(t *testing.T) {
 }
 
 func TestKubectlGetClusterResourceSet(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	resourceSetJson := test.ReadFile(t, "testdata/kubectl_clusterresourceset.json")
 	resourceSetName := "Bundle-name"
@@ -2154,6 +2234,7 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 }
 
 func TestKubectlGetConfigMap(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	configmapJson := test.ReadFile(t, "testdata/kubectl_configmap.json")
 	configmapName := "csi.vsphere.vmware.com"
@@ -2188,6 +2269,7 @@ spec:
 }
 
 func TestKubectlSetDaemonSetImage(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	daemonSetName := "ds-1"
 	container := "cont1"
@@ -2202,6 +2284,7 @@ func TestKubectlSetDaemonSetImage(t *testing.T) {
 }
 
 func TestKubectlCheckCAPIProviderExistsNotInstalled(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	providerName := "providerName"
 	providerNs := "providerNs"
@@ -2213,6 +2296,7 @@ func TestKubectlCheckCAPIProviderExistsNotInstalled(t *testing.T) {
 }
 
 func TestKubectlCheckCAPIProviderExistsInstalled(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	providerName := "providerName"
 	providerNs := "providerNs"
@@ -2227,6 +2311,7 @@ func TestKubectlCheckCAPIProviderExistsInstalled(t *testing.T) {
 }
 
 func TestKubectlGetDeploymentSuccess(t *testing.T) {
+	t.Parallel()
 	var replicas int32 = 2
 	newKubectlGetterTest(t).withResourceType(
 		"deployment",
@@ -2262,6 +2347,7 @@ func TestKubectlGetDeploymentSuccess(t *testing.T) {
 }
 
 func TestKubectlGetDeploymentError(t *testing.T) {
+	t.Parallel()
 	newKubectlGetterTest(t).withResourceType(
 		"deployment",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
@@ -2270,6 +2356,7 @@ func TestKubectlGetDeploymentError(t *testing.T) {
 }
 
 func TestKubectlGetDaemonSetSuccess(t *testing.T) {
+	t.Parallel()
 	newKubectlGetterTest(t).withResourceType(
 		"daemonset",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
@@ -2304,6 +2391,7 @@ func TestKubectlGetDaemonSetSuccess(t *testing.T) {
 }
 
 func TestKubectlGetDaemonSetError(t *testing.T) {
+	t.Parallel()
 	newKubectlGetterTest(t).withResourceType(
 		"daemonset",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
@@ -2312,6 +2400,7 @@ func TestKubectlGetDaemonSetError(t *testing.T) {
 }
 
 func TestKubectlGetStorageClassSuccess(t *testing.T) {
+	t.Parallel()
 	deletePolicy := corev1.PersistentVolumeReclaimDelete
 	immediateBinding := storagev1.VolumeBindingImmediate
 	newKubectlGetterTest(t).withoutNamespace().withResourceType(
@@ -2343,6 +2432,7 @@ func TestKubectlGetStorageClassSuccess(t *testing.T) {
 }
 
 func TestKubectlGetStorageClassError(t *testing.T) {
+	t.Parallel()
 	newKubectlGetterTest(t).withResourceType(
 		"storageclass",
 	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
@@ -2351,6 +2441,7 @@ func TestKubectlGetStorageClassError(t *testing.T) {
 }
 
 func TestApplyTolerationsFromTaints(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	params := []string{
 		"get", "ds", "test",
@@ -2364,6 +2455,7 @@ func TestApplyTolerationsFromTaints(t *testing.T) {
 }
 
 func TestKubectlGetObjectNotFound(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name         string
 		resourceType string
@@ -2399,6 +2491,7 @@ func TestKubectlGetObjectNotFound(t *testing.T) {
 }
 
 func TestKubectlGetClusterObjectNotFound(t *testing.T) {
+	t.Parallel()
 	test := newKubectlTest(t)
 	name := "my-cluster"
 	test.e.EXPECT().Execute(
@@ -2412,6 +2505,7 @@ func TestKubectlGetClusterObjectNotFound(t *testing.T) {
 }
 
 func TestKubectlGetEksaFluxConfig(t *testing.T) {
+	t.Parallel()
 	kubeconfig := "/my/kubeconfig"
 	namespace := "eksa-system"
 	eksaFluxConfigResourceType := fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -2432,6 +2526,7 @@ func TestKubectlGetEksaFluxConfig(t *testing.T) {
 }
 
 func TestKubectlDeleteFluxConfig(t *testing.T) {
+	t.Parallel()
 	namespace := "eksa-system"
 	kubeconfig := "/my/kubeconfig"
 	eksaFluxConfigResourceType := fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -2454,6 +2549,7 @@ func TestKubectlDeleteFluxConfig(t *testing.T) {
 }
 
 func TestGetTinkerbellDatacenterConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	datacenterJson := test.ReadFile(t, "testdata/kubectl_tinkerbelldatacenter.json")
 	wantDatacenter := &v1alpha1.TinkerbellDatacenterConfig{
@@ -2481,6 +2577,7 @@ func TestGetTinkerbellDatacenterConfig(t *testing.T) {
 }
 
 func TestGetTinkerbellMachineConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	machineconfigJson := test.ReadFile(t, "testdata/kubectl_tinkerbellmachineconfig.json")
 	wantMachineConfig := &v1alpha1.TinkerbellMachineConfig{
@@ -2512,6 +2609,7 @@ func TestGetTinkerbellMachineConfig(t *testing.T) {
 }
 
 func TestGetTinkerbellMachineConfigInvalid(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	machineconfigJson := test.ReadFile(t, "testdata/kubectl_tinkerbellmachineconfig_invalid.json")
 
@@ -2526,6 +2624,7 @@ func TestGetTinkerbellMachineConfigInvalid(t *testing.T) {
 }
 
 func TestGetTinkerbellDatacenterConfigInvalid(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	datacenterconfigJson := test.ReadFile(t, "testdata/kubectl_tinkerbelldatacenter_invalid.json")
 
@@ -2540,6 +2639,7 @@ func TestGetTinkerbellDatacenterConfigInvalid(t *testing.T) {
 }
 
 func TestGetTinkerbellMachineConfigNotFound(t *testing.T) {
+	t.Parallel()
 	var kubeconfigfile string
 	tt := newKubectlTest(t)
 
@@ -2554,6 +2654,7 @@ func TestGetTinkerbellMachineConfigNotFound(t *testing.T) {
 }
 
 func TestGetTinkerbellDatacenterConfigNotFound(t *testing.T) {
+	t.Parallel()
 	var kubeconfigfile string
 	tt := newKubectlTest(t)
 
@@ -2568,6 +2669,7 @@ func TestGetTinkerbellDatacenterConfigNotFound(t *testing.T) {
 }
 
 func TestGetUnprovisionedTinkerbellHardware(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	hardwareJSON := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
 	kubeconfig := "foo/bar"
@@ -2600,6 +2702,7 @@ func TestGetUnprovisionedTinkerbellHardware(t *testing.T) {
 }
 
 func TestGetUnprovisionedTinkerbellHardware_MarshallingError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	kubeconfig := "foo/bar"
 	var buf bytes.Buffer
@@ -2618,6 +2721,7 @@ func TestGetUnprovisionedTinkerbellHardware_MarshallingError(t *testing.T) {
 }
 
 func TestGetUnprovisionedTinkerbellHardware_ExecutableErrors(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	kubeconfig := "foo/bar"
 	var buf bytes.Buffer
@@ -2637,6 +2741,7 @@ func TestGetUnprovisionedTinkerbellHardware_ExecutableErrors(t *testing.T) {
 }
 
 func TestKubectlDelete(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	name := "my-cluster"
 	resourceType := "cluster.x-k8s.io"
@@ -2649,6 +2754,7 @@ func TestKubectlDelete(t *testing.T) {
 }
 
 func TestKubectlDeleteClusterObject(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	name := "my-storageclass"
 	resourceType := "storageclass"
@@ -2661,6 +2767,7 @@ func TestKubectlDeleteClusterObject(t *testing.T) {
 }
 
 func TestKubectlDeleteClusterObjectError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	name := "my-storageclass"
 	resourceType := "storageclass"
@@ -2673,6 +2780,7 @@ func TestKubectlDeleteClusterObjectError(t *testing.T) {
 }
 
 func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	timeout := "5m"
 	expectedTimeout := "300.00s"
@@ -2686,6 +2794,7 @@ func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
 }
 
 func TestKubectlWaitForMachineDeploymentReady(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	timeout := "5m"
 	expectedTimeout := "300.00s"
@@ -2699,6 +2808,7 @@ func TestKubectlWaitForMachineDeploymentReady(t *testing.T) {
 }
 
 func TestKubectlWaitForClusterReady(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 
 	timeout := "5m"
@@ -2713,6 +2823,7 @@ func TestKubectlWaitForClusterReady(t *testing.T) {
 }
 
 func TestWaitForRufioMachines(t *testing.T) {
+	t.Parallel()
 	kt := newKubectlTest(t)
 
 	timeout := "5m"
@@ -2727,6 +2838,7 @@ func TestWaitForRufioMachines(t *testing.T) {
 }
 
 func TestKubectlApply(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	secret := &corev1.Secret{}
 	b, err := yaml.Marshal(secret)
@@ -2742,6 +2854,7 @@ func TestKubectlApply(t *testing.T) {
 }
 
 func TestKubectlListObjects(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	list := &v1alpha1.ClusterList{}
 	b, err := json.Marshal(list)
@@ -2755,6 +2868,7 @@ func TestKubectlListObjects(t *testing.T) {
 }
 
 func TestKubectlListObjectsExecError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
@@ -2765,6 +2879,7 @@ func TestKubectlListObjectsExecError(t *testing.T) {
 }
 
 func TestKubectlListObjectsMarshalError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
@@ -2775,6 +2890,7 @@ func TestKubectlListObjectsMarshalError(t *testing.T) {
 }
 
 func TestKubectlHasResource(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	pbc := &packagesv1.PackageBundleController{
 		TypeMeta: metav1.TypeMeta{Kind: "packageBundleController"},
@@ -2795,6 +2911,7 @@ func TestKubectlHasResource(t *testing.T) {
 }
 
 func TestKubectlHasResourceWithGetError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(tt.ctx,
 		"get", "--ignore-not-found", "-o", "json",
@@ -2849,6 +2966,7 @@ func TestKubectlDeletePackageResources(t *testing.T) {
 }
 
 func TestKubectlExecuteFromYaml(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().ExecuteWithStdin(
 		tt.ctx, []byte(nutanixMachineConfigSpec), "apply", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace,
@@ -2858,6 +2976,7 @@ func TestKubectlExecuteFromYaml(t *testing.T) {
 }
 
 func TestKubectlSearchNutanixMachineConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
@@ -2869,6 +2988,7 @@ func TestKubectlSearchNutanixMachineConfig(t *testing.T) {
 }
 
 func TestKubectlSearchNutanixMachineConfigError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
@@ -2880,6 +3000,7 @@ func TestKubectlSearchNutanixMachineConfigError(t *testing.T) {
 }
 
 func TestKubectlSearchNutanixDatacenterConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
@@ -2891,6 +3012,7 @@ func TestKubectlSearchNutanixDatacenterConfig(t *testing.T) {
 }
 
 func TestKubectlSearchNutanixDatacenterConfigError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
 		tt.ctx,
@@ -2902,6 +3024,7 @@ func TestKubectlSearchNutanixDatacenterConfigError(t *testing.T) {
 }
 
 func TestKubectlGetEksaNutanixMachineConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
 		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
@@ -2913,6 +3036,7 @@ func TestKubectlGetEksaNutanixMachineConfig(t *testing.T) {
 }
 
 func TestKubectlGetEksaNutanixMachineConfigError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
 		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
@@ -2924,6 +3048,7 @@ func TestKubectlGetEksaNutanixMachineConfigError(t *testing.T) {
 }
 
 func TestKubectlGetEksaNutanixDatacenterConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
 		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
@@ -2935,6 +3060,7 @@ func TestKubectlGetEksaNutanixDatacenterConfig(t *testing.T) {
 }
 
 func TestKubectlGetEksaNutanixDatacenterConfigError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
 		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "--namespace", tt.namespace, "eksa-unit-test"},
@@ -2946,6 +3072,7 @@ func TestKubectlGetEksaNutanixDatacenterConfigError(t *testing.T) {
 }
 
 func TestKubectlDeleteEksaNutanixDatacenterConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "delete",
 		[]string{"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--ignore-not-found=true"},
@@ -2955,6 +3082,7 @@ func TestKubectlDeleteEksaNutanixDatacenterConfig(t *testing.T) {
 }
 
 func TestKubectlDeleteEksaNutanixDatacenterConfigError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "delete",
 		[]string{"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--ignore-not-found=true"},
@@ -2964,6 +3092,7 @@ func TestKubectlDeleteEksaNutanixDatacenterConfigError(t *testing.T) {
 }
 
 func TestKubectlDeleteEksaNutanixMachineConfig(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "delete",
 		[]string{"nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--ignore-not-found=true"},
@@ -2973,6 +3102,7 @@ func TestKubectlDeleteEksaNutanixMachineConfig(t *testing.T) {
 }
 
 func TestKubectlDeleteEksaNutanixMachineConfigError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "delete",
 		[]string{"nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--ignore-not-found=true"},
@@ -2982,6 +3112,7 @@ func TestKubectlDeleteEksaNutanixMachineConfigError(t *testing.T) {
 }
 
 func TestWaitForResourceRolledout(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	timeout := "2m"
 	target := "testdaemonset"
@@ -2992,6 +3123,7 @@ func TestWaitForResourceRolledout(t *testing.T) {
 }
 
 func TestWaitForDaemonsetRolledoutError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	timeout := "2m"
 	target := "testdaemonset"
@@ -3002,6 +3134,7 @@ func TestWaitForDaemonsetRolledoutError(t *testing.T) {
 }
 
 func TestWaitForPod(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	timeout := "2m"
 	expectedTimeout := "120.00s"
@@ -3016,6 +3149,7 @@ func TestWaitForPod(t *testing.T) {
 }
 
 func TestWaitForJob(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	timeout := "2m"
 	expectedTimeout := "120.00s"
@@ -3030,6 +3164,7 @@ func TestWaitForJob(t *testing.T) {
 }
 
 func TestWaitForPodCompleted(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'Completed'")
 	tt := newKubectlTest(t)
@@ -3040,6 +3175,7 @@ func TestWaitForPodCompleted(t *testing.T) {
 }
 
 func TestWaitForPackagesInstalled(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3050,6 +3186,7 @@ func TestWaitForPackagesInstalled(t *testing.T) {
 }
 
 func TestWaitJSONPathLoop(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3061,6 +3198,7 @@ func TestWaitJSONPathLoop(t *testing.T) {
 }
 
 func TestWaitJSONPathLoopTimeParseError(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3070,6 +3208,7 @@ func TestWaitJSONPathLoopTimeParseError(t *testing.T) {
 }
 
 func TestWaitJSONPathLoopNegativeTimeError(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3079,6 +3218,7 @@ func TestWaitJSONPathLoopNegativeTimeError(t *testing.T) {
 }
 
 func TestWaitJSONPathLoopRetrierError(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("")
 	tt := newKubectlTest(t)
@@ -3088,6 +3228,7 @@ func TestWaitJSONPathLoopRetrierError(t *testing.T) {
 }
 
 func TestWaitJSONPath(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3098,6 +3239,7 @@ func TestWaitJSONPath(t *testing.T) {
 }
 
 func TestWaitJSONPathTimeParseError(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3107,6 +3249,7 @@ func TestWaitJSONPathTimeParseError(t *testing.T) {
 }
 
 func TestWaitJSONPathNegativeTimeError(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3116,6 +3259,7 @@ func TestWaitJSONPathNegativeTimeError(t *testing.T) {
 }
 
 func TestWaitJSONPathRetrierError(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 	b.WriteString("'installed'")
 	tt := newKubectlTest(t)
@@ -3125,6 +3269,7 @@ func TestWaitJSONPathRetrierError(t *testing.T) {
 }
 
 func TestGetPackageBundleController(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	testPbc := &packagesv1.PackageBundleController{}
 	respJSON, err := json.Marshal(testPbc)
@@ -3140,6 +3285,7 @@ func TestGetPackageBundleController(t *testing.T) {
 }
 
 func TestGetPackageBundleList(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	testPbc := &packagesv1.PackageBundleList{
 		TypeMeta: metav1.TypeMeta{
@@ -3161,6 +3307,7 @@ func TestGetPackageBundleList(t *testing.T) {
 }
 
 func TestRunBusyBoxPod(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
 	expectedParam := []string{"run", "testpod-123", "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "pwd"}
@@ -3171,6 +3318,7 @@ func TestRunBusyBoxPod(t *testing.T) {
 }
 
 func TestGetPodNameByLabel(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
 	expectedParam := []string{"get", "pod", "-l=app.kubernetes.io/name=aws-otel-collector", "-o=jsonpath='{.items[0].metadata.name}'", "--kubeconfig", "c.kubeconfig", "--namespace", "observability"}
@@ -3181,6 +3329,7 @@ func TestGetPodNameByLabel(t *testing.T) {
 }
 
 func TestGetPodIP(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
 	expectedParam := []string{"get", "pod", "generated-adot-75f769bc7-f7pmv", "-o=jsonpath='{.status.podIP}'", "--kubeconfig", "c.kubeconfig", "--namespace", "observability"}
@@ -3191,6 +3340,7 @@ func TestGetPodIP(t *testing.T) {
 }
 
 func TestGetPodLogs(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
 	expectedParam := []string{"logs", "testpod", "testcontainer", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages"}
@@ -3201,6 +3351,7 @@ func TestGetPodLogs(t *testing.T) {
 }
 
 func TestGetPodLogsSince(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
 	now := time.Now()
@@ -3212,6 +3363,7 @@ func TestGetPodLogsSince(t *testing.T) {
 }
 
 func TestGetPodLogsSinceInternalError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	now := time.Now()
 	var b bytes.Buffer
@@ -3223,6 +3375,7 @@ func TestGetPodLogsSinceInternalError(t *testing.T) {
 }
 
 func TestGetPodLogsSinceExecuteError(t *testing.T) {
+	t.Parallel()
 	tt := newKubectlTest(t)
 	now := time.Now()
 	var b bytes.Buffer
@@ -3234,6 +3387,7 @@ func TestGetPodLogsSinceExecuteError(t *testing.T) {
 }
 
 func TestKubectlSearchTinkerbellMachineConfig(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace, name string
 	buffer := bytes.Buffer{}
 	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
@@ -3254,6 +3408,7 @@ func TestKubectlSearchTinkerbellMachineConfig(t *testing.T) {
 }
 
 func TestKubectlSearchTinkerbellMachineConfigNotFound(t *testing.T) {
+	t.Parallel()
 	var kubeconfigfile string
 	tt := newKubectlTest(t)
 
@@ -3268,6 +3423,7 @@ func TestKubectlSearchTinkerbellMachineConfigNotFound(t *testing.T) {
 }
 
 func TestKubectlSearchTinkerbellDatacenterConfigs(t *testing.T) {
+	t.Parallel()
 	var kubeconfig, namespace, name string
 	buffer := bytes.Buffer{}
 	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_datacenterconfigs.json"))
@@ -3288,6 +3444,7 @@ func TestKubectlSearchTinkerbellDatacenterConfigs(t *testing.T) {
 }
 
 func TestKubectlSearchTinkerbellDatacenterConfigNotFound(t *testing.T) {
+	t.Parallel()
 	var kubeconfigfile string
 	tt := newKubectlTest(t)
 
@@ -3302,6 +3459,7 @@ func TestKubectlSearchTinkerbellDatacenterConfigNotFound(t *testing.T) {
 }
 
 func TestGetMachineDeploymentsForCluster(t *testing.T) {
+	t.Parallel()
 	k, ctx, _, e := newKubectl(t)
 	clusterName := "test0"
 	fileContent := test.ReadFile(t, "testdata/kubectl_machine_deployments.json")
@@ -3332,6 +3490,7 @@ func TestGetMachineDeploymentsForCluster(t *testing.T) {
 }
 
 func TestKubectlHasCRD(t *testing.T) {
+	t.Parallel()
 	for _, tt := range []struct {
 		Name      string
 		Error     error
@@ -3375,6 +3534,7 @@ func TestKubectlHasCRD(t *testing.T) {
 }
 
 func TestKubectlDeleteCRD(t *testing.T) {
+	t.Parallel()
 	//"delete", "crd", crd, "--kubeconfig", kubeconfig
 
 	for _, tt := range []struct {
