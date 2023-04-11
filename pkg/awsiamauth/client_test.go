@@ -88,7 +88,7 @@ func TestRetrierClientGetClusterCACertSuccess(t *testing.T) {
 		}).Times(1)
 
 	cert, err := tt.r.GetClusterCACert(tt.ctx, tt.cluster, "test-cluster")
-	tt.Expect(cert).To(Equal([]byte("cert")))
+	tt.Expect(cert).To(Equal([]byte("Y2VydA==")))
 	tt.Expect(err).To(Succeed(), "retrierClient.GetObject() should succeed after 5 tries")
 }
 
