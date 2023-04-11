@@ -802,7 +802,18 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 		}
 		certgen := crypto.NewCertificateGenerator()
 		clusterId := uuid.New()
-		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(certgen, clusterId, awsiamauth.NewRetrierClient(f.dependencies.Kubectl), f.dependencies.Writer)
+
+		var opts []awsiamauth.RetrierClientOpt
+		if f.config.noTimeouts {
+			opts = append(opts, awsiamauth.RetrierClientRetrier(*retrier.NewWithNoTimeout()))
+		}
+
+		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(
+			certgen,
+			clusterId,
+			awsiamauth.NewRetrierClient(f.dependencies.Kubectl, opts...),
+			f.dependencies.Writer,
+		)
 		return nil
 	})
 
