@@ -47,6 +47,7 @@ const (
 	tinkerbellPackage   = "github.com/tinkerbell/tink"
 	etcdProviderPackage = "github.com/aws/etcdadm-controller"
 	rufioPackage        = "github.com/tinkerbell/rufio"
+	capcPackage         = "sigs.k8s.io/cluster-api-provider-cloudstack"
 )
 
 func init() {
@@ -86,6 +87,7 @@ var packages = []moduleWithCRD{
 	),
 	mustBuildModuleWithCRDs(etcdProviderPackage),
 	mustBuildModuleWithCRDs(rufioPackage),
+	mustBuildModuleWithCRDs(capcPackage),
 }
 
 type Environment struct {
