@@ -44,7 +44,7 @@ func New(templater Templater) *Reconciler {
 // It uses a controller.Result to indicate when requeues are needed. client is connected to the
 // target Kubernetes cluster, not the management cluster.
 func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
-	installation, err := getInstallation(ctx, client)
+	installation, err := cilium.GetInstallation(ctx, client)
 	if err != nil {
 		return controller.Result{}, err
 	}

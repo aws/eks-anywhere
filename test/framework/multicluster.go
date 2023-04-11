@@ -42,7 +42,7 @@ func (m *MulticlusterE2ETest) WithWorkloadClusters(workloadClusters ...*ClusterE
 	for _, c := range workloadClusters {
 		m.WorkloadClusters[c.ClusterName] = &WorkloadCluster{
 			ClusterE2ETest:                  c,
-			ManagementClusterKubeconfigFile: m.ManagementCluster.kubeconfigFilePath,
+			ManagementClusterKubeconfigFile: m.ManagementCluster.KubeconfigFilePath,
 		}
 	}
 }
