@@ -596,6 +596,7 @@ mocks: ## Generate mocks
 	${MOCKGEN} -destination=pkg/workflow/task_mock_test.go -package=workflow_test -source "pkg/workflow/task.go"
 	${MOCKGEN} -destination=pkg/validations/createcluster/mocks/createcluster.go -package=mocks -source "pkg/validations/createcluster/createcluster.go"
 	${MOCKGEN} -destination=pkg/awsiamauth/mock_test.go -package=awsiamauth_test -source "pkg/awsiamauth/installer.go"
+	${MOCKGEN} -destination=pkg/awsiamauth/mocks/clients.go -package=mocks -source "pkg/awsiamauth/client.go"
 	${MOCKGEN} -destination=controllers/mocks/provider.go -package=mocks -source "pkg/controller/clusters/registry.go"
 	${MOCKGEN} -destination=pkg/controller/clusters/mocks/ipvalidator.go -package=mocks -source "pkg/controller/clusters/ipvalidator.go" IPUniquenessValidator
 	${MOCKGEN} -destination=pkg/registry/mocks/storage.go -package=mocks -source "pkg/registry/storage.go" StorageClient
