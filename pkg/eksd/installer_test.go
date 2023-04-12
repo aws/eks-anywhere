@@ -2,6 +2,7 @@ package eksd_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -66,9 +67,11 @@ func TestInstallEksdCRDsSuccess(t *testing.T) {
 
 func TestInstallEksdManifestSuccess(t *testing.T) {
 	tt := newInstallerTest(t)
+	tt.eksdInstaller = eksd.NewEksdInstaller(tt.client, tt.reader, eksd.WithRetrier(retrier.NewWithMaxRetries(3, 0)))
 	tt.clusterSpec.Bundles = bundle()
 
 	tt.reader.EXPECT().ReadFile(testdataFile).Return([]byte("test data"), nil).Times(2)
+	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(errors.New("error apply")).Times(2)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil).Times(2)
 	if err := tt.eksdInstaller.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
 		t.Errorf("Eksd.InstallEksdManifest() error = %v, wantErr nil", err)
