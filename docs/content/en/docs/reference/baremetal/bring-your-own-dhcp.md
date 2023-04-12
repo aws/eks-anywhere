@@ -6,7 +6,7 @@ description: >
   Using your existing DHCP service with EKS Anywhere Bare Metal
 ---
 
-In order to facilitate network booting machines, EKS Anywhere bare metal runs its own DHCP server, Boots (a standalone service in the Tinkerbell stack). There can be numerous reasons why you may want to use an existing DHCP service instead of Boots; Security, compliance, access issues, existing layer 2 constraints, existing automation, etc.
+In order to facilitate network booting machines, EKS Anywhere bare metal runs its own DHCP server, Boots (a standalone service in the Tinkerbell stack). There can be numerous reasons why you may want to use an existing DHCP service instead of Boots: Security, compliance, access issues, existing layer 2 constraints, existing automation, and so on.
 
 In environments where there is an existing DHCP service, this DHCP service can be configured to interoperate with EKS Anywhere. This document will cover how to make your existing DHCP service interoperate with EKS Anywhere bare metal. In this scenario EKS Anywhere will have no layer 2 DHCP responsibilities.
 
