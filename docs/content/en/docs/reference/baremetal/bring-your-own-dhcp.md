@@ -22,7 +22,7 @@ In environments where there is an existing DHCP service, this DHCP service can b
 
 As a prerequisite, your existing DHCP must serve [host/address/static reservations](https://kb.isc.org/docs/what-are-host-reservations-how-to-use-them) for all machines that EKS Anywhere bare metal will be provisioning. This means that the IPAM details you enter into your [`hardware.csv`]({{< relref "./bare-preparation#prepare-hardware-inventory" >}}) must be used to create host/address/static reservations in your existing DHCP service.
 
-Now, you configure your existing DHCP service to provide the location of the iPXE binary and script. This is a 2 step interaction between machines and the DHCP service and enables the provisioning process to start.
+Now, you configure your existing DHCP service to provide the location of the iPXE binary and script. This is a two-step interaction between machines and the DHCP service and enables the provisioning process to start.
 
 - __Step 1__: The machine broadcasts a request to network boot. Your existing DHCP service then provides the machine with all IPAM info as well as the location of the Tinkerbell iPXE binary (`ipxe.efi`). The machine configures its network interface with the IPAM info then downloads the Tinkerbell iPXE binary from the location provided by the DHCP service and runs it.
 
