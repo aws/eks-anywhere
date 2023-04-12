@@ -25,17 +25,35 @@ type Reader interface {
 	ReadFile(url string) ([]byte, error)
 }
 
+// InstallerOpt allows to customize an eksd installer
+// on construction.
+type InstallerOpt func(*Installer)
+
 type Installer struct {
 	client  EksdInstallerClient
 	retrier *retrier.Retrier
 	reader  Reader
 }
 
-func NewEksdInstaller(client EksdInstallerClient, reader Reader) *Installer {
-	return &Installer{
+// NewEksdInstaller constructs a new eks-d installer.
+func NewEksdInstaller(client EksdInstallerClient, reader Reader, opts ...InstallerOpt) *Installer {
+	i := &Installer{
 		client:  client,
 		retrier: retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		reader:  reader,
+	}
+
+	for _, opt := range opts {
+		opt(i)
+	}
+
+	return i
+}
+
+// WithRetrier allows to use a custom retrier.
+func WithRetrier(retrier *retrier.Retrier) InstallerOpt {
+	return func(i *Installer) {
+		i.retrier = retrier
 	}
 }
 

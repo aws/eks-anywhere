@@ -13,9 +13,13 @@ type Upgrader struct {
 	*Installer
 }
 
-func NewUpgrader(client EksdInstallerClient, reader Reader) *Upgrader {
+// UpgraderOpt allows to customize an eksd upgrader on construction.
+type UpgraderOpt = InstallerOpt
+
+// NewUpgrader constructs a new eks-d upgrader.
+func NewUpgrader(client EksdInstallerClient, reader Reader, opts ...UpgraderOpt) *Upgrader {
 	return &Upgrader{
-		NewEksdInstaller(client, reader),
+		NewEksdInstaller(client, reader, opts...),
 	}
 }
 
