@@ -35,8 +35,8 @@ func TestBootstrapperCreateBootstrapClusterSuccess(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
-			client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-			client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace)
+			client.EXPECT().CreateKindCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+			client.EXPECT().CreateNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 
 			got, err := b.CreateBootstrapCluster(ctx, clusterSpec, tt.opts...)
 			if err != nil {
@@ -59,8 +59,8 @@ func TestBootstrapperCreateBootstrapClusterFailureOnCreateNamespaceIfNotPresentF
 
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
-	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-	client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace).Return(errors.New(""))
+	client.EXPECT().CreateKindCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+	client.EXPECT().CreateNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace).Return(errors.New(""))
 
 	_, err := b.CreateBootstrapCluster(ctx, clusterSpec)
 	if err == nil {
@@ -76,7 +76,7 @@ func TestBootstrapperDeleteBootstrapClusterNoBootstrap(t *testing.T) {
 
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
-	client.EXPECT().ClusterExists(ctx, cluster.Name).Return(false, nil)
+	client.EXPECT().KindClusterExists(ctx, cluster.Name).Return(false, nil)
 	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
@@ -92,11 +92,11 @@ func TestBootstrapperDeleteBootstrapClusterNoKubeconfig(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 
-	client.EXPECT().GetKubeconfig(ctx, cluster.Name).Return("c.kubeconfig", nil)
-	client.EXPECT().ClusterExists(ctx, cluster.Name).Return(true, nil)
-	client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(nil)
-	client.EXPECT().GetClusters(ctx, cluster).Return(nil, nil)
-	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
+	client.EXPECT().GetKindClusterKubeconfig(ctx, cluster.Name).Return("c.kubeconfig", nil)
+	client.EXPECT().KindClusterExists(ctx, cluster.Name).Return(true, nil)
+	client.EXPECT().GetCAPIClusterCRD(ctx, cluster).Return(nil)
+	client.EXPECT().GetCAPIClusters(ctx, cluster).Return(nil, nil)
+	client.EXPECT().DeleteKindCluster(ctx, cluster).Return(nil)
 
 	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
@@ -113,9 +113,9 @@ func TestBootstrapperDeleteBootstrapClusterNoClusterCRD(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 
-	client.EXPECT().ClusterExists(ctx, cluster.Name).Return(true, nil)
-	client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(errors.New("cluster crd not found"))
-	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
+	client.EXPECT().KindClusterExists(ctx, cluster.Name).Return(true, nil)
+	client.EXPECT().GetCAPIClusterCRD(ctx, cluster).Return(errors.New("cluster crd not found"))
+	client.EXPECT().DeleteKindCluster(ctx, cluster).Return(nil)
 
 	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
@@ -132,10 +132,10 @@ func TestBootstrapperDeleteBootstrapClusterNoManagement(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 
-	client.EXPECT().ClusterExists(ctx, cluster.Name).Return(true, nil)
-	client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(nil)
-	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
-	client.EXPECT().GetClusters(ctx, cluster).Return(nil, nil)
+	client.EXPECT().KindClusterExists(ctx, cluster.Name).Return(true, nil)
+	client.EXPECT().GetCAPIClusterCRD(ctx, cluster).Return(nil)
+	client.EXPECT().DeleteKindCluster(ctx, cluster).Return(nil)
+	client.EXPECT().GetCAPIClusters(ctx, cluster).Return(nil, nil)
 
 	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
@@ -152,8 +152,8 @@ func TestBootstrapperDeleteBootstrapClusterErrorWithManagement(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 
-	client.EXPECT().ClusterExists(ctx, cluster.Name).Return(true, nil)
-	client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(nil)
+	client.EXPECT().KindClusterExists(ctx, cluster.Name).Return(true, nil)
+	client.EXPECT().GetCAPIClusterCRD(ctx, cluster).Return(nil)
 
 	capiClusters := []types.CAPICluster{
 		{
@@ -165,7 +165,7 @@ func TestBootstrapperDeleteBootstrapClusterErrorWithManagement(t *testing.T) {
 			},
 		},
 	}
-	client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
+	client.EXPECT().GetCAPIClusters(ctx, cluster).Return(capiClusters, nil)
 
 	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Upgrade, false)
 	if err == nil {
@@ -206,8 +206,8 @@ func TestBootstrapperDeleteBootstrapClusterCreateOrDelete(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
 
-			client.EXPECT().ClusterExists(ctx, cluster.Name).Return(true, nil)
-			client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(nil)
+			client.EXPECT().KindClusterExists(ctx, cluster.Name).Return(true, nil)
+			client.EXPECT().GetCAPIClusterCRD(ctx, cluster).Return(nil)
 
 			capiClusters := []types.CAPICluster{
 				{
@@ -219,8 +219,8 @@ func TestBootstrapperDeleteBootstrapClusterCreateOrDelete(t *testing.T) {
 					},
 				},
 			}
-			client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
-			client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
+			client.EXPECT().GetCAPIClusters(ctx, cluster).Return(capiClusters, nil)
+			client.EXPECT().DeleteKindCluster(ctx, cluster).Return(nil)
 
 			err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 			if err != nil {
@@ -267,8 +267,8 @@ func TestBootstrapperDeleteBootstrapClusterUpgrade(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
 
-			client.EXPECT().ClusterExists(ctx, cluster.Name).Return(true, nil)
-			client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(nil)
+			client.EXPECT().KindClusterExists(ctx, cluster.Name).Return(true, nil)
+			client.EXPECT().GetCAPIClusterCRD(ctx, cluster).Return(nil)
 
 			capiClusters := []types.CAPICluster{
 				{
@@ -280,8 +280,8 @@ func TestBootstrapperDeleteBootstrapClusterUpgrade(t *testing.T) {
 					},
 				},
 			}
-			client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
-			client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil).Times(0)
+			client.EXPECT().GetCAPIClusters(ctx, cluster).Return(capiClusters, nil)
+			client.EXPECT().DeleteKindCluster(ctx, cluster).Return(nil).Times(0)
 
 			err := b.DeleteBootstrapCluster(ctx, cluster, constants.Upgrade, false)
 			if err == nil {
@@ -291,11 +291,11 @@ func TestBootstrapperDeleteBootstrapClusterUpgrade(t *testing.T) {
 	}
 }
 
-func newBootstrapper(t *testing.T, opts ...bootstrapper.BootstrapperOpt) (*bootstrapper.Bootstrapper, *mocks.MockClusterClient) {
+func newBootstrapper(t *testing.T) (*bootstrapper.Bootstrapper, *mocks.MockClusterClient) {
 	mockCtrl := gomock.NewController(t)
 
 	client := mocks.NewMockClusterClient(mockCtrl)
-	b := bootstrapper.New(client, opts...)
+	b := bootstrapper.New(client)
 	return b, client
 }
 
