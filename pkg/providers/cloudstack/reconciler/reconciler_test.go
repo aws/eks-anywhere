@@ -4,15 +4,20 @@ import (
 	"context"
 	"testing"
 
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -34,14 +39,13 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
-	tt.withFakeClient()
-
+	tt.createAllObjs()
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
 	tt.remoteClientRegistry.EXPECT().GetClient(
-		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil).Times(1)
 	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
 
@@ -89,8 +93,123 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      capiCluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&cloudstackv1.CloudStackMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      capiCluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      capiCluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+}
+
+func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&cloudstackv1.CloudStackMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.cleanup()
+}
+
+func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.cluster.Spec.KubernetesVersion = ""
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	_, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
+	tt.cleanup()
+}
+
 func (tt *reconcilerTest) withFakeClient() {
 	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
+}
+
+func (tt *reconcilerTest) createAllObjs() {
+	tt.t.Helper()
+	envtest.CreateObjs(tt.ctx, tt.t, tt.client, tt.allObjs()...)
 }
 
 func (tt *reconcilerTest) allObjs() []client.Object {
@@ -116,6 +235,7 @@ func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
+	*envtest.APIExpecter
 	ctx                       context.Context
 	cluster                   *anywherev1.Cluster
 	client                    client.Client
@@ -155,6 +275,11 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 	machineConfigWN := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
 		m.Name = "worker-machine-config"
+		m.Spec.Users = append(m.Spec.Users,
+			anywherev1.UserConfiguration{
+				Name:              "user",
+				SshAuthorizedKeys: []string{""},
+			})
 	})
 
 	workloadClusterDatacenter := dataCenter(func(d *anywherev1.CloudStackDatacenterConfig) {})
@@ -200,6 +325,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	tt := &reconcilerTest{
 		t:           t,
 		WithT:       NewWithT(t),
+		APIExpecter: envtest.NewAPIExpecter(t, c),
 		ctx:         context.Background(),
 		ipValidator: ipValidator,
 		client:      c,
@@ -220,6 +346,17 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	}
 
 	return tt
+}
+
+func (tt *reconcilerTest) cleanup() {
+	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
+	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
+	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackCluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackMachineTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &etcdv1.EtcdadmCluster{})
 }
 
 type clusterOpt func(*anywherev1.Cluster)
