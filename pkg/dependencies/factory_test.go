@@ -507,6 +507,18 @@ func TestFactoryBuildWithAwsIamAuthNoTimeout(t *testing.T) {
 	tt.Expect(deps.AwsIamAuth).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithBootstrapperNoTimeout(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithBootstrapper().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Bootstrapper).NotTo(BeNil())
+}
+
 type dummyDockerClient struct{}
 
 func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
