@@ -82,25 +82,6 @@ func TestDockerAllocatedMemory(t *testing.T) {
 	}
 }
 
-func TestDockerCgroupVersion(t *testing.T) {
-	version := "'\"1\"'\n"
-	wantVersion := 1
-
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	executable.EXPECT().Execute(ctx, "info", "--format", "'{{json .CgroupVersion}}'").Return(*bytes.NewBufferString(version), nil)
-	d := executables.NewDocker(executable)
-	cgroupVersion, err := d.CgroupVersion(ctx)
-	if err != nil {
-		t.Fatalf("Docker.AllocatedMemory() error = %v, want %v", err, cgroupVersion)
-	}
-	if !reflect.DeepEqual(cgroupVersion, wantVersion) {
-		t.Fatalf("Docker.Version() version = %v, want %v", cgroupVersion, wantVersion)
-	}
-}
-
 func TestDockerLoadFromFile(t *testing.T) {
 	file := "file"
 

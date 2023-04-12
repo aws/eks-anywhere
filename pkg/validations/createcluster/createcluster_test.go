@@ -100,7 +100,6 @@ func (c *createClusterValidationTest) expectValidProvider() {
 func (c *createClusterValidationTest) expectValidDockerExec() {
 	c.docker.EXPECT().Version(c.ctx).Return(21, nil).AnyTimes()
 	c.docker.EXPECT().AllocatedMemory(c.ctx).Return(uint64(6200000001), nil).AnyTimes()
-	c.docker.EXPECT().CgroupVersion(c.ctx).Return(1, nil).AnyTimes()
 }
 
 func (c *createClusterValidationTest) expectEmptyFlux() {

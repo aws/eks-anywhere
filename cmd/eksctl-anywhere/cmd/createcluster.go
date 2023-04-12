@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"runtime"
 
 	"github.com/spf13/cobra"
 
@@ -80,12 +79,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	if err := validations.CheckMinimumDockerVersion(ctx, docker); err != nil {
 		return fmt.Errorf("failed to validate docker: %v", err)
-	}
-
-	if runtime.GOOS == "darwin" {
-		if err = validations.CheckDockerDesktopVersion(ctx, docker); err != nil {
-			return fmt.Errorf("failed to validate docker desktop: %v", err)
-		}
 	}
 
 	validations.CheckDockerAllocatedMemory(ctx, docker)

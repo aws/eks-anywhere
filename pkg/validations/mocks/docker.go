@@ -49,21 +49,6 @@ func (mr *MockDockerExecutableMockRecorder) AllocatedMemory(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllocatedMemory", reflect.TypeOf((*MockDockerExecutable)(nil).AllocatedMemory), arg0)
 }
 
-// CgroupVersion mocks base method.
-func (m *MockDockerExecutable) CgroupVersion(arg0 context.Context) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CgroupVersion", arg0)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CgroupVersion indicates an expected call of CgroupVersion.
-func (mr *MockDockerExecutableMockRecorder) CgroupVersion(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CgroupVersion", reflect.TypeOf((*MockDockerExecutable)(nil).CgroupVersion), arg0)
-}
-
 // Version mocks base method.
 func (m *MockDockerExecutable) Version(arg0 context.Context) (int, error) {
 	m.ctrl.T.Helper()
