@@ -26,7 +26,7 @@ Now, you configure your existing DHCP service to provide the location of the iPX
 
 - __Step 1__: The machine broadcasts a request to network boot. Your existing DHCP service then provides the machine with all IPAM info as well as the location of the Tinkerbell iPXE binary (`ipxe.efi`). The machine configures its network interface with the IPAM info then downloads the Tinkerbell iPXE binary from the location provided by the DHCP service and runs it.
 
-- __Step 2__: Now in the Tinkerbell iPXE binary, iPXE broadcasts a request to network boot. The DHCP service again provides all IPAM info as well as the location of the Tinkerbell iPXE script (`auto.ipxe`). iPXE configures its network interface using the IPAM info and then downloads the Tinkerbell iPXE script from the location provided by the DHCP service and runs it.
+- __Step 2__: Now with the Tinkerbell iPXE binary loaded and running, iPXE again broadcasts a request to network boot. The DHCP service again provides all IPAM info as well as the location of the Tinkerbell iPXE script (`auto.ipxe`). iPXE configures its network interface using the IPAM info and then downloads the Tinkerbell iPXE script from the location provided by the DHCP service and runs it.
 
 >Note The `auto.ipxe` is an [iPXE script](https://ipxe.org/scripting) that tells iPXE from where to download the [HookOS]({{< relref "./bare-custom-hookos" >}}) kernel and initrd so that they can be loaded into memory.
 
@@ -43,6 +43,8 @@ Below you will find code snippets showing how to add the 2 step process from abo
 Most DHCP services define a `next server` option. This option generally corresponds to either DHCP option 66 or the DHCP header `sname`, [reference.](https://www.rfc-editor.org/rfc/rfc2132.html#section-9.4) This option is used to tell a machine where to download the initial bootloader, [reference.](https://networkboot.org/fundamentals/)
 
 Special consideration is required for the `next server` value when using EKS Anywhere to create your initial [management cluster]({{< relref "../../concepts/cluster-topologies" >}}). This is because during this initial create phase a temporary [bootstrap cluster]({{< relref "../../concepts/cluster-topologies#whats-the-difference-between-a-management-cluster-and-a-bootstrap-cluster-for-eks-anywhere" >}}) is created and used to provision the management cluster.
+
+The bootstrap cluster runs the Tinkerbell stack. When the management cluster is successfully created, the Tinkerbell stack is redeployed to the management cluster and the bootstrap cluster is deleted. This means that the IP address of the Tinkerbell stack will change.
 
 As a temporary and one time step, the IP address used by the existing DHCP service for `next server` will need to be the IP address of the temporary bootstrap cluster. This will be the IP of the [Admin node]({{< relref "../../getting-started/install#administrative-machine-prerequisites" >}}) or if you use the cli flag [`--tinkerbell-bootstrap-ip`]({{< relref "../eksctl/anywhere_create_cluster#options" >}}) then that IP should be used for the `next server` in your existing DHCP service.
 
