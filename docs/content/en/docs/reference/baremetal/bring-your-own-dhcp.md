@@ -54,7 +54,7 @@ Once the management cluster is created, the IP address used by the existing DHCP
 
 ### Code snippets
 
-The following code snippets are generic examples of the config needed to enable the 2 step process to an existing DHCP service. It does not cover the IPAM info that is also required.
+The following code snippets are generic examples of the config needed to enable the two-step process to an existing DHCP service. It does not cover the IPAM info that is also required.
 
 [dnsmasq](https://linux.die.net/man/8/dnsmasq)
 
