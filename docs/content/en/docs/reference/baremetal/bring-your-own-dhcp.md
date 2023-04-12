@@ -46,7 +46,7 @@ Special consideration is required for the `next server` value when using EKS Any
 
 The bootstrap cluster runs the Tinkerbell stack. When the management cluster is successfully created, the Tinkerbell stack is redeployed to the management cluster and the bootstrap cluster is deleted. This means that the IP address of the Tinkerbell stack will change.
 
-As a temporary and one time step, the IP address used by the existing DHCP service for `next server` will need to be the IP address of the temporary bootstrap cluster. This will be the IP of the [Admin node]({{< relref "../../getting-started/install#administrative-machine-prerequisites" >}}) or if you use the cli flag [`--tinkerbell-bootstrap-ip`]({{< relref "../eksctl/anywhere_create_cluster#options" >}}) then that IP should be used for the `next server` in your existing DHCP service.
+As a temporary and one-time step, the IP address used by the existing DHCP service for `next server` will need to be the IP address of the temporary bootstrap cluster. This will be the IP of the [Admin node]({{< relref "../../getting-started/install#administrative-machine-prerequisites" >}}) or if you use the cli flag [`--tinkerbell-bootstrap-ip`]({{< relref "../eksctl/anywhere_create_cluster#options" >}}) then that IP should be used for the `next server` in your existing DHCP service.
 
 Once the management cluster is created, the IP address used by the existing DHCP service for `next server` will need to be updated to the `tinkerbellIP`. This IP is defined in your cluster spec at [`tinkerbellDatacenterConfig.spec.tinkerbellIP`]({{< relref "../clusterspec/baremetal#example-tinkerbelldatacenterconfigspec" >}}). The `next server` IP will not need to be updated again.
 
