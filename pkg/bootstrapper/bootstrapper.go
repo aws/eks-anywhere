@@ -22,7 +22,7 @@ type ClusterClient interface {
 	GetCAPIClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	KindClusterExists(ctx context.Context, clusterName string) (bool, error)
 	GetKindClusterKubeconfig(ctx context.Context, clusterName string) (string, error)
-	CreateKindCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterClientOption) (string, error)
+	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterClientOption) (string, error)
 	DeleteKindCluster(ctx context.Context, cluster *types.Cluster) error
 	WithExtraDockerMounts() BootstrapClusterClientOption
 	WithExtraPortMappings([]int) BootstrapClusterClientOption
@@ -42,7 +42,7 @@ func New(clusterClient ClusterClient) *Bootstrapper {
 }
 
 func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterOption) (*types.Cluster, error) {
-	kubeconfigFile, err := b.clusterClient.CreateKindCluster(ctx, clusterSpec, b.getClientOptions(opts)...)
+	kubeconfigFile, err := b.clusterClient.CreateBootstrapCluster(ctx, clusterSpec, b.getClientOptions(opts)...)
 	if err != nil {
 		return nil, fmt.Errorf("creating bootstrap cluster: %v, try rerunning with --force-cleanup to force delete previously created bootstrap cluster", err)
 	}

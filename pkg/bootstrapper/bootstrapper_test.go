@@ -35,7 +35,7 @@ func TestBootstrapperCreateBootstrapClusterSuccess(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
-			client.EXPECT().CreateKindCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+			client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
 			client.EXPECT().CreateNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 
 			got, err := b.CreateBootstrapCluster(ctx, clusterSpec, tt.opts...)
@@ -59,7 +59,7 @@ func TestBootstrapperCreateBootstrapClusterFailureOnCreateNamespaceIfNotPresentF
 
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
-	client.EXPECT().CreateKindCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
 	client.EXPECT().CreateNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace).Return(errors.New(""))
 
 	_, err := b.CreateBootstrapCluster(ctx, clusterSpec)
