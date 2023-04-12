@@ -181,7 +181,6 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 			},
 		},
 	)
-	tt.cleanup()
 }
 
 func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
@@ -200,7 +199,6 @@ func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
 	_, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).To(MatchError(ContainSubstring("building cluster Spec for worker node reconcile")))
-	tt.cleanup()
 }
 
 func (tt *reconcilerTest) withFakeClient() {
@@ -345,6 +343,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		remoteClientRegistry:      remoteClientRegistry,
 	}
 
+	t.Cleanup(tt.cleanup)
 	return tt
 }
 
