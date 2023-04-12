@@ -519,6 +519,30 @@ func TestFactoryBuildWithBootstrapperNoTimeout(t *testing.T) {
 	tt.Expect(deps.Bootstrapper).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithEksdUpgraderNoTimeout(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithEksdUpgrader().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.EksdUpgrader).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithEksdInstallerNoTimeout(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithEksdInstaller().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.EksdInstaller).NotTo(BeNil())
+}
+
 type dummyDockerClient struct{}
 
 func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
