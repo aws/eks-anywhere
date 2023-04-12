@@ -845,7 +845,22 @@ func (f *Factory) WithBootstrapper() *Factory {
 			return nil
 		}
 
-		f.dependencies.Bootstrapper = bootstrapper.New(&bootstrapperClient{f.dependencies.Kind, f.dependencies.Kubectl})
+		var opts []bootstrapper.RetrierClientOpt
+		if f.config.noTimeouts {
+			opts = append(opts,
+				bootstrapper.WithRetrierClientRetrier(
+					*retrier.NewWithNoTimeout(),
+				),
+			)
+		}
+
+		f.dependencies.Bootstrapper = bootstrapper.New(
+			bootstrapper.NewRetrierClient(
+				f.dependencies.Kind,
+				f.dependencies.Kubectl,
+				opts...,
+			),
+		)
 		return nil
 	})
 
