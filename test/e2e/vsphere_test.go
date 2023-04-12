@@ -17,181 +17,63 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-// Autoimport
-func TestVSphereKubernetes122BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runAutoImportFlow(test, provider)
+// Auto Import tests
+func TestBottlerocketAutoImport(t *testing.T) {
+	tests := map[string]struct {
+		version v1alpha1.KubernetesVersion
+	}{
+		"k8s version 1.22": {version: v1alpha1.Kube122},
+		"k8s version 1.23": {version: v1alpha1.Kube123},
+		"k8s version 1.24": {version: v1alpha1.Kube124},
+		"k8s version 1.25": {version: v1alpha1.Kube125},
+		"k8s version 1.26": {version: v1alpha1.Kube126},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			provider := framework.NewVSphere(t,
+				framework.WithVSphereFillers(
+					api.WithTemplateForAllMachines(""),
+					api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
+				),
+			)
+			test := framework.NewClusterE2ETest(
+				t,
+				provider,
+				framework.WithClusterFiller(api.WithKubernetesVersion(test.version)),
+			)
+			runAutoImportFlow(test, provider)
+		})
+	}
 }
 
-func TestVSphereKubernetes123BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
-func TestVSphereKubernetes124BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
-func TestVSphereKubernetes125BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
-func TestVSphereKubernetes126BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
-// AWS IAM Auth
-func TestVSphereKubernetes122AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes123AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu123()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes124AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu124()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes125AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu125()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes126AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu126()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes122BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket122()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes123BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket123()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes124BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket124()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes125BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket125()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes126BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket126()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-	)
-	runAWSIamAuthFlow(test)
+// AWS IAM Auth tests
+func TestIAMAuth(t *testing.T) {
+	tests := map[string]struct {
+		version v1alpha1.KubernetesVersion
+		opts    []framework.VSphereOpt
+	}{
+		"k8s and Ubuntu version 1.22":       {version: v1alpha1.Kube122, opts: []framework.VSphereOpt{framework.WithUbuntu122()}},
+		"k8s and Ubuntu version 1.23":       {version: v1alpha1.Kube123, opts: []framework.VSphereOpt{framework.WithUbuntu123()}},
+		"k8s and Ubuntu version 1.24":       {version: v1alpha1.Kube124, opts: []framework.VSphereOpt{framework.WithUbuntu124()}},
+		"k8s and Ubuntu version 1.25":       {version: v1alpha1.Kube125, opts: []framework.VSphereOpt{framework.WithUbuntu125()}},
+		"k8s and Ubuntu version 1.26":       {version: v1alpha1.Kube126, opts: []framework.VSphereOpt{framework.WithUbuntu126()}},
+		"k8s and Bottlerocket version 1.22": {version: v1alpha1.Kube122, opts: []framework.VSphereOpt{framework.WithBottleRocket122()}},
+		"k8s and Bottlerocket version 1.23": {version: v1alpha1.Kube123, opts: []framework.VSphereOpt{framework.WithBottleRocket123()}},
+		"k8s and Bottlerocket version 1.24": {version: v1alpha1.Kube124, opts: []framework.VSphereOpt{framework.WithBottleRocket124()}},
+		"k8s and Bottlerocket version 1.25": {version: v1alpha1.Kube125, opts: []framework.VSphereOpt{framework.WithBottleRocket125()}},
+		"k8s and Bottlerocket version 1.26": {version: v1alpha1.Kube126, opts: []framework.VSphereOpt{framework.WithBottleRocket126()}},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			test := framework.NewClusterE2ETest(
+				t,
+				framework.NewVSphere(t, test.opts...),
+				framework.WithAWSIam(),
+				framework.WithClusterFiller(api.WithKubernetesVersion(test.version)),
+			)
+			runAWSIamAuthFlow(test)
+		})
+	}
 }
 
 func TestVSphereKubernetes125To126AWSIamAuthUpgrade(t *testing.T) {
