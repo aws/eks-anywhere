@@ -69,20 +69,6 @@ func (d *Docker) AllocatedMemory(ctx context.Context) (uint64, error) {
 	return strconv.ParseUint(totalMemory, 10, 64)
 }
 
-func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
-	cmdOutput, err := d.Execute(ctx, "info", "--format", "'{{json .CgroupVersion}}'")
-	if err != nil {
-		return 0, fmt.Errorf("please check if docker is installed and running %v", err)
-	}
-	cgroupVersion := strings.TrimSpace(cmdOutput.String())
-	cgroupVersion = strings.Trim(cgroupVersion, "\"'")
-	version, err := strconv.Atoi(cgroupVersion)
-	if err != nil {
-		return 0, err
-	}
-	return version, nil
-}
-
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
 	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
 	localImage := replacer.Replace(image)

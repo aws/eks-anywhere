@@ -3,11 +3,13 @@ package reconciler_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -20,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -40,6 +43,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
+
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
@@ -53,6 +57,166 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name,
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+}
+
+func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
+	tt := newReconcilerTest(t)
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	capiCluster.Status.Conditions = clusterv1.Conditions{
+		{
+			Type:               clusterapi.ControlPlaneReadyCondition,
+			Status:             corev1.ConditionFalse,
+			LastTransitionTime: metav1.NewTime(time.Now()),
+		},
+	}
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.ResultWithRequeue(30 * time.Second)))
+}
+
+func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{
+		Count: 1,
+		MachineGroupRef: &anywherev1.Ref{
+			Kind: anywherev1.CloudStackMachineConfigKind,
+			Name: tt.machineConfigControlPlane.Name,
+		},
+	}
+	tt.createAllObjs()
+	logger := test.NewNullLogger()
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyExist(tt.ctx, &cloudstackv1.CloudStackCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tt.cluster.Name,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	})
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name,
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&cloudstackv1.CloudStackMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-control-plane-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&cloudstackv1.CloudStackMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-etcd-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&etcdv1.EtcdadmCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-etcd",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+}
+
+func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	logger := test.NewNullLogger()
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+
+	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
+	tt.ShouldEventuallyExist(tt.ctx, &cloudstackv1.CloudStackCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tt.cluster.Name,
+			Namespace: constants.EksaSystemNamespace,
+		},
+	})
+	tt.ShouldEventuallyExist(tt.ctx,
+		&controlplanev1.KubeadmControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name,
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyExist(tt.ctx,
+		&cloudstackv1.CloudStackMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-control-plane-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyNotExist(tt.ctx,
+		&cloudstackv1.CloudStackMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-etcd-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+	tt.ShouldEventuallyNotExist(tt.ctx,
+		&etcdv1.EtcdadmCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-etcd",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+}
+
+func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+	spec := tt.buildSpec()
+	spec.Cluster.Spec.KubernetesVersion = ""
+	_, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), spec)
+	tt.Expect(err).To(MatchError(ContainSubstring("generating cloudstack control plane yaml spec")))
 }
 
 func TestReconcileCNISuccess(t *testing.T) {
@@ -270,6 +434,11 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	machineConfigCP := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
 		m.Name = "cp-machine-config"
+		m.Spec.Users = append(m.Spec.Users,
+			anywherev1.UserConfiguration{
+				Name:              "user",
+				SshAuthorizedKeys: []string{""},
+			})
 	})
 	machineConfigWN := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
 		m.Name = "worker-machine-config"
@@ -280,7 +449,12 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			})
 	})
 
-	workloadClusterDatacenter := dataCenter(func(d *anywherev1.CloudStackDatacenterConfig) {})
+	workloadClusterDatacenter := dataCenter(func(d *anywherev1.CloudStackDatacenterConfig) {
+		d.Spec.AvailabilityZones = append(d.Spec.AvailabilityZones,
+			anywherev1.CloudStackAvailabilityZone{
+				Name: "test-zone",
+			})
+	})
 
 	cluster := cloudstackCluster(func(c *anywherev1.Cluster) {
 		c.Name = "workload-cluster"
@@ -351,11 +525,21 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
-	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
-	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackCluster{})
-	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
-	tt.DeleteAllOfAndWait(tt.ctx, &etcdv1.EtcdadmCluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackCluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
+	tt.DeleteAndWait(tt.ctx, &cloudstackv1.CloudStackMachineTemplate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workload-cluster-etcd-1",
+			Namespace: "eksa-system",
+		},
+	})
+	tt.DeleteAndWait(tt.ctx, &etcdv1.EtcdadmCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "workload-cluster-etcd",
+			Namespace: "eksa-system",
+		},
+	})
 }
 
 type clusterOpt func(*anywherev1.Cluster)

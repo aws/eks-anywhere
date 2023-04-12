@@ -104,7 +104,7 @@ spec:
       kind: VSphereMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.25"
+  kubernetesVersion: "1.26"
       ...
 ```
 

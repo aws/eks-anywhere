@@ -71,7 +71,7 @@ type KubeProxyCLIUpgrader struct {
 	retrier       retrier.Retrier
 }
 
-// KubeProxyCLIUpgraderOpt allows to customize a KubeProxyCLIUpgraderOpt
+// KubeProxyCLIUpgraderOpt allows to customize a KubeProxyCLIUpgrader
 // on construction.
 type KubeProxyCLIUpgraderOpt func(*KubeProxyCLIUpgrader)
 
@@ -124,14 +124,18 @@ func (u KubeProxyCLIUpgrader) buildClients(
 	managementClusterKubeconfigPath, workloadClusterKubeconfigPath string,
 ) (managementClusterClient, workloadClusterClient client.Client, err error) {
 	u.log.V(4).Info("Building client for management cluster", "kubeconfig", managementClusterKubeconfigPath)
-	managementClusterClient, err = u.clientFactory.BuildClientFromKubeconfig(managementClusterKubeconfigPath)
-	if err != nil {
+	if err = u.retrier.Retry(func() error {
+		managementClusterClient, err = u.clientFactory.BuildClientFromKubeconfig(managementClusterKubeconfigPath)
+		return err
+	}); err != nil {
 		return nil, nil, err
 	}
 
 	u.log.V(4).Info("Building client for workload cluster", "kubeconfig", workloadClusterKubeconfigPath)
-	workloadClusterClient, err = u.clientFactory.BuildClientFromKubeconfig(workloadClusterKubeconfigPath)
-	if err != nil {
+	if err = u.retrier.Retry(func() error {
+		workloadClusterClient, err = u.clientFactory.BuildClientFromKubeconfig(workloadClusterKubeconfigPath)
+		return err
+	}); err != nil {
 		return nil, nil, err
 	}
 

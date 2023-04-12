@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"runtime"
 
 	"github.com/spf13/cobra"
 
@@ -82,12 +81,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return fmt.Errorf("failed to validate docker: %v", err)
 	}
 
-	if runtime.GOOS == "darwin" {
-		if err = validations.CheckDockerDesktopVersion(ctx, docker); err != nil {
-			return fmt.Errorf("failed to validate docker desktop: %v", err)
-		}
-	}
-
 	validations.CheckDockerAllocatedMemory(ctx, docker)
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
@@ -127,6 +120,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithWriter().
 		WithEksdInstaller().
 		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig)
+
+	if cc.timeoutOptions.noTimeouts {
+		factory.WithNoTimeouts()
+	}
 
 	deps, err := factory.Build(ctx)
 	if err != nil {

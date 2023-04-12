@@ -213,7 +213,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithVSphereValidator().
 		WithCiliumTemplater().
 		WithIPValidator().
-		WithKubeProxyCLIUpgrader(dependencies.KubeProxyCLIUpgraderOptions{}).
+		WithKubeProxyCLIUpgrader().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -487,11 +487,24 @@ func TestFactoryBuildWithCNIInstallerKindnetd(t *testing.T) {
 func TestFactoryBuildWithKubeProxyCLIUpgraderNoTimeout(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		WithKubeProxyCLIUpgrader(dependencies.KubeProxyCLIUpgraderOptions{NoTimouts: true}).
+		WithNoTimeouts().
+		WithKubeProxyCLIUpgrader().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.KubeProxyCLIUpgrader).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithAwsIamAuthNoTimeout(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithAwsIamAuth().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.AwsIamAuth).NotTo(BeNil())
 }
 
 type dummyDockerClient struct{}

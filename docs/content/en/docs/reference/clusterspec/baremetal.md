@@ -41,7 +41,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.25"
+  kubernetesVersion: "1.26"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -151,7 +151,7 @@ the existing nodes.
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.25`, `1.24`, `1.23`, `1.22`, `1.21`
+The Kubernetes version you want to use for your cluster. Supported values: `1.26`, `1.25`, `1.24`, `1.23`, `1.22`
 
 ### managementCluster
 Identifies the name of the management cluster.

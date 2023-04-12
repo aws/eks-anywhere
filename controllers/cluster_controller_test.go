@@ -177,6 +177,36 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("deleting self-managed clusters is not supported")))
 }
 
+func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	selfManagedCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-management-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			BundlesRef: &anywherev1.BundlesRef{
+				Name: "my-bundles-ref",
+			},
+			RegistryMirrorConfiguration: &anywherev1.RegistryMirrorConfiguration{
+				Authenticate: true,
+			},
+		},
+	}
+
+	controller := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	clusterValidator := mocks.NewMockClusterValidator(controller)
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
+
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
+	g.Expect(err).To(MatchError(ContainSubstring("fetching registry auth secret")))
+}
+
 func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 	secret := createSecret()
 	managementCluster := createCluster()

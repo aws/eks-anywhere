@@ -34,32 +34,49 @@ type Client interface {
 
 // RetrierClient wraps basic kubernetes API operations around a retrier.
 type RetrierClient struct {
-	Client
-	*retrier.Retrier
+	client  Client
+	retrier *retrier.Retrier
+}
+
+// RetrierClientOpt allows to customize a RetrierClient
+// on construction.
+type RetrierClientOpt func(*RetrierClient)
+
+// RetrierClientRetrier allows to use a custom retrier.
+func RetrierClientRetrier(retrier *retrier.Retrier) RetrierClientOpt {
+	return func(u *RetrierClient) {
+		u.retrier = retrier
+	}
 }
 
 // NewRetrier constructs a new RetrierClient.
-func NewRetrier(client Client) *RetrierClient {
-	return &RetrierClient{
-		Client:  client,
-		Retrier: retrier.New(5 * time.Minute),
+func NewRetrier(client Client, opts ...RetrierClientOpt) *RetrierClient {
+	c := &RetrierClient{
+		client:  client,
+		retrier: retrier.New(5 * time.Minute),
 	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }
 
 // Apply creates/updates the objects provided by the yaml document in the cluster.
 func (c *RetrierClient) Apply(ctx context.Context, cluster *types.Cluster, data []byte) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
-			return c.ApplyKubeSpecFromBytes(ctx, cluster, data)
+			return c.client.ApplyKubeSpecFromBytes(ctx, cluster, data)
 		},
 	)
 }
 
 // Delete deletes the objects defined in the yaml document from the cluster.
 func (c *RetrierClient) Delete(ctx context.Context, cluster *types.Cluster, data []byte) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
-			return c.DeleteKubeSpecFromBytes(ctx, cluster, data)
+			return c.client.DeleteKubeSpecFromBytes(ctx, cluster, data)
 		},
 	)
 }
@@ -67,7 +84,7 @@ func (c *RetrierClient) Delete(ctx context.Context, cluster *types.Cluster, data
 // WaitForPreflightDaemonSet blocks until the Cilium preflight DS installed during upgrades
 // becomes ready or until the timeout expires.
 func (c *RetrierClient) WaitForPreflightDaemonSet(ctx context.Context, cluster *types.Cluster) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.checkPreflightDaemonSetReady(ctx, cluster)
 		},
@@ -75,7 +92,7 @@ func (c *RetrierClient) WaitForPreflightDaemonSet(ctx context.Context, cluster *
 }
 
 func (c *RetrierClient) checkPreflightDaemonSetReady(ctx context.Context, cluster *types.Cluster) error {
-	ciliumDaemonSet, err := c.GetDaemonSet(ctx, DaemonSetName, namespace, cluster.KubeconfigFile)
+	ciliumDaemonSet, err := c.client.GetDaemonSet(ctx, DaemonSetName, namespace, cluster.KubeconfigFile)
 	if err != nil {
 		return err
 	}
@@ -84,7 +101,7 @@ func (c *RetrierClient) checkPreflightDaemonSetReady(ctx context.Context, cluste
 		return err
 	}
 
-	preflightDaemonSet, err := c.GetDaemonSet(ctx, PreflightDaemonSetName, namespace, cluster.KubeconfigFile)
+	preflightDaemonSet, err := c.client.GetDaemonSet(ctx, PreflightDaemonSetName, namespace, cluster.KubeconfigFile)
 	if err != nil {
 		return err
 	}
@@ -99,7 +116,7 @@ func (c *RetrierClient) checkPreflightDaemonSetReady(ctx context.Context, cluste
 // WaitForPreflightDeployment blocks until the Cilium preflight Deployment installed during upgrades
 // becomes ready or until the timeout expires.
 func (c *RetrierClient) WaitForPreflightDeployment(ctx context.Context, cluster *types.Cluster) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.checkPreflightDeploymentReady(ctx, cluster)
 		},
@@ -107,7 +124,7 @@ func (c *RetrierClient) WaitForPreflightDeployment(ctx context.Context, cluster 
 }
 
 func (c *RetrierClient) checkPreflightDeploymentReady(ctx context.Context, cluster *types.Cluster) error {
-	preflightDeployment, err := c.GetDeployment(ctx, PreflightDeploymentName, namespace, cluster.KubeconfigFile)
+	preflightDeployment, err := c.client.GetDeployment(ctx, PreflightDeploymentName, namespace, cluster.KubeconfigFile)
 	if err != nil {
 		return err
 	}
@@ -122,7 +139,7 @@ func (c *RetrierClient) checkPreflightDeploymentReady(ctx context.Context, clust
 // WaitForCiliumDaemonSet blocks until the Cilium DS installed as part of the default
 // Cilium installation becomes ready or until the timeout expires.
 func (c *RetrierClient) WaitForCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.checkCiliumDaemonSetReady(ctx, cluster)
 		},
@@ -132,15 +149,15 @@ func (c *RetrierClient) WaitForCiliumDaemonSet(ctx context.Context, cluster *typ
 // RolloutRestartCiliumDaemonSet triggers a rollout restart of the Cilium DS installed
 // as part of the default Cilium installation.
 func (c *RetrierClient) RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
-			return c.RolloutRestartDaemonSet(ctx, DaemonSetName, namespace, cluster.KubeconfigFile)
+			return c.client.RolloutRestartDaemonSet(ctx, DaemonSetName, namespace, cluster.KubeconfigFile)
 		},
 	)
 }
 
 func (c *RetrierClient) checkCiliumDaemonSetReady(ctx context.Context, cluster *types.Cluster) error {
-	daemonSet, err := c.GetDaemonSet(ctx, DaemonSetName, namespace, cluster.KubeconfigFile)
+	daemonSet, err := c.client.GetDaemonSet(ctx, DaemonSetName, namespace, cluster.KubeconfigFile)
 	if err != nil {
 		return err
 	}
@@ -155,7 +172,7 @@ func (c *RetrierClient) checkCiliumDaemonSetReady(ctx context.Context, cluster *
 // WaitForCiliumDeployment blocks until the Cilium Deployment installed as part of the default
 // Cilium installation becomes ready or until the timeout expires.
 func (c *RetrierClient) WaitForCiliumDeployment(ctx context.Context, cluster *types.Cluster) error {
-	return c.Retry(
+	return c.retrier.Retry(
 		func() error {
 			return c.checkCiliumDeploymentReady(ctx, cluster)
 		},
@@ -163,7 +180,7 @@ func (c *RetrierClient) WaitForCiliumDeployment(ctx context.Context, cluster *ty
 }
 
 func (c *RetrierClient) checkCiliumDeploymentReady(ctx context.Context, cluster *types.Cluster) error {
-	deployment, err := c.GetDeployment(ctx, DeploymentName, namespace, cluster.KubeconfigFile)
+	deployment, err := c.client.GetDeployment(ctx, DeploymentName, namespace, cluster.KubeconfigFile)
 	if err != nil {
 		return err
 	}

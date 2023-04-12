@@ -375,7 +375,7 @@ func buildTemplateMapCP(
 		"clusterName":                   clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":        clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":          clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
-		"controlPlaneSshAuthorizedKey":  controlPlaneMachineSpec.Users[0].SshAuthorizedKeys,
+		"controlPlaneSshAuthorizedKey":  controlPlaneMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"controlPlaneSshUsername":       controlPlaneMachineSpec.Users[0].Name,
 		"eksaSystemNamespace":           constants.EksaSystemNamespace,
 		"format":                        format,
@@ -407,7 +407,11 @@ func buildTemplateMapCP(
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values = populateRegistryMirrorValues(clusterSpec, values)
+		values, err := populateRegistryMirrorValues(clusterSpec, values)
+		if err != nil {
+			return values, err
+		}
+
 		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
 		localRegistry := values["publicMirror"].(string)
 		cpTemplateOverride = strings.ReplaceAll(cpTemplateOverride, defaultRegistry, localRegistry)
@@ -480,7 +484,7 @@ func buildTemplateMapMD(
 		"format":                 format,
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
 		"workerNodeGroupName":    workerNodeGroupConfiguration.Name,
-		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
+		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 		"hardwareSelector":       workerNodeGroupMachineSpec.HardwareSelector,
 		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
@@ -495,7 +499,11 @@ func buildTemplateMapMD(
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values = populateRegistryMirrorValues(clusterSpec, values)
+		values, err := populateRegistryMirrorValues(clusterSpec, values)
+		if err != nil {
+			return values, err
+		}
+
 		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
 		localRegistry := values["publicMirror"].(string)
 		workerTemplateOverride = strings.ReplaceAll(workerTemplateOverride, defaultRegistry, localRegistry)
@@ -549,7 +557,7 @@ func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
 	return unstructuredutil.UnstructuredToYaml(outSpec)
 }
 
-func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) map[string]interface{} {
+func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) (map[string]interface{}, error) {
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
@@ -563,12 +571,12 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 		values["registryAuth"] = registryMirror.Auth
 		username, password, err := config.ReadCredentials()
 		if err != nil {
-			return values
+			return values, err
 		}
 		values["registryUsername"] = username
 		values["registryPassword"] = password
 	}
-	return values
+	return values, nil
 }
 
 func getControlPlaneMachineSpec(clusterSpec *cluster.Spec) (*v1alpha1.TinkerbellMachineConfigSpec, error) {

@@ -22,6 +22,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -267,6 +268,17 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
 			cluster.Status.FailureMessage = ptr.String(err.Error())
+			return controller.Result{}, err
+		}
+	}
+
+	if cluster.RegistryAuth() {
+		rUsername, rPassword, err := config.ReadCredentialsFromSecret(ctx, r.client)
+		if err != nil {
+			return controller.Result{}, err
+		}
+
+		if err := config.SetCredentialsEnv(rUsername, rPassword); err != nil {
 			return controller.Result{}, err
 		}
 	}

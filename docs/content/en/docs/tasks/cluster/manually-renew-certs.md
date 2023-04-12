@@ -40,9 +40,9 @@ kubectl get etcdadmcluster -A
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
 # backup certs
 cd /etc/etcd
-sudo mv pki pki.bak
-sudo mkdir pki
-sudo mv pki.bak/ca.* pki
+sudo cp -r pki pki.bak
+sudo rm pki/*
+sudo cp pki.bak/ca.* pki
 
 # run certificates join phase to regenerate the deleted certificates
 sudo etcdadm join phase certificates http://eks-a-etcd-dumb-url
@@ -61,9 +61,9 @@ ctr image pull ${IMAGE_ID}
 
 # backup certs
 cd /var/lib/etcd
-mv pki pki.bak
-mkdir pki
-mv pki.bak/ca.* pki
+cp -r pki pki.bak
+rm pki/*
+cp pki.bak/ca.* pki
 
 # recreate certificates
 ctr run \
@@ -84,8 +84,12 @@ ${IMAGE_ID} tmp-cert-renew \
 sudo etcdctl --cacert=/etc/etcd/pki/ca.crt --cert=/etc/etcd/pki/etcdctl-etcd-client.crt --key=/etc/etcd/pki/etcdctl-etcd-client.key member list
 {{< /tab >}}
 {{< tab header="Bottlerocket" lang="bash" >}}
-# there should be no error except "connection refused" for the health check
-tail -f -n 100 /var/log/containers/etcd*
+ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1)
+ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
+     --cacert=/var/lib/etcd/pki/ca.crt \
+     --cert=/var/lib/etcd/pki/server.crt \
+     --key=/var/lib/etcd/pki/server.key \
+     member list
 {{< /tab >}}
 {{< /tabpane >}}
 

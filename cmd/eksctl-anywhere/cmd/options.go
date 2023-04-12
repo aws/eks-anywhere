@@ -88,12 +88,6 @@ func buildClusterManagerOpts(t timeoutOptions) (*dependencies.ClusterManagerTime
 	}, nil
 }
 
-func kubeProxyCLIUpgraderOptions(o *upgradeClusterOptions) dependencies.KubeProxyCLIUpgraderOptions {
-	return dependencies.KubeProxyCLIUpgraderOptions{
-		NoTimouts: o.noTimeouts,
-	}
-}
-
 type clusterOptions struct {
 	fileName             string
 	bundlesOverride      string

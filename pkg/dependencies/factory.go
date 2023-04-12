@@ -20,7 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
-	"github.com/aws/eks-anywhere/pkg/config"
+	cliconfig "github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
@@ -90,7 +90,7 @@ type Dependencies struct {
 	FileReader                  *files.Reader
 	ManifestReader              *manifests.Reader
 	closers                     []types.Closer
-	CliConfig                   *config.CliConfig
+	CliConfig                   *cliconfig.CliConfig
 	PackageInstaller            interfaces.PackageInstaller
 	BundleRegistry              curatedpackages.BundleRegistry
 	PackageControllerClient     *curatedpackages.PackageControllerClient
@@ -128,6 +128,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 // Factory helps initialization.
 type Factory struct {
 	executablesConfig        *executablesConfig
+	config                   config
 	registryMirror           *registrymirror.RegistryMirror
 	proxyConfiguration       map[string]string
 	writerFolder             string
@@ -142,6 +143,10 @@ type executablesConfig struct {
 	useDockerContainer bool
 	dockerClient       executables.DockerClient
 	mountDirs          []string
+}
+
+type config struct {
+	noTimeouts bool
 }
 
 type buildStep func(ctx context.Context) error
@@ -196,7 +201,7 @@ func (f *Factory) GetProxyConfiguration() map[string]string {
 func (f *Factory) WithProxyConfiguration() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.proxyConfiguration == nil {
-			proxyConfig := config.GetProxyConfigFromEnv()
+			proxyConfig := cliconfig.GetProxyConfigFromEnv()
 			f.UseProxyConfiguration(proxyConfig)
 		}
 		return nil
@@ -256,7 +261,7 @@ func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *F
 
 // dockerLogin performs a docker login with the ENV VARS.
 func dockerLogin(ctx context.Context, registry string, docker executables.DockerClient) error {
-	username, password, _ := config.ReadCredentials()
+	username, password, _ := cliconfig.ReadCredentials()
 	err := docker.Login(ctx, registry, username, password)
 	if err != nil {
 		return err
@@ -700,6 +705,7 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	return f
 }
 
+// WithNetworking builds a Networking.
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	var networkingBuilder func() clustermanager.Networking
 	if clusterConfig.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
@@ -709,9 +715,14 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 		}
 	} else {
 		f.WithKubectl().WithCiliumTemplater()
+		var opts []cilium.RetrierClientOpt
+		if f.config.noTimeouts {
+			opts = append(opts, cilium.RetrierClientRetrier(retrier.NewWithNoTimeout()))
+		}
+
 		networkingBuilder = func() clustermanager.Networking {
 			c := cilium.NewCilium(
-				cilium.NewRetrier(f.dependencies.Kubectl),
+				cilium.NewRetrier(f.dependencies.Kubectl, opts...),
 				f.dependencies.CiliumTemplater,
 			)
 			c.SetSkipUpgrade(!clusterConfig.Spec.ClusterNetwork.CNIConfig.Cilium.IsManaged())
@@ -791,7 +802,18 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 		}
 		certgen := crypto.NewCertificateGenerator()
 		clusterId := uuid.New()
-		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(certgen, clusterId, f.dependencies.Kubectl, f.dependencies.Writer)
+
+		var opts []awsiamauth.RetrierClientOpt
+		if f.config.noTimeouts {
+			opts = append(opts, awsiamauth.RetrierClientRetrier(*retrier.NewWithNoTimeout()))
+		}
+
+		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(
+			certgen,
+			clusterId,
+			awsiamauth.NewRetrierClient(f.dependencies.Kubectl, opts...),
+			f.dependencies.Writer,
+		)
 		return nil
 	})
 
@@ -842,15 +864,15 @@ type ClusterManagerTimeoutOptions struct {
 	ControlPlaneWait, ExternalEtcdWait, MachineWait, UnhealthyMachineWait, NodeStartupWait time.Duration
 }
 
-func eksaInstallerOpts(timeoutOpts *ClusterManagerTimeoutOptions) []clustermanager.EKSAInstallerOpt {
-	if timeoutOpts == nil || !timeoutOpts.NoTimeouts {
-		return nil
+func (f *Factory) eksaInstallerOpts() []clustermanager.EKSAInstallerOpt {
+	var opts []clustermanager.EKSAInstallerOpt
+	if f.config.noTimeouts {
+		opts = append(opts, clustermanager.WithEKSAInstallerNoTimeouts())
 	}
-
-	return []clustermanager.EKSAInstallerOpt{clustermanager.WithEKSAInstallerNoTimeouts()}
+	return opts
 }
 
-func clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) []clustermanager.ClusterManagerOpt {
+func (f *Factory) clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) []clustermanager.ClusterManagerOpt {
 	if timeoutOpts == nil {
 		return nil
 	}
@@ -863,7 +885,7 @@ func clusterManagerOpts(timeoutOpts *ClusterManagerTimeoutOptions) []clustermana
 		clustermanager.WithNodeStartupTimeout(timeoutOpts.NodeStartupWait),
 	}
 
-	if timeoutOpts.NoTimeouts {
+	if f.config.noTimeouts {
 		o = append(o, clustermanager.WithNoTimeouts())
 	}
 
@@ -880,7 +902,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 		}
 
 		var r *retrier.Retrier
-		if timeoutOpts != nil && timeoutOpts.NoTimeouts {
+		if f.config.noTimeouts {
 			r = retrier.NewWithNoTimeout()
 		} else {
 			r = clustermanager.DefaultRetrier()
@@ -894,7 +916,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 			r,
 		)
 
-		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, eksaInstallerOpts(timeoutOpts)...)
+		installer := clustermanager.NewEKSAInstaller(client, f.dependencies.FileReader, f.eksaInstallerOpts()...)
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			client,
@@ -903,7 +925,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
 			installer,
-			clusterManagerOpts(timeoutOpts)...,
+			f.clusterManagerOpts(timeoutOpts)...,
 		)
 		return nil
 	})
@@ -911,7 +933,18 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, timeoutOpt
 	return f
 }
 
-func (f *Factory) WithCliConfig(cliConfig *config.CliConfig) *Factory {
+// WithNoTimeouts injects no timeouts to all the dependencies with configurable timeout.
+// Calling this method sets no timeout for the waits and retries in all the
+// cluster operations, i.e. cluster manager, eksa installer, networking installer.
+// Instead of passing the option to each dependency's constructor, use this
+// method to pass no timeouts to new dependency.
+func (f *Factory) WithNoTimeouts() *Factory {
+	f.config.noTimeouts = true
+	return f
+}
+
+// WithCliConfig builds a cli config.
+func (f *Factory) WithCliConfig(cliConfig *cliconfig.CliConfig) *Factory {
 	f.dependencies.CliConfig = cliConfig
 	return f
 }
@@ -960,18 +993,13 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 	return f
 }
 
-// KubeProxyCLIUpgraderOptions allows to configure the WithKubeProxyCLIUpgrader.
-type KubeProxyCLIUpgraderOptions struct {
-	NoTimouts bool
-}
-
 // WithKubeProxyCLIUpgrader builds a KubeProxyCLIUpgrader.
-func (f *Factory) WithKubeProxyCLIUpgrader(o KubeProxyCLIUpgraderOptions) *Factory {
+func (f *Factory) WithKubeProxyCLIUpgrader() *Factory {
 	f.WithLogger()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		var opts []clustermanager.KubeProxyCLIUpgraderOpt
-		if o.NoTimouts {
+		if f.config.noTimeouts {
 			opts = append(opts, clustermanager.KubeProxyCLIUpgraderRetrier(*retrier.NewWithNoTimeout()))
 		}
 
@@ -1031,7 +1059,8 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return f
 }
 
-func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
+// WithGitOpsFlux builds a gitops flux.
+func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *cliconfig.CliConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -1080,7 +1109,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
-		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(cliconfig.EksaAccessKeyIdEnv), os.Getenv(cliconfig.EksaSecretAccessKeyEnv), os.Getenv(cliconfig.EksaRegionEnv)
 		writer, err := filewriter.NewWriter(spec.Cluster.Name)
 		if err != nil {
 			return err
