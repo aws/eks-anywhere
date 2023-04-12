@@ -240,7 +240,6 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
 			workers, err := vsphere.WorkersSpec(ctx, logger, client, spec)
 			g.Expect(err).NotTo(HaveOccurred())

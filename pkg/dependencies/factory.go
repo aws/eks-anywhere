@@ -103,6 +103,13 @@ type Dependencies struct {
 	NutanixValidator            *nutanix.Validator
 	SnowValidator               *snow.Validator
 	IPValidator                 *validator.IPValidator
+	UnAuthKubectlClient         KubeClients
+}
+
+// KubeClients defines super struct that exposes all behavior.
+type KubeClients struct {
+	*executables.Kubectl
+	*kubernetes.UnAuthClient
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -1070,6 +1077,22 @@ func (f *Factory) WithKubeProxyCLIUpgrader() *Factory {
 		)
 		return nil
 	})
+	return f
+}
+
+// WithValidatorClients builds KubeClients.
+func (f *Factory) WithValidatorClients() *Factory {
+	f.WithKubectl().WithUnAuthKubeClient()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		f.dependencies.UnAuthKubectlClient = KubeClients{
+			Kubectl:      f.dependencies.Kubectl,
+			UnAuthClient: f.dependencies.UnAuthKubeClient,
+		}
+
+		return nil
+	})
+
 	return f
 }
 

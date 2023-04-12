@@ -214,6 +214,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCiliumTemplater().
 		WithIPValidator().
 		WithKubeProxyCLIUpgrader().
+		WithValidatorClients().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -235,6 +236,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.CiliumTemplater).NotTo(BeNil())
 	tt.Expect(deps.IPValidator).NotTo(BeNil())
 	tt.Expect(deps.KubeProxyCLIUpgrader).NotTo(BeNil())
+	tt.Expect(deps.UnAuthKubectlClient).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithProxyConfiguration(t *testing.T) {

@@ -32,7 +32,7 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 			return &validations.ValidationResult{
 				Name:        "validate certificate for registry mirror",
 				Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
-				Err:         validations.ValidateCertForRegistryMirror(v.Opts.Spec, v.Opts.TlsValidator),
+				Err:         validations.ValidateCertForRegistryMirror(v.Opts.Spec, v.Opts.TLSValidator),
 			}
 		},
 		func() *validations.ValidationResult {

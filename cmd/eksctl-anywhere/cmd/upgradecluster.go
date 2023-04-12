@@ -23,6 +23,7 @@ type upgradeClusterOptions struct {
 	forceClean            bool
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
+	skipValidations       []string
 }
 
 var uc = &upgradeClusterOptions{}
@@ -48,6 +49,7 @@ func init() {
 	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
+	upgradeClusterCmd.Flags().StringArrayVar(&uc.skipValidations, "skip-validations", []string{}, "Bypass upgrade validations by name. Valid arguments you can pass are --skip-validations=pod-disruption")
 
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -107,7 +109,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithCAPIManager().
 		WithEksdUpgrader().
 		WithEksdInstaller().
-		WithKubectl()
+		WithKubectl().
+		WithValidatorClients()
 
 	if uc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -144,12 +147,19 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	validationOpts := &validations.Opts{
-		Kubectl:           deps.Kubectl,
+		Kubectl:           deps.UnAuthKubectlClient,
 		Spec:              clusterSpec,
 		WorkloadCluster:   workloadCluster,
 		ManagementCluster: managementCluster,
 		Provider:          deps.Provider,
 		CliConfig:         cliConfig,
+	}
+
+	if len(uc.skipValidations) != 0 {
+		validationOpts.SkippedValidations, err = upgradevalidations.ValidateSkippableUpgradeValidation(uc.skipValidations)
+		if err != nil {
+			return err
+		}
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
