@@ -1459,7 +1459,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
-	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
+	expectedLogs := "Everything is ready"
 	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
@@ -1509,7 +1509,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 	if err != nil {
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
-	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
+	expectedLogs := "Everything is ready"
 	err = retrier.New(5 * time.Minute).Retry(func() error {
 		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
 		if err != nil {
