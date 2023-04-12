@@ -59,15 +59,20 @@ func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *
 
 // KubeadmControlPlane reads a cluster-api KubeadmControlPlane for an eks-a cluster using a kube client.
 func KubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
-	kubeadmControlPlaneName := clusterapi.KubeadmControlPlaneName(cluster)
-
 	kubeadmControlPlane := &controlplanev1.KubeadmControlPlane{}
-	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: kubeadmControlPlaneName}
-
-	if err := client.Get(ctx, key, kubeadmControlPlane); err != nil {
+	if err := client.Get(ctx, CAPIKubeadmControlPlaneKey(cluster), kubeadmControlPlane); err != nil {
 		return nil, err
 	}
 	return kubeadmControlPlane, nil
+}
+
+// CAPIKubeadmControlPlaneKey generates an ObjectKey for the CAPI Kubeadm control plane owned by
+// the provided eks-a cluster.
+func CAPIKubeadmControlPlaneKey(cluster *anywherev1.Cluster) client.ObjectKey {
+	return client.ObjectKey{
+		Name:      clusterapi.KubeadmControlPlaneName(cluster),
+		Namespace: constants.EksaSystemNamespace,
+	}
 }
 
 // GetMachineDeployment reads a cluster-api MachineDeployment for an eks-a cluster using a kube client.

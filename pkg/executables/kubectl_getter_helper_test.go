@@ -26,6 +26,7 @@ func newKubectlGetterTest(t *testing.T) *kubectlGetterTest {
 	return &kubectlGetterTest{
 		kubectlTest: newKubectlTest(t),
 		name:        "name",
+		namespace:   "my-ns",
 	}
 }
 

@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
@@ -30,17 +31,23 @@ import (
 )
 
 type prepareKubeProxyTest struct {
-	ctx                         context.Context
-	log                         logr.Logger
-	spec                        *cluster.Spec
-	kcp                         *controlplanev1.KubeadmControlPlane
-	kubeProxy                   *appsv1.DaemonSet
-	nodeCP                      *corev1.Node
-	nodeWorker                  *corev1.Node
-	kubeProxyCP                 *corev1.Pod
-	kubeProxyWorker             *corev1.Pod
-	managementClient            client.Client
-	workloadClient              client.Client
+	ctx              context.Context
+	log              logr.Logger
+	spec             *cluster.Spec
+	kcp              *controlplanev1.KubeadmControlPlane
+	kubeProxy        *appsv1.DaemonSet
+	nodeCP           *corev1.Node
+	nodeWorker       *corev1.Node
+	kubeProxyCP      *corev1.Pod
+	kubeProxyWorker  *corev1.Pod
+	managementClient kubernetes.Client
+	// managementImplClient is a controller-runtime client that serves as the
+	// underlying implementation for managementClient.
+	managementImplClient client.Client
+	workloadClient       kubernetes.Client
+	// workloadImplClient is a controller-runtime client that serves as the
+	// underlying implementation for workloadClient.
+	workloadImplClient          client.Client
 	workloadClusterExtraObjects []client.Object
 }
 
@@ -117,7 +124,8 @@ func newPrepareKubeProxyTest() *prepareKubeProxyTest {
 }
 
 func (tt *prepareKubeProxyTest) initClients(tb testing.TB) {
-	tt.managementClient = fake.NewClientBuilder().WithObjects(tt.kcp).Build()
+	tt.managementImplClient = fake.NewClientBuilder().WithObjects(tt.kcp).Build()
+	tt.managementClient = clientutil.NewKubeClient(tt.managementImplClient)
 
 	objs := []client.Object{
 		tt.kubeProxy,
@@ -128,7 +136,8 @@ func (tt *prepareKubeProxyTest) initClients(tb testing.TB) {
 	}
 	objs = append(objs, tt.workloadClusterExtraObjects...)
 
-	tt.workloadClient = fake.NewClientBuilder().WithObjects(objs...).Build()
+	tt.workloadImplClient = fake.NewClientBuilder().WithObjects(objs...).Build()
+	tt.workloadClient = clientutil.NewKubeClient(tt.workloadImplClient)
 }
 
 // startKCPControllerEmulator stars a routine that reverts the kube-proxy
@@ -137,7 +146,7 @@ func (tt *prepareKubeProxyTest) initClients(tb testing.TB) {
 // keeps reverting the kube-proxy image tag.
 func (tt *prepareKubeProxyTest) startKCPControllerEmulator(tb testing.TB, times int) {
 	go func() {
-		api := envtest.NewAPIExpecter(tb, tt.workloadClient)
+		api := envtest.NewAPIExpecter(tb, tt.workloadImplClient)
 		kubeProxy := tt.kubeProxy.DeepCopy()
 		originalImage := kubeProxy.Spec.Template.Spec.Containers[0].Image
 		for i := 0; i < times; i++ {
@@ -167,12 +176,12 @@ func TestKubeProxyUpgraderPrepareForUpgradeSuccess(t *testing.T) {
 		u.PrepareForUpgrade(tt.ctx, tt.log, tt.managementClient, tt.workloadClient, tt.spec),
 	).To(Succeed())
 
-	managementAPI := envtest.NewAPIExpecter(t, tt.managementClient)
+	managementAPI := envtest.NewAPIExpecter(t, tt.managementImplClient)
 	managementAPI.ShouldEventuallyMatch(tt.ctx, tt.kcp, func(g Gomega) {
 		g.Expect(tt.kcp.Annotations).To(HaveKeyWithValue(controlplanev1.SkipKubeProxyAnnotation, "true"))
 	})
 
-	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadClient)
+	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadImplClient)
 	workloadAPI.ShouldEventuallyMatch(tt.ctx, tt.kubeProxy, func(g Gomega) {
 		image := tt.kubeProxy.Spec.Template.Spec.Containers[0].Image
 		g.Expect(image).To(Equal("public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-18"))
@@ -257,12 +266,12 @@ func TestKubeProxyUpgraderPrepareForUpgradeAlreadyUsingNewKubeProxy(t *testing.T
 		u.PrepareForUpgrade(tt.ctx, tt.log, tt.managementClient, tt.workloadClient, tt.spec),
 	).To(Succeed())
 
-	managementAPI := envtest.NewAPIExpecter(t, tt.managementClient)
+	managementAPI := envtest.NewAPIExpecter(t, tt.managementImplClient)
 	managementAPI.ShouldEventuallyMatch(tt.ctx, tt.kcp, func(g Gomega) {
 		g.Expect(tt.kcp.Annotations).NotTo(HaveKeyWithValue(controlplanev1.SkipKubeProxyAnnotation, "true"))
 	})
 
-	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadClient)
+	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadImplClient)
 	workloadAPI.ShouldEventuallyMatch(tt.ctx, tt.kubeProxy, func(g Gomega) {
 		image := tt.kubeProxy.Spec.Template.Spec.Containers[0].Image
 		g.Expect(image).To(Equal("public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-18"))
@@ -301,12 +310,12 @@ func TestKubeProxyUpgraderPrepareForUpgradeNewSpecHasOldKubeProxy(t *testing.T) 
 		u.PrepareForUpgrade(tt.ctx, tt.log, tt.managementClient, tt.workloadClient, tt.spec),
 	).To(Succeed())
 
-	managementAPI := envtest.NewAPIExpecter(t, tt.managementClient)
+	managementAPI := envtest.NewAPIExpecter(t, tt.managementImplClient)
 	managementAPI.ShouldEventuallyMatch(tt.ctx, tt.kcp, func(g Gomega) {
 		g.Expect(tt.kcp.Annotations).NotTo(HaveKeyWithValue(controlplanev1.SkipKubeProxyAnnotation, "true"))
 	})
 
-	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadClient)
+	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadImplClient)
 	workloadAPI.ShouldEventuallyMatch(tt.ctx, tt.kubeProxy, func(g Gomega) {
 		image := tt.kubeProxy.Spec.Template.Spec.Containers[0].Image
 		g.Expect(image).To(Equal("public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.23.16-eks-1-23-15"))
@@ -348,12 +357,12 @@ func TestKubeProxyUpgraderCleanupAfterUpgradeSuccessWithReentry(t *testing.T) {
 		u.CleanupAfterUpgrade(tt.ctx, tt.log, tt.managementClient, tt.workloadClient, tt.spec),
 	).To(Succeed())
 
-	managementAPI := envtest.NewAPIExpecter(t, tt.managementClient)
+	managementAPI := envtest.NewAPIExpecter(t, tt.managementImplClient)
 	managementAPI.ShouldEventuallyMatch(tt.ctx, tt.kcp, func(g Gomega) {
 		g.Expect(tt.kcp.Annotations).NotTo(HaveKeyWithValue(controlplanev1.SkipKubeProxyAnnotation, "true"))
 	})
 
-	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadClient)
+	workloadAPI := envtest.NewAPIExpecter(t, tt.workloadImplClient)
 	workloadAPI.ShouldEventuallyMatch(tt.ctx, tt.kubeProxy, func(g Gomega) {
 		g.Expect(tt.kubeProxy.Spec.Template.Spec.Affinity).To(BeNil())
 	})

@@ -1022,7 +1022,7 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 
 // WithKubeProxyCLIUpgrader builds a KubeProxyCLIUpgrader.
 func (f *Factory) WithKubeProxyCLIUpgrader() *Factory {
-	f.WithLogger()
+	f.WithLogger().WithUnAuthKubeClient()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		var opts []clustermanager.KubeProxyCLIUpgraderOpt
@@ -1032,7 +1032,7 @@ func (f *Factory) WithKubeProxyCLIUpgrader() *Factory {
 
 		f.dependencies.KubeProxyCLIUpgrader = clustermanager.NewKubeProxyCLIUpgrader(
 			f.dependencies.Logger,
-			kubernetes.ClientFactory{},
+			f.dependencies.UnAuthKubeClient,
 			opts...,
 		)
 		return nil

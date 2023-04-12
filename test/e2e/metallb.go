@@ -16,6 +16,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -186,7 +187,11 @@ spec:
 			}
 
 			t.Cleanup(func() {
-				test.KubectlClient.Delete(ctx, "service", "my-service", "default", kubeconfig.FromClusterName(test.ClusterName))
+				opts := &kubernetes.KubectlDeleteOptions{
+					Name:      "my-service",
+					Namespace: "default",
+				}
+				test.KubectlClient.Delete(ctx, "service", kubeconfig.FromClusterName(test.ClusterName), opts)
 			})
 			test.CreateResource(ctx, `
 apiVersion: v1
@@ -332,7 +337,11 @@ spec:
 			}
 
 			t.Cleanup(func() {
-				test.KubectlClient.Delete(ctx, "service", "my-service", "default", kubeconfig.FromClusterName(test.ClusterName))
+				opts := &kubernetes.KubectlDeleteOptions{
+					Name:      "my-service",
+					Namespace: "default",
+				}
+				test.KubectlClient.Delete(ctx, "service", kubeconfig.FromClusterName(test.ClusterName), opts)
 			})
 			test.CreateResource(ctx, `
 apiVersion: v1
