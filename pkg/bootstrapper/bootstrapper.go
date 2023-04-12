@@ -4,36 +4,29 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-const (
-	maxRetries           = 10
-	defaultBackOffPeriod = 5 * time.Second
-)
-
 type Bootstrapper struct {
-	clusterClient *retrierClient
+	clusterClient ClusterClient
 }
 
 type ClusterClient interface {
-	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterClientOption) (kubeconfig string, err error)
-	DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error
+	Apply(ctx context.Context, cluster *types.Cluster, data []byte) error
+	CreateNamespace(ctx context.Context, kubeconfig, namespace string) error
+	GetCAPIClusterCRD(ctx context.Context, cluster *types.Cluster) error
+	GetCAPIClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
+	KindClusterExists(ctx context.Context, clusterName string) (bool, error)
+	GetKindClusterKubeconfig(ctx context.Context, clusterName string) (string, error)
+	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterClientOption) (string, error)
+	DeleteKindCluster(ctx context.Context, cluster *types.Cluster) error
 	WithExtraDockerMounts() BootstrapClusterClientOption
 	WithExtraPortMappings([]int) BootstrapClusterClientOption
 	WithEnv(env map[string]string) BootstrapClusterClientOption
-	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
-	GetKubeconfig(ctx context.Context, clusterName string) (string, error)
-	ClusterExists(ctx context.Context, clusterName string) (bool, error)
-	ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error
-	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 }
 
 type (
@@ -41,17 +34,11 @@ type (
 	BootstrapClusterOption       func(b *Bootstrapper) BootstrapClusterClientOption
 )
 
-func New(clusterClient ClusterClient, opts ...BootstrapperOpt) *Bootstrapper {
-	retrier := retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
-	retrierClient := NewRetrierClient(&clusterClient, retrier)
-	bootstrapper := &Bootstrapper{
-		clusterClient: retrierClient,
+// New constructs a new bootstrapper.
+func New(clusterClient ClusterClient) *Bootstrapper {
+	return &Bootstrapper{
+		clusterClient: clusterClient,
 	}
-
-	for _, o := range opts {
-		o(bootstrapper)
-	}
-	return bootstrapper
 }
 
 func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterOption) (*types.Cluster, error) {
@@ -65,24 +52,15 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 		KubeconfigFile: kubeconfigFile,
 	}
 
-	if err = b.clusterClient.CreateNamespaceIfNotPresent(ctx, c.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+	if err = b.clusterClient.CreateNamespace(ctx, c.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
 		return nil, err
 	}
 
 	return c, nil
 }
 
-type BootstrapperOpt func(*Bootstrapper)
-
-// WithRetrier implemented primarily for unit testing optimization purposes.
-func WithRetrier(retrier *retrier.Retrier) BootstrapperOpt {
-	return func(c *Bootstrapper) {
-		c.clusterClient.Retrier = retrier
-	}
-}
-
 func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, operationType constants.Operation, isForceCleanup bool) error {
-	clusterExists, err := b.clusterClient.ClusterExists(ctx, cluster.Name)
+	clusterExists, err := b.clusterClient.KindClusterExists(ctx, cluster.Name)
 	if err != nil {
 		return fmt.Errorf("deleting bootstrap cluster: %v", err)
 	}
@@ -101,20 +79,20 @@ func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *type
 		}
 	}
 
-	return b.clusterClient.DeleteBootstrapCluster(ctx, cluster)
+	return b.clusterClient.DeleteKindCluster(ctx, cluster)
 }
 
 func (b *Bootstrapper) managementInCluster(ctx context.Context, cluster *types.Cluster) (*types.CAPICluster, error) {
 	if cluster.KubeconfigFile == "" {
-		kubeconfig, err := b.clusterClient.GetKubeconfig(ctx, cluster.Name)
+		kubeconfig, err := b.clusterClient.GetKindClusterKubeconfig(ctx, cluster.Name)
 		if err != nil {
 			return nil, fmt.Errorf("fetching bootstrap cluster's kubeconfig: %v", err)
 		}
 		cluster.KubeconfigFile = kubeconfig
 	}
-	err := b.clusterClient.ValidateClustersCRD(ctx, cluster)
+	err := b.clusterClient.GetCAPIClusterCRD(ctx, cluster)
 	if err == nil {
-		clusters, err := b.clusterClient.GetClusters(ctx, cluster)
+		clusters, err := b.clusterClient.GetCAPIClusters(ctx, cluster)
 		if err != nil {
 			return nil, err
 		}
