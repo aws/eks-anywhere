@@ -36,7 +36,7 @@ The following diagram illustrates the process described above. Note that the dia
 
 ## Configuration
 
-Below you will find code snippets showing how to add the 2 step process from above to an existing DHCP service. Each config checks if DHCP option 77 ([user class option](https://www.rfc-editor.org/rfc/rfc3004.html)) equals "`Tinkerbell`". If it does match, then the Tinkerbell iPXE script (`auto.ipxe`) will be served. If option 77 does not match, then the iPXE binary (`ipxe.efi`) will be served.
+Below you will find code snippets showing how to add the two-step process from above to an existing DHCP service. Each config checks if DHCP option 77 ([user class option](https://www.rfc-editor.org/rfc/rfc3004.html)) equals "`Tinkerbell`". If it does match, then the Tinkerbell iPXE script (`auto.ipxe`) will be served. If option 77 does not match, then the iPXE binary (`ipxe.efi`) will be served.
 
 ### DHCP option: `next server`
 
