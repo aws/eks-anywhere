@@ -368,3 +368,15 @@ spec:
         - containerPath: /var/run/docker.sock
           hostPath: /var/run/docker.sock
       customImage: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.21.2-eks-d-1-21-4-eks-a-v0.0.0-dev-build.158
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: eksa-system
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "username"
+  password: "password"
+---
