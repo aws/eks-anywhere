@@ -61,3 +61,13 @@ func TestReadCredentialsFromSecret(t *testing.T) {
 	assert.Equal(t, expectedUser, u)
 	assert.Equal(t, expectedPassword, p)
 }
+
+func TestReadCredentialsFromSecretNotFound(t *testing.T) {
+	ctx := context.Background()
+	cb := fake.NewClientBuilder()
+	cl := cb.Build()
+	u, p, err := ReadCredentialsFromSecret(ctx, cl)
+	assert.ErrorContains(t, err, "fetching registry auth secret")
+	assert.Empty(t, u)
+	assert.Empty(t, p)
+}
