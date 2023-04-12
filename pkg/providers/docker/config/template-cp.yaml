@@ -298,3 +298,17 @@ spec:
           hostPath: /var/run/docker.sock
       customImage: {{.kindNodeImage}}
 {{- end }}
+{{- if .registryAuth }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-credentials
+  namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+stringData:
+  username: "{{.registryUsername}}"
+  password: "{{.registryPassword}}"
+---
+{{- end }}
