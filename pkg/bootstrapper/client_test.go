@@ -140,24 +140,6 @@ func TestRetrierClientGetKindClusterKubeconfigError(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("error in GetKubeconfig")), "retrierClient.GetKindClusterKubeconfig() should fail after 5 tries")
 }
 
-func TestRetrierClientCreateKindClusterSuccess(t *testing.T) {
-	tt := newRetrierTest(t)
-	opts := []bootstrapper.BootstrapClusterClientOption{}
-	tt.kind.EXPECT().CreateBootstrapCluster(tt.ctx, tt.clusterSpec, opts).Return("", errors.New("error in CreateBootstrapCluster")).Times(4)
-	tt.kind.EXPECT().CreateBootstrapCluster(tt.ctx, tt.clusterSpec, opts).Return("kubeconfig", nil).Times(1)
-	kubeconfig, err := tt.r.CreateKindCluster(tt.ctx, tt.clusterSpec, opts...)
-	tt.Expect(kubeconfig).To(Equal("kubeconfig"))
-	tt.Expect(err).To(Succeed(), "retrierClient.CreateKindCluster() should succeed after 5 tries")
-}
-
-func TestRetrierClientCreateKindClusterError(t *testing.T) {
-	tt := newRetrierTest(t)
-	tt.kind.EXPECT().CreateBootstrapCluster(tt.ctx, tt.clusterSpec).Return("", errors.New("error in CreateBootstrapCluster")).Times(5)
-	tt.kind.EXPECT().CreateBootstrapCluster(tt.ctx, tt.clusterSpec).Return("kubeconfig", nil).AnyTimes()
-	_, err := tt.r.CreateKindCluster(tt.ctx, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("error in CreateBootstrapCluster")), "retrierClient.CreateKindCluster() should fail after 5 tries")
-}
-
 func TestRetrierClientDeleteKindClusterSuccess(t *testing.T) {
 	tt := newRetrierTest(t)
 	tt.kind.EXPECT().DeleteBootstrapCluster(tt.ctx, tt.cluster).Return(errors.New("error in DeleteBootstrapCluster")).Times(4)

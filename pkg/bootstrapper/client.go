@@ -139,23 +139,6 @@ func (c RetrierClient) GetKindClusterKubeconfig(ctx context.Context, clusterName
 	return kubeconfig, nil
 }
 
-// CreateKindCluster creates a kind cluster based on cluster spec and bootstrap cluster client options.
-func (c RetrierClient) CreateKindCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterClientOption) (string, error) {
-	var kubeconfig string
-	err := c.retrier.Retry(
-		func() error {
-			var err error
-			kubeconfig, err = c.KindClient.CreateBootstrapCluster(ctx, clusterSpec, opts...)
-			return err
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return kubeconfig, nil
-}
-
 // DeleteKindCluster deletes a kind cluster by cluster name.
 func (c RetrierClient) DeleteKindCluster(ctx context.Context, cluster *types.Cluster) error {
 	return c.retrier.Retry(

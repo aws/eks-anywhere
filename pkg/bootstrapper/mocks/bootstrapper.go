@@ -51,24 +51,24 @@ func (mr *MockClusterClientMockRecorder) Apply(arg0, arg1, arg2 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockClusterClient)(nil).Apply), arg0, arg1, arg2)
 }
 
-// CreateKindCluster mocks base method.
-func (m *MockClusterClient) CreateKindCluster(arg0 context.Context, arg1 *cluster.Spec, arg2 ...bootstrapper.BootstrapClusterClientOption) (string, error) {
+// CreateBootstrapCluster mocks base method.
+func (m *MockClusterClient) CreateBootstrapCluster(arg0 context.Context, arg1 *cluster.Spec, arg2 ...bootstrapper.BootstrapClusterClientOption) (string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "CreateKindCluster", varargs...)
+	ret := m.ctrl.Call(m, "CreateBootstrapCluster", varargs...)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateKindCluster indicates an expected call of CreateKindCluster.
-func (mr *MockClusterClientMockRecorder) CreateKindCluster(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+// CreateBootstrapCluster indicates an expected call of CreateBootstrapCluster.
+func (mr *MockClusterClientMockRecorder) CreateBootstrapCluster(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateKindCluster", reflect.TypeOf((*MockClusterClient)(nil).CreateKindCluster), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBootstrapCluster", reflect.TypeOf((*MockClusterClient)(nil).CreateBootstrapCluster), varargs...)
 }
 
 // CreateNamespace mocks base method.
