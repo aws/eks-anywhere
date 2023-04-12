@@ -976,11 +976,17 @@ func (f *Factory) WithEksdInstaller() *Factory {
 			return nil
 		}
 
+		var opts []eksd.InstallerOpt
+		if f.config.noTimeouts {
+			opts = append(opts, eksd.WithRetrier(retrier.NewWithNoTimeout()))
+		}
+
 		f.dependencies.EksdInstaller = eksd.NewEksdInstaller(
 			&eksdInstallerClient{
 				f.dependencies.Kubectl,
 			},
 			f.dependencies.FileReader,
+			opts...,
 		)
 		return nil
 	})
@@ -996,11 +1002,17 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 			return nil
 		}
 
+		var opts []eksd.InstallerOpt
+		if f.config.noTimeouts {
+			opts = append(opts, eksd.WithRetrier(retrier.NewWithNoTimeout()))
+		}
+
 		f.dependencies.EksdUpgrader = eksd.NewUpgrader(
 			&eksdInstallerClient{
 				f.dependencies.Kubectl,
 			},
 			f.dependencies.FileReader,
+			opts...,
 		)
 		return nil
 	})
