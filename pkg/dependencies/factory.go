@@ -715,12 +715,13 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 		}
 	} else {
 		f.WithKubectl().WithCiliumTemplater()
-		var opts []cilium.RetrierClientOpt
-		if f.config.noTimeouts {
-			opts = append(opts, cilium.RetrierClientRetrier(retrier.NewWithNoTimeout()))
-		}
 
 		networkingBuilder = func() clustermanager.Networking {
+			var opts []cilium.RetrierClientOpt
+			if f.config.noTimeouts {
+				opts = append(opts, cilium.RetrierClientRetrier(retrier.NewWithNoTimeout()))
+			}
+
 			c := cilium.NewCilium(
 				cilium.NewRetrier(f.dependencies.Kubectl, opts...),
 				f.dependencies.CiliumTemplater,
