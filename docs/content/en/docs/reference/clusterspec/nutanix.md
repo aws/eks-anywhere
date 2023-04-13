@@ -54,6 +54,9 @@ metadata:
 spec:
  endpoint: pc01.cloud.internal
  port: 9440
+ credentialRef:
+   kind: Secret
+   name: nutanix-credentials
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixMachineConfig
@@ -182,6 +185,9 @@ The Prism Central server fully qualified domain name or IP address. If the serve
 
 ### port (required) 
 The Prism Central server port. (Default: `9440`) 
+
+### credentialRef (required)
+Reference to the Kubernetes secret that contains the Prism Central credentials.
 
 ### insecure (optional)
 Set insecure to `true` if the Prism Central server does not have a valid certificate. This is not recommended for production use cases. (Default: `false`)
