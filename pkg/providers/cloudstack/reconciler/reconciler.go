@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -60,6 +61,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
+		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
 
@@ -95,6 +97,19 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	// Implement reconcile worker nodes here
 
 	return controller.Result{}, nil
+}
+
+// ReconcileWorkers applies the worker CAPI objects to the cluster.
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileWorkers")
+	log.Info("Applying worker CAPI objects")
+
+	w, err := cloudstack.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), clusterSpec)
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "Generate worker node CAPI spec")
+	}
+
+	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, clusterSpec.Cluster, clusters.ToWorkers(w))
 }
 
 // ReconcileCNI reconciles the CNI to the desired state.

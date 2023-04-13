@@ -2,6 +2,7 @@ package reconciler_test
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -256,6 +258,69 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+	result, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&clusterv1.MachineDeployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&bootstrapv1.KubeadmConfigTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+
+	tt.ShouldEventuallyExist(tt.ctx,
+		&cloudstackv1.CloudStackMachineTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tt.cluster.Name + "-md-0-1",
+				Namespace: constants.EksaSystemNamespace,
+			},
+		},
+	)
+}
+
+func TestReconcilerReconcileWorkersFailure(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+	clusterSpec := tt.buildSpec()
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(int(math.Inf(1)))
+
+	logger := test.NewNullLogger()
+
+	_, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, clusterSpec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("Generate worker node CAPI spec")))
+}
+
 func (tt *reconcilerTest) withFakeClient() {
 	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.allObjs())...).Build()
 }
@@ -333,6 +398,11 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 	machineConfigWN := machineConfig(func(m *anywherev1.CloudStackMachineConfig) {
 		m.Name = "worker-machine-config"
+		m.Spec.Users = append(m.Spec.Users,
+			anywherev1.UserConfiguration{
+				Name:              "user",
+				SshAuthorizedKeys: []string{""},
+			})
 	})
 
 	workloadClusterDatacenter := dataCenter(func(d *anywherev1.CloudStackDatacenterConfig) {
@@ -409,7 +479,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
-
+	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
 	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
 	tt.DeleteAndWait(tt.ctx, &cloudstackv1.CloudStackMachineTemplate{
