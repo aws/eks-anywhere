@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -270,7 +271,7 @@ func (p *SnowProvider) machineConfigsChanged(ctx context.Context, cluster *types
 
 	for _, new := range spec.SnowMachineConfigs {
 		old := &v1alpha1.SnowMachineConfig{}
-		err := client.Get(ctx, new.Name, new.Namespace, old)
+		err := client.Get(ctx, new.Name, namespaceOrDefault(new), old)
 		if apierrors.IsNotFound(err) {
 			return true, nil
 		}
@@ -290,7 +291,7 @@ func (p *SnowProvider) datacenterChanged(ctx context.Context, cluster *types.Clu
 	client := p.kubeUnAuthClient.KubeconfigClient(cluster.KubeconfigFile)
 	new := spec.SnowDatacenter
 	old := &v1alpha1.SnowDatacenterConfig{}
-	err := client.Get(ctx, new.Name, new.Namespace, old)
+	err := client.Get(ctx, new.Name, namespaceOrDefault(new), old)
 	if apierrors.IsNotFound(err) {
 		return true, nil
 	}
@@ -299,6 +300,16 @@ func (p *SnowProvider) datacenterChanged(ctx context.Context, cluster *types.Clu
 	}
 
 	return !equality.Semantic.DeepDerivative(new.Spec, old.Spec), nil
+}
+
+// namespaceOrDefault return the object namespace or default if it's empty.
+func namespaceOrDefault(obj client.Object) string {
+	ns := obj.GetNamespace()
+	if ns == "" {
+		ns = "default"
+	}
+
+	return ns
 }
 
 func (p *SnowProvider) validateUpgradeRolloutStrategy(clusterSpec *cluster.Spec) error {
@@ -336,12 +347,18 @@ func (p *SnowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster
 	client := p.kubeUnAuthClient.KubeconfigClient(clusterSpec.ManagementCluster.KubeconfigFile)
 
 	for _, mc := range clusterSpec.SnowMachineConfigs {
-		if err := client.Delete(ctx, mc); err != nil {
+		mc.Namespace = namespaceOrDefault(mc)
+		if err := client.Delete(ctx, mc); err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
 	}
 
-	return client.Delete(ctx, clusterSpec.SnowDatacenter)
+	clusterSpec.SnowDatacenter.Namespace = namespaceOrDefault(clusterSpec.SnowDatacenter)
+	if err := client.Delete(ctx, clusterSpec.SnowDatacenter); err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("deleting snow datacenter: %v", err)
+	}
+
+	return nil
 }
 
 func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
