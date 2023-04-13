@@ -17,7 +17,8 @@ type listPackagesOption struct {
 	registry    string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig string
+	kubeConfig      string
+	bundlesOverride string
 }
 
 var lpo = &listPackagesOption{}
@@ -33,6 +34,8 @@ func init() {
 		"Path to a kubeconfig file to use when source is a cluster.")
 	listPackagesCommand.Flags().StringVar(&lpo.clusterName, "cluster", "",
 		"Name of cluster for package list.")
+	listPackagesCommand.Flags().StringVar(&lpo.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 }
 
 var listPackagesCommand = &cobra.Command{
@@ -57,7 +60,7 @@ func listPackages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(lpo.registry), WithKubeVersion(lpo.kubeVersion), WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(lpo.registry), WithKubeVersion(lpo.kubeVersion), WithMountPaths(kubeConfig), WithBundlesOverride(lpo.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

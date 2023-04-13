@@ -35,6 +35,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -235,6 +236,37 @@ func (f *Factory) WithExecutableImage() *Factory {
 		}
 
 		f.executablesConfig.image = bundles.DefaultEksAToolsImage().VersionedImage()
+		return nil
+	})
+
+	return f
+}
+
+// WithCustomExecutableImage sets the right cli tools image for the executable builder based on bundlesOverride.
+// If bundleOverride is not set then WithExecutableImage is called.
+// Otherwise, the bundlesOverride is used and the executable image is set to the first VersionsBundle.
+func (f *Factory) WithCustomExecutableImage(bundlesOverride string) *Factory {
+	f.WithManifestReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.executablesConfig.image != "" {
+			return nil
+		}
+
+		if bundlesOverride == "" {
+			f.WithExecutableImage()
+			return nil
+		}
+		bundles, err := bundles.Read(f.dependencies.ManifestReader, bundlesOverride)
+		if err != nil {
+			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory %v", err)
+		}
+
+		// Note: Currently using the first available version of the cli tools
+		// This is because the binaries bundled are all the same version hence no compatibility concerns
+		// In case, there is a change to this behavior, there might be a need to reassess this item
+		image := bundles.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage()
+		f.UseExecutableImage(image)
 		return nil
 	})
 

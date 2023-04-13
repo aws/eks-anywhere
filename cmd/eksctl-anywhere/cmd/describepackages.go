@@ -14,8 +14,9 @@ import (
 type describePackagesOption struct {
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig  string
-	clusterName string
+	kubeConfig      string
+	clusterName     string
+	bundlesOverride string
 }
 
 var dpo = &describePackagesOption{}
@@ -27,6 +28,8 @@ func init() {
 		"Path to an optional kubeconfig file to use.")
 	describePackagesCommand.Flags().StringVar(&dpo.clusterName, "cluster", "",
 		"Cluster to describe packages.")
+	describePackagesCommand.Flags().StringVar(&dpo.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 	if err := describePackagesCommand.MarkFlagRequired("cluster"); err != nil {
 		log.Fatalf("marking cluster flag as required: %s", err)
 	}
@@ -51,7 +54,7 @@ func describeResources(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithBundlesOverride(dpo.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

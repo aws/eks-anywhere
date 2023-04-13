@@ -1,0 +1,12 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+spec:
+  cliMaxVersion: ""
+  cliMinVersion: ""
+  number: 0
+  versionsBundles:
+    - eksa:
+        cliTools:
+          uri: test.registry/eks-anywhere-cli-tools:v0.0.0
+        components:
+          uri: test.registry

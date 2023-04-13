@@ -38,6 +38,7 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 	config := New(opts...)
 	return dependencies.NewFactory().
 		WithExecutableMountDirs(config.mountPaths...).
+		WithCustomExecutableImage(config.bundlesOverride).
 		WithExecutableBuilder().
 		WithManifestReader().
 		WithKubectl().
@@ -50,11 +51,12 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 type PackageOpt func(*PackageConfig)
 
 type PackageConfig struct {
-	registryName string
-	kubeVersion  string
-	kubeConfig   string
-	mountPaths   []string
-	spec         *cluster.Spec
+	registryName    string
+	kubeVersion     string
+	kubeConfig      string
+	mountPaths      []string
+	spec            *cluster.Spec
+	bundlesOverride string
 }
 
 func New(options ...PackageOpt) *PackageConfig {
@@ -92,5 +94,12 @@ func WithClusterSpec(spec *cluster.Spec) func(config *PackageConfig) {
 func WithKubeConfig(kubeConfig string) func(*PackageConfig) {
 	return func(config *PackageConfig) {
 		config.kubeConfig = kubeConfig
+	}
+}
+
+// WithBundlesOverride sets bundlesOverride in the config with incoming value.
+func WithBundlesOverride(bundlesOverride string) func(*PackageConfig) {
+	return func(config *PackageConfig) {
+		config.bundlesOverride = bundlesOverride
 	}
 }
