@@ -2,6 +2,7 @@ package reconciler_test
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -299,6 +300,25 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 			},
 		},
 	)
+}
+
+func TestReconcilerReconcileWorkersFailure(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.cluster.Name = "mgmt-cluster"
+	tt.cluster.SetSelfManaged()
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+	clusterSpec := tt.buildSpec()
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(int(math.Inf(1)))
+
+	logger := test.NewNullLogger()
+
+	_, err := tt.reconciler().ReconcileWorkers(tt.ctx, logger, clusterSpec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("Generate worker node CAPI spec")))
 }
 
 func (tt *reconcilerTest) withFakeClient() {
