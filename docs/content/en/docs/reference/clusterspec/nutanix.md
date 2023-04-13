@@ -15,10 +15,6 @@ metadata:
  name: mgmt
  namespace: default
 spec:
- bundlesRef:
-   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-   name: bundles-2
-   namespace: eksa-system
  clusterNetwork:
    cniConfig:
      cilium: {}
@@ -117,6 +113,11 @@ spec:
  vcpusPerSocket: 1
 ---
 ```
+
+The following additional optional configuration can also be included:
+
+* [OIDC]({{< relref "optional/oidc.md" >}})
+* [Registry Mirror]({{< relref "optional/registrymirror.md" >}})
 
 ## Cluster Fields
 
