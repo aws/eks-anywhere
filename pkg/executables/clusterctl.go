@@ -4,12 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"math"
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
-	"time"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -18,7 +15,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -31,13 +27,10 @@ const (
 	etcdadmBootstrapProviderName  = "etcdadm-bootstrap"
 	etcdadmControllerProviderName = "etcdadm-controller"
 	kubeadmBootstrapProviderName  = "kubeadm"
-	clusterctlMoveTimeout         = 30 * time.Minute // Arbitrarily established.  Equal to kubectl wait default timeouts.
 )
 
 //go:embed config/clusterctl.yaml
 var clusterctlConfigTemplate string
-
-var clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
 
 type Clusterctl struct {
 	Executable
@@ -159,23 +152,6 @@ func (c *Clusterctl) writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFo
 	return nil
 }
 
-func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
-	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
-
-	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
-	if totalRetries < 1 {
-		totalRetries = 1
-	}
-	const networkFaultBaseRetryTime = 10 * time.Second
-	const backoffFactor = 1.5
-	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
-
-	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
-		return true, waitTime
-	}
-	return false, 0
-}
-
 // BackupManagement save CAPI resources of a workload cluster before moving it to the bootstrap cluster during upgrade.
 func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
 	filePath := filepath.Join(".", cluster.Name, managementStatePath)
@@ -202,19 +178,8 @@ func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster
 		params = append(params, "--kubeconfig", from.KubeconfigFile)
 	}
 
-	// Network errors, most commonly connection refused or timeout, can occur if either source or target
-	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
-	// abandons the move operation, leaving an unpredictable subset of the CAPI components copied to target
-	// or deleted from source.  Retrying once connectivity is re-established completes the partial move.
-	// Here we use a retrier, with the above defined clusterctlMoveRetryPolicy policy, to attempt to
-	// wait out the network disruption and complete the move.
-
-	retrier := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
-	err := retrier.Retry(
-		func() error {
-			_, err := c.Execute(ctx, params...)
-			return err
-		},
+	_, err := c.Execute(
+		ctx, params...,
 	)
 	if err != nil {
 		return fmt.Errorf("failed moving management cluster: %v", err)

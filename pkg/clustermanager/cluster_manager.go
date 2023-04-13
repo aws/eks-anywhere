@@ -9,6 +9,7 @@ import (
 	"io"
 	"math"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -64,9 +65,13 @@ const (
 	DefaultUnhealthyMachineTimeout = 5 * time.Minute
 	// DefaultNodeStartupTimeout is the default timeout for a machine without a node to be considered to have failed machine health check.
 	DefaultNodeStartupTimeout = 10 * time.Minute
+	clusterctlMoveTimeout     = 30 * time.Minute // Arbitrarily established.  Equal to kubectl wait default timeouts.
 )
 
-var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+var (
+	clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
+	eksaClusterResourceType     = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+)
 
 type ClusterManager struct {
 	eksaComponents     EKSAComponents
@@ -259,13 +264,41 @@ func WithNoTimeouts() ClusterManagerOpt {
 	}
 }
 
+func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+
+	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
+	if totalRetries < 1 {
+		totalRetries = 1
+	}
+
+	const networkFaultBaseRetryTime = 10 * time.Second
+	const backoffFactor = 1.5
+	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
+
+	if match := clusterctlNetworkErrorRegex.MatchString(err.Error()); match {
+		return true, waitTime
+	}
+	return false, 0
+}
+
 // BackupCAPI takes backup of management cluster's resources during uograde process.
 func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error {
-	err := c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
+	// Network errors, most commonly connection refused or timeout, can occur if either source
+	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
+	// abandons the move operation, and fails cluster upgrade.
+	// Retrying once connectivity is re-established completes the partial move.
+	// Here we use a retrier, with the above defined clusterctlMoveRetryPolicy policy, to attempt to
+	// wait out the network disruption and complete the move.
+	// Keeping clusterctlMoveTimeout to the same as MoveManagement since both uses the same command with the differrent params.
+
+	r := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
+	err := r.Retry(func() error {
+		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
+	})
 	if err != nil {
 		return fmt.Errorf("backing up CAPI resources of management cluster before moving to bootstrap cluster: %v", err)
 	}
-
 	return nil
 }
 
@@ -281,7 +314,17 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 		return err
 	}
 
-	err := c.clusterClient.MoveManagement(ctx, from, to)
+	// Network errors, most commonly connection refused or timeout, can occur if either source or target
+	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
+	// abandons the move operation, leaving an unpredictable subset of the CAPI components copied to target
+	// or deleted from source.  Retrying once connectivity is re-established completes the partial move.
+	// Here we use a retrier, with the above defined clusterctlMoveRetryPolicy policy, to attempt to
+	// wait out the network disruption and complete the move.
+
+	r := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
+	err := r.Retry(func() error {
+		return c.clusterClient.MoveManagement(ctx, from, to)
+	})
 	if err != nil {
 		return fmt.Errorf("moving CAPI management from source to target: %v", err)
 	}

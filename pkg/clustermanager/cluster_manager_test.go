@@ -1330,6 +1330,57 @@ func TestClusterManagerBackupCAPISuccess(t *testing.T) {
 	}
 }
 
+func TestClusterManagerBackupCAPIRetrySuccess(t *testing.T) {
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
+
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	// m.client.EXPECT().BackupManagement(ctx, from, managementStatePath)
+	firstTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
+	secondTry := m.client.EXPECT().BackupManagement(ctx, from, managementStatePath).Return(nil)
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+	)
+	if err := c.BackupCAPI(ctx, from, managementStatePath); err != nil {
+		t.Errorf("ClusterManager.BackupCAPI() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterctlWaitRetryPolicy(t *testing.T) {
+	connectionRefusedError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:53733/api?timeout=30s\": dial tcp 127.0.0.1:53733: connect: connection refused")
+	ioTimeoutError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": net/http: TLS handshake timeout")
+	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
+
+	_, wait := clustermanager.ClusterctlMoveRetryPolicy(1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for connection refused")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveRetryPolicy(-1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for total retries < 0")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveRetryPolicy(2, connectionRefusedError)
+	if wait != 15*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for second retry wait")
+	}
+
+	_, wait = clustermanager.ClusterctlMoveRetryPolicy(1, ioTimeoutError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	retry, _ := clustermanager.ClusterctlMoveRetryPolicy(1, miscellaneousError)
+	if retry != false {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't not-retry on non-network error")
+	}
+}
+
 func TestClusterManagerBackupCAPIError(t *testing.T) {
 	from := &types.Cluster{}
 
@@ -1387,6 +1438,77 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	m.client.EXPECT().GetClusters(ctx, from).Return(clustersNotReady, nil)
 	m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", capiClusterName)
 	m.client.EXPECT().MoveManagement(ctx, from, to)
+	m.client.EXPECT().GetClusters(ctx, to).Return(clustersReady, nil)
+	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName)
+	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
+	m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
+	m.client.EXPECT().GetKubeadmControlPlane(ctx,
+		to,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(kcp, nil)
+	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(mds, nil)
+	m.client.EXPECT().GetMachines(ctx, to, to.Name)
+
+	if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
+		t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerMoveCAPIRetrySuccess(t *testing.T) {
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
+	to := &types.Cluster{
+		Name: "to-cluster",
+	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = to.Name
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
+	})
+	capiClusterName := "capi-cluster"
+	clustersNotReady := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}, Status: types.ClusterStatus{
+		Conditions: []types.Condition{{
+			Type:   "Ready",
+			Status: "False",
+		}},
+	}}}
+	clustersReady := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}, Status: types.ClusterStatus{
+		Conditions: []types.Condition{{
+			Type:   "Ready",
+			Status: "True",
+		}},
+	}}}
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	kcp, mds := getKcpAndMdsForNodeCount(0)
+	m.client.EXPECT().GetKubeadmControlPlane(ctx,
+		from,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(kcp, nil)
+	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+		to.Name,
+		gomock.AssignableToTypeOf(executables.WithCluster(from)),
+		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+	).Return(mds, nil)
+	m.client.EXPECT().GetMachines(ctx, from, to.Name)
+	m.client.EXPECT().GetClusters(ctx, from).Return(clustersNotReady, nil)
+	m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", capiClusterName)
+	firstTry := m.client.EXPECT().MoveManagement(ctx, from, to).Return(errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
+	secondTry := m.client.EXPECT().MoveManagement(ctx, from, to).Return(nil)
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+	)
 	m.client.EXPECT().GetClusters(ctx, to).Return(clustersReady, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
