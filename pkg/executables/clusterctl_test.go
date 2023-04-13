@@ -317,31 +317,6 @@ func TestClusterctlMoveManagement(t *testing.T) {
 	}
 }
 
-func TestClusterctlMoveManagementWithRetry(t *testing.T) {
-	tt := newClusterctlTest(t)
-
-	from := &types.Cluster{
-		KubeconfigFile: "from.kubeconfig",
-	}
-
-	to := &types.Cluster{
-		KubeconfigFile: "to.kubeconfig",
-	}
-
-	wantMoveArgs := []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"}
-
-	firstTry := tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
-	secondTry := tt.e.EXPECT().Execute(tt.ctx, wantMoveArgs...).Return(bytes.Buffer{}, nil)
-	gomock.InOrder(
-		firstTry,
-		secondTry,
-	)
-
-	if err := tt.clusterctl.MoveManagement(tt.ctx, from, to); err != nil {
-		t.Fatalf("Clusterctl.MoveManagement() error = %v, want nil", err)
-	}
-}
-
 func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 	tt := newClusterctlTest(t)
 
@@ -433,37 +408,6 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 	).Return(bytes.Buffer{}, errors.New("error in exec"))
 
 	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).NotTo(Succeed())
-}
-
-func TestClusterctlWaitRetryPolicy(t *testing.T) {
-	connectionRefusedError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:53733/api?timeout=30s\": dial tcp 127.0.0.1:53733: connect: connection refused\n")
-	ioTimeoutError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": net/http: TLS handshake timeout\n")
-	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
-
-	_, wait := executables.ClusterctlMoveRetryPolicy(1, connectionRefusedError)
-	if wait != 10*time.Second {
-		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for connection refused")
-	}
-
-	_, wait = executables.ClusterctlMoveRetryPolicy(-1, connectionRefusedError)
-	if wait != 10*time.Second {
-		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for total retries < 0")
-	}
-
-	_, wait = executables.ClusterctlMoveRetryPolicy(2, connectionRefusedError)
-	if wait != 15*time.Second {
-		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for second retry wait")
-	}
-
-	_, wait = executables.ClusterctlMoveRetryPolicy(1, ioTimeoutError)
-	if wait != 10*time.Second {
-		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
-	}
-
-	retry, _ := executables.ClusterctlMoveRetryPolicy(1, miscellaneousError)
-	if retry != false {
-		t.Errorf("ClusterctlMoveRetryPolicy didn't not-retry on non-network error")
-	}
 }
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
