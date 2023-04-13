@@ -429,6 +429,18 @@ func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
 	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithCuratedPackagesCustomManifestImage(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithCustomExecutableImage("testdata/cli_tools_bundle.yaml").
+		WithManifestReader().
+		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithExecutablesUsingDocker(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().

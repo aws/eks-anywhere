@@ -15,7 +15,8 @@ type applyPackageOptions struct {
 	fileName string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig string
+	kubeConfig      string
+	bundlesOverride string
 }
 
 var apo = &applyPackageOptions{}
@@ -27,6 +28,8 @@ func init() {
 		"", "Filename that contains curated packages custom resources to apply")
 	applyPackagesCommand.Flags().StringVar(&apo.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file to use.")
+	applyPackagesCommand.Flags().StringVar(&apo.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 
 	err := applyPackagesCommand.MarkFlagRequired("filename")
 	if err != nil {
@@ -55,7 +58,7 @@ func applyPackages(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithBundlesOverride(apo.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

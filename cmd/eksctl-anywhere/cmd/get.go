@@ -31,8 +31,8 @@ func preRunPackages(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getResources(ctx context.Context, resourceType, output, kubeConfig, clusterName string, args []string) error {
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+func getResources(ctx context.Context, resourceType, output, kubeConfig, clusterName, bundlesOverride string, args []string) error {
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithBundlesOverride(bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

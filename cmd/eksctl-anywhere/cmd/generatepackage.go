@@ -17,7 +17,8 @@ type generatePackageOptions struct {
 	registry    string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig string
+	kubeConfig      string
+	bundlesOverride string
 }
 
 var gpOptions = &generatePackageOptions{}
@@ -29,6 +30,7 @@ func init() {
 	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
 	generatePackageCommand.Flags().StringVar(&gpOptions.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file to use.")
+	generatePackageCommand.Flags().StringVar(&gpOptions.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	if err := generatePackageCommand.MarkFlagRequired("cluster"); err != nil {
 		log.Fatalf("marking cluster flag as required: %s", err)
 	}
@@ -68,7 +70,7 @@ func generatePackages(ctx context.Context, args []string) error {
 		return err
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(gpOptions.registry), WithKubeVersion(gpOptions.kubeVersion), WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(gpOptions.registry), WithKubeVersion(gpOptions.kubeVersion), WithMountPaths(kubeConfig), WithBundlesOverride(gpOptions.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
