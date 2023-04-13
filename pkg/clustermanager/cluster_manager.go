@@ -65,7 +65,8 @@ const (
 	DefaultUnhealthyMachineTimeout = 5 * time.Minute
 	// DefaultNodeStartupTimeout is the default timeout for a machine without a node to be considered to have failed machine health check.
 	DefaultNodeStartupTimeout = 10 * time.Minute
-	clusterctlMoveTimeout     = 30 * time.Minute // Arbitrarily established.  Equal to kubectl wait default timeouts.
+	// DefaultClusterctlMoveTimeout is arbitrarily established.  Equal to kubectl wait default timeouts.
+	DefaultClusterctlMoveTimeout = 30 * time.Minute
 )
 
 var (
@@ -92,6 +93,7 @@ type ClusterManager struct {
 	nodeStartupTimeout               time.Duration
 	clusterWaitTimeout               time.Duration
 	deploymentWaitTimeout            time.Duration
+	clusterctlMoveTimeout            time.Duration
 }
 
 type ClusterClient interface {
@@ -186,6 +188,7 @@ func New(clusterClient *RetrierClient, networking Networking, writer filewriter.
 		nodeStartupTimeout:               DefaultNodeStartupTimeout,
 		clusterWaitTimeout:               DefaultClusterWait,
 		deploymentWaitTimeout:            DefaultDeploymentWait,
+		clusterctlMoveTimeout:            DefaultClusterctlMoveTimeout,
 	}
 
 	for _, o := range opts {
@@ -261,6 +264,7 @@ func WithNoTimeouts() ClusterManagerOpt {
 		c.nodeStartupTimeout = maxTime
 		c.clusterWaitTimeout = maxTime
 		c.deploymentWaitTimeout = maxTime
+		c.clusterctlMoveTimeout = maxTime
 	}
 }
 
@@ -292,7 +296,7 @@ func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster,
 	// wait out the network disruption and complete the move.
 	// Keeping clusterctlMoveTimeout to the same as MoveManagement since both uses the same command with the differrent params.
 
-	r := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
+	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 	err := r.Retry(func() error {
 		return c.clusterClient.BackupManagement(ctx, cluster, managementStatePath)
 	})
@@ -321,7 +325,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	// Here we use a retrier, with the above defined clusterctlMoveRetryPolicy policy, to attempt to
 	// wait out the network disruption and complete the move.
 
-	r := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
+	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 	err := r.Retry(func() error {
 		return c.clusterClient.MoveManagement(ctx, from, to)
 	})
