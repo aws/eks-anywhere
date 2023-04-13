@@ -2320,7 +2320,7 @@ func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuAPI(t *testing.T) {
+func TestVSphereUpgradeKubernetesUbuntuAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -2356,11 +2356,58 @@ func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuAPI(t *testing.T) {
 		wc.WaitForKubeconfig()
 		wc.ValidateClusterState()
 		wc.UpdateClusterConfig(
+			vsphere.WithUbuntu124(),
+		)
+		wc.ApplyClusterManifest()
+		wc.DeleteWorkloadVsphereCSI()
+		wc.ValidateClusterState()
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
+func TestVSphereCiliumDisableCSIUbuntuAPI(t *testing.T) {
+	vsphere := framework.NewVSphere(t)
+
+	managementCluster := framework.NewClusterE2ETest(
+		t, vsphere,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		vsphere.WithUbuntu124(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			),
+			vsphere.WithWorkerNodeGroup("worker-0", framework.WithWorkerNodeGroup("worker-0", api.WithCount(1))),
+			vsphere.WithUbuntu124(),
+		),
+	)
+
+	test.CreateManagementCluster()
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		wc.UpdateClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
 			),
 			api.VSphereToConfigFiller(api.WithDisableCSI(true)),
-			vsphere.WithUbuntu124(),
 		)
 		wc.ApplyClusterManifest()
 		wc.DeleteWorkloadVsphereCSI()
