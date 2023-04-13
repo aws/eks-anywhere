@@ -5,6 +5,7 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -21,6 +22,8 @@ import (
 type schemeAdder func(s *runtime.Scheme) error
 
 var schemeAdders = []schemeAdder{
+	// clientgoscheme adds all the native K8s kinds
+	clientgoscheme.AddToScheme,
 	clusterv1.AddToScheme,
 	controlplanev1.AddToScheme,
 	anywherev1.AddToScheme,

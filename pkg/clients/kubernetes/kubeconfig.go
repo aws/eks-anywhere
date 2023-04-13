@@ -2,17 +2,7 @@ package kubernetes
 
 import (
 	"context"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-type Client interface {
-	Get(ctx context.Context, name, namespace string, obj Object) error
-}
-
-type Object client.Object
-
-type ObjectList client.ObjectList
 
 // KubeconfigClient is an authenticated kubernetes API client
 // it authenticates using the credentials of a kubeconfig file.
@@ -32,4 +22,30 @@ func NewKubeconfigClient(client *UnAuthClient, kubeconfig string) *KubeconfigCli
 // and unmarshalls the response into the provided Object.
 func (c *KubeconfigClient) Get(ctx context.Context, name, namespace string, obj Object) error {
 	return c.client.Get(ctx, name, namespace, c.kubeconfig, obj)
+}
+
+// List retrieves list of objects. On a successful call, Items field
+// in the list will be populated with the result returned from the server.
+func (c *KubeconfigClient) List(ctx context.Context, list ObjectList) error {
+	return c.client.List(ctx, c.kubeconfig, list)
+}
+
+// Create saves the object obj in the Kubernetes cluster.
+func (c *KubeconfigClient) Create(ctx context.Context, obj Object) error {
+	return c.client.Create(ctx, c.kubeconfig, obj)
+}
+
+// Update updates the given obj in the Kubernetes cluster.
+func (c *KubeconfigClient) Update(ctx context.Context, obj Object) error {
+	return c.client.Update(ctx, c.kubeconfig, obj)
+}
+
+// Delete deletes the given obj from Kubernetes cluster.
+func (c *KubeconfigClient) Delete(ctx context.Context, obj Object) error {
+	return c.client.Delete(ctx, c.kubeconfig, obj)
+}
+
+// DeleteAllOf deletes all objects of the given type matching the given options.
+func (c *KubeconfigClient) DeleteAllOf(ctx context.Context, obj Object, opts ...DeleteAllOfOption) error {
+	return c.client.DeleteAllOf(ctx, c.kubeconfig, obj, opts...)
 }

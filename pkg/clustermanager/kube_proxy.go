@@ -14,9 +14,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -43,7 +43,7 @@ var firstEKSDWithNewKubeProxy = map[anywherev1.KubernetesVersion]int{
 // ClientFactory builds Kubernetes clients.
 type ClientFactory interface {
 	// BuildClientFromKubeconfig builds a Kubernetes client from a kubeconfig file.
-	BuildClientFromKubeconfig(kubeconfigPath string) (client.Client, error)
+	BuildClientFromKubeconfig(kubeconfigPath string) (kubernetes.Client, error)
 }
 
 // NewKubeProxyCLIUpgrader builds a new KubeProxyCLIUpgrader.
@@ -122,7 +122,7 @@ func (u KubeProxyCLIUpgrader) CleanupAfterUpgrade(ctx context.Context,
 
 func (u KubeProxyCLIUpgrader) buildClients(
 	managementClusterKubeconfigPath, workloadClusterKubeconfigPath string,
-) (managementClusterClient, workloadClusterClient client.Client, err error) {
+) (managementClusterClient, workloadClusterClient kubernetes.Client, err error) {
 	u.log.V(4).Info("Building client for management cluster", "kubeconfig", managementClusterKubeconfigPath)
 	if err = u.retrier.Retry(func() error {
 		managementClusterClient, err = u.clientFactory.BuildClientFromKubeconfig(managementClusterKubeconfigPath)
@@ -179,8 +179,8 @@ func WithUpdateKubeProxyTiming(retries int, backoff time.Duration) KubeProxyUpgr
 // old kube-proxy that always uses iptables legacy and the new one that detects the host preference
 // and is able to work with nft as well. This is idempotent, so it can be called in a loop if transient
 // errors are a risk.
-func (u KubeProxyUpgrader) PrepareForUpgrade(ctx context.Context, log logr.Logger, managementClusterClient, workloadClusterClient client.Client, spec *cluster.Spec) error {
-	kcp, err := controller.KubeadmControlPlane(ctx, managementClusterClient, spec.Cluster)
+func (u KubeProxyUpgrader) PrepareForUpgrade(ctx context.Context, log logr.Logger, managementClusterClient, workloadClusterClient kubernetes.Client, spec *cluster.Spec) error {
+	kcp, err := getKubeadmControlPlane(ctx, managementClusterClient, spec.Cluster)
 	if err != nil {
 		return errors.Wrap(err, "reading the kubeadm control plane for an upgrade")
 	}
@@ -235,7 +235,7 @@ func (u KubeProxyUpgrader) PrepareForUpgrade(ctx context.Context, log logr.Logge
 // CleanupAfterUpgrade cleanups all the leftover changes made by PrepareForUpgrade.
 // It's idempotent so it can be call multiple timesm even if PrepareForUpgrade wasn't
 // called before.
-func (u KubeProxyUpgrader) CleanupAfterUpgrade(ctx context.Context, log logr.Logger, managementClusterClient, workloadClusterClient client.Client, spec *cluster.Spec) error {
+func (u KubeProxyUpgrader) CleanupAfterUpgrade(ctx context.Context, log logr.Logger, managementClusterClient, workloadClusterClient kubernetes.Client, spec *cluster.Spec) error {
 	log.V(4).Info("Deleting iptables legacy kube-proxy", "name", iptablesLegacyKubeProxyDSName)
 	if err := deleteIPTablesLegacyKubeProxy(ctx, workloadClusterClient); err != nil {
 		return err
@@ -256,7 +256,7 @@ func (u KubeProxyUpgrader) CleanupAfterUpgrade(ctx context.Context, log logr.Log
 	}
 
 	// Remove the skip annotation from the kubeadm control plane so it starts reconciling the kube-proxy again
-	kcp, err := controller.KubeadmControlPlane(ctx, managementClusterClient, spec.Cluster)
+	kcp, err := getKubeadmControlPlane(ctx, managementClusterClient, spec.Cluster)
 	if err != nil {
 		return errors.Wrap(err, "reading the kubeadm control plane to cleanup the skip annotations")
 	}
@@ -313,7 +313,7 @@ func needsKubeProxyPreUpgrade(spec *cluster.Spec, currentKCP *controlplanev1.Kub
 	return specIncludesNewKubeProxy(spec) && !eksdIncludesNewKubeProxy(currentKubeVersion, currentEKSDNumber), nil
 }
 
-func annotateKCPWithSKipKubeProxy(ctx context.Context, log logr.Logger, c client.Client, kcp *controlplanev1.KubeadmControlPlane) error {
+func annotateKCPWithSKipKubeProxy(ctx context.Context, log logr.Logger, c kubernetes.Client, kcp *controlplanev1.KubeadmControlPlane) error {
 	log.V(4).Info("Adding skip annotation to kcp", "kcp", klog.KObj(kcp), "annotation", controlplanev1.SkipKubeProxyAnnotation)
 	clientutil.AddAnnotation(kcp, controlplanev1.SkipKubeProxyAnnotation, "true")
 	if err := c.Update(ctx, kcp); err != nil {
@@ -323,7 +323,7 @@ func annotateKCPWithSKipKubeProxy(ctx context.Context, log logr.Logger, c client
 	return nil
 }
 
-func addIPTablesLegacyLabelToAllNodes(ctx context.Context, log logr.Logger, client client.Client) error {
+func addIPTablesLegacyLabelToAllNodes(ctx context.Context, log logr.Logger, client kubernetes.Client) error {
 	nodeList := &corev1.NodeList{}
 	if err := client.List(ctx, nodeList); err != nil {
 		return errors.Wrap(err, "listing workload cluster nodes for kube-proxy upgrade")
@@ -346,17 +346,26 @@ func addIPTablesLegacyLabelToAllNodes(ctx context.Context, log logr.Logger, clie
 	return nil
 }
 
-func getKubeProxy(ctx context.Context, c client.Client) (*appsv1.DaemonSet, error) {
+func getKubeProxy(ctx context.Context, c kubernetes.Client) (*appsv1.DaemonSet, error) {
 	kubeProxy := &appsv1.DaemonSet{}
-	kubeProxyKey := client.ObjectKey{Name: kubeProxyDSName, Namespace: kubeProxyDSNamespace}
-	if err := c.Get(ctx, kubeProxyKey, kubeProxy); err != nil {
+	if err := c.Get(ctx, kubeProxyDSName, kubeProxyDSNamespace, kubeProxy); err != nil {
 		return nil, errors.Wrap(err, "reading kube-proxy for upgrade")
 	}
 
 	return kubeProxy, nil
 }
 
-func addAntiNodeAffinityToKubeProxy(ctx context.Context, client client.Client, kubeProxy *appsv1.DaemonSet) error {
+func getKubeadmControlPlane(ctx context.Context, c kubernetes.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
+	key := controller.CAPIKubeadmControlPlaneKey(cluster)
+
+	kubeadmControlPlane := &controlplanev1.KubeadmControlPlane{}
+	if err := c.Get(ctx, key.Name, key.Namespace, kubeadmControlPlane); err != nil {
+		return nil, err
+	}
+	return kubeadmControlPlane, nil
+}
+
+func addAntiNodeAffinityToKubeProxy(ctx context.Context, client kubernetes.Client, kubeProxy *appsv1.DaemonSet) error {
 	kubeProxy.Spec.Template.Spec.Affinity = &corev1.Affinity{
 		NodeAffinity: &corev1.NodeAffinity{
 			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
@@ -380,11 +389,13 @@ func addAntiNodeAffinityToKubeProxy(ctx context.Context, client client.Client, k
 	return nil
 }
 
-func deleteAllOriginalKubeProxyPods(ctx context.Context, c client.Client) error {
+func deleteAllOriginalKubeProxyPods(ctx context.Context, c kubernetes.Client) error {
 	if err := c.DeleteAllOf(ctx, &corev1.Pod{},
-		client.InNamespace(kubeProxyDSNamespace),
-		client.MatchingLabels{
-			k8sAppLabel: kubeProxyLabel,
+		&kubernetes.DeleteAllOfOptions{
+			Namespace: kubeProxyDSNamespace,
+			HasLabels: map[string]string{
+				k8sAppLabel: kubeProxyLabel,
+			},
 		},
 	); err != nil && !apierrors.IsNotFound(err) {
 		return errors.Wrap(err, "deleting kube-proxy pods before upgrade")
@@ -393,7 +404,7 @@ func deleteAllOriginalKubeProxyPods(ctx context.Context, c client.Client) error 
 	return nil
 }
 
-func restrictKubeProxyToNewNodes(ctx context.Context, client client.Client, kubeProxy *appsv1.DaemonSet) error {
+func restrictKubeProxyToNewNodes(ctx context.Context, client kubernetes.Client, kubeProxy *appsv1.DaemonSet) error {
 	kubeProxy = kubeProxy.DeepCopy()
 	// Add nodeAffinity to kube-proxy so it's not scheduled in new nodes without our label
 	if err := addAntiNodeAffinityToKubeProxy(ctx, client, kubeProxy); err != nil {
@@ -440,7 +451,7 @@ func iptablesLegacyKubeProxyFromCurrentDaemonSet(kcp *controlplanev1.KubeadmCont
 	return iptablesLegacyKubeProxy
 }
 
-func createIPTablesLegacyKubeProxy(ctx context.Context, client client.Client, kcp *controlplanev1.KubeadmControlPlane, originalKubeProxy *appsv1.DaemonSet) error {
+func createIPTablesLegacyKubeProxy(ctx context.Context, client kubernetes.Client, kcp *controlplanev1.KubeadmControlPlane, originalKubeProxy *appsv1.DaemonSet) error {
 	iptablesLegacyKubeProxy := iptablesLegacyKubeProxyFromCurrentDaemonSet(kcp, originalKubeProxy)
 	if err := client.Create(ctx, iptablesLegacyKubeProxy); err != nil && !apierrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "creating secondary kube-proxy DS with iptables-legacy for old nodes")
@@ -449,7 +460,7 @@ func createIPTablesLegacyKubeProxy(ctx context.Context, client client.Client, kc
 	return nil
 }
 
-func deleteIPTablesLegacyKubeProxy(ctx context.Context, client client.Client) error {
+func deleteIPTablesLegacyKubeProxy(ctx context.Context, client kubernetes.Client) error {
 	iptablesLegacyKubeProxy := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      iptablesLegacyKubeProxyDSName,
@@ -464,7 +475,7 @@ func deleteIPTablesLegacyKubeProxy(ctx context.Context, client client.Client) er
 	return nil
 }
 
-func updateKubeProxyVersion(ctx context.Context, client client.Client, kubeProxy *appsv1.DaemonSet, image string) error {
+func updateKubeProxyVersion(ctx context.Context, client kubernetes.Client, kubeProxy *appsv1.DaemonSet, image string) error {
 	kubeProxy.Spec.Template.Spec.Containers[0].Image = image
 	if err := client.Update(ctx, kubeProxy); err != nil {
 		return errors.Wrap(err, "updating main kube-proxy version before upgrade")
@@ -473,7 +484,7 @@ func updateKubeProxyVersion(ctx context.Context, client client.Client, kubeProxy
 	return nil
 }
 
-func (u KubeProxyUpgrader) ensureUpdateKubeProxyVersion(ctx context.Context, log logr.Logger, client client.Client, spec *cluster.Spec) error {
+func (u KubeProxyUpgrader) ensureUpdateKubeProxyVersion(ctx context.Context, log logr.Logger, client kubernetes.Client, spec *cluster.Spec) error {
 	newKubeProxyImage := spec.VersionsBundle.KubeDistro.KubeProxy.URI
 	return retrier.Retry(u.updateKubeProxyRetries, u.updateKubeProxyBackoff, func() error {
 		kubeProxy, err := getKubeProxy(ctx, client)
