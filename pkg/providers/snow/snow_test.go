@@ -931,6 +931,56 @@ func TestDeleteResources(t *testing.T) {
 	tt.Expect(err).To(Succeed())
 }
 
+func TestDeleteResourcesWithEmptyNamespace(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.clusterSpec.SnowDatacenter.Namespace = ""
+	for _, m := range tt.clusterSpec.SnowMachineConfigs {
+		m.Namespace = ""
+	}
+
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(
+		tt.clusterSpec.ManagementCluster.KubeconfigFile,
+	).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().Delete(
+		tt.ctx,
+		tt.clusterSpec.SnowDatacenter,
+	).Return(nil)
+	tt.kubeconfigClient.EXPECT().Delete(
+		tt.ctx,
+		tt.clusterSpec.SnowMachineConfigs["test-cp"],
+	).Return(nil)
+	tt.kubeconfigClient.EXPECT().Delete(
+		tt.ctx,
+		tt.clusterSpec.SnowMachineConfigs["test-wn"],
+	).Return(nil)
+
+	err := tt.provider.DeleteResources(tt.ctx, tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+}
+
+func TestDeleteResourcesWhenObjectsDoNotExist(t *testing.T) {
+	tt := newSnowTest(t)
+	client := test.NewFakeKubeClient(tt.clusterSpec.Cluster)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(
+		tt.clusterSpec.ManagementCluster.KubeconfigFile,
+	).Return(client)
+
+	err := tt.provider.DeleteResources(tt.ctx, tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+}
+
+func TestDeleteResourcesErrorDeletingDatacenter(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.clusterSpec.SnowMachineConfigs = nil
+	client := test.NewFakeKubeClientAlwaysError()
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(
+		tt.clusterSpec.ManagementCluster.KubeconfigFile,
+	).Return(client)
+
+	err := tt.provider.DeleteResources(tt.ctx, tt.clusterSpec)
+	tt.Expect(err).To(MatchError(ContainSubstring("deleting snow datacenter")))
+}
+
 func TestUpgradeNeededFalse(t *testing.T) {
 	tt := newSnowTest(t)
 	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient).Times(2)
