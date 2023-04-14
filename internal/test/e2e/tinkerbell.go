@@ -83,7 +83,7 @@ func (e *E2ESession) setTinkerbellBootstrapIPInInstance(tinkInterface string) er
 	e.logger.V(1).Info("Setting Tinkerbell Bootstrap IP in instance")
 
 	command := fmt.Sprintf("export T_TINKERBELL_BOOTSTRAP_IP=$(/sbin/ip -o -4 addr list %s | awk '{print $4}' | cut -d/ -f1) && echo T_TINKERBELL_BOOTSTRAP_IP=\"$T_TINKERBELL_BOOTSTRAP_IP\" | tee -a /etc/environment", tinkInterface)
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("setting tinkerbell boostrap ip: %v", err)
 	}
 
