@@ -100,6 +100,23 @@ func TestCloudstackDatacenterConfigReconcilerDelete(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 }
 
+func TestCloudstackDatacenterConfigFailGetDatacenter(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	r := controllers.NewCloudStackDatacenterReconciler(client)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(MatchError(ContainSubstring("failed getting cloudstack datacenter config")))
+}
+
 func createCloudstackDatacenterConfig() *anywherev1.CloudStackDatacenterConfig {
 	return &anywherev1.CloudStackDatacenterConfig{
 		TypeMeta: metav1.TypeMeta{

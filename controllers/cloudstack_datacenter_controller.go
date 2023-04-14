@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -37,19 +38,17 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 
 	cloudstackDatacenter := &anywherev1.CloudStackDatacenterConfig{}
 	if err := r.client.Get(ctx, req.NamespacedName, cloudstackDatacenter); err != nil {
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, fmt.Errorf("failed getting cloudstack datacenter config: %v", err)
 	}
 
 	patchHelper, err := patch.NewHelper(cloudstackDatacenter, r.client)
 	if err != nil {
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	defer func() {
 		// Always attempt to patch the object and status after each reconciliation.
-		patchOpts := []patch.Option{}
-
-		if err := patchHelper.Patch(ctx, cloudstackDatacenter, patchOpts...); err != nil {
+		if err := patchHelper.Patch(ctx, cloudstackDatacenter); err != nil {
 			log.Error(reterr, "Failed to patch cloudstackDatacenter")
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
