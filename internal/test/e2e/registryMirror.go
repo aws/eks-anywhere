@@ -77,7 +77,7 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 func (e *E2ESession) mountRegistryCert(cert string, endpoint string) error {
 	command := fmt.Sprintf("sudo mkdir -p /etc/docker/certs.d/%s", endpoint)
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("creating directory in instance: %v", err)
 	}
 	decodedCert, err := base64.StdEncoding.DecodeString(cert)
@@ -86,7 +86,7 @@ func (e *E2ESession) mountRegistryCert(cert string, endpoint string) error {
 	}
 	command = fmt.Sprintf("sudo cat <<EOF>> /etc/docker/certs.d/%s/ca.crt\n%s\nEOF", endpoint, string(decodedCert))
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("mounting certificate in instance: %v", err)
 	}
 

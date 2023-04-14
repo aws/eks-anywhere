@@ -117,7 +117,7 @@ func (e *E2ESession) downloadSignerKeyInInstance(folder string) (pathInInstance 
 	e.logger.V(1).Info("Downloading from s3 in instance", "key", saSignerKey)
 	command := fmt.Sprintf("aws s3 cp s3://%s/%s ./%s", e.storageBucket, saSignerKey, saSignerPath)
 
-	if err = ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err = ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return "", fmt.Errorf("downloading signer key in instance: %v", err)
 	}
 	e.logger.V(1).Info("Successfully downloaded signer key")
