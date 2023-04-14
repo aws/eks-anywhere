@@ -74,7 +74,7 @@ func (e *E2ESession) setup(regex string) error {
 	}
 
 	e.logger.V(1).Info("Waiting until SSM is ready")
-	err = ssm.WaitForSSMReady(e.session, e.instanceId)
+	err = ssm.WaitForSSMReady(e.session, e.instanceId, ssmTimeout)
 	if err != nil {
 		return fmt.Errorf("waiting for ssm in new instance: %v", err)
 	}
@@ -184,7 +184,7 @@ func (e *E2ESession) setup(regex string) error {
 func (e *E2ESession) updateFSInotifyResources() error {
 	command := fmt.Sprintf("sudo sysctl fs.inotify.max_user_watches=%v && sudo sysctl fs.inotify.max_user_instances=%v", maxUserWatches, maxUserInstances)
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("updating fs inotify resources: %v", err)
 	}
 	e.logger.V(1).Info("Successfully updated the fs inotify user watches and instances")
@@ -230,7 +230,7 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 	e.logger.V(1).Info("Downloading from s3 in instance", "file", file)
 
 	command := fmt.Sprintf("aws s3 cp s3://%s/%s/%[3]s ./bin/ && chmod 645 ./bin/%[3]s", e.storageBucket, e.jobId, file)
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("downloading file in instance: %v", err)
 	}
 	e.logger.V(1).Info("Successfully downloaded file")
@@ -251,7 +251,7 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 func (e *E2ESession) createTestNameFile(testName string) error {
 	command := fmt.Sprintf("echo \"%s\" > %s", testName, testNameFile)
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("creating test name file in instance: %v", err)
 	}
 	e.logger.V(1).Info("Successfully created test name file")
