@@ -147,6 +147,11 @@ spec:
                       name:
                         type: string
                     type: object
+                  skipLoadBalancerDeployment:
+                    description: SkipLoadBalancerDeployment skip deploying control
+                      plane load balancer. Make sure your infrastructure can handle
+                      control plane load balancing when you set this field to true.
+                    type: boolean
                   taints:
                     description: Taints define the set of taints to be applied on
                       control plane nodes

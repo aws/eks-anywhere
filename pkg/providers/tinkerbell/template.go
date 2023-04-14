@@ -399,6 +399,7 @@ func buildTemplateMapCP(
 		"controlPlaneTaints":            clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 		"skipLoadBalancerDeployment":    datacenterSpec.SkipLoadBalancerDeployment,
+		"cpSkipLoadBalancerDeployment":  clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipLoadBalancerDeployment,
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
