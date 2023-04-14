@@ -20,7 +20,7 @@ func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 		e.generatedArtifactsBucketPath(), testName,
 	).recursive().String()
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		e.logger.Error(err, "error uploading log files from instance")
 	} else {
 		e.logger.V(1).Info("Successfully uploaded log files to S3")
@@ -34,7 +34,7 @@ func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 		e.generatedArtifactsBucketPath(), testName,
 	).recursive().exclude("*").include(bundleNameFormat).String()
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		e.logger.Error(err, "error uploading diagnostic bundle from instance")
 	} else {
 		e.logger.V(1).Info("Successfully uploaded diagnostic bundle files to S3")
@@ -48,7 +48,7 @@ func (e *E2ESession) uploadJUnitReportFromInstance(testName string) {
 		e.generatedArtifactsBucketPath(), testName,
 	).recursive().exclude("*").include(junitFile).String()
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		e.logger.Error(err, "error uploading JUnit report from instance")
 	} else {
 		e.logger.V(1).Info("Successfully uploaded JUnit report files to S3")

@@ -82,7 +82,7 @@ func (e *E2ESession) writeFileToInstance(file fileFromBytes) error {
 	e.logger.V(1).Info("Writing bytes to file in instance", "file", file.dstPath)
 
 	command := fmt.Sprintf("echo $'%s' >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("writing file in instance: %v", err)
 	}
 	e.logger.V(1).Info("Successfully wrote file", "file", file.dstPath)
@@ -94,7 +94,7 @@ func (e *E2ESession) downloadFileInInstance(file s3Files) error {
 	e.logger.V(1).Info("Downloading from s3 in instance", "file", file.key)
 
 	command := fmt.Sprintf("aws s3 cp s3://%s/%s %s && chmod %d %[3]s", e.storageBucket, file.key, file.dstPath, file.permission)
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("downloading file in instance: %v", err)
 	}
 	e.logger.V(1).Info("Successfully downloaded file", "file", file.key)
@@ -105,7 +105,7 @@ func (e *E2ESession) downloadFileInInstance(file s3Files) error {
 func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 	command := fmt.Sprintf("eval $(ssh-agent -s) ssh-add %s", privateKeyFile)
 
-	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("starting SSH agent on instance: %v", err)
 	}
 	e.logger.V(1).Info("Successfully started SSH agent on instance")

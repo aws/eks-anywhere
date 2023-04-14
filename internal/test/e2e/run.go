@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/go-logr/logr"
@@ -24,6 +25,13 @@ const (
 
 	maxIPPoolSize = 10
 	minIPPoolSize = 1
+
+	// Default timeout for E2E test instance.
+	e2eTimeout           = 300 * time.Minute
+	e2eSSMTimeoutPadding = 10 * time.Minute
+
+	// Default timeout used for all SSM commands besides running the actual E2E test.
+	ssmTimeout = 10 * time.Minute
 )
 
 type ParallelRunConf struct {
@@ -205,7 +213,7 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
 
 	if regex != "" {
-		command = fmt.Sprintf("%s -test.run \"%s\"", command, regex)
+		command = fmt.Sprintf("%s -test.run \"%s\" -test.timeout %s", command, regex, e2eTimeout)
 	}
 
 	command = e.commandWithEnvVars(command)
@@ -217,6 +225,7 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 		e.logger.V(4),
 		e.instanceId,
 		command,
+		e2eTimeout+e2eSSMTimeoutPadding,
 		opt,
 	)
 	if err != nil {
