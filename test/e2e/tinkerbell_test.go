@@ -1080,6 +1080,26 @@ func TestTinkerbellKubernetes126SkipPowerActions(t *testing.T) {
 	test.ValidateHardwareDecommissioned()
 }
 
+func TestTinkerbellKubernetes126SingleNodeSkipPowerActions(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithNoPowerActions(),
+		framework.WithControlPlaneHardware(1),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.PXEBootHardware()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestTinkerbellKubernetes126UbuntuControlPlaneScaleUp(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
 	test := framework.NewClusterE2ETest(
