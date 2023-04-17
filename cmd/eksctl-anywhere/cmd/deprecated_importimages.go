@@ -1,5 +1,13 @@
 package cmd
 
+//////////////////////////////////////////////////////
+//
+// WARNING: The command defined in this file is DEPRECATED.
+//
+// See ./import_images.go for the newer command.
+//
+//////////////////////////////////////////////////////
+
 import (
 	"context"
 	"fmt"
