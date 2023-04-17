@@ -924,10 +924,18 @@ func (e *ClusterE2ETest) deleteCluster(opts ...CommandOpt) {
 	e.RunEKSA(deleteClusterArgs, opts...)
 }
 
-func (e *ClusterE2ETest) GenerateSupportBundle(opts ...CommandOpt) {
-	e.T.Log("Generating support bundle for failed test")
-	generateSupportBundleArgs := []string{"generate", "support-bundle", "-f", e.ClusterConfigLocation}
-	e.RunEKSA(generateSupportBundleArgs, opts...)
+// GenerateSupportBundleOnCleanupIfTestFailed does what it says on the tin.
+//
+// It uses testing.T.Cleanup to register a handler that checks if the test
+// failed, and generates a support bundle only in the event of a failure.
+func (e *ClusterE2ETest) GenerateSupportBundleOnCleanupIfTestFailed(opts ...CommandOpt) {
+	e.T.Cleanup(func() {
+		if e.T.Failed() {
+			e.T.Log("Generating support bundle for failed test")
+			generateSupportBundleArgs := []string{"generate", "support-bundle", "-f", e.ClusterConfigLocation}
+			e.RunEKSA(generateSupportBundleArgs, opts...)
+		}
+	})
 }
 
 func (e *ClusterE2ETest) Run(name string, args ...string) {
@@ -1339,15 +1347,12 @@ func (e *ClusterE2ETest) printDeploymentSpec(ctx context.Context, ns string) {
 
 // VerifyHelloPackageInstalled is checking if the hello eks anywhere package gets installed correctly.
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtCluster *types.Cluster) {
-	failedTest := false
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
+	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	// Log Package/Deployment outputs
 	defer func() {
-		if failedTest {
-			e.GenerateSupportBundle()
-		}
 		params := []string{"get", "package", packageName, "-o", "json", "-n", packageMetadatNamespace, "--kubeconfig", e.kubeconfigFilePath()}
 		e.printPackageSpec(ctx, params)
 		e.printDeploymentSpec(ctx, constants.EksaPackagesName)
@@ -1357,7 +1362,6 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
 		mgmtCluster, packageName, "10m", packageMetadatNamespace)
 	if err != nil {
-		failedTest = true
 		e.T.Fatalf("waiting for hello-eks-anywhere package timed out: %s", err)
 	}
 
@@ -1365,7 +1369,6 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 	err = e.KubectlClient.WaitForDeployment(ctx,
 		e.Cluster(), "10m", "Available", "hello-eks-anywhere", constants.EksaPackagesName)
 	if err != nil {
-		failedTest = true
 		e.T.Fatalf("waiting for hello-eks-anywhere deployment timed out: %s", err)
 	}
 
@@ -1379,12 +1382,12 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
+	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
 		e.Cluster(), packageName, "10m", packageMetadatNamespace)
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("waiting for adot package install timed out: %s", err)
 	}
 
@@ -1399,7 +1402,6 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 	err = e.KubectlClient.WaitForDeployment(ctx,
 		e.Cluster(), "10m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
 
@@ -1413,7 +1415,6 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 
 	podIPAddress, err := e.KubectlClient.GetPodIP(context.TODO(), targetNamespace, adotPodName, e.kubeconfigFilePath())
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("unable to get ip of the aws-otel-collector pod: %s", err)
 	}
 	podFullIPAddress := strings.Trim(podIPAddress, `'"`) + ":8888/metrics"
@@ -1438,7 +1439,6 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 	e.T.Log("This will update", packageName, "to be a deployment, and scrape the apiservers")
 	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDeployment, packageMetadatNamespace)
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
 	}
@@ -1455,7 +1455,6 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
 		e.Cluster(), packageName, "10m", packageMetadatNamespace)
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
 
@@ -1463,26 +1462,22 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 	err = e.KubectlClient.WaitForDeployment(ctx,
 		e.Cluster(), "10m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
 
 	e.T.Log("Reading", packageName, "pod logs")
 	adotPodName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.kubeconfigFilePath())
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("unable to get name of the aws-otel-collector pod: %s", err)
 	}
 	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace, adotPodName, "aws-otel-collector", e.kubeconfigFilePath())
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
 	fmt.Printf("Logs from aws-otel-collector pod\n %s\n", logs)
 	expectedLogs := "MetricsExporter	{\"kind\": \"exporter\", \"data_type\": \"metrics\", \"name\": \"logging\", \"#metrics\":"
 	ok := strings.Contains(logs, expectedLogs)
 	if !ok {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("expected to find %s in the log, got %s", expectedLogs, logs)
 	}
 }
@@ -1497,7 +1492,6 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 	e.T.Log("This will update", packageName, "to be a daemonset, and scrape the node")
 	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDaemonset, packageMetadatNamespace)
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
 	}
@@ -2065,6 +2059,7 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
 ) {
 	e.T.Logf("Match logs for pod %s, container %s in namespace %s", targetPodName,
 		targetContainerName, targetNamespace)
+	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	err := retrier.New(timeout).Retry(func() error {
 		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace,
@@ -2080,7 +2075,6 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
 		return nil
 	})
 	if err != nil {
-		e.GenerateSupportBundle()
 		e.T.Fatalf("unable to match logs: %s", err)
 	}
 }
