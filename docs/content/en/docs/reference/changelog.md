@@ -4,6 +4,25 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
+## [v0.15.2](https://github.com/aws/eks-anywhere/releases/tag/v0.15.2)
+
+### Supported OS version details
+|              | vSphere | Baremetal |  Nutanix | Cloudstack | Snow  |
+|    :---:     |  :---:  |   :---:   |   :---:  |    :---:   | :---: |
+| Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
+| Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
+| RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+### Added
+- Support for no-timeouts to more EKS Anywhere operations (#[5565](https://github.com/aws/eks-anywhere/issues/5565))
+
+### Changed
+- Use kubectl for kube-proxy upgrader calls (#[5609](https://github.com/aws/eks-anywhere/pull/5609))
+
+### Fixed
+- Fixed the failure to delete a Tinkerbell workload cluster due to an incorrect SSH key update during reconciliation (#[5554](https://github.com/aws/eks-anywhere/issues/5554))
+- Fixed `machineGroupRef` updates for CloudStack and Vsphere  (#[5313](https://github.com/aws/eks-anywhere/issues/5313))
+
 ## [v0.15.1](https://github.com/aws/eks-anywhere/releases/tag/v0.15.1)
 
 ### Supported OS version details
@@ -12,6 +31,9 @@ weight: 35
 | Ubuntu       | 20.04	 | 20.04     |	20.04             | Not supported	     | 20.04 |  
 | Bottlerocket | 1.13.1  | 1.13.1    |  Not supported     | Not supported	     | Not supported   |
 | RHEL         | 8.7	   | 8.7	     |  Not supported     | 8.7	               | Not supported   |
+
+### Added
+- Kubernetes 1.26 support
 
 ### Upgraded
 - Cilium updated from version `v1.11.10` to version `v1.11.15`
