@@ -86,11 +86,11 @@ func TestTinkerbellKubernetes126UbuntuWorkerNodeUpgrade(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes125UbuntuWorkerNodeScaleUpWithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithControlPlaneHardware(1),
@@ -104,26 +104,25 @@ func TestTinkerbellKubernetes125UbuntuWorkerNodeScaleUpWithAPI(t *testing.T) {
 }
 
 func TestTinkerbellKubernetes125UbuntuAddWorkerNodeGroupWithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithCustomLabelHardware(1, "worker-0"),
+		framework.WithWorkerHardware(2),
 	)
 	runUpgradeFlowForBareMetalWithAPI(test,
 		api.ClusterToConfigFiller(
-			api.WithWorkerNodeGroup("worker-0",
+			api.WithWorkerNodeGroup("worker",
 				api.WithCount(1),
-				api.WithMachineGroupRef("worker-0", "TinkerbellMachineConfig"),
+				api.WithMachineGroupRef("worker", "TinkerbellMachineConfig"),
 			),
 		),
 		api.TinkerbellToConfigFiller(
-			api.WithCustomTinkerbellMachineConfig("worker-0",
+			api.WithCustomTinkerbellMachineConfig("worker",
 				framework.UpdateTinkerbellMachineSSHAuthorizedKey(),
 				api.WithOsFamilyForTinkerbellMachineConfig(v1alpha1.Ubuntu),
 			),
