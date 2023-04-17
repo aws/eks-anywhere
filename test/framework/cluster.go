@@ -924,6 +924,20 @@ func (e *ClusterE2ETest) deleteCluster(opts ...CommandOpt) {
 	e.RunEKSA(deleteClusterArgs, opts...)
 }
 
+// GenerateSupportBundleOnCleanupIfTestFailed does what it says on the tin.
+//
+// It uses testing.T.Cleanup to register a handler that checks if the test
+// failed, and generates a support bundle only in the event of a failure.
+func (e *ClusterE2ETest) GenerateSupportBundleOnCleanupIfTestFailed(opts ...CommandOpt) {
+	e.T.Cleanup(func() {
+		if e.T.Failed() {
+			e.T.Log("Generating support bundle for failed test")
+			generateSupportBundleArgs := []string{"generate", "support-bundle", "-f", e.ClusterConfigLocation}
+			e.RunEKSA(generateSupportBundleArgs, opts...)
+		}
+	})
+}
+
 func (e *ClusterE2ETest) Run(name string, args ...string) {
 	command := strings.Join(append([]string{name}, args...), " ")
 	shArgs := []string{"-c", command}
@@ -1335,6 +1349,7 @@ func (e *ClusterE2ETest) printDeploymentSpec(ctx context.Context, ns string) {
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
+	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	// Log Package/Deployment outputs
 	defer func() {
@@ -1367,6 +1382,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNamespace string) {
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
+	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
@@ -2043,6 +2059,7 @@ func (e *ClusterE2ETest) MatchLogs(targetNamespace string, targetPodName string,
 ) {
 	e.T.Logf("Match logs for pod %s, container %s in namespace %s", targetPodName,
 		targetContainerName, targetNamespace)
+	e.GenerateSupportBundleOnCleanupIfTestFailed()
 
 	err := retrier.New(timeout).Retry(func() error {
 		logs, err := e.KubectlClient.GetPodLogs(context.TODO(), targetNamespace,
