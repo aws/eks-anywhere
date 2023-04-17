@@ -18,7 +18,6 @@ Currently the only way to manage EKS Anywhere CloudStack cluster is by using CLI
 #### Limitation
 
 * We currently only supports k8s version < 1.24 on CloudStack
-* We only support Redhat, not on Ubuntu or Bottlerocket yet.
 
 ## Overview of Solution
 
@@ -36,6 +35,7 @@ CloudStack already has webhook for datacenter and machine config. We’ll reorga
 * We have immutable fields validation in both webhook ([validateImmutableFieldsCloudStackMachineConfig](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/api/v1alpha1/cloudstackmachineconfig_webhook.go#L86) and provider ([validateMachineConfigImmutability](https://github.com/aws/eks-anywhere/blob/01cd1e7c3da0c6d87b2d85c4ac6e61f409091e9d/pkg/providers/cloudstack/cloudstack.go#L162)). There’re some gaps between two places so we’ll need to decide the final validation.
   * affinity group
   * [disk offering](https://github.com/aws/eks-anywhere/issues/5319)
+* [Validate k8s version](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/providers/cloudstack/cloudstack.go#L1371) and [set Default And Validate Contro lPlane Host Port](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator.go#L211) in cluster webhook.
 
 ### Runtime Validation
 
@@ -66,7 +66,6 @@ func (r *CloudstackReconciler) Reconcile(ctx context.Context, log logr.Logger, c
     }
     
     return controller.NewPhaseRunner().Register(
-        r.ValidateAndSetEnv,
         r.ipValidator.ValidateControlPlaneIP,      
         r.ValidateDatacenterConfig,  
         r.ValidateMachineConfig,         
@@ -79,7 +78,5 @@ func (r *CloudstackReconciler) Reconcile(ctx context.Context, log logr.Logger, c
 }
 ```
 
-* validateAndSetEnv: setting [eksa license](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/cloudstack.go#L395), [validate k8s version](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/providers/cloudstack/cloudstack.go#L1371),
-  [setDefaultAndValidateControlPlaneHostPort](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator.go#L211)
 * ValidateDatacenterConfig checks status and failure message from CloudStackDatacenterReconciler
 * After successful datacenter config validation, ValidateMachineConfig runs machine config validations via cmk for each availability zone in datacenter.
