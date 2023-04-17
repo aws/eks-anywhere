@@ -101,11 +101,11 @@ func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
 
 func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
 	logger.Info("Logging in to helm registry", "registry", registry)
-	params := []string{"registry", "login", registry, "--username", username, "--password", password}
+	params := []string{"registry", "login", registry, "--username", username, "--password-stdin"}
 	if h.insecure {
 		params = append(params, "--insecure")
 	}
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).WithStdIn([]byte(password)).Run()
 	return err
 }
 
