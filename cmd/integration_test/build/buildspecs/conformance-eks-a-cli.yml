@@ -13,15 +13,17 @@ env:
     TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
     T_VSPHERE_TEMPLATE_FOLDER: "/SDDC-Datacenter/vm/Templates"
-    T_VSPHERE_TEMPLATE_UBUNTU_1_21: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-21"
     T_VSPHERE_TEMPLATE_UBUNTU_1_22: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-22"
     T_VSPHERE_TEMPLATE_UBUNTU_1_23: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-23"
     T_VSPHERE_TEMPLATE_UBUNTU_1_24: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-24"
-    T_VSPHERE_TEMPLATE_BR_1_21: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-21"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_25: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-25"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_26: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-26"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_27: "/SDDC-Datacenter/vm/Templates/ubuntu-kube-v1-27"
     T_VSPHERE_TEMPLATE_BR_1_22: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22"
     T_VSPHERE_TEMPLATE_BR_1_23: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-23"
     T_VSPHERE_TEMPLATE_BR_1_24: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-24"
-    T_VSPHERE_TEMPLATE_REDHAT_1_21: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-21"
+    T_VSPHERE_TEMPLATE_BR_1_25: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-25"
+    T_VSPHERE_TEMPLATE_BR_1_26: "/SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-26"
     T_VSPHERE_TEMPLATE_REDHAT_1_22: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-22"
     T_VSPHERE_TEMPLATE_REDHAT_1_23: "/SDDC-Datacenter/vm/Templates/redhat-kube-v1-23"
     T_NUTANIX_MACHINE_VCPU_PER_SOCKET: 1
@@ -60,7 +62,8 @@ env:
     T_CLOUDSTACK_NETWORK_2: "cloudstack_ci_beta_connection:network_2"
     T_CLOUDSTACK_MANAGEMENT_SERVER: "cloudstack_ci_beta_connection:management_server"
     T_CLOUDSTACK_MANAGEMENT_SERVER_2: "cloudstack_ci_beta_connection:management_server_2"
-    T_CLOUDSTACK_TEMPLATE_REDHAT_1_21: "cloudstack_ci_beta_connection:template_redhat_1_21"
+    T_CLOUDSTACK_TEMPLATE_REDHAT_1_22: "cloudstack_ci_beta_connection:template_redhat_1_22"
+    T_CLOUDSTACK_TEMPLATE_REDHAT_1_23: "cloudstack_ci_beta_connection:template_redhat_1_23"
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGE: "cloudstack_ci_beta_connection:compute_offering_large"
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGER: "cloudstack_ci_beta_connection:compute_offering_larger"
     T_CLOUDSTACK_TLS_INSECURE: "cloudstack_ci_beta_connection:tls_insecure"
@@ -68,12 +71,12 @@ env:
     T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
     T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
-    T_TINKERBELL_IMAGE_UBUNTU_1_21: "tinkerbell_ci:image_ubuntu_1_21"
     T_TINKERBELL_IMAGE_UBUNTU_1_22: "tinkerbell_ci:image_ubuntu_1_22"
     T_TINKERBELL_IMAGE_UBUNTU_1_23: "tinkerbell_ci:image_ubuntu_1_23"
     T_TINKERBELL_IMAGE_UBUNTU_1_24: "tinkerbell_ci:image_ubuntu_1_24"
     T_TINKERBELL_IMAGE_UBUNTU_1_25: "tinkerbell_ci:image_ubuntu_1_25"
-    T_TINKERBELL_IMAGE_REDHAT_1_21: "tinkerbell_ci:image_redhat_1_21"
+    T_TINKERBELL_IMAGE_UBUNTU_1_26: "tinkerbell_ci:image_ubuntu_1_26"
+    T_TINKERBELL_IMAGE_UBUNTU_1_27: "tinkerbell_ci:image_ubuntu_1_27"
     T_TINKERBELL_IMAGE_REDHAT_1_22: "tinkerbell_ci:image_redhat_1_22"
     T_TINKERBELL_IMAGE_REDHAT_1_23: "tinkerbell_ci:image_redhat_1_23"
     T_TINKERBELL_IMAGE_REDHAT_1_24: "tinkerbell_ci:image_redhat_1_24"
@@ -101,10 +104,11 @@ env:
     T_NUTANIX_POD_CIDR: "nutanix_ci:nutanix_pod_cidr"
     T_NUTANIX_SERVICE_CIDR: "nutanix_ci:nutanix_service_cidr"
     T_NUTANIX_ADDITIONAL_TRUST_BUNDLE: "nutanix_ci:nutanix_additional_trust_bundle"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_21: "nutanix_ci:nutanix_template_ubuntu_1_21"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_22: "nutanix_ci:nutanix_template_ubuntu_1_22"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23: "nutanix_ci:nutanix_template_ubuntu_1_23"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24: "nutanix_ci:nutanix_template_ubuntu_1_24"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25: "nutanix_ci:nutanix_template_ubuntu_1_25"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26: "nutanix_ci:nutanix_template_ubuntu_1_26"
 phases:
   pre_build:
     commands:
@@ -115,6 +119,12 @@ phases:
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
+      - BUNDLES_OVERRIDE=false
+      - |
+        if [ -f ./bin/local-bundle-release.yaml ]; then
+          BUNDLES_OVERRIDE=true
+        fi
+      - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
       - >
         ./bin/test e2e run
         -c ${INTEGRATION_TEST_INFRA_CONFIG}
@@ -124,4 +134,13 @@ phases:
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
         -r 'Test'
+        -v 4
+        --skip ${SKIPPED_TESTS}
+        --bundles-override=${BUNDLES_OVERRIDE}
         --cleanup-vms=true
+        --test-report-folder=reports
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"
