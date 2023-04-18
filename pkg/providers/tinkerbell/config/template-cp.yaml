@@ -85,6 +85,14 @@ spec:
 {{- if .bottlerocketSettings }}
 {{ .bottlerocketSettings | indent 6 }}
 {{- end -}}
+{{- if .certBundles }}
+      certBundles:
+        {{- range .certBundles }}
+      - name: "{{ .Name }}"
+        data: |
+{{ .Data | indent 10 }}
+        {{- end }}
+{{- end}}
 {{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
@@ -167,6 +175,14 @@ spec:
 {{- if .bottlerocketSettings }}
 {{ .bottlerocketSettings | indent 6 }}
 {{- end }}
+{{- if .certBundles }}
+      certBundles:
+        {{- range .certBundles }}
+      - name: "{{ .Name }}"
+        data: |
+{{ .Data | indent 10 }}
+        {{- end }}
+{{- end}}
 {{- if and .proxyConfig (eq .format "bottlerocket") }}
       proxy:
         httpsProxy: {{.httpsProxy}}

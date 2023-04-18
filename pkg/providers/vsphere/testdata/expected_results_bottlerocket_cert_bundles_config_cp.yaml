@@ -2,149 +2,119 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   labels:
-    cluster.x-k8s.io/cluster-name: {{.clusterName}}
-  name: {{.clusterName}}
-  namespace: {{.eksaSystemNamespace}}
+    cluster.x-k8s.io/cluster-name: test
+  name: test
+  namespace: eksa-system
 spec:
   clusterNetwork:
     pods:
-      cidrBlocks: {{.podCidrs}}
+      cidrBlocks: [192.168.0.0/16]
     services:
-      cidrBlocks: {{.serviceCidrs}}
+      cidrBlocks: [10.96.0.0/12]
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: {{.clusterName}}
+    name: test
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: VSphereCluster
-    name: {{.clusterName}}
-{{- if .externalEtcd }}
+    name: test
   managedExternalEtcdRef:
     apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
     kind: EtcdadmCluster
-    name: {{.clusterName}}-etcd
-    namespace: {{.eksaSystemNamespace}}
-{{- end }}
+    name: test-etcd
+    namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereCluster
 metadata:
-  name: {{.clusterName}}
-  namespace: {{.eksaSystemNamespace}}
+  name: test
+  namespace: eksa-system
 spec:
   controlPlaneEndpoint:
-    host: {{.controlPlaneEndpointIp}}
+    host: 1.2.3.4
     port: 6443
   identityRef:
     kind: Secret
-    name: {{.clusterName}}-vsphere-credentials
-  server: {{.vsphereServer}}
-  thumbprint: '{{.thumbprint}}'
+    name: test-vsphere-credentials
+  server: vsphere_server
+  thumbprint: 'ABCDEFG'
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
-  name: {{.controlPlaneTemplateName}}
-  namespace: {{.eksaSystemNamespace}}
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
 spec:
   template:
     spec:
-      cloneMode: {{.controlPlaneCloneMode}}
-      datacenter: '{{.vsphereDatacenter}}'
-      datastore: {{.controlPlaneVsphereDatastore}}
-      diskGiB: {{.controlPlaneDiskGiB}}
-      folder: '{{.controlPlaneVsphereFolder}}'
-      memoryMiB: {{.controlPlaneVMsMemoryMiB}}
+      cloneMode: linkedClone
+      datacenter: 'SDDC-Datacenter'
+      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      diskGiB: 25
+      folder: '/SDDC-Datacenter/vm'
+      memoryMiB: 8192
       network:
         devices:
         - dhcp4: true
-          networkName: {{.vsphereNetwork}}
-      numCPUs: {{.controlPlaneVMsNumCPUs}}
-      resourcePool: '{{.controlPlaneVsphereResourcePool}}'
-      server: {{.vsphereServer}}
-{{- if (ne .controlPlaneVsphereStoragePolicyName "") }}
-      storagePolicyName: "{{.controlPlaneVsphereStoragePolicyName}}"
-{{- end }}
-      template: {{.vsphereTemplate}}
-      thumbprint: '{{.thumbprint}}'
-{{- if .controlPlaneTagIDs }}
-      tagIDs: {{.controlPlaneTagIDs}}
-{{- end }}
+          networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
+      numCPUs: 2
+      resourcePool: '*/Resources'
+      server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
+      template: /SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6
+      thumbprint: 'ABCDEFG'
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: {{.clusterName}}
-  namespace: {{.eksaSystemNamespace}}
+  name: test
+  namespace: eksa-system
 spec:
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: VSphereMachineTemplate
-      name: {{.controlPlaneTemplateName}}
+      name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
     clusterConfiguration:
-      imageRepository: {{.kubernetesRepository}}
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
-{{- if .externalEtcd }}
         external:
           endpoints: []
-{{- if (eq .format "bottlerocket") }}
           caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
           certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"
           keyFile: "/var/lib/kubeadm/pki/apiserver-etcd-client.key"
-{{- else }}
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
-{{- end }}
-{{- else }}
-        local:
-          imageRepository: {{.etcdRepository}}
-          imageTag: {{.etcdImageTag}}
-{{- if .etcdExtraArgs }}
-          extraArgs:
-{{ .etcdExtraArgs.ToYaml | indent 12 }}
-{{- end }}
-{{- end }}
       dns:
-        imageRepository: {{.corednsRepository}}
-        imageTag: {{.corednsVersion}}
-{{- if (eq .format "bottlerocket") }}
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.3-eks-1-21-4
       pause:
-        imageRepository: {{.pauseRepository}}
-        imageTag: {{.pauseVersion}}
+        imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
+        imageTag: v1.21.2-eks-1-21-4
       bottlerocketBootstrap:
-        imageRepository: {{.bottlerocketBootstrapRepository}}
-        imageTag: {{.bottlerocketBootstrapVersion}}
-{{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket") }}
-      proxy:
-        httpsProxy: {{.httpsProxy}}
-        noProxy: {{ range .noProxy }}
-          - {{ . }}
-        {{- end }}
-{{- end }}
-{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
-      registryMirror:
-        endpoint: {{ .publicMirror }}
-        {{- if .registryCACert }}
-        caCert: |
-{{ .registryCACert | indent 10 }}
-        {{- end }}
-{{- end }}
-{{- if .bottlerocketSettings }}
-{{ .bottlerocketSettings | indent 6 }}
-{{- end }}
-{{- if .certBundles }}
+        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
+        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
       certBundles:
-        {{- range .certBundles }}
-      - name: "{{ .Name }}"
+      - name: "bundle1"
         data: |
-{{ .Data | indent 10 }}
-        {{- end }}
-{{- end}}
+          -----BEGIN CERTIFICATE-----
+          MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+          BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+          MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+          EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+          lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+          2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+          o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+          cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+          LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+          ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+          hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+          iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+          zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+          9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+          -----END CERTIFICATE-----
+          
       apiServer:
         extraArgs:
           cloud-provider: external
@@ -154,15 +124,9 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
-{{- if .apiserverExtraArgs }}
-{{ .apiserverExtraArgs.ToYaml | indent 10 }}
-{{- end }}
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
-{{- if (eq .format "bottlerocket") }}
         - hostPath: /var/lib/kubeadm/audit-policy.yaml
-{{- else }}
-        - hostPath: /etc/kubernetes/audit-policy.yaml
-{{- end }}
           mountPath: /etc/kubernetes/audit-policy.yaml
           name: audit-policy
           pathType: File
@@ -172,38 +136,21 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-{{- if .awsIamAuth}}
-        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
-          mountPath: /etc/kubernetes/aws-iam-authenticator/
-          name: authconfig
-          readOnly: false
-        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
-          mountPath: /var/aws-iam-authenticator/
-          name: awsiamcert
-          readOnly: false
-{{- end}}
       controllerManager:
         extraArgs:
           cloud-provider: external
           profiling: "false"
-{{- if .controllerManagerExtraArgs }}
-{{ .controllerManagerExtraArgs.ToYaml | indent 10 }}
-{{- end }}
-{{- if (eq .format "bottlerocket") }}
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /var/lib/kubeadm/controller-manager.conf
           mountPath: /etc/kubernetes/controller-manager.conf
           name: kubeconfig
           pathType: File
           readOnly: true
-{{- end }}
       scheduler:
         extraArgs:
           profiling: "false"
-{{- if .schedulerExtraArgs }}
-{{ .schedulerExtraArgs.ToYaml | indent 10 }}
-{{- end }}
-{{- if (eq .format "bottlerocket") }}
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /var/lib/kubeadm/scheduler.conf
           mountPath: /etc/kubernetes/scheduler.conf
@@ -211,7 +158,6 @@ spec:
           pathType: File
           readOnly: true
       certificatesDir: /var/lib/kubeadm/pki
-{{- end }}
     files:
     - content: |
         apiVersion: v1
@@ -246,8 +192,8 @@ spec:
             - name: vip_retryperiod
               value: "2"
             - name: address
-              value: {{.controlPlaneEndpointIp}}
-            image: {{.kubeVipImage}}
+              value: 1.2.3.4
+            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
             imagePullPolicy: IfNotPresent
             name: kube-vip
             resources: {}
@@ -268,87 +214,163 @@ spec:
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
-{{ .auditPolicy | indent 8 }}
+        apiVersion: audit.k8s.io/v1beta1
+        kind: Policy
+        rules:
+        # Log aws-auth configmap changes
+        - level: RequestResponse
+          namespaces: ["kube-system"]
+          verbs: ["update", "patch", "delete"]
+          resources:
+          - group: "" # core
+            resources: ["configmaps"]
+            resourceNames: ["aws-auth"]
+          omitStages:
+          - "RequestReceived"
+        # The following requests were manually identified as high-volume and low-risk,
+        # so drop them.
+        - level: None
+          users: ["system:kube-proxy"]
+          verbs: ["watch"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints", "services", "services/status"]
+        - level: None
+          users: ["kubelet"] # legacy kubelet identity
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          userGroups: ["system:nodes"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          users:
+          - system:kube-controller-manager
+          - system:kube-scheduler
+          - system:serviceaccount:kube-system:endpoint-controller
+          verbs: ["get", "update"]
+          namespaces: ["kube-system"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints"]
+        - level: None
+          users: ["system:apiserver"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+        # Don't log HPA fetching metrics.
+        - level: None
+          users:
+          - system:kube-controller-manager
+          verbs: ["get", "list"]
+          resources:
+          - group: "metrics.k8s.io"
+        # Don't log these read-only URLs.
+        - level: None
+          nonResourceURLs:
+          - /healthz*
+          - /version
+          - /swagger*
+        # Don't log events requests.
+        - level: None
+          resources:
+          - group: "" # core
+            resources: ["events"]
+        # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+        - level: Request
+          users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        - level: Request
+          userGroups: ["system:nodes"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        # deletecollection calls can be large, don't log responses for expected namespace deletions
+        - level: Request
+          users: ["system:serviceaccount:kube-system:namespace-controller"]
+          verbs: ["deletecollection"]
+          omitStages:
+          - "RequestReceived"
+        # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
+        # so only log at the Metadata level.
+        - level: Metadata
+          resources:
+          - group: "" # core
+            resources: ["secrets", "configmaps"]
+          - group: authentication.k8s.io
+            resources: ["tokenreviews"]
+          omitStages:
+            - "RequestReceived"
+        - level: Request
+          resources:
+          - group: ""
+            resources: ["serviceaccounts/token"]
+        # Get repsonses can be large; skip them.
+        - level: Request
+          verbs: ["get", "list", "watch"]
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for known APIs
+        - level: RequestResponse
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for all other requests.
+        - level: Metadata
+          omitStages:
+          - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
-{{- if and .proxyConfig (ne .format "bottlerocket")}}
-    - content: |
-        [Service]
-        Environment="HTTP_PROXY={{.httpProxy}}"
-        Environment="HTTPS_PROXY={{.httpsProxy}}"
-        Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
-      owner: root:root
-      path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-{{- end }}
-{{- if (ne .format "bottlerocket") }}
-{{- if .registryCACert }}
-    - content: |
-{{ .registryCACert | indent 8 }}
-      owner: root:root
-      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-{{- end }}
-{{- if .registryMirrorMap }}
-    - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          {{- range $orig, $mirror := .registryMirrorMap }}
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
-            endpoint = ["https://{{ $mirror }}"]
-          {{- end }}
-          {{- if or .registryCACert .insecureSkip }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
-          {{- if .registryCACert }}
-            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-          {{- end }}
-          {{- if .insecureSkip }}
-            insecure_skip_verify = {{.insecureSkip}}
-          {{- end }}
-          {{- end }}
-          {{- if .registryAuth }}
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
-            username = "{{.registryUsername}}"
-            password = "{{.registryPassword}}"
-          {{- end }}
-      owner: root:root
-      path: "/etc/containerd/config_append.toml"
-{{- end }}
-{{- end }}
-{{- if .awsIamAuth}}
-    - content: |
-        # clusters refers to the remote service.
-        clusters:
-          - name: aws-iam-authenticator
-            cluster:
-              certificate-authority: /var/aws-iam-authenticator/cert.pem
-              server: https://localhost:21362/authenticate
-        # users refers to the API Server's webhook configuration
-        # (we don't need to authenticate the API server).
-        users:
-          - name: apiserver
-        # kubeconfig files require a context. Provide one for the API Server.
-        current-context: webhook
-        contexts:
-        - name: webhook
-          context:
-            cluster: aws-iam-authenticator
-            user: apiserver
-      permissions: "0640"
-      owner: root:root
-      path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
-    - contentFrom:
-        secret:
-          name: {{.clusterName}}-aws-iam-authenticator-ca
-          key: cert.pem
-      permissions: "0640"
-      owner: root:root
-      path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
-    - contentFrom:
-        secret:
-          name: {{.clusterName}}-aws-iam-authenticator-ca
-          key: key.pem
-      permissions: "0640"
-      owner: root:root
-      path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
-{{- end}}
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -356,306 +378,195 @@ spec:
           cloud-provider: external
           read-only-port: "0"
           anonymous-auth: "false"
-{{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
-{{- end }}
-        name: '{{`{{ ds.meta_data.hostname }}`}}'
-{{- if .controlPlaneTaints }}
-        taints:
-{{- range .controlPlaneTaints}}
-          - key: {{ .Key }}
-            value: {{ .Value }}
-            effect: {{ .Effect }}
-{{- if .TimeAdded }}
-            timeAdded: {{ .TimeAdded }}
-{{- end }}
-        {{- end }}
-{{- end }}
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
-{{- if (eq .format "bottlerocket") }}
       pause:
-        imageRepository: {{.pauseRepository}}
-        imageTag: {{.pauseVersion}}
+        imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
+        imageTag: v1.21.2-eks-1-21-4
       bottlerocketBootstrap:
-        imageRepository: {{.bottlerocketBootstrapRepository}}
-        imageTag: {{.bottlerocketBootstrapVersion}}
-{{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket") }}
-      proxy:
-        httpsProxy: {{.httpsProxy}}
-        noProxy: {{ range .noProxy }}
-        - {{ . }}
-        {{- end }}
-{{- end }}
-{{- if and .registryMirrorMap (eq .format "bottlerocket") }}
-      registryMirror:
-        endpoint: {{ .publicMirror }}
-        {{- if .registryCACert }}
-        caCert: |
-{{ .registryCACert | indent 10 }}
-        {{- end }}
-{{- end }}
-{{- if .bottlerocketSettings }}
-{{ .bottlerocketSettings | indent 6 }}
-{{- end }}
-{{- if .certBundles }}
+        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
+        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
       certBundles:
-        {{- range .certBundles }}
-      - name: "{{ .Name }}"
+      - name: "bundle1"
         data: |
-{{ .Data | indent 10 }}
-        {{- end }}
-{{- end}}
+          -----BEGIN CERTIFICATE-----
+          MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+          BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+          MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+          EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+          lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+          2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+          o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+          cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+          LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+          ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+          hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+          iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+          zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+          9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+          -----END CERTIFICATE-----
+          
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
           read-only-port: "0"
           anonymous-auth: "false"
-{{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
-{{- end }}
-        name: '{{`{{ ds.meta_data.hostname }}`}}'
-{{- if .controlPlaneTaints }}
-        taints:
-{{- range .controlPlaneTaints}}
-          - key: {{ .Key }}
-            value: {{ .Value }}
-            effect: {{ .Effect }}
-{{- if .TimeAdded }}
-            timeAdded: {{ .TimeAdded }}
-{{- end }}
-        {{- end }}
-{{- end }}
-{{- if .cpNtpServers }}
-    ntp:
-      enabled: true
-      servers: {{ range .cpNtpServers }}
-      - {{ . }}
-      {{- end }}
-{{- end }}
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        name: '{{ ds.meta_data.hostname }}'
     preKubeadmCommands:
-{{- if and .registryMirrorMap (ne .format "bottlerocket") }}
-    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
-{{- end }}
-{{- if and (or .proxyConfig .registryMirrorMap) (ne .format "bottlerocket") }}
-    - sudo systemctl daemon-reload
-    - sudo systemctl restart containerd
-{{- end }}
-    - hostname "{{`{{ ds.meta_data.hostname }}`}}"
+    - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
-    - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
-    - name: {{.controlPlaneSshUsername}}
+    - name: ec2-user
       sshAuthorizedKeys:
-      - '{{.vsphereControlPlaneSshAuthorizedKey}}'
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
-    format: {{.format}}
-  replicas: {{.controlPlaneReplicas}}
-  version: {{.kubernetesVersion}}
+    format: bottlerocket
+  replicas: 3
+  version: v1.21.2-eks-1-21-4
 ---
-{{- if not .disableCSI }}
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
 metadata:
   labels:
-    cluster.x-k8s.io/cluster-name: {{.clusterName}}
-  name: {{.csiResourceSetName}}
-  namespace: {{.eksaSystemNamespace}}
+    cluster.x-k8s.io/cluster-name: test
+  name: test-csi
+  namespace: eksa-system
 spec:
   strategy: Reconcile
   clusterSelector:
     matchLabels:
-      cluster.x-k8s.io/cluster-name: {{.clusterName}}
+      cluster.x-k8s.io/cluster-name: test
   resources:
   - kind: Secret
-    name: {{.clusterName}}-vsphere-csi-controller
+    name: test-vsphere-csi-controller
   - kind: ConfigMap
-    name: {{.clusterName}}-vsphere-csi-controller-role
+    name: test-vsphere-csi-controller-role
   - kind: ConfigMap
-    name: {{.clusterName}}-vsphere-csi-controller-binding
+    name: test-vsphere-csi-controller-binding
   - kind: Secret
-    name: {{.clusterName}}-csi-vsphere-config
+    name: test-csi-vsphere-config
   - kind: ConfigMap
-    name: {{.clusterName}}-csi.vsphere.vmware.com
+    name: test-csi.vsphere.vmware.com
   - kind: ConfigMap
-    name: {{.clusterName}}-vsphere-csi-node
+    name: test-vsphere-csi-node
   - kind: ConfigMap
-    name: {{.clusterName}}-vsphere-csi-controller
+    name: test-vsphere-csi-controller
 ---
-{{- end }}
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
 metadata:
   labels:
-    cluster.x-k8s.io/cluster-name: {{.clusterName}}
-  name: {{.cpiResourceSetName}}
-  namespace: {{.eksaSystemNamespace}}
+    cluster.x-k8s.io/cluster-name: test
+  name: test-cpi
+  namespace: eksa-system
 spec:
   strategy: Reconcile
   clusterSelector:
     matchLabels:
-      cluster.x-k8s.io/cluster-name: {{.clusterName}}
+      cluster.x-k8s.io/cluster-name: test
   resources:
   - kind: Secret
-    name: {{.clusterName}}-cloud-controller-manager
+    name: test-cloud-controller-manager
   - kind: Secret
-    name: {{.clusterName}}-cloud-provider-vsphere-credentials
+    name: test-cloud-provider-vsphere-credentials
   - kind: ConfigMap
-    name: {{.clusterName}}-cpi-manifests
+    name: test-cpi-manifests
 ---
-{{- if .externalEtcd }}
 kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
 metadata:
-  name: {{.clusterName}}-etcd
-  namespace: {{.eksaSystemNamespace}}
+  name: test-etcd
+  namespace: eksa-system
 spec:
-  replicas: {{.externalEtcdReplicas}}
+  replicas: 3
   etcdadmConfigSpec:
     etcdadmBuiltin: true
-    format: {{.format}}
-{{- if .etcdNtpServers }}
-    ntp:
-      enabled: true
-      servers: {{ range .etcdNtpServers }}
-      - {{ . }}
-      {{- end }}
-{{- end }}
-{{- if (eq .format "bottlerocket") }}
+    format: bottlerocket
     bottlerocketConfig:
-      etcdImage: {{.etcdImage}}
-      bootstrapImage: {{.bottlerocketBootstrapRepository}}:{{.bottlerocketBootstrapVersion}}
-      pauseImage: {{.pauseRepository}}:{{.pauseVersion}}
-{{- if .etcdBootParameters }}
-      boot:
-        bootKernelParameters:
-{{- range $key, $value := .etcdBootParameters }}
-          {{ $key }}:
-{{- range $val := $value }}
-          - "{{ $val }}"
-{{- end }}
-{{- end }}
-{{- end }}
-{{- if .etcdKernelSettings }}
-      kernel:
-        sysctlSettings:
-{{- range $key, $value := .etcdKernelSettings }}
-          {{ $key }}: "{{ $value }}"
-{{- end }}
-{{- end }}
-{{- else}}
-    cloudInitConfig:
-      version: {{.externalEtcdVersion}}
-      installDir: "/usr/bin"
-    preEtcdadmCommands:
-      - hostname "{{`{{ ds.meta_data.hostname }}`}}"
-      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
-      - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
-      - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
-{{- end }}
-{{- if .etcdCipherSuites }}
-    cipherSuites: {{.etcdCipherSuites}}
-{{- end }}
+      etcdImage: public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.16-eks-1-21-4
+      bootstrapImage: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-21-4-eks-a-v0.0.0-dev-build.158
+      pauseImage: public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
-      - name: {{.etcdSshUsername}}
+      - name: ec2-user
         sshAuthorizedKeys:
-          - '{{.vsphereEtcdSshAuthorizedKey}}'
+          - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
         sudo: ALL=(ALL) NOPASSWD:ALL
-{{- if .proxyConfig }}
-    proxy:
-      httpProxy: {{ .httpProxy }}
-      httpsProxy: {{ .httpsProxy }}
-      noProxy: {{ range .noProxy }}
-        - {{ . }}
-      {{- end }}
-{{- end }}
-{{- if .registryMirrorMap }}
-    registryMirror:
-      endpoint: {{ .publicMirror }}
-      {{- if .registryCACert }}
-      caCert: |
-{{ .registryCACert | indent 8 }}
-      {{- end }}
-{{- end }}
-{{- if .etcdCertBundles }}
     certBundles:
-    {{- range .etcdCertBundles }}
-    - name: "{{ .Name }}"
+    - name: "bundle1"
       data: |
-{{ .Data | indent 8 }}
-      {{- end }}
-{{- end}}
+        -----BEGIN CERTIFICATE-----
+        MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+        BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+        MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+        CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+        EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+        lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+        2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+        o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+        cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+        LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+        ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+        hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+        iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+        zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+        9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+        -----END CERTIFICATE-----
+        
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: VSphereMachineTemplate
-    name: {{.etcdTemplateName}}
+    name: test-etcd-template-1234567890000
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
-  name: {{.etcdTemplateName}}
-  namespace: '{{.eksaSystemNamespace}}'
+  name: test-etcd-template-1234567890000
+  namespace: 'eksa-system'
 spec:
   template:
     spec:
-      cloneMode: {{.etcdCloneMode}}
-      datacenter: '{{.vsphereDatacenter}}'
-      datastore: {{.etcdVsphereDatastore}}
-      diskGiB: {{.etcdDiskGiB}}
-      folder: '{{.etcdVsphereFolder}}'
-      memoryMiB: {{.etcdVMsMemoryMiB}}
+      cloneMode: linkedClone
+      datacenter: 'SDDC-Datacenter'
+      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      diskGiB: 25
+      folder: '/SDDC-Datacenter/vm'
+      memoryMiB: 8192
       network:
         devices:
           - dhcp4: true
-            networkName: {{.vsphereNetwork}}
-      numCPUs: {{.etcdVMsNumCPUs}}
-      resourcePool: '{{.etcdVsphereResourcePool}}'
-      server: {{.vsphereServer}}
-{{- if (ne .etcdVsphereStoragePolicyName "") }}
-      storagePolicyName: "{{.etcdVsphereStoragePolicyName}}"
-{{- end }}
-      template: {{.vsphereTemplate}}
-      thumbprint: '{{.thumbprint}}'
-{{- if .etcdTagIDs }}
-      tagIDs: {{.etcdTagIDs}}
-{{- end }}
+            networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
+      numCPUs: 3
+      resourcePool: '*/Resources'
+      server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
+      template: /SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6
+      thumbprint: 'ABCDEFG'
 ---
-{{- end }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.clusterName}}-vsphere-credentials
-  namespace: {{.eksaSystemNamespace}}
+  name: test-vsphere-credentials
+  namespace: eksa-system
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
 stringData:
-  username: "{{.eksaVsphereUsername}}"
-  password: "{{.eksaVspherePassword}}"
+  username: "vsphere_username"
+  password: "vsphere_password"
 ---
-{{- if .registryAuth }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: registry-credentials
-  namespace: {{.eksaSystemNamespace}}
-  labels:
-    clusterctl.cluster.x-k8s.io/move: "true"
-stringData:
-  username: "{{.registryUsername}}"
-  password: "{{.registryPassword}}"
----
-{{- end }}
-{{- if not .disableCSI }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.clusterName}}-vsphere-csi-controller
-  namespace: {{.eksaSystemNamespace}}
+  name: test-vsphere-csi-controller
+  namespace: eksa-system
 stringData:
   data: |
     apiVersion: v1
@@ -668,8 +579,8 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.clusterName}}-csi-vsphere-config
-  namespace: {{.eksaSystemNamespace}}
+  name: test-csi-vsphere-config
+  namespace: eksa-system
 stringData:
   data: |
     apiVersion: v1
@@ -680,17 +591,17 @@ stringData:
     stringData:
       csi-vsphere.conf: |+
         [Global]
-        cluster-id = "default/{{.clusterName}}"
-        thumbprint = "{{.thumbprint}}"
+        cluster-id = "default/test"
+        thumbprint = "ABCDEFG"
 
-        [VirtualCenter "{{.vsphereServer}}"]
-        user = "{{.eksaCSIUsername}}"
-        password = "{{.eksaCSIPassword}}"
-        datacenters = "{{.vsphereDatacenter}}"
-        insecure-flag = "{{.insecure}}"
+        [VirtualCenter "vsphere_server"]
+        user = "vsphere_username"
+        password = "vsphere_password"
+        datacenters = "SDDC-Datacenter"
+        insecure-flag = "false"
 
         [Network]
-        public-network = "{{.vsphereNetwork}}"
+        public-network = "/SDDC-Datacenter/network/sddc-cgw-network-1"
     type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---
@@ -803,8 +714,8 @@ data:
       - list
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-vsphere-csi-controller-role
-  namespace: {{.eksaSystemNamespace}}
+  name: test-vsphere-csi-controller-role
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -823,8 +734,8 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-vsphere-csi-controller-binding
-  namespace: {{.eksaSystemNamespace}}
+  name: test-vsphere-csi-controller-binding
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -837,8 +748,8 @@ data:
       attachRequired: true
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-csi.vsphere.vmware.com
-  namespace: {{.eksaSystemNamespace}}
+  name: test-csi.vsphere.vmware.com
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -868,7 +779,7 @@ data:
               value: /csi/csi.sock
             - name: DRIVER_REG_SOCK_PATH
               value: /var/lib/kubelet/plugins/csi.vsphere.vmware.com/csi.sock
-            image: {{.nodeDriverRegistrarImage}}
+            image: public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.1.0-eks-1-21-4
             lifecycle:
               preStop:
                 exec:
@@ -902,7 +813,7 @@ data:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            image: {{.driverImage}}
+            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.158
             livenessProbe:
               failureThreshold: 3
               httpGet:
@@ -935,7 +846,7 @@ data:
               name: device-dir
           - args:
             - --csi-address=/csi/csi.sock
-            image: {{.livenessProbeImage}}
+            image: public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0-eks-1-21-4
             name: liveness-probe
             resources: {}
             volumeMounts:
@@ -970,8 +881,8 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-vsphere-csi-node
-  namespace: {{.eksaSystemNamespace}}
+  name: test-vsphere-csi-node
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -1001,7 +912,7 @@ data:
             env:
             - name: ADDRESS
               value: /csi/csi.sock
-            image: {{.externalAttacherImage}}
+            image: public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0-eks-1-21-4
             name: csi-attacher
             resources: {}
             volumeMounts:
@@ -1018,7 +929,7 @@ data:
               value: PRODUCTION
             - name: X_CSI_LOG_LEVEL
               value: INFO
-            image: {{.driverImage}}
+            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.158
             livenessProbe:
               failureThreshold: 3
               httpGet:
@@ -1044,7 +955,7 @@ data:
             env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
-            image: {{.livenessProbeImage}}
+            image: public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0-eks-1-21-4
             name: liveness-probe
             resources: {}
             volumeMounts:
@@ -1059,7 +970,7 @@ data:
               value: PRODUCTION
             - name: VSPHERE_CSI_CONFIG
               value: /etc/cloud/csi-vsphere.conf
-            image: {{.syncerImage}}
+            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.158
             name: vsphere-syncer
             resources: {}
             volumeMounts:
@@ -1075,7 +986,7 @@ data:
             env:
             - name: ADDRESS
               value: /csi/csi.sock
-            image: {{.externalProvisionerImage}}
+            image: public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1-eks-1-21-4
             name: csi-provisioner
             resources: {}
             volumeMounts:
@@ -1090,16 +1001,6 @@ data:
           - effect: NoSchedule
             key: node-role.kubernetes.io/control-plane
             operator: Exists
-{{- if .controlPlaneTaints }}
-{{- range .controlPlaneTaints}}
-          - key: {{ .Key }}
-            value: {{ .Value }}
-            effect: {{ .Effect }}
-{{- if .TimeAdded }}
-            timeAdded: {{ .TimeAdded }}
-{{- end }}
-{{- end }}
-{{- end }}
           volumes:
           - name: vsphere-config-volume
             secret:
@@ -1108,8 +1009,8 @@ data:
             name: socket-dir
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-vsphere-csi-controller
-  namespace: {{.eksaSystemNamespace}}
+  name: test-vsphere-csi-controller
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -1123,15 +1024,14 @@ data:
       namespace: kube-system
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-internal-feature-states.csi.vsphere.vmware.com
-  namespace: {{.eksaSystemNamespace}}
+  name: test-internal-feature-states.csi.vsphere.vmware.com
+  namespace: eksa-system
 ---
-{{- end }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.clusterName}}-cloud-controller-manager
-  namespace: {{.eksaSystemNamespace}}
+  name: test-cloud-controller-manager
+  namespace: eksa-system
 stringData:
   data: |
     apiVersion: v1
@@ -1144,8 +1044,8 @@ type: addons.cluster.x-k8s.io/resource-set
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.clusterName}}-cloud-provider-vsphere-credentials
-  namespace: {{.eksaSystemNamespace}}
+  name: test-cloud-provider-vsphere-credentials
+  namespace: eksa-system
 stringData:
   data: |
     apiVersion: v1
@@ -1154,8 +1054,8 @@ stringData:
       name: cloud-provider-vsphere-credentials
       namespace: kube-system
     stringData:
-      {{.vsphereServer}}.password: "{{.eksaCloudProviderPassword}}"
-      {{.vsphereServer}}.username: "{{.eksaCloudProviderUsername}}"
+      vsphere_server.password: "vsphere_password"
+      vsphere_server.username: "vsphere_username"
     type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---
@@ -1267,16 +1167,16 @@ data:
         global:
           secretName: cloud-provider-vsphere-credentials
           secretNamespace: kube-system
-          thumbprint: "{{.thumbprint}}"
-          insecureFlag: {{.insecure}}
+          thumbprint: "ABCDEFG"
+          insecureFlag: false
         vcenter:
-          {{.vsphereServer}}:
+          vsphere_server:
             datacenters:
-            - '{{.vsphereDatacenter}}'
+            - 'SDDC-Datacenter'
             secretName: cloud-provider-vsphere-credentials
             secretNamespace: kube-system
-            server: '{{.vsphereServer}}'
-            thumbprint: '{{.thumbprint}}'
+            server: 'vsphere_server'
+            thumbprint: 'ABCDEFG'
     kind: ConfigMap
     metadata:
       name: vsphere-cloud-config
@@ -1335,7 +1235,7 @@ data:
             - --v=2
             - --cloud-provider=vsphere
             - --cloud-config=/etc/cloud/vsphere.conf
-            image: {{.managerImage}}
+            image: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.21.0-eks-d-1-21-eks-a-v0.0.0-dev-build.158
             name: vsphere-cloud-controller-manager
             resources:
               requests:
@@ -1356,16 +1256,6 @@ data:
             key: node-role.kubernetes.io/control-plane
           - effect: NoSchedule
             key: node.kubernetes.io/not-ready
-{{- if .controlPlaneTaints }}
-{{- range .controlPlaneTaints}}
-          - key: {{ .Key }}
-            value: {{ .Value }}
-            effect: {{ .Effect }}
-{{- if .TimeAdded }}
-            timeAdded: {{ .TimeAdded }}
-{{- end }}
-{{- end }}
-{{- end }}
           volumes:
           - configMap:
               name: vsphere-cloud-config
@@ -1374,5 +1264,5 @@ data:
         type: RollingUpdate
 kind: ConfigMap
 metadata:
-  name: {{.clusterName}}-cpi-manifests
-  namespace: {{.eksaSystemNamespace}}
+  name: test-cpi-manifests
+  namespace: eksa-system

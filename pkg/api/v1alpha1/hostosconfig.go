@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"net"
 	"net/url"
@@ -17,6 +19,12 @@ func validateHostOSConfig(config *HostOSConfiguration, osFamily OSFamily) error 
 
 	if err := validateNTPServers(config.NTPConfiguration); err != nil {
 		return err
+	}
+
+	for _, certBundle := range config.CertBundles {
+		if err := validateCertBundles(&certBundle); err != nil {
+			return err
+		}
 	}
 
 	return validateBotterocketConfig(config.BottlerocketConfiguration, osFamily)
@@ -50,6 +58,21 @@ func addNTPScheme(server string) string {
 		return server
 	}
 	return fmt.Sprintf("udp://%s", server)
+}
+
+func validateCertBundles(config *certBundle) error {
+	if config == nil {
+		return nil
+	}
+
+	// add what we need to check here
+	if config.Name == "" {
+		return fmt.Errorf("certBundles name cannot be empty")
+	}
+	if err := ValidateTrustedCertBundle(config.Data); err != nil {
+		return err
+	}
+	return nil
 }
 
 func validateBotterocketConfig(config *BottlerocketConfiguration, osFamily OSFamily) error {
@@ -118,6 +141,38 @@ func validateBottlerocketBootSettingsConfiguration(config *v1beta1.BottlerocketB
 		if key == "" {
 			return fmt.Errorf("bootKernelParameters key cannot be empty")
 		}
+	}
+
+	return nil
+}
+
+// ValidateTrustedCertBundle validates that the cert is valid.
+func ValidateTrustedCertBundle(certBundle string) error {
+	var blocks []byte
+	rest := []byte(certBundle)
+
+	// cert bundles could contain more than one certificate
+	for {
+		var block *pem.Block
+		block, rest = pem.Decode(rest)
+
+		// no more PEM structed objects
+		if block == nil {
+			break
+		}
+		blocks = append(blocks, block.Bytes...)
+		if len(rest) == 0 {
+			break
+		}
+	}
+
+	if len(blocks) == 0 {
+		return fmt.Errorf("failed to parse certificate PEM")
+	}
+
+	_, err := x509.ParseCertificates(blocks)
+	if err != nil {
+		return fmt.Errorf("failed to parse certificate: %v", err)
 	}
 
 	return nil

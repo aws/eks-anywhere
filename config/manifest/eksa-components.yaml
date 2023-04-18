@@ -3754,6 +3754,11 @@ spec:
                       name:
                         type: string
                     type: object
+                  skipLoadBalancerDeployment:
+                    description: SkipLoadBalancerDeployment skip deploying control
+                      plane load balancer. Make sure your infrastructure can handle
+                      control plane load balancing when you set this field to true.
+                    type: boolean
                   taints:
                     description: Taints define the set of taints to be applied on
                       control plane nodes
@@ -4677,8 +4682,8 @@ spec:
                       description: The machine address.
                       type: string
                     type:
-                      description: Machine address type, one of Hostname, ExternalIP
-                        or InternalIP.
+                      description: Machine address type, one of Hostname, ExternalIP,
+                        InternalIP, ExternalDNS or InternalDNS.
                       type: string
                   required:
                   - address
@@ -5138,6 +5143,22 @@ spec:
                             type: integer
                         type: object
                     type: object
+                  certBundles:
+                    items:
+                      description: Cert defines additional trusted cert bundles on
+                        the host OS.
+                      properties:
+                        data:
+                          description: Data defines the cert bundle data.
+                          type: string
+                        name:
+                          description: Name defines the cert bundle name.
+                          type: string
+                      required:
+                      - data
+                      - name
+                      type: object
+                    type: array
                   ntpConfiguration:
                     description: NTPConfiguration defines the NTP configuration on
                       the host OS.
@@ -5442,6 +5463,22 @@ spec:
                             type: integer
                         type: object
                     type: object
+                  certBundles:
+                    items:
+                      description: Cert defines additional trusted cert bundles on
+                        the host OS.
+                      properties:
+                        data:
+                          description: Data defines the cert bundle data.
+                          type: string
+                        name:
+                          description: Name defines the cert bundle name.
+                          type: string
+                      required:
+                      - data
+                      - name
+                      type: object
+                    type: array
                   ntpConfiguration:
                     description: NTPConfiguration defines the NTP configuration on
                       the host OS.
@@ -5828,6 +5865,22 @@ spec:
                             type: integer
                         type: object
                     type: object
+                  certBundles:
+                    items:
+                      description: Cert defines additional trusted cert bundles on
+                        the host OS.
+                      properties:
+                        data:
+                          description: Data defines the cert bundle data.
+                          type: string
+                        name:
+                          description: Name defines the cert bundle name.
+                          type: string
+                      required:
+                      - data
+                      - name
+                      type: object
+                    type: array
                   ntpConfiguration:
                     description: NTPConfiguration defines the NTP configuration on
                       the host OS.
@@ -6458,6 +6511,19 @@ spec:
       containers:
       - args:
         - --leader-elect
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
         image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
         imagePullPolicy: Always
         livenessProbe:
