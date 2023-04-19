@@ -32,6 +32,7 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 	artifacts = append(artifacts, r.BundleArtifactsTable[fmt.Sprintf("kind-%s", eksDReleaseChannel)]...)
 
 	tarballArtifacts := map[string][]releasetypes.Artifact{
+		"containerd":    r.BundleArtifactsTable["containerd"],
 		"cri-tools":     r.BundleArtifactsTable["cri-tools"],
 		"etcdadm":       r.BundleArtifactsTable["etcdadm"],
 		"image-builder": r.BundleArtifactsTable["image-builder"],
@@ -127,6 +128,7 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 		KindNode:       bundleImageArtifacts["kind-node"],
 		Etcdadm:        bundleArchiveArtifacts["etcdadm"],
 		Crictl:         bundleArchiveArtifacts["cri-tools"],
+		Containerd:     bundleArchiveArtifacts["containerd"],
 		ImageBuilder:   bundleArchiveArtifacts["image-builder"],
 		Ami: anywherev1alpha1.OSImageBundle{
 			Bottlerocket: bundleArchiveArtifacts["bottlerocket-ami"],

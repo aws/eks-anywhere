@@ -129,7 +129,7 @@ spec:
                       - linux
                       type: object
                     eksACLI:
-                      description: EKS Anywhere AMD64 binary bundle
+                      description: EKS Anywhere CLI bundle
                       properties:
                         darwin:
                           description: EKS Anywhere Darwin binary
