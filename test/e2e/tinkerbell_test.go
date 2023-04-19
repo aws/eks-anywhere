@@ -279,7 +279,7 @@ func TestTinkerbellKubernetes126UbuntuWorkloadClusterWithAPI(t *testing.T) {
 	runWorkloadClusterWithAPIFlowForBareMetal(test)
 }
 
-func TestTinkerbellKubernetes126UbuntuWorkloadClusterGithubFluxAPI(t *testing.T) {
+func TestTinkerbellKubernetes126UbuntuWorkloadClusterGitFluxWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -673,7 +673,7 @@ func TestTinkerbellKubernetes125UbuntuTo126Upgrade(t *testing.T) {
 	)
 }
 
-func TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI(t *testing.T) {
+func TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
 		t,
