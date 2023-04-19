@@ -57,7 +57,7 @@ skipped_tests:
 - TestTinkerbellKubernetes126SkipPowerActions
 - TestTinkerbellKubernetes126BottlerocketWorkloadClusterSkipPowerActions
 - TestTinkerbellKubernetes126WithNodesPoweredOn
-# Skiiping a few redundant tests
+# Skipping a few redundant tests
 - TestTinkerbellKubernetes122RedHatSimpleFlow
 - TestTinkerbellKubernetes123RedHatSimpleFlow
 - TestTinkerbellKubernetes124RedHatSimpleFlow
@@ -74,3 +74,5 @@ skipped_tests:
 - TestTinkerbellKubernetes126UbuntuThreeWorkersSimpleFlow
 - TestTinkerbellKubernetes126BottleRocketThreeWorkersSimpleFlow
 - TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
+# vSphere tests
+- TestVSphereUpgradeKubernetesUbuntuAPI
