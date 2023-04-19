@@ -129,6 +129,9 @@ type EksDRelease struct {
 
 	// ImageBuilder points to the image-builder binary used to build eks-D based node images
 	ImageBuilder Archive `json:"imagebuilder,omitempty"`
+
+	// Containerd points to the containerd binary baked into this eks-D based node image
+	Containerd Archive `json:"containerd,omitempty"`
 }
 
 type OSImageBundle struct {

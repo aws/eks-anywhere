@@ -301,7 +301,17 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
-
+	// Containerd artifacts
+	{
+		ProjectName: "containerd",
+		ProjectPath: "projects/containerd/containerd",
+		Archives: []*assettypes.Archive{
+			{
+				Name:   "containerd",
+				Format: "tarball",
+			},
+		},
+	},
 	// Image-builder cli artifacts
 	{
 		ProjectName: "image-builder",

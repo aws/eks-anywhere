@@ -4,8 +4,8 @@ metadata:
   creationTimestamp: "1970-01-01T00:00:00Z"
   name: bundles-1
 spec:
-  cliMaxVersion: v0.7.2
-  cliMinVersion: v0.7.2
+  cliMaxVersion: v0.16.0
+  cliMinVersion: v0.16.0
   number: 1
   versionsBundles:
   - bootstrap:
@@ -253,6 +253,15 @@ spec:
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-22/1-22-25/bottlerocket-v1.22.17-eks-d-1-22-25-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
+      containerd:
+        arch:
+        - amd64
+        description: containerd tarball for linux/amd64
+        name: containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.20/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -1039,6 +1048,15 @@ spec:
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-23/1-23-20/bottlerocket-v1.23.17-eks-d-1-23-20-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-23
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
+      containerd:
+        arch:
+        - amd64
+        description: containerd tarball for linux/amd64
+        name: containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.20/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -1825,6 +1843,15 @@ spec:
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ami/1-24/1-24-15/bottlerocket-v1.24.12-eks-d-1-24-15-eks-a-v0.0.0-dev-build.0-amd64.img.gz
       channel: 1-24
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
+      containerd:
+        arch:
+        - amd64
+        description: containerd tarball for linux/amd64
+        name: containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.20/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -2602,6 +2629,15 @@ spec:
         bottlerocket: {}
       channel: 1-25
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
+      containerd:
+        arch:
+        - amd64
+        description: containerd tarball for linux/amd64
+        name: containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.20/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
@@ -3361,6 +3397,15 @@ spec:
         bottlerocket: {}
       channel: 1-26
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
+      containerd:
+        arch:
+        - amd64
+        description: containerd tarball for linux/amd64
+        name: containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/containerd/v1.6.20/containerd-v0.0.0-dev-build.0-linux-amd64.tar.gz
       crictl:
         arch:
         - amd64
