@@ -3,6 +3,10 @@ title: "What's New?"
 linkTitle: "What's New?"
 weight: 35
 ---
+{{% alert title="Warning" color="warning" %}}
+`v0.15` releases have an issue with Tinkerbell provider where BMC/IPMI calls time out for certain hardware.<br>
+Do not upgrade to `v0.15.0`-`v0.15.2` if you are using Tinkerbell (Bare Metal) provider.
+{{% /alert %}}
 
 ## [v0.15.2](https://github.com/aws/eks-anywhere/releases/tag/v0.15.2)
 
