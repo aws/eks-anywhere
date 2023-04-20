@@ -237,6 +237,9 @@ type ControlPlaneConfiguration struct {
 	// UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
 	// and related parameters/knobs
 	UpgradeRolloutStrategy *ControlPlaneUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
+	// SkipLoadBalancerDeployment skip deploying control plane load balancer.
+	// Make sure your infrastructure can handle control plane load balancing when you set this field to true.
+	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {

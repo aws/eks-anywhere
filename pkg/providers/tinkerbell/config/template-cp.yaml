@@ -199,6 +199,7 @@ spec:
 {{- end }}
 {{- end }}
     files:
+{{- if not .cpSkipLoadBalancerDeployment }}
       - content: |
           apiVersion: v1
           kind: Pod
@@ -259,6 +260,7 @@ spec:
           status: {}
         owner: root:root
         path: /etc/kubernetes/manifests/kube-vip.yaml
+{{- end }}
 {{- if .awsIamAuth}}
       - content: |
           # clusters refers to the remote service.

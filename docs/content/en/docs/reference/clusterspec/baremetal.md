@@ -147,6 +147,9 @@ EKS Anywhere will add by default.
 Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
 the existing nodes.
 
+### controlPlaneConfiguration.skipLoadBalancerDeployment
+Optional field to skip deploying the control plane load balancer. Make sure your infrastructure can handle control plane load balancing when you set this field to true. In most cases, you should not set this field to true.
+
 ### datacenterRef
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
