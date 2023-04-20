@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -208,6 +209,10 @@ func (v *Validator) ValidateControlPlaneIP(ctx context.Context, controlPlaneIP s
 
 	instanceIP, err := v.imds.EC2InstanceIP(ctx)
 	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			// the admin instance is not running inside snow devices or doesn't have a public IP
+			return nil
+		}
 		return fmt.Errorf("fetching host instance ip: %v", err)
 	}
 

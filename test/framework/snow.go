@@ -6,6 +6,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
@@ -26,6 +32,8 @@ const (
 	snowIPPoolIPEnd      = "T_SNOW_IPPOOL_IPEND"
 	snowIPPoolGateway    = "T_SNOW_IPPOOL_GATEWAY"
 	snowIPPoolSubnet     = "T_SNOW_IPPOOL_SUBNET"
+
+	snowEc2TagPrefix = "sigs.k8s.io/cluster-api-provider-aws-snow/cluster/"
 )
 
 var requiredSnowEnvVars = []string{
@@ -93,8 +101,106 @@ func (s *Snow) ClusterConfigUpdates() []api.ClusterConfigFiller {
 }
 
 // CleanupVMs  satisfies the test framework Provider.
-func (s *Snow) CleanupVMs(_ string) error {
-	return nil
+func (s *Snow) CleanupVMs(clusterName string) error {
+	snowDeviceIPs := strings.Split(os.Getenv(snowDevices), ",")
+	s.t.Logf("Cleaning ec2 instances of %s in snow devices: %v", clusterName, snowDeviceIPs)
+
+	var res []error
+	for _, ip := range snowDeviceIPs {
+		sess, err := newSession(ip)
+		if err != nil {
+			res = append(res, fmt.Errorf("Cannot create session to snow device: %w", err))
+			continue
+		}
+
+		ec2Client := ec2.New(sess)
+		// snow device doesn't support filter hitherto
+		out, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{})
+		if err != nil {
+			res = append(res, fmt.Errorf("Cannot get ec2 instances from snow device: %w", err))
+			continue
+		}
+
+		var ownedInstanceIds []*string
+		for _, reservation := range out.Reservations {
+			for _, instance := range reservation.Instances {
+				if isNotTerminatedAndHasTag(instance, snowEc2TagPrefix+clusterName) {
+					ownedInstanceIds = append(ownedInstanceIds, instance.InstanceId)
+				}
+			}
+		}
+
+		if len(ownedInstanceIds) != 0 {
+			if _, err = ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{
+				InstanceIds: ownedInstanceIds,
+			}); err != nil {
+				res = append(res, fmt.Errorf("Cannot terminate ec2 instances from snow device: %w", err))
+			} else {
+				s.t.Logf("Cluster %s EC2 instances have been cleaned from device %s: %+v", clusterName, ip, ownedInstanceIds)
+			}
+		} else {
+			s.t.Logf("No EC2 instances to cleanup for snow device: %s", ip)
+		}
+
+		cleanedKeys, err := cleanupKeypairs(ec2Client, clusterName)
+		if err != nil {
+			res = append(res, err)
+		} else {
+			s.t.Logf("KeyPairs has been cleaned: %+v", cleanedKeys)
+		}
+
+	}
+
+	return kerrors.NewAggregate(res)
+}
+
+func cleanupKeypairs(ec2Client *ec2.EC2, clusterName string) ([]*string, error) {
+	out, err := ec2Client.DescribeKeyPairs(&ec2.DescribeKeyPairsInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	var keyPairNames []*string
+	for _, keyPair := range out.KeyPairs {
+		if strings.Contains(*keyPair.KeyName, clusterName) {
+			keyPairNames = append(keyPairNames, keyPair.KeyName)
+		}
+	}
+
+	var errs []error
+	for _, keyPairName := range keyPairNames {
+		if _, err := ec2Client.DeleteKeyPair(&ec2.DeleteKeyPairInput{
+			KeyName: keyPairName,
+		}); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return keyPairNames, kerrors.NewAggregate(errs)
+}
+
+func isNotTerminatedAndHasTag(instance *ec2.Instance, tag string) bool {
+	if *instance.State.Name == "terminated" {
+		return false
+	}
+
+	for _, t := range instance.Tags {
+		if *t.Key == tag {
+			return true
+		}
+	}
+	return false
+}
+
+func newSession(ip string) (*session.Session, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Endpoint:    aws.String("http://" + ip + ":8008"),
+		Credentials: credentials.NewSharedCredentials(os.Getenv(snowCredentialsFile), ip),
+		Region:      aws.String("snow"),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Cannot create session to snow device: %v", err)
+	}
+	return sess, nil
 }
 
 func (s *Snow) WithProviderUpgrade(fillers ...api.SnowFiller) ClusterE2ETestOpt {
