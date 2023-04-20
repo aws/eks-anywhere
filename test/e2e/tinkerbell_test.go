@@ -1084,7 +1084,7 @@ func TestTinkerbellKubernetes126SingleNodeSkipPowerActions(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithClusterSingleNode(v1alpha1.Kube126),
 		framework.WithNoPowerActions(),
 		framework.WithControlPlaneHardware(1),
 	)
