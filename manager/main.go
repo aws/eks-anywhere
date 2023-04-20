@@ -181,7 +181,8 @@ func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mg
 		WithClusterReconciler(providers).
 		WithVSphereDatacenterReconciler().
 		WithSnowMachineConfigReconciler().
-		WithNutanixDatacenterReconciler()
+		WithNutanixDatacenterReconciler().
+		WithCloudStackDatacenterReconciler()
 
 	reconcilers, err := factory.Build(ctx)
 	if err != nil {
@@ -211,6 +212,12 @@ func setupFullLifecycleReconcilers(ctx context.Context, setupLog logr.Logger, mg
 	setupLog.Info("Setting up nutanixdatacenter controller")
 	if err := (reconcilers.NutanixDatacenterReconciler).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", anywherev1.NutanixDatacenterKind)
+		failed = true
+	}
+
+	setupLog.Info("Setting up cloudstackdatacenter controller")
+	if err := (reconcilers.CloudStackDatacenterReconciler).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", anywherev1.CloudStackDatacenterKind)
 		failed = true
 	}
 
