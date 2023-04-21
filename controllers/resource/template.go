@@ -179,7 +179,7 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	}
 	clusterSpec.CloudStackDatacenter = &csdc
 	// control plane and etcd updates are prohibited in controller so those specs should not change
-	templateBuilder := cloudstack.NewCloudStackTemplateBuilder(&csdc.Spec, &cpCsmc.Spec, &etcdCsmc.Spec, workerNodeGroupMachineSpecs, r.now)
+	templateBuilder := cloudstack.NewTemplateBuilder(&csdc.Spec, &cpCsmc.Spec, &etcdCsmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	clusterName := clusterSpec.Cluster.Name
 
 	oldCsdc, err := r.ExistingCloudStackDatacenterConfig(ctx, eksaCluster, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0])
