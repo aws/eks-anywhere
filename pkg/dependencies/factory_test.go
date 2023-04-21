@@ -432,7 +432,7 @@ func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
 func TestFactoryBuildWithCuratedPackagesCustomManifestImage(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		WithCustomExecutableImage("testdata/cli_tools_bundle.yaml").
+		WithCustomBundles("testdata/cli_tools_bundle.yaml").
 		WithManifestReader().
 		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
@@ -444,7 +444,7 @@ func TestFactoryBuildWithCuratedPackagesCustomManifestImage(t *testing.T) {
 func TestFactoryBuildWithCuratedPackagesCustomManifestImageNoOverrides(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		WithCustomExecutableImage("").
+		WithCustomBundles("").
 		WithManifestReader().
 		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
@@ -456,7 +456,7 @@ func TestFactoryBuildWithCuratedPackagesCustomManifestImageNoOverrides(t *testin
 func TestFactoryBuildWithCuratedPackagesCustomManifestImageMissingBundle(t *testing.T) {
 	tt := newTest(t, vsphere)
 	_, err := dependencies.NewFactory().
-		WithCustomExecutableImage("testdata/not_exist.yaml").
+		WithCustomBundles("testdata/not_exist.yaml").
 		WithManifestReader().
 		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
@@ -468,7 +468,7 @@ func TestFactoryBuildWithCuratedPackagesCustomManifestWithExistingExecConfig(t *
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("test-exec-image").
-		WithCustomExecutableImage("testdata/not_exist.yaml").
+		WithCustomBundles("testdata/not_exist.yaml").
 		WithManifestReader().
 		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())

@@ -38,7 +38,7 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 	config := New(opts...)
 	return dependencies.NewFactory().
 		WithExecutableMountDirs(config.mountPaths...).
-		WithCustomExecutableImage(config.bundlesOverride).
+		WithCustomBundles(config.bundlesOverride).
 		WithExecutableBuilder().
 		WithManifestReader().
 		WithKubectl().
