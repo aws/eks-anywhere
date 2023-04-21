@@ -55,6 +55,8 @@ const (
 
 	networkFaultBaseRetryTime = 10 * time.Second
 	networkFaultBackoffFactor = 1.5
+
+	lastAppliedAnnotation = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
 var (
@@ -2180,6 +2182,17 @@ func newNotFoundErrorForTypeAndName(resourceType, name string) error {
 
 // Replace performs a kubectl replace command.
 func (k *Kubectl) Replace(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+	// Even is --save-config=false is set (which is the default), kubectl replace will
+	// not only respect the last-applied annotation if present in the object, but it will update
+	// it with the provided state of the resource. This includes the metadata.resourceVersion. This
+	// breaks future uses of kubectl apply. Since those commands' input never provide the resourceVersion,
+	// kubectl will send a request trying to remove that field. That is obviously not a valid request, so
+	// it gets rejected by the kube API server. To avoid this, we simply remove the annotation when passing
+	// it to the replace command.
+	// It's not recommended to use both imperative and "declarative" commands for the same resource. Unfortunately
+	// our CLI makes extensive use of client side apply. Although not ideal, this mechanism allows us to perform
+	// updates (using replace) where idempotency is necessary while maintaining the ability to continue to use apply.
+	obj = removeLastAppliedAnnotation(obj)
 	b, err := yaml.Marshal(obj)
 	if err != nil {
 		return errors.Wrap(err, "marshalling object")
@@ -2188,6 +2201,24 @@ func (k *Kubectl) Replace(ctx context.Context, kubeconfig string, obj runtime.Ob
 		return errors.Wrapf(err, "replacing %s object with kubectl", obj.GetObjectKind().GroupVersionKind())
 	}
 	return nil
+}
+
+// removeLastAppliedAnnotation deletes the kubectl last-applied annotation
+// from the object if present.
+func removeLastAppliedAnnotation(obj runtime.Object) runtime.Object {
+	apiObj, ok := obj.(client.Object)
+	// If this doesn't implement the client object interface,
+	// we don't know how to access the annotations.
+	// All the objects that we pass here do implement client.Client.
+	if !ok {
+		return obj
+	}
+
+	annotations := apiObj.GetAnnotations()
+	delete(annotations, lastAppliedAnnotation)
+	apiObj.SetAnnotations(annotations)
+
+	return apiObj
 }
 
 // Delete performs a delete command authenticating with a kubeconfig file.
