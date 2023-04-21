@@ -62,7 +62,6 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
 	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
-	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.machineConfigControlPlane.Spec.Datastore).Return(100.0, nil).Times(2)
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
@@ -95,7 +94,6 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
 	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
-	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.machineConfigControlPlane.Spec.Datastore).Return(100.0, nil).Times(2)
 
 	result, err := tt.reconciler().ReconcileWorkerNodes(tt.ctx, logger, tt.cluster)
 
@@ -140,7 +138,6 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, tt.machineConfigWorker, gomock.Any()).Return(nil).MaxTimes(1)
 	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.machineConfigControlPlane).Return("test", nil).Times(0)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
-	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.machineConfigControlPlane.Spec.Datastore).Return(100.0, nil).Times(0)
 
 	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, logger, tt.buildSpec())
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
@@ -171,7 +168,6 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
 	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
-	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(tt.ctx, tt.machineConfigControlPlane.Spec.Datastore).Return(100.0, nil).Times(2)
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
