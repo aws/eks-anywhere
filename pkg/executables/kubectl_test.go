@@ -2633,6 +2633,35 @@ func TestKubectlReplaceSuccess(t *testing.T) {
 	tt.Expect(tt.k.Replace(tt.ctx, tt.kubeconfig, secret)).To(Succeed())
 }
 
+func TestKubectlReplaceSuccessWithLastAppliedAnnotation(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"kubectl.kubernetes.io/last-applied-configuration": "fake value",
+				"my-other-annotation":                              "true",
+			},
+			Name:      "my-secret",
+			Namespace: "my-ns",
+		},
+	}
+	cleanedUpSecret := secret.DeepCopy()
+	cleanedUpSecret.Annotations = map[string]string{
+		"my-other-annotation": "true",
+	}
+	b, err := yaml.Marshal(cleanedUpSecret)
+	tt.Expect(err).To(Succeed())
+
+	tt.e.EXPECT().ExecuteWithStdin(
+		tt.ctx,
+		b,
+		"replace", "-f", "-", "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Replace(tt.ctx, tt.kubeconfig, secret)).To(Succeed())
+}
+
 func TestKubectlGetClusterObjectNotFound(t *testing.T) {
 	t.Parallel()
 	test := newKubectlTest(t)
