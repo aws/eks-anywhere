@@ -29,7 +29,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       --provider docker > $CLUSTER_NAME.yaml
    ```
 
-   The command above creates a file named eksa-cluster.yaml with the contents below in the path where it is executed.
+   The command above creates a file named mgmt.yaml (if you used the provided example) with the contents below in the path where it is executed.
    The configuration specification is divided into two sections:
 
    * Cluster
