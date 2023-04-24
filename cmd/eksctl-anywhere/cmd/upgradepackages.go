@@ -15,8 +15,9 @@ type upgradePackageOptions struct {
 	bundleVersion string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig  string
-	clusterName string
+	kubeConfig      string
+	clusterName     string
+	bundlesOverride string
 }
 
 var upo = &upgradePackageOptions{}
@@ -30,6 +31,8 @@ func init() {
 		"", "Path to an optional kubeconfig file to use.")
 	upgradePackagesCommand.Flags().StringVar(&upo.clusterName, "cluster",
 		"", "Cluster to upgrade.")
+	upgradePackagesCommand.Flags().StringVar(&upo.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 
 	err := upgradePackagesCommand.MarkFlagRequired("bundle-version")
 	if err != nil {
@@ -60,7 +63,7 @@ func upgradePackages(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithBundlesOverride(upo.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

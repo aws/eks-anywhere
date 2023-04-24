@@ -35,6 +35,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -146,7 +147,8 @@ type executablesConfig struct {
 }
 
 type config struct {
-	noTimeouts bool
+	bundlesOverride string
+	noTimeouts      bool
 }
 
 type buildStep func(ctx context.Context) error
@@ -229,6 +231,14 @@ func (f *Factory) WithExecutableImage() *Factory {
 			return nil
 		}
 
+		if f.config.bundlesOverride != "" {
+			image, err := f.selectImageFromBundleOverride(f.config.bundlesOverride)
+			if err != nil {
+				return err
+			}
+			f.executablesConfig.image = image
+			return nil
+		}
 		bundles, err := f.dependencies.ManifestReader.ReadBundlesForVersion(version.Get().GitVersion)
 		if err != nil {
 			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
@@ -238,6 +248,30 @@ func (f *Factory) WithExecutableImage() *Factory {
 		return nil
 	})
 
+	return f
+}
+
+// selectImageFromBundleOverride retrieves an image from a bundles override.
+//
+// Handles cases where the bundle is configured with an override.
+func (f *Factory) selectImageFromBundleOverride(bundlesOverride string) (string, error) {
+	releaseBundles, err := bundles.Read(f.dependencies.ManifestReader, bundlesOverride)
+	if err != nil {
+		return "", fmt.Errorf("retrieving executable tools image from overridden bundle in dependency factory %v", err)
+	}
+	// Note: Currently using the first available version of the cli tools
+	// This is because the binaries bundled are all the same version hence no compatibility concerns
+	// In case, there is a change to this behavior, there might be a need to reassess this item
+	return releaseBundles.DefaultEksAToolsImage().VersionedImage(), nil
+}
+
+// WithCustomBundles allows configuring a bundle override.
+func (f *Factory) WithCustomBundles(bundlesOverride string) *Factory {
+	if bundlesOverride == "" {
+		return f
+	}
+	f.config.bundlesOverride = bundlesOverride
+	f.WithExecutableImage()
 	return f
 }
 

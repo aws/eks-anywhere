@@ -15,7 +15,8 @@ type createPackageOptions struct {
 	fileName string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig string
+	kubeConfig      string
+	bundlesOverride string
 }
 
 var cpo = &createPackageOptions{}
@@ -27,6 +28,8 @@ func init() {
 		"", "Filename that contains curated packages custom resources to create")
 	createPackagesCommand.Flags().StringVar(&cpo.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file to use.")
+	createPackagesCommand.Flags().StringVar(&cpo.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 
 	err := createPackagesCommand.MarkFlagRequired("filename")
 	if err != nil {
@@ -54,7 +57,7 @@ func createPackages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithBundlesOverride(cpo.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
