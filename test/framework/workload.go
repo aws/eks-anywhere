@@ -13,6 +13,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
+const (
+	kubectlDeleteTimeout = "20m"
+)
+
 type WorkloadCluster struct {
 	*ClusterE2ETest
 	ManagementClusterKubeconfigFile func() string
@@ -49,7 +53,7 @@ func (w *WorkloadCluster) ApplyClusterManifest() {
 func (w *WorkloadCluster) DeleteClusterWithKubectl() {
 	ctx := context.Background()
 	w.T.Logf("Deleting workload cluster %s with kubectl", w.ClusterName)
-	if err := w.KubectlClient.DeleteManifest(ctx, w.ManagementClusterKubeconfigFile(), w.ClusterConfigLocation); err != nil {
+	if err := w.KubectlClient.DeleteManifest(ctx, w.ManagementClusterKubeconfigFile(), w.ClusterConfigLocation, kubectlDeleteTimeout); err != nil {
 		w.T.Fatalf("Failed to delete workload cluster config: %s", err)
 	}
 	w.StopIfFailed()

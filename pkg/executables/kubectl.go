@@ -348,8 +348,8 @@ func (k *Kubectl) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *type
 }
 
 // DeleteManifest uses client-side logic to delete objects defined in a yaml manifest.
-func (k *Kubectl) DeleteManifest(ctx context.Context, kubeconfigPath, manifestPath string) error {
-	if _, err := k.Execute(ctx, "delete", "-f", manifestPath, "--kubeconfig", kubeconfigPath, "--timeout", "20m"); err != nil {
+func (k *Kubectl) DeleteManifest(ctx context.Context, kubeconfigPath, manifestPath string, timeout string) error {
+	if _, err := k.Execute(ctx, "delete", "-f", manifestPath, "--kubeconfig", kubeconfigPath, "--timeout", timeout); err != nil {
 		return fmt.Errorf("executing apply manifest: %v", err)
 	}
 	return nil
