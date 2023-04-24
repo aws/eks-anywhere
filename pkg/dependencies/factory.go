@@ -271,7 +271,6 @@ func (f *Factory) WithCustomBundles(bundlesOverride string) *Factory {
 		return f
 	}
 	f.config.bundlesOverride = bundlesOverride
-	f.WithExecutableImage()
 	return f
 }
 
