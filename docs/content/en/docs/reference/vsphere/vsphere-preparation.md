@@ -266,6 +266,10 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
 
 vSphere does not currently support a public API for setting global permissions. Because of this, you will need to manually assign the Global Role you created to your user or group in the Global Permissions UI.
 
+Make sure to select the `Propagate to children` box so the permissions get propagated down properly.
+
+<img src="/images/global-permissions.png" alt="Global Permissions Screenshot" width="30%" style='border:0.5px solid #000000'>
+
 ## Deploy an OVA Template
 If the user creating the cluster has permission and network access to create and tag a template, you can skip these steps because EKS Anywhere will automatically download the OVA and create the template if it can.
 If the user does not have the permissions or network access to create and tag the template, follow this guide.
