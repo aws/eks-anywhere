@@ -2320,7 +2320,7 @@ func TestVSphereMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereUpgradeKubernetesUbuntuAPI(t *testing.T) {
+func TestVSphereUpgradeKubernetes123to124UbuntuWorkloadClusterAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -2350,22 +2350,9 @@ func TestVSphereUpgradeKubernetesUbuntuAPI(t *testing.T) {
 		),
 	)
 
-	test.CreateManagementCluster()
-	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
-		wc.ApplyClusterManifest()
-		wc.WaitForKubeconfig()
-		wc.ValidateClusterState()
-		wc.UpdateClusterConfig(
-			vsphere.WithUbuntu124(),
-		)
-		wc.ApplyClusterManifest()
-		wc.DeleteWorkloadVsphereCSI()
-		wc.ValidateClusterState()
-		wc.DeleteClusterWithKubectl()
-		wc.ValidateClusterDelete()
-	})
-	test.ManagementCluster.StopIfFailed()
-	test.DeleteManagementCluster()
+	runWorkloadClusterUpgradeFlowAPI(test,
+		vsphere.WithUbuntu124(),
+	)
 }
 
 func TestVSphereCiliumDisableCSIUbuntuAPI(t *testing.T) {
