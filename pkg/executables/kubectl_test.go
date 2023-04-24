@@ -210,7 +210,7 @@ func TestKubectlDeleteManifestSuccess(t *testing.T) {
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
-	expectedParam := []string{"delete", "-f", spec, "--kubeconfig", cluster.KubeconfigFile}
+	expectedParam := []string{"delete", "-f", spec, "--kubeconfig", cluster.KubeconfigFile, "--timeout", "20m"}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
 	if err := k.DeleteManifest(ctx, cluster.KubeconfigFile, spec); err != nil {
 		t.Errorf("Kubectl.DeleteManifest() error = %v, want nil", err)
@@ -222,7 +222,7 @@ func TestKubectlDeleteManifestError(t *testing.T) {
 	spec := "specfile"
 
 	k, ctx, cluster, e := newKubectl(t)
-	expectedParam := []string{"delete", "-f", spec, "--kubeconfig", cluster.KubeconfigFile}
+	expectedParam := []string{"delete", "-f", spec, "--kubeconfig", cluster.KubeconfigFile, "--timeout", "20m"}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.DeleteManifest(ctx, cluster.KubeconfigFile, spec); err == nil {
 		t.Errorf("Kubectl.DeleteManifest() error = nil, want not nil")
