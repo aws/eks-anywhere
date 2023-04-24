@@ -19,7 +19,8 @@ type installPackageOptions struct {
 	customConfigs []string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig string
+	kubeConfig      string
+	bundlesOverride string
 }
 
 var ipo = &installPackageOptions{}
@@ -39,6 +40,8 @@ func init() {
 		"Path to an optional kubeconfig file to use.")
 	installPackageCommand.Flags().StringVar(&ipo.clusterName, "cluster", "",
 		"Target cluster for installation.")
+	installPackageCommand.Flags().StringVar(&ipo.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 
 	if err := installPackageCommand.MarkFlagRequired("package-name"); err != nil {
 		log.Fatalf("marking package-name flag as required: %s", err)
@@ -77,7 +80,7 @@ func installPackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(ipo.registry), WithKubeVersion(ipo.kubeVersion), WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(ipo.registry), WithKubeVersion(ipo.kubeVersion), WithMountPaths(kubeConfig), WithBundlesOverride(ipo.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

@@ -429,6 +429,54 @@ func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
 	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithCuratedPackagesCustomManifestImage(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithCustomBundles("testdata/cli_tools_bundle.yaml").
+		WithManifestReader().
+		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithCuratedPackagesCustomManifestImageNoOverrides(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithCustomBundles("").
+		WithManifestReader().
+		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithCuratedPackagesCustomManifestImageMissingBundle(t *testing.T) {
+	tt := newTest(t, vsphere)
+	_, err := dependencies.NewFactory().
+		WithCustomBundles("testdata/not_exist.yaml").
+		WithManifestReader().
+		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithCuratedPackagesCustomManifestWithExistingExecConfig(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("test-exec-image").
+		WithCustomBundles("testdata/not_exist.yaml").
+		WithManifestReader().
+		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithExecutablesUsingDocker(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().

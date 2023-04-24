@@ -15,8 +15,9 @@ import (
 )
 
 type installControllerOptions struct {
-	fileName   string
-	kubeConfig string
+	fileName        string
+	kubeConfig      string
+	bundlesOverride string
 }
 
 var ico = &installControllerOptions{}
@@ -25,6 +26,8 @@ func init() {
 	installCmd.AddCommand(installPackageControllerCommand)
 	installPackageControllerCommand.Flags().StringVarP(&ico.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	installPackageControllerCommand.Flags().StringVar(&ico.kubeConfig, "kubeConfig", "", "Management cluster kubeconfig file")
+	installPackageControllerCommand.Flags().StringVar(&ico.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 	if err := installPackageControllerCommand.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -56,7 +59,7 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithClusterSpec(clusterSpec), WithKubeConfig(ico.kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithClusterSpec(clusterSpec), WithKubeConfig(ico.kubeConfig), WithBundlesOverride(ico.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

@@ -14,8 +14,9 @@ import (
 type deletePackageOptions struct {
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig  string
-	clusterName string
+	kubeConfig      string
+	clusterName     string
+	bundlesOverride string
 }
 
 var delPkgOpts = deletePackageOptions{}
@@ -27,6 +28,8 @@ func init() {
 		"Path to an optional kubeconfig file to use.")
 	deletePackageCommand.Flags().StringVar(&delPkgOpts.clusterName, "cluster", "",
 		"Cluster for package deletion.")
+	deletePackageCommand.Flags().StringVar(&delPkgOpts.bundlesOverride, "bundles-override", "",
+		"Override default Bundles manifest (not recommended)")
 	if err := deletePackageCommand.MarkFlagRequired("cluster"); err != nil {
 		log.Fatalf("marking cluster flag as required: %s", err)
 	}
@@ -50,7 +53,7 @@ func deleteResources(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithBundlesOverride(delPkgOpts.bundlesOverride))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
