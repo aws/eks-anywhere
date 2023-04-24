@@ -262,7 +262,7 @@ func (f *Factory) selectImageFromBundleOverride(bundlesOverride string) (string,
 	// Note: Currently using the first available version of the cli tools
 	// This is because the binaries bundled are all the same version hence no compatibility concerns
 	// In case, there is a change to this behavior, there might be a need to reassess this item
-	return releaseBundles.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage(), nil
+	return releaseBundles.DefaultEksAToolsImage().VersionedImage(), nil
 }
 
 // WithCustomBundles allows configuring a bundle override.
