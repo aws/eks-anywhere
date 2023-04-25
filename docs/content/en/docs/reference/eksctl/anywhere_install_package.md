@@ -18,13 +18,14 @@ anywhere install package [flags] package
 ### Options
 
 ```
-      --cluster string        Target cluster for installation.
-  -h, --help                  help for package
-      --kube-version string   Kubernetes Version of the cluster to be used. Format <major>.<minor>
-      --kubeconfig string     Path to an optional kubeconfig file to use.
-  -n, --package-name string   Custom name of the curated package to install
-      --registry string       Used to specify an alternative registry for discovery
-      --set stringArray       Provide custom configurations for curated packages. Format key:value
+      --bundles-override string   Override default Bundles manifest (not recommended)
+      --cluster string            Target cluster for installation.
+  -h, --help                      help for package
+      --kube-version string       Kubernetes Version of the cluster to be used. Format <major>.<minor>
+      --kubeconfig string         Path to an optional kubeconfig file to use.
+  -n, --package-name string       Custom name of the curated package to install
+      --registry string           Used to specify an alternative registry for discovery
+      --set stringArray           Provide custom configurations for curated packages. Format key:value
 ```
 
 ### Options inherited from parent commands

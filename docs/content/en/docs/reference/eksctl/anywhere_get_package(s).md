@@ -18,10 +18,11 @@ anywhere get package(s) [flags]
 ### Options
 
 ```
-      --cluster string      Cluster to get list of packages.
-  -h, --help                help for package(s)
-      --kubeconfig string   Path to an optional kubeconfig file.
-  -o, --output string       Specifies the output format (valid option: json, yaml)
+      --bundles-override string   Override default Bundles manifest (not recommended)
+      --cluster string            Cluster to get list of packages.
+  -h, --help                      help for package(s)
+      --kubeconfig string         Path to an optional kubeconfig file.
+  -o, --output string             Specifies the output format (valid option: json, yaml)
 ```
 
 ### Options inherited from parent commands
