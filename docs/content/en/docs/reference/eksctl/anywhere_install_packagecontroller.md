@@ -18,9 +18,10 @@ anywhere install packagecontroller [flags]
 ### Options
 
 ```
-  -f, --filename string     Filename that contains EKS-A cluster configuration
-  -h, --help                help for packagecontroller
-      --kubeConfig string   Management cluster kubeconfig file
+      --bundles-override string   Override default Bundles manifest (not recommended)
+  -f, --filename string           Filename that contains EKS-A cluster configuration
+  -h, --help                      help for packagecontroller
+      --kubeConfig string         Management cluster kubeconfig file
 ```
 
 ### Options inherited from parent commands
