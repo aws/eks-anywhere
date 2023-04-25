@@ -18,9 +18,10 @@ anywhere delete package(s) [flags]
 ### Options
 
 ```
-      --cluster string      Cluster for package deletion.
-  -h, --help                help for package(s)
-      --kubeconfig string   Path to an optional kubeconfig file to use.
+      --bundles-override string   Override default Bundles manifest (not recommended)
+      --cluster string            Cluster for package deletion.
+  -h, --help                      help for package(s)
+      --kubeconfig string         Path to an optional kubeconfig file to use.
 ```
 
 ### Options inherited from parent commands

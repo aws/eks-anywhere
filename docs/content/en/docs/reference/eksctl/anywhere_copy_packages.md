@@ -12,7 +12,7 @@ Copy curated package images and charts from a source to a destination
 Copy all the EKS Anywhere curated package images and helm charts from a source to a destination.
 
 ```
-anywhere copy packages [flags]
+anywhere copy packages <destination-registry> [flags]
 ```
 
 ### Options
