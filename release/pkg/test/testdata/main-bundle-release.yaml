@@ -28,7 +28,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -152,7 +152,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -185,7 +185,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -209,7 +209,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -226,7 +226,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -270,7 +270,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.0/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -375,7 +375,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.7-rc3/metadata.yaml
       version: v1.0.7-rc3+abcdef1
@@ -399,7 +399,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc2/metadata.yaml
       version: v1.0.6-rc2+abcdef1
@@ -465,11 +465,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -480,8 +480,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
-      version: v1.1.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/metadata.yaml
+      version: v1.2.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -772,7 +772,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -823,7 +823,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -947,7 +947,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -980,7 +980,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -1004,7 +1004,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -1021,7 +1021,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -1065,7 +1065,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.0/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -1170,7 +1170,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.7-rc3/metadata.yaml
       version: v1.0.7-rc3+abcdef1
@@ -1194,7 +1194,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc2/metadata.yaml
       version: v1.0.6-rc2+abcdef1
@@ -1260,11 +1260,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1275,8 +1275,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
-      version: v1.1.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/metadata.yaml
+      version: v1.2.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -1567,7 +1567,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -1618,7 +1618,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -1742,7 +1742,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -1775,7 +1775,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -1799,7 +1799,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -1816,7 +1816,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -1860,7 +1860,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.0/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -1965,7 +1965,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.7-rc3/metadata.yaml
       version: v1.0.7-rc3+abcdef1
@@ -1989,7 +1989,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc2/metadata.yaml
       version: v1.0.6-rc2+abcdef1
@@ -2055,11 +2055,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2070,8 +2070,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
-      version: v1.1.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/metadata.yaml
+      version: v1.2.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -2362,7 +2362,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -2413,7 +2413,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -2537,7 +2537,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -2570,7 +2570,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -2594,7 +2594,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -2611,7 +2611,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -2646,7 +2646,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.0/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -2733,7 +2733,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.7-rc3/metadata.yaml
       version: v1.0.7-rc3+abcdef1
@@ -2757,7 +2757,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc2/metadata.yaml
       version: v1.0.6-rc2+abcdef1
@@ -2823,11 +2823,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2838,8 +2838,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
-      version: v1.1.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/metadata.yaml
+      version: v1.2.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -3130,7 +3130,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -3181,7 +3181,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -3305,7 +3305,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -3338,7 +3338,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -3362,7 +3362,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.3.5/metadata.yaml
       version: v1.3.5+abcdef1
@@ -3379,7 +3379,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
@@ -3414,7 +3414,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.0/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.26.1/cri-tools-v0.0.0-dev-build.0-linux-amd64.tar.gz
       etcdadm:
         arch:
         - amd64
@@ -3501,7 +3501,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.7-rc3/metadata.yaml
       version: v1.0.7-rc3+abcdef1
@@ -3525,7 +3525,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc2/metadata.yaml
       version: v1.0.6-rc2+abcdef1
@@ -3591,11 +3591,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.1.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3606,8 +3606,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.3/metadata.yaml
-      version: v1.1.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.1/metadata.yaml
+      version: v1.2.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -3898,7 +3898,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
