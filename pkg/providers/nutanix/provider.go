@@ -51,6 +51,8 @@ type Provider struct {
 	kubectlClient    ProviderKubectlClient
 	validator        *Validator
 	writer           filewriter.FileWriter
+	ipValidator      IPValidator
+	skipIPCheck      bool
 }
 
 var _ providers.Provider = &Provider{}
@@ -63,9 +65,11 @@ func NewProvider(
 	providerKubectlClient ProviderKubectlClient,
 	writer filewriter.FileWriter,
 	clientCache *ClientCache,
+	ipValidator IPValidator,
 	certValidator crypto.TlsValidator,
 	httpClient *http.Client,
 	now types.NowFunc,
+	skipIPCheck bool,
 ) *Provider {
 	datacenterConfig.SetDefaults()
 	for _, machineConfig := range machineConfigs {
@@ -96,6 +100,8 @@ func NewProvider(
 		kubectlClient:    providerKubectlClient,
 		validator:        nutanixValidator,
 		writer:           writer,
+		ipValidator:      ipValidator,
+		skipIPCheck:      skipIPCheck,
 	}
 }
 
@@ -191,6 +197,14 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 
 	if err := p.generateSSHKeysIfNotSet(); err != nil {
 		return fmt.Errorf("failed to generate ssh key: %v", err)
+	}
+
+	if !p.skipIPCheck {
+		if err := p.ipValidator.ValidateControlPlaneIPUniqueness(clusterSpec.Cluster); err != nil {
+			return err
+		}
+	} else {
+		logger.Info("Skipping check for whether control plane ip is in use")
 	}
 
 	return nil

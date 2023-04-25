@@ -386,7 +386,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	case v1alpha1.NutanixDatacenterKind:
-		f.WithKubectl().WithNutanixClientCache().WithNutanixDefaulter().WithNutanixValidator()
+		f.WithKubectl().WithNutanixClientCache().WithNutanixDefaulter().WithNutanixValidator().WithIPValidator()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -514,9 +514,11 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Kubectl,
 				f.dependencies.Writer,
 				f.dependencies.NutanixClientCache,
+				f.dependencies.IPValidator,
 				crypto.NewTlsValidator(),
 				httpClient,
 				time.Now,
+				skipIpCheck,
 			)
 			f.dependencies.Provider = provider
 		default:

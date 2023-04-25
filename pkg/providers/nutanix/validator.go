@@ -27,6 +27,11 @@ const (
 	minNutanixDiskGiB      = 20
 )
 
+// IPValidator is an interface that defines methods to validate the control plane IP.
+type IPValidator interface {
+	ValidateControlPlaneIPUniqueness(cluster *anywherev1.Cluster) error
+}
+
 // Validator is a client to validate nutanix resources.
 type Validator struct {
 	httpClient    *http.Client

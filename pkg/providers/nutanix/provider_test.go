@@ -98,7 +98,10 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	}
 	clientCache.clients[dcConf.Name] = nutanixClient
 
-	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, writer, clientCache, certValidator, httpClient, time.Now)
+	ctrl := gomock.NewController(t)
+	mockIPValidator := mocknutanix.NewMockIPValidator(ctrl)
+	mockIPValidator.EXPECT().ValidateControlPlaneIPUniqueness(gomock.Any()).Return(nil).AnyTimes()
+	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, writer, clientCache, mockIPValidator, certValidator, httpClient, time.Now, false)
 	require.NotNil(t, provider)
 	return provider
 }
@@ -111,7 +114,10 @@ func testNutanixProviderWithClusterSpec(t *testing.T, nutanixClient Client, kube
 		clients: make(map[string]Client),
 	}
 	clientCache.clients[clusterSpec.NutanixDatacenter.Name] = nutanixClient
-	provider := NewProvider(clusterSpec.NutanixDatacenter, clusterSpec.NutanixMachineConfigs, clusterSpec.Cluster, kubectl, writer, clientCache, certValidator, httpClient, time.Now)
+	ctrl := gomock.NewController(t)
+	mockIPValidator := mocknutanix.NewMockIPValidator(ctrl)
+	mockIPValidator.EXPECT().ValidateControlPlaneIPUniqueness(gomock.Any()).Return(nil).AnyTimes()
+	provider := NewProvider(clusterSpec.NutanixDatacenter, clusterSpec.NutanixMachineConfigs, clusterSpec.Cluster, kubectl, writer, clientCache, mockIPValidator, certValidator, httpClient, time.Now, false)
 	require.NotNil(t, provider)
 	return provider
 }
