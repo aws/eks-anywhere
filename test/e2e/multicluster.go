@@ -6,6 +6,7 @@ package e2e
 import (
 	"time"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -31,6 +32,23 @@ func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clust
 		w.DeleteCluster()
 	})
 	time.Sleep(5 * time.Minute)
+	test.DeleteManagementCluster()
+}
+
+func runWorkloadClusterGitOpsAPIUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETest, filler ...api.ClusterConfigFiller) {
+	test.CreateTinkerbellManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.WaitForAvailableHardware()
+		w.PowerOffHardware()
+		test.PushWorkloadClusterToGit(w)
+		w.WaitForKubeconfig()
+		w.ValidateClusterState()
+		test.PushWorkloadClusterToGit(w, filler...)
+		w.ValidateClusterState()
+		test.DeleteWorkloadClusterFromGit(w)
+		w.ValidateClusterDelete()
+		w.ValidateHardwareDecommissioned()
+	})
 	test.DeleteManagementCluster()
 }
 
@@ -77,6 +95,25 @@ func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETes
 		w.DeleteCluster()
 		w.ValidateHardwareDecommissioned()
 	})
+	test.DeleteManagementCluster()
+}
+
+func runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test *framework.MulticlusterE2ETest, filler ...api.ClusterConfigFiller) {
+	test.CreateTinkerbellManagementCluster()
+	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.WaitForAvailableHardware()
+		w.PowerOffHardware()
+		w.ApplyClusterManifest()
+		w.WaitForKubeconfig()
+		w.ValidateClusterState()
+		w.UpdateClusterConfig(filler...)
+		w.ApplyClusterManifest()
+		w.ValidateClusterState()
+		w.DeleteClusterWithKubectl()
+		w.ValidateClusterDelete()
+		w.ValidateHardwareDecommissioned()
+	})
+	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
 }
 
