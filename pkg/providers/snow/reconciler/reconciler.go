@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 )
 
@@ -79,6 +80,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 
 	return controller.NewPhaseRunner[*cluster.Spec]().Register(
 		r.ValidateMachineConfigs,
+		r.SetupControllerManager,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
@@ -140,6 +142,19 @@ func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 	}
 
 	return clusters.ReconcileWorkersForEKSA(ctx, log, s.client, clusterSpec.Cluster, toClientWorkers(w))
+}
+
+// SetupControllerManager checks whether capas-controller-manager deployments PodSpec includes tolerations for
+// control plane taints and adds them if not already there.
+func (r *Reconciler) SetupControllerManager(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "setupControllerManager")
+	err := providers.SetupProviderManagerDeployment(ctx, clientutil.NewKubeClient(r.client), "capas-controller-manager", "capas-system")
+
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "Applying tolerations on controller manager")
+	}
+
+	return controller.Result{}, nil
 }
 
 func toClientControlPlane(cp *snow.ControlPlane) *clusters.ControlPlane {

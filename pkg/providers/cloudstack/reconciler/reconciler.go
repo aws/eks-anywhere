@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 )
 
@@ -91,6 +92,19 @@ func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger
 	return clusters.CheckControlPlaneReady(ctx, r.client, log, spec.Cluster)
 }
 
+// SetupControllerManager checks whether capc-controller-manager deployments PodSpec includes tolerations for
+// control plane taints and adds them if not already there.
+func (r *Reconciler) SetupControllerManager(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "setupControllerManager")
+	err := providers.SetupProviderManagerDeployment(ctx, clientutil.NewKubeClient(r.client), "capc-controller-manager", "capc-system")
+
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "Applying tolerations on controller manager")
+	}
+
+	return controller.Result{}, nil
+}
+
 // ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
 // to the desired state.
 func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
@@ -101,6 +115,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 	}
 
 	return controller.NewPhaseRunner[*c.Spec]().Register(
+		r.SetupControllerManager,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }

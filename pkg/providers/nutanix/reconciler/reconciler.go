@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
+	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 )
 
@@ -218,6 +220,7 @@ func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, 
 
 	return controller.NewPhaseRunner[*cluster.Spec]().Register(
 		r.ValidateClusterSpec,
+		r.SetupControllerManager,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
@@ -235,6 +238,19 @@ func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec
 	}
 
 	return clusters.ReconcileWorkersForEKSA(ctx, log, r.client, spec.Cluster, clusters.ToWorkers(w))
+}
+
+// SetupControllerManager checks whether capx-controller-manager deployments PodSpec includes tolerations for
+// control plane taints and adds them if not already there.
+func (r *Reconciler) SetupControllerManager(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "setupControllerManager")
+	err := providers.SetupProviderManagerDeployment(ctx, clientutil.NewKubeClient(r.client), "capx-controller-manager", "capx-system")
+
+	if err != nil {
+		return controller.Result{}, errors.Wrap(err, "Applying tolerations on controller manager")
+	}
+
+	return controller.Result{}, nil
 }
 
 // CheckControlPlaneReady checks whether the control plane for an eks-a cluster is ready or not.
