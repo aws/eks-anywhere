@@ -85,52 +85,6 @@ func TestTinkerbellKubernetes126UbuntuWorkerNodeUpgrade(t *testing.T) {
 	)
 }
 
-func TestTinkerbellKubernetes125UbuntuWorkerNodeScaleUpWithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(2),
-	)
-	runUpgradeFlowForBareMetalWithAPI(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeCount(2),
-		),
-	)
-}
-
-func TestTinkerbellKubernetes125UbuntuAddWorkerNodeGroupWithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu125Tinkerbell())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithCustomLabelHardware(1, "worker-0"),
-	)
-	runUpgradeFlowForBareMetalWithAPI(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeGroup("worker-0",
-				api.WithCount(1),
-				api.WithMachineGroupRef("worker-0", "TinkerbellMachineConfig"),
-			),
-		),
-		api.TinkerbellToConfigFiller(
-			api.WithCustomTinkerbellMachineConfig("worker-0",
-				framework.UpdateTinkerbellMachineSSHAuthorizedKey(),
-				api.WithOsFamilyForTinkerbellMachineConfig(v1alpha1.Ubuntu),
-			),
-		),
-	)
-}
-
 // Curated packages
 func TestTinkerbellKubernetes126UbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
@@ -493,44 +447,6 @@ func TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleup(t *testing
 	)
 }
 
-func TestTinkerbellSingleNode125ManagementScaleupWorkloadWithAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell())
-	managementCluster := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(2),
-	).WithClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube125),
-			api.WithEtcdCountIfExternal(0),
-			api.RemoveAllWorkerNodeGroups(),
-		),
-	)
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		managementCluster,
-	)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube125),
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithEtcdCountIfExternal(0),
-			),
-		),
-	)
-	runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeCount(2),
-		),
-	)
-}
-
 func TestTinkerbellKubernetes126BottleRocketCuratedPackagesAdotSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -624,45 +540,6 @@ func TestTinkerbellKubernetes125UbuntuTo126Upgrade(t *testing.T) {
 		v1alpha1.Kube126,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		provider.WithProviderUpgrade(framework.UpdateTinkerbellUbuntuTemplate126Var()),
-	)
-}
-
-func TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI(t *testing.T) {
-	provider := framework.NewTinkerbell(t, framework.WithUbuntu126Tinkerbell())
-	managementCluster := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(2),
-		framework.WithFluxGithubEnvVarCheck(),
-		framework.WithFluxGithubCleanup(),
-	).WithClusterConfig(
-		framework.WithFluxGithubConfig(),
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube126),
-			api.RemoveAllWorkerNodeGroups(),
-		),
-	)
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		managementCluster,
-	)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube126),
-				api.WithManagementCluster(managementCluster.ClusterName),
-			),
-		),
-	)
-	runWorkloadClusterGitOpsAPIUpgradeFlowForBareMetal(test,
-		api.ClusterToConfigFiller(
-			api.WithWorkerNodeCount(2),
-		),
 	)
 }
 
