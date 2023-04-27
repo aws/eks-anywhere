@@ -137,8 +137,8 @@ will not delete any of the existing NetworkPolicy objects, including the ones re
 
 ### Use a custom CNI
 
-EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field. `skipUpgrade` 
-can be `true` or `false`. When not set, it defaults to `false`.
+EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field. 
+`skipUpgrade` can be `true` or `false`. When not set, it defaults to `false`.
 
 When creating a new cluster with `skipUpgrade` enabled, EKS Anywhere Cilium will be installed as it 
 is required to successfully provision an EKS Anywhere cluster. 
@@ -165,6 +165,15 @@ spec:
       cilium: 
         skipUpgrade: true
 ```
+
+The [Cilium CLI](https://github.com/cilium/cilium-cli) can be used to uninstall EKS Anywhere Cilium 
+via `cilium uninstall`.
+
+{{% alert title="Warning" color="warning" %}}
+When uninstalling EKS Anywhere Cilium, nodes will become unhealthy. If nodes are left without a CNI 
+for longer than 5m the nodes will begin rolling. To maintain a healthy cluster operators should 
+immediately install a CNI after uninstalling EKS Anywhere Cilium.
+{{% /alert %}}
 
 {{% alert title="Warning" color="warning" %}}
 Clusters created using the Full Lifecycle Controller prior to v0.15 that have removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
