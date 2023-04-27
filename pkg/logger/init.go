@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -44,16 +43,12 @@ func Init(opts Options) error {
 		return err
 	}
 
-	// Default to os.Stdout if no writer is provided.
-	if opts.Console == nil {
-		opts.Console = os.Stdout
-	}
-
 	// Build the encoders and logger.
+
 	fileEncoder := zapcore.NewJSONEncoder(encoderCfg)
 	consoleEncoder := zapcore.NewConsoleEncoder(encoderCfg)
 	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(opts.Console), logrAtomicLevel(opts.Level)),
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), logrAtomicLevel(opts.Level)),
 		zapcore.NewCore(fileEncoder, logFile, logrAtomicLevel(MaxLogLevel)),
 	)
 	logger := zap.New(core)
@@ -74,9 +69,6 @@ type Options struct {
 	// OutputFilePath is an absolute file path. The file will be created if it doesn't exist.
 	// All logs available at level 9 will be written to the file.
 	OutputFilePath string
-
-	// Console is a Writer that represents the console. It defaults to os.Stdout.
-	Console io.Writer
 }
 
 // logrAtomicLevel creates a zapcore.AtomicLevel compatible with go-logr.
