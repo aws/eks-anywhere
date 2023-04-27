@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/pkg/nutanix"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -13,40 +14,27 @@ import (
 )
 
 const (
-	nutanixEndpoint              = "T_NUTANIX_ENDPOINT"
-	nutanixPort                  = "T_NUTANIX_PORT"
-	nutanixAdditionalTrustBundle = "T_NUTANIX_ADDITIONAL_TRUST_BUNDLE"
-	nutanixInsecure              = "T_NUTANIX_INSECURE"
-
-	nutanixMachineBootType       = "T_NUTANIX_MACHINE_BOOT_TYPE"
-	nutanixMachineMemorySize     = "T_NUTANIX_MACHINE_MEMORY_SIZE"
-	nutanixSystemDiskSize        = "T_NUTANIX_SYSTEMDISK_SIZE"
-	nutanixMachineVCPUsPerSocket = "T_NUTANIX_MACHINE_VCPU_PER_SOCKET"
-	nutanixMachineVCPUSocket     = "T_NUTANIX_MACHINE_VCPU_SOCKET"
-
-	nutanixPrismElementClusterName = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
-	nutanixPrismElementClusterUUID = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_UUID"
-	nutanixSSHAuthorizedKey        = "T_NUTANIX_SSH_AUTHORIZED_KEY"
-
-	nutanixSubnetName = "T_NUTANIX_SUBNET_NAME"
-	nutanixSubnetUUID = "T_NUTANIX_SUBNET_UUID"
-
-	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
-	nutanixControlPlaneCidrVar    = "T_NUTANIX_CONTROL_PLANE_CIDR"
-	nutanixPodCidrVar             = "T_NUTANIX_POD_CIDR"
-	nutanixServiceCidrVar         = "T_NUTANIX_SERVICE_CIDR"
-
+	nutanixEndpoint                 = "T_NUTANIX_ENDPOINT"
+	nutanixPort                     = "T_NUTANIX_PORT"
+	nutanixAdditionalTrustBundle    = "T_NUTANIX_ADDITIONAL_TRUST_BUNDLE"
+	nutanixInsecure                 = "T_NUTANIX_INSECURE"
+	nutanixMachineBootType          = "T_NUTANIX_MACHINE_BOOT_TYPE"
+	nutanixMachineMemorySize        = "T_NUTANIX_MACHINE_MEMORY_SIZE"
+	nutanixSystemDiskSize           = "T_NUTANIX_SYSTEMDISK_SIZE"
+	nutanixMachineVCPUsPerSocket    = "T_NUTANIX_MACHINE_VCPU_PER_SOCKET"
+	nutanixMachineVCPUSocket        = "T_NUTANIX_MACHINE_VCPU_SOCKET"
+	nutanixPrismElementClusterName  = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
+	nutanixSSHAuthorizedKey         = "T_NUTANIX_SSH_AUTHORIZED_KEY"
+	nutanixSubnetName               = "T_NUTANIX_SUBNET_NAME"
+	nutanixControlPlaneEndpointIP   = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
+	nutanixControlPlaneCidrVar      = "T_NUTANIX_CONTROL_PLANE_CIDR"
+	nutanixPodCidrVar               = "T_NUTANIX_POD_CIDR"
+	nutanixServiceCidrVar           = "T_NUTANIX_SERVICE_CIDR"
 	nutanixTemplateNameUbuntu122Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_22"
 	nutanixTemplateNameUbuntu123Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_23"
 	nutanixTemplateNameUbuntu124Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24"
 	nutanixTemplateNameUbuntu125Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25"
 	nutanixTemplateNameUbuntu126Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26"
-
-	nutanixTemplateUUIDUbuntu122Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_22"
-	nutanixTemplateUUIDUbuntu123Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_23"
-	nutanixTemplateUUIDUbuntu124Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_24"
-	nutanixTemplateUUIDUbuntu125Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_25"
-	nutanixTemplateUUIDUbuntu126Var = "T_NUTANIX_TEMPLATE_UUID_UBUNTU_1_26"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -61,10 +49,8 @@ var requiredNutanixEnvVars = []string{
 	nutanixMachineVCPUsPerSocket,
 	nutanixMachineVCPUSocket,
 	nutanixPrismElementClusterName,
-	nutanixPrismElementClusterUUID,
 	nutanixSSHAuthorizedKey,
 	nutanixSubnetName,
-	nutanixSubnetUUID,
 	nutanixPodCidrVar,
 	nutanixServiceCidrVar,
 	nutanixTemplateNameUbuntu122Var,
@@ -72,11 +58,6 @@ var requiredNutanixEnvVars = []string{
 	nutanixTemplateNameUbuntu124Var,
 	nutanixTemplateNameUbuntu125Var,
 	nutanixTemplateNameUbuntu126Var,
-	nutanixTemplateUUIDUbuntu122Var,
-	nutanixTemplateUUIDUbuntu123Var,
-	nutanixTemplateUUIDUbuntu124Var,
-	nutanixTemplateUUIDUbuntu125Var,
-	nutanixTemplateUUIDUbuntu126Var,
 	nutanixInsecure,
 }
 
@@ -84,6 +65,7 @@ type Nutanix struct {
 	t                      *testing.T
 	fillers                []api.NutanixFiller
 	clusterFillers         []api.ClusterFiller
+	client                 nutanix.PrismClient
 	controlPlaneEndpointIP string
 	cpCidr                 string
 	podCidr                string
@@ -111,9 +93,7 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 			// for uuid specific id type, we will set it thru each specific test so that current CI
 			// works as is with name id type for following resources
 			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterName, api.WithNutanixPrismElementClusterName),
-			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterUUID, api.WithNutanixPrismElementClusterUUID),
 			api.WithNutanixStringFromEnvVar(nutanixSubnetName, api.WithNutanixSubnetName),
-			api.WithNutanixStringFromEnvVar(nutanixSubnetUUID, api.WithNutanixSubnetUUID),
 		},
 	}
 
@@ -121,6 +101,11 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 	nutanixProvider.cpCidr = os.Getenv(nutanixControlPlaneCidrVar)
 	nutanixProvider.podCidr = os.Getenv(nutanixPodCidrVar)
 	nutanixProvider.serviceCidr = os.Getenv(nutanixServiceCidrVar)
+	client, err := nutanix.NewPrismClient(os.Getenv(nutanixEndpoint), os.Getenv(nutanixPort), true)
+	if err != nil {
+		t.Fatalf("Failed to initialize Nutanix Prism Client: %v", err)
+	}
+	nutanixProvider.client = client
 
 	for _, opt := range opts {
 		opt(nutanixProvider)
@@ -240,10 +225,8 @@ func WithUbuntu126Nutanix() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu122NutanixUUID() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu122Var, api.WithNutanixMachineTemplateImageUUID),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		name := os.Getenv(nutanixTemplateNameUbuntu122Var)
+		v.fillers = append(v.fillers, v.withUbuntuNutanixUUID(name)...)
 	}
 }
 
@@ -251,10 +234,8 @@ func WithUbuntu122NutanixUUID() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu123NutanixUUID() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu123Var, api.WithNutanixMachineTemplateImageUUID),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		name := os.Getenv(nutanixTemplateNameUbuntu123Var)
+		v.fillers = append(v.fillers, v.withUbuntuNutanixUUID(name)...)
 	}
 }
 
@@ -262,10 +243,8 @@ func WithUbuntu123NutanixUUID() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu124NutanixUUID() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu124Var, api.WithNutanixMachineTemplateImageUUID),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		name := os.Getenv(nutanixTemplateNameUbuntu124Var)
+		v.fillers = append(v.fillers, v.withUbuntuNutanixUUID(name)...)
 	}
 }
 
@@ -273,10 +252,8 @@ func WithUbuntu124NutanixUUID() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu125NutanixUUID() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu125Var, api.WithNutanixMachineTemplateImageUUID),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		name := os.Getenv(nutanixTemplateNameUbuntu125Var)
+		v.fillers = append(v.fillers, v.withUbuntuNutanixUUID(name)...)
 	}
 }
 
@@ -284,28 +261,43 @@ func WithUbuntu125NutanixUUID() NutanixOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu126NutanixUUID() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixTemplateUUIDUbuntu126Var, api.WithNutanixMachineTemplateImageUUID),
-			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
-		)
+		name := os.Getenv(nutanixTemplateNameUbuntu126Var)
+		v.fillers = append(v.fillers, v.withUbuntuNutanixUUID(name)...)
 	}
+}
+
+func (s *Nutanix) withUbuntuNutanixUUID(name string) []api.NutanixFiller {
+	uuid, err := s.client.GetImageUUIDFromName(context.Background(), name)
+	if err != nil {
+		s.t.Fatalf("Failed to get UUID for image %s: %v", name, err)
+	}
+	return append([]api.NutanixFiller{},
+		api.WithNutanixMachineTemplateImageUUID(*uuid),
+		api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+	)
 }
 
 // WithPrismElementClusterUUID returns a NutanixOpt that adds API fillers to use a PE Cluster UUID.
 func WithPrismElementClusterUUID() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterUUID, api.WithNutanixPrismElementClusterUUID),
-		)
+		name := os.Getenv(nutanixPrismElementClusterName)
+		uuid, err := v.client.GetClusterUUIDFromName(context.Background(), name)
+		if err != nil {
+			v.t.Fatalf("Failed to get UUID for image %s: %v", name, err)
+		}
+		v.fillers = append(v.fillers, api.WithNutanixPrismElementClusterUUID(*uuid))
 	}
 }
 
 // WithNutanixSubnetUUID returns a NutanixOpt that adds API fillers to use a Subnet UUID.
 func WithNutanixSubnetUUID() NutanixOpt {
 	return func(v *Nutanix) {
-		v.fillers = append(v.fillers,
-			api.WithNutanixStringFromEnvVar(nutanixSubnetUUID, api.WithNutanixSubnetUUID),
-		)
+		name := os.Getenv(nutanixSubnetName)
+		uuid, err := v.client.GetSubnetUUIDFromName(context.Background(), name)
+		if err != nil {
+			v.t.Fatalf("Failed to get UUID for image %s: %v", name, err)
+		}
+		v.fillers = append(v.fillers, api.WithNutanixSubnetUUID(*uuid))
 	}
 }
 
