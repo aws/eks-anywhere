@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -359,7 +360,7 @@ func TestUpgrade(t *testing.T) {
 		ctx        = context.Background()
 	)
 
-	helm.EXPECT().UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+	helm.EXPECT().UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
@@ -367,4 +368,29 @@ func TestUpgrade(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertYamlFilesEqual(t, "testdata/expected_upgrade.yaml", valuesFile)
+}
+
+func TestUpdateStackInstallerNoProxyError(t *testing.T) {
+	var (
+		mockCtrl = gomock.NewController(t)
+		docker   = mocks.NewMockDocker(mockCtrl)
+		helm     = mocks.NewMockHelm(mockCtrl)
+		writer   = filewritermocks.NewMockFileWriter(mockCtrl)
+	)
+	noProxy := []string{
+		"localhost", ".svc",
+	}
+	proxyConfiguration := &v1alpha1.ProxyConfiguration{
+		HttpProxy:  "1.2.3.4",
+		HttpsProxy: "1.2.3.4",
+		NoProxy:    noProxy,
+	}
+
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, proxyConfiguration)
+	s.AddNoProxyIP("2.3.4.5")
+
+	noProxy = append(noProxy, "2.3.4.5")
+	if !reflect.DeepEqual(proxyConfiguration.NoProxy, noProxy) {
+		t.Fatalf("failed upgrading no proxy list of stack installer")
+	}
 }

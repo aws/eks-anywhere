@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/util/slices"
 )
 
 const (
@@ -134,7 +135,14 @@ func NewProvider(
 		proxyConfig = &v1alpha1.ProxyConfiguration{
 			HttpProxy:  clusterConfig.Spec.ProxyConfiguration.HttpProxy,
 			HttpsProxy: clusterConfig.Spec.ProxyConfiguration.HttpsProxy,
-			NoProxy:    GenerateNoProxyList(clusterConfig, datacenterConfig.Spec, tinkerbellIP),
+			NoProxy:    generateNoProxyList(clusterConfig, datacenterConfig.Spec),
+		}
+		// We need local tinkerbell IP only in case of management
+		// cluster's create and upgrade that too for the kind cluster.
+		// GenerateNoProxyList is getting used by all the cluster operations.
+		// Thus moving adding tinkerbell Local IP to here.
+		if !slices.SliceContains(proxyConfig.NoProxy, tinkerbellIP) {
+			proxyConfig.NoProxy = append(proxyConfig.NoProxy, tinkerbellIP)
 		}
 	} else {
 		proxyConfig = nil

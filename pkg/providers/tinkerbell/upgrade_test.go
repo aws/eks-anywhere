@@ -3,12 +3,14 @@ package tinkerbell
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	rufiov1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,9 +18,12 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	stackmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/yaml"
@@ -613,4 +618,97 @@ func (t *PreCoreComponentsUpgradeTestConfig) WithStackUpgrade() *PreCoreComponen
 		).
 		Return(true, nil)
 	return t
+}
+
+func newTinkerbellProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient) *Provider {
+	hardwareFile := "./testdata/hardware.csv"
+	forceCleanup := false
+
+	provider, err := NewProvider(
+		datacenterConfig,
+		machineConfigs,
+		clusterConfig,
+		hardwareFile,
+		writer,
+		docker,
+		helm,
+		kubectl,
+		testIP,
+		test.FakeNow,
+		forceCleanup,
+		false,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return provider
+}
+
+func TestProviderSetupAndValidateManagementProxySuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	clusterSpec.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+		HttpProxy:  "1.2.3.4:3128",
+		HttpsProxy: "1.2.3.4:3128",
+	}
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.Spec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
+	stackInstaller.EXPECT().AddNoProxyIP(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return()
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any()).Return(nil)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", gomock.Any()).Return(nil)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec.ManagementCluster, clusterSpec, clusterSpec)
+	if err != nil {
+		t.Fatalf("Received unexpected error: %v", err)
+	}
+}
+
+func TestProviderSetupAndValidateManagementProxyError(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+	clusterSpec.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test-mgmt"}
+	clusterSpec.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+		HttpProxy:  "1.2.3.4:3128",
+		HttpsProxy: "1.2.3.4:3128",
+	}
+
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.Spec.ManagementCluster.Name).Return(clusterSpec.Cluster, fmt.Errorf("error getting management cluster data"))
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec.ManagementCluster, clusterSpec, clusterSpec)
+	assertError(t, "error getting management cluster data", err)
 }
