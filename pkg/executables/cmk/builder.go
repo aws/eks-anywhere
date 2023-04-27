@@ -18,6 +18,6 @@ func NewCmkBuilder(builder *executables.ExecutablesBuilder) *Builder {
 }
 
 // BuildCloudstackClient exposes a single method to consumers to abstract away executableBuilder's other operations and business logic.
-func (b *Builder) BuildCloudstackClient(writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) cloudstack.ProviderCmkClient {
+func (b *Builder) BuildCloudstackClient(writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) (cloudstack.ProviderCmkClient, error) {
 	return b.builder.BuildCmkExecutable(writer, config)
 }

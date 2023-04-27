@@ -2,15 +2,17 @@ package reconciler
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/collection"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+
 	apiv1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
+// GetCloudstackExecConfig gets cloudstack exec config from secrets.
 func GetCloudstackExecConfig(ctx context.Context, cli client.Client, datacenterConfig *v1alpha1.CloudStackDatacenterConfig) (*decoder.CloudStackExecConfig, error) {
 	var profiles []decoder.CloudStackProfileConfig
 	credRefs := collection.NewSet[string]()

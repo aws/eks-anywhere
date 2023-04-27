@@ -51,7 +51,7 @@ func (b *ExecutablesBuilder) BuildGovcExecutable(writer filewriter.FileWriter, o
 }
 
 // BuildCmkExecutable initializes a Cmk object and returns it.
-func (b *ExecutablesBuilder) BuildCmkExecutable(writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) *Cmk {
+func (b *ExecutablesBuilder) BuildCmkExecutable(writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) (*Cmk, error) {
 	return NewCmk(b.executableBuilder.Build(cmkPath), writer, config)
 }
 

@@ -2,9 +2,6 @@ package controllers
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/executables/cmk"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
@@ -18,8 +15,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/executables/cmk"
 	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	cloudstackreconciler "github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 	dockerreconciler "github.com/aws/eks-anywhere/pkg/providers/docker/reconciler"
 	nutanixreconciler "github.com/aws/eks-anywhere/pkg/providers/nutanix/reconciler"

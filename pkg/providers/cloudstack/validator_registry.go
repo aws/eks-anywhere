@@ -2,6 +2,7 @@ package cloudstack
 
 import (
 	"context"
+	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -12,12 +13,12 @@ import (
 
 // ValidatorRegistry exposes a single method for retrieving the CloudStack validator, and abstracts away how they are injected.
 type ValidatorRegistry interface {
-	Get(execConfig *decoder.CloudStackExecConfig) ProviderValidator
+	Get(execConfig *decoder.CloudStackExecConfig) (ProviderValidator, error)
 }
 
 // CmkBuilder defines the interface to be consumed by the ValidatorFactory which enables it to build a new CloudStackClient.
 type CmkBuilder interface {
-	BuildCloudstackClient(writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) ProviderCmkClient
+	BuildCloudstackClient(writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) (ProviderCmkClient, error)
 }
 
 // ValidatorFactory implements the ValidatorRegistry interface and holds the necessary structs for building fresh Validator objects.
@@ -45,8 +46,11 @@ func NewValidatorFactory(builder CmkBuilder, writer filewriter.FileWriter, skipI
 }
 
 // Get returns a validator for a particular cloudstack exec config.
-func (r ValidatorFactory) Get(execConfig *decoder.CloudStackExecConfig) ProviderValidator {
-	cmk := r.builder.BuildCloudstackClient(r.writer, execConfig)
+func (r ValidatorFactory) Get(execConfig *decoder.CloudStackExecConfig) (ProviderValidator, error) {
+	cmk, err := r.builder.BuildCloudstackClient(r.writer, execConfig)
+	if err != nil {
+		return nil, fmt.Errorf("building cmk executable: %v", err)
+	}
 
-	return NewValidator(cmk, &networkutils.DefaultNetClient{}, r.skipIPCheck)
+	return NewValidator(cmk, &networkutils.DefaultNetClient{}, r.skipIPCheck), nil
 }

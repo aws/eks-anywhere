@@ -426,7 +426,10 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			if err != nil {
 				return fmt.Errorf("parsing CloudStack credentials: %v", err)
 			}
-			validator := f.dependencies.CloudStackValidatorRegistry.Get(execConfig)
+			validator, err := f.dependencies.CloudStackValidatorRegistry.Get(execConfig)
+			if err != nil {
+				return fmt.Errorf("building validator from exec config: %v", err)
+			}
 			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, validator, f.dependencies.Writer, time.Now, logger.Get())
 
 		case v1alpha1.SnowDatacenterKind:

@@ -38,6 +38,8 @@ const (
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	// We want to check that the cluster status is cleaned up if validations are passed
+	tt.cluster.Status.FailureMessage = ptr.String("invalid cluster")
 
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
@@ -66,6 +68,8 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 			},
 		},
 	)
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
@@ -474,6 +478,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			anywherev1.CloudStackAvailabilityZone{
 				Name: "test-zone",
 			})
+		d.Status.SpecValid = true
 	})
 
 	cluster := cloudstackCluster(func(c *anywherev1.Cluster) {

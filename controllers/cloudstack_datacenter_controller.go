@@ -83,8 +83,15 @@ func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudsta
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	validator := r.validatorRegistry.Get(execConfig)
+	validator, err := r.validatorRegistry.Get(execConfig)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 	// Run validations with validator as Get will construct CMK each time
+	if err := validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenterConfig); err != nil {
+		log.Error(err, "Failed to validate CloudStackDatacenterConfig")
+		return ctrl.Result{}, err
+	}
 
 	cloudstackDatacenterConfig.Status.SpecValid = true
 
