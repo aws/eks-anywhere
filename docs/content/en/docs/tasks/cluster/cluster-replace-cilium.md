@@ -11,7 +11,7 @@ description: >
 * EKS Anywhere v0.15+.
 * A recent version of [Cilium CLI](https://github.com/cilium/cilium-cli).
 
-## Creating new clusters
+## Add a custom CNI to a new cluster
 
 If an operator intends to uninstall EKS Anywhere Cilium from a new cluster they can enable the `skipUpgrade`
 option when creating the cluster. 
