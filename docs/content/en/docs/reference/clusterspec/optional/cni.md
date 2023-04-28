@@ -168,6 +168,7 @@ spec:
 
 The [Cilium CLI](https://github.com/cilium/cilium-cli) can be used to uninstall EKS Anywhere Cilium 
 via `cilium uninstall`.
+See the [replacing Cilium task]({{< ref "/docs/tasks/cluster/cluster-replace-cilium" >}}) for a walkthrough on how to successfully replace EKS Anywhere Cilium.
 
 {{% alert title="Warning" color="warning" %}}
 When uninstalling EKS Anywhere Cilium, nodes will become unhealthy. If nodes are left without a CNI 
