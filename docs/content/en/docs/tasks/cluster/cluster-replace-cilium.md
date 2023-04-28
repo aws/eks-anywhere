@@ -38,7 +38,7 @@ Any future upgrades to the newly created cluster will not have EKS Anywhere Cili
 
 5. Install the custom CNI.
 
-## Modifying existing clusters using EKS Anywhere CLI
+## Add a custom CNI to an existing cluster with eksctl
 
 1. Modify the existing `Cluster` object's `spec.clusterNetwork.cniConfig.cilium.skipUpgrade` field to equal `true`.
 
