@@ -71,7 +71,7 @@ Any future upgrades to the newly created cluster will not have EKS Anywhere Cili
 
 5. Install the custom CNI.
 
-## Modifying existing clusters using EKS Anywhere Lifecycle Controller
+## Add a custom CNI to an existing cluster with Lifecycle Controller
 
 {{% alert title="Warning" color="warning" %}}
 Clusters created using the Full Lifecycle Controller prior to v0.15 that have removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
