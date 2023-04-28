@@ -169,6 +169,34 @@ func TestCloudstackDatacenterConfigReconcilerDelete(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 }
 
+func TestCloudstackDatacenterConfigFailGetValidator(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	dcConfig := createCloudstackDatacenterConfig()
+	dcConfig.Spec.AvailabilityZones = nil
+	objs := []runtime.Object{dcConfig}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+	ctrl := gomock.NewController(t)
+	validatorRegistry := cloudstack.NewMockValidatorRegistry(ctrl)
+	execConfig := &decoder.CloudStackExecConfig{}
+	errMsg := "building cmk executable: nil exec config for CloudMonkey, unable to proceed"
+	validatorRegistry.EXPECT().Get(execConfig).Return(nil, errors.New(errMsg)).Times(1)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	r := controllers.NewCloudStackDatacenterReconciler(client, validatorRegistry)
+
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
+}
+
 func TestCloudstackDatacenterConfigFailGetDatacenter(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
@@ -186,6 +214,32 @@ func TestCloudstackDatacenterConfigFailGetDatacenter(t *testing.T) {
 	r := controllers.NewCloudStackDatacenterReconciler(client, validatorRegistry)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(MatchError(ContainSubstring("failed getting cloudstack datacenter config")))
+}
+
+func TestCloudstackDatacenterConfigFailGetExecConfig(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	dcConfig := createCloudstackDatacenterConfig()
+	objs := []runtime.Object{dcConfig}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	r := controllers.NewCloudStackDatacenterReconciler(client, nil)
+
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(MatchError(ContainSubstring("secrets \"testCred\" not found")))
+
+	gotDatacenterConfig := &anywherev1.CloudStackDatacenterConfig{}
+	err = client.Get(ctx, req.NamespacedName, gotDatacenterConfig)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(gotDatacenterConfig.Status.SpecValid).To(BeFalse())
 }
 
 func TestCloudstackDatacenterConfigFailureAccountNotPresent(t *testing.T) {

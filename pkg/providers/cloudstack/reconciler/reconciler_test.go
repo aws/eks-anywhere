@@ -72,6 +72,46 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
 }
 
+func TestReconcilerValidateDatacenterConfigRequeue(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.datacenterConfig.Status.SpecValid = false
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(result).To(Equal(controller.ResultWithReturn()))
+	tt.Expect(tt.datacenterConfig.Status.FailureMessage).To(BeNil())
+}
+
+func TestReconcilerValidateDatacenterConfigFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.datacenterConfig.Status.SpecValid = false
+	tt.datacenterConfig.Status.FailureMessage = ptr.String("Invalid CloudStackDatacenterConfig")
+
+	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.createAllObjs()
+
+	logger := test.NewNullLogger()
+
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+
+	_, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(&tt.datacenterConfig.Status.FailureMessage).To(HaveValue(Equal("Invalid CloudStackDatacenterConfig")))
+}
+
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 	tt := newReconcilerTest(t)
 

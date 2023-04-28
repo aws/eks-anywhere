@@ -12,7 +12,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 )
 
 // CloudStackDatacenterReconciler reconciles a CloudStackDatacenterConfig object.
@@ -79,7 +78,7 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudstackDatacenterConfig *anywherev1.CloudStackDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
 	cloudstackDatacenterConfig.SetDefaults()
 
-	execConfig, err := reconciler.GetCloudstackExecConfig(ctx, r.client, cloudstackDatacenterConfig)
+	execConfig, err := cloudstack.GetCloudstackExecConfig(ctx, r.client, cloudstackDatacenterConfig)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
