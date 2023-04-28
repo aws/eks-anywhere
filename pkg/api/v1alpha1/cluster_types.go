@@ -8,6 +8,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 const (
@@ -682,6 +683,12 @@ const (
 	Kube125 KubernetesVersion = "1.25"
 	Kube126 KubernetesVersion = "1.26"
 )
+
+// KubeVersionToValidSemver converts kube version to semver for comparisons.
+func KubeVersionToValidSemver(kubeVersion KubernetesVersion) (*semver.Version, error) {
+	// appending the ".0" as the patch version to have a valid semver string and use those semvers for comparison
+	return semver.New(string(kubeVersion) + ".0")
+}
 
 type CNI string
 

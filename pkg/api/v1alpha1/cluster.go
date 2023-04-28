@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 const (
@@ -201,6 +202,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
+	validateCloudstackK8sVersion,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -854,5 +856,28 @@ func validatePackageControllerConfiguration(clusterConfig *Cluster) error {
 			}
 		}
 	}
+	return nil
+}
+
+func validateCloudstackK8sVersion(cluster *Cluster) error {
+	if cluster.Spec.DatacenterRef.Kind == CloudStackDatacenterKind {
+		return ValidateCloudstackK8sVersion(cluster.Spec.KubernetesVersion)
+	}
+	return nil
+}
+
+// ValidateCloudstackK8sVersion validates cloudstack k8s version due to upstream capc limitation.
+func ValidateCloudstackK8sVersion(version KubernetesVersion) error {
+	kubeVersionSemver, err := semver.New(string(version) + ".0")
+	if err != nil {
+		return fmt.Errorf("error converting kubeVersion %v to semver %v", version, err)
+	}
+
+	kube124Semver, _ := semver.New(string(Kube124) + ".0")
+
+	if kubeVersionSemver.Compare(kube124Semver) != -1 {
+		return fmt.Errorf("cloudstack provider does not support K8s version > 1.23")
+	}
+
 	return nil
 }
