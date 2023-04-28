@@ -6,6 +6,9 @@ description: >
  Replace EKS Anywhere Cilium with a custom CNI
 ---
 
+This page provides walkthroughs on replacing the EKS Anywhere Cilium with a custom CNI. 
+For more information on CNI customization see [Use a custom CNI]({{< ref "/docs/reference/clusterspec/optional/cni#use-a-custom-cni"  >}}).
+
 ## Prerequisites
 
 * EKS Anywhere v0.15+.
@@ -13,63 +16,86 @@ description: >
 
 ## Add a custom CNI to a new cluster
 
-If an operator intends to uninstall EKS Anywhere Cilium from a new cluster they can enable the `skipUpgrade`
-option when creating the cluster. 
+If an operator intends to uninstall EKS Anywhere Cilium from a new cluster they can enable the `skipUpgrade` option when creating the cluster. 
 Any future upgrades to the newly created cluster will not have EKS Anywhere Cilium upgraded.
 
 1. Generate a cluster configuration according to the [Getting Started]({{< ref "/docs/getting-started" >}}) section.
 
 2. Modify the `Cluster` object's `spec.clusterNetwork.cniConfig.cilium.skipUpgrade` field to equal `true`.
 
-    ```yaml
-    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-    kind: Cluster
-    metadata:
-        name: eks-anywhere
-    spec:
-      clusterNetwork:
-        cniConfig:
-          cilium:
-            skipUpgrade: true
-      ...
-    ```
+  ```yaml
+  apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+  kind: Cluster
+  metadata:
+      name: eks-anywhere
+  spec:
+    clusterNetwork:
+      cniConfig:
+        cilium:
+          skipUpgrade: true
+    ...
+  ```
 
-3. Create the cluster according to the [Getting Started]({{< ref "/docs/getting-started" >}}) section.
+3. Create the cluster according to the [Getting Started]({{< ref "/docs/getting-started" >}}) guide.
 
-4. Uninstall EKS Anywhere Cilium:
+4. Pause reconciliation of the cluster. This ensures EKS Anywhere components do not attempt to remediate issues arising from a missing CNI.
+
+  ```bash
+  kubectl --kubeconfig=MANAGEMENT_KUBECONFIG -n eksa-system annotate clusters.cluster.x-k8s.io WORKLOAD_CLUSTER_NAME cluster.x-k8s.io/paused=true
+  ```
+
+5. Uninstall EKS Anywhere Cilium.
 
     ```bash
     cilium uninstall
     ```
 
-5. Install the custom CNI.
+6. Install a custom CNI.
+
+7. Resume reconciliation of the cluster object.
+
+  ```bash
+  kubectl --kubeconfig=MANAGEMENT_KUBECONFIG -n eksa-system annotate clusters.cluster.x-k8s.io WORKLOAD_CLUSTER_NAME cluster.x-k8s.io/paused-
+  ```
 
 ## Add a custom CNI to an existing cluster with eksctl
 
 1. Modify the existing `Cluster` object's `spec.clusterNetwork.cniConfig.cilium.skipUpgrade` field to equal `true`.
 
-    ```yaml
-    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-    kind: Cluster
-    metadata:
-        name: eks-anywhere
-    spec:
-      clusterNetwork:
-        cniConfig:
-          cilium:
-            skipUpgrade: true
-      ...
-    ```
+  ```yaml
+  apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+  kind: Cluster
+  metadata:
+      name: eks-anywhere
+  spec:
+    clusterNetwork:
+      cniConfig:
+        cilium:
+          skipUpgrade: true
+    ...
+  ```
 
-3. [Upgrade the EKS Anywhere cluster]({{< ref "/docs/tasks/cluster/cluster-upgrades" >}}).
+2. [Upgrade the EKS Anywhere cluster]({{< ref "/docs/tasks/cluster/cluster-upgrades" >}}).
 
-4. Uninstall EKS Anywhere Cilium:
+3. Pause reconciliation of the cluster. This ensures EKS Anywhere components do not attempt to remediate issues arising from a missing CNI.
+
+  ```bash
+  kubectl --kubeconfig=MANAGEMENT_KUBECONFIG -n eksa-system annotate clusters.cluster.x-k8s.io WORKLOAD_CLUSTER_NAME cluster.x-k8s.io/paused=true
+  ```
+
+4. Uninstall EKS Anywhere Cilium.
 
     ```bash
     cilium uninstall
     ```
 
-5. Install the custom CNI.
+5. Install a custom CNI.
+
+6. Resume reconciliation of the cluster object.
+
+  ```bash
+  kubectl --kubeconfig=MANAGEMENT_KUBECONFIG -n eksa-system annotate clusters.cluster.x-k8s.io WORKLOAD_CLUSTER_NAME cluster.x-k8s.io/paused-
+  ```
 
 ## Add a custom CNI to an existing cluster with Lifecycle Controller
 
@@ -83,31 +109,41 @@ anywhere.eks.amazonaws.com/eksa-cilium: ""
 
 1. Modify the existing `Cluster` object's `spec.clusterNetwork.cniConfig.cilium.skipUpgrade` field to equal `true`.
 
-    ```yaml
-    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-    kind: Cluster
-    metadata:
-        name: eks-anywhere
-    spec:
-      clusterNetwork:
-        cniConfig:
-          cilium:
-            skipUpgrade: true
-      ...
-    ```
+  ```yaml
+  apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+  kind: Cluster
+  metadata:
+      name: eks-anywhere
+  spec:
+    clusterNetwork:
+      cniConfig:
+        cilium:
+          skipUpgrade: true
+    ...
+  ```
 
-3. Apply the cluster configuration to the cluster.
+2. Apply the cluster configuration to the cluster and _await successful object reconciliation_.
 
     ```bash
     kubectl apply -f <cluster config path>
     ```
 
-5. Await the cluster to reconcile.
+3. Pause reconciliation of the cluster. This ensures EKS Anywhere components do not attempt to remediate issues arising from a missing CNI.
 
-4. Uninstall EKS Anywhere Cilium:
+  ```bash
+  kubectl --kubeconfig=MANAGEMENT_KUBECONFIG -n eksa-system annotate clusters.cluster.x-k8s.io WORKLOAD_CLUSTER_NAME cluster.x-k8s.io/paused=true
+  ```
 
-    ```bash
-    cilium uninstall
-    ```
+4. Uninstall EKS Anywhere Cilium.
 
-5. Install the custom CNI.
+  ```bash
+  cilium uninstall
+  ```
+
+5. Install a custom CNI.
+
+6. Resume reconciliation of the cluster object.
+
+  ```bash
+  kubectl --kubeconfig=MANAGEMENT_KUBECONFIG -n eksa-system annotate clusters.cluster.x-k8s.io WORKLOAD_CLUSTER_NAME cluster.x-k8s.io/paused-
+  ```
