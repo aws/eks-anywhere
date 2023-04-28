@@ -7,6 +7,7 @@ const (
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
+	K8s127SupportEnvVar             = "K8S_1_27_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -52,5 +53,13 @@ func UseNewWorkflows() Feature {
 	return Feature{
 		Name:     "Use new workflow logic for cluster management operations",
 		IsActive: globalFeatures.isActiveForEnvVar(UseNewWorkflowsEnvVar),
+	}
+}
+
+// K8s127Support is the feature flag for Kubernetes 1.27 support.
+func K8s127Support() Feature {
+	return Feature{
+		Name:     "Kubernetes version 1.27 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s127SupportEnvVar),
 	}
 }
