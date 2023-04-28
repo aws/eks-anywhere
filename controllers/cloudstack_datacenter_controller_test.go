@@ -169,7 +169,7 @@ func TestCloudstackDatacenterConfigReconcilerDelete(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 }
 
-func TestCloudstackDatacenterConfigFailGetValidator(t *testing.T) {
+func TestCloudstackDatacenterConfigGetValidatorFailure(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -197,7 +197,7 @@ func TestCloudstackDatacenterConfigFailGetValidator(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
 }
 
-func TestCloudstackDatacenterConfigFailGetDatacenter(t *testing.T) {
+func TestCloudstackDatacenterConfigGetDatacenterFailure(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
@@ -216,7 +216,7 @@ func TestCloudstackDatacenterConfigFailGetDatacenter(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("failed getting cloudstack datacenter config")))
 }
 
-func TestCloudstackDatacenterConfigFailGetExecConfig(t *testing.T) {
+func TestCloudstackDatacenterConfigGetExecConfigFailure(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
@@ -242,7 +242,7 @@ func TestCloudstackDatacenterConfigFailGetExecConfig(t *testing.T) {
 	g.Expect(gotDatacenterConfig.Status.SpecValid).To(BeFalse())
 }
 
-func TestCloudstackDatacenterConfigFailureAccountNotPresent(t *testing.T) {
+func TestCloudstackDatacenterConfigAccountNotPresentFailure(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	dcConfig := createCloudstackDatacenterConfig()

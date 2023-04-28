@@ -75,17 +75,17 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 	log.Info("Validating datacenter config")
 	dataCenterConfig := spec.CloudStackDatacenter
 
-	if !dataCenterConfig.Status.SpecValid {
-		if dataCenterConfig.Status.FailureMessage != nil {
-			failureMessage := fmt.Sprintf("Invalid %s CloudStackDatacenterConfig: %s", dataCenterConfig.Name, *dataCenterConfig.Status.FailureMessage)
-			spec.Cluster.Status.FailureMessage = &failureMessage
-			log.Error(errors.New(*dataCenterConfig.Status.FailureMessage), "Invalid CloudStackDatacenterConfig", "datacenterConfig", klog.KObj(dataCenterConfig))
-		} else {
-			log.Info("CloudStackDatacenterConfig hasn't been validated yet", klog.KObj(dataCenterConfig))
-		}
-		return controller.ResultWithReturn(), nil
+	if dataCenterConfig.Status.SpecValid {
+		return controller.Result{}, nil
 	}
-	return controller.Result{}, nil
+	if dataCenterConfig.Status.FailureMessage != nil {
+		failureMessage := fmt.Sprintf("Invalid %s CloudStackDatacenterConfig: %s", dataCenterConfig.Name, *dataCenterConfig.Status.FailureMessage)
+		spec.Cluster.Status.FailureMessage = &failureMessage
+		log.Error(errors.New(*dataCenterConfig.Status.FailureMessage), "Invalid CloudStackDatacenterConfig", "datacenterConfig", klog.KObj(dataCenterConfig))
+	} else {
+		log.Info("CloudStackDatacenterConfig hasn't been validated yet", klog.KObj(dataCenterConfig))
+	}
+	return controller.ResultWithReturn(), nil
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.

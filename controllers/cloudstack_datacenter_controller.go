@@ -39,7 +39,7 @@ func (r *CloudStackDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) erro
 func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	// Fetch the VsphereDatacenter object
+	// Fetch the CloudStackDatacenter object
 	cloudstackDatacenter := &anywherev1.CloudStackDatacenterConfig{}
 	if err := r.client.Get(ctx, req.NamespacedName, cloudstackDatacenter); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed getting cloudstack datacenter config: %v", err)
