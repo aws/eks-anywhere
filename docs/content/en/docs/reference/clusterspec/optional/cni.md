@@ -171,7 +171,7 @@ via `cilium uninstall`.
 
 {{% alert title="Warning" color="warning" %}}
 When uninstalling EKS Anywhere Cilium, nodes will become unhealthy. If nodes are left without a CNI 
-for longer than 5m the nodes will begin rolling. To maintain a healthy cluster operators should 
+for longer than 5m the nodes will begin rolling. To maintain a healthy cluster, operators should 
 immediately install a CNI after uninstalling EKS Anywhere Cilium.
 {{% /alert %}}
 
