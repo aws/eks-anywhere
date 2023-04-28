@@ -1,4 +1,10 @@
-# Replace EKS Anywhere Cilium with a custom CNI
+---
+title: "Replace EKS Anywhere Cilium with a custom CNI"
+linkTitle: "Add custom CNI"
+weight: 21
+description: >
+ Replace EKS Anywhere Cilium with a custom CNI
+---
 
 ## Prerequisites
 
