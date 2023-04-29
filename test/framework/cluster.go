@@ -58,6 +58,7 @@ const (
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
+	unreleasedK8sVersion                   = v1alpha1.Kube127
 )
 
 //go:embed testdata/oidc-roles.yaml
