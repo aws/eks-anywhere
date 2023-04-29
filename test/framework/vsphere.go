@@ -152,6 +152,17 @@ func WithRedHat123VSphere() VSphereOpt {
 	}
 }
 
+// WithUbuntu127 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.27
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu127() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube127)),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
 // WithUbuntu126 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.26
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu126() VSphereOpt {
@@ -540,6 +551,11 @@ func (v *VSphere) Ubuntu125Template() api.VSphereFiller {
 // Ubuntu126Template returns vsphere filler for 1.26 Ubuntu.
 func (v *VSphere) Ubuntu126Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube126))
+}
+
+// Ubuntu127Template returns vsphere filler for 1.27 Ubuntu.
+func (v *VSphere) Ubuntu127Template() api.VSphereFiller {
+	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube127))
 }
 
 // Bottlerocket122Template returns vsphere filler for 1.22 BR.

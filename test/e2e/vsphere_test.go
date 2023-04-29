@@ -1239,6 +1239,15 @@ func TestVSphereKubernetes126SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes127SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu127()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes122RedHatSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
