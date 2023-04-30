@@ -57,8 +57,9 @@ require (
 	k8s.io/component-base v0.26.2
 	k8s.io/klog/v2 v2.90.1
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
+	oras.land/oras v1.0.1-0.20230330024920-07a754eab697
 	oras.land/oras-go v1.2.3
-	oras.land/oras-go/v2 v2.0.0
+	oras.land/oras-go/v2 v2.0.2
 	sigs.k8s.io/cluster-api v1.4.2
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
@@ -158,6 +159,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/need-being/go-tree v0.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
