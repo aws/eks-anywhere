@@ -1,6 +1,6 @@
 module github.com/aws/eks-anywhere-test-tool
 
-go 1.18
+go 1.20
 
 require (
 	github.com/aws/aws-sdk-go v1.42.23
