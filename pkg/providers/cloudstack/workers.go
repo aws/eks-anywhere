@@ -2,6 +2,7 @@ package cloudstack
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -24,7 +25,7 @@ type (
 // It talks to the cluster with a client to detect changes in immutable objects and generates new
 // names for them.
 func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*Workers, error) {
-	templateBuilder := generateTemplateBuilder(spec)
+	templateBuilder := NewTemplateBuilder(time.Now)
 	machineTemplateNames, kubeadmConfigTemplateNames := clusterapi.InitialTemplateNamesForWorkers(spec)
 	workersYaml, err := templateBuilder.GenerateCAPISpecWorkers(spec, machineTemplateNames, kubeadmConfigTemplateNames)
 	if err != nil {

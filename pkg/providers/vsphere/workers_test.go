@@ -6,7 +6,6 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/format"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
@@ -241,7 +240,6 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			format.MaxLength = 40000
 
 			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
 			workers, err := vsphere.WorkersSpec(ctx, logger, client, spec)

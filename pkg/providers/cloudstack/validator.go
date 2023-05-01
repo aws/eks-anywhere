@@ -10,7 +10,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -110,24 +112,26 @@ func generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywh
 }
 
 // TODO: dry out machine configs validations.
-func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error {
-	controlPlaneMachineConfig := cloudStackClusterSpec.controlPlaneMachineConfig()
+// Cyclomatic complexity is high. The exception below can probably be removed once the above todo is done.
+// nolint:gocyclo
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSpec *cluster.Spec) error {
+	controlPlaneMachineConfig := controlPlaneMachineConfig(clusterSpec)
 	if controlPlaneMachineConfig == nil {
-		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 
-	if cloudStackClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig := cloudStackClusterSpec.etcdMachineConfig()
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := etcdMachineConfig(clusterSpec)
 		if etcdMachineConfig == nil {
-			return fmt.Errorf("cannot find CloudStackMachineConfig %v for etcd machines", cloudStackClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
+			return fmt.Errorf("cannot find CloudStackMachineConfig %v for etcd machines", clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 		}
 		if etcdMachineConfig.Spec.Template != controlPlaneMachineConfig.Spec.Template {
 			return fmt.Errorf("control plane and etcd machines must have the same template specified")
 		}
 	}
 
-	for _, workerNodeGroupConfiguration := range cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		workerNodeGroupMachineConfig, ok := cloudStackClusterSpec.machineConfigsLookup[workerNodeGroupConfiguration.MachineGroupRef.Name]
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMachineConfig, ok := clusterSpec.CloudStackMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		if !ok {
 			return fmt.Errorf("cannot find CloudStackMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
 		}
@@ -136,19 +140,22 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		}
 	}
 
-	err := v.setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec)
+	err := v.setDefaultAndValidateControlPlaneHostPort(clusterSpec)
 	if err != nil {
 		return fmt.Errorf("validating controlPlaneConfiguration.Endpoint.Host: %v", err)
 	}
 
-	for _, machineConfig := range cloudStackClusterSpec.machineConfigsLookup {
+	for _, machineConfig := range clusterSpec.CloudStackMachineConfigs {
 		if len(machineConfig.Spec.Users) <= 0 {
 			machineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
 		}
 		if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
 			machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 		}
-		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig, machineConfig); err != nil {
+		if machineConfig.Spec.Users[0].Name == "" {
+			machineConfig.Spec.Users[0].Name = v1alpha1.DefaultCloudStackUser
+		}
+		if err = v.validateMachineConfig(ctx, clusterSpec.CloudStackDatacenter, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}
 	}
@@ -208,14 +215,14 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 
 // setDefaultAndValidateControlPlaneHostPort checks the input host to see if it is a valid hostname. If it's valid, it checks the port
 // to see if the default port should be used and sets it.
-func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec *Spec) error {
-	pHost := cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+func (v *Validator) setDefaultAndValidateControlPlaneHostPort(clusterSpec *cluster.Spec) error {
+	pHost := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	_, port, err := net.SplitHostPort(pHost)
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
 			port = controlEndpointDefaultPort
-			cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
-				cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
+				clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 				controlEndpointDefaultPort)
 		} else {
 			return fmt.Errorf("host %s is invalid: %v", pHost, err.Error())

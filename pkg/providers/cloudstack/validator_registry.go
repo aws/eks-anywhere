@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -31,7 +32,7 @@ type ValidatorFactory struct {
 // ProviderValidator exposes a common interface to avoid coupling on implementation details and to support mocking.
 type ProviderValidator interface {
 	ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error
-	ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error
+	ValidateClusterMachineConfigs(ctx context.Context, clusterSpec *cluster.Spec) error
 	ValidateControlPlaneEndpointUniqueness(endpoint string) error
 	ValidateSecretsUnchanged(ctx context.Context, cluster *types.Cluster, execConfig *decoder.CloudStackExecConfig, client ProviderKubectlClient) error
 }

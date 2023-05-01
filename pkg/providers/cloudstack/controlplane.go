@@ -2,6 +2,7 @@ package cloudstack
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ func (p ControlPlane) Objects() []kubernetes.Object {
 
 // ControlPlaneSpec builds a CloudStack ControlPlane definition based on an eks-a cluster spec.
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, clusterSpec *cluster.Spec) (*ControlPlane, error) {
-	templateBuilder := generateTemplateBuilder(clusterSpec)
+	templateBuilder := NewTemplateBuilder(time.Now)
 	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(
 		clusterSpec,
 		func(values map[string]interface{}) {

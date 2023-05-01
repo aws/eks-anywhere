@@ -8,7 +8,6 @@ import (
 	etcdadmbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/format"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
@@ -265,7 +264,6 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 		},
 	}
 
-	format.MaxLength = 40000
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			spec.Cluster.Spec.RegistryMirrorConfiguration = tt.mirrorConfig
