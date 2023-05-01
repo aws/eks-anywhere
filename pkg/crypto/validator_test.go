@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -130,15 +129,6 @@ invalidCert
 )
 
 func TestIsSignedByUnknownAuthority(t *testing.T) {
-	// We need to add this check as newer version of macos require the adding trusted certs manually to test for this,
-	// through `security add-trusted-cert`, so we are only able to run this test on linux for now.
-	// This is a known issue here: https://github.com/golang/go/issues/52010
-	// Refer to https://go-review.googlesource.com/c/go/+/353132 and https://github.com/helm/helm/pull/11160
-	// Follow up tracking issue for us to fix: https://github.com/aws/eks-anywhere/issues/3267
-	if runtime.GOOS == "darwin" {
-		t.Skipf("Skipping as this test will fail on darwin because newer versions require this cert " +
-			"to be added to the system trust store")
-	}
 	certSvr, err := runTestServerWithCert(serverCert, serverKey)
 	if err != nil {
 		t.Fatalf("starting test server with certs: %v", err)
