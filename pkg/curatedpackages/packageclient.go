@@ -189,7 +189,7 @@ func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string
 		return fmt.Errorf("kubectl execution failure: \n%v", err)
 	}
 	if len(stdOut.Bytes()) == 0 {
-		return errors.New("no resources found")
+		return errors.New("no resources founded")
 	}
 	fmt.Print(&stdOut)
 	return nil
