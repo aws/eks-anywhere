@@ -27,7 +27,7 @@ func (tv *DefaultTlsValidator) IsSignedByUnknownAuthority(host, port string) (bo
 
 	_, err := tls.Dial("tcp", net.JoinHostPort(host, port), conf)
 	if err != nil {
-		if err.Error() == (x509.UnknownAuthorityError{}).Error() {
+		if _, ok := err.(*tls.CertificateVerificationError); ok {
 			return true, nil
 		}
 		return false, err
