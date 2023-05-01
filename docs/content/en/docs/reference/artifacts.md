@@ -747,27 +747,65 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    IMAGEBUILDER_TARBALL_URI=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksD.imagebuilder.uri")
    curl -s $IMAGEBUILDER_TARBALL_URI | tar xz ./image-builder
    sudo cp ./image-builder /usr/local/bin
-   cd -
+   cd /home/$USER
    ```
-1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters.
+1. Create an AMI configuration file (for example, `ami.json`) that contains various AMI parameters. For example:
+
    ```json
    {
-     "ami_filter_name": "<Regular expression to filter a source AMI (default: ubuntu/images/*ubuntu-focal-20.04-amd64-server-*)>",
-     "ami_filter_owners": "<AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc (default: 679593333241 - the AWS Marketplace AWS account ID)>",
-     "ami_regions": "<A list of AWS regions to copy the AMI to>",
-     "aws_region": "<The AWS region in which to launch the EC2 instance to create the AMI>",
-     "ansible_extra_vars": "<The absolute path to the additional variables to pass to Ansible. These are converted to the `--extra-vars` command-line argument. This path must be prefix with '@'>",
-     "builder_instance_type": "<The EC2 instance type to use while building the AMI (default: t3.small)>",
-     "custom_role": "<If set to true, this will run a custom Ansible role before the `sysprep` role to allow for further customization>",
-     "custom_role_name_list" : "<Array of strings representing the absolute paths of custom Ansible roles to run. This field is mutually exclusive with custom_role_names>",
-     "custom_role_names": "<Space-delimited string of the custom roles to run. This field is mutually exclusive with custom_role_name_list and is provided for compatibility with Ansible's input format>",
-     "manifest_output": "<The absolute path to write the build artifacts manifest to. If you wish to export the AMI using this manifest, ensure that you provide a path that is not inside the '/home/$USER/eks-anywhere-build-tooling' path since that will be cleaned up when the build finishes>",
-     "root_device_name": "<The device name used by EC2 for the root EBS volume attached to the instance>",
-     "subnet_id": "<The ID of the subnet where Packer will launch the EC2 instance. This field is required when using a non-default VPC>",
-     "volume_size": "<The size of the root EBS volume in GiB>",
-     "volume_type": "<The type of root EBS volume, such as gp2, gp3, io1, etc.>"
+      "ami_filter_name": "ubuntu/images/*ubuntu-focal-20.04-amd64-server-*",
+      "ami_filter_owners": "679593333241",
+      "ami_regions": "us-east-2",
+      "aws_region": "us-east-2",
+      "ansible_extra_vars": "@/home/image-builder/eks-anywhere-build-tooling/projects/kubernetes-sigs/image-builder/packer/ami/ansible_extra_vars.yaml",
+      "builder_instance_type": "t3.small",
+      "custom_role_name_list" : ["/home/image-builder/eks-anywhere-build-tooling/projects/kubernetes-sigs/image-builder/ansible/roles/load_additional_files"],
+      "manifest_output": "/home/image-builder/manifest.json",
+      "root_device_name": "/dev/sda1",
+      "volume_size": "25",
+      "volume_type": "gp3",
    }
    ```
+
+   ##### **ami_filter_name**
+   Regular expression to filter a source AMI. (default: `ubuntu/images/*ubuntu-focal-20.04-amd64-server-*`).
+
+   ##### **ami_filter_owners**
+   AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc. (default: `679593333241` - the AWS Marketplace AWS account ID).
+
+   ##### **ami_regions**
+   A list of AWS regions to copy the AMI to. (default: `us-west-2`).
+
+   ##### **aws_region**
+   The AWS region in which to launch the EC2 instance to create the AMI. (default: `us-west-2`).
+
+   ##### **ansible_extra_vars**
+   The absolute path to the additional variables to pass to Ansible. These are converted to the `--extra-vars` command-line argument. This path must be prefix with '@'. (default: `@/home/image-builder/eks-anywhere-build-tooling/projects/kubernetes-sigs/image-builder/packer/ami/ansible_extra_vars.yaml`)
+
+   ##### **builder_instance_type**
+   The EC2 instance type to use while building the AMI. (default: `t3.small`).
+
+   ##### **custom_role_name_list**
+   Array of strings representing the absolute paths of custom Ansible roles to run. This field is mutually exclusive with `custom_role_names`.
+
+   ##### **custom_role_names**
+   Space-delimited string of the custom roles to run. This field is mutually exclusive with `custom_role_name_list` and is provided for compatibility with Ansible's input format.
+
+   ##### **manifest_output**
+   The absolute path to write the build artifacts manifest to. If you wish to export the AMI using this manifest, ensure that you provide a path that is not inside the `/home/$USER/eks-anywhere-build-tooling` path since that will be cleaned up when the build finishes. (default: `/home/image-builder/manifest.json`).
+
+   ##### **root_device_name**
+   The device name used by EC2 for the root EBS volume attached to the instance. (default: `/dev/sda1`).
+
+   ##### **subnet_id**
+   The ID of the subnet where Packer will launch the EC2 instance. This field is required when using a non-default VPC.
+
+   ##### **volume_size**
+   The size of the root EBS volume in GiB. (default: `25`).
+
+   ##### **volume_type**
+   The type of root EBS volume, such as gp2, gp3, io1, etc. (default: `gp3`).
+
 1. To create an Ubuntu-based image, run `image-builder` with the following options:
 
    * `--os`: `ubuntu`
