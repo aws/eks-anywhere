@@ -139,6 +139,9 @@ Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR b
 ### clusterNetwork.services.cidrBlocks[0] (required)
 Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted. This CIDR block should not conflict with the network subnet range selected for the VMs.
 
+### clusterNetwork.dns.resolvConf.path (optional)
+Path to the file with a custom DNS resolver configuration.
+
 ### controlPlaneConfiguration (required)
 Specific control plane configuration for your Kubernetes cluster.
 
