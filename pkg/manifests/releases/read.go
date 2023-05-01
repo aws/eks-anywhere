@@ -41,6 +41,22 @@ func ReadReleasesFromURL(reader Reader, url string) (*releasev1.Release, error) 
 	return release, nil
 }
 
+// GetBundleManifestURL fetches the bundle manifest URL pertaining to this
+// release version of EKS Anywhere.
+func GetBundleManifestURL(reader Reader, version string) (string, error) {
+	eksAReleases, err := ReadReleases(reader)
+	if err != nil {
+		return "", fmt.Errorf("failed to read releases: %v", err)
+	}
+
+	eksAReleaseForVersion, err := ReleaseForVersion(eksAReleases, version)
+	if err != nil {
+		return "", fmt.Errorf("failed to get EKS-A release for version %s: %v", version, err)
+	}
+
+	return eksAReleaseForVersion.BundleManifestUrl, nil
+}
+
 func ReadBundlesForRelease(reader Reader, release *releasev1.EksARelease) (*releasev1.Bundles, error) {
 	return bundles.Read(reader, release.BundleManifestUrl)
 }
