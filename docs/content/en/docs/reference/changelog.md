@@ -6,6 +6,17 @@ weight: 35
 
 ## Unreleased
 
+## [v0.15.3](https://github.com/aws/eks-anywhere/releases/tag/v0.15.3)
+
+### Added
+
+- Added bundles-override to package cli commands ([#5695](https://github.com/aws/eks-anywhere/pull/5695))
+
+### Fixed
+
+- Remove last-applied annotation for kubectl replace ([#5684](https://github.com/aws/eks-anywhere/pull/5684))
+- Fixed bmclib timeout issues when using Tinkerbell provider with older hardware ([aws/eks-anywhere-build-tooling#2117](https://github.com/aws/eks-anywhere-build-tooling/pull/2117))
+
 ## [v0.15.2](https://github.com/aws/eks-anywhere/releases/tag/v0.15.2)
 
 ### Supported OS version details
