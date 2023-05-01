@@ -164,7 +164,9 @@ eks-a-binary:
 	CGO_ENABLED=0 GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) $(BUILD_FLAGS) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
 
 .PHONY: eks-a-embed-config
+eks-a-embed-config: $(EMBED_CONFIG_FOLDER)
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
+	cp pkg/cluster/config/releases.yaml $(EMBED_CONFIG_FOLDER)/releases.yaml
 	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) files_embed_fs'
 
 .PHONY: eks-a-cross-platform-embed-latest-config
@@ -179,6 +181,7 @@ eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release ve
 
 .PHONY: eks-a-custom-embed-config
 eks-a-custom-embed-config:
+	cp pkg/cluster/config/releases.yaml $(EMBED_CONFIG_FOLDER)/releases.yaml
 	$(MAKE) eks-a-binary GIT_VERSION=$(CUSTOM_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true' BUILD_TAGS='$(BUILD_TAGS) files_embed_fs'
 
 .PHONY: eks-a-cross-platform-custom-embed-latest-config
