@@ -5,8 +5,8 @@
 package e2e
 
 import (
-	"testing"
 	corev1 "k8s.io/api/core/v1"
+	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -441,6 +441,15 @@ func TestDockerKubernetes126SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestDockerKubernetes127SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 	)
 	runSimpleFlow(test)
 }
