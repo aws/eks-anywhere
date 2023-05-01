@@ -75,4 +75,3 @@ skipped_tests:
 - TestTinkerbellKubernetes126BottleRocketThreeWorkersSimpleFlow
 - TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
 # vSphere tests
-- TestVSphereUpgradeKubernetesUbuntuAPI
