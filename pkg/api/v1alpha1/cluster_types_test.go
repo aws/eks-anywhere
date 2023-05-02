@@ -2632,13 +2632,13 @@ func TestKubeVersionToValidSemver(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := v1alpha1.KubeVersionToValidSemver(tt.args.kubeVersion)
+			got, err := v1alpha1.KubeVersionToSemver(tt.args.kubeVersion)
 			if err != tt.wantErr {
-				t.Errorf("KubeVersionToValidSemver() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("KubeVersionToSemver() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("KubeVersionToValidSemver() = %v, want %v", got, tt.want)
+				t.Errorf("KubeVersionToSemver() = %v, want %v", got, tt.want)
 			}
 		})
 	}

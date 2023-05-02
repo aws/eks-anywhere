@@ -104,11 +104,11 @@ func (t *TemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (string, error) 
 
 func (t *TemplateBuilder) setControlPlaneNodeSelector(kubeVersion v1alpha1.KubernetesVersion) (string, error) {
 	var nodeSelector string
-	clusterKubeVersionSemver, err := v1alpha1.KubeVersionToValidSemver(kubeVersion)
+	clusterKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(kubeVersion)
 	if err != nil {
 		return "", fmt.Errorf("converting kubeVersion %v to semver %v", kubeVersion, err)
 	}
-	kube124Semver, err := v1alpha1.KubeVersionToValidSemver(v1alpha1.Kube124)
+	kube124Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube124)
 	if err != nil {
 		return "", fmt.Errorf("converting kubeVersion %v to semver %v", v1alpha1.Kube124, err)
 	}

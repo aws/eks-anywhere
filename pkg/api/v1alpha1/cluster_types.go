@@ -684,8 +684,8 @@ const (
 	Kube126 KubernetesVersion = "1.26"
 )
 
-// KubeVersionToValidSemver converts kube version to semver for comparisons.
-func KubeVersionToValidSemver(kubeVersion KubernetesVersion) (*semver.Version, error) {
+// KubeVersionToSemver converts kube version to semver for comparisons.
+func KubeVersionToSemver(kubeVersion KubernetesVersion) (*semver.Version, error) {
 	// appending the ".0" as the patch version to have a valid semver string and use those semvers for comparison
 	return semver.New(string(kubeVersion) + ".0")
 }

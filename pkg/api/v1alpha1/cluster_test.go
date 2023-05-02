@@ -3296,14 +3296,19 @@ func TestCloudstackK8sVersion(t *testing.T) {
 			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.23"),
 		},
 		{
+			testName:   "FailureK8sVersion",
+			k8sVersion: Kube126,
+			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.23"),
+		},
+		{
 			testName:   "InvalidK8sVersion",
 			k8sVersion: "1",
-			wantErr:    errors.New("error converting kubeVersion 1 to semver invalid major version in semver 1.0: strconv.ParseUint: parsing \"\": invalid syntax"),
+			wantErr:    errors.New("converting kubeVersion 1 to semver invalid major version in semver 1.0: strconv.ParseUint: parsing \"\": invalid syntax"),
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.testName, func(tt *testing.T) {
-			got := ValidateCloudstackK8sVersion(tc.k8sVersion)
+			got := ValidateCloudStackK8sVersion(tc.k8sVersion)
 			if !reflect.DeepEqual(tc.wantErr, got) {
 				t.Errorf("%v got = %v, want %v", tc.testName, got, tc.wantErr)
 			}

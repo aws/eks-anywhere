@@ -402,7 +402,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
-	if err := v1alpha1.ValidateCloudstackK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
+	if err := v1alpha1.ValidateCloudStackK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
 		return fmt.Errorf("validating K8s version for provider: %v", err)
 	}
 
@@ -445,7 +445,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
-	if err := v1alpha1.ValidateCloudstackK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
+	if err := v1alpha1.ValidateCloudStackK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
 		return fmt.Errorf("validating K8s version for provider: %v", err)
 	}
 
