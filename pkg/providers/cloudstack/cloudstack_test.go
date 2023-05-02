@@ -76,7 +76,6 @@ func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 // TODO: Validate against validator operations instead of using wildcard, now that it's mocked. https://github.com/aws/eks-anywhere/issues/3944
 func givenWildcardValidator(mockCtrl *gomock.Controller, clusterSpec *cluster.Spec) *MockProviderValidator {
 	validator := NewMockProviderValidator(mockCtrl)
-	setClusterSpecDefaultHostPort(clusterSpec)
 	validator.EXPECT().ValidateClusterMachineConfigs(gomock.Any(), gomock.Any()).SetArg(1, *clusterSpec).AnyTimes()
 	validator.EXPECT().ValidateCloudStackDatacenterConfig(gomock.Any(), clusterSpec.CloudStackDatacenter).AnyTimes()
 	validator.EXPECT().ValidateControlPlaneEndpointUniqueness(gomock.Any()).AnyTimes()
@@ -253,11 +252,6 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackD
 func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, validator ProviderValidator) *cloudstackProvider {
 	_, writer := test.NewWriter(t)
 	return NewProvider(datacenterConfig, clusterConfig, kubectl, validator, writer, test.FakeNow, test.NewNullLogger())
-}
-
-func setClusterSpecDefaultHostPort(clusterSpec *cluster.Spec) {
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
-		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, controlEndpointDefaultPort)
 }
 
 func TestProviderGenerateCAPISpecForCreate(t *testing.T) {

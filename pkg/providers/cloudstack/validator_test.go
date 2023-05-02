@@ -107,14 +107,6 @@ func TestValidateControlPlaneIpCheck(t *testing.T) {
 	err := validator.ValidateControlPlaneEndpointUniqueness("255.255.255.255:6443")
 	thenErrorExpected(t, "endpoint <255.255.255.255:6443> is already in use", err)
 }
-
-func TestValidateControlPlaneIpCheckInvalidPort(t *testing.T) {
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	validator := NewValidator(cmk, &DummyNetClient{}, false)
-	err := validator.ValidateControlPlaneEndpointUniqueness("255.255.255.255")
-	thenErrorExpected(t, "invalid endpoint - not in host:port format: address 255.255.255.255: missing port in address", err)
-}
-
 func TestValidateControlPlaneIpCheckUniqueIpSuccess(t *testing.T) {
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	validator := NewValidator(cmk, &DummyNetClient{}, false)
@@ -123,18 +115,18 @@ func TestValidateControlPlaneIpCheckUniqueIpSuccess(t *testing.T) {
 	}
 }
 
-func TestValidateMachineConfigsInvalidControlPlanePort(t *testing.T) {
-	ctx := context.Background()
+func TestValidateControlPlaneIpCheckUniqueIpInvalidEndpointPort(t *testing.T) {
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
 	validator := NewValidator(cmk, &DummyNetClient{}, false)
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "255.255.255.255:0"
+	err := validator.ValidateControlPlaneEndpointUniqueness("1.1.1.1:")
+	thenErrorExpected(t, "invalid endpoint: host 1.1.1.1: has an invalid port", err)
+}
 
-	setupMockForAvailabilityZonesValidation(cmk, ctx, clusterSpec.CloudStackDatacenter.Spec.AvailabilityZones)
-
-	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
-
-	thenErrorExpected(t, "validating controlPlaneConfiguration.Endpoint.Host: host 255.255.255.255:0 has an invalid port", err)
+func TestValidateControlPlaneIpCheckUniqueIpInvalidEndpointHost(t *testing.T) {
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk, &DummyNetClient{}, false)
+	err := validator.ValidateControlPlaneEndpointUniqueness("invalid::host")
+	thenErrorExpected(t, "invalid endpoint: host invalid::host is invalid: address invalid::host: too many colons in address", err)
 }
 
 func TestValidateDatacenterInconsistentManagementEndpoints(t *testing.T) {
@@ -296,7 +288,6 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 	_ = validator.ValidateCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter)
 	err := validator.ValidateClusterMachineConfigs(ctx, clusterSpec)
 	assert.Nil(t, err)
-	assert.Equal(t, "1.2.3.4:6443", clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 }
 
 func TestValidateCloudStackMachineConfig(t *testing.T) {
