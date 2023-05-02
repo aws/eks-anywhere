@@ -2,9 +2,11 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -58,11 +60,32 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 
 	return controller.NewPhaseRunner[*c.Spec]().Register(
 		r.ipValidator.ValidateControlPlaneIP,
+		r.ValidateDatacenterConfig,
+		clusters.CleanupStatusAfterValidate,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
 		r.ReconcileCNI,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
+}
+
+// ValidateDatacenterConfig updates the cluster status if the CloudStackDatacenter status indicates that the spec is invalid.
+func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateDatacenterConfig")
+	log.Info("Validating datacenter config")
+	dataCenterConfig := spec.CloudStackDatacenter
+
+	if dataCenterConfig.Status.SpecValid {
+		return controller.Result{}, nil
+	}
+	if dataCenterConfig.Status.FailureMessage != nil {
+		failureMessage := fmt.Sprintf("Invalid %s CloudStackDatacenterConfig: %s", dataCenterConfig.Name, *dataCenterConfig.Status.FailureMessage)
+		spec.Cluster.Status.FailureMessage = &failureMessage
+		log.Error(errors.New(*dataCenterConfig.Status.FailureMessage), "Invalid CloudStackDatacenterConfig", "datacenterConfig", klog.KObj(dataCenterConfig))
+	} else {
+		log.Info("CloudStackDatacenterConfig hasn't been validated yet", klog.KObj(dataCenterConfig))
+	}
+	return controller.ResultWithReturn(), nil
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
