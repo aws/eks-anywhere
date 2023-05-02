@@ -418,10 +418,6 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
 			}
 
-			machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfigFile)
-			if err != nil {
-				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
-			}
 			execConfig, err := decoder.ParseCloudStackCredsFromEnv()
 			if err != nil {
 				return fmt.Errorf("parsing CloudStack credentials: %v", err)
@@ -430,7 +426,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			if err != nil {
 				return fmt.Errorf("building validator from exec config: %v", err)
 			}
-			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, validator, f.dependencies.Writer, time.Now, logger.Get())
+			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, clusterConfig, f.dependencies.Kubectl, validator, f.dependencies.Writer, time.Now, logger.Get())
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(

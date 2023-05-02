@@ -9,6 +9,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// DefaultCloudStackUser is the default CloudStackMachingConfig username.
+const DefaultCloudStackUser = "capc"
+
+// CloudStackMachineConfigKind is the kind value for a CloudStackMachineConfig.
 const CloudStackMachineConfigKind = "CloudStackMachineConfig"
 
 // Taken from https://github.com/shapeblue/cloudstack/blob/08bb4ad9fea7e422c3d3ac6d52f4670b1e89eed7/api/src/main/java/com/cloud/vm/VmDetailConstants.java

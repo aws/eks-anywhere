@@ -117,6 +117,8 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		}
 		resources = append(resources, r...)
 	case anywherev1.CloudStackDatacenterKind:
+		// max len = len(workers) + CP + etcd
+		spec.CloudStackMachineConfigs = make(map[string]*anywherev1.CloudStackMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations)+2)
 		csdc := &anywherev1.CloudStackDatacenterConfig{}
 		cpCsmc := &anywherev1.CloudStackMachineConfig{}
 		etcdCsmc := &anywherev1.CloudStackMachineConfig{}
@@ -126,23 +128,31 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		if err != nil {
 			return err
 		}
+		spec.CloudStackDatacenter = csdc
+
 		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}, cpCsmc)
 		if err != nil {
 			return err
 		}
+		spec.CloudStackMachineConfigs[cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] = cpCsmc
+
 		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
 			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerCsmc)
 			if err != nil {
 				return err
 			}
 			workerCsmcs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerCsmc
+			spec.CloudStackMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name] = workerCsmc
 		}
+
 		if cs.Spec.ExternalEtcdConfiguration != nil {
 			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdCsmc)
 			if err != nil {
 				return err
 			}
+			spec.CloudStackMachineConfigs[cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] = etcdCsmc
 		}
+
 		r, err := cor.cloudStackTemplate.TemplateResources(ctx, cs, spec, *csdc, *cpCsmc, *etcdCsmc, workerCsmcs)
 		if err != nil {
 			return err

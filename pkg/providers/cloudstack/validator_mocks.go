@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	decoder "github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
@@ -52,7 +53,7 @@ func (mr *MockProviderValidatorMockRecorder) ValidateCloudStackDatacenterConfig(
 }
 
 // ValidateClusterMachineConfigs mocks base method.
-func (m *MockProviderValidator) ValidateClusterMachineConfigs(arg0 context.Context, arg1 *Spec) error {
+func (m *MockProviderValidator) ValidateClusterMachineConfigs(arg0 context.Context, arg1 *cluster.Spec) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateClusterMachineConfigs", arg0, arg1)
 	ret0, _ := ret[0].(error)

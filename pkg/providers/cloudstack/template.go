@@ -3,7 +3,6 @@ package cloudstack
 import (
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -19,35 +18,29 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-// NewTemplateBuilder creates a new CloudStack yaml TemplateBuilder.
-func NewTemplateBuilder(CloudStackDatacenterConfigSpec *v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+// TemplateBuilder is responsible for building the CAPI templates.
+type TemplateBuilder struct {
+	now types.NowFunc
+}
+
+// NewTemplateBuilder creates a new TemplateBuilder.
+func NewTemplateBuilder(now types.NowFunc) *TemplateBuilder {
 	return &TemplateBuilder{
-		controlPlaneMachineSpec:     controlPlaneMachineSpec,
-		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-		etcdMachineSpec:             etcdMachineSpec,
-		now:                         now,
+		now: now,
 	}
 }
 
-// TemplateBuilder is responsible for building the CAPI yaml templates.
-type TemplateBuilder struct {
-	controlPlaneMachineSpec     *v1alpha1.CloudStackMachineConfigSpec
-	WorkerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec
-	etcdMachineSpec             *v1alpha1.CloudStackMachineConfigSpec
-	now                         types.NowFunc
-}
-
-// GenerateCAPISpecControlPlane builds the CAPI yaml controlplane template containing the CAPI objects for the control plane configuration.
-// nolint:gocyclo
+// GenerateCAPISpecControlPlane builds the CAPI controlplane template containing the CAPI objects for the control plane configuration defined in the cluster.Spec.
 func (cs *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	if clusterSpec.CloudStackDatacenter == nil {
 		return nil, fmt.Errorf("provided clusterSpec CloudStackDatacenter is nil. Unable to generate CAPI spec control plane")
 	}
 	var etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineSpec = *cs.etcdMachineSpec
+		etcdMachineSpec = etcdMachineConfig(clusterSpec).Spec
 	}
-	values, err := buildTemplateMapCP(clusterSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
+
+	values, err := buildTemplateMapCP(clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error building template map from CP %v", err)
 	}
@@ -56,29 +49,13 @@ func (cs *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		buildOption(values)
 	}
 
-	cpTemplateName, ok := values[cpTemplateNameKey]
-	if !ok {
-		return nil, fmt.Errorf("unable to determine control plane template name")
-	}
-	cpMachineTemplate := MachineTemplate(fmt.Sprintf("%s", cpTemplateName), cs.controlPlaneMachineSpec)
-	cpMachineTemplateBytes, err := templater.ObjectsToYaml(cpMachineTemplate)
-	if err != nil {
-		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)
-	}
-
-	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
+	bytes, err := buildControlPlaneTemplate(&controlPlaneMachineConfig(clusterSpec).Spec, values)
 	if err != nil {
 		return nil, err
 	}
-	bytes = append(bytes, cpMachineTemplateBytes...)
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineTemplateName, ok := values[etcdTemplateNameKey]
-		if !ok {
-			return nil, fmt.Errorf("unable to determine etcd template name")
-		}
-		etcdMachineTemplate := MachineTemplate(fmt.Sprintf("%s", etcdMachineTemplateName), &etcdMachineSpec)
-		etcdMachineTemplateBytes, err := templater.ObjectsToYaml(etcdMachineTemplate)
+		etcdMachineTemplateBytes, err := buildEtcdTemplate(&etcdMachineSpec, values)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling etcd machine template to byte array: %v", err)
 		}
@@ -88,12 +65,15 @@ func (cs *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 	return bytes, nil
 }
 
-// GenerateCAPISpecWorkers builds the CAPI worker yaml template containing the CAPI objects for the worker node groups configuration defined in the cluster.Spec.
-// nolint:gocyclo
+// GenerateCAPISpecWorkers builds the CAPI worker template containing the CAPI objects for the worker node groups configuration defined in the cluster.Spec.
 func (cs *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values, err := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, fmt.Errorf("building template map for MD %v", err)
+		}
+
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
@@ -106,8 +86,7 @@ func (cs *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 		workerSpecs = append(workerSpecs, bytes)
 
 		workerMachineTemplateName := workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		machineConfig := cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		workerMachineTemplate := MachineTemplate(workerMachineTemplateName, &machineConfig)
+		workerMachineTemplate := MachineTemplate(workerMachineTemplateName, &workerMachineConfig(clusterSpec, workerNodeGroupConfiguration).Spec)
 		workerMachineTemplateBytes, err := templater.ObjectsToYaml(workerMachineTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling worker machine template to byte array: %v", err)
@@ -119,7 +98,7 @@ func (cs *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 }
 
 // nolint:gocyclo
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) (map[string]interface{}, error) {
+func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, error) {
 	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
@@ -135,6 +114,22 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		Append(sharedExtraArgs)
 	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
+
+	controlPlaneMachineSpec := controlPlaneMachineConfig(clusterSpec).Spec
+	controlPlaneSSHKey, err := common.StripSshAuthorizedKeyComment(controlPlaneMachineSpec.Users[0].SshAuthorizedKeys[0])
+	if err != nil {
+		return nil, fmt.Errorf("formatting ssh key for cloudstack control plane template: %v", err)
+	}
+
+	var etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec
+	var etcdSSHAuthorizedKey string
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineSpec = etcdMachineConfig(clusterSpec).Spec
+		etcdSSHAuthorizedKey, err = common.StripSshAuthorizedKeyComment(etcdMachineSpec.Users[0].SshAuthorizedKeys[0])
+		if err != nil {
+			return nil, fmt.Errorf("formatting ssh key for cloudstack etcd template: %v", err)
+		}
+	}
 
 	values := map[string]interface{}{
 		"clusterName":                                clusterSpec.Cluster.Name,
@@ -174,6 +169,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"cloudstackEtcdAffinity":                     etcdMachineSpec.Affinity,
 		"cloudstackEtcdAffinityGroupIds":             etcdMachineSpec.AffinityGroupIds,
 		"controlPlaneSshUsername":                    controlPlaneMachineSpec.Users[0].Name,
+		"cloudstackControlPlaneSshAuthorizedKey":     controlPlaneSSHKey,
+		"cloudstackEtcdSshAuthorizedKey":             etcdSSHAuthorizedKey,
 		"podCidrs":                                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                               clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"apiserverExtraArgs":                         apiServerExtraArgs.ToPartialYaml(),
@@ -236,6 +233,39 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	return values, nil
 }
 
+func buildControlPlaneTemplate(machineSpec *v1alpha1.CloudStackMachineConfigSpec, values map[string]interface{}) (content []byte, err error) {
+	templateName, ok := values[cpTemplateNameKey]
+	if !ok {
+		return nil, fmt.Errorf("unable to determine control plane template name")
+	}
+	machineTemplate := MachineTemplate(fmt.Sprintf("%s", templateName), machineSpec)
+	templateBytes, err := templater.ObjectsToYaml(machineTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)
+	}
+
+	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
+	if err != nil {
+		return nil, err
+	}
+	bytes = append(bytes, templateBytes...)
+
+	return bytes, nil
+}
+
+func buildEtcdTemplate(machineSpec *v1alpha1.CloudStackMachineConfigSpec, values map[string]interface{}) (content []byte, err error) {
+	machineTemplateName, ok := values[etcdTemplateNameKey]
+	if !ok {
+		return nil, fmt.Errorf("unable to determine etcd template name")
+	}
+	machineTemplate := MachineTemplate(fmt.Sprintf("%s", machineTemplateName), machineSpec)
+	machineTemplateBytes, err := templater.ObjectsToYaml(machineTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling etcd machine template to byte array: %v", err)
+	}
+	return machineTemplateBytes, nil
+}
+
 func fillDiskOffering(values map[string]interface{}, diskOffering *v1alpha1.CloudStackResourceDiskOffering, machineType string) {
 	if diskOffering != nil {
 		values[fmt.Sprintf("cloudstack%sDiskOfferingProvided", machineType)] = len(diskOffering.Id) > 0 || len(diskOffering.Name) > 0
@@ -277,12 +307,19 @@ func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster
 	values["noProxy"] = noProxyList
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
+
+	workerNodeGroupMachineSpec := workerMachineConfig(clusterSpec, workerNodeGroupConfiguration).Spec
+	workerUser := workerNodeGroupMachineSpec.Users[0]
+	workerSSHKey, err := common.StripSshAuthorizedKeyComment(workerUser.SshAuthorizedKeys[0])
+	if err != nil {
+		return nil, fmt.Errorf("formatting ssh key for cloudstack worker template: %v", err)
+	}
 
 	values := map[string]interface{}{
 		"clusterName":                      clusterSpec.Cluster.Name,
@@ -298,7 +335,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":                   *workerNodeGroupConfiguration.Count,
 		"workerSshUsername":                workerNodeGroupMachineSpec.Users[0].Name,
-		"cloudstackWorkerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
+		"cloudstackWorkerSshAuthorizedKey": workerSSHKey,
 		"format":                           format,
 		"kubeletExtraArgs":                 kubeletExtraArgs.ToPartialYaml(),
 		"eksaSystemNamespace":              constants.EksaSystemNamespace,
@@ -328,28 +365,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["maxUnavailable"] = workerNodeGroupConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
 	}
 
-	return values
-}
-
-func generateTemplateBuilder(clusterSpec *cluster.Spec) providers.TemplateBuilder {
-	spec := v1alpha1.ClusterSpec{
-		ControlPlaneConfiguration:     clusterSpec.Cluster.Spec.ControlPlaneConfiguration,
-		WorkerNodeGroupConfigurations: clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
-		ExternalEtcdConfiguration:     clusterSpec.Cluster.Spec.ExternalEtcdConfiguration,
-	}
-
-	controlPlaneMachineSpec := getControlPlaneMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-	workerNodeGroupMachineSpecs := getWorkerNodeGroupMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-	etcdMachineSpec := getEtcdMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-
-	templateBuilder := NewTemplateBuilder(
-		&clusterSpec.CloudStackDatacenter.Spec,
-		controlPlaneMachineSpec,
-		etcdMachineSpec,
-		workerNodeGroupMachineSpecs,
-		time.Now,
-	)
-	return templateBuilder
+	return values, nil
 }
 
 func getEtcdMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) *v1alpha1.CloudStackMachineConfigSpec {
@@ -361,19 +377,6 @@ func getEtcdMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[str
 	}
 
 	return etcdMachineSpec
-}
-
-func getWorkerNodeGroupMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) map[string]v1alpha1.CloudStackMachineConfigSpec {
-	var workerNodeGroupMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
-	for _, wnConfig := range clusterSpec.WorkerNodeGroupConfigurations {
-		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
-			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
-			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
-		}
-	}
-
-	return workerNodeGroupMachineSpecs
 }
 
 func getControlPlaneMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) *v1alpha1.CloudStackMachineConfigSpec {

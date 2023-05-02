@@ -1,124 +1,126 @@
-package cloudstack
+package cloudstack_test
 
 import (
+	"path"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 )
 
-func TestGenerateTemplateBuilder(t *testing.T) {
+const (
+	testClusterConfigMainFilename        = "cluster_main.yaml"
+	testClusterConfigMainWithAZsFilename = "cluster_main_with_availability_zones.yaml"
+	testDataDir                          = "testdata"
+)
+
+func TestTemplateBuilderGenerateCAPISpecControlPlaneNilDatacenter(t *testing.T) {
 	g := NewWithT(t)
-	clusterSpec := test.NewFullClusterSpec(t, testClusterConfigFilename)
-	spec := v1alpha1.ClusterSpec{
-		ControlPlaneConfiguration:     clusterSpec.Cluster.Spec.ControlPlaneConfiguration,
-		WorkerNodeGroupConfigurations: clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
-		ExternalEtcdConfiguration:     clusterSpec.Cluster.Spec.ExternalEtcdConfiguration,
+	templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.CloudStackDatacenter = nil
+	_, err := templateBuilder.GenerateCAPISpecControlPlane(clusterSpec)
+	g.Expect(err).To(MatchError(ContainSubstring("provided clusterSpec CloudStackDatacenter is nil. Unable to generate CAPI spec control plane")))
+}
+
+func TestTemplateBuilderGenerateCAPISpecControlPlaneNoKubernetesVersion(t *testing.T) {
+	g := NewWithT(t)
+	templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.Cluster.Spec.KubernetesVersion = ""
+	_, err := templateBuilder.GenerateCAPISpecControlPlane(clusterSpec)
+	g.Expect(err).To(MatchError(ContainSubstring("error building template map from CP error converting kubeVersion")))
+}
+
+func TestTemplateBuilderGenerateCAPISpecControlPlaneMissingNames(t *testing.T) {
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+
+	tests := []struct {
+		name        string
+		buildOption func(values map[string]interface{})
+		wantErr     string
+	}{
+		{
+			name: "missing control plane template name",
+			buildOption: func(values map[string]interface{}) {
+				values["etcdTemplateName"] = clusterapi.EtcdMachineTemplateName(clusterSpec.Cluster)
+			},
+			wantErr: "unable to determine control plane template name",
+		},
+		{
+			name: "missing etcd machine template name",
+			buildOption: func(values map[string]interface{}) {
+				values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster)
+			},
+			wantErr: "",
+		},
 	}
 
-	expectedControlPlaneMachineSpec := &v1alpha1.CloudStackMachineConfigSpec{
-		Template: v1alpha1.CloudStackResourceIdentifier{
-			Id:   "",
-			Name: "centos7-k8s-118",
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+
+			templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
+
+			_, err := templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, tt.buildOption)
+			g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+		})
+	}
+}
+
+func TestTemplateBuilderGenerateCAPISpecControlPlaneInvalidSSHKey(t *testing.T) {
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+
+	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+
+	tests := []struct {
+		name              string
+		machineConfigName string
+		wantErr           string
+	}{
+		{
+			name:              "invalid controlplane ssh key",
+			machineConfigName: controlPlaneMachineConfigName,
+			wantErr:           "formatting ssh key for cloudstack control plane template: ssh",
 		},
-		ComputeOffering: v1alpha1.CloudStackResourceIdentifier{Id: "", Name: "m4-large"},
-		DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
-			CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{Id: "", Name: "Small"},
-			CustomSize:                   0,
-			MountPath:                    "/data-small",
-			Device:                       "/dev/vdb",
-			Filesystem:                   "ext4",
-			Label:                        "data_disk",
-		},
-		Users: []v1alpha1.UserConfiguration{
-			{
-				Name: "mySshUsername",
-				SshAuthorizedKeys: []string{
-					"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com",
-				},
-			},
-		},
-		Affinity: "",
-		AffinityGroupIds: []string{
-			"control-plane-anti-affinity",
-		},
-		UserCustomDetails: nil,
-		Symlinks: v1alpha1.SymlinkMaps{
-			"/var/log/kubernetes": "/data-small/var/log/kubernetes",
+		{
+			name:              "invalid etcd ssh key",
+			machineConfigName: etcdMachineConfigName,
+			wantErr:           "formatting ssh key for cloudstack etcd template: ssh",
 		},
 	}
 
-	gotExpectedControlPlaneMachineSpec := getControlPlaneMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-	g.Expect(gotExpectedControlPlaneMachineSpec).To(Equal(expectedControlPlaneMachineSpec))
-
-	expectedWorkerNodeGroupMachineSpec := map[string]v1alpha1.CloudStackMachineConfigSpec{
-		"test": {
-			Template: v1alpha1.CloudStackResourceIdentifier{
-				Id:   "",
-				Name: "centos7-k8s-118",
-			},
-			ComputeOffering: v1alpha1.CloudStackResourceIdentifier{Id: "", Name: "m4-large"},
-			DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
-				CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{Id: "", Name: "Small"},
-				CustomSize:                   0,
-				MountPath:                    "/data-small",
-				Device:                       "/dev/vdb",
-				Filesystem:                   "ext4",
-				Label:                        "data_disk",
-			},
-			Users: []v1alpha1.UserConfiguration{
-				{
-					Name: "mySshUsername",
-					SshAuthorizedKeys: []string{
-						"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com",
-					},
-				},
-			},
-			Affinity:          "",
-			AffinityGroupIds:  []string{"worker-affinity"},
-			UserCustomDetails: map[string]string{"foo": "bar"},
-			Symlinks: v1alpha1.SymlinkMaps{
-				"/var/log/containers": "/data-small/var/log/containers",
-				"/var/log/pods":       "/data-small/var/log/pods",
-			},
-		},
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			spec := clusterSpec.DeepCopy()
+			templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
+			machineConfig := spec.CloudStackMachineConfigs[tt.machineConfigName]
+			machineConfig.Spec.Users[0].SshAuthorizedKeys[0] = "ssh-rsa AAAA    B3NzaC1K73CeQ== testemail@test.com"
+			_, err := templateBuilder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+				values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster)
+				values["etcdTemplateName"] = clusterapi.EtcdMachineTemplateName(clusterSpec.Cluster)
+			})
+			g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+		})
 	}
-	gotWorkerNodeGroupMachineSpec := getWorkerNodeGroupMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-	g.Expect(gotWorkerNodeGroupMachineSpec).To(Equal(expectedWorkerNodeGroupMachineSpec))
+}
 
-	gotEtcdMachineSpec := getEtcdMachineSpec(spec, clusterSpec.CloudStackMachineConfigs)
-	expectedEtcdMachineSpec := &v1alpha1.CloudStackMachineConfigSpec{
-		Template: v1alpha1.CloudStackResourceIdentifier{
-			Id:   "",
-			Name: "centos7-k8s-118",
-		},
-		ComputeOffering: v1alpha1.CloudStackResourceIdentifier{Id: "", Name: "m4-large"},
-		DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
-			CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{Id: "", Name: "Small"},
-			CustomSize:                   0,
-			MountPath:                    "/data-small",
-			Device:                       "/dev/vdb",
-			Filesystem:                   "ext4",
-			Label:                        "data_disk",
-		},
-		Users: []v1alpha1.UserConfiguration{
-			{
-				Name: "mySshUsername",
-				SshAuthorizedKeys: []string{
-					"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com",
-				},
-			},
-		},
-		Affinity: "",
-		AffinityGroupIds: []string{
-			"etcd-affinity",
-		},
-		UserCustomDetails: nil,
-		Symlinks: v1alpha1.SymlinkMaps{
-			"/var/lib/": "/data-small/var/lib",
-		},
-	}
-	g.Expect(gotEtcdMachineSpec).To(Equal(expectedEtcdMachineSpec))
+func TestTemplateBuilderGenerateCAPISpecWorkersInvalidSSHKey(t *testing.T) {
+	g := NewWithT(t)
+	templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	firstMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	machineConfig := clusterSpec.CloudStackMachineConfigs[firstMachineConfigName]
+	machineConfig.Spec.Users[0].SshAuthorizedKeys[0] = "ssh-rsa AAAA    B3NzaC1K73CeQ== testemail@test.com"
+	machineTemplateNames, kubeadmConfigTemplateNames := clusterapi.InitialTemplateNamesForWorkers(clusterSpec)
+	_, err := templateBuilder.GenerateCAPISpecWorkers(clusterSpec, machineTemplateNames, kubeadmConfigTemplateNames)
+	g.Expect(err).To(
+		MatchError(ContainSubstring("formatting ssh key for cloudstack worker template: ssh")),
+	)
 }
