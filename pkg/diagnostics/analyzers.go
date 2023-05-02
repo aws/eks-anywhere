@@ -90,6 +90,10 @@ func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 			Namespace:        constants.CapcSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
+			Name:             "capx-controller-manager",
+			Namespace:        constants.CapxSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
 			Name:             "cert-manager-webhook",
 			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
@@ -161,6 +165,8 @@ func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*
 		return a.eksaCloudstackAnalyzers()
 	case v1alpha1.SnowDatacenterKind:
 		return a.eksaSnowAnalyzers()
+	case v1alpha1.NutanixDatacenterKind:
+		return a.eksaNutanixAnalyzers()
 	default:
 		return nil
 	}
@@ -182,7 +188,8 @@ func (a *analyzerFactory) eksaCloudstackAnalyzers() []*Analyze {
 		fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
 		fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
-	return a.generateCrdAnalyzers(crds)
+	analyzers := a.generateCrdAnalyzers(crds)
+	return append(analyzers, a.validControlPlaneIPAnalyzer())
 }
 
 func (a *analyzerFactory) eksaSnowAnalyzers() []*Analyze {
@@ -211,6 +218,15 @@ func (a *analyzerFactory) eksaDockerAnalyzers() []*Analyze {
 
 	analyazers = append(analyazers, a.generateCrdAnalyzers(crds)...)
 	return append(analyazers, a.generateDeploymentAnalyzers(deployments)...)
+}
+
+func (a *analyzerFactory) eksaNutanixAnalyzers() []*Analyze {
+	crds := []string{
+		fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
+		fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group),
+	}
+	analyzers := a.generateCrdAnalyzers(crds)
+	return append(analyzers, a.validControlPlaneIPAnalyzer())
 }
 
 // EksaLogTextAnalyzers given a slice of Collectors will check which namespaced log collectors are present

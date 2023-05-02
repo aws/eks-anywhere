@@ -14,12 +14,13 @@ func TestManagementClusterAnalyzers(t *testing.T) {
 	g := NewGomegaWithT(t)
 	factory := diagnostics.NewAnalyzerFactory()
 	analyzers := factory.ManagementClusterAnalyzers()
-	g.Expect(analyzers).To(HaveLen(12), "DataCenterConfigCollectors() mismatch between desired collectors and actual")
+	g.Expect(analyzers).To(HaveLen(13), "DataCenterConfigCollectors() mismatch between desired collectors and actual")
 	g.Expect(getDeploymentStatusAnalyzer(analyzers, "capc-controller-manager")).ToNot(BeNil(), "capc controller manager analyzer should be present")
 	g.Expect(getDeploymentStatusAnalyzer(analyzers, "capv-controller-manager")).ToNot(BeNil(), "capv controller manager analyzer should be present")
 	g.Expect(getDeploymentStatusAnalyzer(analyzers, "capt-controller-manager")).ToNot(BeNil(), "capt controller manager analyzer should be present")
-	g.Expect(analyzers[10].CustomResourceDefinition.CheckName).To(Equal("clusters.anywhere.eks.amazonaws.com"))
-	g.Expect(analyzers[11].CustomResourceDefinition.CheckName).To(Equal("bundles.anywhere.eks.amazonaws.com"))
+	g.Expect(getDeploymentStatusAnalyzer(analyzers, "capx-controller-manager")).ToNot(BeNil(), "capx controller manager analyzer should be present")
+	g.Expect(analyzers[11].CustomResourceDefinition.CheckName).To(Equal("clusters.anywhere.eks.amazonaws.com"))
+	g.Expect(analyzers[12].CustomResourceDefinition.CheckName).To(Equal("bundles.anywhere.eks.amazonaws.com"))
 }
 
 func getDeploymentStatusAnalyzer(analyzers []*diagnostics.Analyze, name string) *diagnostics.Analyze {
@@ -74,7 +75,21 @@ func TestCloudStackDataCenterConfigAnalyzers(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.CloudStackDatacenterKind}
 	analyzerFactory := diagnostics.NewAnalyzerFactory()
 	analyzers := analyzerFactory.DataCenterConfigAnalyzers(datacenter)
-	g.Expect(analyzers).To(HaveLen(2), "DataCenterConfigAnalyzers() mismatch between desired analyzers and actual")
+	g.Expect(analyzers).To(HaveLen(3), "DataCenterConfigAnalyzers() mismatch between desired analyzers and actual")
+}
+
+func TestNutanixDataCenterConfigAnalyzers(t *testing.T) {
+	g := NewGomegaWithT(t)
+	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.NutanixDatacenterKind}
+	analyzerFactory := diagnostics.NewAnalyzerFactory()
+	analyzers := analyzerFactory.DataCenterConfigAnalyzers(datacenter)
+	g.Expect(analyzers).To(HaveLen(3), "DataCenterConfigAnalyzers() mismatch between desired analyzers and actual")
+	g.Expect(analyzers[0].CustomResourceDefinition.CustomResourceDefinitionName).To(Equal("nutanixdatacenterconfigs.anywhere.eks.amazonaws.com"),
+		"Nutanix generateCrdAnalyzers() mismatch between desired datacenter config group version and actual")
+	g.Expect(analyzers[1].CustomResourceDefinition.CustomResourceDefinitionName).To(Equal("nutanixmachineconfigs.anywhere.eks.amazonaws.com"),
+		"Nutanix generateCrdAnalyzers() mismatch between desired machine config group version and actual")
+	g.Expect(analyzers[2].TextAnalyze.RegexPattern).To(Equal("exit code: 0"),
+		"validControlPlaneIPAnalyzer() mismatch between desired regexPattern and actual")
 }
 
 func TestSnowAnalyzers(t *testing.T) {
