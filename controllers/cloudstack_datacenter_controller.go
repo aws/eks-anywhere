@@ -58,7 +58,7 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
 		if err := patchHelper.Patch(ctx, cloudstackDatacenter, patchOpts...); err != nil {
-			log.Error(reterr, "Failed to patch cloudstackdatacenterconfig")
+			log.Error(reterr, "patching CloudStackDatacenterConfig")
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 	}()
@@ -70,7 +70,7 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 
 	result, err := r.reconcile(ctx, cloudstackDatacenter, log)
 	if err != nil {
-		log.Error(err, "Failed to reconcile CloudStackDatacenterConfig")
+		log.Error(err, "reconciling CloudStackDatacenterConfig")
 	}
 	return result, err
 }
@@ -88,7 +88,7 @@ func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudsta
 	}
 	// Run validations with validator as Get will construct CMK each time
 	if err := validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenterConfig); err != nil {
-		log.Error(err, "Failed to validate CloudStackDatacenterConfig")
+		log.Error(err, "validating CloudStackDatacenterConfig")
 		return ctrl.Result{}, err
 	}
 
