@@ -9,6 +9,10 @@ description: >
 This page provides walkthroughs on replacing the EKS Anywhere Cilium with a custom CNI. 
 For more information on CNI customization see [Use a custom CNI]({{< ref "/docs/reference/clusterspec/optional/cni#use-a-custom-cni"  >}}).
 
+{{% alert title="Note" color="primary" %}}
+When replacing EKS Anywhere Cilium with a custom CNI, it is your responsibility to manage the custom CNI, including version upgrades and support.
+{{% /alert %}}
+
 ## Prerequisites
 
 * EKS Anywhere v0.15+.
