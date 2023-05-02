@@ -216,7 +216,8 @@ func capiCluster() *clusterv1.Cluster {
 				},
 			},
 			ControlPlaneEndpoint: clusterv1.APIEndpoint{
-				Host: "",
+				Host: "1.2.3.4",
+				Port: 6443,
 			},
 			ControlPlaneRef: &corev1.ObjectReference{
 				Kind:       "KubeadmControlPlane",
@@ -263,6 +264,10 @@ func cloudstackCluster() *cloudstackv1.CloudStackCluster {
 						Namespace: "eksa-system",
 					},
 				},
+			},
+			ControlPlaneEndpoint: clusterv1.APIEndpoint{
+				Host: "1.2.3.4",
+				Port: 6443,
 			},
 		},
 	}
@@ -354,7 +359,7 @@ func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *con
 						Permissions: "",
 						Encoding:    "",
 						Append:      false,
-						Content:     "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: \n    image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158\n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /etc/kubernetes/admin.conf\n    name: kubeconfig\nstatus: {}\n",
+						Content:     "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: 1.2.3.4\n    image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158\n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /etc/kubernetes/admin.conf\n    name: kubeconfig\nstatus: {}\n",
 					},
 					{
 						Path:  "/etc/kubernetes/audit-policy.yaml",

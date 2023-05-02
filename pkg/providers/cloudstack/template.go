@@ -102,7 +102,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	host, port, _ := net.SplitHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	host, port, err := getControlPlaneHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	if err != nil {
+		return nil, err
+	}
+
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
@@ -209,7 +213,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		fillProxyConfigurations(values, clusterSpec)
+		fillProxyConfigurations(values, clusterSpec, net.JoinHostPort(host, port))
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -281,7 +285,7 @@ func fillDiskOffering(values map[string]interface{}, diskOffering *v1alpha1.Clou
 	}
 }
 
-func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec) {
+func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec, controlPlaneEndpoint string) {
 	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	values["proxyConfig"] = true
 	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
@@ -298,9 +302,8 @@ func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster
 			noProxyList = append(noProxyList, cloudStackManagementAPIEndpointHostname)
 		}
 	}
-	noProxyList = append(noProxyList,
-		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-	)
+
+	noProxyList = append(noProxyList, controlPlaneEndpoint)
 
 	values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
 	values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
@@ -356,7 +359,11 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		fillProxyConfigurations(values, clusterSpec)
+		endpoint, err := controlPlaneEndpointHost(clusterSpec)
+		if err != nil {
+			return nil, err
+		}
+		fillProxyConfigurations(values, clusterSpec, endpoint)
 	}
 
 	if workerNodeGroupConfiguration.UpgradeRolloutStrategy != nil {

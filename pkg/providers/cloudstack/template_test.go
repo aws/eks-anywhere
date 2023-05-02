@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 )
@@ -111,6 +112,20 @@ func TestTemplateBuilderGenerateCAPISpecControlPlaneInvalidSSHKey(t *testing.T) 
 	}
 }
 
+func TestTemplateBuilderGenerateCAPISpecControlPlaneInvalidEndpoint(t *testing.T) {
+	g := NewWithT(t)
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "1.1.1.1::"
+	templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
+
+	_, err := templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster)
+		values["etcdTemplateName"] = clusterapi.EtcdMachineTemplateName(clusterSpec.Cluster)
+	})
+
+	g.Expect(err).To(MatchError(ContainSubstring("error building template map from CP host 1.1.1.1:: is invalid: address 1.1.1.1::: too many colons in address")))
+}
+
 func TestTemplateBuilderGenerateCAPISpecWorkersInvalidSSHKey(t *testing.T) {
 	g := NewWithT(t)
 	templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
@@ -123,4 +138,15 @@ func TestTemplateBuilderGenerateCAPISpecWorkersInvalidSSHKey(t *testing.T) {
 	g.Expect(err).To(
 		MatchError(ContainSubstring("formatting ssh key for cloudstack worker template: ssh")),
 	)
+}
+
+func TestTemplateBuilderGenerateCAPISpecWorkersInvalidEndpoint(t *testing.T) {
+	g := NewWithT(t)
+	templateBuilder := cloudstack.NewTemplateBuilder(time.Now)
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{}
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "1.1.1.1::"
+	machineTemplateNames, kubeadmConfigTemplateNames := clusterapi.InitialTemplateNamesForWorkers(clusterSpec)
+	_, err := templateBuilder.GenerateCAPISpecWorkers(clusterSpec, machineTemplateNames, kubeadmConfigTemplateNames)
+	g.Expect(err).To(MatchError(ContainSubstring("building template map for MD host 1.1.1.1:: is invalid: address 1.1.1.1::: too many colons in address")))
 }

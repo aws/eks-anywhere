@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -140,11 +138,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 		}
 	}
 
-	err := v.setDefaultAndValidateControlPlaneHostPort(clusterSpec)
-	if err != nil {
-		return fmt.Errorf("validating controlPlaneConfiguration.Endpoint.Host: %v", err)
-	}
-
 	for _, machineConfig := range clusterSpec.CloudStackMachineConfigs {
 		if len(machineConfig.Spec.Users) <= 0 {
 			machineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
@@ -155,7 +148,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 		if machineConfig.Spec.Users[0].Name == "" {
 			machineConfig.Spec.Users[0].Name = v1alpha1.DefaultCloudStackUser
 		}
-		if err = v.validateMachineConfig(ctx, clusterSpec.CloudStackDatacenter, machineConfig); err != nil {
+		if err := v.validateMachineConfig(ctx, clusterSpec.CloudStackDatacenter, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}
 	}
@@ -170,9 +163,9 @@ func (v *Validator) ValidateControlPlaneEndpointUniqueness(endpoint string) erro
 		logger.Info("Skipping control plane endpoint uniqueness check")
 		return nil
 	}
-	host, port, err := net.SplitHostPort(endpoint)
+	host, port, err := getControlPlaneHostPort(endpoint)
 	if err != nil {
-		return fmt.Errorf("invalid endpoint - not in host:port format: %v", err)
+		return fmt.Errorf("invalid endpoint: %v", err)
 	}
 	if networkutils.IsPortInUse(v.netClient, host, port) {
 		return fmt.Errorf("endpoint <%s> is already in use", endpoint)
@@ -210,27 +203,6 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		}
 	}
 
-	return nil
-}
-
-// setDefaultAndValidateControlPlaneHostPort checks the input host to see if it is a valid hostname. If it's valid, it checks the port
-// to see if the default port should be used and sets it.
-func (v *Validator) setDefaultAndValidateControlPlaneHostPort(clusterSpec *cluster.Spec) error {
-	pHost := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	_, port, err := net.SplitHostPort(pHost)
-	if err != nil {
-		if strings.Contains(err.Error(), "missing port") {
-			port = controlEndpointDefaultPort
-			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
-				clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-				controlEndpointDefaultPort)
-		} else {
-			return fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
-		}
-	}
-	if !networkutils.IsPortValid(port) {
-		return fmt.Errorf("host %s has an invalid port", pHost)
-	}
 	return nil
 }
 
