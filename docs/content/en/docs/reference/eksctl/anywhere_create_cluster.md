@@ -18,16 +18,21 @@ anywhere create cluster -f <cluster-config-file> [flags]
 ### Options
 
 ```
-      --bundles-override string          Override default Bundles manifest (not recommended)
-  -f, --filename string                  Filename that contains EKS-A cluster configuration
-      --force-cleanup                    Force deletion of previously created bootstrap cluster
-  -z, --hardware-csv string              Path to a CSV file containing hardware data.
-  -h, --help                             help for cluster
-      --install-packages string          Location of curated packages configuration files to install to the cluster
-      --kubeconfig string                Management cluster kubeconfig file
-      --no-timeouts                      Disable timeout for all wait operations
-      --skip-ip-check                    Skip check for whether cluster control plane ip is in use
-      --tinkerbell-bootstrap-ip string   Override the local tinkerbell IP in the bootstrap cluster
+      --bundles-override string             Override default Bundles manifest (not recommended)
+      --control-plane-wait-timeout string   Override the default control plane wait timeout (default "1h0m0s")
+      --external-etcd-wait-timeout string   Override the default external etcd wait timeout (default "1h0m0s")
+  -f, --filename string                     Filename that contains EKS-A cluster configuration
+      --force-cleanup                       Force deletion of previously created bootstrap cluster
+  -z, --hardware-csv string                 Path to a CSV file containing hardware data.
+  -h, --help                                help for cluster
+      --install-packages string             Location of curated packages configuration files to install to the cluster
+      --kubeconfig string                   Management cluster kubeconfig file
+      --no-timeouts                         Disable timeout for all wait operations
+      --node-startup-timeout string         Override the default node startup timeout (default "10m0s")
+      --per-machine-wait-timeout string     Override the default machine wait timeout per machine (default "10m0s")
+      --skip-ip-check                       Skip check for whether cluster control plane ip is in use
+      --tinkerbell-bootstrap-ip string      Override the local tinkerbell IP in the bootstrap cluster
+      --unhealthy-machine-timeout string    Override the default unhealthy machine timeout (default "5m0s")
 ```
 
 ### Options inherited from parent commands
