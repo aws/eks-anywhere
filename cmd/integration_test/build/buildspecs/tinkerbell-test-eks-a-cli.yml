@@ -16,9 +16,6 @@ env:
     EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
     EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
     EKSA_AWS_REGION: "packages_ci_beta:aws_region"
-    VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
-    GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
-    GOVC_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
@@ -63,11 +60,6 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
-      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
-      - >
-        ./bin/test e2e cleanup vsphere
-        -n ${CLUSTER_NAME_PREFIX}
-        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -94,29 +86,6 @@ phases:
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
-  post_build:
-    commands:
-      - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
-      - >
-        ./bin/test e2e cleanup vsphere
-        -n ${CLUSTER_NAME_PREFIX}
-        -v 4
-      # Clean up test runner instances in EKS-A Baremetal lab
-      - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
-      - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
-      - export VSPHERE_SERVER=${TEST_RUNNER_GOVC_URL}
-      - export GOVC_DATACENTER=${TEST_RUNNER_GOVC_DATACENTER}
-      - export NODE_PREFIX=eksa-e2e-$CODEBUILD_BUILD_ID
-      - >
-        if [[ ${#NODE_PREFIX} -gt 80 ]] ; then
-          echo "Truncating node prefix to 80 chars for vsphere test runner nodes"
-          START="$((${#NODE_PREFIX}-79))"
-          export NODE_PREFIX=$(echo "${NODE_PREFIX}" | cut -c $START-)
-        fi
-      - >
-        ./bin/test e2e cleanup vsphere
-        -n ${NODE_PREFIX}
-        -v 4
 reports:
   e2e-reports:
     files:
