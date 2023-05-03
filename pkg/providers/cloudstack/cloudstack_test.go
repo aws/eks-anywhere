@@ -1847,7 +1847,7 @@ func TestClusterUpgradeNeededMachineConfigsChangedDiskOffering(t *testing.T) {
 	}
 }
 
-func TestAnyImmutableFieldChangedDiskOfferingNoChange(t *testing.T) {
+func TestNeedNewMachineTemplateDiskOfferingNoChange(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cc := givenClusterConfig(t, testClusterConfigMainFilename)
 	fillClusterSpecWithClusterConfig(clusterSpec, cc)
@@ -1857,10 +1857,10 @@ func TestAnyImmutableFieldChangedDiskOfferingNoChange(t *testing.T) {
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+	assert.False(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
-func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
+func TestNeedNewMachineTemplateDiskOfferingNameChange(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cc := givenClusterConfig(t, testClusterConfigMainFilename)
 	fillClusterSpecWithClusterConfig(clusterSpec, cc)
@@ -1880,10 +1880,10 @@ func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
 		Filesystem: "",
 		Label:      "",
 	}
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
-func TestAnyImmutableFieldChangedSymlinksAdded(t *testing.T) {
+func TestNeedNewMachineTemplateSymlinksAdded(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cc := givenClusterConfig(t, testClusterConfigMainFilename)
 	fillClusterSpecWithClusterConfig(clusterSpec, cc)
@@ -1894,10 +1894,10 @@ func TestAnyImmutableFieldChangedSymlinksAdded(t *testing.T) {
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	newMachineConfigsMap["test"].Spec.Symlinks["/new/folder"] = "/data/new/folder"
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
-func TestAnyImmutableFieldChangedComputeOffering(t *testing.T) {
+func TestNeedNewMachineTemplateComputeOffering(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cc := givenClusterConfig(t, testClusterConfigMainFilename)
 	fillClusterSpecWithClusterConfig(clusterSpec, cc)
@@ -1908,10 +1908,10 @@ func TestAnyImmutableFieldChangedComputeOffering(t *testing.T) {
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	newMachineConfigsMap["test"].Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{Name: "new-offering"}
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
-func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
+func TestNeedNewMachineTemplateSymlinksChange(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cc := givenClusterConfig(t, testClusterConfigMainFilename)
 	fillClusterSpecWithClusterConfig(clusterSpec, cc)
@@ -1924,19 +1924,19 @@ func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
 	for k, v := range newMachineConfigsMap["test"].Spec.Symlinks {
 		newMachineConfigsMap["test"].Spec.Symlinks[k] = "/new" + v
 	}
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
-func TestAnyImmutableFieldChangedDomain(t *testing.T) {
+func TestNeedNewMachineTemplateDomain(t *testing.T) {
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newDcConfig.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
 
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
+	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
 }
 
-func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
+func TestNeedNewMachineTemplateFewerZones(t *testing.T) {
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	secondAz := dcConfig.Spec.AvailabilityZones[0].DeepCopy()
 	secondAz.Name = "shinyNewAz"
@@ -1944,10 +1944,10 @@ func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
 
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
+	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
 }
 
-func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) {
+func TestNeedNewMachineTemplateMissingApiEndpointFromCloudStackCluster(t *testing.T) {
 	// We currently can't retrieve ManagementApiEndpoint for an AZ from the CloudStackCluster resource, so a difference there should be ignored
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	cc := givenClusterConfig(t, testClusterConfigMainFilename)
@@ -1959,7 +1959,7 @@ func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) 
 	newDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+	assert.False(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {

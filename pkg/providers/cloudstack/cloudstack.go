@@ -155,7 +155,15 @@ func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 }
 
 func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.CloudStackMachineConfig, clusterSpec *cluster.Spec) error {
-	// TODO: for GA, we need to decide which fields are immutable.
+	prevMachineConfig, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, newConfig.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+	if err != nil {
+		return err
+	}
+
+	err = newConfig.ValidateUpdate(prevMachineConfig)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -430,7 +438,7 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsmc, newCs
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc, log)
+	return NeedNewMachineTemplate(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc, log)
 }
 
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
@@ -444,7 +452,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *
 		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc, log)
+	return NeedNewMachineTemplate(oldCsdc, newCsdc, oldCsmc, newCsmc, log)
 }
 
 func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
@@ -458,7 +466,7 @@ func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsmc, newCsmc *v1al
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc, log)
+	return NeedNewMachineTemplate(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc, log)
 }
 
 func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, csdc *v1alpha1.CloudStackDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
@@ -482,10 +490,10 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 	return true, nil
 }
 
-// AnyImmutableFieldChanged Used by EKS-A controller and CLI upgrade workflow to compare generated CSDC/CSMC's from
+// NeedNewMachineTemplate Used by EKS-A controller and CLI upgrade workflow to compare generated CSDC/CSMC's from
 // CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
 // new CloudStackMachineTemplates.
-func AnyImmutableFieldChanged(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatacenterConfig, generatedCsmc, actualCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
+func NeedNewMachineTemplate(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatacenterConfig, generatedCsmc, actualCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
 	if len(generatedCsdc.Spec.AvailabilityZones) != len(actualCsdc.Spec.AvailabilityZones) {
 		log.V(4).Info("Generated and actual CloudStackDatacenterConfigs do not match", "generatedAvailabilityZones", generatedCsdc.Spec.AvailabilityZones,
 			"actualAvailabilityZones", actualCsdc.Spec.AvailabilityZones)
