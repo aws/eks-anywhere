@@ -74,4 +74,6 @@ skipped_tests:
 - TestTinkerbellKubernetes126UbuntuThreeWorkersSimpleFlow
 - TestTinkerbellKubernetes126BottleRocketThreeWorkersSimpleFlow
 - TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
-# vSphere tests
+# Conformance
+- TestSnowKubernetes122ThreeWorkersConformanceFlow
+- TestSnowKubernetes123ThreeWorkersConformanceFlow
