@@ -3754,6 +3754,11 @@ spec:
                       name:
                         type: string
                     type: object
+                  skipLoadBalancerDeployment:
+                    description: SkipLoadBalancerDeployment skip deploying control
+                      plane load balancer. Make sure your infrastructure can handle
+                      control plane load balancing when you set this field to true.
+                    type: boolean
                   taints:
                     description: Taints define the set of taints to be applied on
                       control plane nodes
@@ -4071,6 +4076,15 @@ spec:
           status:
             description: ClusterStatus defines the observed state of Cluster.
             properties:
+              childrenReconciledGeneration:
+                description: 'ChildrenReconciledGeneration represents the sum of the
+                  .metadata.generation for all the linked objects for the cluster,
+                  observed the last time the cluster was successfully reconciled.
+                  NOTE: This field was added for internal use and we do not provide
+                  guarantees to its behavior if changed externally. Its meaning and
+                  implementation are subject to change in the future.'
+                format: int64
+                type: integer
               conditions:
                 items:
                   description: Condition defines an observation of a Cluster API resource
@@ -4143,6 +4157,15 @@ spec:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
                 type: string
+              reconciledGeneration:
+                description: 'ReconciledGeneration represents the .metadata.generation
+                  the last time the cluster was successfully reconciled. It is the
+                  latest generation observed by the controller. NOTE: This field was
+                  added for internal use and we do not provide guarantees to its behavior
+                  if changed externally. Its meaning and implementation are subject
+                  to change in the future.'
+                format: int64
+                type: integer
             type: object
         type: object
     served: true
@@ -4677,8 +4700,8 @@ spec:
                       description: The machine address.
                       type: string
                     type:
-                      description: Machine address type, one of Hostname, ExternalIP
-                        or InternalIP.
+                      description: Machine address type, one of Hostname, ExternalIP,
+                        InternalIP, ExternalDNS or InternalDNS.
                       type: string
                   required:
                   - address
@@ -6458,6 +6481,19 @@ spec:
       containers:
       - args:
         - --leader-elect
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
         image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
         imagePullPolicy: Always
         livenessProbe:

@@ -469,6 +469,15 @@ spec:
           status:
             description: ClusterStatus defines the observed state of Cluster.
             properties:
+              childrenReconciledGeneration:
+                description: 'ChildrenReconciledGeneration represents the sum of the
+                  .metadata.generation for all the linked objects for the cluster,
+                  observed the last time the cluster was successfully reconciled.
+                  NOTE: This field was added for internal use and we do not provide
+                  guarantees to its behavior if changed externally. Its meaning and
+                  implementation are subject to change in the future.'
+                format: int64
+                type: integer
               conditions:
                 items:
                   description: Condition defines an observation of a Cluster API resource
@@ -541,6 +550,15 @@ spec:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
                 type: string
+              reconciledGeneration:
+                description: 'ReconciledGeneration represents the .metadata.generation
+                  the last time the cluster was successfully reconciled. It is the
+                  latest generation observed by the controller. NOTE: This field was
+                  added for internal use and we do not provide guarantees to its behavior
+                  if changed externally. Its meaning and implementation are subject
+                  to change in the future.'
+                format: int64
+                type: integer
             type: object
         type: object
     served: true

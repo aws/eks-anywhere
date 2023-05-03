@@ -26,7 +26,9 @@ import (
 	"github.com/aws/eks-anywhere/controllers/mocks"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -34,8 +36,10 @@ import (
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 	vspherereconcilermocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+var clusterName = "test-cluster"
 
 type vsphereClusterReconcilerTest struct {
 	govcClient *vspheremocks.MockProviderGovcClient
@@ -98,6 +102,9 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 				Name: "my-bundles-ref",
 			},
 		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
 	}
 
 	controller := gomock.NewController(t)
@@ -115,6 +122,143 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	g.Expect(result).To(Equal(ctrl.Result{}))
 }
 
+func TestClusterReconcilerReconcileGenerations(t *testing.T) {
+	testCases := []struct {
+		testName                  string
+		clusterGeneration         int64
+		childReconciledGeneration int64
+		reconciledGeneration      int64
+
+		datacenterGeneration          int64
+		cpMachineConfigGeneration     int64
+		workerMachineConfigGeneration int64
+		oidcGeneration                int64
+		awsIAMGeneration              int64
+
+		wantReconciliation            bool
+		wantChildReconciledGeneration int64
+	}{
+		{
+			testName:                      "matching generation, matching aggregated generation",
+			clusterGeneration:             2,
+			reconciledGeneration:          2,
+			childReconciledGeneration:     12,
+			datacenterGeneration:          1,
+			cpMachineConfigGeneration:     2,
+			workerMachineConfigGeneration: 5,
+			oidcGeneration:                3,
+			awsIAMGeneration:              1,
+			wantReconciliation:            false,
+			wantChildReconciledGeneration: 12,
+		},
+		{
+			testName:                      "matching generation, non-matching aggregated generation",
+			clusterGeneration:             2,
+			reconciledGeneration:          2,
+			childReconciledGeneration:     10,
+			datacenterGeneration:          1,
+			cpMachineConfigGeneration:     2,
+			workerMachineConfigGeneration: 5,
+			oidcGeneration:                3,
+			awsIAMGeneration:              1,
+			wantReconciliation:            true,
+			wantChildReconciledGeneration: 12,
+		},
+		{
+			testName:                      "non-matching generation, matching aggregated generation",
+			clusterGeneration:             3,
+			reconciledGeneration:          2,
+			childReconciledGeneration:     12,
+			datacenterGeneration:          1,
+			cpMachineConfigGeneration:     2,
+			workerMachineConfigGeneration: 5,
+			oidcGeneration:                3,
+			awsIAMGeneration:              1,
+			wantReconciliation:            true,
+			wantChildReconciledGeneration: 12,
+		},
+		{
+			testName:                      "non-matching generation, non-matching aggregated generation",
+			clusterGeneration:             3,
+			reconciledGeneration:          2,
+			childReconciledGeneration:     12,
+			datacenterGeneration:          1,
+			cpMachineConfigGeneration:     2,
+			workerMachineConfigGeneration: 5,
+			oidcGeneration:                3,
+			awsIAMGeneration:              3,
+			wantReconciliation:            true,
+			wantChildReconciledGeneration: 14,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			config, bundles := baseTestVsphereCluster()
+
+			config.Cluster.Generation = tt.clusterGeneration
+			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
+			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
+			config.Cluster.Status.ChildrenReconciledGeneration = tt.childReconciledGeneration
+
+			config.VSphereDatacenter.Generation = tt.datacenterGeneration
+			cpMachine := config.VSphereMachineConfigs[config.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+			cpMachine.Generation = tt.cpMachineConfigGeneration
+			workerMachineConfig := config.VSphereMachineConfigs[config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+			workerMachineConfig.Generation = tt.workerMachineConfigGeneration
+
+			for _, oidc := range config.OIDCConfigs {
+				oidc.Generation = tt.oidcGeneration
+			}
+			for _, awsIAM := range config.AWSIAMConfigs {
+				awsIAM.Generation = tt.awsIAMGeneration
+			}
+
+			g := NewWithT(t)
+			ctx := context.Background()
+
+			objs := make([]runtime.Object, 0, 7)
+			objs = append(objs, config.Cluster, bundles)
+			for _, o := range config.ChildObjects() {
+				objs = append(objs, o)
+			}
+
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			mockCtrl := gomock.NewController(t)
+			providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+			iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+			clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+			registry := newRegistryMock(providerReconciler)
+			mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+			if tt.wantReconciliation {
+				iam.EXPECT().EnsureCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(config.Cluster)).Return(controller.Result{}, nil)
+				iam.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(config.Cluster)).Return(controller.Result{}, nil)
+				providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1)
+			} else {
+				providerReconciler.EXPECT().ReconcileWorkerNodes(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+			}
+
+			r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs)
+
+			result, err := r.Reconcile(ctx, clusterRequest(config.Cluster))
+			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(result).To(Equal(ctrl.Result{}))
+
+			api := envtest.NewAPIExpecter(t, client)
+			c := envtest.CloneNameNamespace(config.Cluster)
+			api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+				g.Expect(c.Status.ReconciledGeneration).To(
+					Equal(c.Generation), "status generation should have been updated to the metadata generation's value",
+				)
+
+				g.Expect(c.Status.ChildrenReconciledGeneration).To(
+					Equal(tt.wantChildReconciledGeneration), "status children generation should have been updated to the aggregated generation's value",
+				)
+			})
+		})
+	}
+}
+
 func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
@@ -127,6 +271,9 @@ func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t 
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
 		},
 	}
 
@@ -150,9 +297,9 @@ func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t 
 func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	managementCluster := createCluster()
+	managementCluster := vsphereCluster()
 	managementCluster.Name = "management-cluster"
-	cluster := createCluster()
+	cluster := vsphereCluster()
 	cluster.SetManagedBy(managementCluster.Name)
 	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
 
@@ -195,6 +342,9 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 				Name: "my-bundles-ref",
 			},
 		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
 	}
 
 	controller := gomock.NewController(t)
@@ -225,6 +375,9 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 				Authenticate: true,
 			},
 		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
 	}
 
 	controller := gomock.NewController(t)
@@ -241,17 +394,17 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 
 func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 	secret := createSecret()
-	managementCluster := createCluster()
+	managementCluster := vsphereCluster()
 	managementCluster.Name = "management-cluster"
-	cluster := createCluster()
+	cluster := vsphereCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 	now := metav1.Now()
 	cluster.DeletionTimestamp = &now
 
-	datacenterConfig := createDataCenter(cluster)
+	datacenterConfig := vsphereDataCenter(cluster)
 	bundle := createBundle(managementCluster)
-	machineConfigCP := createCPMachineConfig()
-	machineConfigWN := createWNMachineConfig()
+	machineConfigCP := vsphereCPMachineConfig()
+	machineConfigWN := vsphereWorkerMachineConfig()
 
 	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
 
@@ -282,9 +435,9 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	managementCluster := createCluster()
+	managementCluster := vsphereCluster()
 	managementCluster.Name = "management-cluster"
-	cluster := createCluster()
+	cluster := vsphereCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
 	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
@@ -325,9 +478,9 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 func TestClusterReconcilerReconcileDeleteClusterManagedByCLI(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	managementCluster := createCluster()
+	managementCluster := vsphereCluster()
 	managementCluster.Name = "management-cluster"
-	cluster := createCluster()
+	cluster := vsphereCluster()
 	cluster.SetManagedBy(managementCluster.Name)
 	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
 	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
@@ -365,17 +518,17 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 	g := NewWithT(t)
 
 	secret := createSecret()
-	managementCluster := createCluster()
+	managementCluster := vsphereCluster()
 	managementCluster.Name = "management-cluster"
-	cluster := createCluster()
+	cluster := vsphereCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 	now := metav1.Now()
 	cluster.DeletionTimestamp = &now
 
-	datacenterConfig := createDataCenter(cluster)
+	datacenterConfig := vsphereDataCenter(cluster)
 	bundle := createBundle(managementCluster)
-	machineConfigCP := createCPMachineConfig()
-	machineConfigWN := createWNMachineConfig()
+	machineConfigCP := vsphereCPMachineConfig()
+	machineConfigWN := vsphereWorkerMachineConfig()
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
 
@@ -422,6 +575,9 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 				Name: "",
 			},
 		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
 	}
 	objs := []runtime.Object{cluster}
 	cb := fake.NewClientBuilder()
@@ -456,6 +612,9 @@ func TestClusterReconcilerDontDeletePackagesOnSelfManaged(t *testing.T) {
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
 			},
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
 		},
 	}
 	objs := []runtime.Object{cluster}
@@ -494,6 +653,9 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
 				},
+			},
+			Status: anywherev1.ClusterStatus{
+				ReconciledGeneration: 1,
 			},
 		}
 	}
@@ -538,6 +700,9 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 					Name: "my-management-cluster",
 				},
 			},
+			Status: anywherev1.ClusterStatus{
+				ReconciledGeneration: 1,
+			},
 		}
 	}
 
@@ -577,7 +742,7 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 	})
 }
 
-func createWNMachineConfig() *anywherev1.VSphereMachineConfig {
+func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
 	return &anywherev1.VSphereMachineConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VSphereMachineConfig",
@@ -628,7 +793,7 @@ func newCAPICluster(name, namespace string) *clusterv1.Cluster {
 	}
 }
 
-func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
+func vsphereCPMachineConfig() *anywherev1.VSphereMachineConfig {
 	return &anywherev1.VSphereMachineConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VSphereMachineConfig",
@@ -666,42 +831,42 @@ func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
 	}
 }
 
-func createBundle(cluster *anywherev1.Cluster) *v1alpha1.Bundles {
-	return &v1alpha1.Bundles{
+func createBundle(cluster *anywherev1.Cluster) *releasev1.Bundles {
+	return &releasev1.Bundles{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cluster.Name,
 			Namespace: "default",
 		},
-		Spec: v1alpha1.BundlesSpec{
-			VersionsBundles: []v1alpha1.VersionsBundle{
+		Spec: releasev1.BundlesSpec{
+			VersionsBundles: []releasev1.VersionsBundle{
 				{
 					KubeVersion: "1.20",
-					EksD: v1alpha1.EksDRelease{
+					EksD: releasev1.EksDRelease{
 						Name:           "test",
 						EksDReleaseUrl: "testdata/release.yaml",
 						KubeVersion:    "1.20",
 					},
-					CertManager:                v1alpha1.CertManagerBundle{},
-					ClusterAPI:                 v1alpha1.CoreClusterAPI{},
-					Bootstrap:                  v1alpha1.KubeadmBootstrapBundle{},
-					ControlPlane:               v1alpha1.KubeadmControlPlaneBundle{},
-					VSphere:                    v1alpha1.VSphereBundle{},
-					Docker:                     v1alpha1.DockerBundle{},
-					Eksa:                       v1alpha1.EksaBundle{},
-					Cilium:                     v1alpha1.CiliumBundle{},
-					Kindnetd:                   v1alpha1.KindnetdBundle{},
-					Flux:                       v1alpha1.FluxBundle{},
-					BottleRocketHostContainers: v1alpha1.BottlerocketHostContainersBundle{},
-					ExternalEtcdBootstrap:      v1alpha1.EtcdadmBootstrapBundle{},
-					ExternalEtcdController:     v1alpha1.EtcdadmControllerBundle{},
-					Tinkerbell:                 v1alpha1.TinkerbellBundle{},
+					CertManager:                releasev1.CertManagerBundle{},
+					ClusterAPI:                 releasev1.CoreClusterAPI{},
+					Bootstrap:                  releasev1.KubeadmBootstrapBundle{},
+					ControlPlane:               releasev1.KubeadmControlPlaneBundle{},
+					VSphere:                    releasev1.VSphereBundle{},
+					Docker:                     releasev1.DockerBundle{},
+					Eksa:                       releasev1.EksaBundle{},
+					Cilium:                     releasev1.CiliumBundle{},
+					Kindnetd:                   releasev1.KindnetdBundle{},
+					Flux:                       releasev1.FluxBundle{},
+					BottleRocketHostContainers: releasev1.BottlerocketHostContainersBundle{},
+					ExternalEtcdBootstrap:      releasev1.EtcdadmBootstrapBundle{},
+					ExternalEtcdController:     releasev1.EtcdadmControllerBundle{},
+					Tinkerbell:                 releasev1.TinkerbellBundle{},
 				},
 			},
 		},
 	}
 }
 
-func createDataCenter(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacenterConfig {
+func vsphereDataCenter(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacenterConfig {
 	return &anywherev1.VSphereDatacenterConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VSphereDatacenterConfig",
@@ -730,10 +895,10 @@ func createDataCenter(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacenter
 	}
 }
 
-func createCluster() *anywherev1.Cluster {
+func vsphereCluster() *anywherev1.Cluster {
 	return &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      clusterName,
 			Namespace: namespace,
 		},
 		Spec: anywherev1.ClusterSpec{
@@ -749,7 +914,7 @@ func createCluster() *anywherev1.Cluster {
 				},
 				MachineGroupRef: &anywherev1.Ref{
 					Kind: "VSphereMachineConfig",
-					Name: name + "-cp",
+					Name: clusterName + "-cp",
 				},
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
@@ -757,12 +922,15 @@ func createCluster() *anywherev1.Cluster {
 					Count: ptr.Int(1),
 					MachineGroupRef: &anywherev1.Ref{
 						Kind: "VSphereMachineConfig",
-						Name: name + "-wn",
+						Name: clusterName + "-wn",
 					},
 					Name:   "md-0",
 					Labels: nil,
 				},
 			},
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
 		},
 	}
 }
@@ -797,4 +965,78 @@ func (s *sameNameCluster) Matches(x interface{}) bool {
 
 func (s *sameNameCluster) String() string {
 	return fmt.Sprintf("has name %s and namespace %s", s.c.Name, s.c.Namespace)
+}
+
+func baseTestVsphereCluster() (*cluster.Config, *releasev1.Bundles) {
+	config := &cluster.Config{
+		VSphereMachineConfigs: map[string]*anywherev1.VSphereMachineConfig{},
+		OIDCConfigs:           map[string]*anywherev1.OIDCConfig{},
+		AWSIAMConfigs:         map[string]*anywherev1.AWSIamConfig{},
+	}
+
+	config.Cluster = vsphereCluster()
+	config.VSphereDatacenter = vsphereDataCenter(config.Cluster)
+
+	machineConfigCP := vsphereCPMachineConfig()
+	machineConfigWorker := vsphereWorkerMachineConfig()
+	config.VSphereMachineConfigs[machineConfigCP.Name] = machineConfigCP
+	config.VSphereMachineConfigs[machineConfigWorker.Name] = machineConfigWorker
+
+	config.Cluster.Spec.IdentityProviderRefs = []anywherev1.Ref{
+		{
+			Kind: anywherev1.OIDCConfigKind,
+			Name: "my-oidc",
+		},
+		{
+			Kind: anywherev1.AWSIamConfigKind,
+			Name: "my-iam",
+		},
+	}
+
+	oidc := &anywherev1.OIDCConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-oidc",
+			Namespace: config.Cluster.Namespace,
+		},
+	}
+	awsIAM := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-iam",
+			Namespace: config.Cluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       config.Cluster.Name,
+				},
+			},
+		},
+	}
+
+	config.AWSIAMConfigs[awsIAM.Name] = awsIAM
+	config.OIDCConfigs[oidc.Name] = oidc
+
+	bundles := &releasev1.Bundles{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-bundles-ref",
+			Namespace: config.Cluster.Namespace,
+		},
+		Spec: releasev1.BundlesSpec{
+			VersionsBundles: []releasev1.VersionsBundle{
+				{
+					KubeVersion: "v1.25",
+					PackageController: releasev1.PackageBundle{
+						HelmChart: releasev1.Image{},
+					},
+				},
+			},
+		},
+	}
+
+	config.Cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
+		Name:      bundles.Name,
+		Namespace: bundles.Namespace,
+	}
+
+	return config, bundles
 }

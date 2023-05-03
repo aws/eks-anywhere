@@ -42,6 +42,9 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 				Name: "my-bundles-ref",
 			},
 		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
 	}
 
 	cluster := &anywherev1.Cluster{
@@ -55,6 +58,9 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
 			},
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
 		},
 	}
 	cluster.Spec.IdentityProviderRefs = []anywherev1.Ref{
@@ -240,6 +246,9 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 				Namespace: "my-namespace",
 			},
 		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
 	}
 
 	cluster := &anywherev1.Cluster{
@@ -252,6 +261,9 @@ func TestClusterReconcilerSetBundlesRef(t *testing.T) {
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
 			},
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
 		},
 	}
 	cluster.SetManagedBy("my-management-cluster")
@@ -310,12 +322,18 @@ func TestClusterReconcilerWorkloadClusterMgmtClusterNameFail(t *testing.T) {
 			Name:      "my-management-cluster",
 			Namespace: "my-namespace",
 		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
 	}
 
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "my-namespace",
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
 		},
 	}
 	cluster.SetManagedBy("my-management-cluster")
