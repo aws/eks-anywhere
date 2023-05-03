@@ -256,6 +256,14 @@ func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfig
 	return api.WithCloudStackMachineConfig(name, f...)
 }
 
+func (c *CloudStack) Redhat122Template() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat122Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+func (c *CloudStack) Redhat123Template() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines)
+}
+
 func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
 	// Set worker node group ref to cloudstack machine config
 	workerNodeGroup.MachineConfigKind = anywherev1.CloudStackMachineConfigKind

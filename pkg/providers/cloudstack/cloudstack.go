@@ -984,7 +984,6 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 	}
 
 	cpMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	fmt.Println(cpMachineConfigName)
 	if prevSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != cpMachineConfigName {
 		err := p.validateMachineConfigNameUniqueness(ctx, cpMachineConfigName, cluster, clusterSpec)
 		if err != nil {
