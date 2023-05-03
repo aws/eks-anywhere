@@ -3,7 +3,7 @@ module github.com/aws/eks-anywhere-test-tool
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.42.23
+	github.com/aws/aws-sdk-go v1.44.256
 	github.com/aws/eks-anywhere v0.14.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
