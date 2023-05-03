@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 180
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 180
+    INTEGRATION_TEST_MAX_EC2_COUNT: 3
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 3
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
@@ -21,6 +21,10 @@ env:
     T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
     T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+    T_SNOW_DEVICES: "snow_ci:snow_devices"
+    T_SNOW_CREDENTIALS_S3_PATH: "snow_ci:snow_credentials_s3_path"
+    T_SNOW_CERTIFICATES_S3_PATH: "snow_ci:snow_certificates_s3_path"
+    T_SNOW_CONTROL_PLANE_CIDRS: "snow_ci:control_plane_cidrs"
 phases:
   pre_build:
     commands:
@@ -49,11 +53,12 @@ phases:
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
+        --cleanup-vms=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
-# reports:
-#   e2e-reports:
-#     files:
-#       - reports/junit-testing-*.xml
-#     file-format: "JUNITXML"
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"

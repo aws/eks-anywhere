@@ -60,6 +60,7 @@ type (
 	}
 )
 
+// RunTestsInParallel Run Tests in parallel by spawning multiple admin machines.
 func RunTestsInParallel(conf ParallelRunConf) error {
 	testsList, skippedTests, err := listTests(conf.Regex, conf.TestsToSkip)
 	if err != nil {
