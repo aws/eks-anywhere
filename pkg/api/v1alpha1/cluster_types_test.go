@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"reflect"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -8,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -2601,6 +2603,43 @@ func TestCiliumConfigEquality(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tc.A.Equal(tc.B)).To(Equal(tc.Equal))
+		})
+	}
+}
+
+func TestKubeVersionToValidSemver(t *testing.T) {
+	type args struct {
+		kubeVersion v1alpha1.KubernetesVersion
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *semver.Version
+		wantErr error
+	}{
+		{
+			name: "convert kube 1.22",
+			args: args{
+				kubeVersion: v1alpha1.Kube122,
+			},
+			want: &semver.Version{
+				Major: 1,
+				Minor: 22,
+				Patch: 0,
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := v1alpha1.KubeVersionToSemver(tt.args.kubeVersion)
+			if err != tt.wantErr {
+				t.Errorf("KubeVersionToSemver() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("KubeVersionToSemver() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

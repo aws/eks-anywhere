@@ -384,7 +384,7 @@ func TestProviderCreateOrUpgradeClusterK8s124(t *testing.T) {
 
 	clusterSpec.Cluster.Spec.KubernetesVersion = "abcd"
 	err = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: error converting kubeVersion abcd to semver invalid major version in semver abcd.0: strconv.ParseUint: parsing \"\": invalid syntax"))
+	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: converting kubeVersion abcd to semver invalid major version in semver abcd.0: strconv.ParseUint: parsing \"\": invalid syntax"))
 }
 
 func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T) {

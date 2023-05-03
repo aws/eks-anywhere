@@ -24,7 +24,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
-	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -216,11 +215,11 @@ func initialNamesForWorkers(spec *cluster.Spec) (machineTemplateNames, kubeadmCo
 }
 
 func kubeletCgroupDriverExtraArgs(kubeVersion v1alpha1.KubernetesVersion) (clusterapi.ExtraArgs, error) {
-	clusterKubeVersionSemver, err := semver.KubeVersionToValidSemver(kubeVersion)
+	clusterKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("converting kubeVersion %v to semver %v", kubeVersion, err)
 	}
-	kube124Semver, err := semver.KubeVersionToValidSemver(v1alpha1.Kube124)
+	kube124Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube124)
 	if err != nil {
 		return nil, fmt.Errorf("error converting kubeVersion %v to semver %v", v1alpha1.Kube124, err)
 	}

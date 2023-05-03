@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
-	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -105,11 +104,11 @@ func (t *TemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (string, error) 
 
 func (t *TemplateBuilder) setControlPlaneNodeSelector(kubeVersion v1alpha1.KubernetesVersion) (string, error) {
 	var nodeSelector string
-	clusterKubeVersionSemver, err := semver.KubeVersionToValidSemver(kubeVersion)
+	clusterKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(kubeVersion)
 	if err != nil {
 		return "", fmt.Errorf("converting kubeVersion %v to semver %v", kubeVersion, err)
 	}
-	kube124Semver, err := semver.KubeVersionToValidSemver(v1alpha1.Kube124)
+	kube124Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube124)
 	if err != nil {
 		return "", fmt.Errorf("converting kubeVersion %v to semver %v", v1alpha1.Kube124, err)
 	}
