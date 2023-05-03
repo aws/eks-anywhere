@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -78,14 +79,14 @@ func buildFluxGitFiles(envVars map[string]string) []s3Files {
 	}
 }
 
-func (e *E2ESession) writeFileToInstance(file fileFromBytes) error {
+func (e *E2ESession) decodeAndWriteFileToInstance(file fileFromBytes) error {
 	e.logger.V(1).Info("Writing bytes to file in instance", "file", file.dstPath)
 
-	command := fmt.Sprintf("echo $'%s' >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
+	command := fmt.Sprintf("echo $'%s' | base64 -d >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
 	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("writing file in instance: %v", err)
 	}
-	e.logger.V(1).Info("Successfully wrote file", "file", file.dstPath)
+	e.logger.V(1).Info("Successfully decoded and wrote file", "file", file.dstPath)
 
 	return nil
 }
@@ -171,19 +172,26 @@ func (e *E2ESession) setupGithubRepo() (*git.Repository, error) {
 		return r, err
 	}
 
+	encodedPK := encodePrivateKey(pk)
 	// Generate a PEM file from the private key and write it instance at the user-provided path
 	pkFile := fileFromBytes{
 		dstPath:    e.testEnvVars[config.EksaGitPrivateKeyTokenEnv],
 		permission: 600,
-		content:    pk,
+		content:    encodedPK,
 	}
 
-	err = e.writeFileToInstance(pkFile)
+	err = e.decodeAndWriteFileToInstance(pkFile)
 	if err != nil {
 		return nil, fmt.Errorf("writing private key file to instance: %v", err)
 	}
 
 	return r, err
+}
+
+func encodePrivateKey(privateKey []byte) []byte {
+	b64EncodedPK := make([]byte, base64.StdEncoding.EncodedLen(len(privateKey)))
+	base64.StdEncoding.Encode(b64EncodedPK, privateKey)
+	return b64EncodedPK
 }
 
 func (e *E2ESession) generateKeyPairForGitTest() (privateKeyBytes, publicKeyBytes []byte, err error) {
