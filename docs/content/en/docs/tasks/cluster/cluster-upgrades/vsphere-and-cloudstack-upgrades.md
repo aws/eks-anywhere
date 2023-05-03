@@ -215,6 +215,17 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `osFamily`
 - `network`
 
+`CloudStackDatacenterConfig`:
+- `availabilityZones` (Can add and remove availability zones provided at least 1 previously configured zone is still present)
+
+`CloudStackMachineConfig`:
+- `template`
+- `computeOffering`
+- `diskOffering`
+- `userCustomDetails`
+- `symlinks`
+- `users`
+
 `OIDCConfig`:
 - `clientID`
 - `groupsClaim`
