@@ -2078,3 +2078,44 @@ func TestProviderUpdateSecrets(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateNewSpecMachineConfigImmutable(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	workerMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	newAffinityGroupIds := [1]string{"different"}
+	newClusterSpec.CloudStackMachineConfigs[workerMachineConfigName].Spec.AffinityGroupIds = newAffinityGroupIds[:]
+
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.CloudStackDatacenter, nil)
+	kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.CloudStackMachineConfigs[workerMachineConfigName], nil).AnyTimes()
+
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
+	assert.ErrorContains(t, err, "field is immutable")
+}
+
+func TestValidateNewSpecMachineConfigNotFound(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newClusterSpec := clusterSpec.DeepCopy()
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	workerMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	apierr := apierrors.NewNotFound(schema.GroupResource{}, workerMachineConfigName)
+
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), clusterSpec.Cluster.Namespace).Return(clusterSpec.CloudStackDatacenter, nil)
+	kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterSpec.Cluster.Namespace).Return(nil, apierr).AnyTimes()
+
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, newClusterSpec)
+	assert.ErrorContains(t, err, "not found")
+}
