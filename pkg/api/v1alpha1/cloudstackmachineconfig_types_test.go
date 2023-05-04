@@ -498,9 +498,21 @@ func TestCloudStackMachineConfigValidateUsers(t *testing.T) {
 				g.Expect(err).To(BeNil())
 			} else {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
-
 			}
 		})
 	}
+}
 
+func TestCloudStackMachineConfigSetDefaultUsers(t *testing.T) {
+	g := NewWithT(t)
+	machineConfig := &v1alpha1.CloudStackMachineConfig{
+		Spec: v1alpha1.CloudStackMachineConfigSpec{},
+	}
+	machineConfig.SetUserDefaults()
+	g.Expect(machineConfig.Spec.Users).To(Equal([]v1alpha1.UserConfiguration{
+		{
+			Name:              v1alpha1.DefaultCloudStackUser,
+			SshAuthorizedKeys: []string{""},
+		},
+	}))
 }

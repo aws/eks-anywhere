@@ -491,7 +491,7 @@ func TestWorkloadCloudStackMachineValidateUpdateInvalidUsers(t *testing.T) {
 
 	c.Spec.Users[0].Name = ""
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
 }
 
 func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
