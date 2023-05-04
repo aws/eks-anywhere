@@ -38,15 +38,17 @@ type Reconciler struct {
 	ipValidator          IPValidator
 	cniReconciler        CNIReconciler
 	remoteClientRegistry RemoteClientRegistry
+	validatorRegistry    cloudstack.ValidatorRegistry
 }
 
 // New defines a new CloudStack reconciler.
-func New(client client.Client, ipValidator IPValidator, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry) *Reconciler {
+func New(client client.Client, ipValidator IPValidator, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry, validatorRegistry cloudstack.ValidatorRegistry) *Reconciler {
 	return &Reconciler{
 		client:               client,
 		ipValidator:          ipValidator,
 		cniReconciler:        cniReconciler,
 		remoteClientRegistry: remoteClientRegistry,
+		validatorRegistry:    validatorRegistry,
 	}
 }
 
@@ -61,6 +63,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	return controller.NewPhaseRunner[*c.Spec]().Register(
 		r.ipValidator.ValidateControlPlaneIP,
 		r.ValidateDatacenterConfig,
+		r.ValidateMachineConfig,
 		clusters.CleanupStatusAfterValidate,
 		r.ReconcileControlPlane,
 		r.CheckControlPlaneReady,
@@ -86,6 +89,29 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 		log.Info("CloudStackDatacenterConfig hasn't been validated yet", klog.KObj(dataCenterConfig))
 	}
 	return controller.ResultWithReturn(), nil
+}
+
+// ValidateMachineConfig performs additional, context-aware validations on the machine configs.
+func (r *Reconciler) ValidateMachineConfig(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "validateMachineConfigs")
+	log.Info("Validating machine config")
+
+	datacenterConfig := spec.CloudStackDatacenter
+	execConfig, err := cloudstack.GetCloudstackExecConfig(ctx, r.client, datacenterConfig)
+	if err != nil {
+		return controller.Result{}, err
+	}
+	validator, err := r.validatorRegistry.Get(execConfig)
+	if err != nil {
+		return controller.Result{}, err
+	}
+	if err = validator.ValidateClusterMachineConfigs(ctx, spec); err != nil {
+		log.Error(err, "Invalid CloudStackMachineConfig")
+		failureMessage := err.Error()
+		spec.Cluster.Status.FailureMessage = &failureMessage
+		return controller.ResultWithReturn(), nil
+	}
+	return controller.Result{}, nil
 }
 
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
