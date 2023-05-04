@@ -219,7 +219,7 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 
 func (r *CloudStackTemplate) getControlPlaneTemplateName(ctx context.Context, eksaCluster *anywherev1.Cluster, oldCsdc *anywherev1.CloudStackDatacenterConfig, csdc anywherev1.CloudStackDatacenterConfig, oldCpCsmc *anywherev1.CloudStackMachineConfig, cpCsmc anywherev1.CloudStackMachineConfig, clusterName string) (string, error) {
 	var controlPlaneTemplateName string
-	updateControlPlaneTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldCpCsmc, &cpCsmc, r.log)
+	updateControlPlaneTemplate := cloudstack.NeedNewMachineTemplate(oldCsdc, &csdc, oldCpCsmc, &cpCsmc, r.log)
 	if updateControlPlaneTemplate {
 		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, r.now)
 		r.log.V(4).Info("Control plane machine template updated", "new name", controlPlaneTemplateName)
@@ -240,7 +240,7 @@ func (r *CloudStackTemplate) getEtcdTemplateName(ctx context.Context, eksaCluste
 		if err != nil {
 			return "", err
 		}
-		updateEtcdTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldEtcdCsmc, &etcdCsmc, r.log)
+		updateEtcdTemplate := cloudstack.NeedNewMachineTemplate(oldCsdc, &csdc, oldEtcdCsmc, &etcdCsmc, r.log)
 		etcd, err := r.Etcd(ctx, eksaCluster)
 		if err != nil {
 			return "", err
@@ -290,7 +290,7 @@ func (r *CloudStackTemplate) getWorkloadTemplateNames(ctx context.Context, eksaC
 		if err != nil {
 			return nil, err
 		}
-		updateWorkloadTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldCsmc, &csmc, r.log)
+		updateWorkloadTemplate := cloudstack.NeedNewMachineTemplate(oldCsdc, &csdc, oldCsmc, &csmc, r.log)
 		if updateWorkloadTemplate {
 			workloadTemplateName := common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
