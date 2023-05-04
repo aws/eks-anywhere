@@ -292,6 +292,12 @@ func (p *cloudstackProvider) generateSSHKeysIfNotSet(machineConfigs map[string]*
 	return nil
 }
 
+func (p *cloudstackProvider) setMachineConfigDefaults(clusterSpec *cluster.Spec) {
+	for _, mc := range clusterSpec.CloudStackMachineConfigs {
+		mc.SetUserDefaults()
+	}
+}
+
 func (p *cloudstackProvider) validateManagementApiEndpoint(rawurl string) error {
 	_, err := url.ParseRequestURI(rawurl)
 	if err != nil {
@@ -396,6 +402,8 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	if err := p.validateK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
 		return fmt.Errorf("validating K8s version for provider: %v", err)
 	}
+
+	p.setMachineConfigDefaults(clusterSpec)
 
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)

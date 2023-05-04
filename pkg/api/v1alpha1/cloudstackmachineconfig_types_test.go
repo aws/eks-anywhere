@@ -439,3 +439,66 @@ status: {}
 		})
 	}
 }
+
+func TestCloudStackMachineConfigValidateUsers(t *testing.T) {
+	g := NewWithT(t)
+	tests := []struct {
+		name          string
+		machineConfig *v1alpha1.CloudStackMachineConfig
+		wantErr       string
+	}{
+		{
+			name: "users valid",
+			machineConfig: &v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{{
+						Name:              "capc",
+						SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
+					}},
+				},
+			},
+		},
+		{
+			name: "users not set",
+			machineConfig: &v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{},
+			},
+			wantErr: "users is not set for CloudStackMachineConfig , please provide specify a user",
+		},
+		{
+			name: "user name empty",
+			machineConfig: &v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{{
+						Name:              "",
+						SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
+					}},
+				},
+			},
+			wantErr: "users[0].name is not set or is empty for CloudStackMachineConfig , please provide a username",
+		},
+		{
+			name: "user ssh authorized key empty or not set",
+			machineConfig: &v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{{
+						Name:              "Jeff",
+						SshAuthorizedKeys: []string{""},
+					}},
+				},
+			},
+			wantErr: "users[0].SshAuthorizedKeys is not set or is empty for CloudStackMachineConfig , please provide a valid ssh authorized key",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.machineConfig.ValidateUsers()
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}

@@ -30,15 +30,33 @@ var _ webhook.Validator = &CloudStackMachineConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackMachineConfig) ValidateCreate() error {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
+	allErrs := field.ErrorList{}
 
 	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
-		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "diskOffering", fieldName), fieldValue, err.Error()),
+		)
 	}
 	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
-		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
+		)
+	}
+	if err := r.ValidateUsers(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
+	}
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return r.Validate()
+	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -75,10 +93,14 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
 		)
 	}
+	if err := r.ValidateUsers(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
+	}
 	if err := r.Validate(); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
-
 	if len(allErrs) > 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}

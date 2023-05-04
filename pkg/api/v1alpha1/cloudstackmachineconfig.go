@@ -89,6 +89,18 @@ func GetCloudStackMachineConfigs(fileName string) (map[string]*CloudStackMachine
 	return configs, nil
 }
 
+func setCloudStackMachineConfigUserDefaults(machineConfig *CloudStackMachineConfig) {
+	if len(machineConfig.Spec.Users) <= 0 {
+		machineConfig.Spec.Users = []UserConfiguration{{}}
+	}
+	if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+		machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+	}
+	if machineConfig.Spec.Users[0].Name == "" {
+		machineConfig.Spec.Users[0].Name = DefaultCloudStackUser
+	}
+}
+
 func validateCloudStackMachineConfig(machineConfig *CloudStackMachineConfig) error {
 	if len(machineConfig.Spec.ComputeOffering.Id) == 0 && len(machineConfig.Spec.ComputeOffering.Name) == 0 {
 		return fmt.Errorf("computeOffering is not set for CloudStackMachineConfig %s. Default computeOffering is not supported in CloudStack, please provide a computeOffering name or ID", machineConfig.Name)
