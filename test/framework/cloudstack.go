@@ -256,10 +256,12 @@ func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfig
 	return api.WithCloudStackMachineConfig(name, f...)
 }
 
+// Redhat122Template returns cloudstack filler for 1.22 Ubuntu.
 func (c *CloudStack) Redhat122Template() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat122Var, api.WithCloudStackTemplateForAllMachines)
 }
 
+// Redhat123Template returns cloudstack filler for 1.23 Ubuntu.
 func (c *CloudStack) Redhat123Template() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines)
 }
