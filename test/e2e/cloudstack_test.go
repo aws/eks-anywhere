@@ -879,7 +879,7 @@ func TestCloudStackKubernetes122RedhatTo123UpgradeWithCheckpoint(t *testing.T) {
 	)
 }
 
-func TestVCloudStackKubernetes123RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
+func TestCloudStackKubernetes123RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123())
 	test := framework.NewClusterE2ETest(
