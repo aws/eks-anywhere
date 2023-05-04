@@ -394,3 +394,33 @@ func TestUpdateStackInstallerNoProxyError(t *testing.T) {
 		t.Fatalf("failed upgrading no proxy list of stack installer")
 	}
 }
+
+func TestUpgradeWithProxy(t *testing.T) {
+	var (
+		mockCtrl       = gomock.NewController(t)
+		docker         = mocks.NewMockDocker(mockCtrl)
+		helm           = mocks.NewMockHelm(mockCtrl)
+		folder, writer = test.NewWriter(t)
+
+		valuesFile = filepath.Join(folder, "generated", overridesFileName)
+		cluster    = &types.Cluster{Name: "test"}
+		ctx        = context.Background()
+	)
+
+	helm.EXPECT().UpgradeChartWithValuesFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+
+	proxyConfiguration := &v1alpha1.ProxyConfiguration{
+		HttpProxy:  "1.2.3.4",
+		HttpsProxy: "1.2.3.4",
+		NoProxy: []string{
+			"localhost", ".svc",
+		},
+	}
+
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, proxyConfiguration)
+
+	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile)
+	assert.NoError(t, err)
+
+	assertYamlFilesEqual(t, "testdata/expected_upgrade.yaml", valuesFile)
+}

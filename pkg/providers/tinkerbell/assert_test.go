@@ -320,7 +320,7 @@ func TestAssertAssertHookRetrievableWithoutProxyURLUnreachable(t *testing.T) {
 		HttpsProxy: "2.3.4.5",
 	}
 
-	clusterSpec.DatacenterConfig.Spec.HookImagesURLPath = "https://test.com"
+	clusterSpec.DatacenterConfig.Spec.HookImagesURLPath = "https://1.2.3.4"
 	g.Expect(tinkerbell.AssertHookRetrievableWithoutProxy(clusterSpec)).ToNot(gomega.Succeed())
 }
 

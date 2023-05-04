@@ -645,7 +645,7 @@ func newTinkerbellProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig
 }
 
 func TestProviderSetupAndValidateManagementProxySuccess(t *testing.T) {
-	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	clusterSpecManifest := "cluster_tinkerbell_proxy.yaml"
 
 	mockCtrl := gomock.NewController(t)
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
@@ -682,7 +682,7 @@ func TestProviderSetupAndValidateManagementProxySuccess(t *testing.T) {
 }
 
 func TestProviderSetupAndValidateManagementProxyError(t *testing.T) {
-	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	clusterSpecManifest := "cluster_tinkerbell_proxy.yaml"
 
 	mockCtrl := gomock.NewController(t)
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
