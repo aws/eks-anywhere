@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	tinkerbellv1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -119,6 +120,36 @@ func AssertTinkerbellIPAndControlPlaneIPNotSame(spec *ClusterSpec) error {
 	if tinkerbellIP == controlPlaneIP {
 		return fmt.Errorf("controlPlaneConfiguration.endpoint.host and tinkerbellIP are the same (%s), please provide two unique IPs", tinkerbellIP)
 	}
+	return nil
+}
+
+// AssertHookRetrievableWithoutProxy ensures the executing machine can retrieve Hook
+// from the host URL without a proxy configured. It does not guarantee the target node
+// will be able to download Hook.
+func AssertHookRetrievableWithoutProxy(spec *ClusterSpec) error {
+	if spec.Cluster.Spec.ProxyConfiguration == nil {
+		return nil
+	}
+
+	// return an error if hookImagesURLPath field is not specified for during Proxy configuration.
+	if spec.DatacenterConfig.Spec.HookImagesURLPath == "" {
+		return fmt.Errorf("locally hosted hookImagesURLPath is required to support ProxyConfiguration")
+	}
+
+	// verify hookImagesURLPath is accessible locally too
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	client := &http.Client{
+		Transport: transport,
+	}
+
+	resp, err := client.Get(spec.DatacenterConfig.Spec.HookImagesURLPath)
+	if err != nil {
+		return fmt.Errorf("HookImagesURLPath: %s needs to be hosted locally while specifiying Proxy configuration: %v", spec.DatacenterConfig.Spec.HookImagesURLPath, err)
+	}
+
+	defer resp.Body.Close()
+
 	return nil
 }
 

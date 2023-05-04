@@ -286,6 +286,44 @@ func TestAssertPortsNotInUse_Fails(t *testing.T) {
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
+func TestAssertAssertHookImageURLProxyNonAirgappedURLSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ProxyConfiguration = &eksav1alpha1.ProxyConfiguration{
+		HttpProxy:  "2.3.4.5",
+		HttpsProxy: "2.3.4.5",
+	}
+
+	clusterSpec.DatacenterConfig.Spec.HookImagesURLPath = "https://anywhere.eks.amazonaws.com/"
+	g.Expect(tinkerbell.AssertHookRetrievableWithoutProxy(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertAssertHookRetrievableWithoutProxyURLNotProvided(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ProxyConfiguration = &eksav1alpha1.ProxyConfiguration{
+		HttpProxy:  "2.3.4.5",
+		HttpsProxy: "2.3.4.5",
+	}
+
+	g.Expect(tinkerbell.AssertHookRetrievableWithoutProxy(clusterSpec)).ToNot(gomega.Succeed())
+}
+
+func TestAssertAssertHookRetrievableWithoutProxyURLUnreachable(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ProxyConfiguration = &eksav1alpha1.ProxyConfiguration{
+		HttpProxy:  "2.3.4.5",
+		HttpsProxy: "2.3.4.5",
+	}
+
+	clusterSpec.DatacenterConfig.Spec.HookImagesURLPath = "https://test.com"
+	g.Expect(tinkerbell.AssertHookRetrievableWithoutProxy(clusterSpec)).ToNot(gomega.Succeed())
+}
+
 func TestMinimumHardwareAvailableAssertionForCreate_SufficientSucceeds(t *testing.T) {
 	g := gomega.NewWithT(t)
 

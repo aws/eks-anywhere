@@ -51,6 +51,7 @@ metadata:
   namespace: test-namespace
 spec:
   tinkerbellIP: "2.3.4.5"
+  hookImagesURLPath: "https://anywhere.eks.amazonaws.com/"
   osImageURL: "https://ubuntu.gz"
 
 ---
