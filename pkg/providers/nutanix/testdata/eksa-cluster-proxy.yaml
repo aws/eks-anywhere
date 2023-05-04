@@ -39,6 +39,10 @@ spec:
   proxyConfiguration:
     httpProxy: proxy.nutanix.com:8888
     httpsProxy: proxy.nutanix.com:8888
+    noProxy:
+      - noproxy1.nutanix.com
+      - noproxy2.nutanix.com
+      - noproxy3.nutanix.com
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: NutanixDatacenterConfig
