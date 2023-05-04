@@ -440,7 +440,7 @@ status: {}
 	}
 }
 
-func TestCloudStackMachineConfigValidateUsers(t *testing.T) {
+func TestCloudStackMachineConfigSetUserDefaults(t *testing.T) {
 	g := NewWithT(t)
 	tests := []struct {
 		name          string
@@ -501,4 +501,18 @@ func TestCloudStackMachineConfigValidateUsers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCloudStackMachineConfigSetDefaultUsers(t *testing.T) {
+	g := NewWithT(t)
+	machineConfig := &v1alpha1.CloudStackMachineConfig{
+		Spec: v1alpha1.CloudStackMachineConfigSpec{},
+	}
+	machineConfig.SetUserDefaults()
+	g.Expect(machineConfig.Spec.Users).To(Equal([]v1alpha1.UserConfiguration{
+		{
+			Name:              v1alpha1.DefaultCloudStackUser,
+			SshAuthorizedKeys: []string{""},
+		},
+	}))
 }
