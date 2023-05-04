@@ -863,7 +863,7 @@ func TestCloudStackKubernetes122RedhatTo123UpgradeWithCheckpoint(t *testing.T) {
 	)
 
 	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)), framework.ExpectFailure(true),
-		provider.WithProviderUpgrade(framework.UpdateRedhatTemplate122Var()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
+		provider.WithProviderUpgrade(provider.Redhat122Template()), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
 
 	commandOpts := []framework.CommandOpt{framework.WithExternalEtcdWaitTimeout("10m")}
 
