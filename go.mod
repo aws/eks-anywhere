@@ -17,7 +17,7 @@ require (
 	github.com/aws/etcdadm-bootstrap-provider v1.0.7-rc3
 	github.com/aws/etcdadm-controller v1.0.5
 	github.com/aws/smithy-go v1.13.2
-	github.com/docker/cli v20.10.21+incompatible
+	github.com/docker/cli v23.0.5+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
@@ -40,12 +40,12 @@ require (
 	github.com/tinkerbell/tink v0.8.0
 	github.com/vmware/govmomi v0.29.0
 	go.uber.org/zap v1.23.0
-	golang.org/x/crypto v0.5.0
+	golang.org/x/crypto v0.7.0
 	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6
-	golang.org/x/net v0.7.0
+	golang.org/x/net v0.8.0
 	golang.org/x/oauth2 v0.4.0
 	golang.org/x/sys v0.6.0
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.9.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -57,7 +57,7 @@ require (
 	k8s.io/component-base v0.26.2
 	k8s.io/klog/v2 v2.90.1
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
-	oras.land/oras-go v1.2.2
+	oras.land/oras-go v1.2.3
 	oras.land/oras-go/v2 v2.0.0
 	sigs.k8s.io/cluster-api v1.3.3
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.8-rc1
@@ -110,7 +110,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.21+incompatible // indirect
+	github.com/docker/docker v23.0.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -139,7 +139,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/huandu/xstrings v1.3.3 // indirect
+	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/itchyny/gojq v0.12.6 // indirect
@@ -192,11 +192,11 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.5.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
@@ -216,10 +216,6 @@ replace (
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/internal/endpoints/v2 => ./internal/aws-sdk-go-v2/internal/endpoints/v2
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice => ./internal/aws-sdk-go-v2/service/snowballdevice
 	github.com/aws/eks-anywhere/release => ./release
-	// Fixing GMS-2022-20): this dependency comes from the cluster-api module.
-	// It has already been patched upstream (https://github.com/kubernetes-sigs/cluster-api/pull/6199)
-	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
-	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 
 	// opencontainers/runc patched a CVE in v1.1.5.
 	// Various dependencies both direct and indirect are yet to upgrade runc. All seem to work
