@@ -239,6 +239,28 @@ func buildTemplateMapCP(
 		values["awsIamAuth"] = true
 	}
 
+	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
+		values["proxyConfig"] = true
+		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
+		noProxyList := make([]string, 0, capacity)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
+
+		// Add no-proxy defaults
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
+		noProxyList = append(noProxyList,
+			datacenterSpec.Endpoint,
+			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		)
+
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+		values["noProxy"] = noProxyList
+	}
+
 	return values, nil
 }
 
@@ -301,6 +323,28 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["projectIDType"] = workerNodeGroupMachineSpec.Project.Type
 		values["projectName"] = workerNodeGroupMachineSpec.Project.Name
 		values["projectUUID"] = workerNodeGroupMachineSpec.Project.UUID
+	}
+
+	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
+		values["proxyConfig"] = true
+		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
+		noProxyList := make([]string, 0, capacity)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
+
+		// Add no-proxy defaults
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
+		noProxyList = append(noProxyList,
+			clusterSpec.Config.NutanixDatacenter.Spec.Endpoint,
+			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		)
+
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+		values["noProxy"] = noProxyList
 	}
 
 	return values, nil
