@@ -42,20 +42,21 @@ var _ webhook.Validator = &VSphereMachineConfig{}
 func (r *VSphereMachineConfig) ValidateCreate() error {
 	vspheremachineconfiglog.Info("validate create", "name", r.Name)
 
-	allErrs := field.ErrorList{}
-
 	if err := r.ValidateHasTemplate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template"), r.Spec, err.Error()))
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "template"), r.Spec, err.Error()),
+		})
 	}
 	if err := r.ValidateUsers(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
-	}
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+		})
 	}
 
-	if len(allErrs) > 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+		})
 	}
 
 	return nil
@@ -70,16 +71,18 @@ func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineConfig but got a %T", old))
 	}
 
+	if err := r.ValidateUsers(); err != nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+		})
+	}
+
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableFieldsVSphereMachineConfig(r, oldVSphereMachineConfig)...)
 
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
-	}
-
-	if err := r.ValidateUsers(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
 	}
 
 	if err := r.Validate(); err != nil {

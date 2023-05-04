@@ -89,7 +89,7 @@ func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
 	if config.Spec.OSFamily != Bottlerocket && config.Spec.OSFamily != Ubuntu && config.Spec.OSFamily != RedHat {
 		return fmt.Errorf("VSphereMachineConfig %s osFamily: %s is not supported, please use one of the following: %s, %s, %s", config.Name, config.Spec.OSFamily, Bottlerocket, Ubuntu, RedHat)
 	}
-	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
+	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users != nil && config.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
 		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", config.Spec.Users[0].Name)
 	}
 	if err := validateHostOSConfig(config.Spec.HostOSConfiguration, config.Spec.OSFamily); err != nil {
