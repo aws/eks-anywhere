@@ -35,6 +35,7 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu124EnvVar,
 	tinkerbellImageUbuntu125EnvVar,
 	tinkerbellImageUbuntu126EnvVar,
+	tinkerbellImageUbuntu127EnvVar,
 	tinkerbellImageRedHat122EnvVar,
 	tinkerbellImageRedHat123EnvVar,
 	tinkerbellImageRedHat124EnvVar,
@@ -79,6 +80,11 @@ func UpdateTinkerbellUbuntuTemplate125Var() api.TinkerbellFiller {
 // UpdateTinkerbellUbuntuTemplate126Var updates the tinkerbell template.
 func UpdateTinkerbellUbuntuTemplate126Var() api.TinkerbellFiller {
 	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu126EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+// UpdateTinkerbellUbuntuTemplate127Var updates the tinkerbell template.
+func UpdateTinkerbellUbuntuTemplate127Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu127EnvVar, api.WithTinkerbellOSImageURL)
 }
 
 // UpdateTinkerbellMachineSSHAuthorizedKey updates a tinkerbell machine configs SSHAuthorizedKey.
