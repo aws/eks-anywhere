@@ -46,7 +46,7 @@ func TestCloudStackKubernetes122to123AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube123,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		provider.WithProviderUpgrade(provider.Redhat123Template())
+		provider.WithProviderUpgrade(provider.Redhat123Template()),
 	)
 }
 
