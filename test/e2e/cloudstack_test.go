@@ -279,7 +279,7 @@ func TestCloudStackKubernetes122To123GitFluxUpgrade(t *testing.T) {
 }
 
 func TestCloudStackInstallGitFluxDuringUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithCloudStackRedhat122())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
@@ -670,7 +670,7 @@ func TestCloudStackKubernetes123CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *t
 }
 
 func TestCloudStackKubernetes122RedhatTo123UpgradeCiliumPolicyEnforcementMode(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithCloudStackRedhat122())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -876,7 +876,7 @@ func TestCloudStackKubernetes122RedhatTo123UpgradeWithCheckpoint(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes123RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
+func TestVCloudStackKubernetes123RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat123()) 
 	test := framework.NewClusterE2ETest(
