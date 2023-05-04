@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	executables "github.com/aws/eks-anywhere/pkg/executables"
 	stack "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	v1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
@@ -136,17 +137,22 @@ func (mr *MockHelmMockRecorder) RegistryLogin(ctx, endpoint, username, password 
 }
 
 // UpgradeChartWithValuesFile mocks base method.
-func (m *MockHelm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
+func (m *MockHelm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...executables.HelmOpt) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeChartWithValuesFile", ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
+	varargs := []interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpgradeChartWithValuesFile", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpgradeChartWithValuesFile indicates an expected call of UpgradeChartWithValuesFile.
-func (mr *MockHelmMockRecorder) UpgradeChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}) *gomock.Call {
+func (mr *MockHelmMockRecorder) UpgradeChartWithValuesFile(ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeChartWithValuesFile", reflect.TypeOf((*MockHelm)(nil).UpgradeChartWithValuesFile), ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
+	varargs := append([]interface{}{ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeChartWithValuesFile", reflect.TypeOf((*MockHelm)(nil).UpgradeChartWithValuesFile), varargs...)
 }
 
 // MockStackInstaller is a mock of StackInstaller interface.
@@ -170,6 +176,18 @@ func NewMockStackInstaller(ctrl *gomock.Controller) *MockStackInstaller {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStackInstaller) EXPECT() *MockStackInstallerMockRecorder {
 	return m.recorder
+}
+
+// AddNoProxyIP mocks base method.
+func (m *MockStackInstaller) AddNoProxyIP(IP string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddNoProxyIP", IP)
+}
+
+// AddNoProxyIP indicates an expected call of AddNoProxyIP.
+func (mr *MockStackInstallerMockRecorder) AddNoProxyIP(IP interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddNoProxyIP", reflect.TypeOf((*MockStackInstaller)(nil).AddNoProxyIP), IP)
 }
 
 // CleanupLocalBoots mocks base method.

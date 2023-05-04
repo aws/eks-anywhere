@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -47,7 +48,7 @@ type Docker interface {
 type Helm interface {
 	RegistryLogin(ctx context.Context, endpoint, username, password string) error
 	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
-	UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
+	UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...executables.HelmOpt) error
 }
 
 // StackInstaller deploys a Tinkerbell stack.
@@ -58,6 +59,7 @@ type StackInstaller interface {
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string) error
+	AddNoProxyIP(IP string)
 	GetNamespace() string
 }
 
@@ -117,6 +119,12 @@ func WithLoadBalancerEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
 		s.loadBalancer = enabled
 	}
+}
+
+// AddNoProxyIP is for workload cluster upgrade, we have to pass
+// controlPlaneEndpoint IP of managemement cluster if proxy is configured.
+func (s *Installer) AddNoProxyIP(IP string) {
+	s.proxyConfig.NoProxy = append(s.proxyConfig.NoProxy, IP)
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack.
@@ -428,7 +436,10 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			return err
 		}
 	}
-
+	envMap := map[string]string{}
+	if s.proxyConfig != nil {
+		envMap["NO_PROXY"] = strings.Join(s.proxyConfig.NoProxy, ",")
+	}
 	return s.helm.UpgradeChartWithValuesFile(
 		ctx,
 		bundle.TinkerbellStack.TinkebellChart.Name,
@@ -436,6 +447,7 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		bundle.TinkerbellStack.TinkebellChart.Tag(),
 		kubeconfig,
 		valuesPath,
+		executables.WithEnv(envMap),
 	)
 }
 

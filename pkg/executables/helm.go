@@ -217,13 +217,16 @@ func GetHelmValueArgs(values []string) []string {
 
 // UpgradeChartWithValuesFile tuns a helm upgrade with the provided values file and waits for the
 // chart deployment to be ready.
-func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
+func (h *Helm) UpgradeChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string, opts ...HelmOpt) error {
 	params := []string{
 		"upgrade", chart, ociURI,
 		"--version", version,
 		"--values", valuesFilePath,
 		"--kubeconfig", kubeconfigFilePath,
 		"--wait",
+	}
+	for _, opt := range opts {
+		opt(h)
 	}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()

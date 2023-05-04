@@ -165,7 +165,7 @@ spec:
             [Service]
             Environment="HTTP_PROXY=1.1.1.1:8080"
             Environment="HTTPS_PROXY=1.1.1.1:8443"
-            Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,localhost,127.0.0.1,.svc,1.2.3.4,2.3.4.5,5.6.7.8"
+            Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,localhost,127.0.0.1,.svc,1.2.3.4,2.3.4.5"
           owner: root:root
           path: /etc/systemd/system/containerd.service.d/http-proxy.conf
       preKubeadmCommands:
