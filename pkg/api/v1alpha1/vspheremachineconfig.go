@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
@@ -78,49 +77,6 @@ func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig
 		return nil, fmt.Errorf("unable to find kind %v in file", VSphereMachineConfigKind)
 	}
 	return configs, nil
-}
-
-func setVSphereMachineConfigDefaults(machineConfig *VSphereMachineConfig) {
-	if len(machineConfig.Spec.Folder) <= 0 {
-		logger.Info("VSphereMachineConfig Folder is not set or is empty. Defaulting to root vSphere folder.")
-	}
-
-	if machineConfig.Spec.MemoryMiB <= 0 {
-		logger.V(1).Info("VSphereMachineConfig MemoryMiB is not set or is empty. Defaulting to 8192.", "machineConfig", machineConfig.Name)
-		machineConfig.Spec.MemoryMiB = 8192
-	}
-
-	if machineConfig.Spec.MemoryMiB < 2048 {
-		logger.Info("Warning: VSphereMachineConfig MemoryMiB should not be less than 2048. Defaulting to 2048. Recommended memory is 8192.", "machineConfig", machineConfig.Name)
-		machineConfig.Spec.MemoryMiB = 2048
-	}
-
-	if machineConfig.Spec.NumCPUs <= 0 {
-		logger.V(1).Info("VSphereMachineConfig NumCPUs is not set or is empty. Defaulting to 2.", "machineConfig", machineConfig.Name)
-		machineConfig.Spec.NumCPUs = 2
-	}
-
-	if len(machineConfig.Spec.Users) <= 0 {
-		machineConfig.Spec.Users = []UserConfiguration{{}}
-	}
-
-	if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-	}
-
-	if machineConfig.Spec.OSFamily == "" {
-		logger.Info("Warning: OS family not specified in machine config specification. Defaulting to Bottlerocket.")
-		machineConfig.Spec.OSFamily = Bottlerocket
-	}
-
-	if len(machineConfig.Spec.Users) == 0 || machineConfig.Spec.Users[0].Name == "" {
-		if machineConfig.Spec.OSFamily == Bottlerocket {
-			machineConfig.Spec.Users[0].Name = constants.BottlerocketDefaultUser
-		} else {
-			machineConfig.Spec.Users[0].Name = constants.UbuntuDefaultUser
-		}
-		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "machineConfig", machineConfig.Name, "user", machineConfig.Spec.Users[0].Name)
-	}
 }
 
 func validateVSphereMachineConfig(config *VSphereMachineConfig) error {

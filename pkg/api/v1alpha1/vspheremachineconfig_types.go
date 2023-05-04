@@ -1,6 +1,12 @@
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"fmt"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -119,11 +125,70 @@ func (c *VSphereMachineConfig) Marshallable() Marshallable {
 }
 
 func (c *VSphereMachineConfig) SetDefaults() {
-	setVSphereMachineConfigDefaults(c)
+	if c.Spec.OSFamily == "" {
+		logger.Info("Warning: OS family not specified in machine config specification. Defaulting to Bottlerocket.")
+		c.Spec.OSFamily = Bottlerocket
+	}
+
+	if len(c.Spec.Folder) <= 0 {
+		logger.Info("VSphereMachineConfig Folder is not set or is empty. Defaulting to root vSphere folder.")
+	}
+
+	if c.Spec.MemoryMiB <= 0 {
+		logger.V(1).Info("VSphereMachineConfig MemoryMiB is not set or is empty. Defaulting to 8192.", "machineConfig", c.Name)
+		c.Spec.MemoryMiB = 8192
+	}
+
+	if c.Spec.MemoryMiB < 2048 {
+		logger.Info("Warning: VSphereMachineConfig MemoryMiB should not be less than 2048. Defaulting to 2048. Recommended memory is 8192.", "machineConfig", c.Name)
+		c.Spec.MemoryMiB = 2048
+	}
+
+	if c.Spec.NumCPUs <= 0 {
+		logger.V(1).Info("VSphereMachineConfig NumCPUs is not set or is empty. Defaulting to 2.", "machineConfig", c.Name)
+		c.Spec.NumCPUs = 2
+	}
+}
+
+// SetUserDefaults initializes Spec.Users for the VSphereMachineConfig with default values.
+// This only runs in the CLI, as we support do support user defaults through the webhook.
+func (c *VSphereMachineConfig) SetUserDefaults() {
+	if len(c.Spec.Users) <= 0 {
+		c.Spec.Users = []UserConfiguration{{}}
+	}
+
+	if len(c.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+		c.Spec.Users[0].SshAuthorizedKeys = []string{""}
+	}
+
+	if len(c.Spec.Users) == 0 || c.Spec.Users[0].Name == "" {
+		if c.Spec.OSFamily == Bottlerocket {
+			c.Spec.Users[0].Name = constants.BottlerocketDefaultUser
+		} else {
+			c.Spec.Users[0].Name = constants.UbuntuDefaultUser
+		}
+		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "c", c.Name, "user", c.Spec.Users[0].Name)
+	}
 }
 
 func (c *VSphereMachineConfig) Validate() error {
 	return validateVSphereMachineConfig(c)
+}
+
+// ValidateUsers verifies a CloudStackMachineConfig object must have a users with ssh authorized keys.
+// This validation only runs in CloudStackMachineConfig validation webhook, as we support
+// auto-generate and import ssh key when creating a cluster via CLI.
+func (c *VSphereMachineConfig) ValidateUsers() error {
+	if len(c.Spec.Users) == 0 {
+		return fmt.Errorf("users is not set for CloudStackMachineConfig %s, please provide specify a user", c.Name)
+	}
+	if c.Spec.Users[0].Name == "" {
+		return fmt.Errorf("users[0].name is not set or is empty for CloudStackMachineConfig %s, please provide a username", c.Name)
+	}
+	if len(c.Spec.Users[0].SshAuthorizedKeys) == 0 || c.Spec.Users[0].SshAuthorizedKeys[0] == "" {
+		return fmt.Errorf("users[0].SshAuthorizedKeys is not set or is empty for CloudStackMachineConfig %s, please provide a valid ssh authorized key for user %s", c.Name, c.Spec.Users[0].Name)
+	}
+	return nil
 }
 
 // ValidateHasTemplate verifies that a VSphereMachineConfig object has a template.

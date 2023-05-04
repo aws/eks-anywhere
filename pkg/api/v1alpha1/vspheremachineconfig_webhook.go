@@ -41,11 +41,24 @@ var _ webhook.Validator = &VSphereMachineConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereMachineConfig) ValidateCreate() error {
 	vspheremachineconfiglog.Info("validate create", "name", r.Name)
-	err := r.Validate()
-	if err != nil {
-		return err
+
+	allErrs := field.ErrorList{}
+
+	if err := r.ValidateHasTemplate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template"), r.Spec, err.Error()))
 	}
-	return r.ValidateHasTemplate()
+	if err := r.ValidateUsers(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
+	}
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+	}
+
+	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -63,6 +76,10 @@ func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) error {
 
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+	}
+
+	if err := r.ValidateUsers(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
 	}
 
 	if err := r.Validate(); err != nil {

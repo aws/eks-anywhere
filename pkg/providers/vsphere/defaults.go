@@ -28,6 +28,7 @@ func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *Spec)
 	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
 	for _, m := range spec.machineConfigs() {
 		m.SetDefaults()
+		m.SetUserDefaults()
 		if err := d.setDefaultTemplateIfMissing(ctx, spec, m); err != nil {
 			return err
 		}
