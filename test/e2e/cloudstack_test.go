@@ -842,7 +842,7 @@ func TestCloudStackKubernetes122RedhatTo123StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube123,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		provider.WithProviderUpgrade(framework.UpdateRedhatTemplate123Var),
+		provider.WithProviderUpgrade(provider.Redhat123Template()),
 	)
 }
 
@@ -893,7 +893,7 @@ func TestVSphereKubernetes123RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPol
 		v1alpha1.Kube123,
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
 		provider.WithProviderUpgrade(
-			framework.UpdateRedhatTemplate123Var, // Set the template so it doesn't get autoimported
+			provider.Redhat123Template(), // Set the template so it doesn't get autoimported
 		),
 	)
 }
