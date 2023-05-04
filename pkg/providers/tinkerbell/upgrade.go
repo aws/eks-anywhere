@@ -385,6 +385,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		clusterSpec.VersionsBundle.Tinkerbell,
 		p.datacenterConfig.Spec.TinkerbellIP,
 		cluster.KubeconfigFile,
+		p.datacenterConfig.Spec.HookImagesURLPath,
 	)
 	if err != nil {
 		return fmt.Errorf("upgrading stack: %v", err)
