@@ -90,7 +90,7 @@ func baseboardManagementSecretFromMachine(m Machine) *corev1.Secret {
 			Name:      formatBMCSecretRef(m),
 			Namespace: constants.EksaSystemNamespace,
 			Labels: map[string]string{
-				v1alpha3.ClusterctlMoveLabelName: "true",
+				v1alpha3.ClusterctlMoveLabel: "true",
 			},
 		},
 		Type: "kubernetes.io/basic-auth",

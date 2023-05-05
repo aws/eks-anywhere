@@ -66,6 +66,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		WithFileReader().
 		WithManifestReader().
 		WithHelm(helmOpts...).
+		WithLogger().
 		Build(ctx)
 	if err != nil {
 		return err
@@ -93,7 +94,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		TmpDowloadFolder:   downloadFolder,
 		DstFile:            c.outputFile,
 		Packager:           packagerForFile(c.outputFile),
-		ManifestDownloader: oras.NewBundleDownloader(downloadFolder),
+		ManifestDownloader: oras.NewBundleDownloader(deps.Logger, downloadFolder),
 		BundlesOverride:    c.bundlesOverride,
 	}
 

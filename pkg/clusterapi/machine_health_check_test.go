@@ -22,7 +22,7 @@ func TestMachineHealthCheckForControlPlane(t *testing.T) {
 		tt := newApiBuilerTest(t)
 		want := expectedMachineHealthCheckForControlPlane(timeout)
 		got := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec, timeout, timeout)
-		tt.Expect(got).To(Equal(want))
+		tt.Expect(got).To(BeComparableTo(want))
 	}
 }
 

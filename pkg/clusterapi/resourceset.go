@@ -47,14 +47,14 @@ func (c ClusterResourceSet) buildSet() *addons.ClusterResourceSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("%s-crs", c.clusterName),
 			Labels: map[string]string{
-				clusterv1.ClusterLabelName: c.clusterName,
+				clusterv1.ClusterNameLabel: c.clusterName,
 			},
 			Namespace: c.namespace,
 		},
 		Spec: addons.ClusterResourceSetSpec{
 			ClusterSelector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					clusterv1.ClusterLabelName: c.clusterName,
+					clusterv1.ClusterNameLabel: c.clusterName,
 				},
 			},
 			Resources: c.resourceRefs(),

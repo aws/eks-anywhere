@@ -308,7 +308,7 @@ func (c *ClusterManager) BackupCAPI(ctx context.Context, cluster *types.Cluster,
 
 func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
-	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	labels := []string{clusterv1.MachineControlPlaneNameLabel, clusterv1.MachineDeploymentNameLabel}
 	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
 		return err
 	}
@@ -494,7 +494,7 @@ func (c *ClusterManager) getWorkloadClusterKubeconfig(ctx context.Context, clust
 
 func (c *ClusterManager) RunPostCreateWorkloadCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
-	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	labels := []string{clusterv1.MachineControlPlaneNameLabel, clusterv1.MachineDeploymentNameLabel}
 	return c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef())
 }
 
@@ -628,7 +628,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, newClusterSpec.Cluster.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, newClusterSpec.Cluster.Name, []string{clusterv1.MachineControlPlaneNameLabel}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -665,7 +665,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for machine deployment machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, newClusterSpec.Cluster.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, newClusterSpec.Cluster.Name, []string{clusterv1.MachineDeploymentNameLabel}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -980,7 +980,7 @@ func (c *ClusterManager) getNodesCount(ctx context.Context, managementCluster *t
 		labelsMap[label] = nil
 	}
 
-	if _, ok := labelsMap[clusterv1.MachineControlPlaneLabelName]; ok {
+	if _, ok := labelsMap[clusterv1.MachineControlPlaneNameLabel]; ok {
 		kcp, err := c.clusterClient.GetKubeadmControlPlane(ctx, managementCluster, clusterName, executables.WithCluster(managementCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return 0, fmt.Errorf("getting KubeadmControlPlane for cluster %s: %v", clusterName, err)
@@ -988,7 +988,7 @@ func (c *ClusterManager) getNodesCount(ctx context.Context, managementCluster *t
 		totalNodes += int(*kcp.Spec.Replicas)
 	}
 
-	if _, ok := labelsMap[clusterv1.MachineDeploymentLabelName]; ok {
+	if _, ok := labelsMap[clusterv1.MachineDeploymentNameLabel]; ok {
 		mds, err := c.clusterClient.GetMachineDeploymentsForCluster(ctx, clusterName, executables.WithCluster(managementCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return 0, fmt.Errorf("getting KubeadmControlPlane for cluster %s: %v", clusterName, err)

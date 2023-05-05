@@ -45,6 +45,7 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		WithHelm(executables.WithInsecure()).
 		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
 		WithPackageControllerClient(config.spec, config.kubeConfig).
+		WithLogger().
 		Build(ctx)
 }
 

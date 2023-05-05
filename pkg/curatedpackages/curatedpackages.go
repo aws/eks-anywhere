@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"oras.land/oras-go/pkg/content"
 	"oras.land/oras-go/pkg/oras"
 
@@ -25,8 +26,9 @@ Amazon EKS Anywhere Enterprise Subscription`
 
 var userMsgSeparator = strings.Repeat("-", width)
 
-func CreateBundleManager() bundle.RegistryClient {
-	puller := artifacts.NewRegistryPuller()
+// CreateBundleManager builds a new bundle Manager.
+func CreateBundleManager(log logr.Logger) bundle.RegistryClient {
+	puller := artifacts.NewRegistryPuller(log)
 	return bundle.NewRegistryClient(puller)
 }
 
@@ -63,10 +65,11 @@ func PrintLicense() {
 	fmt.Println(userMsgSeparator)
 }
 
-func PullLatestBundle(ctx context.Context, art string) ([]byte, error) {
-	puller := artifacts.NewRegistryPuller()
+// PullLatestBundle reads the contents of the artifact using the latest bundle.
+func PullLatestBundle(ctx context.Context, log logr.Logger, artifact string) ([]byte, error) {
+	puller := artifacts.NewRegistryPuller(log)
 
-	data, err := puller.Pull(ctx, art)
+	data, err := puller.Pull(ctx, artifact, "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to pull artifacts %v", err)
 	}

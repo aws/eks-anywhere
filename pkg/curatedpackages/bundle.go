@@ -11,6 +11,7 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -56,7 +57,13 @@ func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context, kubeVers
 	if err != nil {
 		return nil, err
 	}
-	return b.bundleManager.LatestBundle(ctx, registryBaseRef, kubeVersion)
+
+	kubeSemVer, err := semver.New(kubeVersion + ".0")
+	if err != nil {
+		return nil, err
+	}
+
+	return b.bundleManager.LatestBundle(ctx, registryBaseRef, fmt.Sprintf("%d", kubeSemVer.Major), fmt.Sprintf("%d", kubeSemVer.Minor), "")
 }
 
 func (b *BundleReader) getActiveBundleFromCluster(ctx context.Context) (*packagesv1.PackageBundle, error) {

@@ -102,7 +102,7 @@ func ReconcileWorkers(ctx context.Context, c client.Client, cluster *clusterv1.C
 
 	machineDeployments := &clusterv1.MachineDeploymentList{}
 	if err := c.List(ctx, machineDeployments,
-		client.MatchingLabels{clusterv1.ClusterLabelName: cluster.Name},
+		client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name},
 		client.InNamespace(cluster.Namespace)); err != nil {
 		return controller.Result{}, errors.Wrap(err, "listing current machine deployments")
 	}
