@@ -147,6 +147,16 @@ func (r SymlinkMaps) Validate() (err error, field string, value string) {
 	return nil, "", ""
 }
 
+// ValidateUsers verifies a CloudStackMachineConfig object must have a users with ssh authorized keys.
+// This validation only runs in CloudStackMachineConfig validation webhook, as we support
+// auto-generate and import ssh key when creating a cluster via CLI.
+func (c *CloudStackMachineConfig) ValidateUsers() error {
+	if err := validateMachineConfigUsers(c.Name, CloudStackMachineConfigKind, c.Spec.Users); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *CloudStackMachineConfig) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
 }
@@ -204,6 +214,12 @@ func (c *CloudStackMachineConfig) GetName() string {
 
 func (c *CloudStackMachineConfig) Validate() error {
 	return validateCloudStackMachineConfig(c)
+}
+
+// SetUserDefaults initializes Spec.Users for the CloudStackMachineConfig with default values.
+// This only runs in the CLI, as we support do support user defaults through the webhook.
+func (c *CloudStackMachineConfig) SetUserDefaults() {
+	c.Spec.Users = defaultMachineConfigUsers(c.Spec.Users)
 }
 
 // CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig.

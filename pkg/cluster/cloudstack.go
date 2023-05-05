@@ -27,6 +27,12 @@ func cloudstackEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			func(c *Config) error {
+				for _, mc := range c.CloudStackMachineConfigs {
+					mc.SetUserDefaults()
+				}
+				return nil
+			},
 		},
 		Validations: []Validation{
 			func(c *Config) error {
