@@ -221,7 +221,10 @@ func validateOSFamilyUser(machineConfig *VSphereMachineConfig) error {
 // Specifying a template is required when submitting an object via webhook,
 // as we only support auto-importing templates when creating a cluster via CLI.
 func (c *VSphereMachineConfig) ValidateHasTemplate() error {
-	return validateVSphereMachineConfigHasTemplate(c)
+	if c.Spec.Template == "" {
+		return fmt.Errorf("template field is required")
+	}
+	return nil
 }
 
 // +kubebuilder:object:generate=false

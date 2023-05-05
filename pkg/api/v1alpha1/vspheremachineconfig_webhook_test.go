@@ -464,6 +464,20 @@ func TestVSphereMachineValidateUpdateSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
+func TestVSphereMachineValidateUpdateBottleRocketInvalidUserName(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.OSFamily = "bottlerocket"
+	c := vOld.DeepCopy()
+	c.Spec.Users = []v1alpha1.UserConfiguration{
+		{
+			Name:              "jeff",
+			SshAuthorizedKeys: []string{"ssh AAA..."},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+}
 func TestManagementCPVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
@@ -682,6 +696,18 @@ func TestVSphereMachineConfigValidateCreateSuccess(t *testing.T) {
 	g.Expect(config.ValidateCreate()).To(Succeed())
 }
 
+func TestVSphereMachineConfigValidateInvalidUserSSHAuthorizedKeys(t *testing.T) {
+	config := vsphereMachineConfig()
+	config.Spec.Users = []v1alpha1.UserConfiguration{
+		{
+			Name:              "capv",
+			SshAuthorizedKeys: []string{""},
+		},
+	}
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).ToNot(Succeed())
+}
+
 func TestVSphereMachineConfigValidateCreateResourcePoolNotSet(t *testing.T) {
 	config := vsphereMachineConfig()
 	config.Spec.ResourcePool = ""
@@ -720,6 +746,12 @@ func vsphereMachineConfig() v1alpha1.VSphereMachineConfig {
 			Datastore:    "my-datastore",
 			OSFamily:     "ubuntu",
 			Template:     "/Datacenter/vm/Templates/bottlerocket-v1.23.12-kubernetes-1-23-eks-7-amd64-d44065e",
+			Users: []v1alpha1.UserConfiguration{
+				{
+					Name:              "capv",
+					SshAuthorizedKeys: []string{"ssh AAA..."},
+				},
+			},
 		},
 		Status: v1alpha1.VSphereMachineConfigStatus{},
 	}

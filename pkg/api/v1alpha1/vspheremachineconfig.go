@@ -7,8 +7,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
-
-	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const (
@@ -77,32 +75,4 @@ func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig
 		return nil, fmt.Errorf("unable to find kind %v in file", VSphereMachineConfigKind)
 	}
 	return configs, nil
-}
-
-func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
-	if len(config.Spec.Datastore) <= 0 {
-		return fmt.Errorf("VSphereMachineConfig %s datastore is not set or is empty", config.Name)
-	}
-	if len(config.Spec.ResourcePool) <= 0 {
-		return fmt.Errorf("VSphereMachineConfig %s VM resourcePool is not set or is empty", config.Name)
-	}
-	if config.Spec.OSFamily != Bottlerocket && config.Spec.OSFamily != Ubuntu && config.Spec.OSFamily != RedHat {
-		return fmt.Errorf("VSphereMachineConfig %s osFamily: %s is not supported, please use one of the following: %s, %s, %s", config.Name, config.Spec.OSFamily, Bottlerocket, Ubuntu, RedHat)
-	}
-	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users != nil && config.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
-		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", config.Spec.Users[0].Name)
-	}
-	if err := validateHostOSConfig(config.Spec.HostOSConfiguration, config.Spec.OSFamily); err != nil {
-		return fmt.Errorf("HostOSConfiguration is invalid for VSphereMachineConfig %s: %v", config.Name, err)
-	}
-
-	return nil
-}
-
-func validateVSphereMachineConfigHasTemplate(config *VSphereMachineConfig) error {
-	if config.Spec.Template == "" {
-		return fmt.Errorf("template field is required")
-	}
-
-	return nil
 }
