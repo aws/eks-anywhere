@@ -54,6 +54,9 @@ env:
     TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
     TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
     TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
+    T_HTTP_PROXY_TINKERBELL: "proxy-config-data:httpProxyTinkerbell"
+    T_HTTPS_PROXY_TINKERBELL: "proxy-config-data:httpsProxyTinkerbell"
+    T_NO_PROXY_TINKERBELL: "proxy-config-data:noProxyTinkerbell"
 phases:
   pre_build:
     commands:
