@@ -178,6 +178,9 @@ func (c *VSphereMachineConfig) Validate() error {
 	if len(c.Spec.ResourcePool) <= 0 {
 		return fmt.Errorf("VSphereMachineConfig %s VM resourcePool is not set or is empty", c.Name)
 	}
+	if c.Spec.OSFamily != Bottlerocket && c.Spec.OSFamily != Ubuntu && c.Spec.OSFamily != RedHat {
+		return fmt.Errorf("VSphereMachineConfig %s osFamily: %s is not supported, please use one of the following: %s, %s, %s", c.Name, c.Spec.OSFamily, Bottlerocket, Ubuntu, RedHat)
+	}
 	if err := validateOSFamilyUser(c); err != nil {
 		return err
 	}

@@ -375,7 +375,7 @@ func TestVSphereMachineConfigValidate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "SSHUsername test is invalid",
+			wantErr: "users[0].name test is invalid. Please use 'ec2-user' for Bottlerocket",
 		},
 		{
 			name: "invalid hostOSConfiguration",
