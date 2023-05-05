@@ -849,6 +849,7 @@ func TestCloudStackKubernetes122RedhatTo123StackedEtcdUpgrade(t *testing.T) {
 	)
 }
 
+// TODO: investigate these tests further as they pass even without the expected behavior(upgrade should fail the first time and continue from the checkpoint on second upgrade)wq
 func TestCloudStackKubernetes122RedhatTo123UpgradeWithCheckpoint(t *testing.T) {
 	var clusterOpts []framework.ClusterE2ETestOpt
 	var clusterOpts2 []framework.ClusterE2ETestOpt
