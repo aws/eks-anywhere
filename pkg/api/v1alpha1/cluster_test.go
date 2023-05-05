@@ -1611,6 +1611,12 @@ func TestEndPointEquals(t *testing.T) {
 			prev: &Endpoint{Host: "host"},
 			new:  &Endpoint{Host: "new-host"},
 		},
+		{
+			name: "new no port",
+			want: true,
+			prev: &Endpoint{Host: "host:6443"},
+			new:  &Endpoint{Host: "host"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

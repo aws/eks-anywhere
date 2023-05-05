@@ -1,13 +1,17 @@
 package v1alpha1
 
 import (
+	"fmt"
+	"net"
 	"strconv"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
@@ -36,6 +40,9 @@ const (
 
 	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
 	defaultEksaNamespace = "default"
+
+	// controlEndpointDefaultPort defaults cluster control plane endpoint port if not specified.
+	controlEndpointDefaultPort = "6443"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -300,7 +307,41 @@ func (n *Endpoint) Equal(o *Endpoint) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Host == o.Host
+	newEndpointStr, _ := ControlPlaneEndpointHost(n)
+	oldEndpointStr, err := ControlPlaneEndpointHost(o)
+	if err != nil {
+		return false
+	}
+
+	return n.Host == o.Host || newEndpointStr == oldEndpointStr
+}
+
+// GetControlPlaneHostPort retrieves the ControlPlaneConfiguration host and port split defined in the cluster.Spec. If it's valid, it checks the port
+// to see if the default port should be used and returns it.
+func GetControlPlaneHostPort(pHost string) (string, string, error) {
+	host, port, err := net.SplitHostPort(pHost)
+	if err != nil {
+		if strings.Contains(err.Error(), "missing port") {
+			host = pHost
+			port = controlEndpointDefaultPort
+		} else {
+			return "", "", fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
+		}
+	}
+	if !networkutils.IsPortValid(port) {
+		return "", "", fmt.Errorf("host %s has an invalid port", pHost)
+	}
+	return host, port, nil
+}
+
+// ControlPlaneEndpointHost gets host and port (default if not provided) and combines thenm into a network address of the form "host:port".
+func ControlPlaneEndpointHost(endpoint *Endpoint) (string, error) {
+	host, port, err := GetControlPlaneHostPort(endpoint.Host)
+	if err != nil {
+		return "", err
+	}
+
+	return net.JoinHostPort(host, port), nil
 }
 
 type WorkerNodeGroupConfiguration struct {

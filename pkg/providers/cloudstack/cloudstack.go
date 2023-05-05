@@ -36,7 +36,6 @@ import (
 
 const (
 	eksaLicense                = "EKSA_LICENSE"
-	controlEndpointDefaultPort = "6443"
 	etcdTemplateNameKey        = "etcdTemplateName"
 	cpTemplateNameKey          = "controlPlaneTemplateName"
 )
