@@ -36,6 +36,8 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
+
+	// This is only needed for the webhook, which is why it is separate from the Validate method
 	if err := r.ValidateUsers(); err != nil {
 		return err
 	}
@@ -61,6 +63,7 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 		return nil
 	}
 
+	// This is only needed for the webhook, which is why it is separate from the Validate method
 	if err := r.ValidateUsers(); err != nil {
 		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(),
 			r.Name,
