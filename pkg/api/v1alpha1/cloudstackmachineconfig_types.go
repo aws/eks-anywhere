@@ -217,7 +217,7 @@ func (c *CloudStackMachineConfig) Validate() error {
 }
 
 // SetUserDefaults initializes Spec.Users for the CloudStackMachineConfig with default values.
-// This only runs in the CLI, as we support don't support user defaults through the webhook.
+// This only runs in the CLI, as we don't support user defaults through the webhook.
 func (c *CloudStackMachineConfig) SetUserDefaults() {
 	c.Spec.Users = defaultMachineConfigUsers(DefaultCloudStackUser, c.Spec.Users)
 }
