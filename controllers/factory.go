@@ -415,7 +415,7 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 }
 
 func (f *Factory) withCloudStackClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker().withIPValidator()
+	f.withCNIReconciler().withTracker().withIPValidator().withCloudStackValidatorRegistry()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cloudstackClusterReconciler != nil {
@@ -427,6 +427,7 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 			f.ipValidator,
 			f.cniReconciler,
 			f.tracker,
+			f.cloudStackValidatorRegistry,
 		)
 		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
 
