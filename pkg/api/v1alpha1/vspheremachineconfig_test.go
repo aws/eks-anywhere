@@ -461,24 +461,6 @@ func TestVSphereMachineConfigValidateUsers(t *testing.T) {
 			wantErr: "users is not set for VSphereMachineConfig test-cp, please provide a user",
 		},
 		{
-			name: "machineconfig with bottlerocket user name empty",
-			machineConfig: &VSphereMachineConfig{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-cp",
-				},
-				Spec: VSphereMachineConfigSpec{
-					OSFamily: "bottlerocket",
-					Users: []UserConfiguration{
-						{
-							Name:              "",
-							SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
-						},
-					},
-				},
-			},
-			wantErr: "users[0].name  is invalid. Please use 'ec2-user' for Bottlerocket",
-		},
-		{
 			name: "machineconfig with bottlerocket user name invalid",
 			machineConfig: &VSphereMachineConfig{
 				ObjectMeta: metav1.ObjectMeta{

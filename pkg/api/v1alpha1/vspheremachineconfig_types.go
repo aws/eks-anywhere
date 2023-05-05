@@ -153,22 +153,16 @@ func (c *VSphereMachineConfig) SetDefaults() {
 // SetUserDefaults initializes Spec.Users for the VSphereMachineConfig with default values.
 // This only runs in the CLI, as we support do support user defaults through the webhook.
 func (c *VSphereMachineConfig) SetUserDefaults() {
-	if len(c.Spec.Users) <= 0 {
-		c.Spec.Users = []UserConfiguration{{}}
-	}
-
-	if len(c.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		c.Spec.Users[0].SshAuthorizedKeys = []string{""}
-	}
-
+	var defaultUsername string
 	if len(c.Spec.Users) == 0 || c.Spec.Users[0].Name == "" {
 		if c.Spec.OSFamily == Bottlerocket {
-			c.Spec.Users[0].Name = constants.BottlerocketDefaultUser
+			defaultUsername = constants.BottlerocketDefaultUser
 		} else {
-			c.Spec.Users[0].Name = constants.UbuntuDefaultUser
+			defaultUsername = constants.UbuntuDefaultUser
 		}
-		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "c", c.Name, "user", c.Spec.Users[0].Name)
+		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "c", c.Name, "user", defaultUsername)
 	}
+	c.Spec.Users = defaultMachineConfigUsers(defaultUsername, c.Spec.Users)
 }
 
 func (c *VSphereMachineConfig) Validate() error {
@@ -195,17 +189,11 @@ func (c *VSphereMachineConfig) Validate() error {
 // This validation only runs in VSphereMachineConfig validation webhook, as we support
 // auto-generate and import ssh key when creating a cluster via CLI.
 func (c *VSphereMachineConfig) ValidateUsers() error {
-	if len(c.Spec.Users) == 0 {
-		return fmt.Errorf("users is not set for VSphereMachineConfig %s, please provide a user", c.Name)
+	if err := validateMachineConfigUsers(c.Name, VSphereMachineConfigKind, c.Spec.Users); err != nil {
+		return err
 	}
 	if err := validateOSFamilyUser(c); err != nil {
 		return err
-	}
-	if c.Spec.Users[0].Name == "" {
-		return fmt.Errorf("users[0].name is not set or is empty for VSphereMachineConfig %s, please provide a username", c.Name)
-	}
-	if len(c.Spec.Users[0].SshAuthorizedKeys) == 0 || c.Spec.Users[0].SshAuthorizedKeys[0] == "" {
-		return fmt.Errorf("users[0].SshAuthorizedKeys is not set or is empty for VSphereMachineConfig %s, please provide a valid ssh authorized key for user %s", c.Name, c.Spec.Users[0].Name)
 	}
 	return nil
 }
@@ -214,7 +202,7 @@ func validateOSFamilyUser(machineConfig *VSphereMachineConfig) error {
 	if machineConfig.Spec.OSFamily != Bottlerocket {
 		return nil
 	}
-	if machineConfig.Spec.Users == nil || machineConfig.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
+	if machineConfig.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
 		return fmt.Errorf("users[0].name %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
 	}
 	return nil
