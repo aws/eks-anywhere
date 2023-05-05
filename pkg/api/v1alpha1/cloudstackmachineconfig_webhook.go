@@ -30,14 +30,15 @@ var _ webhook.Validator = &CloudStackMachineConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *CloudStackMachineConfig) ValidateCreate() error {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
-
 	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
 	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
-
+	if err := r.ValidateUsers(); err != nil {
+		return err
+	}
 	return r.Validate()
 }
 
@@ -60,6 +61,14 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 		return nil
 	}
 
+	if err := r.ValidateUsers(); err != nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(),
+			r.Name,
+			field.ErrorList{
+				field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+			})
+	}
+
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(r, oldCloudStackMachineConfig)...)
 
@@ -78,7 +87,6 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 	if err := r.Validate(); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
-
 	if len(allErrs) > 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}

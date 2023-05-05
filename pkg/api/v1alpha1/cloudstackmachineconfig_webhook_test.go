@@ -161,6 +161,13 @@ func TestCloudStackMachineConfigValidateCreateInvalidComputeOfferingEmpty(t *tes
 	g.Expect(c.ValidateCreate()).NotTo(Succeed())
 }
 
+func TestCloudStackMachineConfigValidateCreateInvalidUsers(t *testing.T) {
+	c := cloudstackMachineConfig()
+	c.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
@@ -462,12 +469,29 @@ func TestManagementCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.
 func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{
+		Name:              "Jeff",
+		SshAuthorizedKeys: []string{"rsa-blahdeblahbalh"},
+	}}
 	c := vOld.DeepCopy()
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadCloudStackMachineValidateUpdateInvalidUsers(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{
+		Name:              "Jeff",
+		SshAuthorizedKeys: []string{"rsa-blahdeblahbalh"},
+	}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = ""
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
 }
 
 func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
@@ -488,6 +512,12 @@ func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
 			},
 			ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
 				Name: "offering1",
+			},
+			Users: []v1alpha1.UserConfiguration{
+				{
+					Name:              "capc",
+					SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
+				},
 			},
 		},
 		Status: v1alpha1.CloudStackMachineConfigStatus{},
