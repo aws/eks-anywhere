@@ -296,6 +296,46 @@ func TestNewNutanixTemplateBuilderNodeTaintsAndLabels(t *testing.T) {
 	assert.Equal(t, expectedWorkersSpec, workerSpec)
 }
 
+func TestNewNutanixTemplateBuilderIAMAuth(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-iamauth.yaml")
+
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	expectedControlPlaneSpec, err := os.ReadFile("testdata/expected_results_iamauth.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedControlPlaneSpec, cpSpec)
+}
+
+func TestNewNutanixTemplateBuilderIRSA(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-irsa.yaml")
+
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	expectedControlPlaneSpec, err := os.ReadFile("testdata/expected_results_irsa.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedControlPlaneSpec, cpSpec)
+}
+
 func minimalNutanixConfigSpec(t *testing.T) (*anywherev1.NutanixDatacenterConfig, *anywherev1.NutanixMachineConfig, map[string]anywherev1.NutanixMachineConfigSpec) {
 	dcConf := &anywherev1.NutanixDatacenterConfig{}
 	err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), dcConf)

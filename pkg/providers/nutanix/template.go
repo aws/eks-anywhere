@@ -152,8 +152,9 @@ func buildTemplateMapCP(
 ) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig)
-
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig))
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
@@ -232,6 +233,10 @@ func buildTemplateMapCP(
 		values["projectIDType"] = controlPlaneMachineSpec.Project.Type
 		values["projectName"] = controlPlaneMachineSpec.Project.Name
 		values["projectUUID"] = controlPlaneMachineSpec.Project.UUID
+	}
+
+	if clusterSpec.AWSIamConfig != nil {
+		values["awsIamAuth"] = true
 	}
 
 	return values, nil
