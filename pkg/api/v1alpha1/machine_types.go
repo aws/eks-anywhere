@@ -16,7 +16,7 @@ type UserConfiguration struct {
 	SshAuthorizedKeys []string `json:"sshAuthorizedKeys"`
 }
 
-func defaultMachineConfigUsers(users []UserConfiguration) []UserConfiguration {
+func defaultMachineConfigUsers(defaultUsername string, users []UserConfiguration) []UserConfiguration {
 	if len(users) <= 0 {
 		users = []UserConfiguration{{}}
 	}
@@ -24,7 +24,7 @@ func defaultMachineConfigUsers(users []UserConfiguration) []UserConfiguration {
 		users[0].SshAuthorizedKeys = []string{""}
 	}
 	if users[0].Name == "" {
-		users[0].Name = DefaultCloudStackUser
+		users[0].Name = defaultUsername
 	}
 
 	return users
