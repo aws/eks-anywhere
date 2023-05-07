@@ -30,6 +30,7 @@ type ImageTagConfiguration struct {
 	NonProdSourceImageTagFormat string
 	ProdSourceImageTagFormat    string
 	ReleaseImageTagFormat       string
+	TagOnly                     bool
 }
 
 type Image struct {

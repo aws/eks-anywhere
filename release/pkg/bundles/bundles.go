@@ -116,11 +116,6 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for external Etcdadm controller")
 	}
 
-	packageBundle, err := GetPackagesBundle(r, imageDigests)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
-	}
-
 	tinkerbellBundle, err := GetTinkerbellBundle(r, imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
@@ -175,6 +170,11 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		snowBundle, err := GetSnowBundle(r, channel, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
+		}
+
+		packageBundle, err := GetPackagesBundle(r, channel, imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
 		}
 
 		versionsBundle := anywherev1alpha1.VersionsBundle{

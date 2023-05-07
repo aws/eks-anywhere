@@ -31,10 +31,11 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
 
-func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.PackageBundle, error) {
+func GetPackagesBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.PackageBundle, error) {
 	artifacts := map[string][]releasetypes.Artifact{
-		"eks-anywhere-packages": r.BundleArtifactsTable["eks-anywhere-packages"],
-		"ecr-token-refresher":   r.BundleArtifactsTable["ecr-token-refresher"],
+		"eks-anywhere-packages":         r.BundleArtifactsTable[fmt.Sprintf("eks-anywhere-packages-%s", eksDReleaseChannel)],
+		"eks-anywhere-packages-bundles": r.BundleArtifactsTable[fmt.Sprintf("eks-anywhere-packages-bundles-%s", eksDReleaseChannel)],
+		"ecr-token-refresher":           r.BundleArtifactsTable[fmt.Sprintf("ecr-token-refresher-%s", eksDReleaseChannel)],
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(artifacts)
 
@@ -177,6 +178,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 		Controller:     bundleImageArtifacts["eks-anywhere-packages"],
 		TokenRefresher: bundleImageArtifacts["ecr-token-refresher"],
 		HelmChart:      bundleImageArtifacts["eks-anywhere-packages-helm"],
+		Bundle:         bundleImageArtifacts["eks-anywhere-packages-bundles"],
 	}
 	return bundle, nil
 }

@@ -127,6 +127,16 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	var sourceImageUri string
 	var latestTag string
 	var err error
+	if imageTagConfiguration.TagOnly == true {
+		sourceImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.NonProdSourceImageTagFormat, tagOptions)
+		sourceImageUri := fmt.Sprintf("%s/%s:%s",
+			r.ReleaseContainerRegistry,
+			repoName,
+			sourceImageTagPrefix,
+		)
+		return sourceImageUri, r.BuildRepoBranchName, nil
+	}
+
 	sourcedFromBranch := r.BuildRepoBranchName
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		latestTag = artifactutils.GetLatestUploadDestination(r.BuildRepoBranchName)
@@ -217,6 +227,14 @@ func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, ta
 
 	if imageTagConfiguration.ReleaseImageTagFormat != "" {
 		releaseImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.ReleaseImageTagFormat, tagOptions)
+		if imageTagConfiguration.TagOnly == true {
+			releaseImageUri = fmt.Sprintf("%s/%s:%s",
+				r.ReleaseContainerRegistry,
+				repoName,
+				releaseImageTagPrefix,
+			)
+			return releaseImageUri, nil
+		}
 		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,

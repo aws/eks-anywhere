@@ -244,6 +244,7 @@ type PackageBundle struct {
 	Controller     Image  `json:"packageController"`
 	TokenRefresher Image  `json:"tokenRefresher"`
 	HelmChart      Image  `json:"helmChart,omitempty"`
+	Bundle         Image  `json:"bundle,omitempty"`
 }
 
 type EksaBundle struct {

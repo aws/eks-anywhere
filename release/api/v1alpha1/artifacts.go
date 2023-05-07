@@ -229,3 +229,9 @@ func (vb *VersionsBundle) Charts() map[string]*Image {
 		"tinkerbell-chart":      &vb.Tinkerbell.TinkerbellStack.TinkebellChart,
 	}
 }
+
+func (vb *VersionsBundle) RegistryArtifacts() map[string]*Image {
+	return map[string]*Image{
+		"eks-anywhere-packages": &vb.PackageController.Bundle,
+	}
+}

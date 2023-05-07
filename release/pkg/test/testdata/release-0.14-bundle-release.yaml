@@ -474,6 +474,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.14-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
       version: v1.1.0+abcdef1
     packageController:
+      bundle:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for eks-anywhere-packages-bundles image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages-bundles
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages-bundles:v1-21-latest
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -1260,6 +1269,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.14-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
       version: v1.1.0+abcdef1
     packageController:
+      bundle:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for eks-anywhere-packages-bundles image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages-bundles
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages-bundles:v1-22-latest
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -2046,6 +2064,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.14-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
       version: v1.1.0+abcdef1
     packageController:
+      bundle:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for eks-anywhere-packages-bundles image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages-bundles
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages-bundles:v1-23-latest
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -2832,6 +2859,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.14-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
       version: v1.1.0+abcdef1
     packageController:
+      bundle:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for eks-anywhere-packages-bundles image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages-bundles
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages-bundles:v1-24-latest
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -3591,6 +3627,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.14-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.1.0/metadata.yaml
       version: v1.1.0+abcdef1
     packageController:
+      bundle:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for eks-anywhere-packages-bundles image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages-bundles
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages-bundles:v1-25-latest
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

@@ -399,6 +399,15 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName: "eks-anywhere-packages",
 			},
 			{
+				RepoName: "eks-anywhere-packages-bundles",
+				ImageTagConfiguration: assettypes.ImageTagConfiguration{
+					NonProdSourceImageTagFormat: "v<eksDReleaseChannel>-latest",
+					ProdSourceImageTagFormat:    "v<eksDReleaseChannel>-latest",
+					ReleaseImageTagFormat:       "v<eksDReleaseChannel>-latest",
+					TagOnly:                     true,
+				},
+			},
+			{
 				RepoName: "ecr-token-refresher",
 			},
 			{
@@ -413,7 +422,9 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ImageTagOptions: []string{
 			"gitTag",
 			"projectPath",
+			"eksDReleaseChannel",
 		},
+		HasReleaseBranches: true,
 	},
 	// Etcdadm artifacts
 	{
