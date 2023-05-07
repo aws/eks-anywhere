@@ -667,6 +667,20 @@ func (e *ClusterE2ETest) convertVSphereMachineConfigs(cpName, workerName, etcdNa
 	return configs
 }
 
+func (e *ClusterE2ETest) convertCloudstackMachineConfigs(cpName, workerName, etcdName string, cloudstackMachineConfigs map[string]*v1alpha1.CloudStackMachineConfig) []providers.MachineConfig {
+	var configs []providers.MachineConfig
+	if cloudstackMachineConfigs[cpName] != nil {
+		configs = append(configs, cloudstackMachineConfigs[cpName])
+	}
+	if workerName != cpName && cloudstackMachineConfigs[workerName] != nil {
+		configs = append(configs, cloudstackMachineConfigs[workerName])
+	}
+	if etcdName != "" && etcdName != cpName && etcdName != workerName && cloudstackMachineConfigs[etcdName] != nil {
+		configs = append(configs, cloudstackMachineConfigs[etcdName])
+	}
+	return configs
+}
+
 func (e *ClusterE2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) error {
 	machineTemplateName, err := e.machineTemplateName(ctx)
 	if err != nil {
@@ -820,6 +834,25 @@ func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerCon
 			return nil, err
 		}
 		providerConfig.datacenterConfig = datacenterConfig
+	case v1alpha1.CloudStackDatacenterKind:
+		datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfGitPath)
+		if err != nil {
+			return nil, err
+		}
+		providerConfig.datacenterConfig = datacenterConfig
+		machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
+		if err != nil {
+			return nil, err
+		}
+		etcdName := ""
+		if e.ClusterConfig.Cluster.Spec.ExternalEtcdConfiguration != nil {
+			etcdName = e.ClusterConfig.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		}
+		providerConfig.machineConfigs = e.convertCloudstackMachineConfigs(
+			e.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name,
+			e.ClusterConfig.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name,
+			etcdName,
+			machineConfigs)
 	default:
 		return nil, fmt.Errorf("unexpected DatacenterRef %s", e.ClusterConfig.Cluster.Spec.DatacenterRef.Kind)
 	}
