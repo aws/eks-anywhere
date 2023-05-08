@@ -164,3 +164,13 @@ func WithCloudStackMachineConfig(name string, fillers ...CloudStackMachineConfig
 		FillCloudStackMachineConfig(m, fillers...)
 	}
 }
+
+// WithCloudStackConfigNamespaceForAllMachinesAndDatacenter sets the namespace for all Machines and Datacenter objects.
+func WithCloudStackConfigNamespaceForAllMachinesAndDatacenter(ns string) CloudStackFiller {
+	return func(config CloudStackConfig) {
+		config.datacenterConfig.Namespace = ns
+		for _, m := range config.machineConfigs {
+			m.Namespace = ns
+		}
+	}
+}
