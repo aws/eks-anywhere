@@ -115,6 +115,38 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	g.Expect(result).To(Equal(ctrl.Result{}))
 }
 
+func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	selfManagedCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-management-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			BundlesRef: &anywherev1.BundlesRef{
+				Name: "my-bundles-ref",
+			},
+		},
+	}
+
+	controller := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
+	iam := mocks.NewMockAWSIamConfigReconciler(controller)
+	clusterValidator := mocks.NewMockClusterValidator(controller)
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
+	mockPkgs := mocks.NewMockPackagesClient(controller)
+	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
+
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs,
+		controllers.WithExperimentalSelfManagedClusterUpgrades(true),
+	)
+	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(result).To(Equal(ctrl.Result{}))
+}
+
 func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

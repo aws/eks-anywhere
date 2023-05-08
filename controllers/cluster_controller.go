@@ -47,6 +47,13 @@ type ClusterReconciler struct {
 	awsIamAuth                 AWSIamConfigReconciler
 	clusterValidator           ClusterValidator
 	packagesClient             PackagesClient
+
+	// experimentalSelfManagedUpgrade enables management cluster full upgrades.
+	// The default behavior for management cluster only reconciles the worker nodes.
+	// When this is enabled, the controller will handle management clusters in the same
+	// way as workload clusters: it will reconcile CP, etcd and workers.
+	// Only intended for internal testing.
+	experimentalSelfManagedUpgrade bool
 }
 
 // PackagesClient handles curated packages operations from within the cluster
@@ -73,14 +80,31 @@ type ClusterValidator interface {
 	ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
 }
 
+// ClusterReconcilerOption allows to configure the ClusterReconciler.
+type ClusterReconcilerOption func(*ClusterReconciler)
+
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient) *ClusterReconciler {
-	return &ClusterReconciler{
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, opts ...ClusterReconcilerOption) *ClusterReconciler {
+	c := &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
 		awsIamAuth:                 awsIamAuth,
 		clusterValidator:           clusterValidator,
 		packagesClient:             pkgs,
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
+}
+
+// WithExperimentalSelfManagedClusterUpgrades allows to enable experimental upgrades for self
+// managed clusters.
+func WithExperimentalSelfManagedClusterUpgrades(exp bool) ClusterReconcilerOption {
+	return func(c *ClusterReconciler) {
+		c.experimentalSelfManagedUpgrade = exp
 	}
 }
 
@@ -234,7 +258,7 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 		return reconcileResult.ToCtrlResult(), nil
 	}
 
-	if cluster.IsSelfManaged() {
+	if cluster.IsSelfManaged() && !r.experimentalSelfManagedUpgrade {
 		// self-managed clusters should only reconcile worker nodes to avoid control plane instability
 		reconcileResult, err = clusterProviderReconciler.ReconcileWorkerNodes(ctx, log, cluster)
 	} else {
