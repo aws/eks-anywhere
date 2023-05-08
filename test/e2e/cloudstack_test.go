@@ -654,7 +654,9 @@ func TestCloudStackKubernetes123MultiEndpointSimpleFlow(t *testing.T) {
 func TestCloudStackKubernetes123DifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithCloudStackRedhat123(), framework.WithCloudStackFillers(api.WithCloudStackConfigNamespace(clusterNamespace))),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat123(),
+			framework.WithCloudStackFillers(api.WithCloudStackConfigNamespace(clusterNamespace),
+				api.WithCloudStackConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
@@ -1010,7 +1012,8 @@ func TestCloudStackKubernetes122RedhatTo123WithFluxLegacyUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes122RedhatTo123DifferentNamespaceWithFluxLegacyUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat122(),
+		framework.WithCloudStackFillers(api.WithCloudStackConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFluxLegacy(api.WithGitOpsNamespace(clusterNamespace)),
