@@ -91,6 +91,8 @@ spec:
       preKubeadmCommands:
 {{- if .registryMirrorMap }}
         - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+{{- end }}
+{{- if or .proxyConfig .registryMirrorMap }}
         - sudo systemctl daemon-reload
         - sudo systemctl restart containerd
 {{- end }}
@@ -123,8 +125,17 @@ spec:
           sudo: ALL=(ALL) NOPASSWD:ALL
           sshAuthorizedKeys:
             - "{{.workerSshAuthorizedKey}}"
-{{- if .registryMirrorMap }}
+{{- if or .proxyConfig .registryMirrorMap }}
       files:
+{{- end }}
+{{- if .proxyConfig }}
+      - content: |
+          [Service]
+          Environment="HTTP_PROXY={{.httpProxy}}"
+          Environment="HTTPS_PROXY={{.httpsProxy}}"
+          Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
+        owner: root:root
+        path: /etc/systemd/system/containerd.service.d/http-proxy.conf
 {{- end }}
 {{- if .registryCACert }}
       - content: |
