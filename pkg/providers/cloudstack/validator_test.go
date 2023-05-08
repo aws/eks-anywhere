@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -107,6 +106,7 @@ func TestValidateControlPlaneIpCheck(t *testing.T) {
 	err := validator.ValidateControlPlaneEndpointUniqueness("255.255.255.255:6443")
 	thenErrorExpected(t, "endpoint <255.255.255.255:6443> is already in use", err)
 }
+
 func TestValidateControlPlaneIpCheckUniqueIpSuccess(t *testing.T) {
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	validator := NewValidator(cmk, &DummyNetClient{}, false)

@@ -1962,6 +1962,104 @@ func TestNeedNewMachineTemplateMissingApiEndpointFromCloudStackCluster(t *testin
 	assert.False(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
+func TestNeedsNewMachineTemplate_UserCustomDetails(t *testing.T) {
+	datacenter := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	for _, tc := range []struct {
+		Name      string
+		Configure func(old, nw *v1alpha1.CloudStackMachineConfig)
+		Expect    bool
+	}{
+		{
+			Name: "Equivalent",
+			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "bar",
+					"qux": "baz",
+				}
+
+				nw.Spec.UserCustomDetails = map[string]string{
+					"foo": "bar",
+					"qux": "baz",
+				}
+			},
+		},
+		{
+			Name: "Add",
+			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{}
+
+				nw.Spec.UserCustomDetails = map[string]string{
+					"foo": "bar",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Remove",
+			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "bar",
+				}
+
+				nw.Spec.UserCustomDetails = map[string]string{}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Replace",
+			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "bar",
+				}
+
+				nw.Spec.UserCustomDetails = map[string]string{
+					"qux": "baz",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "ReplaceEmptyValue",
+			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "",
+					"qux": "baz",
+				}
+
+				nw.Spec.UserCustomDetails = map[string]string{
+					"bar": "",
+					"qux": "baz",
+				}
+			},
+			Expect: true,
+		},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			oldMachines := givenMachineConfigs(t, testClusterConfigMainFilename)
+			newMachines := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+			oldMachine, newMachine := oldMachines["test"], newMachines["test"]
+
+			if tc.Configure != nil {
+				tc.Configure(oldMachine, newMachine)
+			}
+
+			result := NeedNewMachineTemplate(
+				datacenter,
+				datacenter,
+				oldMachine,
+				newMachine,
+				test.NewNullLogger(),
+			)
+
+			if result != tc.Expect {
+				t.Fatalf("Expected: %v; Received: %v", tc.Expect, result)
+			}
+		})
+	}
+}
+
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
