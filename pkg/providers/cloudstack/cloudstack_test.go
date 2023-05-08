@@ -1847,7 +1847,7 @@ func TestClusterUpgradeNeededMachineConfigsChangedDiskOffering(t *testing.T) {
 	}
 }
 
-func TestNeedsNewMachineTemplate(t *testing.T) {
+func TestNeedNewMachineTemplate(t *testing.T) {
 	for _, tc := range []struct {
 		Name                string
 		ConfigureDatacenter func(old, nw *v1alpha1.CloudStackDatacenterConfig)
@@ -1869,7 +1869,7 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			},
 		},
 		{
-			Name: "AvailabilityZones_Add",
+			Name: "Datacenter_AvailabilityZones_Add",
 			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
 				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
 					{
@@ -1899,7 +1899,116 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "AvailabilityZones_DomainChange",
+			Name: "Datacenter_AvailabilityZones_Removed",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+					{
+						Name:           "name",
+						CredentialsRef: "credentials_ref",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "name",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "name",
+							},
+						},
+						Domain:                "domain",
+						Account:               "account",
+						ManagementApiEndpoint: "management_api_endpoint",
+					},
+				}
+
+				nw.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Datacenter_AvailabilityZones_ChangeCredentialsRef",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+					{
+						Name:           "name",
+						CredentialsRef: "credentials_ref",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "name",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "name",
+							},
+						},
+						Domain:                "domain",
+						Account:               "account",
+						ManagementApiEndpoint: "management_api_endpoint",
+					},
+				}
+
+				nw.Spec.AvailabilityZones = append(
+					[]v1alpha1.CloudStackAvailabilityZone{},
+					old.Spec.AvailabilityZones...,
+				)
+
+				nw.Spec.AvailabilityZones[0].CredentialsRef = "new_credentials_ref"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Datacenter_AvailabilityZones_ChangeZoneName",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+					{
+						Name:           "name",
+						CredentialsRef: "credentials_ref",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "name",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "name",
+							},
+						},
+						Domain:                "domain",
+						Account:               "account",
+						ManagementApiEndpoint: "management_api_endpoint",
+					},
+				}
+
+				nw.Spec.AvailabilityZones = append(
+					[]v1alpha1.CloudStackAvailabilityZone{},
+					old.Spec.AvailabilityZones...,
+				)
+
+				nw.Spec.AvailabilityZones[0].Zone.Name = "new_credentials_ref"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Datacenter_AvailabilityZones_ChangeZoneNetwork",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+					{
+						Name:           "name",
+						CredentialsRef: "credentials_ref",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "name",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "name",
+							},
+						},
+						Domain:                "domain",
+						Account:               "account",
+						ManagementApiEndpoint: "management_api_endpoint",
+					},
+				}
+
+				nw.Spec.AvailabilityZones = append(
+					[]v1alpha1.CloudStackAvailabilityZone{},
+					old.Spec.AvailabilityZones...,
+				)
+
+				nw.Spec.AvailabilityZones[0].Zone.Network = v1alpha1.CloudStackResourceIdentifier{
+					Name: "new_name",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Datacenter_AvailabilityZones_ChangeDomain",
 			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
 				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
 					{
@@ -1927,7 +2036,35 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Symlinks_Add",
+			Name: "Datacenter_AvailabilityZones_ChangeAccount",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+					{
+						Name:           "name",
+						CredentialsRef: "credentials_ref",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "name",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "name",
+							},
+						},
+						Domain:                "domain",
+						Account:               "account",
+						ManagementApiEndpoint: "management_api_endpoint",
+					},
+				}
+
+				nw.Spec.AvailabilityZones = append(
+					[]v1alpha1.CloudStackAvailabilityZone{},
+					old.Spec.AvailabilityZones...,
+				)
+
+				nw.Spec.AvailabilityZones[0].Account = "new_account"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_Symlinks_Add",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.Symlinks = map[string]string{
 					"foo": "bar",
@@ -1940,7 +2077,17 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Symlinks_Changed",
+			Name: "Machine_Symlinks_Remove",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.Symlinks = map[string]string{
+					"foo": "bar",
+				}
+				nw.Spec.Symlinks = map[string]string{}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_Symlinks_Changed",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.Symlinks = map[string]string{
 					"foo": "bar",
@@ -1954,7 +2101,7 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "ComputeOffering_NameChanged",
+			Name: "Machine_ComputeOffering_NameChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -1967,7 +2114,90 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "UserCustomDetails_Add",
+			Name: "Machine_ComputeOffering_IDChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+						Id: "id",
+					},
+				}
+				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
+				nw.Spec.DiskOffering.Id = "id_changed"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_SizeChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+						Id: "id",
+					},
+					CustomSize: 1,
+				}
+				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
+				nw.Spec.DiskOffering.CustomSize = 2
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_MountPathChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+						Id: "id",
+					},
+					MountPath: "mount_path",
+				}
+				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
+				nw.Spec.DiskOffering.MountPath = "new_mount_path"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_DeviceChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+						Id: "id",
+					},
+					Device: "device",
+				}
+				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
+				nw.Spec.DiskOffering.Device = "new_device_path"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_FilesystemChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+						Id: "id",
+					},
+					Filesystem: "filesystem",
+				}
+				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
+				nw.Spec.DiskOffering.Filesystem = "new_filesystem"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_LabelChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+						Id: "id",
+					},
+					Label: "label",
+				}
+				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
+				nw.Spec.DiskOffering.Label = "new_label"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_UserCustomDetails_Add",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{}
 
@@ -1978,7 +2208,7 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "UserCustomDetails_Remove",
+			Name: "Machine_UserCustomDetails_Remove",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
 					"foo": "bar",
@@ -1989,7 +2219,7 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "UserCustomDetails_Replace",
+			Name: "Machine_UserCustomDetails_Replace",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
 					"foo": "bar",
@@ -2002,7 +2232,7 @@ func TestNeedsNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "UserCustomDetails_ReplaceEmptyValue",
+			Name: "Machine_UserCustomDetails_ReplaceEmptyValue",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
 					"foo": "",
