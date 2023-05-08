@@ -71,7 +71,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 // ReconcileWorkerNodes validates the cluster definition and reconciles the worker nodes
 // to the desired state.
 func (r *Reconciler) ReconcileWorkerNodes(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
-	log = log.WithValues("provider", "vsphere", "reconcile type", "workers")
+	log = log.WithValues("provider", "snow", "reconcile type", "workers")
 	clusterSpec, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
 	if err != nil {
 		return controller.Result{}, err
