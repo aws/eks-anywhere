@@ -1847,146 +1847,128 @@ func TestClusterUpgradeNeededMachineConfigsChangedDiskOffering(t *testing.T) {
 	}
 }
 
-func TestNeedNewMachineTemplateDiskOfferingNoChange(t *testing.T) {
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	assert.False(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
-}
-
-func TestNeedNewMachineTemplateDiskOfferingNameChange(t *testing.T) {
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newMachineConfigsMap["test"].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
-		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
-			Name: "newDiskOffering",
-		},
-		CustomSize: 0,
-		MountPath:  "",
-		Device:     "",
-		Filesystem: "",
-		Label:      "",
-	}
-	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
-}
-
-func TestNeedNewMachineTemplateSymlinksAdded(t *testing.T) {
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newMachineConfigsMap["test"].Spec.Symlinks["/new/folder"] = "/data/new/folder"
-	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
-}
-
-func TestNeedNewMachineTemplateComputeOffering(t *testing.T) {
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newMachineConfigsMap["test"].Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{Name: "new-offering"}
-	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
-}
-
-func TestNeedNewMachineTemplateSymlinksChange(t *testing.T) {
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	for k, v := range newMachineConfigsMap["test"].Spec.Symlinks {
-		newMachineConfigsMap["test"].Spec.Symlinks[k] = "/new" + v
-	}
-	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
-}
-
-func TestNeedNewMachineTemplateDomain(t *testing.T) {
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newDcConfig.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
-
-	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
-}
-
-func TestNeedNewMachineTemplateFewerZones(t *testing.T) {
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	secondAz := dcConfig.Spec.AvailabilityZones[0].DeepCopy()
-	secondAz.Name = "shinyNewAz"
-	dcConfig.Spec.AvailabilityZones = append(dcConfig.Spec.AvailabilityZones, *secondAz)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-
-	assert.True(t, NeedNewMachineTemplate(dcConfig, newDcConfig, nil, nil, test.NewNullLogger()), "Should have an immutable field changed")
-}
-
-func TestNeedNewMachineTemplateMissingApiEndpointFromCloudStackCluster(t *testing.T) {
-	// We currently can't retrieve ManagementApiEndpoint for an AZ from the CloudStackCluster resource, so a difference there should be ignored
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
-	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	assert.False(t, NeedNewMachineTemplate(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
-}
-
-func TestNeedsNewMachineTemplate_UserCustomDetails(t *testing.T) {
-	datacenter := givenDatacenterConfig(t, testClusterConfigMainFilename)
-
+func TestNeedsNewMachineTemplate(t *testing.T) {
 	for _, tc := range []struct {
-		Name      string
-		Configure func(old, nw *v1alpha1.CloudStackMachineConfig)
-		Expect    bool
+		Name                string
+		ConfigureDatacenter func(old, nw *v1alpha1.CloudStackDatacenterConfig)
+		ConfigureMachines   func(old, nw *v1alpha1.CloudStackMachineConfig)
+		Expect              bool
 	}{
 		{
 			Name: "Equivalent",
-			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
-				old.Spec.UserCustomDetails = map[string]string{
-					"foo": "bar",
-					"qux": "baz",
+		},
+		{
+			// We can't retrieve the ManagementApiEndpoint for an availability zone from the
+			// cloudstackv1.CloudStackCluster resource so a difference should be ignored.
+			//
+			// The criteria for changing this test and the context under which it was written
+			// is unclear.
+			Name: "AvailabilityZones_MissingManagementAPIEndpoint",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				nw.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
+			},
+		},
+		{
+			Name: "AvailabilityZones_Add",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+					{
+						Name:           "name",
+						CredentialsRef: "credentials_ref",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "name",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "name",
+							},
+						},
+						Domain:                "domain",
+						Account:               "account",
+						ManagementApiEndpoint: "management_api_endpoint",
+					},
 				}
 
-				nw.Spec.UserCustomDetails = map[string]string{
+				nw.Spec.AvailabilityZones = append(
+					[]v1alpha1.CloudStackAvailabilityZone{},
+					old.Spec.AvailabilityZones...,
+				)
+
+				az := old.Spec.AvailabilityZones[0].DeepCopy()
+				az.Name = "shinyNewAz"
+				nw.Spec.AvailabilityZones = append(nw.Spec.AvailabilityZones, *az)
+			},
+			Expect: true,
+		},
+		{
+			Name: "AvailabilityZones_DomainChange",
+			ConfigureDatacenter: func(old, nw *v1alpha1.CloudStackDatacenterConfig) {
+				old.Spec.AvailabilityZones = []v1alpha1.CloudStackAvailabilityZone{
+					{
+						Name:           "name",
+						CredentialsRef: "credentials_ref",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "name",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "name",
+							},
+						},
+						Domain:                "domain",
+						Account:               "account",
+						ManagementApiEndpoint: "management_api_endpoint",
+					},
+				}
+
+				nw.Spec.AvailabilityZones = append(
+					[]v1alpha1.CloudStackAvailabilityZone{},
+					old.Spec.AvailabilityZones...,
+				)
+
+				nw.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Symlinks_Add",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.Symlinks = map[string]string{
+					"foo": "bar",
+				}
+				nw.Spec.Symlinks = map[string]string{
 					"foo": "bar",
 					"qux": "baz",
 				}
 			},
+			Expect: true,
 		},
 		{
-			Name: "Add",
-			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+			Name: "Symlinks_Changed",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.Symlinks = map[string]string{
+					"foo": "bar",
+					"qux": "baz",
+				}
+				nw.Spec.Symlinks = map[string]string{
+					"foo": "bar_changed",
+					"qux": "baz_changed",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "ComputeOffering_NameChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+						Name: "name",
+					},
+				}
+				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
+				nw.Spec.DiskOffering.Name = "name_changed"
+			},
+			Expect: true,
+		},
+		{
+			Name: "UserCustomDetails_Add",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{}
 
 				nw.Spec.UserCustomDetails = map[string]string{
@@ -1996,8 +1978,8 @@ func TestNeedsNewMachineTemplate_UserCustomDetails(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Remove",
-			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+			Name: "UserCustomDetails_Remove",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
 					"foo": "bar",
 				}
@@ -2007,8 +1989,8 @@ func TestNeedsNewMachineTemplate_UserCustomDetails(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Replace",
-			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+			Name: "UserCustomDetails_Replace",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
 					"foo": "bar",
 				}
@@ -2020,8 +2002,8 @@ func TestNeedsNewMachineTemplate_UserCustomDetails(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "ReplaceEmptyValue",
-			Configure: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+			Name: "UserCustomDetails_ReplaceEmptyValue",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
 					"foo": "",
 					"qux": "baz",
@@ -2036,18 +2018,23 @@ func TestNeedsNewMachineTemplate_UserCustomDetails(t *testing.T) {
 		},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
+			oldDatacenter := givenDatacenterConfig(t, testClusterConfigMainFilename)
+			newDatacenter := oldDatacenter.DeepCopy()
+
+			if tc.ConfigureDatacenter != nil {
+				tc.ConfigureDatacenter(oldDatacenter, newDatacenter)
+			}
+
 			oldMachines := givenMachineConfigs(t, testClusterConfigMainFilename)
-			newMachines := givenMachineConfigs(t, testClusterConfigMainFilename)
+			oldMachine, newMachine := oldMachines["test"], oldMachines["test"].DeepCopy()
 
-			oldMachine, newMachine := oldMachines["test"], newMachines["test"]
-
-			if tc.Configure != nil {
-				tc.Configure(oldMachine, newMachine)
+			if tc.ConfigureMachines != nil {
+				tc.ConfigureMachines(oldMachine, newMachine)
 			}
 
 			result := NeedNewMachineTemplate(
-				datacenter,
-				datacenter,
+				oldDatacenter,
+				newDatacenter,
 				oldMachine,
 				newMachine,
 				test.NewNullLogger(),
