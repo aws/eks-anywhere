@@ -14,6 +14,9 @@ const (
 	cloudstackHttpProxyVar  = "T_HTTP_PROXY_CLOUDSTACK"
 	cloudstackHttpsProxyVar = "T_HTTPS_PROXY_CLOUDSTACK"
 	cloudstackNoProxyVar    = "T_NO_PROXY_CLOUDSTACK"
+	tinkerbellHTTPProxyVar  = "T_HTTP_PROXY_TINKERBELL"
+	tinkerbellHTTPSProxyVar = "T_HTTPS_PROXY_TINKERBELL"
+	tinkerbellNoProxyVar    = "T_NO_PROXY_TINKERBELL"
 )
 
 var VsphereProxyRequiredEnvVars = ProxyRequiredEnvVars{
@@ -26,6 +29,13 @@ var CloudstackProxyRequiredEnvVars = ProxyRequiredEnvVars{
 	HttpProxy:  cloudstackHttpProxyVar,
 	HttpsProxy: cloudstackHttpsProxyVar,
 	NoProxy:    cloudstackNoProxyVar,
+}
+
+// TinkerbellProxyRequiredEnvVars is for proxy related variables for tinkerbell.
+var TinkerbellProxyRequiredEnvVars = ProxyRequiredEnvVars{
+	HttpProxy:  tinkerbellHTTPProxyVar,
+	HttpsProxy: tinkerbellHTTPSProxyVar,
+	NoProxy:    tinkerbellNoProxyVar,
 }
 
 type ProxyRequiredEnvVars struct {

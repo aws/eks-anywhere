@@ -1394,3 +1394,53 @@ func TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror(t *testing.T
 
 	runTinkerbellAirgapConfigFlow(test, "10.80.0.0/16")
 }
+
+// Proxy tests
+
+func TestTinkerbellAirgappedKubernetes126BottlerocketProxyConfigFlow(t *testing.T) {
+	localIp, err := networkutils.GetLocalIP()
+	if err != nil {
+		t.Fatalf("Cannot get admin machine local IP: %v", err)
+	}
+	t.Logf("Admin machine's IP is: %s", localIp)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t,
+			framework.WithBottleRocketTinkerbell(),
+			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
+	)
+
+	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16")
+}
+
+func TestTinkerbellAirgappedKubernetes126UbuntuProxyConfigFlow(t *testing.T) {
+	localIp, err := networkutils.GetLocalIP()
+	if err != nil {
+		t.Fatalf("Cannot get admin machine local IP: %v", err)
+	}
+	t.Logf("Admin machine's IP is: %s", localIp)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t,
+			framework.WithUbuntu126Tinkerbell(),
+			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube126),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
+	)
+
+	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16")
+}
