@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 // PreflightValidations returns the validations required before upgrading a cluster.
@@ -98,6 +99,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s127SupportEnvVar),
 				Err:         validations.ValidateK8s127Support(u.Opts.Spec),
 				Silent:      true,
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "upgrade cluster eksa version increment",
+				Remediation: "ensure that the eksa version is incremented by one minor version exactly (e.g. 0.14 -> 0.15)",
+				Err:         ValidateEKSAVersionSkew(ctx, version.Get().GitVersion, k, u.Opts.WorkloadCluster),
 			}
 		},
 	}
