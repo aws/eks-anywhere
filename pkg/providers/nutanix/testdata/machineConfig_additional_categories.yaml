@@ -1,0 +1,29 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  vcpusPerSocket: 1
+  vcpuSockets: 4
+  memorySize: 8Gi
+  image:
+    type: "name"
+    name: "prism-image"
+  cluster:
+    type: "name"
+    name: "prism-cluster"
+  subnet:
+    type: "name"
+    name: "prism-subnet"
+  additionalCategories:
+    - key:   "key1"
+      value: "value1"
+    - key:   "key2"
+      value: "value2"
+  systemDiskSize: 40Gi
+  osFamily: "ubuntu"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"

@@ -38,6 +38,16 @@ func nutanixMachineConfig() *v1alpha1.NutanixMachineConfig {
 				Type: v1alpha1.NutanixIdentifierName,
 				Name: ptr.String("project-1"),
 			},
+			AdditionalCategories: []v1alpha1.NutanixCategoryIdentifier{
+				{
+					Key:   "category-1",
+					Value: "value-1",
+				},
+				{
+					Key:   "category-2",
+					Value: "value-2",
+				},
+			},
 			SystemDiskSize: resource.MustParse("100Gi"),
 			Users: []v1alpha1.UserConfiguration{
 				{

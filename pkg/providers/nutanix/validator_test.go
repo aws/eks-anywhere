@@ -457,6 +457,80 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 			},
 			expectedError: "found more than one (2) project with name",
 		},
+		{
+			name: "empty category key",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Spec.AdditionalCategories = []anywherev1.NutanixCategoryIdentifier{
+					{
+						Key:   "",
+						Value: "",
+					},
+				}
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "missing category key",
+		},
+		{
+			name: "empty category value",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				machineConf.Spec.AdditionalCategories = []anywherev1.NutanixCategoryIdentifier{
+					{
+						Key:   "key",
+						Value: "",
+					},
+				}
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "missing category value",
+		},
+		{
+			name: "get category key failed",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				mockClient.EXPECT().GetCategoryKey(gomock.Any(), gomock.Any()).Return(nil, errors.New("category key not found"))
+				machineConf.Spec.AdditionalCategories = []anywherev1.NutanixCategoryIdentifier{
+					{
+						Key:   "nonexistent",
+						Value: "value",
+					},
+				}
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "failed to find category with key",
+		},
+		{
+			name: "get category value failed",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(fakeClusterList(), nil)
+				mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(fakeSubnetList(), nil)
+				mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(fakeImageList(), nil)
+				categoryKey := v3.CategoryKeyStatus{
+					Name: ptr.String("key"),
+				}
+				mockClient.EXPECT().GetCategoryKey(gomock.Any(), gomock.Any()).Return(&categoryKey, nil)
+				mockClient.EXPECT().GetCategoryValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("category value not found"))
+				machineConf.Spec.AdditionalCategories = []anywherev1.NutanixCategoryIdentifier{
+					{
+						Key:   "key",
+						Value: "nonexistent",
+					},
+				}
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "failed to find category value",
+		},
 	}
 
 	for _, tc := range tests {

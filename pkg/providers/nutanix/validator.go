@@ -201,6 +201,12 @@ func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, co
 		}
 	}
 
+	if config.Spec.AdditionalCategories != nil {
+		if err := v.validateAdditionalCategories(ctx, client, config.Spec.AdditionalCategories); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -305,6 +311,28 @@ func (v *Validator) validateProjectConfig(ctx context.Context, client Client, id
 		}
 	default:
 		return fmt.Errorf("invalid project identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
+	}
+
+	return nil
+}
+
+func (v *Validator) validateAdditionalCategories(ctx context.Context, client Client, categories []anywherev1.NutanixCategoryIdentifier) error {
+	for _, category := range categories {
+		if category.Key == "" {
+			return fmt.Errorf("missing category key")
+		}
+
+		if category.Value == "" {
+			return fmt.Errorf("missing category value")
+		}
+
+		if _, err := client.GetCategoryKey(ctx, category.Key); err != nil {
+			return fmt.Errorf("failed to find category with key %q: %v", category.Key, err)
+		}
+
+		if _, err := client.GetCategoryValue(ctx, category.Key, category.Value); err != nil {
+			return fmt.Errorf("failed to find category value %q for category %q: %v", category.Value, category.Key, err)
+		}
 	}
 
 	return nil

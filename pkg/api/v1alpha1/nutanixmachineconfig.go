@@ -54,6 +54,17 @@ type NutanixResourceIdentifier struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// NutanixCategoryIdentifier holds the identity of a Nutanix Prism Central category.
+type NutanixCategoryIdentifier struct {
+	// key is the Key of the category in the Prism Central.
+	// +kubebuilder:validation:Required
+	Key string `json:"key,omitempty"`
+
+	// value is the category value linked to the key in the Prism Central.
+	// +kubebuilder:validation:Required
+	Value string `json:"value,omitempty"`
+}
+
 // NutanixMachineConfigGenerateOpt is a functional option that can be passed to NewNutanixMachineConfigGenerate to
 // customize the generated machine config
 //
@@ -229,6 +240,12 @@ func validateNutanixReferences(c *NutanixMachineConfig) error {
 		}
 	}
 
+	if len(c.Spec.AdditionalCategories) > 0 {
+		if err := validateNutanixCategorySlice(c.Spec.AdditionalCategories, c.Name); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -241,6 +258,20 @@ func validateNutanixResourceReference(i *NutanixResourceIdentifier, resource str
 		return fmt.Errorf("NutanixMachineConfig: missing %s name: %s", resource, mcName)
 	} else if i.Type == NutanixIdentifierUUID && i.UUID == nil {
 		return fmt.Errorf("NutanixMachineConfig: missing %s UUID: %s", resource, mcName)
+	}
+
+	return nil
+}
+
+func validateNutanixCategorySlice(i []NutanixCategoryIdentifier, mcName string) error {
+	for _, category := range i {
+		if category.Key == "" {
+			return fmt.Errorf("NutanixMachineConfig: missing category key: %s", mcName)
+		}
+
+		if category.Value == "" {
+			return fmt.Errorf("NutanixMachineConfig: missing category value for key %s: %s", category.Key, mcName)
+		}
 	}
 
 	return nil

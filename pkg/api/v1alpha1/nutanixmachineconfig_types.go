@@ -52,6 +52,11 @@ type NutanixMachineConfigSpec struct {
 	// The minimum systemDiskSize is 20Gi bytes
 	// +kubebuilder:validation:Required
 	SystemDiskSize resource.Quantity `json:"systemDiskSize"`
+
+	// additionalCategories is a list of optional categories to be added to the VM.
+	// Categories must be created in Prism Central before they can be used.
+	// +kubebuilder:validation:Optional
+	AdditionalCategories []NutanixCategoryIdentifier `json:"additionalCategories,omitempty"`
 }
 
 // SetDefaults sets defaults to NutanixMachineConfig if user has not provided.
