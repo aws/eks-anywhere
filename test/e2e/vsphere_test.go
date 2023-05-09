@@ -1163,7 +1163,7 @@ func TestVSphereKubernetes127FullClone(t *testing.T) {
 func TestVSphereKubernetes127LinkedClone(t *testing.T) {
 	diskSize := 20
 	vsphere := framework.NewVSphere(t,
-		framework.WithUbuntu126(),
+		framework.WithUbuntu127(),
 		framework.WithLinkedCloneMode(),
 		framework.WithDiskGiBForAllMachines(diskSize),
 	)
@@ -1647,7 +1647,7 @@ func TestVSphereKubernetes126UbuntuTo127DifferentNamespaceWithFluxLegacyUpgrade(
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFluxLegacy(api.WithGitOpsNamespace(clusterNamespace)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -1806,7 +1806,7 @@ func TestVSphereKubernetes126BottlerocketWorkerNodeUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes126UbuntuTo127StackedEtcdUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu125())
+	provider := framework.NewVSphere(t, framework.WithUbuntu126())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -1817,7 +1817,7 @@ func TestVSphereKubernetes126UbuntuTo127StackedEtcdUpgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		provider.WithProviderUpgrade(provider.Ubuntu127Template()),
 	)
@@ -1864,7 +1864,7 @@ func TestVSphereKubernetes126UbuntuTo127UpgradeWithCheckpoint(t *testing.T) {
 
 	runUpgradeFlowWithCheckpoint(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		clusterOpts,
 		clusterOpts2,
 		commandOpts,
@@ -2629,7 +2629,7 @@ func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuGitHubFluxAPI(t *testing.
 func TestVSphereKubernetes127UbuntuAirgappedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu126(), framework.WithPrivateNetwork()),
+		framework.NewVSphere(t, framework.WithUbuntu127(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
