@@ -78,7 +78,7 @@ func newConfig() *config {
 		logging: logsv1.NewLoggingConfiguration(),
 	}
 	c.logging.Format = logsv1.JSONLogFormat
-	c.logging.Verbosity = logsv1.VerbosityLevel(4)
+	c.logging.Verbosity = logsv1.VerbosityLevel(0)
 
 	return c
 }

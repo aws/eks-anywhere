@@ -41,7 +41,7 @@ func (i *IPValidator) ValidateControlPlaneIP(ctx context.Context, log logr.Logge
 	if capiCluster != nil {
 		// If CAPI cluster exists, the control plane IP has already been validated,
 		// and it's possibly already in use so no need to validate it again
-		log.V(3).Info("CAPI cluster already exists, skipping control plane IP validation")
+		log.Info("CAPI cluster already exists, skipping control plane IP validation")
 		return controller.Result{}, nil
 	}
 	if err := i.ipUniquenessValidator.ValidateControlPlaneIPUniqueness(spec.Cluster); err != nil {
