@@ -195,12 +195,9 @@ func anywhereCluster(name string) *anywherev1.Cluster {
 
 type clusterTest struct {
 	*WithT
-	tlsValidator *mocks.MockTlsValidator
-	kubectl      *mocks.MockKubectlClient
-	provider     *providermocks.MockProvider
-	clusterSpec  *cluster.Spec
-	certContent  string
-	host, port   string
+	kubectl     *mocks.MockKubectlClient
+	provider    *providermocks.MockProvider
+	clusterSpec *cluster.Spec
 }
 
 type clusterTestOpt func(t *testing.T, ct *clusterTest)
