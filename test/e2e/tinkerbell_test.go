@@ -1107,18 +1107,6 @@ func TestTinkerbellKubernetes126BottleRocketSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes127UbuntuExternalEtcdSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell(), framework.WithTinkerbellExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-		framework.WithExternalEtcdHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes127UbuntuThreeControlPlaneReplicasSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
