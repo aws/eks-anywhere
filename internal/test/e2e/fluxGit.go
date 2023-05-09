@@ -82,7 +82,7 @@ func buildFluxGitFiles(envVars map[string]string) []s3Files {
 func (e *E2ESession) decodeAndWriteFileToInstance(file fileFromBytes) error {
 	e.logger.V(1).Info("Writing bytes to file in instance", "file", file.dstPath)
 
-	command := fmt.Sprintf("echo $'%s' | base64 -d >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
+	command := fmt.Sprintf("echo '%s' | base64 -d >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
 	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command, ssmTimeout); err != nil {
 		return fmt.Errorf("writing file in instance: %v", err)
 	}
