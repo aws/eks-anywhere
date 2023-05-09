@@ -302,8 +302,7 @@ docgen: eks-a-tool ## generate eksctl anywhere commands doc from code
 
 .PHONY: eks-a-cluster-controller
 eks-a-cluster-controller: ## Build eks-a-cluster-controller
-	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./manager
-
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -trimpath -o bin/manager github.com/aws/eks-anywhere/manager
 # This target will copy LICENSE file from root to the release submodule
 # when fetching licenses for cluster-controller
 .PHONY: copy-license-cluster-controller
