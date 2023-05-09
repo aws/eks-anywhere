@@ -4,7 +4,6 @@ skipped_tests:
 - TestCloudStackKubernetes123AddRemoveAz
 - TestCloudStackKubernetes123MultiEndpointSimpleFlow
 # CloudStack Registry Mirror endpoint was not set up
-- TestCloudStackKubernetes123RedhatRegistryMirrorAndCert
 - TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror
 # Nutanix
 - TestNutanixKubernetes122UbuntuControlPlaneNodeScaleDown3To1
