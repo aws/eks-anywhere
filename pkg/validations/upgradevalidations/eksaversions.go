@@ -13,7 +13,7 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-// ValidateEKSAVersionSkew ensures that the eksa version is incremented by one minor version exactly (e.g. 0.14 -> 0.15)
+// ValidateEKSAVersionSkew ensures that the eksa version is incremented by one minor version exactly (e.g. 0.14 -> 0.15).
 func ValidateEKSAVersionSkew(ctx context.Context, upgradeVersion string, k validations.KubectlClient, cluster *types.Cluster) error {
 	c, err := k.GetEksaCluster(ctx, cluster, cluster.Name)
 	if err != nil {
