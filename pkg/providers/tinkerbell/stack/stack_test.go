@@ -364,10 +364,39 @@ func TestUpgrade(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
-	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile)
+	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
 	assert.NoError(t, err)
 
 	assertYamlFilesEqual(t, "testdata/expected_upgrade.yaml", valuesFile)
+}
+
+func TestUpgradeWithRegistryMirrorAuthError(t *testing.T) {
+	var (
+		mockCtrl  = gomock.NewController(t)
+		docker    = mocks.NewMockDocker(mockCtrl)
+		helm      = mocks.NewMockHelm(mockCtrl)
+		_, writer = test.NewWriter(t)
+
+		cluster = &types.Cluster{Name: "test"}
+		ctx     = context.Background()
+	)
+	registryMirror := &registrymirror.RegistryMirror{
+		BaseRegistry: "1.2.3.4:443",
+		NamespacedRegistryMap: map[string]string{
+			"public.ecr.aws": "1.2.3.4:443/custom",
+		},
+		Auth: true,
+	}
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+
+	expectedErrorMsg := "invalid registry credentials"
+	helm.EXPECT().RegistryLogin(ctx, "1.2.3.4:443", "username", "password").Return(fmt.Errorf(expectedErrorMsg))
+
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", registryMirror, nil)
+
+	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
+	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
 }
 
 func TestUpdateStackInstallerNoProxyError(t *testing.T) {
@@ -419,7 +448,7 @@ func TestUpgradeWithProxy(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil, proxyConfiguration)
 
-	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile)
+	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "https://my-local-web-server/hook")
 	assert.NoError(t, err)
 
 	assertYamlFilesEqual(t, "testdata/expected_upgrade.yaml", valuesFile)
