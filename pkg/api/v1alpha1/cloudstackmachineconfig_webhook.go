@@ -87,6 +87,11 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
 		)
 	}
+	if err := r.ValidateUsers(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
+	}
 	if err := r.Validate(); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}

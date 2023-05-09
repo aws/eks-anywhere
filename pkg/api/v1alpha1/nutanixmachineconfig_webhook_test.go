@@ -41,7 +41,8 @@ func nutanixMachineConfig() *v1alpha1.NutanixMachineConfig {
 			SystemDiskSize: resource.MustParse("100Gi"),
 			Users: []v1alpha1.UserConfiguration{
 				{
-					Name: "test-user",
+					Name:              "test-user",
+					SshAuthorizedKeys: []string{"ssh AAA..."},
 				},
 			},
 		},
@@ -136,6 +137,37 @@ func TestValidateCreate_Invalid(t *testing.T) {
 			name: "no user",
 			fn: func(config *v1alpha1.NutanixMachineConfig) {
 				config.Spec.Users = []v1alpha1.UserConfiguration{}
+			},
+		},
+		{
+			name: "no user name",
+			fn: func(config *v1alpha1.NutanixMachineConfig) {
+				config.Spec.Users = []v1alpha1.UserConfiguration{
+					{
+						SshAuthorizedKeys: []string{"ssh AAA..."},
+					},
+				}
+			},
+		},
+		{
+			name: "no ssh authorized key",
+			fn: func(config *v1alpha1.NutanixMachineConfig) {
+				config.Spec.Users = []v1alpha1.UserConfiguration{
+					{
+						Name: "eksa",
+					},
+				}
+			},
+		},
+		{
+			name: "invalid ssh authorized key",
+			fn: func(config *v1alpha1.NutanixMachineConfig) {
+				config.Spec.Users = []v1alpha1.UserConfiguration{
+					{
+						Name:              "eksa",
+						SshAuthorizedKeys: []string{""},
+					},
+				}
 			},
 		},
 	}

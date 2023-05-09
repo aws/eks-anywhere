@@ -183,8 +183,8 @@ func validateNutanixMachineConfig(c *NutanixMachineConfig) error {
 		)
 	}
 
-	if len(c.Spec.Users) <= 0 {
-		return fmt.Errorf("NutanixMachineConfig: missing spec.Users: %s", c.Name)
+	if err := validateMachineConfigUsers(c.Name, NutanixMachineConfigKind, c.Spec.Users); err != nil {
+		return err
 	}
 
 	return nil

@@ -463,7 +463,7 @@ func TestCloudStackMachineConfigValidateUsers(t *testing.T) {
 			machineConfig: &v1alpha1.CloudStackMachineConfig{
 				Spec: v1alpha1.CloudStackMachineConfigSpec{},
 			},
-			wantErr: "users is not set for CloudStackMachineConfig , please provide specify a user",
+			wantErr: "users is not set for CloudStackMachineConfig , please provide a user",
 		},
 		{
 			name: "user name empty",

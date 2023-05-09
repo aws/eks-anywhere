@@ -82,6 +82,7 @@ func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
 	c := vOld.DeepCopy()
 
 	c.Spec.OSFamily = v1alpha1.Bottlerocket
+	c.Spec.Users[0].Name = "ec2-user"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(MatchError(ContainSubstring("spec.osFamily: Forbidden: field is immutable")))
 }
@@ -317,7 +318,7 @@ func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshAuthorizedKeyImmutab
 func TestManagementControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].Name = "Jeff"
 	c := vOld.DeepCopy()
 
 	c.Spec.Users[0].Name = "Andy"
@@ -329,7 +330,7 @@ func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(t 
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.SetManagedBy("test-cluster")
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].Name = "Jeff"
 	c := vOld.DeepCopy()
 
 	c.Spec.Users[0].Name = "Andy"
@@ -381,7 +382,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *te
 func TestManagementEtcdVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].Name = "Jeff"
 	c := vOld.DeepCopy()
 
 	c.Spec.Users[0].Name = "Andy"
@@ -393,7 +394,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateSshUsernameImmutable(t *testing
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.SetManagedBy("test-cluster")
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].Name = "Jeff"
 	c := vOld.DeepCopy()
 
 	c.Spec.Users[0].Name = "Andy"
@@ -426,7 +427,7 @@ func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshAuthorizedKeyImmutable
 
 func TestManagementWorkerNodeVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].Name = "Jeff"
 	c := vOld.DeepCopy()
 
 	c.Spec.Users[0].Name = "Andy"
@@ -437,7 +438,7 @@ func TestManagementWorkerNodeVSphereMachineValidateUpdateSshUsernameImmutable(t 
 func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetManagedBy("test-cluster")
-	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].Name = "Jeff"
 	c := vOld.DeepCopy()
 
 	c.Spec.Users[0].Name = "Andy"
@@ -462,6 +463,21 @@ func TestVSphereMachineValidateUpdateSuccess(t *testing.T) {
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestVSphereMachineValidateUpdateBottleRocketInvalidUserName(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.OSFamily = "bottlerocket"
+	c := vOld.DeepCopy()
+	c.Spec.Users = []v1alpha1.UserConfiguration{
+		{
+			Name:              "jeff",
+			SshAuthorizedKeys: []string{"ssh AAA..."},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
@@ -682,6 +698,18 @@ func TestVSphereMachineConfigValidateCreateSuccess(t *testing.T) {
 	g.Expect(config.ValidateCreate()).To(Succeed())
 }
 
+func TestVSphereMachineConfigValidateInvalidUserSSHAuthorizedKeys(t *testing.T) {
+	config := vsphereMachineConfig()
+	config.Spec.Users = []v1alpha1.UserConfiguration{
+		{
+			Name:              "capv",
+			SshAuthorizedKeys: []string{""},
+		},
+	}
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).ToNot(Succeed())
+}
+
 func TestVSphereMachineConfigValidateCreateResourcePoolNotSet(t *testing.T) {
 	config := vsphereMachineConfig()
 	config.Spec.ResourcePool = ""
@@ -708,7 +736,6 @@ func TestVSphereMachineConfigSetDefaults(t *testing.T) {
 	g.Expect(sOld.Spec.MemoryMiB).To(Equal(8192))
 	g.Expect(sOld.Spec.NumCPUs).To(Equal(2))
 	g.Expect(sOld.Spec.OSFamily).To(Equal(v1alpha1.Bottlerocket))
-	g.Expect(sOld.Spec.Users).To(Equal([]v1alpha1.UserConfiguration{{Name: "ec2-user", SshAuthorizedKeys: []string{""}}}))
 }
 
 func vsphereMachineConfig() v1alpha1.VSphereMachineConfig {
@@ -720,6 +747,12 @@ func vsphereMachineConfig() v1alpha1.VSphereMachineConfig {
 			Datastore:    "my-datastore",
 			OSFamily:     "ubuntu",
 			Template:     "/Datacenter/vm/Templates/bottlerocket-v1.23.12-kubernetes-1-23-eks-7-amd64-d44065e",
+			Users: []v1alpha1.UserConfiguration{
+				{
+					Name:              "capv",
+					SshAuthorizedKeys: []string{"ssh AAA..."},
+				},
+			},
 		},
 		Status: v1alpha1.VSphereMachineConfigStatus{},
 	}
