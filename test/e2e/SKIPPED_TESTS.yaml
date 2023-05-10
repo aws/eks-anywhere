@@ -15,12 +15,12 @@ skipped_tests:
 - TestNutanixKubernetes122UbuntuWorkerNodeScaleUp1To3
 - TestNutanixKubernetes122UbuntuWorkerNodeScaleUp2To5
 # Snow
-- TestSnowKubernetes126UbuntuAWSIamAuth
-- TestSnowKubernetes125To126AWSIamAuthUpgrade
-- TestSnowKubernetes126UbuntuLabelsUpgradeFlow
-- TestSnowKubernetes126UbuntuRemoveWorkerNodeGroups
-- TestSnowKubernetes126OIDC
-- TestSnowKubernetes126UbuntuProxyConfig
+- TestSnowKubernetes127UbuntuAWSIamAuth
+- TestSnowKubernetes126To127AWSIamAuthUpgrade
+- TestSnowKubernetes127UbuntuLabelsUpgradeFlow
+- TestSnowKubernetes127UbuntuRemoveWorkerNodeGroups
+- TestSnowKubernetes127OIDC
+- TestSnowKubernetes127UbuntuProxyConfig
 # - TestSnowKubernetes122SimpleFlow
 # - TestSnowKubernetes123SimpleFlow
 # - TestSnowKubernetes124SimpleFlow
@@ -30,17 +30,20 @@ skipped_tests:
 - TestSnowKubernetes123UbuntuTo124Upgrade
 - TestSnowKubernetes124UbuntuTo125Upgrade
 - TestSnowKubernetes125UbuntuTo126Upgrade
+- TestSnowKubernetes126UbuntuTo127Upgrade
 - TestSnowKubernetes122BottlerocketTo123Upgrade
 - TestSnowKubernetes123BottlerocketTo124Upgrade
 - TestSnowKubernetes124BottlerocketTo125Upgrade
 - TestSnowKubernetes125BottlerocketTo126Upgrade
+- TestSnowKubernetes126BottlerocketTo127Upgrade
 - TestSnowKubernetes122To123BottlerocketStaticIPUpgrade
 - TestSnowKubernetes123To124BottlerocketStaticIPUpgrade
 - TestSnowKubernetes124To125BottlerocketStaticIPUpgrade
 - TestSnowKubernetes125To126BottlerocketStaticIPUpgrade
+- TestSnowKubernetes126To127BottlerocketStaticIPUpgrade
 - TestSnowMulticlusterWorkloadClusterAPI
-- TestSnowKubernetes126UbuntuTaintsUpgradeFlow
-- TestSnowKubernetes125To126UbuntuMultipleFieldsUpgrade
+- TestSnowKubernetes127UbuntuTaintsUpgradeFlow
+- TestSnowKubernetes126To127UbuntuMultipleFieldsUpgrade
 # Tinkerbell
 # Skipping Workload upgrade tests due to hardware limitation
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade
