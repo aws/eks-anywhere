@@ -114,6 +114,7 @@ env:
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24: "nutanix_ci:nutanix_template_ubuntu_1_24"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25: "nutanix_ci:nutanix_template_ubuntu_1_25"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26: "nutanix_ci:nutanix_template_ubuntu_1_26"
+    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27: "nutanix_ci:nutanix_template_ubuntu_1_27"
 phases:
   pre_build:
     commands:

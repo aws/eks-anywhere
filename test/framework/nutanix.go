@@ -35,6 +35,7 @@ const (
 	nutanixTemplateNameUbuntu124Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_24"
 	nutanixTemplateNameUbuntu125Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_25"
 	nutanixTemplateNameUbuntu126Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_26"
+	nutanixTemplateNameUbuntu127Var = "T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_27"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -58,6 +59,7 @@ var requiredNutanixEnvVars = []string{
 	nutanixTemplateNameUbuntu124Var,
 	nutanixTemplateNameUbuntu125Var,
 	nutanixTemplateNameUbuntu126Var,
+	nutanixTemplateNameUbuntu127Var,
 	nutanixInsecure,
 }
 
@@ -221,6 +223,17 @@ func WithUbuntu126Nutanix() NutanixOpt {
 	}
 }
 
+// WithUbuntu127Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template for k8s 1.27
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu127Nutanix() NutanixOpt {
+	return func(v *Nutanix) {
+		v.fillers = append(v.fillers,
+			api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu127Var, api.WithNutanixMachineTemplateImageName),
+			api.WithOsFamilyForAllNutanixMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
 // WithUbuntu122NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.22
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu122NutanixUUID() NutanixOpt {
@@ -262,6 +275,15 @@ func WithUbuntu125NutanixUUID() NutanixOpt {
 func WithUbuntu126NutanixUUID() NutanixOpt {
 	return func(v *Nutanix) {
 		name := os.Getenv(nutanixTemplateNameUbuntu126Var)
+		v.fillers = append(v.fillers, v.withUbuntuNutanixUUID(name)...)
+	}
+}
+
+// WithUbuntu127NutanixUUID returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template UUID for k8s 1.27
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu127NutanixUUID() NutanixOpt {
+	return func(v *Nutanix) {
+		name := os.Getenv(nutanixTemplateNameUbuntu127Var)
 		v.fillers = append(v.fillers, v.withUbuntuNutanixUUID(name)...)
 	}
 }
@@ -329,6 +351,12 @@ func UpdateNutanixUbuntuTemplate125Var() api.NutanixFiller {
 // image name parameter in the spec.
 func UpdateNutanixUbuntuTemplate126Var() api.NutanixFiller {
 	return api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu126Var, api.WithNutanixMachineTemplateImageName)
+}
+
+// UpdateNutanixUbuntuTemplate127Var returns NutanixFiller by reading the env var and setting machine config's
+// image name parameter in the spec.
+func UpdateNutanixUbuntuTemplate127Var() api.NutanixFiller {
+	return api.WithNutanixStringFromEnvVar(nutanixTemplateNameUbuntu127Var, api.WithNutanixMachineTemplateImageName)
 }
 
 // ClusterStateValidations returns a list of provider specific ClusterStateValidations.
