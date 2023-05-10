@@ -48,7 +48,7 @@ func ReadBundlesForRelease(reader Reader, release *releasev1.EksARelease) (*rele
 
 func ReleaseForVersion(releases *releasev1.Release, version string) (*releasev1.EksARelease, error) {
 	// if dev cli, strip beginning of version to match dev release version
-	if strings.Contains(version, "dev") {
+	if strings.Contains(version, "dev") && strings.Count(version, "-") > 1 {
 		version = strings.SplitN(version, "-", 2)[1]
 	}
 	semVer, err := semver.New(version)
