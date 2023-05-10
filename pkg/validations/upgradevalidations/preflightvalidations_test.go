@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
+	eksaversion "github.com/aws/eks-anywhere/pkg/version"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -388,6 +389,22 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			existingClusterSpec := clusterSpec.DeepCopy()
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
 			existingMachineConfigSpec := defaultTinkerbellMachineConfigSpec.DeepCopy()
+			existingClusterSpec.Cluster.Spec.BundlesRef = &v1alpha1.BundlesRef{Name: "bundles-1", Namespace: constants.EksaSystemNamespace}
+			uri := fmt.Sprintf("public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:%s", tc.clusterVersion)
+			vb := releasev1alpha1.VersionsBundle{
+				Eksa: releasev1alpha1.EksaBundle{
+					ClusterController: releasev1alpha1.Image{
+						URI: uri,
+					},
+				},
+			}
+			bundle := &releasev1alpha1.Bundles{
+				Spec: releasev1alpha1.BundlesSpec{
+					VersionsBundles: []releasev1alpha1.VersionsBundle{
+						vb,
+					},
+				},
+			}
 			// existingMachineConfigSpec := defaultTinkerbellMachineConfigSpec.DeepCopy()
 			if tc.modifyFunc != nil {
 				tc.modifyFunc(existingClusterSpec)
@@ -403,6 +420,9 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 					GitVersion: tc.clusterVersion,
 				},
 			}
+			eksaversion.Get = func() eksaversion.Info {
+				return eksaversion.Info{GitVersion: tc.clusterVersion}
+			}
 
 			kubectl.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(1)
 			// provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
@@ -415,7 +435,8 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(2)
+			k.EXPECT().GetBundles(ctx, kubeconfigFilePath, existingClusterSpec.Cluster.Spec.BundlesRef.Name, existingClusterSpec.Cluster.Spec.BundlesRef.Namespace).Return(bundle, nil)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
@@ -1176,6 +1197,22 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
 			existingClusterSpec := defaultClusterSpec.DeepCopy()
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
+			existingClusterSpec.Cluster.Spec.BundlesRef = &v1alpha1.BundlesRef{Name: "bundles-1", Namespace: constants.EksaSystemNamespace}
+			uri := fmt.Sprintf("public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:%s", tc.clusterVersion)
+			vb := releasev1alpha1.VersionsBundle{
+				Eksa: releasev1alpha1.EksaBundle{
+					ClusterController: releasev1alpha1.Image{
+						URI: uri,
+					},
+				},
+			}
+			bundle := &releasev1alpha1.Bundles{
+				Spec: releasev1alpha1.BundlesSpec{
+					VersionsBundles: []releasev1alpha1.VersionsBundle{
+						vb,
+					},
+				},
+			}
 			if tc.modifyExistingSpecFunc != nil {
 				tc.modifyExistingSpecFunc(existingClusterSpec)
 			}
@@ -1189,6 +1226,9 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 					Number: 28,
 				},
 			}
+			eksaversion.Get = func() eksaversion.Info {
+				return eksaversion.Info{GitVersion: tc.clusterVersion}
+			}
 
 			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
@@ -1198,9 +1238,10 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(2)
+			k.EXPECT().GetBundles(ctx, kubeconfigFilePath, existingClusterSpec.Cluster.Spec.BundlesRef.Name, existingClusterSpec.Cluster.Spec.BundlesRef.Namespace).Return(bundle, nil)
 			if opts.Spec.Cluster.IsManaged() {
-				k.EXPECT().GetEksaCluster(ctx, workloadCluster, workloadCluster.Name).Return(existingClusterSpec.Cluster, nil)
+				k.EXPECT().GetEksaCluster(ctx, workloadCluster, workloadCluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(2)
 				k.EXPECT().GetBundles(ctx, workloadCluster.KubeconfigFile, existingClusterSpec.Cluster.Spec.BundlesRef.Name, existingClusterSpec.Cluster.Spec.BundlesRef.Namespace).Return(bundlesResponse, nil)
 			}
 			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
@@ -1419,6 +1460,22 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
 			existingClusterSpec := clusterSpec.DeepCopy()
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
+			existingClusterSpec.Cluster.Spec.BundlesRef = &v1alpha1.BundlesRef{Name: "bundles-1", Namespace: constants.EksaSystemNamespace}
+			uri := fmt.Sprintf("public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:%s", tc.clusterVersion)
+			vb := releasev1alpha1.VersionsBundle{
+				Eksa: releasev1alpha1.EksaBundle{
+					ClusterController: releasev1alpha1.Image{
+						URI: uri,
+					},
+				},
+			}
+			bundle := &releasev1alpha1.Bundles{
+				Spec: releasev1alpha1.BundlesSpec{
+					VersionsBundles: []releasev1alpha1.VersionsBundle{
+						vb,
+					},
+				},
+			}
 			if tc.modifyFunc != nil {
 				tc.modifyFunc(existingClusterSpec)
 			}
@@ -1426,6 +1483,9 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				ServerVersion: version.Info{
 					GitVersion: tc.clusterVersion,
 				},
+			}
+			eksaversion.Get = func() eksaversion.Info {
+				return eksaversion.Info{GitVersion: tc.clusterVersion}
 			}
 
 			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
@@ -1436,7 +1496,8 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(2)
+			k.EXPECT().GetBundles(ctx, kubeconfigFilePath, existingClusterSpec.Cluster.Spec.BundlesRef.Name, existingClusterSpec.Cluster.Spec.BundlesRef.Namespace).Return(bundle, nil)
 			k.EXPECT().GetEksaFluxConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.FluxConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)

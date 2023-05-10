@@ -73,8 +73,8 @@ func TestValidateEKSAVersionSkew(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		test := newTest(t, withKubectl())
 		t.Run(tc.name, func(tt *testing.T) {
+			test := newTest(t, withKubectl())
 			clusterName := "upgrade-cluster"
 			uCluster := getCluster(clusterName)
 			upgradeCluster := anywhereCluster(clusterName)
@@ -99,7 +99,7 @@ func TestValidateEKSAVersionSkew(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			test.kubectl.EXPECT().GetEksaCluster(ctx, uCluster, uCluster.Name).Return(upgradeCluster, nil)
+			test.kubectl.EXPECT().GetEksaCluster(ctx, uCluster, uCluster.Name).Return(upgradeCluster, nil).MaxTimes(1)
 			test.kubectl.EXPECT().GetBundles(ctx, uCluster.KubeconfigFile, upgradeCluster.Spec.BundlesRef.Name, upgradeCluster.Spec.BundlesRef.Namespace).Return(bundle, nil)
 
 			err := upgradevalidations.ValidateEKSAVersionSkew(ctx, tc.upgradeVersion, test.kubectl, uCluster)

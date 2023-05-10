@@ -6,7 +6,7 @@ type Info struct {
 	GitVersion string
 }
 
-func Get() Info {
+var Get = func() Info {
 	return Info{
 		GitVersion: gitVersion,
 	}
