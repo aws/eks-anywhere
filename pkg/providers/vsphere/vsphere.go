@@ -303,6 +303,9 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	if err := p.validator.ValidateClusterMachineConfigs(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
+	if err := p.validateDatastoreUsageForCreate(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("validating vsphere machine configs datastore usage: %v", err)
+	}
 
 	if err := p.generateSSHKeysIfNotSet(clusterSpec.VSphereMachineConfigs); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -403,6 +406,10 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return err
 	}
 
+	if err := p.validateDatastoreUsageForUpgrade(ctx, vSphereClusterSpec, cluster); err != nil {
+		return fmt.Errorf("validating vsphere machine configs datastore usage: %v", err)
+	}
+
 	err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
@@ -440,6 +447,131 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 		}
 	}
 
+	return nil
+}
+
+type datastoreUsage struct {
+	availableSpace float64
+	needGiBSpace   int
+}
+
+func (p *vsphereProvider) getPrevMachineConfigDatastoreUsage(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig, cluster *types.Cluster, count int) (diskGiB float64, err error) {
+	em, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, machineConfig.Name, cluster.KubeconfigFile, machineConfig.GetNamespace())
+	if err != nil {
+		return 0, err
+	}
+	if em != nil {
+		return float64(em.Spec.DiskGiB * count), nil
+	}
+	return 0, nil
+}
+
+func (p *vsphereProvider) getMachineConfigDatastoreRequirements(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig, count int) (available float64, need int, err error) {
+	availableSpace, err := p.providerGovcClient.GetWorkloadAvailableSpace(ctx, machineConfig.Spec.Datastore) // TODO: remove dependency on machineConfig
+	if err != nil {
+		return 0, 0, fmt.Errorf("getting datastore details: %v", err)
+	}
+	needGiB := machineConfig.Spec.DiskGiB * count
+	return availableSpace, needGiB, nil
+}
+
+func (p *vsphereProvider) calculateDatastoreUsage(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig, cluster *types.Cluster, usage map[string]*datastoreUsage, prevCount, newCount int) error {
+	availableSpace, needGiB, err := p.getMachineConfigDatastoreRequirements(ctx, machineConfig, newCount)
+	if err != nil {
+		return err
+	}
+	prevUsage, err := p.getPrevMachineConfigDatastoreUsage(ctx, machineConfig, cluster, prevCount)
+	if err != nil {
+		return err
+	}
+	availableSpace += prevUsage
+	updateDatastoreUsageMap(machineConfig, needGiB, availableSpace, prevUsage, usage)
+	return nil
+}
+
+func updateDatastoreUsageMap(machineConfig *v1alpha1.VSphereMachineConfig, needGiB int, availableSpace, prevUsage float64, usage map[string]*datastoreUsage) {
+	if _, ok := usage[machineConfig.Spec.Datastore]; ok {
+		usage[machineConfig.Spec.Datastore].needGiBSpace += needGiB
+		usage[machineConfig.Spec.Datastore].availableSpace += prevUsage
+	} else {
+		usage[machineConfig.Spec.Datastore] = &datastoreUsage{
+			availableSpace: availableSpace,
+			needGiBSpace:   needGiB,
+		}
+	}
+}
+
+func (p *vsphereProvider) validateDatastoreUsageForUpgrade(ctx context.Context, currentClusterSpec *Spec, cluster *types.Cluster) error {
+	usage := make(map[string]*datastoreUsage)
+	prevEksaCluster, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, currentClusterSpec.Cluster.GetName())
+	if err != nil {
+		return err
+	}
+
+	cpMachineConfig := currentClusterSpec.controlPlaneMachineConfig()
+	if err := p.calculateDatastoreUsage(ctx, cpMachineConfig, cluster, usage, prevEksaCluster.Spec.ControlPlaneConfiguration.Count, currentClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count); err != nil {
+		return fmt.Errorf("calculating datastore usage: %v", err)
+	}
+
+	prevMachineConfigRefs := machineRefSliceToMap(prevEksaCluster.MachineConfigRefs())
+	for _, workerNodeGroupConfiguration := range currentClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		prevCount := 0
+		workerMachineConfig := currentClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
+		if _, ok := prevMachineConfigRefs[workerNodeGroupConfiguration.MachineGroupRef.Name]; ok {
+			prevCount = *workerNodeGroupConfiguration.Count
+		}
+		if err := p.calculateDatastoreUsage(ctx, workerMachineConfig, cluster, usage, prevCount, *workerNodeGroupConfiguration.Count); err != nil {
+			return fmt.Errorf("calculating datastore usage: %v", err)
+		}
+	}
+
+	etcdMachineConfig := currentClusterSpec.etcdMachineConfig()
+	if etcdMachineConfig != nil {
+		if err := p.calculateDatastoreUsage(ctx, etcdMachineConfig, cluster, usage, prevEksaCluster.Spec.ExternalEtcdConfiguration.Count, currentClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count); err != nil {
+			return fmt.Errorf("calculating datastore usage: %v", err)
+		}
+	}
+
+	for datastore, usage := range usage {
+		if float64(usage.needGiBSpace) > usage.availableSpace {
+			return fmt.Errorf("not enough space in datastore %v for given diskGiB and count for respective machine groups", datastore)
+		}
+	}
+	return nil
+}
+
+func (p *vsphereProvider) validateDatastoreUsageForCreate(ctx context.Context, vsphereClusterSpec *Spec) error {
+	usage := make(map[string]*datastoreUsage)
+	cpMachineConfig := vsphereClusterSpec.controlPlaneMachineConfig()
+	controlPlaneAvailableSpace, controlPlaneNeedGiB, err := p.getMachineConfigDatastoreRequirements(ctx, cpMachineConfig, vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count)
+	if err != nil {
+		return err
+	}
+	updateDatastoreUsageMap(cpMachineConfig, controlPlaneNeedGiB, controlPlaneAvailableSpace, 0, usage)
+
+	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
+		workerAvailableSpace, workerNeedGiB, err := p.getMachineConfigDatastoreRequirements(ctx, workerMachineConfig, *workerNodeGroupConfiguration.Count)
+		if err != nil {
+			return err
+		}
+		updateDatastoreUsageMap(workerMachineConfig, workerNeedGiB, workerAvailableSpace, 0, usage)
+	}
+
+	etcdMachineConfig := vsphereClusterSpec.etcdMachineConfig()
+	if etcdMachineConfig != nil {
+		etcdAvailableSpace, etcdNeedGiB, err := p.getMachineConfigDatastoreRequirements(ctx, etcdMachineConfig, vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count)
+		if err != nil {
+			return err
+		}
+		updateDatastoreUsageMap(etcdMachineConfig, etcdNeedGiB, etcdAvailableSpace, 0, usage)
+	}
+
+	for datastore, usage := range usage {
+		if float64(usage.needGiBSpace) > usage.availableSpace {
+			return fmt.Errorf("not enough space in datastore %v for given diskGiB and count for respective machine groups", datastore)
+		}
+	}
 	return nil
 }
 

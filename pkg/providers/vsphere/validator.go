@@ -177,7 +177,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 	}
 
-	return v.validateDatastoreUsage(ctx, vsphereClusterSpec, controlPlaneMachineConfig, etcdMachineConfig)
+	return nil
 }
 
 func (v *Validator) validateControlPlaneIp(ip string) error {
@@ -250,67 +250,6 @@ func (v *Validator) validateBRHardDiskSize(ctx context.Context, spec *Spec, mach
 		return fmt.Errorf("Incorrect disk size for disk1 - expected: 23068672 kB got: %v", hardDiskMap[disk1])
 	}
 	logger.V(5).Info("Bottlerocket Disk size validated: ", "diskMap", hardDiskMap)
-	return nil
-}
-
-type datastoreUsage struct {
-	availableSpace float64
-	needGiBSpace   int
-}
-
-// TODO: cleanup this method signature
-// TODO: dry out implementation.
-func (v *Validator) validateDatastoreUsage(ctx context.Context, vsphereClusterSpec *Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
-	usage := make(map[string]*datastoreUsage)
-	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig.Spec.Datastore) // TODO: remove dependency on machineConfig
-	if err != nil {
-		return fmt.Errorf("getting datastore details: %v", err)
-	}
-	controlPlaneNeedGiB := controlPlaneMachineConfig.Spec.DiskGiB * vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count
-	usage[controlPlaneMachineConfig.Spec.Datastore] = &datastoreUsage{
-		availableSpace: controlPlaneAvailableSpace,
-		needGiBSpace:   controlPlaneNeedGiB,
-	}
-
-	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		workerMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
-		workerAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, workerMachineConfig.Spec.Datastore)
-		if err != nil {
-			return fmt.Errorf("getting datastore details: %v", err)
-		}
-		workerNeedGiB := workerMachineConfig.Spec.DiskGiB * *workerNodeGroupConfiguration.Count
-		_, ok := usage[workerMachineConfig.Spec.Datastore]
-		if ok {
-			usage[workerMachineConfig.Spec.Datastore].needGiBSpace += workerNeedGiB
-		} else {
-			usage[workerMachineConfig.Spec.Datastore] = &datastoreUsage{
-				availableSpace: workerAvailableSpace,
-				needGiBSpace:   workerNeedGiB,
-			}
-		}
-	}
-
-	if etcdMachineConfig != nil {
-		etcdAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig.Spec.Datastore)
-		if err != nil {
-			return fmt.Errorf("getting datastore details: %v", err)
-		}
-		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
-		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {
-			usage[etcdMachineConfig.Spec.Datastore].needGiBSpace += etcdNeedGiB
-		} else {
-			usage[etcdMachineConfig.Spec.Datastore] = &datastoreUsage{
-				availableSpace: etcdAvailableSpace,
-				needGiBSpace:   etcdNeedGiB,
-			}
-		}
-	}
-
-	for datastore, usage := range usage {
-		if float64(usage.needGiBSpace) > usage.availableSpace {
-			return fmt.Errorf("not enough space in datastore %v for given diskGiB and count for respective machine groups", datastore)
-		}
-	}
 	return nil
 }
 
