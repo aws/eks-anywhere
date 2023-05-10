@@ -997,7 +997,7 @@ func TestTinkerbellKubernetes126SimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes127SimpleFlow(t *testing.T) {
+func TestTinkerbellKubernetes127UbuntuSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
