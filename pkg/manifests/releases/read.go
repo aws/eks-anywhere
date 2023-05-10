@@ -2,6 +2,7 @@ package releases
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
@@ -46,6 +47,10 @@ func ReadBundlesForRelease(reader Reader, release *releasev1.EksARelease) (*rele
 }
 
 func ReleaseForVersion(releases *releasev1.Release, version string) (*releasev1.EksARelease, error) {
+	// if dev cli, strip beginning of version to match dev release version
+	if strings.Contains(version, "dev") {
+		version = strings.SplitN(version, "-", 2)[1]
+	}
 	semVer, err := semver.New(version)
 	if err != nil {
 		return nil, fmt.Errorf("invalid eksa version: %v", err)

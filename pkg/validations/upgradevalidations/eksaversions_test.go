@@ -55,7 +55,7 @@ func TestValidateEKSAVersionSkew(t *testing.T) {
 		{
 			name:              "SuccessDevVersion",
 			wantErr:           nil,
-			upgradeVersion:    "v0.0.0-dev",
+			upgradeVersion:    "v0.15.3",
 			clusterVersionTag: "v0.15.3-eks-a-v0.0.0-dev-build.6886",
 		},
 		{

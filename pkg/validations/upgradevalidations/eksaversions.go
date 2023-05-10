@@ -62,8 +62,5 @@ func parseTags(bundles *releasev1alpha1.Bundles) (string, error) {
 	}
 	tag := strings.Split(image, ":")[1]
 	version := strings.Split(tag, "-")[0]
-	if strings.Contains(tag, "dev") {
-		version = "v0.0.0"
-	}
 	return version, nil
 }

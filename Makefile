@@ -24,6 +24,7 @@ GOLANG_VERSION?="1.20"
 GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
+LATEST_RELEASE_VERSION ?= $(shell curl --silent 'https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml' | yq e '.spec.latestVersion')
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 UNIT_TEST_PACKAGES ?= $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
@@ -35,14 +36,14 @@ ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
 endif
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
-DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
+DEV_GIT_VERSION:=${LATEST_RELEASE_VERSION}-v0.0.0-dev-${BRANCH_NAME}
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/bundle-release.yaml
 RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
 $(info    Using branch-specific BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 else
 ## use the standard bundle manifest if the branch is 'main'
-DEV_GIT_VERSION:=v0.0.0-dev
+DEV_GIT_VERSION:=${LATEST_RELEASE_VERSION}-v0.0.0-dev
 BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
 RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml
 $(info    Using standard BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
