@@ -48,11 +48,14 @@ skipped_tests:
 # Skipping Workload upgrade tests due to hardware limitation
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade125To126
+- TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade126To127
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterCPScaleup
+- TestTinkerbellUpgrade127MulticlusterWorkloadClusterCPScaleup
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleDown
 - TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI
+- TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
 # Skipping ETCD tests
 - TestTinkerbellKubernetes126UbuntuExternalEtcdSimpleFlow
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
@@ -68,6 +71,7 @@ skipped_tests:
 - TestTinkerbellKubernetes123UbuntuSimpleFlow
 - TestTinkerbellKubernetes124UbuntuSimpleFlow
 - TestTinkerbellKubernetes125UbuntuSimpleFlow
+- TestTinkerbellKubernetes126SimpleFlow
 - TestTinkerbellKubernetes122BottleRocketSimpleFlow
 - TestTinkerbellKubernetes123BottleRocketSimpleFlow
 - TestTinkerbellKubernetes124BottleRocketSimpleFlow
@@ -76,6 +80,9 @@ skipped_tests:
 - TestTinkerbellKubernetes126UbuntuThreeWorkersSimpleFlow
 - TestTinkerbellKubernetes126BottleRocketThreeWorkersSimpleFlow
 - TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
+- TestTinkerbellKubernetes124UbuntuTo125Upgrade
+- TestTinkerbellKubernetes126BottleRocketThreeControlPlaneReplicasSimpleFlow
+- TestTinkerbellKubernetes126BottleRocketThreeWorkersSimpleFlow
 # Conformance
 - TestSnowKubernetes122ThreeWorkersConformanceFlow
 - TestSnowKubernetes123ThreeWorkersConformanceFlow
