@@ -344,33 +344,8 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		logger.Info("Skipping check for whether control plane ip is in use")
 	}
 
-	var passed bool
-	var err error
-	vuc := config.NewVsphereUserConfig()
-
-	if passed, err = p.validator.validateUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
-		return err
-	} else if passed {
-		s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereUsername)
-		logger.MarkPass(s)
-	}
-
-	if len(vuc.EksaVsphereCPUsername) > 0 && vuc.EksaVsphereCPUsername != vuc.EksaVsphereUsername {
-		if passed, err = p.validator.validateCPUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
-			return err
-		} else if passed {
-			s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereCPUsername)
-			logger.MarkPass(s)
-		}
-	}
-
-	if len(vuc.EksaVsphereCSIUsername) > 0 && vuc.EksaVsphereCSIUsername != vuc.EksaVsphereUsername {
-		if passed, err = p.validator.validateCSIUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
-			return err
-		} else if passed {
-			s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereCSIUsername)
-			logger.MarkPass(s)
-		}
+	if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("validating vsphere user privileges: %v", err)
 	}
 
 	return nil
@@ -408,6 +383,10 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 
 	if err := p.validateDatastoreUsageForUpgrade(ctx, vSphereClusterSpec, cluster); err != nil {
 		return fmt.Errorf("validating vsphere machine configs datastore usage: %v", err)
+	}
+
+	if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("validating vsphere user privileges: %v", err)
 	}
 
 	err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)

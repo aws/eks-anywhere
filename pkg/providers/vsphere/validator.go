@@ -323,6 +323,39 @@ func (v *Validator) collectSpecMachineConfigs(ctx context.Context, spec *Spec) (
 	return machineConfigs, nil
 }
 
+func (v *Validator) validateVsphereUserPrivs(ctx context.Context, vSphereClusterSpec *Spec) error {
+	var passed bool
+	var err error
+	vuc := config.NewVsphereUserConfig()
+
+	if passed, err = v.validateUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+		return err
+	}
+	markPrivsValidationPass(passed, vuc.EksaVsphereUsername)
+
+	if len(vuc.EksaVsphereCPUsername) > 0 && vuc.EksaVsphereCPUsername != vuc.EksaVsphereUsername {
+		if passed, err = v.validateCPUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+			return err
+		}
+		markPrivsValidationPass(passed, vuc.EksaVsphereCPUsername)
+	}
+
+	if len(vuc.EksaVsphereCSIUsername) > 0 && vuc.EksaVsphereCSIUsername != vuc.EksaVsphereUsername {
+		if passed, err = v.validateCSIUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+			return err
+		}
+		markPrivsValidationPass(passed, vuc.EksaVsphereCSIUsername)
+	}
+	return nil
+}
+
+func markPrivsValidationPass(passed bool, username string) {
+	if passed {
+		s := fmt.Sprintf("%s user vSphere privileges validated", username)
+		logger.MarkPass(s)
+	}
+}
+
 func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) (bool, error) {
 	machineConfigs, err := v.collectSpecMachineConfigs(ctx, spec)
 	if err != nil {
