@@ -575,8 +575,8 @@ github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdn
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
-github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230123132352-e982ba834c64 h1:6HH4Qs64xx0adb6MFomY7p6p97/Ko0VXpjVrUph5ZkY=
-github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230123132352-e982ba834c64/go.mod h1:2HUSfpk9cdI69955us3orjKGlVr/SKNZg2DQZuNqsjQ=
+github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230212165211-bac64498b8ba h1:7f1/G8FgXc8iS1MbD8t2G/kHAj3DOfWQK3xenuSXH+o=
+github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230212165211-bac64498b8ba/go.mod h1:MmsiCtKkfgtZ4eTRmL78HADcV8nOY46rHnj5GmUfOhs=
 github.com/bmc-toolbox/common v0.0.0-20221115135648-0b584f504396 h1:MAIYVFtt/Hnhx0Cth6T9pnLTJnZKppzi7LHue4KpPtg=
 github.com/bmc-toolbox/common v0.0.0-20221115135648-0b584f504396/go.mod h1:SY//n1PJjZfbFbmAsB6GvEKbc7UXz3d30s3kWxfJQ/c=
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869/go.mod h1:Ekp36dRnpXw/yCqJaO+ZrUyxD+3VXMFFr56k5XYrpB4=
@@ -1690,8 +1690,8 @@ github.com/tchap/go-patricia v2.2.6+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.1-0.20220615214617-9e9c2a397288 h1:HkBPnM4/DdLKJvcUNsFePYuTAFOHPMSzr3DvH7ZKBds=
 github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.1-0.20220615214617-9e9c2a397288/go.mod h1:IjRbGnQtoplJEW5UgKHsCp1WukkAyjhIdDBsxjYq2dM=
-github.com/tinkerbell/rufio v0.2.2 h1:8flSXZflykhM1yzn6dH2Q5J18m5N5uYVaPqVzjo1Ejw=
-github.com/tinkerbell/rufio v0.2.2/go.mod h1:DV4YEOlgmuHoYoT9iBPY4BWs8OSc9/QQV3fEWh7AhAQ=
+github.com/tinkerbell/rufio v0.3.0 h1:nNn0F4cJSSX+x0vRCqbG5u39lTAD1JWPXqX/LrvCHkw=
+github.com/tinkerbell/rufio v0.3.0/go.mod h1:AEZMNcgcrOrJnJlKUXToXYj6ywiv9UDeZQonwIkuUL8=
 github.com/tinkerbell/tink v0.8.0 h1:qgl/rglpO5Rvq6UKZd29O6X9mDgZZYgf841+Y0IYWak=
 github.com/tinkerbell/tink v0.8.0/go.mod h1:bfAkSH7J/QQYIyqZRR6IQp8w78aac6l8Z2Lws5uXz6A=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
@@ -1911,8 +1911,8 @@ golang.org/x/exp v0.0.0-20191227195350-da58074b4299/go.mod h1:2RIsYlXP63K8oxa1u0
 golang.org/x/exp v0.0.0-20200119233911-0405dc783f0a/go.mod h1:2RIsYlXP63K8oxa1u096TMicItID8zy7Y6sNkU49FU4=
 golang.org/x/exp v0.0.0-20200207192155-f17229e696bd/go.mod h1:J/WKrq2StrnmMY6+EHIKF9dgMWnmCNThgcyBT1FY9mM=
 golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6/go.mod h1:3jZMyOhIsHpP37uCMkUooju7aAi5cS1Q23tOzKc+0MU=
-golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6 h1:+hSdOdB7nHAFs+EDQXTvkJj7kUMugNAcE2x+BwxlVt4=
-golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6/go.mod h1:cyybsKvd6eL0RnXn6p/Grxp8F5bW7iYuBgsNCOHpMYE=
+golang.org/x/exp v0.0.0-20230127130021-4ca2cb1a16b7 h1:o7Ps2IYdzLRolS9/nadqeMSHpa9k8pu8u+VKBFUG7cQ=
+golang.org/x/exp v0.0.0-20230127130021-4ca2cb1a16b7/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.0.0-20190802002840-cff245a6509b/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
@@ -2812,7 +2812,6 @@ sigs.k8s.io/cluster-api/test v1.4.2/go.mod h1:/64ycj3YFMW1BGVtCtfwmlVAXGN0DFTZEk
 sigs.k8s.io/controller-runtime v0.5.0/go.mod h1:REiJzC7Y00U+2YkMbT8wxgrsX5USpXKGhb2sCtAXiT8=
 sigs.k8s.io/controller-runtime v0.10.2/go.mod h1:CQp8eyUQZ/Q7PJvnIrB6/hgfTC1kBkGylwsLgOQi1WY=
 sigs.k8s.io/controller-runtime v0.11.1/go.mod h1:KKwLiTooNGu+JmLZGn9Sl3Gjmfj66eMbCQznLP5zcqA=
-sigs.k8s.io/controller-runtime v0.14.5 h1:6xaWFqzT5KuAQ9ufgUaj1G/+C4Y1GRkhrxl+BJ9i+5s=
 sigs.k8s.io/controller-runtime v0.14.5/go.mod h1:WqIdsAY6JBsjfc/CqO0CORmNtoCtE4S6qbPc9s68h+0=
 sigs.k8s.io/controller-runtime v0.14.6 h1:oxstGVvXGNnMvY7TAESYk+lzr6S3V5VFxQ6d92KcwQA=
 sigs.k8s.io/controller-runtime v0.14.6/go.mod h1:WqIdsAY6JBsjfc/CqO0CORmNtoCtE4S6qbPc9s68h+0=

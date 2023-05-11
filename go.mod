@@ -36,12 +36,12 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.1-0.20220615214617-9e9c2a397288
-	github.com/tinkerbell/rufio v0.2.2
+	github.com/tinkerbell/rufio v0.3.0
 	github.com/tinkerbell/tink v0.8.0
 	github.com/vmware/govmomi v0.29.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.7.0
-	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6
+	golang.org/x/exp v0.0.0-20230127130021-4ca2cb1a16b7
 	golang.org/x/net v0.8.0
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/sys v0.6.0
@@ -93,7 +93,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230123132352-e982ba834c64 // indirect
+	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230212165211-bac64498b8ba // indirect
 	github.com/bmc-toolbox/common v0.0.0-20221115135648-0b584f504396 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/containerd v1.7.0 // indirect
