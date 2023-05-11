@@ -67,6 +67,7 @@ skipped_tests:
 - TestTinkerbellKubernetes123RedHatSimpleFlow
 - TestTinkerbellKubernetes124RedHatSimpleFlow
 - TestTinkerbellKubernetes125RedHatSimpleFlow
+- TestTinkerbellKubernetes126RedHatSimpleFlow
 - TestTinkerbellKubernetes122UbuntuSimpleFlow
 - TestTinkerbellKubernetes123UbuntuSimpleFlow
 - TestTinkerbellKubernetes124UbuntuSimpleFlow

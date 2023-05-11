@@ -23,6 +23,8 @@ const (
 	tinkerbellImageRedHat123EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_23"
 	tinkerbellImageRedHat124EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_24"
 	tinkerbellImageRedHat125EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_25"
+	tinkerbellImageRedHat126EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_26"
+	tinkerbellImageRedHat127EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_27"
 	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey              = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 	TinkerbellCIEnvironment                 = "T_TINKERBELL_CI_ENVIRONMENT"
@@ -40,6 +42,8 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageRedHat123EnvVar,
 	tinkerbellImageRedHat124EnvVar,
 	tinkerbellImageRedHat125EnvVar,
+	tinkerbellImageRedHat126EnvVar,
+	tinkerbellImageRedHat127EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
 }
@@ -250,6 +254,26 @@ func WithRedHat125Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat125EnvVar, api.WithTinkerbellOSImageURL),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat126Tinkerbell tink test with redhat 1.26.
+func WithRedHat126Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat126EnvVar, api.WithTinkerbellOSImageURL),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat127Tinkerbell tink test with redhat 1.27.
+func WithRedHat127Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat127EnvVar, api.WithTinkerbellOSImageURL),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
 		)
 	}
