@@ -17,46 +17,51 @@ Currently the only way to manage EKS Anywhere CloudStack cluster is by using CLI
 
 #### Limitation
 
-* We currently only supports k8s version < 1.24 on CloudStack
+* We currently only supports k8s version < 1.24 on CloudStack due to current capc version.
 
 ## Overview of Solution
 
-The EKS-A controller running in management cluster reconciles EKS-A CRDs, which fully manages workload clusters. [Detailed lifecycle diagram](https://github.com/aws/eks-anywhere/blob/4d307c6fe75075adadae38537d0f211c9142003e/designs/full-cluster-lifecycle-api.md#L55)
+The EKS-A controller running in management cluster fully manages workload clusters, including reconciling EKS-A CRDs and installing the CNI in the workload cluster. The CloudStack cluster reconciling flow is similar to [vsphere reconciler](images/cluster_reconcile.png) which watches resources (eg. CAPI objects) and use an event handler to enqueue reconcile requests in response to those events.
 
-### CloudStack defaults
+In order to maintain same level of validations logic we currently run in CLI, we'll import validations into data validation and run time validation.
+* Data validation: Kubernetes offers validation webhook for CRDs which runs data validation before accepted by kube-api server. Data validations should be light and fast.
+* Run time validation: some validations require calling the CloudStack API, which is too heavy for the webhook. We will implement those validations in a separate datacenter reconciler. This flow is similar to [vSphere datacenter reconciler](https://github.com/aws/eks-anywhere/blob/main/designs/full-cluster-lifecycle-api.md?plain=1#L82)
 
-We already have [SetDefaults](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/api/v1alpha1/cloudstackdatacenterconfig_types.go#L216) for datacenter, we can utilize it in its mutation webhook (need to create one). Cloudstack machine config doesn’t have machine config [default](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/providers/cloudstack/cloudstack.go#L162) values at this stage.
+### Defaults
 
-### Static/Data validation
+As part of the CLI logic, we set default values to some spec if they're missing from what customers provide, like [datacenter availability zone](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/api/v1alpha1/cloudstackdatacenterconfig_types.go#L216), which can be leveraged in mutation webhook. 
 
-CloudStack already has webhook for datacenter and machine config. We’ll reorganize validations, so keep static/data validations in webhook and keep validations need cmk in validator. The validator will be used in CloudStack provider, cluster reconciler and datacenter reconciler.
+We don't want to modify the spec that customers have already specified. [Control lPlane Host Port](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator.go#L211) could be missing from what customers provide in control plane host, and the reconciler would set a default port when generating CAPI objects. 
 
-* Extract static/data validation from [validateDatacenterConfig](https://github.com/aws/eks-anywhere/blob/main/pkg/providers/cloudstack/validator.go#L60) and ValidateClusterMachineConfigs (https://github.com/aws/eks-anywhere/blob/main/pkg/providers/cloudstack/validator.go#L127) to datacenterConfig/machineConfig types, and called in webhook. The runtime validations stay in validator and will be called during reconcile.
-* We have immutable fields validation in both webhook ([validateImmutableFieldsCloudStackMachineConfig](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/api/v1alpha1/cloudstackmachineconfig_webhook.go#L86) and provider ([validateMachineConfigImmutability](https://github.com/aws/eks-anywhere/blob/01cd1e7c3da0c6d87b2d85c4ac6e61f409091e9d/pkg/providers/cloudstack/cloudstack.go#L162)). There’re some gaps between two places so we’ll need to decide the final validation.
+CloudStack machine config doesn’t have default values at this stage.
+
+### Data validation
+
+In order to better sort out data validation and run time validation, we’ll reorganize validations in CLI.
+
+* Extract data validation from ValidateClusterMachineConfigs (https://github.com/aws/eks-anywhere/blob/main/pkg/providers/cloudstack/validator.go#L127) and called from webhook.
+* We have immutable fields validation in both webhook ([validateImmutableFieldsCloudStackMachineConfig](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/api/v1alpha1/cloudstackmachineconfig_webhook.go#L86) and provider [validateMachineConfigImmutability](https://github.com/aws/eks-anywhere/blob/01cd1e7c3da0c6d87b2d85c4ac6e61f409091e9d/pkg/providers/cloudstack/cloudstack.go#L162)). There’re some gaps between two places so we’ll need to decide the final immutable fields.
   * affinity group
   * [disk offering](https://github.com/aws/eks-anywhere/issues/5319)
-* [Validate k8s version](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/providers/cloudstack/cloudstack.go#L1371) and [set Default And Validate Contro lPlane Host Port](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator.go#L211) in cluster webhook.
+* We have [k8s version](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/providers/cloudstack/cloudstack.go#L1371) limitation due to capc version. This lightweight validation can be done in cluster webhook.
 
 ### Runtime Validation
 
-#### Validator Initialization
+#### Datacenter Reconciler
 
-* **How to read credential**
+We’ll have CloudStackDatacenterReconciler to validate and update corresponding status and failure message.
 
-  The validator requires cloudstack credential to build cmk. Our current CLI reads credential from env, and has a validation that accept new credential but not allowing existing credential update.
+#### How to read credential
 
-    1. (preferred) Read credentials from existing secrets. Customers would need to update k8s secrets object manually. Our [current mechanism](https://github.com/aws/eks-anywhere/blob/main/designs/cloudstack-multiple-endpoints.md?plain=1#L187)) doesn't allow users to update cluster and secrets at the same time as a safeguard. But for controller, users naturally can't perform those two operations at the same time, so it won't be a problem.
-    2. Read credentials from env. This the credentials are call captured as a single env var so there's limitation to only store one and hard to rotate.
+  The datacenter reconciler needs a validator with CloudStack credential to build cmk to talk to CloudStack API. The reconciler will retrieve the CloudStack credentials from secrets. These secrets are created by the CLI during the management cluster creation or added by customers. CloudStack supports multiple secrets by referring secret name and credential profile name.
 
-* **Where to build validator**
+  CLI doesn't allow customers to [rotate credentials](https://github.com/aws/eks-anywhere/blob/main/designs/cloudstack-multiple-endpoints.md?plain=1#L187). Since reconciler reads credentials from secrets dynamically, customers are allowed to rotate secrets.
 
-    We can use the [validator factory](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator_registry.go#L25) to pass validatorRegistry to controller, so the validator is built in every reconcile loop.
+#### Where to build validator
 
-* **Datacenter Reconciler**
+  We can use the [validator factory](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator_registry.go#L25) to pass validatorRegistry to controller, so the validator is built in every reconcile loop.
 
-  We’ll have CloudStackDatacenterReconciler to validate and update corresponding status and failure message.
-
-* **Cluster Reconciler**
+### Cluster Reconciler skeleton
 ```
 func (r *CloudstackReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
     log = log.WithValues("provider", "cloudstack")
@@ -66,11 +71,11 @@ func (r *CloudstackReconciler) Reconcile(ctx context.Context, log logr.Logger, c
     }
     
     return controller.NewPhaseRunner().Register(
-        r.ipValidator.ValidateControlPlaneIP,      
-        r.ValidateDatacenterConfig,  
-        r.ValidateMachineConfig,         
-        clusters.CleanupStatusAfterValidate,      
-        r.ReconcileControlPlane,      
+        r.ipValidator.ValidateControlPlaneIP,      // checks whether the control plane ip is used by another cluster
+        r.ValidateDatacenterConfig,                // checks no failre from datacenter reconciler 
+        r.ValidateMachineConfig,                   // Once datacenter is validated, generate availability zone from datacenter to perform run time validation on machine config
+        clusters.CleanupStatusAfterValidate,       // removes errors from the cluster status after all validation phases have been executed
+        r.ReconcileControlPlane,
         r.CheckControlPlaneReady,      
         r.ReconcileCNI,      
         r.ReconcileWorkers,
@@ -78,5 +83,3 @@ func (r *CloudstackReconciler) Reconcile(ctx context.Context, log logr.Logger, c
 }
 ```
 
-* ValidateDatacenterConfig checks status and failure message from CloudStackDatacenterReconciler
-* After successful datacenter config validation, ValidateMachineConfig runs machine config validations via cmk for each availability zone in datacenter.
