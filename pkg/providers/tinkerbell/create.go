@@ -152,8 +152,10 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		if err != nil {
 			return fmt.Errorf("getting TinkerbellIP of management cluster: %s", err)
 		}
-
-		p.datacenterConfig.Spec.TinkerbellIP = managementDatacenterConfig.Spec.TinkerbellIP
+		// Checking for empty first as that returns a different error in the datacenter config validate method below
+		if p.datacenterConfig.Spec.TinkerbellIP != "" && p.datacenterConfig.Spec.TinkerbellIP != managementDatacenterConfig.Spec.TinkerbellIP {
+			return fmt.Errorf("TinkerbellIP %v does not match management cluster ip %v", p.datacenterConfig.Spec.TinkerbellIP, managementDatacenterConfig.Spec.TinkerbellIP)
+		}
 	}
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
