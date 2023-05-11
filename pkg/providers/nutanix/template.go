@@ -239,6 +239,13 @@ func buildTemplateMapCP(
 		values["awsIamAuth"] = true
 	}
 
+	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
+		values["proxyConfig"] = true
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+		values["noProxy"] = generateNoProxyList(clusterSpec)
+	}
+
 	return values, nil
 }
 
@@ -303,6 +310,14 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["projectUUID"] = workerNodeGroupMachineSpec.Project.UUID
 	}
 
+	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
+		values["proxyConfig"] = true
+
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+		values["noProxy"] = generateNoProxyList(clusterSpec)
+	}
+
 	return values, nil
 }
 
@@ -328,4 +343,24 @@ func buildTemplateMapSecret(secretName string, creds credentials.BasicAuthCreden
 	}
 
 	return values, nil
+}
+
+func generateNoProxyList(clusterSpec *cluster.Spec) []string {
+	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+		len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+		len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
+
+	noProxyList := make([]string, 0, capacity)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
+
+	// Add no-proxy defaults
+	noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
+	noProxyList = append(noProxyList,
+		clusterSpec.Config.NutanixDatacenter.Spec.Endpoint,
+		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+	)
+
+	return noProxyList
 }

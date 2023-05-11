@@ -58,7 +58,7 @@ type StackInstaller interface {
 	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
-	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string) error
+	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string) error
 	AddNoProxyIP(IP string)
 	GetNamespace() string
 }
@@ -223,15 +223,8 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
 	}
 
-	if s.registryMirror != nil && s.registryMirror.Auth {
-		username, password, err := config.ReadCredentials()
-		if err != nil {
-			return err
-		}
-		endpoint := s.registryMirror.BaseRegistry
-		if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
-			return err
-		}
+	if err := s.authenticateHelmRegistry(ctx); err != nil {
+		return err
 	}
 
 	err = s.helm.InstallChartWithValuesFile(
@@ -367,8 +360,22 @@ func (s *Installer) localRegistryURL(originalURL string) string {
 	return s.registryMirror.ReplaceRegistry(originalURL)
 }
 
+func (s *Installer) authenticateHelmRegistry(ctx context.Context) error {
+	if s.registryMirror != nil && s.registryMirror.Auth {
+		username, password, err := config.ReadCredentials()
+		if err != nil {
+			return err
+		}
+		endpoint := s.registryMirror.BaseRegistry
+		if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Upgrade the Tinkerbell stack using images specified in bundle.
-func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string) error {
+func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig string, hookOverride string) error {
 	logger.V(6).Info("Upgrading Tinkerbell helm chart")
 
 	bootEnv := []map[string]string{}
@@ -383,7 +390,9 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
 	}
-
+	if hookOverride != "" {
+		osiePath = hookOverride
+	}
 	valuesMap := map[string]interface{}{
 		namespace:       s.namespace,
 		createNamespace: false,
@@ -426,16 +435,10 @@ func (s *Installer) Upgrade(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
 	}
 
-	if s.registryMirror != nil && s.registryMirror.Auth {
-		username, password, err := config.ReadCredentials()
-		if err != nil {
-			return err
-		}
-		endpoint := s.registryMirror.BaseRegistry
-		if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
-			return err
-		}
+	if err := s.authenticateHelmRegistry(ctx); err != nil {
+		return err
 	}
+
 	envMap := map[string]string{}
 	if s.proxyConfig != nil {
 		envMap["NO_PROXY"] = strings.Join(s.proxyConfig.NoProxy, ",")

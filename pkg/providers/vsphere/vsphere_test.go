@@ -1694,7 +1694,8 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 	setupContext(t)
 
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil).Times(2)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Times(3)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
@@ -1727,6 +1728,23 @@ func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
+func TestSetupAndValidateUpgradeClusterDatastoreUsageError(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cluster := &types.Cluster{}
+	provider := givenProvider(t)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+	setupContext(t)
+
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Return(nil, fmt.Errorf("error"))
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
+	thenErrorExpected(t, "validating vsphere machine configs datastore usage: calculating datastore usage: error", err)
+}
+
 func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
@@ -1740,7 +1758,8 @@ func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil).Times(2)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Times(3)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
@@ -1760,7 +1779,8 @@ func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil).Times(2)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Times(3)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
@@ -1781,7 +1801,32 @@ func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil).Times(2)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Times(3)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
+func TestSetupAndValidateUpgradeClusterSameMachineConfigforCPandEtcd(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	provider := givenProvider(t)
+	etcdMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = etcdMachineConfigName
+	setupContext(t)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	cluster := &types.Cluster{}
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil).Times(2)
+	for _, mc := range clusterSpec.VSphereMachineConfigs {
+		kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace()).Return(mc, nil)
+	}
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
@@ -2330,6 +2375,27 @@ func TestSetupAndValidateCreateClusterInvalidCloneMode(t *testing.T) {
 			v1alpha1.FullClone,
 		),
 	)
+}
+
+func TestSetupAndValidateCreateClusterDatastoreUsageError(t *testing.T) {
+	tt := newProviderTest(t)
+
+	tt.setExpectationForSetup()
+	tt.setExpectationForVCenterValidation()
+	tt.setExpectationsForDefaultDiskAndCloneModeGovcCalls()
+	tt.setExpectationsForMachineConfigsVCenterValidation()
+
+	cpMachineConfig := tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	for _, mc := range tt.machineConfigs {
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc.Spec.Template).Return(mc.Spec.Template, nil).AnyTimes()
+	}
+	tt.govc.EXPECT().GetTags(tt.ctx, cpMachineConfig.Spec.Template).Return([]string{eksd119ReleaseTag, ubuntuOSTag}, nil)
+	tt.govc.EXPECT().ListTags(tt.ctx)
+	tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, cpMachineConfig.Spec.Datastore).Return(0.0, fmt.Errorf("error"))
+
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+
+	thenErrorExpected(t, "validating vsphere machine configs datastore usage: getting datastore details: error", err)
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
@@ -3306,6 +3372,47 @@ func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
 	if !specChanged {
 		t.Fatalf("expected spec change but none was detected")
 	}
+}
+
+func TestValidateMachineConfigsDatastoreUsageCreateSuccess(t *testing.T) {
+	tt := newProviderTest(t)
+	machineConfigs := tt.clusterSpec.VSphereMachineConfigs
+	machineConfigs[tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Datastore = "test-datastore"
+	for _, config := range machineConfigs {
+		tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, config.Spec.Datastore).Return(200.0, nil)
+	}
+	vSpec := NewSpec(tt.clusterSpec)
+	err := tt.provider.validateDatastoreUsageForCreate(tt.ctx, vSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
+func TestValidateMachineConfigsDatastoreUsageCreateError(t *testing.T) {
+	tt := newProviderTest(t)
+	machineConfigs := tt.clusterSpec.VSphereMachineConfigs
+	for _, config := range machineConfigs {
+		tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, config.Spec.Datastore).Return(50.0, nil)
+	}
+	vSpec := NewSpec(tt.clusterSpec)
+	err := tt.provider.validateDatastoreUsageForCreate(tt.ctx, vSpec)
+	thenErrorExpected(t, fmt.Sprintf("not enough space in datastore %s for given diskGiB and count for respective machine groups", tt.clusterSpec.VSphereMachineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Datastore), err)
+}
+
+func TestValidateMachineConfigsDatastoreUsageUpgradeError(t *testing.T) {
+	tt := newProviderTest(t)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	tt.kubectl.EXPECT().GetEksaCluster(tt.ctx, cluster, tt.clusterSpec.Cluster.GetName()).Return(tt.clusterSpec.Cluster.DeepCopy(), nil)
+	machineConfigs := tt.clusterSpec.VSphereMachineConfigs
+	for _, config := range machineConfigs {
+		tt.kubectl.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, config.Name, cluster.KubeconfigFile, config.Namespace).AnyTimes()
+		tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, config.Spec.Datastore).Return(50.0, nil)
+	}
+	vSpec := NewSpec(tt.clusterSpec)
+	err := tt.provider.validateDatastoreUsageForUpgrade(tt.ctx, vSpec, cluster)
+	thenErrorExpected(t, fmt.Sprintf("not enough space in datastore %s for given diskGiB and count for respective machine groups", tt.clusterSpec.VSphereMachineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Datastore), err)
 }
 
 func TestValidateMachineConfigsNameUniquenessSuccess(t *testing.T) {

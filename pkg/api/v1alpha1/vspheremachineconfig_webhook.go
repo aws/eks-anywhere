@@ -41,11 +41,25 @@ var _ webhook.Validator = &VSphereMachineConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *VSphereMachineConfig) ValidateCreate() error {
 	vspheremachineconfiglog.Info("validate create", "name", r.Name)
-	err := r.Validate()
-	if err != nil {
-		return err
+
+	if err := r.ValidateHasTemplate(); err != nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "template"), r.Spec, err.Error()),
+		})
 	}
-	return r.ValidateHasTemplate()
+	if err := r.ValidateUsers(); err != nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+		})
+	}
+
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+		})
+	}
+
+	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -55,6 +69,12 @@ func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) error {
 	oldVSphereMachineConfig, ok := old.(*VSphereMachineConfig)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineConfig but got a %T", old))
+	}
+
+	if err := r.ValidateUsers(); err != nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+		})
 	}
 
 	var allErrs field.ErrorList

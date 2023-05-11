@@ -298,6 +298,12 @@ func (p *cloudstackProvider) generateSSHKeysIfNotSet(machineConfigs map[string]*
 	return nil
 }
 
+func (p *cloudstackProvider) setMachineConfigDefaults(clusterSpec *cluster.Spec) {
+	for _, mc := range clusterSpec.CloudStackMachineConfigs {
+		mc.SetUserDefaults()
+	}
+}
+
 func (p *cloudstackProvider) validateManagementApiEndpoint(rawurl string) error {
 	_, err := url.ParseRequestURI(rawurl)
 	if err != nil {
@@ -403,6 +409,8 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 		return fmt.Errorf("validating K8s version for provider: %v", err)
 	}
 
+	p.setMachineConfigDefaults(clusterSpec)
+
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
@@ -491,71 +499,119 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 // NeedNewMachineTemplate Used by EKS-A controller and CLI upgrade workflow to compare generated CSDC/CSMC's from
 // CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
 // new CloudStackMachineTemplates.
-func NeedNewMachineTemplate(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatacenterConfig, generatedCsmc, actualCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
-	if len(generatedCsdc.Spec.AvailabilityZones) != len(actualCsdc.Spec.AvailabilityZones) {
-		log.V(4).Info("Generated and actual CloudStackDatacenterConfigs do not match", "generatedAvailabilityZones", generatedCsdc.Spec.AvailabilityZones,
-			"actualAvailabilityZones", actualCsdc.Spec.AvailabilityZones)
+func NeedNewMachineTemplate(
+	oldDatacenterConfig, newDatacenterConfig *v1alpha1.CloudStackDatacenterConfig,
+	oldMachineConfig, newMachineConfig *v1alpha1.CloudStackMachineConfig,
+	log logr.Logger,
+) bool {
+	oldAzs := oldDatacenterConfig.Spec.AvailabilityZones
+	newAzs := newDatacenterConfig.Spec.AvailabilityZones
+	if !hasSameAvailabilityZones(oldAzs, newAzs) {
+		log.V(4).Info(
+			"CloudStackDatacenterConfigs do not match",
+			"oldAvailabilityZones", oldDatacenterConfig.Spec.AvailabilityZones,
+			"newAvailabilityZones", newDatacenterConfig.Spec.AvailabilityZones,
+		)
 		return true
-	}
-	generatedAzsMap := map[string]v1alpha1.CloudStackAvailabilityZone{}
-	for _, generatedAz := range generatedCsdc.Spec.AvailabilityZones {
-		generatedAzsMap[generatedAz.Name] = generatedAz
-	}
-	for _, actualAz := range actualCsdc.Spec.AvailabilityZones {
-		generatedAz, found := generatedAzsMap[actualAz.Name]
-		if !found || !(generatedAz.Zone.Equal(&actualAz.Zone) &&
-			generatedAz.Name == actualAz.Name &&
-			generatedAz.CredentialsRef == actualAz.CredentialsRef &&
-			generatedAz.Account == actualAz.Account &&
-			generatedAz.Domain == actualAz.Domain) {
-
-			log.V(4).Info("Generated and actual CloudStackDatacenterConfigs do not match", "generatedAvailabilityZone", generatedAz,
-				"actualAvailabilityZone", actualAz)
-			return true
-		}
 	}
 
-	if !generatedCsmc.Spec.Template.Equal(&actualCsmc.Spec.Template) {
-		log.V(4).Info("Old and new CloudStackMachineConfig Templates do not match", "machineConfig", generatedCsmc.Name, "oldTemplate", generatedCsmc.Spec.Template,
-			"newTemplate", actualCsmc.Spec.Template)
+	if !oldMachineConfig.Spec.Template.Equal(&newMachineConfig.Spec.Template) {
+		log.V(4).Info(
+			"Old and new CloudStackMachineConfig Templates do not match",
+			"machineConfig", oldMachineConfig.Name,
+			"oldTemplate", oldMachineConfig.Spec.Template,
+			"newTemplate", newMachineConfig.Spec.Template,
+		)
 		return true
 	}
-	if !generatedCsmc.Spec.ComputeOffering.Equal(&actualCsmc.Spec.ComputeOffering) {
-		log.V(4).Info("Old and new CloudStackMachineConfig Compute Offerings do not match", "machineConfig", generatedCsmc.Name, "oldComputeOffering", generatedCsmc.Spec.ComputeOffering,
-			"newComputeOffering", actualCsmc.Spec.ComputeOffering)
+
+	if !oldMachineConfig.Spec.ComputeOffering.Equal(&newMachineConfig.Spec.ComputeOffering) {
+		log.V(4).Info(
+			"Old and new CloudStackMachineConfig Compute Offerings do not match",
+			"machineConfig", oldMachineConfig.Name,
+			"oldComputeOffering", oldMachineConfig.Spec.ComputeOffering,
+			"newComputeOffering", newMachineConfig.Spec.ComputeOffering,
+		)
 		return true
 	}
-	if !generatedCsmc.Spec.DiskOffering.Equal(actualCsmc.Spec.DiskOffering) {
-		log.V(4).Info("Old and new CloudStackMachineConfig DiskOffering does not match", "machineConfig", generatedCsmc.Name, "oldDiskOffering", generatedCsmc.Spec.DiskOffering,
-			"newDiskOffering", actualCsmc.Spec.DiskOffering)
+
+	if !oldMachineConfig.Spec.DiskOffering.Equal(newMachineConfig.Spec.DiskOffering) {
+		log.V(4).Info(
+			"Old and new CloudStackMachineConfig DiskOffering does not match",
+			"machineConfig", oldMachineConfig.Name,
+			"oldDiskOffering", oldMachineConfig.Spec.DiskOffering,
+			"newDiskOffering", newMachineConfig.Spec.DiskOffering,
+		)
 		return true
 	}
-	if len(generatedCsmc.Spec.UserCustomDetails) != len(actualCsmc.Spec.UserCustomDetails) {
-		log.V(4).Info("Old and new CloudStackMachineConfig UserCustomDetails does not match", "machineConfig", generatedCsmc.Name, "oldUserCustomDetails", generatedCsmc.Spec.UserCustomDetails,
-			"newUserCustomDetails", actualCsmc.Spec.UserCustomDetails)
+
+	if !isEqualMap(oldMachineConfig.Spec.UserCustomDetails, newMachineConfig.Spec.UserCustomDetails) {
+		log.V(4).Info(
+			"Old and new CloudStackMachineConfig UserCustomDetails does not match",
+			"machineConfig", oldMachineConfig.Name,
+			"oldUserCustomDetails", oldMachineConfig.Spec.UserCustomDetails,
+			"newUserCustomDetails", newMachineConfig.Spec.UserCustomDetails,
+		)
 		return true
 	}
-	for key, value := range generatedCsmc.Spec.UserCustomDetails {
-		if value != actualCsmc.Spec.UserCustomDetails[key] {
-			log.V(4).Info("Old and new CloudStackMachineConfig UserCustomDetails does not match", "machineConfig", generatedCsmc.Name, "oldUserCustomDetails", generatedCsmc.Spec.UserCustomDetails,
-				"newUserCustomDetails", actualCsmc.Spec.UserCustomDetails)
-			return true
-		}
-	}
-	if len(generatedCsmc.Spec.Symlinks) != len(actualCsmc.Spec.Symlinks) {
-		log.V(4).Info("Old and new CloudStackMachineConfig Symlinks does not match", "machineConfig", generatedCsmc.Name, "oldSymlinks", generatedCsmc.Spec.Symlinks,
-			"newSymlinks", actualCsmc.Spec.Symlinks)
+
+	if !isEqualMap(oldMachineConfig.Spec.Symlinks, newMachineConfig.Spec.Symlinks) {
+		log.V(4).Info(
+			"Old and new CloudStackMachineConfig Symlinks does not match",
+			"machineConfig", oldMachineConfig.Name,
+			"oldSymlinks", oldMachineConfig.Spec.Symlinks,
+			"newSymlinks", newMachineConfig.Spec.Symlinks,
+		)
 		return true
-	}
-	for key, value := range generatedCsmc.Spec.Symlinks {
-		if value != actualCsmc.Spec.Symlinks[key] {
-			log.V(4).Info("Old and new CloudStackMachineConfig Symlinks does not match", "machineConfig", generatedCsmc.Name, "oldSymlinks", generatedCsmc.Spec.Symlinks,
-				"newSymlinks", actualCsmc.Spec.Symlinks)
-			return true
-		}
 	}
 
 	return false
+}
+
+func isEqualMap[K, V comparable](a, b map[K]V) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	// Ensure all keys are present in b, and a's values equal b's values.
+	for k, av := range a {
+		if bv, ok := b[k]; !ok || av != bv {
+			return false
+		}
+	}
+
+	return true
+}
+
+func hasSameAvailabilityZones(old, nw []v1alpha1.CloudStackAvailabilityZone) bool {
+	if len(old) != len(nw) {
+		return false
+	}
+
+	oldAzs := map[string]v1alpha1.CloudStackAvailabilityZone{}
+	for _, az := range old {
+		oldAzs[az.Name] = az
+	}
+
+	// Equality of availability zones doesn't take into consideration the availability zones
+	// ManagementApiEndpoint. Its unclear why this is the case. The ManagementApiEndpoint seems
+	// to only be used for proxy configuration.
+	equal := func(old, nw v1alpha1.CloudStackAvailabilityZone) bool {
+		return old.Zone.Equal(&nw.Zone) &&
+			old.Name == nw.Name &&
+			old.CredentialsRef == nw.CredentialsRef &&
+			old.Account == nw.Account &&
+			old.Domain == nw.Domain
+	}
+
+	for _, newAz := range nw {
+		oldAz, found := oldAzs[newAz.Name]
+		if !found || !equal(oldAz, newAz) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {

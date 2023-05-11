@@ -12,6 +12,9 @@ patches:
     - op: add
       path: /spec/template/spec/containers/0/args/-
       value: --logging-format=text
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: --v=2
   target:
     kind: Deployment
     name: eksa-controller-manager

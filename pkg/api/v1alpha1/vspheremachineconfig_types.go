@@ -1,6 +1,13 @@
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
+)
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -122,8 +129,46 @@ func (c *VSphereMachineConfig) SetDefaults() {
 	setVSphereMachineConfigDefaults(c)
 }
 
+// SetUserDefaults initializes Spec.Users for the VSphereMachineConfig with default values.
+// This only runs in the CLI, as we support do support user defaults through the webhook.
+func (c *VSphereMachineConfig) SetUserDefaults() {
+	var defaultUsername string
+	if len(c.Spec.Users) == 0 || c.Spec.Users[0].Name == "" {
+		if c.Spec.OSFamily == Bottlerocket {
+			defaultUsername = constants.BottlerocketDefaultUser
+		} else {
+			defaultUsername = constants.UbuntuDefaultUser
+		}
+		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "c", c.Name, "user", defaultUsername)
+	}
+	c.Spec.Users = defaultMachineConfigUsers(defaultUsername, c.Spec.Users)
+}
+
 func (c *VSphereMachineConfig) Validate() error {
 	return validateVSphereMachineConfig(c)
+}
+
+// ValidateUsers verifies a VSphereMachineConfig object must have a users with ssh authorized keys.
+// This validation only runs in VSphereMachineConfig validation webhook, as we support
+// auto-generate and import ssh key when creating a cluster via CLI.
+func (c *VSphereMachineConfig) ValidateUsers() error {
+	if err := validateMachineConfigUsers(c.Name, VSphereMachineConfigKind, c.Spec.Users); err != nil {
+		return err
+	}
+	if err := validateVSphereMachineConfigOSFamilyUser(c); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateVSphereMachineConfigOSFamilyUser(machineConfig *VSphereMachineConfig) error {
+	if machineConfig.Spec.OSFamily != Bottlerocket {
+		return nil
+	}
+	if machineConfig.Spec.Users[0].Name != constants.BottlerocketDefaultUser {
+		return fmt.Errorf("users[0].name %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
+	}
+	return nil
 }
 
 // ValidateHasTemplate verifies that a VSphereMachineConfig object has a template.

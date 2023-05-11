@@ -8,6 +8,9 @@ const (
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 	K8s127SupportEnvVar             = "K8S_1_27_SUPPORT"
+
+	experimentalSelfManagedClusterUpgradeEnvVar = "EXP_SELF_MANAGED_API_UPGRADE"
+	experimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
 )
 
 func FeedGates(featureGates []string) {
@@ -32,6 +35,17 @@ func FullLifecycleAPI() Feature {
 	return Feature{
 		Name:     "Full lifecycle API support through the EKS-A controller",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
+	}
+}
+
+// ExperimentalSelfManagedClusterUpgrade allows self managed cluster upgrades through the API.
+func ExperimentalSelfManagedClusterUpgrade() Feature {
+	return Feature{
+		Name: "[EXPERIMENTAL] Upgrade self-managed clusters through the API",
+		IsActive: globalFeatures.isActiveForEnvVarOrGate(
+			experimentalSelfManagedClusterUpgradeEnvVar,
+			experimentalSelfManagedClusterUpgradeGate,
+		),
 	}
 }
 

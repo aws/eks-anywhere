@@ -8,7 +8,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -139,15 +138,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, clusterSp
 	}
 
 	for _, machineConfig := range clusterSpec.CloudStackMachineConfigs {
-		if len(machineConfig.Spec.Users) <= 0 {
-			machineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
-		}
-		if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-			machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-		}
-		if machineConfig.Spec.Users[0].Name == "" {
-			machineConfig.Spec.Users[0].Name = v1alpha1.DefaultCloudStackUser
-		}
 		if err := v.validateMachineConfig(ctx, clusterSpec.CloudStackDatacenter, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}

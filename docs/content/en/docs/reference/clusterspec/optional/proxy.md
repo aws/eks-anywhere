@@ -68,3 +68,8 @@ export NO_PROXY=no-proxy-domain.com,another-domain.com,localhost
    - 192.168.0.0/16
    - .example.com
 ```
+
+{{% alert title="Note" color="primary" %}}
+- For Bottlerocket OS, it is required to add the local subnet CIDR range in the `noProxy` list.
+- For Bare Metal provider, it is required to host hook images locally which should be accessible by admin machines as well as all the nodes without using proxy configuration. Please refer to the documentation for getting hook images [here]({{< relref "../../artifacts/#hookos-kernel-and-initial-ramdisk-for-bare-metal" >}}).
+{{% /alert %}}

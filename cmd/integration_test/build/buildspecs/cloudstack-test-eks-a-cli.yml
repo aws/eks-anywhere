@@ -15,6 +15,10 @@ env:
     EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
     EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
     EKSA_AWS_REGION: "packages_ci_beta:aws_region"
+    ROUTE53_ACCESS_KEY_ID: "packages_ci_beta:route53_access_key_id"
+    ROUTE53_SECRET_ACCESS_KEY: "packages_ci_beta:route53_secret_access_key"
+    ROUTE53_REGION: "packages_ci_beta:route53_region"
+    ROUTE53_ZONEID: "packages_ci_beta:route53_zoneid"
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
@@ -22,11 +26,16 @@ env:
     T_HTTP_PROXY_CLOUDSTACK: "proxy-config-data:httpProxyCloudStack"
     T_HTTPS_PROXY_CLOUDSTACK: "proxy-config-data:httpsProxyCloudStack"
     T_NO_PROXY_CLOUDSTACK: "proxy-config-data:noProxyCloudStack"
-    T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
-    T_REGISTRY_MIRROR_PORT: "harbor-registry-data:port"
-    T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:username"
-    T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
-    T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
+    T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:tinkerbell_endpoint"
+    T_REGISTRY_MIRROR_PORT: "harbor-registry-data:tinkerbell_port"
+    T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:tinkerbell_username"
+    T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:tinkerbell_password"
+    T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:tinkerbell_caCert"
+    T_PRIVATE_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:authenticated_tinkerbell_endpoint"
+    T_PRIVATE_REGISTRY_MIRROR_PORT: "harbor-registry-data:authenticated_tinkerbell_port"
+    T_PRIVATE_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:authenticated_tinkerbell_username"
+    T_PRIVATE_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:authenticated_tinkerbell_password"
+    T_PRIVATE_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:authenticated_tinkerbell_caCert"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
     T_CLOUDSTACK_DOMAIN: "cloudstack_ci_beta_connection:domain"
     T_CLOUDSTACK_CREDENTIALS: "cloudstack_ci_beta_connection:credentials"
@@ -57,6 +66,11 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./bin/test e2e cleanup cloudstack
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -83,6 +97,13 @@ phases:
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
         --baremetal-branch=${BAREMETAL_BRANCH}
+  post_build:
+    commands:
+      - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
+      - >
+        ./bin/test e2e cleanup cloudstack
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
 reports:
   e2e-reports:
     files:

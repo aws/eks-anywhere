@@ -15,33 +15,33 @@ import (
 )
 
 // AWS IAM Auth
-func TestSnowKubernetes126UbuntuAWSIamAuth(t *testing.T) {
+func TestSnowKubernetes127UbuntuAWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu126()),
+		framework.NewSnow(t, framework.WithSnowUbuntu127()),
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 	)
 	runAWSIamAuthFlow(test)
 }
 
-func TestSnowKubernetes125To126AWSIamAuthUpgrade(t *testing.T) {
-	provider := framework.NewSnow(t, framework.WithSnowUbuntu125())
+func TestSnowKubernetes126To127AWSIamAuthUpgrade(t *testing.T) {
+	provider := framework.NewSnow(t, framework.WithSnowUbuntu126())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
 	)
 	runUpgradeFlowWithAWSIamAuth(
 		test,
-		v1alpha1.Kube126,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		v1alpha1.Kube127,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
 	)
 }
 
 // Labels
-func TestSnowKubernetes126UbuntuLabelsUpgradeFlow(t *testing.T) {
+func TestSnowKubernetes127UbuntuLabelsUpgradeFlow(t *testing.T) {
 	provider := framework.NewSnow(t,
 		framework.WithSnowWorkerNodeGroup(
 			worker0,
@@ -51,14 +51,14 @@ func TestSnowKubernetes126UbuntuLabelsUpgradeFlow(t *testing.T) {
 			worker1,
 			framework.WithWorkerNodeGroup(worker1, api.WithCount(1), api.WithLabel(key2, val2)),
 		),
-		framework.WithSnowUbuntu126(),
+		framework.WithSnowUbuntu127(),
 	)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube126),
+			api.WithKubernetesVersion(v1alpha1.Kube127),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(),
 		),
@@ -66,7 +66,7 @@ func TestSnowKubernetes126UbuntuLabelsUpgradeFlow(t *testing.T) {
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val2)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val1)),
@@ -76,12 +76,12 @@ func TestSnowKubernetes126UbuntuLabelsUpgradeFlow(t *testing.T) {
 }
 
 // OIDC
-func TestSnowKubernetes126OIDC(t *testing.T) {
+func TestSnowKubernetes127OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu126()),
+		framework.NewSnow(t, framework.WithSnowUbuntu127()),
 		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
@@ -89,11 +89,11 @@ func TestSnowKubernetes126OIDC(t *testing.T) {
 }
 
 // Proxy config
-func TestSnowKubernetes126UbuntuProxyConfig(t *testing.T) {
+func TestSnowKubernetes127UbuntuProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu126()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		framework.NewSnow(t, framework.WithSnowUbuntu127()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		// TODO: provide separate Proxy Env Vars for Snow provider. Leaving VSphere for backwards compatibility
@@ -148,8 +148,17 @@ func TestSnowKubernetes126SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestSnowKubernetes127SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu127()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
+	)
+	runSimpleFlow(test)
+}
+
 // Taints
-func TestSnowKubernetes126UbuntuTaintsUpgradeFlow(t *testing.T) {
+func TestSnowKubernetes127UbuntuTaintsUpgradeFlow(t *testing.T) {
 	provider := framework.NewSnow(t,
 		framework.WithSnowWorkerNodeGroup(
 			worker0,
@@ -163,14 +172,14 @@ func TestSnowKubernetes126UbuntuTaintsUpgradeFlow(t *testing.T) {
 			worker2,
 			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
-		framework.WithSnowUbuntu126(),
+		framework.WithSnowUbuntu127(),
 	)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube126),
+			api.WithKubernetesVersion(v1alpha1.Kube127),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(),
 		),
@@ -178,7 +187,7 @@ func TestSnowKubernetes126UbuntuTaintsUpgradeFlow(t *testing.T) {
 
 	runTaintsUpgradeFlow(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -189,21 +198,21 @@ func TestSnowKubernetes126UbuntuTaintsUpgradeFlow(t *testing.T) {
 }
 
 // Upgrade
-func TestSnowKubernetes125To126UbuntuMultipleFieldsUpgrade(t *testing.T) {
-	provider := framework.NewSnow(t, framework.WithSnowUbuntu125())
+func TestSnowKubernetes126To127UbuntuMultipleFieldsUpgrade(t *testing.T) {
+	provider := framework.NewSnow(t, framework.WithSnowUbuntu126())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube125),
+			api.WithKubernetesVersion(v1alpha1.Kube126),
 			api.WithControlPlaneCount(3),
 			api.WithWorkerNodeCount(1),
 		),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube126,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube126)),
+		v1alpha1.Kube127,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(2),
@@ -215,7 +224,7 @@ func TestSnowKubernetes125To126UbuntuMultipleFieldsUpgrade(t *testing.T) {
 	)
 }
 
-func TestSnowKubernetes126UbuntuRemoveWorkerNodeGroups(t *testing.T) {
+func TestSnowKubernetes127UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 	provider := framework.NewSnow(t,
 		framework.WithSnowWorkerNodeGroup(
 			worker0,
@@ -225,13 +234,13 @@ func TestSnowKubernetes126UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 			worker1,
 			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
 		),
-		framework.WithSnowUbuntu126(),
+		framework.WithSnowUbuntu127(),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube126),
+			api.WithKubernetesVersion(v1alpha1.Kube127),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(),
 		),
@@ -239,7 +248,7 @@ func TestSnowKubernetes126UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube126,
+		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(
 			api.RemoveWorkerNodeGroup(worker1),
 			api.WithWorkerNodeGroup(worker0, api.WithCount(1)),
@@ -282,6 +291,13 @@ func TestSnowKubernetes125UbuntuTo126Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithUbuntu125(), snow.WithUbuntu126())
 }
 
+func TestSnowKubernetes126UbuntuTo127Upgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithUbuntu126(), snow.WithUbuntu127())
+}
+
 func TestSnowKubernetes122BottlerocketTo123Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -310,6 +326,13 @@ func TestSnowKubernetes125BottlerocketTo126Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocket125(), snow.WithBottlerocket126())
 }
 
+func TestSnowKubernetes126BottlerocketTo127Upgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithBottlerocket126(), snow.WithBottlerocket127())
+}
+
 func TestSnowKubernetes122To123BottlerocketStaticIPUpgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -336,6 +359,13 @@ func TestSnowKubernetes125To126BottlerocketStaticIPUpgrade(t *testing.T) {
 	test := framework.NewClusterE2ETest(t, snow)
 
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP125(), snow.WithBottlerocketStaticIP126())
+}
+
+func TestSnowKubernetes126To127BottlerocketStaticIPUpgrade(t *testing.T) {
+	snow := framework.NewSnow(t)
+	test := framework.NewClusterE2ETest(t, snow)
+
+	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP126(), snow.WithBottlerocketStaticIP127())
 }
 
 // Workload API

@@ -56,13 +56,13 @@ https://github.com/coredns/caddy
 ** github.com/coredns/corefile-migration/migration; version v1.0.20 --
 https://github.com/coredns/corefile-migration
 
-** github.com/docker/cli/cli/config; version v20.10.21+incompatible --
+** github.com/docker/cli/cli/config; version v23.0.5+incompatible --
 https://github.com/docker/cli
 
 ** github.com/docker/distribution; version v2.8.1+incompatible --
 https://github.com/distribution/distribution
 
-** github.com/docker/docker; version v20.10.21+incompatible --
+** github.com/docker/docker; version v23.0.2+incompatible --
 https://github.com/moby/moby
 
 ** github.com/docker/go-connections; version v0.4.0 --
@@ -233,7 +233,7 @@ https://github.com/kubernetes/kube-openapi
 ** k8s.io/utils; version v0.0.0-20230220204549-a5ecb0141aa5 --
 https://github.com/kubernetes/utils
 
-** oras.land/oras-go/pkg; version v1.2.2 --
+** oras.land/oras-go/pkg; version v1.2.3 --
 https://github.com/oras-project/oras-go
 
 ** oras.land/oras-go/v2; version v2.0.0 --
@@ -1304,13 +1304,13 @@ https://github.com/vmware/govmomi
 ** golang.org/go; version go1.20.3 --
 https://github.com/golang/go
 
-** golang.org/x/crypto; version v0.5.0 --
+** golang.org/x/crypto; version v0.7.0 --
 https://golang.org/x/crypto
 
 ** golang.org/x/exp/maps; version v0.0.0-20221011201855-a3968a42eed6 --
 https://golang.org/x/exp
 
-** golang.org/x/net; version v0.7.0 --
+** golang.org/x/net; version v0.8.0 --
 https://golang.org/x/net
 
 ** golang.org/x/oauth2; version v0.4.0 --
@@ -1322,10 +1322,10 @@ https://golang.org/x/sync
 ** golang.org/x/sys; version v0.6.0 --
 https://golang.org/x/sys
 
-** golang.org/x/term; version v0.5.0 --
+** golang.org/x/term; version v0.6.0 --
 https://golang.org/x/term
 
-** golang.org/x/text; version v0.7.0 --
+** golang.org/x/text; version v0.9.0 --
 https://golang.org/x/text
 
 ** golang.org/x/time/rate; version v0.3.0 --
@@ -1546,7 +1546,7 @@ Copyright (c) 2019 Mark Bates
 https://github.com/gocarina/gocsv
 Copyright (c) 2014 Jonathan Picques
 
-** github.com/huandu/xstrings; version v1.3.3 --
+** github.com/huandu/xstrings; version v1.4.0 --
 https://github.com/huandu/xstrings
 Copyright (c) 2015 Huan Du
 

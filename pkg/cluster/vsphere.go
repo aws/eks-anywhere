@@ -30,6 +30,7 @@ func vsphereEntry() *ConfigManagerEntry {
 			func(c *Config) error {
 				for _, m := range c.VSphereMachineConfigs {
 					m.SetDefaults()
+					m.SetUserDefaults()
 				}
 				return nil
 			},

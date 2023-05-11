@@ -106,6 +106,7 @@ func TestValidateControlPlaneIpCheck(t *testing.T) {
 	err := validator.ValidateControlPlaneEndpointUniqueness("255.255.255.255:6443")
 	thenErrorExpected(t, "endpoint <255.255.255.255:6443> is already in use", err)
 }
+
 func TestValidateControlPlaneIpCheckUniqueIpSuccess(t *testing.T) {
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	validator := NewValidator(cmk, &DummyNetClient{}, false)

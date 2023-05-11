@@ -1,0 +1,82 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  kubernetesVersion: "1.19"
+  controlPlaneConfiguration:
+    name: eksa-unit-test
+    count: 3
+    endpoint:
+      host: test-ip
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: NutanixMachineConfig
+  workerNodeGroupConfigurations:
+    - count: 4
+      name: eksa-unit-test
+      machineGroupRef:
+        name: eksa-unit-test
+        kind: NutanixMachineConfig
+  externalEtcdConfiguration:
+    name: eksa-unit-test
+    count: 3
+    machineGroupRef:
+      name: eksa-unit-test
+      kind: NutanixMachineConfig
+  datacenterRef:
+    kind: NutanixDatacenterConfig
+    name: eksa-unit-test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  proxyConfiguration:
+    httpProxy: proxy.nutanix.com:8888
+    httpsProxy: proxy.nutanix.com:8888
+    noProxy:
+      - noproxy1.nutanix.com
+      - noproxy2.nutanix.com
+      - noproxy3.nutanix.com
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixDatacenterConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  endpoint: "prism.nutanix.com"
+  port: 9440
+  credentialRef:
+    kind: Secret
+    name: "nutanix-credentials"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  vcpusPerSocket: 1
+  vcpuSockets: 4
+  memorySize: 8Gi
+  image:
+    type: "name"
+    name: "prism-image"
+  cluster:
+    type: "name"
+    name: "prism-cluster"
+  subnet:
+    type: "name"
+    name: "prism-subnet"
+  systemDiskSize: 40Gi
+  osFamily: "ubuntu"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"

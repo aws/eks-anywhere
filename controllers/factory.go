@@ -99,8 +99,9 @@ func (f *Factory) Close(ctx context.Context) error {
 	return f.deps.Close(ctx)
 }
 
-// WithClusterReconciler configures reconcilers to the factory.
-func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
+
+// WithClusterReconciler builds the cluster reconciler.
+func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, opts ...ClusterReconcilerOption) *Factory {
 	f.dependencyFactory.WithGovc()
 	f.withTracker().
 		WithProviderClusterReconcilerRegistry(capiProviders).
@@ -118,6 +119,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *
 			f.awsIamConfigReconciler,
 			clusters.NewClusterValidator(f.manager.GetClient()),
 			f.packageControllerClient,
+			opts...,
 		)
 
 		return nil
@@ -416,7 +418,7 @@ func (f *Factory) withTinkerbellClusterReconciler() *Factory {
 }
 
 func (f *Factory) withCloudStackClusterReconciler() *Factory {
-	f.withCNIReconciler().withTracker().withIPValidator()
+	f.withCNIReconciler().withTracker().withIPValidator().withCloudStackValidatorRegistry()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cloudstackClusterReconciler != nil {
@@ -428,6 +430,7 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 			f.ipValidator,
 			f.cniReconciler,
 			f.tracker,
+			f.cloudStackValidatorRegistry,
 		)
 		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
 

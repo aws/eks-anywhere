@@ -18,6 +18,7 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
@@ -27,6 +28,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 	cloudstackreconcilermocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -44,17 +47,22 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
-	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+	spec := tt.buildSpec()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, spec).Return(controller.Result{}, nil)
 	tt.remoteClientRegistry.EXPECT().GetClient(
 		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: constants.EksaSystemNamespace},
 	).Return(remoteClient, nil).Times(1)
 	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
+	ctrl := gomock.NewController(t)
+	validator := cloudstack.NewMockProviderValidator(ctrl)
+	tt.validatorRegistry.EXPECT().Get(tt.execConfig).Return(validator, nil).Times(1)
+	validator.EXPECT().ValidateClusterMachineConfigs(tt.ctx, spec).Return(nil).Times(1)
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
@@ -79,7 +87,7 @@ func TestReconcilerValidateDatacenterConfigRequeue(t *testing.T) {
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -100,7 +108,7 @@ func TestReconcilerValidateDatacenterConfigFail(t *testing.T) {
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -110,6 +118,59 @@ func TestReconcilerValidateDatacenterConfigFail(t *testing.T) {
 	_, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(&tt.datacenterConfig.Status.FailureMessage).To(HaveValue(Equal("Invalid CloudStackDatacenterConfig")))
+}
+
+func TestReconcilerValidateMachineConfigInvalidSecret(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	logger := test.NewNullLogger()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, spec).Return(controller.Result{}, nil)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("Secret \"global\" not found")))
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+}
+
+func TestReconcilerValidateMachineConfigGetValidatorFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	logger := test.NewNullLogger()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, spec).Return(controller.Result{}, nil)
+
+	errMsg := "building cmk executable: nil exec config for CloudMonkey, unable to proceed"
+	tt.validatorRegistry.EXPECT().Get(tt.execConfig).Return(nil, errors.New(errMsg)).Times(1)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring(errMsg)))
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+}
+
+func TestReconcilerValidateMachineConfigFail(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
+	tt.createAllObjs()
+
+	spec := tt.buildSpec()
+	logger := test.NewNullLogger()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, spec).Return(controller.Result{}, nil)
+
+	ctrl := gomock.NewController(t)
+	validator := cloudstack.NewMockProviderValidator(ctrl)
+	tt.validatorRegistry.EXPECT().Get(tt.execConfig).Return(validator, nil).Times(1)
+	errMsg := "Invalid CloudStackMachineConfig: validating service offering"
+	validator.EXPECT().ValidateClusterMachineConfigs(tt.ctx, spec).Return(errors.New(errMsg)).Times(1)
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring(errMsg)))
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
@@ -125,12 +186,17 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 			LastTransitionTime: metav1.NewTime(time.Now()),
 		},
 	}
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
 
-	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
+	spec := tt.buildSpec()
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, spec).Return(controller.Result{}, nil)
+	ctrl := gomock.NewController(t)
+	validator := cloudstack.NewMockProviderValidator(ctrl)
+	tt.validatorRegistry.EXPECT().Get(tt.execConfig).Return(validator, nil).Times(1)
+	validator.EXPECT().ValidateClusterMachineConfigs(tt.ctx, spec).Return(nil).Times(1)
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -147,6 +213,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 			Name: tt.machineConfigControlPlane.Name,
 		},
 	}
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, tt.buildSpec())
@@ -202,6 +269,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 
 func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
 	logger := test.NewNullLogger()
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, logger, tt.buildSpec())
@@ -257,6 +325,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 
 func TestReconcilerReconcileControlPlaneFailure(t *testing.T) {
 	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	tt.createAllObjs()
 	spec := tt.buildSpec()
 	spec.Cluster.Spec.KubernetesVersion = ""
@@ -270,6 +339,7 @@ func TestReconcileCNISuccess(t *testing.T) {
 
 	logger := test.NewNullLogger()
 	remoteClient := fake.NewClientBuilder().Build()
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	spec := tt.buildSpec()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
@@ -289,6 +359,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 	tt.withFakeClient()
 
 	logger := test.NewNullLogger()
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.secret)
 	spec := tt.buildSpec()
 
 	tt.remoteClientRegistry.EXPECT().GetClient(
@@ -308,7 +379,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -353,7 +424,7 @@ func TestReconcilerReconcileWorkersFailure(t *testing.T) {
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 	clusterSpec := tt.buildSpec()
 	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(int(math.Inf(1)))
@@ -372,7 +443,7 @@ func TestReconcilerReconcileWorkerNodesSuccess(t *testing.T) {
 	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -419,7 +490,7 @@ func TestReconcilerReconcileWorkerNodesFailure(t *testing.T) {
 		c.Name = tt.cluster.Name
 	})
 	tt.cluster.Spec.KubernetesVersion = ""
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -447,7 +518,7 @@ func (tt *reconcilerTest) allObjs() []client.Object {
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
-	return reconciler.New(tt.client, tt.ipValidator, tt.cniReconciler, tt.remoteClientRegistry)
+	return reconciler.New(tt.client, tt.ipValidator, tt.cniReconciler, tt.remoteClientRegistry, tt.validatorRegistry)
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {
@@ -472,6 +543,9 @@ type reconcilerTest struct {
 	ipValidator               *cloudstackreconcilermocks.MockIPValidator
 	cniReconciler             *cloudstackreconcilermocks.MockCNIReconciler
 	remoteClientRegistry      *cloudstackreconcilermocks.MockRemoteClientRegistry
+	validatorRegistry         *cloudstack.MockValidatorRegistry
+	execConfig                *decoder.CloudStackExecConfig
+	secret                    *corev1.Secret
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -481,6 +555,17 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ipValidator := cloudstackreconcilermocks.NewMockIPValidator(ctrl)
 	cniReconciler := cloudstackreconcilermocks.NewMockCNIReconciler(ctrl)
 	remoteClientRegistry := cloudstackreconcilermocks.NewMockRemoteClientRegistry(ctrl)
+	validatorRegistry := cloudstack.NewMockValidatorRegistry(ctrl)
+	execConfig := &decoder.CloudStackExecConfig{
+		Profiles: []decoder.CloudStackProfileConfig{
+			{
+				Name:          "global",
+				ApiKey:        "test-key1",
+				SecretKey:     "test-secret1",
+				ManagementUrl: "http://1.1.1.1:8080/client/api",
+			},
+		},
+	}
 
 	bundle := test.Bundle()
 
@@ -516,7 +601,8 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	workloadClusterDatacenter := dataCenter(func(d *anywherev1.CloudStackDatacenterConfig) {
 		d.Spec.AvailabilityZones = append(d.Spec.AvailabilityZones,
 			anywherev1.CloudStackAvailabilityZone{
-				Name: "test-zone",
+				Name:           "test-zone",
+				CredentialsRef: "global",
 			})
 		d.Status.SpecValid = true
 	})
@@ -558,6 +644,21 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 			},
 		)
 	})
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "global",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string][]byte{
+			decoder.APIKeyKey:    []byte("test-key1"),
+			decoder.APIUrlKey:    []byte("http://1.1.1.1:8080/client/api"),
+			decoder.SecretKeyKey: []byte("test-secret1"),
+		},
+	}
 
 	tt := &reconcilerTest{
 		t:           t,
@@ -580,6 +681,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		machineConfigWorker:       machineConfigWN,
 		cniReconciler:             cniReconciler,
 		remoteClientRegistry:      remoteClientRegistry,
+		validatorRegistry:         validatorRegistry,
+		execConfig:                execConfig,
+		secret:                    secret,
 	}
 
 	t.Cleanup(tt.cleanup)
