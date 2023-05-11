@@ -457,8 +457,9 @@ func WithVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, f
 // WithWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
 // a corresponding VSphereMachineConfig to the cluster config.
 func (v *VSphere) WithWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.VSphereMachineConfigFiller) api.ClusterConfigFiller {
+	machineConfigFillers := append([]api.VSphereMachineConfigFiller{updateMachineSSHAuthorizedKey()}, fillers...)
 	return api.JoinClusterConfigFillers(
-		api.VSphereToConfigFiller(vSphereMachineConfig(name, fillers...)),
+		api.VSphereToConfigFiller(vSphereMachineConfig(name, machineConfigFillers...)),
 		api.ClusterToConfigFiller(buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
 	)
 }
@@ -466,6 +467,11 @@ func (v *VSphere) WithWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGr
 // WithWorkerNodeGroupConfiguration returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration item to the cluster config.
 func (v *VSphere) WithWorkerNodeGroupConfiguration(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
 	return api.ClusterToConfigFiller(buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+}
+
+// updateMachineSSHAuthorizedKey updates a vsphere machine configs SSHAuthorizedKey.
+func updateMachineSSHAuthorizedKey() api.VSphereMachineConfigFiller {
+	return api.WithStringFromEnvVar(vsphereSshAuthorizedKeyVar, api.WithSSHKey)
 }
 
 // WithVSphereFillers adds VSphereFiller to the provider default fillers.
