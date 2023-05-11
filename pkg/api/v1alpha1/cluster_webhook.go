@@ -175,17 +175,18 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Forbidden(specPath.Child("managementCluster", new.Spec.ManagementCluster.Name), fmt.Sprintf("field is immutable %v", new.Spec.ManagementCluster)))
 	}
 
-	if new.Spec.DatacenterRef.Kind == CloudStackDatacenterKind {
+	switch new.Spec.DatacenterRef.Kind {
+	case CloudStackDatacenterKind:
 		if !new.Spec.ControlPlaneConfiguration.Endpoint.CloudStackEqual(old.Spec.ControlPlaneConfiguration.Endpoint) {
 			allErrs = append(
 				allErrs,
 				field.Forbidden(specPath.Child("ControlPlaneConfiguration.endpoint"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Endpoint)))
 		}
-	} else {
+	default:
 		if !new.Spec.ControlPlaneConfiguration.Endpoint.Equal(old.Spec.ControlPlaneConfiguration.Endpoint) {
-			allErrs = append(
-				allErrs,
-				field.Forbidden(specPath.Child("ControlPlaneConfiguration.endpoint"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Endpoint)))
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("ControlPlaneConfiguration.endpoint"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Endpoint)))
 		}
 	}
 

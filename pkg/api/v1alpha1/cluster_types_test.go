@@ -1501,6 +1501,87 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 	}
 }
 
+func TestControlPlaneConfigurationEndpointEqual(t *testing.T) {
+	testCases := []struct {
+		testName, cluster1CPHost, cluster2CPHost, clusterDatacenterKind string
+		want                                                            bool
+	}{
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.2.3.4",
+			clusterDatacenterKind: v1alpha1.VSphereDatacenterKind,
+			cluster2CPHost:        "1.2.3.5",
+			want:                  false,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.2.3.4",
+			clusterDatacenterKind: v1alpha1.VSphereDatacenterKind,
+			cluster2CPHost:        "",
+			want:                  false,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "",
+			clusterDatacenterKind: v1alpha1.VSphereDatacenterKind,
+			cluster2CPHost:        "",
+			want:                  true,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.1.1.1:6443",
+			clusterDatacenterKind: v1alpha1.CloudStackDatacenterKind,
+			cluster2CPHost:        "1.1.1.1",
+			want:                  true,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.1.1.1",
+			clusterDatacenterKind: v1alpha1.CloudStackDatacenterKind,
+			cluster2CPHost:        "1.1.1.1:6443",
+			want:                  true,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.1.1.1",
+			clusterDatacenterKind: v1alpha1.CloudStackDatacenterKind,
+			cluster2CPHost:        "1.1.1.2",
+			want:                  false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					DatacenterRef: v1alpha1.Ref{
+						Kind: tt.clusterDatacenterKind,
+					},
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Endpoint: &v1alpha1.Endpoint{
+							Host: tt.cluster1CPHost,
+						},
+					},
+				},
+			}
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					DatacenterRef: v1alpha1.Ref{
+						Kind: tt.clusterDatacenterKind,
+					},
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Endpoint: &v1alpha1.Endpoint{
+							Host: tt.cluster2CPHost,
+						},
+					},
+				},
+			}
+
+			g := NewWithT(t)
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 	testCases := []struct {
 		testName                   string

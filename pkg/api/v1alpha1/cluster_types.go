@@ -93,12 +93,18 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	if n.Spec.KubernetesVersion != o.Spec.KubernetesVersion {
 		return false
 	}
-	if n.Spec.DatacenterRef.Kind == CloudStackDatacenterKind && !n.Spec.ControlPlaneConfiguration.Endpoint.CloudStackEqual(o.Spec.ControlPlaneConfiguration.Endpoint) {
-		return false
+
+	switch n.Spec.DatacenterRef.Kind {
+	case CloudStackDatacenterKind:
+		if !n.Spec.ControlPlaneConfiguration.Endpoint.CloudStackEqual(o.Spec.ControlPlaneConfiguration.Endpoint) {
+			return false
+		}
+	default:
+		if !n.Spec.ControlPlaneConfiguration.Endpoint.Equal(o.Spec.ControlPlaneConfiguration.Endpoint) {
+			return false
+		}
 	}
-	if n.Spec.DatacenterRef.Kind != CloudStackDatacenterKind && !n.Spec.ControlPlaneConfiguration.Endpoint.Equal(o.Spec.ControlPlaneConfiguration.Endpoint) {
-		return false
-	}
+
 	if !n.Spec.ControlPlaneConfiguration.Equal(&o.Spec.ControlPlaneConfiguration) {
 		return false
 	}

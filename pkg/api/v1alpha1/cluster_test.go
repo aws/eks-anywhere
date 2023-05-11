@@ -1706,6 +1706,12 @@ func TestCloudStackEndPointEquals(t *testing.T) {
 			prev: &Endpoint{Host: "host:6443"},
 			new:  &Endpoint{Host: "host"},
 		},
+		{
+			name: "invalid host",
+			want: false,
+			prev: &Endpoint{Host: "host:6443"},
+			new:  &Endpoint{Host: "host::"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

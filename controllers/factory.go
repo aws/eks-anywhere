@@ -99,7 +99,6 @@ func (f *Factory) Close(ctx context.Context) error {
 	return f.deps.Close(ctx)
 }
 
-
 // WithClusterReconciler builds the cluster reconciler.
 func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, opts ...ClusterReconcilerOption) *Factory {
 	f.dependencyFactory.WithGovc()
