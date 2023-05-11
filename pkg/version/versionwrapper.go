@@ -1,9 +1,9 @@
 package version
 
-// VersionClient exists to make mocking the version package easier.
-type VersionClient struct{}
+// Client exists to make mocking the version package easier.
+type Client struct{}
 
 // Get returns the version info of eksa.
-func (vc *VersionClient) Get() Info {
+func (vc *Client) Get() Info {
 	return Get()
 }

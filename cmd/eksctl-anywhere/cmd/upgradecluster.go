@@ -151,7 +151,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		ManagementCluster: managementCluster,
 		Provider:          deps.Provider,
 		CliConfig:         cliConfig,
-		Version:           &version.VersionClient{},
+		Version:           &version.Client{},
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
