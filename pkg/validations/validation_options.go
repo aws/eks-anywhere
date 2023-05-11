@@ -16,6 +16,7 @@ type Opts struct {
 	Provider          providers.Provider
 	TlsValidator      TlsValidator
 	CliConfig         *config.CliConfig
+	Version           VersionClient
 }
 
 func (o *Opts) SetDefaults() {

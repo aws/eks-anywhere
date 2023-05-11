@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
+	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
@@ -150,6 +151,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		ManagementCluster: managementCluster,
 		Provider:          deps.Provider,
 		CliConfig:         cliConfig,
+		Version:           &version.VersionClient{},
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 

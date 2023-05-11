@@ -373,6 +373,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			helm := stackmocks.NewMockHelm(mockCtrl)
 			writer := filewritermocks.NewMockFileWriter(mockCtrl)
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
+			v := mocks.NewMockVersionClient(mockCtrl)
 
 			provider := newProvider(defaultDatacenterSpec, givenTinkerbellMachineConfigs(t), clusterSpec.Cluster, writer, docker, helm, kubectl, false)
 			// provider := mockproviders.NewMockProvider(mockCtrl)
@@ -383,6 +384,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TlsValidator:      tlsValidator,
+				Version:           v,
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
@@ -420,9 +422,6 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 					GitVersion: tc.clusterVersion,
 				},
 			}
-			eksaversion.Get = func() eksaversion.Info {
-				return eksaversion.Info{GitVersion: tc.clusterVersion}
-			}
 
 			kubectl.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(1)
 			// provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
@@ -438,6 +437,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil).MaxTimes(2)
 			k.EXPECT().GetBundles(ctx, kubeconfigFilePath, existingClusterSpec.Cluster.Spec.BundlesRef.Name, existingClusterSpec.Cluster.Spec.BundlesRef.Namespace).Return(bundle, nil)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
+			v.EXPECT().Get().Return(eksaversion.Info{GitVersion: tc.clusterVersion})
 			upgradeValidations := upgradevalidations.New(opts)
 			err := validations.ProcessValidationResults(upgradeValidations.PreflightValidations(ctx))
 			if !reflect.DeepEqual(err, tc.wantErr) {
@@ -1178,6 +1178,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			k := mocks.NewMockKubectlClient(mockCtrl)
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
+			v := mocks.NewMockVersionClient(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
 
@@ -1192,6 +1193,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TlsValidator:      tlsValidator,
+				Version:           v,
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
@@ -1226,10 +1228,8 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 					Number: 28,
 				},
 			}
-			eksaversion.Get = func() eksaversion.Info {
-				return eksaversion.Info{GitVersion: tc.clusterVersion}
-			}
 
+			v.EXPECT().Get().Return(eksaversion.Info{GitVersion: tc.clusterVersion})
 			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
@@ -1445,6 +1445,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				GitSshKeyPassphrase: "test",
 				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			}
+			v := mocks.NewMockVersionClient(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			opts := &validations.Opts{
@@ -1455,6 +1456,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				Provider:          provider,
 				TlsValidator:      tlsValidator,
 				CliConfig:         cliConfig,
+				Version:           v,
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
@@ -1484,10 +1486,8 @@ func TestPreFlightValidationsGit(t *testing.T) {
 					GitVersion: tc.clusterVersion,
 				},
 			}
-			eksaversion.Get = func() eksaversion.Info {
-				return eksaversion.Info{GitVersion: tc.clusterVersion}
-			}
 
+			v.EXPECT().Get().Return(eksaversion.Info{GitVersion: tc.clusterVersion})
 			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
