@@ -431,7 +431,7 @@ func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesTimeout(t *tes
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(1).Return(nil, errors.New("error get machines"))
 	// Return a machine with no nodeRef the rest of the retries
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).MinTimes(1).Return([]types.Machine{{Metadata: types.MachineMetadata{
-		Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""},
+		Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""},
 	}}}, nil)
 	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err == nil {
 		t.Error("ClusterManager.RunPostCreateWorkloadCluster() error = nil, wantErr not nil", err)
@@ -477,7 +477,7 @@ func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesSuccessAfterRe
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(retries-5).Return(nil, errors.New("error get machines"))
 	// Return a machine with no nodeRef  times
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(3).Return([]types.Machine{{Metadata: types.MachineMetadata{
-		Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""},
+		Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""},
 	}}}, nil)
 	//// Return a machine with nodeRef + NodeHealthy condition and another with it
 	status := types.MachineStatus{
@@ -490,14 +490,14 @@ func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesSuccessAfterRe
 		},
 	}
 	machines := []types.Machine{
-		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""}}},
-		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""}}, Status: status},
+		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""}}},
+		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""}}, Status: status},
 	}
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(1).Return(machines, nil)
 	// Finally return two machines with node ref
 	machines = []types.Machine{
-		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""}}, Status: status},
-		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""}}, Status: status},
+		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""}}, Status: status},
+		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""}}, Status: status},
 	}
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(1).Return(machines, nil)
 	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err != nil {
@@ -1134,7 +1134,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 	tt.mocks.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).Times(1).Return(nil, errors.New("error get machines"))
 	// Return a machine with no nodeRef the rest of the retries
 	tt.mocks.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).MinTimes(1).Return([]types.Machine{{Metadata: types.MachineMetadata{
-		Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""},
+		Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""},
 	}}}, nil)
 
 	if err := tt.clusterManager.UpgradeCluster(ctx, mCluster, wCluster, tt.clusterSpec, tt.mocks.provider); err == nil {
@@ -1240,7 +1240,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesFailedWithUnhealthyN
 		},
 	}
 	machines := []types.Machine{
-		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""}}, Status: status},
+		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneNameLabel: ""}}, Status: status},
 	}
 
 	tt := newSpecChangedTest(t, clustermanager.WithMachineBackoff(1*time.Nanosecond), clustermanager.WithMachineMaxWait(50*time.Microsecond), clustermanager.WithMachineMinWait(100*time.Microsecond))

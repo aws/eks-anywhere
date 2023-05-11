@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
@@ -15,7 +16,7 @@ import (
 )
 
 func TestCreateBundleManagerWhenValidKubeVersion(t *testing.T) {
-	bm := curatedpackages.CreateBundleManager()
+	bm := curatedpackages.CreateBundleManager(test.NewNullLogger())
 	if bm == nil {
 		t.Errorf("Bundle Manager should be successful when valid kubeversion")
 	}

@@ -185,7 +185,7 @@ func (r *CapiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 
 func (r *CapiResourceFetcher) machineDeploymentsMap(ctx context.Context, c *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error) {
 	machineDeployments := &clusterv1.MachineDeploymentList{}
-	req, err := labels.NewRequirement(clusterv1.ClusterLabelName, selection.Equals, []string{c.Name})
+	req, err := labels.NewRequirement(clusterv1.ClusterNameLabel, selection.Equals, []string{c.Name})
 	if err != nil {
 		return nil, err
 	}

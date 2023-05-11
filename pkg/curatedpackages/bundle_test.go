@@ -22,6 +22,8 @@ type bundleTest struct {
 	ctx           context.Context
 	kubeConfig    string
 	kubeVersion   string
+	kubeMajor     string
+	kubeMinor     string
 	cluster       string
 	kubectl       *mocks.MockKubectlRunner
 	bundleManager *mocks.MockManager
@@ -39,6 +41,8 @@ func newBundleTest(t *testing.T) *bundleTest {
 	bm := mocks.NewMockManager(ctrl)
 	kubeConfig := "test.kubeconfig"
 	kubeVersion := "1.21"
+	kubeMajor := "1"
+	kubeMinor := "21"
 	cluster := "billy"
 	registry := mocks.NewMockBundleRegistry(ctrl)
 	activeBundle := "v1.21-1000"
@@ -63,6 +67,8 @@ func newBundleTest(t *testing.T) *bundleTest {
 		ctx:           context.Background(),
 		kubeConfig:    kubeConfig,
 		kubeVersion:   kubeVersion,
+		kubeMajor:     kubeMajor,
+		kubeMinor:     kubeMinor,
 		cluster:       cluster,
 		kubectl:       k,
 		bundleManager: bm,
@@ -101,7 +107,7 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	tt := newBundleTest(t)
 	baseRef := "test_host/test_env/test_controller"
 	tt.registry.EXPECT().GetRegistryBaseRef(tt.ctx).Return(baseRef, nil)
-	tt.bundleManager.EXPECT().LatestBundle(tt.ctx, baseRef, tt.kubeVersion).Return(tt.packageBundle, nil)
+	tt.bundleManager.EXPECT().LatestBundle(tt.ctx, baseRef, tt.kubeMajor, tt.kubeMinor, "").Return(tt.packageBundle, nil)
 	tt.Command = curatedpackages.NewBundleReader(tt.kubeConfig, "", tt.kubectl, tt.bundleManager, tt.registry)
 	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(BeNil())

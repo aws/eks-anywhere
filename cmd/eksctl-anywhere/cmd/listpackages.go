@@ -65,7 +65,7 @@ func listPackages(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	bm := curatedpackages.CreateBundleManager()
+	bm := curatedpackages.CreateBundleManager(deps.Logger)
 
 	b := curatedpackages.NewBundleReader(kubeConfig, lpo.clusterName, deps.Kubectl, bm, deps.BundleRegistry)
 

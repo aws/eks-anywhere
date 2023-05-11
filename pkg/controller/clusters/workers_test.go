@@ -44,7 +44,7 @@ func TestReconcileWorkersSuccess(t *testing.T) {
 	existingMachineDeployment1 := machineDeployment("my-cluster-md-1", ns)
 	existingMachineDeployment2 := machineDeployment("my-cluster-md-2", ns)
 	existingMachineDeployment3 := machineDeployment("my-other-cluster-md-1", ns)
-	existingMachineDeployment3.Labels[clusterv1.ClusterLabelName] = "my-other-cluster"
+	existingMachineDeployment3.Labels[clusterv1.ClusterNameLabel] = "my-other-cluster"
 	envtest.CreateObjs(ctx, t, c,
 		existingMachineDeployment1,
 		existingMachineDeployment2,
@@ -151,7 +151,7 @@ func machineDeployment(name, namespace string) *clusterv1.MachineDeployment {
 			Namespace: namespace,
 			Name:      name,
 			Labels: map[string]string{
-				clusterv1.ClusterLabelName: "my-cluster",
+				clusterv1.ClusterNameLabel: "my-cluster",
 			},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{

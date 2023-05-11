@@ -10,14 +10,14 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.2.3
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/onsi/gomega v1.23.0
+	github.com/onsi/gomega v1.24.1
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.10.0
 	helm.sh/helm/v3 v3.11.3
 	k8s.io/apimachinery v0.26.2
 	k8s.io/helm v2.17.0+incompatible
-	sigs.k8s.io/controller-runtime v0.13.1
+	sigs.k8s.io/controller-runtime v0.14.6
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -140,7 +140,7 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -152,7 +152,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.26.2 // indirect
-	k8s.io/apiextensions-apiserver v0.26.0 // indirect
+	k8s.io/apiextensions-apiserver v0.26.1 // indirect
 	k8s.io/apiserver v0.26.2 // indirect
 	k8s.io/cli-runtime v0.26.0 // indirect
 	k8s.io/client-go v0.26.2 // indirect
@@ -168,17 +168,8 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-replace (
-	// These 2 replaces are needed because v0.26.0 needs controller-runtime v0.14
-	// Once the rest of dependencies we have that use controller-runtime
-	// move to v0.14, remove these replaces and bump controller-runtime
-	// This will be possible once capi v1.4 is released.
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.25.6
-	k8s.io/client-go => k8s.io/client-go v0.25.0
-
-	// oras-go v1.2.2 is incompatible with newer versions of github.com/docker/distribution
-	// However, the latest release (at the moment) of helm.sh/helm/v3, uses oras 1.2.2
-	// This version swap seems like a drop-in replacement and worka out of the box.
-	// Once helm releases a new version using oras 1.2.3 or newer, we can remove this.
-	oras.land/oras-go => oras.land/oras-go v1.2.3
-)
+// oras-go v1.2.2 is incompatible with newer versions of github.com/docker/distribution
+// However, the latest release (at the moment) of helm.sh/helm/v3, uses oras 1.2.2
+// This version swap seems like a drop-in replacement and worka out of the box.
+// Once helm releases a new version using oras 1.2.3 or newer, we can remove this.
+replace oras.land/oras-go => oras.land/oras-go v1.2.3

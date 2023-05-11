@@ -6,6 +6,7 @@ metadata:
   namespace: eksa-system
 spec:
   template:
+    metadata: {}
     spec:
       clusterConfiguration:
         apiServer: {}

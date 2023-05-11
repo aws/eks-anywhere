@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-logr/logr"
+
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -14,10 +16,13 @@ import (
 
 type BundleDownloader struct {
 	dstFolder string
+	log       logr.Logger
 }
 
-func NewBundleDownloader(dstFolder string) *BundleDownloader {
+// NewBundleDownloader returns a new BundleDownloader.
+func NewBundleDownloader(log logr.Logger, dstFolder string) *BundleDownloader {
 	return &BundleDownloader{
+		log:       log,
 		dstFolder: dstFolder,
 	}
 }
@@ -25,7 +30,7 @@ func NewBundleDownloader(dstFolder string) *BundleDownloader {
 func (bd *BundleDownloader) Download(ctx context.Context, bundles *releasev1.Bundles) {
 	artifacts := ReadFilesFromBundles(bundles)
 	for _, a := range UniqueCharts(artifacts) {
-		data, err := curatedpackages.PullLatestBundle(ctx, a)
+		data, err := curatedpackages.PullLatestBundle(ctx, bd.log, a)
 		if err != nil {
 			fmt.Printf("unable to download bundle %v \n", err)
 			continue

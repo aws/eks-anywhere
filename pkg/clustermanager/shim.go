@@ -66,7 +66,7 @@ func (s CreateClusterShim) WaitUntilReady(ctx context.Context, management *types
 		ctx,
 		management,
 		s.spec.Cluster.Name,
-		[]string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName},
+		[]string{clusterv1.MachineControlPlaneNameLabel, clusterv1.MachineDeploymentNameLabel},
 		types.WithNodeRef(),
 	)
 }

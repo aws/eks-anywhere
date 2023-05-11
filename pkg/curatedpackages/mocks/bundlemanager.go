@@ -36,16 +36,16 @@ func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 }
 
 // LatestBundle mocks base method.
-func (m *MockManager) LatestBundle(ctx context.Context, baseRef, kubeVersion string) (*v1alpha1.PackageBundle, error) {
+func (m *MockManager) LatestBundle(ctx context.Context, baseRef, kubeMajor, kubeMinor, clusterName string) (*v1alpha1.PackageBundle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LatestBundle", ctx, baseRef, kubeVersion)
+	ret := m.ctrl.Call(m, "LatestBundle", ctx, baseRef, kubeMajor, kubeMinor, clusterName)
 	ret0, _ := ret[0].(*v1alpha1.PackageBundle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // LatestBundle indicates an expected call of LatestBundle.
-func (mr *MockManagerMockRecorder) LatestBundle(ctx, baseRef, kubeVersion interface{}) *gomock.Call {
+func (mr *MockManagerMockRecorder) LatestBundle(ctx, baseRef, kubeMajor, kubeMinor, clusterName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LatestBundle", reflect.TypeOf((*MockManager)(nil).LatestBundle), ctx, baseRef, kubeVersion)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LatestBundle", reflect.TypeOf((*MockManager)(nil).LatestBundle), ctx, baseRef, kubeMajor, kubeMinor, clusterName)
 }

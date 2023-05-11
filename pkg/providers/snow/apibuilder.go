@@ -213,7 +213,7 @@ func CredentialsSecret(name, namespace string, credsB64, certsB64 []byte) *v1.Se
 func CAPASCredentialsSecret(clusterSpec *cluster.Spec, credsB64, certsB64 []byte) *v1.Secret {
 	s := CredentialsSecret(CredentialsSecretName(clusterSpec), constants.EksaSystemNamespace, credsB64, certsB64)
 	label := map[string]string{
-		clusterctlv1.ClusterctlMoveLabelName: "true",
+		clusterctlv1.ClusterctlMoveLabel: "true",
 	}
 	s.SetLabels(label)
 	return s

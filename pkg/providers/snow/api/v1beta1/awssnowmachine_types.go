@@ -335,7 +335,7 @@ func (r *AWSSnowMachine) SetConditions(conditions clusterv1.Conditions) {
 }
 
 func (r *AWSSnowMachine) IsControlPlane() bool {
-	_, keyExists := r.ObjectMeta.Labels[clusterv1.MachineControlPlaneLabelName]
+	_, keyExists := r.ObjectMeta.Labels[clusterv1.MachineControlPlaneNameLabel]
 	return keyExists
 }
 
