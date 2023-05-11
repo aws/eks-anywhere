@@ -102,7 +102,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	host, port, err := v1alpha1.GetControlPlaneHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	host, port, err := getValidControlPlaneHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +359,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		endpoint, err := v1alpha1.ControlPlaneEndpointHost(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint)
+		endpoint, err := controlPlaneEndpointHost(clusterSpec)
 		if err != nil {
 			return nil, err
 		}

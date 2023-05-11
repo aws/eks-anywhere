@@ -163,7 +163,7 @@ func (v *Validator) ValidateControlPlaneEndpointUniqueness(endpoint string) erro
 		logger.Info("Skipping control plane endpoint uniqueness check")
 		return nil
 	}
-	host, port, err := v1alpha1.GetControlPlaneHostPort(endpoint)
+	host, port, err := getValidControlPlaneHostPort(endpoint)
 	if err != nil {
 		return fmt.Errorf("invalid endpoint: %v", err)
 	}

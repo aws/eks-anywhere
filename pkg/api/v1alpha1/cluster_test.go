@@ -1611,8 +1611,97 @@ func TestEndPointEquals(t *testing.T) {
 			prev: &Endpoint{Host: "host"},
 			new:  &Endpoint{Host: "new-host"},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.want != tt.prev.Equal(tt.new) {
+				t.Errorf("Endpoint %+v should be equals to  %+v", tt.prev, tt.new)
+			}
+		})
+	}
+}
+
+func TestCloudStackEndPointEquals(t *testing.T) {
+	tests := []struct {
+		name string
+		want bool
+		prev *Endpoint
+		new  *Endpoint
+	}{
 		{
-			name: "new no port",
+			name: "previous and new == nil",
+			want: true,
+			prev: nil,
+			new:  nil,
+		},
+		{
+			name: "previous == nil",
+			want: false,
+			prev: nil,
+			new:  &Endpoint{},
+		},
+		{
+			name: "previous == nil",
+			want: false,
+			prev: &Endpoint{},
+			new:  nil,
+		},
+		{
+			name: "same host, no port",
+			want: true,
+			prev: &Endpoint{Host: "host"},
+			new:  &Endpoint{Host: "host"},
+		},
+		{
+			name: "same host, same default port",
+			want: true,
+			prev: &Endpoint{Host: "host:6443"},
+			new:  &Endpoint{Host: "host:6443"},
+		},
+		{
+			name: "same host, same custom port",
+			want: true,
+			prev: &Endpoint{Host: "host:6442"},
+			new:  &Endpoint{Host: "host:6442"},
+		},
+		{
+			name: "different host, no port",
+			want: false,
+			prev: &Endpoint{Host: "host"},
+			new:  &Endpoint{Host: "new-host"},
+		},
+		{
+			name: "different host, different port",
+			want: false,
+			prev: &Endpoint{Host: "host:6443"},
+			new:  &Endpoint{Host: "new-host:6442"},
+		},
+		{
+			name: "same host, old custom port, new no port",
+			want: false,
+			prev: &Endpoint{Host: "host:6442"},
+			new:  &Endpoint{Host: "host"},
+		},
+		{
+			name: "same host, old default port, new no port",
+			want: true,
+			prev: &Endpoint{Host: "host:6443"},
+			new:  &Endpoint{Host: "host"},
+		},
+		{
+			name: "same host, old no port, new custom port",
+			want: false,
+			prev: &Endpoint{Host: "host"},
+			new:  &Endpoint{Host: "host:6442"},
+		},
+		{
+			name: "same host, old no port, new default port",
+			want: true,
+			prev: &Endpoint{Host: "host"},
+			new:  &Endpoint{Host: "host:6443"},
+		},
+		{
+			name: "same host, old default port, new no port",
 			want: true,
 			prev: &Endpoint{Host: "host:6443"},
 			new:  &Endpoint{Host: "host"},
@@ -1620,7 +1709,7 @@ func TestEndPointEquals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.want != tt.prev.Equal(tt.new) {
+			if tt.want != tt.prev.CloudStackEqual(tt.new) {
 				t.Errorf("Endpoint %+v should be equals to  %+v", tt.prev, tt.new)
 			}
 		})

@@ -99,6 +99,7 @@ func (f *Factory) Close(ctx context.Context) error {
 	return f.deps.Close(ctx)
 }
 
+// WithClusterReconciler configures reconcilers to the factory.
 func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
 	f.dependencyFactory.WithGovc()
 	f.withTracker().

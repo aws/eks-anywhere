@@ -11,7 +11,6 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
@@ -41,8 +40,8 @@ const (
 	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
 	defaultEksaNamespace = "default"
 
-	// controlEndpointDefaultPort defaults cluster control plane endpoint port if not specified.
-	controlEndpointDefaultPort = "6443"
+	// ControlEndpointDefaultPort defaults cluster control plane endpoint port if not specified.
+	ControlEndpointDefaultPort = "6443"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -92,6 +91,12 @@ func (n *Cluster) Equal(o *Cluster) bool {
 		return false
 	}
 	if n.Spec.KubernetesVersion != o.Spec.KubernetesVersion {
+		return false
+	}
+	if n.Spec.DatacenterRef.Kind == CloudStackDatacenterKind && !n.Spec.ControlPlaneConfiguration.Endpoint.CloudStackEqual(o.Spec.ControlPlaneConfiguration.Endpoint) {
+		return false
+	}
+	if n.Spec.DatacenterRef.Kind != CloudStackDatacenterKind && !n.Spec.ControlPlaneConfiguration.Endpoint.Equal(o.Spec.ControlPlaneConfiguration.Endpoint) {
 		return false
 	}
 	if !n.Spec.ControlPlaneConfiguration.Equal(&o.Spec.ControlPlaneConfiguration) {
@@ -291,7 +296,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
+	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
 		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels)
 }
 
@@ -300,6 +305,7 @@ type Endpoint struct {
 	Host string `json:"host"`
 }
 
+// Equal compares if expected endpoint and existing endpoint are equal for non CloudStack clusters.
 func (n *Endpoint) Equal(o *Endpoint) bool {
 	if n == o {
 		return true
@@ -307,41 +313,57 @@ func (n *Endpoint) Equal(o *Endpoint) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	newEndpointStr, _ := ControlPlaneEndpointHost(n)
-	oldEndpointStr, err := ControlPlaneEndpointHost(o)
+	return n.Host == o.Host
+}
+
+// CloudStackEqual makes CloudStack cluster upgrade to new release backward compatible by striping CloudStack cluster existing endpoint default port
+// and comparing if expected endpoint and existing endpoint are equal.
+// Cloudstack CLI used to add default port to cluster object.
+// Now cluster object stays the same with customer input and port is defaulted only in CAPI template.
+func (n *Endpoint) CloudStackEqual(o *Endpoint) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	if n.Host == o.Host {
+		return true
+	}
+	nhost, nport, err := GetControlPlaneHostPort(n.Host, "")
 	if err != nil {
 		return false
 	}
+	ohost, oport, _ := GetControlPlaneHostPort(o.Host, "")
+	if oport == ControlEndpointDefaultPort {
+		switch nport {
+		case ControlEndpointDefaultPort, "":
+			return nhost == ohost
+		default:
+			return false
+		}
+	}
 
-	return n.Host == o.Host || newEndpointStr == oldEndpointStr
+	if nport == ControlEndpointDefaultPort && oport == "" {
+		return nhost == ohost
+	}
+
+	return n.Host == o.Host
 }
 
-// GetControlPlaneHostPort retrieves the ControlPlaneConfiguration host and port split defined in the cluster.Spec. If it's valid, it checks the port
-// to see if the default port should be used and returns it.
-func GetControlPlaneHostPort(pHost string) (string, string, error) {
+// GetControlPlaneHostPort retrieves the ControlPlaneConfiguration host and port split defined in the cluster.Spec.
+func GetControlPlaneHostPort(pHost string, defaultPort string) (string, string, error) {
 	host, port, err := net.SplitHostPort(pHost)
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
 			host = pHost
-			port = controlEndpointDefaultPort
+			port = defaultPort
+			err = nil
 		} else {
 			return "", "", fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
 		}
 	}
-	if !networkutils.IsPortValid(port) {
-		return "", "", fmt.Errorf("host %s has an invalid port", pHost)
-	}
-	return host, port, nil
-}
-
-// ControlPlaneEndpointHost gets host and port (default if not provided) and combines thenm into a network address of the form "host:port".
-func ControlPlaneEndpointHost(endpoint *Endpoint) (string, error) {
-	host, port, err := GetControlPlaneHostPort(endpoint.Host)
-	if err != nil {
-		return "", err
-	}
-
-	return net.JoinHostPort(host, port), nil
+	return host, port, err
 }
 
 type WorkerNodeGroupConfiguration struct {

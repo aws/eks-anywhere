@@ -1435,44 +1435,6 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 			want:             false,
 		},
 		{
-			testName: "endpoint diff",
-			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.2.3.4",
-				},
-			},
-			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.2.3.5",
-				},
-			},
-			want: false,
-		},
-		{
-			testName: "one endpoint empty",
-			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.2.3.4",
-				},
-			},
-			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: nil,
-			},
-			want: false,
-		},
-		{
-			testName: "both endpoints empty",
-			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "",
-				},
-			},
-			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{},
-			},
-			want: true,
-		},
-		{
 			testName: "both taints equal",
 			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
 				Taints: taints1,

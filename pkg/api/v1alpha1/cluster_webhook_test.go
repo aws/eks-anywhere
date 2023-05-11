@@ -221,6 +221,30 @@ func TestClusterValidateUpdateControlPlaneConfigurationNewEndpointNilImmutable(t
 	g.Expect(c.ValidateUpdate(cOld)).To(MatchError(ContainSubstring("spec.ControlPlaneConfiguration.endpoint: Forbidden: field is immutable")))
 }
 
+func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldDefaultPortNewNoPort(t *testing.T) {
+	cOld := createCluster(func(c *v1alpha1.Cluster) {
+		c.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "1.1.1.1:6443"}
+		c.Spec.DatacenterRef.Kind = v1alpha1.CloudStackDatacenterKind
+	})
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "1.1.1.1"}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldNoPortNewDefaultPort(t *testing.T) {
+	cOld := createCluster(func(c *v1alpha1.Cluster) {
+		c.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "1.1.1.1"}
+		c.Spec.DatacenterRef.Kind = v1alpha1.CloudStackDatacenterKind
+	})
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "1.1.1.1:6443"}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{

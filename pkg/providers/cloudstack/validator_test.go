@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/aws/eks-anywhere/internal/test"
