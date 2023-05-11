@@ -153,7 +153,7 @@ func TestCmkCleanupVms(t *testing.T) {
 				return cmk.CleanupVms(ctx, execConfig.Profiles[0].Name, clusterName, false)
 			},
 			cmkResponseError: nil,
-			wantErr:          true,
+			wantErr:          false,
 		},
 		{
 			testName:         "listaffinitygroups json parse exception",

@@ -370,7 +370,8 @@ func (c *Cmk) CleanupVms(ctx context.Context, profile string, clusterName string
 		return fmt.Errorf("listing virtual machines in cluster %s: %s: %v", clusterName, result.String(), err)
 	}
 	if result.Len() == 0 {
-		return fmt.Errorf("virtual machines for cluster %s not found", clusterName)
+		logger.Info("virtual machines not found", "cluster", clusterName)
+		return nil
 	}
 	response := struct {
 		CmkVirtualMachines []cmkResourceIdentifier `json:"virtualmachine"`
