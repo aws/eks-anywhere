@@ -348,6 +348,16 @@ func WithBottleRocket126() VSphereOpt {
 	}
 }
 
+// WithBottleRocket127 returns br 1.27 var.
+func WithBottleRocket127() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube127)),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		)
+	}
+}
+
 func WithPrivateNetwork() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
@@ -563,6 +573,11 @@ func (v *VSphere) Bottlerocket125Template() api.VSphereFiller {
 // Bottlerocket126Template returns vsphere filler for 1.26 BR.
 func (v *VSphere) Bottlerocket126Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube126))
+}
+
+// Bottlerocket127Template returns vsphere filler for 1.27 BR.
+func (v *VSphere) Bottlerocket127Template() api.VSphereFiller {
+	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube127))
 }
 
 func (v *VSphere) getDevRelease() *releasev1.EksARelease {

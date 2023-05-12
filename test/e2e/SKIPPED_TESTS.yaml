@@ -48,9 +48,9 @@ skipped_tests:
 # Skipping ETCD tests
 - TestTinkerbellKubernetes126UbuntuExternalEtcdSimpleFlow
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
-- TestTinkerbellKubernetes126SkipPowerActions
-- TestTinkerbellKubernetes126BottlerocketWorkloadClusterSkipPowerActions
-- TestTinkerbellKubernetes126WithNodesPoweredOn
+- TestTinkerbellKubernetes127SkipPowerActions
+- TestTinkerbellKubernetes127BottlerocketWorkloadClusterSkipPowerActions
+- TestTinkerbellKubernetes127WithNodesPoweredOn
 # Skipping a few redundant tests
 - TestTinkerbellKubernetes123RedHatSimpleFlow
 - TestTinkerbellKubernetes124RedHatSimpleFlow
@@ -64,11 +64,11 @@ skipped_tests:
 - TestTinkerbellKubernetes124BottleRocketSimpleFlow
 - TestTinkerbellKubernetes123UbuntuTo124Upgrade
 - TestTinkerbellKubernetes126UbuntuThreeWorkersSimpleFlow
-- TestTinkerbellKubernetes126BottleRocketThreeWorkersSimpleFlow
+- TestTinkerbellKubernetes127BottleRocketThreeWorkersSimpleFlow
 - TestTinkerbellAirgappedKubernetes126BottleRocketRegistryMirror
 - TestTinkerbellKubernetes124UbuntuTo125Upgrade
-- TestTinkerbellKubernetes126BottleRocketThreeControlPlaneReplicasSimpleFlow
-- TestTinkerbellKubernetes126BottleRocketThreeWorkersSimpleFlow
+- TestTinkerbellKubernetes127BottleRocketThreeControlPlaneReplicasSimpleFlow
+- TestTinkerbellKubernetes127BottleRocketThreeWorkersSimpleFlow
 - TestTinkerbellKubernetes127SkipPowerActions
 - TestTinkerbellKubernetes127SingleNodeSkipPowerActions
 - TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow
