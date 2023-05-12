@@ -132,16 +132,6 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 	return v
 }
 
-// WithRedHat122VSphere vsphere test with redhat 1.22.
-func WithRedHat122VSphere() VSphereOpt {
-	return func(v *VSphere) {
-		v.fillers = append(v.fillers,
-			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube122)),
-			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
-		)
-	}
-}
-
 // WithRedHat123VSphere vsphere test with redhat 1.23.
 func WithRedHat123VSphere() VSphereOpt {
 	return func(v *VSphere) {
@@ -247,26 +237,6 @@ func WithUbuntu123() VSphereOpt {
 	}
 }
 
-// WithUbuntu122 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.22
-// and the "ubuntu" osFamily in all machine configs.
-func WithUbuntu122() VSphereOpt {
-	return func(v *VSphere) {
-		v.fillers = append(v.fillers,
-			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube122)),
-			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
-func WithBottleRocket122() VSphereOpt {
-	return func(v *VSphere) {
-		v.fillers = append(v.fillers,
-			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube122)),
-			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
-		)
-	}
-}
-
 func WithBottleRocket123() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
@@ -274,18 +244,6 @@ func WithBottleRocket123() VSphereOpt {
 			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		)
 	}
-}
-
-// WithUbuntu122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
-// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
-func (v *VSphere) WithUbuntu122() api.ClusterConfigFiller {
-	return api.JoinClusterConfigFillers(
-		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
-		api.VSphereToConfigFiller(
-			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube122)),
-			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-		),
-	)
 }
 
 // WithUbuntu123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
@@ -332,18 +290,6 @@ func (v *VSphere) WithUbuntu126() api.ClusterConfigFiller {
 		api.VSphereToConfigFiller(
 			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube126)),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-		),
-	)
-}
-
-// WithBottleRocket122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
-// as well as the right botllerocket template and osFamily for all VSphereMachaineConfigs.
-func (v *VSphere) WithBottleRocket122() api.ClusterConfigFiller {
-	return api.JoinClusterConfigFillers(
-		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
-		api.VSphereToConfigFiller(
-			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube122)),
-			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		),
 	)
 }
@@ -574,11 +520,6 @@ func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *Wo
 	}
 }
 
-// Ubuntu122Template returns vsphere filler for 1.22 Ubuntu.
-func (v *VSphere) Ubuntu122Template() api.VSphereFiller {
-	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube122))
-}
-
 // Ubuntu123Template returns vsphere filler for 1.23 Ubuntu.
 func (v *VSphere) Ubuntu123Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube123))
@@ -602,11 +543,6 @@ func (v *VSphere) Ubuntu126Template() api.VSphereFiller {
 // Ubuntu127Template returns vsphere filler for 1.27 Ubuntu.
 func (v *VSphere) Ubuntu127Template() api.VSphereFiller {
 	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Ubuntu, anywherev1.Kube127))
-}
-
-// Bottlerocket122Template returns vsphere filler for 1.22 BR.
-func (v *VSphere) Bottlerocket122Template() api.VSphereFiller {
-	return api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.Bottlerocket, anywherev1.Kube122))
 }
 
 // Bottlerocket123Template returns vsphere filler for 1.23 BR.
