@@ -1576,45 +1576,128 @@ func TestGitOpsEquals(t *testing.T) {
 
 func TestEndPointEquals(t *testing.T) {
 	tests := []struct {
-		name string
-		want bool
-		prev *Endpoint
-		new  *Endpoint
+		name              string
+		datacenterRefKind string
+		want              bool
+		prev              *Endpoint
+		new               *Endpoint
 	}{
 		{
-			name: "previous and new == nil",
-			want: true,
-			prev: nil,
-			new:  nil,
+			name:              "previous and new == nil",
+			datacenterRefKind: VSphereDatacenterKind,
+			want:              true,
+			prev:              nil,
+			new:               nil,
 		},
 		{
-			name: "previous == nil",
-			want: false,
-			prev: nil,
-			new:  &Endpoint{},
+			name:              "previous == nil",
+			datacenterRefKind: VSphereDatacenterKind,
+			want:              false,
+			prev:              nil,
+			new:               &Endpoint{},
 		},
 		{
-			name: "previous == nil",
-			want: false,
-			prev: &Endpoint{},
-			new:  nil,
+			name:              "new == nil",
+			datacenterRefKind: VSphereDatacenterKind,
+			want:              false,
+			prev:              &Endpoint{},
+			new:               nil,
 		},
 		{
-			name: "previous == new",
-			want: true,
-			prev: &Endpoint{Host: "host"},
-			new:  &Endpoint{Host: "host"},
+			name:              "previous == new",
+			datacenterRefKind: VSphereDatacenterKind,
+			want:              true,
+			prev:              &Endpoint{Host: "host"},
+			new:               &Endpoint{Host: "host"},
 		},
 		{
-			name: "previous != new",
-			want: false,
-			prev: &Endpoint{Host: "host"},
-			new:  &Endpoint{Host: "new-host"},
+			name:              "previous != new",
+			datacenterRefKind: VSphereDatacenterKind,
+			want:              false,
+			prev:              &Endpoint{Host: "host"},
+			new:               &Endpoint{Host: "new-host"},
+		},
+		{
+			name:              "same host, no port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              true,
+			prev:              &Endpoint{Host: "host"},
+			new:               &Endpoint{Host: "host"},
+		},
+		{
+			name:              "same host, same default port",
+			want:              true,
+			datacenterRefKind: CloudStackDatacenterKind,
+			prev:              &Endpoint{Host: "host:6443"},
+			new:               &Endpoint{Host: "host:6443"},
+		},
+		{
+			name:              "same host, same custom port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              true,
+			prev:              &Endpoint{Host: "host:6442"},
+			new:               &Endpoint{Host: "host:6442"},
+		},
+		{
+			name:              "different host, no port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              false,
+			prev:              &Endpoint{Host: "host"},
+			new:               &Endpoint{Host: "new-host"},
+		},
+		{
+			name:              "different host, different port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              false,
+			prev:              &Endpoint{Host: "host:6443"},
+			new:               &Endpoint{Host: "new-host:6442"},
+		},
+		{
+			name:              "same host, old custom port, new no port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              false,
+			prev:              &Endpoint{Host: "host:6442"},
+			new:               &Endpoint{Host: "host"},
+		},
+		{
+			name:              "same host, old default port, new no port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              true,
+			prev:              &Endpoint{Host: "host:6443"},
+			new:               &Endpoint{Host: "host"},
+		},
+		{
+			name:              "same host, old no port, new custom port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              false,
+			prev:              &Endpoint{Host: "host"},
+			new:               &Endpoint{Host: "host:6442"},
+		},
+		{
+			name:              "same host, old no port, new default port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              true,
+			prev:              &Endpoint{Host: "host"},
+			new:               &Endpoint{Host: "host:6443"},
+		},
+		{
+			name:              "same host, old default port, new no port",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              true,
+			prev:              &Endpoint{Host: "host:6443"},
+			new:               &Endpoint{Host: "host"},
+		},
+		{
+			name:              "invalid host",
+			datacenterRefKind: CloudStackDatacenterKind,
+			want:              false,
+			prev:              &Endpoint{Host: "host:6443"},
+			new:               &Endpoint{Host: "host::"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.want != tt.prev.Equal(tt.new) {
+			if tt.want != tt.prev.Equal(tt.new, tt.datacenterRefKind) {
 				t.Errorf("Endpoint %+v should be equals to  %+v", tt.prev, tt.new)
 			}
 		})

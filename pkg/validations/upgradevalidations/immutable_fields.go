@@ -39,15 +39,8 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return err
 	}
 
-	switch nSpec.DatacenterRef.Kind {
-	case v1alpha1.CloudStackDatacenterKind:
-		if !nSpec.ControlPlaneConfiguration.Endpoint.CloudStackEqual(oSpec.ControlPlaneConfiguration.Endpoint) {
-			return fmt.Errorf("spec.controlPlaneConfiguration.endpoint is immutable")
-		}
-	default:
-		if !nSpec.ControlPlaneConfiguration.Endpoint.Equal(oSpec.ControlPlaneConfiguration.Endpoint) {
-			return fmt.Errorf("spec.controlPlaneConfiguration.endpoint is immutable")
-		}
+	if !nSpec.ControlPlaneConfiguration.Endpoint.Equal(oSpec.ControlPlaneConfiguration.Endpoint, nSpec.DatacenterRef.Kind) {
+		return fmt.Errorf("spec.controlPlaneConfiguration.endpoint is immutable")
 	}
 
 	/* compare all clusterNetwork fields individually, since we do allow updating updating fields for configuring plugins such as CiliumConfig through the cli*/

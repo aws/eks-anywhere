@@ -94,24 +94,16 @@ func (n *Cluster) Equal(o *Cluster) bool {
 		return false
 	}
 
-	switch n.Spec.DatacenterRef.Kind {
-	case CloudStackDatacenterKind:
-		if !n.Spec.ControlPlaneConfiguration.Endpoint.CloudStackEqual(o.Spec.ControlPlaneConfiguration.Endpoint) {
-			return false
-		}
-	default:
-		if !n.Spec.ControlPlaneConfiguration.Endpoint.Equal(o.Spec.ControlPlaneConfiguration.Endpoint) {
-			return false
-		}
+	if !n.Spec.DatacenterRef.Equal(&o.Spec.DatacenterRef) {
+		return false
 	}
-
+	if !n.Spec.ControlPlaneConfiguration.Endpoint.Equal(o.Spec.ControlPlaneConfiguration.Endpoint, n.Spec.DatacenterRef.Kind) {
+		return false
+	}
 	if !n.Spec.ControlPlaneConfiguration.Equal(&o.Spec.ControlPlaneConfiguration) {
 		return false
 	}
 	if !WorkerNodeGroupConfigurationsSliceEqual(n.Spec.WorkerNodeGroupConfigurations, o.Spec.WorkerNodeGroupConfigurations) {
-		return false
-	}
-	if !n.Spec.DatacenterRef.Equal(&o.Spec.DatacenterRef) {
 		return false
 	}
 	if !RefSliceEqual(n.Spec.IdentityProviderRefs, o.Spec.IdentityProviderRefs) {
@@ -312,12 +304,15 @@ type Endpoint struct {
 }
 
 // Equal compares if expected endpoint and existing endpoint are equal for non CloudStack clusters.
-func (n *Endpoint) Equal(o *Endpoint) bool {
+func (n *Endpoint) Equal(o *Endpoint, kind string) bool {
 	if n == o {
 		return true
 	}
 	if n == nil || o == nil {
 		return false
+	}
+	if kind == CloudStackDatacenterKind {
+		return n.CloudStackEqual(o)
 	}
 	return n.Host == o.Host
 }
