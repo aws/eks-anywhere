@@ -152,6 +152,46 @@ func WithRedHat123VSphere() VSphereOpt {
 	}
 }
 
+// WithRedHat124VSphere vsphere test with redhat 1.24.
+func WithRedHat124VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube124)),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat125VSphere vsphere test with redhat 1.25.
+func WithRedHat125VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube125)),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat126VSphere vsphere test with redhat 1.26.
+func WithRedHat126VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube126)),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
+// WithRedHat127VSphere vsphere test with redhat 1.27.
+func WithRedHat127VSphere() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(v.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube127)),
+			api.WithOsFamilyForAllMachines(anywherev1.RedHat),
+		)
+	}
+}
+
 // WithUbuntu127 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.27
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu127() VSphereOpt {
