@@ -18,7 +18,6 @@ import (
 )
 
 const (
-	snowAMIIDUbuntu122   = "T_SNOW_AMIID_UBUNTU_1_22"
 	snowAMIIDUbuntu123   = "T_SNOW_AMIID_UBUNTU_1_23"
 	snowAMIIDUbuntu124   = "T_SNOW_AMIID_UBUNTU_1_24"
 	snowAMIIDUbuntu125   = "T_SNOW_AMIID_UBUNTU_1_25"
@@ -210,15 +209,6 @@ func (s *Snow) WithProviderUpgrade(fillers ...api.SnowFiller) ClusterE2ETestOpt 
 	}
 }
 
-// WithBottlerocket122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
-// as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
-// necessary machine config default required for BR, like the container volume size. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithBottlerocket122() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketForKubeVersion(anywherev1.Kube122)
-}
-
 // WithBottlerocket123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
 // as well as the right devices and osFamily for all SnowMachineConfigs. It also sets any
 // necessary machine config default required for BR, like the container volume size. If the env var is set, this will
@@ -264,14 +254,6 @@ func (s *Snow) WithBottlerocket127() api.ClusterConfigFiller {
 	return s.withBottlerocketForKubeVersion(anywherev1.Kube127)
 }
 
-// WithBottlerocketStaticIP122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
-// as well as the right devices, osFamily and static ip config for all SnowMachineConfigs. Comparing to WithBottlerocket122,
-// this method also adds a snow ip pool to support static ip configuration.
-func (s *Snow) WithBottlerocketStaticIP122() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withBottlerocketStaticIPForKubeVersion(anywherev1.Kube122)
-}
-
 // WithBottlerocketStaticIP123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
 // as well as the right devices, osFamily and static ip config for all SnowMachineConfigs. Comparing to WithBottlerocket123,
 // this method also adds a snow ip pool to support static ip configuration.
@@ -310,14 +292,6 @@ func (s *Snow) WithBottlerocketStaticIP126() api.ClusterConfigFiller {
 func (s *Snow) WithBottlerocketStaticIP127() api.ClusterConfigFiller {
 	s.t.Helper()
 	return s.withBottlerocketStaticIPForKubeVersion(anywherev1.Kube127)
-}
-
-// WithUbuntu122 returns a cluster config filler that sets the kubernetes version of the cluster to 1.22
-// as well as the right devices and osFamily for all SnowMachineConfigs. If the env var is set, this will
-// also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
-func (s *Snow) WithUbuntu122() api.ClusterConfigFiller {
-	s.t.Helper()
-	return s.withKubeVersionAndOS(anywherev1.Kube122, anywherev1.Ubuntu)
 }
 
 // WithUbuntu123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
@@ -404,16 +378,6 @@ func (s *Snow) withIPPoolFromEnvVar(name string) api.SnowFiller {
 	envVars := []string{snowIPPoolIPStart, snowIPPoolIPEnd, snowIPPoolGateway, snowIPPoolSubnet}
 	checkRequiredEnvVars(s.t, envVars)
 	return api.WithSnowIPPool(name, os.Getenv(snowIPPoolIPStart), os.Getenv(snowIPPoolIPEnd), os.Getenv(snowIPPoolGateway), os.Getenv(snowIPPoolSubnet))
-}
-
-func WithSnowUbuntu122() SnowOpt {
-	return func(s *Snow) {
-		s.fillers = append(s.fillers,
-			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu122, api.WithSnowAMIIDForAllMachines),
-			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
-			api.WithOsFamilyForAllSnowMachines(anywherev1.Ubuntu),
-		)
-	}
 }
 
 func WithSnowUbuntu123() SnowOpt {
@@ -523,10 +487,6 @@ func buildSnowWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeG
 	workerNodeGroup.MachineConfigKind = anywherev1.SnowMachineConfigKind
 	workerNodeGroup.MachineConfigName = machineConfigName
 	return workerNodeGroup.ClusterFiller()
-}
-
-func UpdateSnowUbuntuTemplate122Var() api.SnowFiller {
-	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu122, api.WithSnowAMIIDForAllMachines)
 }
 
 func UpdateSnowUbuntuTemplate123Var() api.SnowFiller {

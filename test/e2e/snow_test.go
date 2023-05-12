@@ -103,15 +103,6 @@ func TestSnowKubernetes127UbuntuProxyConfig(t *testing.T) {
 }
 
 // Simpleflow
-func TestSnowKubernetes122SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewSnow(t, framework.WithSnowUbuntu122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestSnowKubernetes123SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -263,13 +254,6 @@ func TestSnowKubernetes127UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 	)
 }
 
-func TestSnowKubernetes122UbuntuTo123Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithUbuntu122(), snow.WithUbuntu123())
-}
-
 func TestSnowKubernetes123UbuntuTo124Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -298,13 +282,6 @@ func TestSnowKubernetes126UbuntuTo127Upgrade(t *testing.T) {
 	runSnowUpgradeTest(test, snow, snow.WithUbuntu126(), snow.WithUbuntu127())
 }
 
-func TestSnowKubernetes122BottlerocketTo123Upgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithBottlerocket122(), snow.WithBottlerocket123())
-}
-
 func TestSnowKubernetes123BottlerocketTo124Upgrade(t *testing.T) {
 	snow := framework.NewSnow(t)
 	test := framework.NewClusterE2ETest(t, snow)
@@ -331,13 +308,6 @@ func TestSnowKubernetes126BottlerocketTo127Upgrade(t *testing.T) {
 	test := framework.NewClusterE2ETest(t, snow)
 
 	runSnowUpgradeTest(test, snow, snow.WithBottlerocket126(), snow.WithBottlerocket127())
-}
-
-func TestSnowKubernetes122To123BottlerocketStaticIPUpgrade(t *testing.T) {
-	snow := framework.NewSnow(t)
-	test := framework.NewClusterE2ETest(t, snow)
-
-	runSnowUpgradeTest(test, snow, snow.WithBottlerocketStaticIP122(), snow.WithBottlerocketStaticIP123())
 }
 
 func TestSnowKubernetes123To124BottlerocketStaticIPUpgrade(t *testing.T) {
@@ -392,17 +362,6 @@ func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			snow.WithBottlerocket122(),
-		),
-		framework.NewClusterE2ETest(
-			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
 			snow.WithBottlerocket123(),
 		),
 		framework.NewClusterE2ETest(
@@ -426,6 +385,17 @@ func TestSnowMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 			),
 			snow.WithBottlerocket125(),
+		),
+		framework.NewClusterE2ETest(
+			t, snow, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+			snow.WithBottlerocket126(),
 		),
 	)
 	test.CreateManagementCluster()

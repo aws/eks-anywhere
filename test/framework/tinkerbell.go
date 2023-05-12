@@ -13,13 +13,11 @@ const (
 	TinkerbellProviderName                  = "tinkerbell"
 	tinkerbellBootstrapIPEnvVar             = "T_TINKERBELL_BOOTSTRAP_IP"
 	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellImageUbuntu122EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
 	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
 	tinkerbellImageUbuntu124EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_24"
 	tinkerbellImageUbuntu125EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_25"
 	tinkerbellImageUbuntu126EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_26"
 	tinkerbellImageUbuntu127EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_27"
-	tinkerbellImageRedHat122EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_22"
 	tinkerbellImageRedHat123EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_23"
 	tinkerbellImageRedHat124EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_24"
 	tinkerbellImageRedHat125EnvVar          = "T_TINKERBELL_IMAGE_REDHAT_1_25"
@@ -32,13 +30,11 @@ const (
 
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellControlPlaneNetworkCidrEnvVar,
-	tinkerbellImageUbuntu122EnvVar,
 	tinkerbellImageUbuntu123EnvVar,
 	tinkerbellImageUbuntu124EnvVar,
 	tinkerbellImageUbuntu125EnvVar,
 	tinkerbellImageUbuntu126EnvVar,
 	tinkerbellImageUbuntu127EnvVar,
-	tinkerbellImageRedHat122EnvVar,
 	tinkerbellImageRedHat123EnvVar,
 	tinkerbellImageRedHat124EnvVar,
 	tinkerbellImageRedHat125EnvVar,
@@ -61,10 +57,6 @@ type Tinkerbell struct {
 	serverIP             string
 	cidr                 string
 	inventoryCsvFilePath string
-}
-
-func UpdateTinkerbellUbuntuTemplate122Var() api.TinkerbellFiller {
-	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithTinkerbellOSImageURL)
 }
 
 func UpdateTinkerbellUbuntuTemplate123Var() api.TinkerbellFiller {
@@ -161,15 +153,6 @@ func (t *Tinkerbell) CleanupVMs(_ string) error {
 	return nil
 }
 
-func WithUbuntu122Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
 func WithUbuntu123Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
@@ -215,16 +198,6 @@ func WithUbuntu127Tinkerbell() TinkerbellOpt {
 		t.fillers = append(t.fillers,
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu127EnvVar, api.WithTinkerbellOSImageURL),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
-// WithRedHat122Tinkerbell tink test with redhat 1.22.
-func WithRedHat122Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageRedHat122EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.RedHat),
 		)
 	}
 }

@@ -18,21 +18,6 @@ import (
 )
 
 // Autoimport
-func TestVSphereKubernetes122BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
 func TestVSphereKubernetes123BottlerocketAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
@@ -94,16 +79,6 @@ func TestVSphereKubernetes126BottlerocketAutoimport(t *testing.T) {
 }
 
 // AWS IAM Auth
-func TestVSphereKubernetes122AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
 func TestVSphereKubernetes123AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -150,16 +125,6 @@ func TestVSphereKubernetes127AWSIamAuth(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu127()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestVSphereKubernetes122BottleRocketAWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket122()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -221,47 +186,24 @@ func TestVSphereKubernetes126To127AWSIamAuthUpgrade(t *testing.T) {
 }
 
 // Curated packages
-func TestVSphereKubernetes122CuratedPackagesSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes125CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallSimpleFlow(test)
-}
-
-func TestVSphereKubernetes122CuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122BottleRocketCuratedPackagesSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallSimpleFlow(test)
-}
-
-func TestVSphereKubernetes122BottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+func TestVSphereKubernetes125BottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+		framework.NewVSphere(t, framework.WithBottleRocket125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
@@ -365,14 +307,6 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesSimpleFlow(t *testing.T)
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	framework.CheckCertManagerCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
-	runCertManagerRemoteClusterInstallSimpleFlow(test)
-}
-
 func TestVSphereKubernetes123BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	framework.CheckCertManagerCredentials(t)
@@ -405,31 +339,17 @@ func TestVSphereKubernetes126BottleRocketWorkloadClusterCuratedPackagesCertManag
 	runCertManagerRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122UbuntuWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes125UbuntuWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithUbuntu122())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
-	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
-}
-
-func TestVSphereKubernetes122UbuntuWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithUbuntu122())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
+	provider := framework.NewVSphere(t, framework.WithUbuntu125())
+	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube125)
 	runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122BottleRocketWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes125BottleRocketWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
-	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
-}
-
-func TestVSphereKubernetes122BottleRocketWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
+	provider := framework.NewVSphere(t, framework.WithBottleRocket125())
+	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube125)
 	runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
 }
 
@@ -489,12 +409,12 @@ func TestVSphereKubernetes126BottleRocketWorkloadClusterCuratedPackagesSimpleFlo
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122BottleRocketCuratedPackagesAdotUpdateFlow(t *testing.T) {
+func TestVSphereKubernetes125BottleRocketCuratedPackagesAdotUpdateFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+		framework.NewVSphere(t, framework.WithBottleRocket125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
@@ -569,12 +489,12 @@ func TestVSphereKubernetes126BottleRocketCuratedPackagesClusterAutoscalerSimpleF
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
-func TestVSphereKubernetes122UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes125UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
+		framework.NewVSphere(t, framework.WithUbuntu125()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
@@ -939,19 +859,6 @@ func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
 }
 
 // OIDC
-func TestVSphereKubernetes122OIDC(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runOIDCFlow(test)
-}
-
 func TestVSphereKubernetes123OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1131,16 +1038,7 @@ func TestVSphereKubernetes126BottlerocketAuthenticatedRegistryMirror(t *testing.
 	runRegistryMirrorConfigFlow(test)
 }
 
-// Simpleflow
-func TestVSphereKubernetes122SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runSimpleFlow(test)
-}
-
+// Clone mode
 func TestVSphereKubernetes127FullClone(t *testing.T) {
 	diskSize := 30
 	vsphere := framework.NewVSphere(t,
@@ -1217,15 +1115,7 @@ func TestVSphereKubernetes126BottlerocketLinkedClone(t *testing.T) {
 	runVSphereCloneModeFlow(test, vsphere, diskSize)
 }
 
-func TestVSphereKubernetes122SimpleFlowWithTags(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket122(), framework.WithVSphereTags()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runSimpleFlow(test)
-}
-
+// Simpleflow
 func TestVSphereKubernetes123SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1267,15 +1157,6 @@ func TestVSphereKubernetes127SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestVSphereKubernetes122RedHatSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithRedHat122VSphere()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 	)
 	runSimpleFlow(test)
 }
@@ -1429,15 +1310,6 @@ func TestVSphereKubernetes126BottlerocketWithBottlerocketKubernetesSettings(t *t
 }
 
 // Stacked etcd
-func TestVSphereKubernetes122StackedEtcdUbuntu(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu122()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithClusterFiller(api.WithStackedEtcdTopology()))
-	runStackedEtcdFlow(test)
-}
-
 func TestVSphereKubernetes123StackedEtcdUbuntu(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu123()),
@@ -1537,21 +1409,6 @@ func TestVSphereKubernetes126BottlerocketTaintsUpgradeFlow(t *testing.T) {
 }
 
 // Upgrade
-func TestVSphereKubernetes122UbuntuTo123Upgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu122())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube123,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		provider.WithProviderUpgrade(provider.Ubuntu123Template()),
-	)
-}
-
 func TestVSphereKubernetes123UbuntuTo124Upgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu123())
 	test := framework.NewClusterE2ETest(
@@ -1986,33 +1843,6 @@ func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPol
 	)
 }
 
-func TestVSphereKubernetes122To123UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
-	release := latestMinorRelease(t)
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
-		),
-		framework.WithUbuntuForRelease(release, v1alpha1.Kube122),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFromReleaseFlow(
-		test,
-		release,
-		v1alpha1.Kube123,
-		provider.WithProviderUpgrade(
-			provider.Ubuntu123Template(), // Set the template so it doesn't get autoimported
-		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
-	)
-}
-
 func TestVSphereKubernetes123To124UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewVSphere(t,
@@ -2257,17 +2087,6 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu122(),
-		),
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
 			vsphere.WithUbuntu123(),
 		),
 		framework.NewClusterE2ETest(
@@ -2291,6 +2110,17 @@ func TestVSphereMulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 			),
 			vsphere.WithUbuntu125(),
+		),
+		framework.NewClusterE2ETest(
+			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+			vsphere.WithUbuntu126(),
 		),
 	)
 	test.CreateManagementCluster()
