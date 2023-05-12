@@ -137,6 +137,150 @@ func TestValidatorValidatePrivsBadJson(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
 }
 
+func clusterSpec() Spec {
+	cpMachineConfig := &v1alpha1.VSphereMachineConfig{
+		Spec: v1alpha1.VSphereMachineConfigSpec{
+			Datastore:    "datastore",
+			ResourcePool: "pool",
+			Folder:       "folder",
+			Template:     "temp",
+		},
+	}
+
+	return Spec{
+		Spec: &cluster.Spec{
+			Config: &cluster.Config{
+				VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
+					Spec: v1alpha1.VSphereDatacenterConfigSpec{
+						Datacenter: "SDDC-Datacenter",
+						Server:     "server",
+					},
+				},
+				VSphereMachineConfigs: map[string]*v1alpha1.VSphereMachineConfig{
+					"test-cp": cpMachineConfig,
+				},
+				Cluster: &v1alpha1.Cluster{
+					Spec: v1alpha1.ClusterSpec{
+						ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+							MachineGroupRef: &v1alpha1.Ref{
+								Name: "test-cp",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestValidatorValidateVsphereUserPrivsError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	vscb := govcmocks.NewMockVSphereClientBuilder(ctrl)
+
+	v := Validator{
+		govc:                 govc,
+		vSphereClientBuilder: vscb,
+	}
+
+	spec := clusterSpec()
+
+	ctx := context.Background()
+	vscb.EXPECT().Build(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), spec.VSphereDatacenter.Spec.Datacenter).Return(nil, fmt.Errorf("error"))
+
+	g := NewWithT(t)
+
+	err := v.validateVsphereUserPrivs(ctx, &spec)
+	g.Expect(err).To(MatchError(ContainSubstring("error")))
+}
+
+func TestValidatorValidateVsphereCPUserPrivsError(t *testing.T) {
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	vscb := govcmocks.NewMockVSphereClientBuilder(ctrl)
+	vsc := mocks.NewMockVSphereClient(ctrl)
+
+	wantEnv := map[string]string{
+		config.EksavSphereUsernameKey:    "foo",
+		config.EksavSpherePasswordKey:    "bar",
+		config.EksavSphereCPUsernameKey:  "foo2",
+		config.EksavSphereCPPasswordKey:  "bar2",
+		config.EksavSphereCSIUsernameKey: "",
+		config.EksavSphereCSIPasswordKey: "",
+	}
+	for k, v := range wantEnv {
+		t.Setenv(k, v)
+	}
+
+	v := Validator{
+		govc:                 govc,
+		vSphereClientBuilder: vscb,
+	}
+
+	var privs []string
+	err := json.Unmarshal([]byte(config.VSphereUserPrivsFile), &privs)
+	if err != nil {
+		t.Fatalf("failed to validate privs: %v", err)
+	}
+
+	spec := clusterSpec()
+
+	vsc.EXPECT().Username().Return("foobar").AnyTimes()
+	vsc.EXPECT().GetPrivsOnEntity(ctx, gomock.Any(), gomock.Any(), "foobar").Return(privs, nil).AnyTimes()
+
+	vscb.EXPECT().Build(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), spec.VSphereDatacenter.Spec.Datacenter).Return(vsc, nil)
+	vscb.EXPECT().Build(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), spec.VSphereDatacenter.Spec.Datacenter).Return(nil, fmt.Errorf("error"))
+	g := NewWithT(t)
+
+	err = v.validateVsphereUserPrivs(ctx, &spec)
+	g.Expect(err).To(MatchError(ContainSubstring("error")))
+}
+
+func TestValidatorValidateVsphereCSIUserPrivsError(t *testing.T) {
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	vscb := govcmocks.NewMockVSphereClientBuilder(ctrl)
+	vsc := mocks.NewMockVSphereClient(ctrl)
+
+	wantEnv := map[string]string{
+		config.EksavSphereUsernameKey:    "foo",
+		config.EksavSpherePasswordKey:    "bar",
+		config.EksavSphereCPUsernameKey:  "foo2",
+		config.EksavSphereCPPasswordKey:  "bar2",
+		config.EksavSphereCSIUsernameKey: "foo3",
+		config.EksavSphereCSIPasswordKey: "bar3",
+	}
+	for k, v := range wantEnv {
+		t.Setenv(k, v)
+	}
+
+	v := Validator{
+		govc:                 govc,
+		vSphereClientBuilder: vscb,
+	}
+
+	var privs []string
+	err := json.Unmarshal([]byte(config.VSphereUserPrivsFile), &privs)
+	if err != nil {
+		t.Fatalf("failed to validate privs: %v", err)
+	}
+
+	spec := clusterSpec()
+
+	vsc.EXPECT().Username().Return("foobar").AnyTimes()
+	vsc.EXPECT().GetPrivsOnEntity(ctx, gomock.Any(), gomock.Any(), "foobar").Return(privs, nil).AnyTimes()
+
+	vscb.EXPECT().Build(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), spec.VSphereDatacenter.Spec.Datacenter).Return(vsc, nil).Times(2)
+	vscb.EXPECT().Build(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), spec.VSphereDatacenter.Spec.Datacenter).Return(nil, fmt.Errorf("error"))
+
+	g := NewWithT(t)
+
+	err = v.validateVsphereUserPrivs(ctx, &spec)
+	g.Expect(err).To(MatchError(ContainSubstring("error")))
+}
+
 func TestValidatorValidateMachineConfigTagsExistErrorListingTag(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	govc := govcmocks.NewMockProviderGovcClient(ctrl)
