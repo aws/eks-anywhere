@@ -5,8 +5,9 @@
 package e2e
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	"testing"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -116,6 +117,20 @@ func TestDockerInstallGithubFluxDuringUpgrade(t *testing.T) {
 }
 
 // Curated packages
+func TestDockerCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewDocker(t),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageEmissaryInstallSimpleFlow(test)
+	}
+}
+
 func TestDockerKubernetes124CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -135,18 +150,6 @@ func TestDockerKubernetesCuratedPackagesHarborSimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
-}
-
-func TestDockerKubernetes125CuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
 func TestDockerKubernetes125CuratedPackagesSimpleFlow(t *testing.T) {
@@ -207,6 +210,7 @@ func TestDockerKubernetesCuratedPackagesDisabled(t *testing.T) {
 	)
 	runDisabledCuratedPackageInstallSimpleFlow(test) // other args as necessary
 }
+
 func TestDockerCuratedPackagesMetalLB(t *testing.T) {
 	RunMetalLBDockerTests(t)
 }
