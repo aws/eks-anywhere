@@ -102,7 +102,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	host, port, err := getControlPlaneHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	host, port, err := getValidControlPlaneHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	if err != nil {
 		return nil, err
 	}
