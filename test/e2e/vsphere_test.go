@@ -211,28 +211,64 @@ func TestVSphereKubernetes126To127AWSIamAuthUpgrade(t *testing.T) {
 }
 
 // Curated packages
-func TestVSphereKubernetes125CuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu125()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
+var versionsToTest = []v1alpha1.KubernetesVersion{v1alpha1.Kube123, v1alpha1.Kube124, v1alpha1.Kube125, v1alpha1.Kube126, v1alpha1.Kube127}
+
+func kubeVersionUbuntu(version v1alpha1.KubernetesVersion) api.ClusterConfigFiller {
+	switch version {
+	case v1alpha1.Kube123:
+		return framework.WithUbuntu123()
+	case v1alpha1.Kube124:
+		return framework.WithUbuntu124()
+	case v1alpha1.Kube125:
+		return framework.WithUbuntu125()
+	case v1alpha1.Kube126:
+		return framework.WithUbuntu126()
+	default:
+		return framework.WithUbuntu127()
+	}
 }
 
-func TestVSphereKubernetes125BottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket125()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
+func kubeVersionBottleRocket(version v1alpha1.KubernetesVersion) api.ClusterConfigFiller {
+	switch version {
+	case v1alpha1.Kube123:
+		return framework.WithBottleRocket123()
+	case v1alpha1.Kube124:
+		return framework.WithBottleRocket124()
+	case v1alpha1.Kube125:
+		return framework.WithBottleRocket125()
+	case v1alpha1.Kube126:
+		return framework.WithBottleRocket126()
+	default:
+		return framework.WithBottleRocket127()
+	}
+}
+
+func TestVSphereCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	for _, version := range versionsToTest {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewVSphere(t, kubeVersionUbuntu(version)),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageEmissaryInstallSimpleFlow(test)
+	}
+}
+
+func TestVSphereBottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+	for _, version := range versionsToTest {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewVSphere(t, kubeVersionBottleRocket(version)),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageEmissaryInstallSimpleFlow(test)
+	}
 }
 
 func TestVSphereKubernetes123CuratedPackagesSimpleFlow(t *testing.T) {
