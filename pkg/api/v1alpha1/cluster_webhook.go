@@ -287,7 +287,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		}
 	}
 
-	if !old.IsSelfManaged() {
+	if !old.IsSelfManaged() || features.IsActive(features.ExperimentalSelfManagedClusterUpgrade()) {
 		clusterlog.Info("Cluster config is associated with workload cluster", "name", old.Name)
 
 		oldAWSIamConfig, newAWSIamConfig := &Ref{}, &Ref{}
