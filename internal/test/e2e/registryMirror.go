@@ -32,7 +32,7 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 
 	// Since Tinkerbell uses a separate harbor registry,
 	// we need to setup cert for that registry for Tinkerbell tests.
-	re = regexp.MustCompile(`^.*(Tinkerbell|CloudStack).*$`)
+	re = regexp.MustCompile(`^.*Tinkerbell.*$`)
 	if re.MatchString(testRegex) {
 		endpoint = e.testEnvVars[e2etests.RegistryEndpointTinkerbellVar]
 		port = e.testEnvVars[e2etests.RegistryPortTinkerbellVar]
@@ -44,12 +44,12 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	}
 
 	// Since Authenticated tests needs to use separate harbor registries.
-	re = regexp.MustCompile(`^.*VSphere.*Authenticated.*$`)
+	re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Authenticated.*$`)
 	if re.MatchString(testRegex) {
 		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointVar]
 		port = e.testEnvVars[e2etests.PrivateRegistryPortVar]
 		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertVar]
-	} else if re = regexp.MustCompile(`^.*(Tinkerbell|CloudStack).*Authenticated.*$`); re.MatchString(testRegex) {
+	} else if re = regexp.MustCompile(`^.*Tinkerbell.*Authenticated.*$`); re.MatchString(testRegex) {
 		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointTinkerbellVar]
 		port = e.testEnvVars[e2etests.PrivateRegistryPortTinkerbellVar]
 		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertTinkerbellVar]
