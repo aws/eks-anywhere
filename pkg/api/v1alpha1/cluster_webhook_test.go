@@ -26,6 +26,35 @@ func TestClusterDefault(t *testing.T) {
 	g.Expect(cOld.Spec.RegistryMirrorConfiguration.Port).To(Equal(constants.DefaultHttpsPort))
 }
 
+func TestClusterValidateUpdateManagementValueMutableExperimental(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "true")
+	cOld := createCluster()
+	cOld.Spec.ControlPlaneConfiguration.Labels = map[string]string{"Key1": "Val1"}
+	cOld.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{
+		{
+			Key:    "Key1",
+			Value:  "Val1",
+			Effect: "PreferNoSchedule",
+		},
+	}
+	cOld.SetSelfManaged()
+	cNew := cOld.DeepCopy()
+	cNew.Spec.ControlPlaneConfiguration.Labels = map[string]string{"Key2": "Val2"}
+	cNew.Spec.ControlPlaneConfiguration.Taints = []v1.Taint{
+		{
+			Key:    "Key2",
+			Value:  "Val2",
+			Effect: "PreferNoSchedule",
+		},
+	}
+	cNew.Spec.ControlPlaneConfiguration.Count = 1
+	cNew.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "test"
+
+	g := NewWithT(t)
+	g.Expect(cNew.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{}
 	cOld.SetSelfManaged()
@@ -64,6 +93,7 @@ func TestClusterValidateUpdateManagementBothNilImmutable(t *testing.T) {
 }
 
 func TestManagementClusterValidateUpdateKubernetesVersionImmutable(t *testing.T) {
+	features.ClearCache()
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			KubernetesVersion:         v1alpha1.Kube119,
@@ -258,6 +288,8 @@ func TestCloudStackClusterValidateUpdateControlPlaneConfigurationOldPortImmutabl
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsImmutable(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
@@ -288,6 +320,8 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsImmutable
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsImmutable(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
@@ -310,6 +344,8 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsImmutable
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefImmutable(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
@@ -341,6 +377,8 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefNilImmutable(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
@@ -372,6 +410,8 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRe
 }
 
 func TestManagementClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilImmutable(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
@@ -1758,6 +1798,7 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 	cOld := createCluster()
 	cOld.SetSelfManaged()
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	t.Setenv(features.ExperimentalSelfManagedClusterUpgradeEnvVar, "false")
 
 	cNew := cOld.DeepCopy()
 	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 1
