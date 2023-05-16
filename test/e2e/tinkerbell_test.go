@@ -147,6 +147,35 @@ func kubeVersionTinkerbellOpt(version v1alpha1.KubernetesVersion) framework.Tink
 	}
 }
 
+func TestTinkerbellUbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+	}
+}
+
+func TestTinkerbellBottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+
+		runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+	}
+}
+
 func TestTinkerbellUbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
 	for _, version := range KubeVersions {
 		test := framework.NewClusterE2ETest(t,
@@ -173,31 +202,6 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.
 		)
 		runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 	}
-}
-
-func TestTinkerbellKubernetes127UbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
-}
-
-func TestTinkerbellKubernetes127BottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-
-	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
 func TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
