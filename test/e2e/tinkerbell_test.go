@@ -262,6 +262,36 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesAdotSimpleFlow(t *testin
 	}
 }
 
+func TestTinkerbellUbuntuSingleNodeCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackagesPrometheusInstallSimpleFlow(test)
+	}
+}
+
+func TestTinkerbellBottleRocketSingleNodeCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackagesPrometheusInstallSimpleFlow(test)
+	}
+}
+
 // Single node
 func TestTinkerbellKubernetes127BottleRocketSingleNodeSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
