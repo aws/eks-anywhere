@@ -145,6 +145,20 @@ func TestDockerCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	}
 }
 
+func TestDockerKubernetesCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewDocker(t),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	}
+}
+
 func TestDockerKubernetes124CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -154,16 +168,6 @@ func TestDockerKubernetes124CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
-}
-
-func TestDockerKubernetesCuratedPackagesHarborSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithPackageConfig(t, EksaPackageBundleURI,
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
 
 func TestDockerKubernetes124CuratedPackagesAdotSimpleFlow(t *testing.T) {

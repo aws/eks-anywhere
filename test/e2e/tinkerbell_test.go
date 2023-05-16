@@ -204,6 +204,34 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.
 	}
 }
 
+func TestTinkerbellUbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	}
+}
+
+func TestTinkerbellBottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	}
+}
+
 func TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,

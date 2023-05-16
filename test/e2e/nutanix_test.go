@@ -56,16 +56,18 @@ func TestNutanixCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	}
 }
 
-func TestNutanixKubernetes123CuratedPackagesHarborSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu123Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+func TestNutanixCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	}
 }
 
 func TestNutanixKubernetes125UbuntuCuratedPackagesAdotUpdateFlow(t *testing.T) {

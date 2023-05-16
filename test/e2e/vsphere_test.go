@@ -298,6 +298,33 @@ func TestVSphereBottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	}
 }
 
+func TestVSphereCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version)),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	}
+}
+
+func TestVSphereBottleRocketCuratedPackagesHarborSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		test := framework.NewClusterE2ETest(t,
+			framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version)),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
+	}
+}
+
 func TestVSphereUbuntuWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
 	for _, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
