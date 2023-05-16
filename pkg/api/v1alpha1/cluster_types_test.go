@@ -2686,3 +2686,56 @@ func TestKubeVersionToValidSemver(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterIsSingleNode(t *testing.T) {
+	testCases := []struct {
+		testName string
+		cluster  *v1alpha1.Cluster
+		want     bool
+	}{
+		{
+			testName: "cluster with single node",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Count: 1,
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			testName: "cluster with cp and worker",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Count: 1,
+					},
+					WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+						{
+							Count: ptr.Int(3),
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "cluster with multiple cp",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Count: 3,
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.IsSingleNode()).To(Equal(tt.want))
+		})
+	}
+}

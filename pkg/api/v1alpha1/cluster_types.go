@@ -1143,6 +1143,12 @@ func (c *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
 	return c.IsSelfManaged() && s2.IsSelfManaged() || c.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
 
+// IsSingleNode checks if the cluster has only a single node specified between the controlplane and worker nodes.
+func (c *Cluster) IsSingleNode() bool {
+	return c.Spec.ControlPlaneConfiguration.Count == 1 &&
+		len(c.Spec.WorkerNodeGroupConfigurations) <= 0
+}
+
 func (c *Cluster) MachineConfigRefs() []Ref {
 	machineConfigRefMap := make(refSet, 1)
 
