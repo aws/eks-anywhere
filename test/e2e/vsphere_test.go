@@ -361,44 +361,24 @@ func TestVSphereBottleRocketWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *
 	}
 }
 
-func TestVSphereKubernetes123BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	framework.CheckCertManagerCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket123())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube123)
-	runCertManagerRemoteClusterInstallSimpleFlow(test)
+func TestVSphereUbuntuWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		framework.CheckCertManagerCredentials(t)
+		provider := framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version))
+		test := SetupSimpleMultiCluster(t, provider, version)
+		runCertManagerRemoteClusterInstallSimpleFlow(test)
+	}
 }
 
-func TestVSphereKubernetes124BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	framework.CheckCertManagerCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket124())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube124)
-	runCertManagerRemoteClusterInstallSimpleFlow(test)
-}
-
-func TestVSphereKubernetes125BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	framework.CheckCertManagerCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket125())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube125)
-	runCertManagerRemoteClusterInstallSimpleFlow(test)
-}
-
-func TestVSphereKubernetes126BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	framework.CheckCertManagerCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket126())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube126)
-	runCertManagerRemoteClusterInstallSimpleFlow(test)
-}
-
-func TestVSphereKubernetes127BottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	framework.CheckCertManagerCredentials(t)
-	provider := framework.NewVSphere(t, framework.WithBottleRocket127())
-	test := SetupSimpleMultiCluster(t, provider, v1alpha1.Kube127)
-	runCertManagerRemoteClusterInstallSimpleFlow(test)
+func TestVSphereBottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		framework.CheckCertManagerCredentials(t)
+		provider := framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version))
+		test := SetupSimpleMultiCluster(t, provider, version)
+		runCertManagerRemoteClusterInstallSimpleFlow(test)
+	}
 }
 
 func TestVSphereKubernetes125BottleRocketCuratedPackagesAdotUpdateFlow(t *testing.T) {
