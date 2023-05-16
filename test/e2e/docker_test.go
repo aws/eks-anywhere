@@ -185,16 +185,18 @@ func TestDockerCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	}
 }
 
-func TestDockerKubernetesCuratedPackagesDisabled(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues,
-			&v1alpha1.PackageConfiguration{Disable: true}),
-	)
-	runDisabledCuratedPackageInstallSimpleFlow(test) // other args as necessary
+func TestDockerCuratedPackagesDisabled(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues,
+				&v1alpha1.PackageConfiguration{Disable: true}),
+		)
+		runDisabledCuratedPackageInstallSimpleFlow(test) // other args as necessary
+	}
 }
 
 func TestDockerCuratedPackagesMetalLB(t *testing.T) {
