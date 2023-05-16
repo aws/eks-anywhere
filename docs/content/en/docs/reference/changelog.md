@@ -12,7 +12,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ### Fixed
 
-- Add validation for tinkerbell ip for workload cluster to match management cluster
+- Add validation for tinkerbell ip for workload cluster to match management cluster (#[5798](https://github.com/aws/eks-anywhere/pull/5798))
 - Update datastore usage validation to account for space that will free up during upgrade (#[5524](https://github.com/aws/eks-anywhere/issues/5524))
 - Expand GITHUB_TOKEN regex to support fine-grained access tokens (#[5764](https://github.com/aws/eks-anywhere/issues/5764))
 - Display the timeout flags in CLI help (#[5637](https://github.com/aws/eks-anywhere/issues/5637))
