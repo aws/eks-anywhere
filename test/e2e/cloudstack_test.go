@@ -1028,10 +1028,6 @@ func TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror(t *testing.T) {
 	runAirgapConfigFlow(test, "10.0.0.1/8")
 }
 
-func runCloudStackMulticlusterWorkloadClusterAPITest() {
-
-}
-
 // Workload API
 
 func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
