@@ -145,7 +145,7 @@ func TestDockerCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	}
 }
 
-func TestDockerKubernetesCuratedPackagesHarborSimpleFlow(t *testing.T) {
+func TestDockerCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	for _, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
 		test := framework.NewClusterE2ETest(t,
@@ -159,6 +159,19 @@ func TestDockerKubernetesCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	}
 }
 
+func TestDockerCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
+			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackagesAdotInstallSimpleFlow(test) // other args as necessary
+	}
+}
+
 func TestDockerKubernetes124CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -168,17 +181,6 @@ func TestDockerKubernetes124CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
-}
-
-func TestDockerKubernetes124CuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube124),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallSimpleFlow(test) // other args as necessary
 }
 
 func TestDockerKubernetesCuratedPackagesDisabled(t *testing.T) {

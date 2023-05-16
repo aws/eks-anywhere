@@ -232,17 +232,34 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T)
 	}
 }
 
-func TestTinkerbellKubernetes127UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
+func TestTinkerbellUbuntuSingleNodeCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
+	}
+}
+
+func TestTinkerbellBottleRocketSingleNodeCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	for _, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		test := framework.NewClusterE2ETest(t,
+			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+			framework.WithClusterSingleNode(version),
+			framework.WithControlPlaneHardware(1),
+			framework.WithPackageConfig(t, packageBundleURI(version),
+				EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+				EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+		)
+		runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
+	}
 }
 
 // Single node
