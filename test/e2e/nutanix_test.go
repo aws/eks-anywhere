@@ -5,6 +5,7 @@
 package e2e
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -24,8 +25,10 @@ func kubeVersionNutanixOpt(version v1alpha1.KubernetesVersion) framework.Nutanix
 		return framework.WithUbuntu125Nutanix()
 	case v1alpha1.Kube126:
 		return framework.WithUbuntu126Nutanix()
-	default:
+	case v1alpha1.Kube127:
 		return framework.WithUbuntu127Nutanix()
+	default:
+		panic(fmt.Sprintf("unsupported version: %v", version))
 	}
 }
 

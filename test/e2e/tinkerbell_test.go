@@ -5,6 +5,7 @@
 package e2e
 
 import (
+	"fmt"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -142,8 +143,10 @@ func kubeVersionTinkerbellOpt(version v1alpha1.KubernetesVersion) framework.Tink
 		return framework.WithUbuntu125Tinkerbell()
 	case v1alpha1.Kube126:
 		return framework.WithUbuntu126Tinkerbell()
-	default:
+	case v1alpha1.Kube127:
 		return framework.WithUbuntu127Tinkerbell()
+	default:
+		panic(fmt.Sprintf("unsupported version: %v", version))
 	}
 }
 

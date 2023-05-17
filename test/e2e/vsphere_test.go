@@ -5,6 +5,7 @@
 package e2e
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -223,8 +224,10 @@ func kubeVersionVSphereOptUbuntu(version v1alpha1.KubernetesVersion) framework.V
 		return framework.WithUbuntu125()
 	case v1alpha1.Kube126:
 		return framework.WithUbuntu126()
-	default:
+	case v1alpha1.Kube127:
 		return framework.WithUbuntu127()
+	default:
+		panic(fmt.Sprintf("unsupported version: %v", version))
 	}
 }
 
@@ -238,8 +241,10 @@ func kubeVersionVSphereOptBottleRocket(version v1alpha1.KubernetesVersion) frame
 		return framework.WithBottleRocket125()
 	case v1alpha1.Kube126:
 		return framework.WithBottleRocket126()
-	default:
+	case v1alpha1.Kube127:
 		return framework.WithBottleRocket127()
+	default:
+		panic(fmt.Sprintf("unsupported version: %v", version))
 	}
 }
 
