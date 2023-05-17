@@ -44,7 +44,7 @@ import (
 const (
 	defaultClusterConfigFile               = "cluster.yaml"
 	defaultBundleReleaseManifestFile       = "bin/local-bundle-release.yaml"
-	defaultEksaBinaryLocation              = "eksctl-anywhere"
+	defaultEksaBinaryLocation              = "eksctl anywhere"
 	defaultClusterName                     = "eksa-test"
 	defaultDownloadArtifactsOutputLocation = "eks-anywhere-downloads.tar.gz"
 	defaultDownloadImagesOutputLocation    = "images.tar"
