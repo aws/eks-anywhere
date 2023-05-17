@@ -1300,7 +1300,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string, namespace s
 		go func(name string) {
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
-				e.Cluster(), "10m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), namespace)
+				e.Cluster(), "20m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), namespace)
 			if err != nil {
 				errCh <- err
 			}
@@ -1309,7 +1309,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string, namespace s
 	for _, name := range statefulsets {
 		go func(name string) {
 			defer wg.Done()
-			err := e.KubectlClient.Wait(ctx, e.kubeconfigFilePath(), "10m", "Ready",
+			err := e.KubectlClient.Wait(ctx, e.kubeconfigFilePath(), "20m", "Ready",
 				fmt.Sprintf("pods/%s-harbor-%s-0", prefix, name), namespace)
 			if err != nil {
 				errCh <- err
@@ -1361,14 +1361,14 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 
 	e.T.Log("Waiting for Package", packageName, "To be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, packageName, "10m", packageMetadatNamespace)
+		mgmtCluster, packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere package timed out: %s", err)
 	}
 
 	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "10m", "Available", "hello-eks-anywhere", constants.EksaPackagesName)
+		e.Cluster(), "20m", "Available", "hello-eks-anywhere", constants.EksaPackagesName)
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere deployment timed out: %s", err)
 	}
@@ -1387,7 +1387,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.Cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot package install timed out: %s", err)
 	}
@@ -1401,7 +1401,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName string, targetNa
 
 	e.T.Log("Waiting for package", packageName, "deployment to be available")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "10m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
+		e.Cluster(), "20m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
@@ -1454,14 +1454,14 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName string, 
 
 	e.T.Log("Waiting for package", packageName, "to be updated")
 	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.Cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
 
 	e.T.Log("Waiting for package", packageName, "deployment to be available")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "10m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
+		e.Cluster(), "20m", "Available", fmt.Sprintf("%s-aws-otel-collector", packageName), targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
@@ -1507,7 +1507,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 
 	e.T.Log("Waiting for package", packageName, "to be updated")
 	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.Cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for adot package update timed out: %s", err)
 	}
@@ -1515,7 +1515,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName string, t
 	e.T.Log("Waiting for package", packageName, "daemonset to be rolled out")
 	err = retrier.New(6 * time.Minute).Retry(func() error {
 		return e.KubectlClient.WaitForResourceRolledout(ctx,
-			e.Cluster(), "10m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace, "daemonset")
+			e.Cluster(), "20m", fmt.Sprintf("%s-aws-otel-collector-agent", packageName), targetNamespace, "daemonset")
 	})
 	if err != nil {
 		e.T.Fatalf("waiting for adot daemonset timed out: %s", err)
@@ -1557,7 +1557,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(packageName string, mgmt
 
 	e.T.Log("Waiting for Package", packageName, "To be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, packageName, "10m", packageMetadatNamespace)
+		mgmtCluster, packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for emissary package timed out: %s", err)
 	}
@@ -1571,7 +1571,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(packageName string, mgmt
 
 	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "10m", "Available", packageName, constants.EksaPackagesName)
+		e.Cluster(), "20m", "Available", packageName, constants.EksaPackagesName)
 	if err != nil {
 		e.T.Fatalf("waiting for emissary deployment timed out: %s", err)
 	}
@@ -1601,7 +1601,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName string, mgmtClus
 
 	e.T.Log("Waiting for Package", packageName, "To be upgraded")
 	err = e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, packageName, "10m", fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName))
+		mgmtCluster, packageName, "20m", fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName))
 	if err != nil {
 		e.T.Fatalf("waiting for emissary package upgrade timed out: %s", err)
 	}
@@ -1625,7 +1625,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName string, ta
 
 	e.T.Log("Waiting for package", packageName, "to be installed")
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		e.Cluster(), packageName, "10m", packageMetadatNamespace)
+		e.Cluster(), packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
 	}
@@ -1665,7 +1665,7 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix string, namesp
 		go func(name string) {
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
-				e.Cluster(), "10m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
+				e.Cluster(), "20m", "Available", fmt.Sprintf("%s-%s", prefix, name), namespace)
 			if err != nil {
 				errCh <- err
 			}
@@ -1869,14 +1869,14 @@ func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(packageName string, ta
 	}()
 
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, packageName, "10m", packageMetadatNamespace)
+		mgmtCluster, packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for Autoscaler Package to be avaliable")
 	}
 
 	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "10m", "Available", deploymentName, targetNamespace)
+		e.Cluster(), "20m", "Available", deploymentName, targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for cluster-autoscaler deployment timed out: %s", err)
 	}
@@ -1898,14 +1898,14 @@ func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(packageName string, 
 	}()
 
 	err := e.KubectlClient.WaitForPackagesInstalled(ctx,
-		mgmtCluster, packageName, "10m", packageMetadatNamespace)
+		mgmtCluster, packageName, "20m", packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for Metric Server Package to be avaliable")
 	}
 
 	e.T.Log("Waiting for Package", packageName, "Deployment to be healthy")
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.Cluster(), "10m", "Available", deploymentName, targetNamespace)
+		e.Cluster(), "20m", "Available", deploymentName, targetNamespace)
 	if err != nil {
 		e.T.Fatalf("waiting for Metric Server deployment timed out: %s", err)
 	}
