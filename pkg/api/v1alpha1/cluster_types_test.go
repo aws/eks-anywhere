@@ -2640,6 +2640,26 @@ func TestCiliumConfigEquality(t *testing.T) {
 			},
 			Equal: false,
 		},
+		{
+			Name: "EqualEgressMasqueradeInterfaces",
+			A: &v1alpha1.CiliumConfig{
+				EgressMasqueradeInterfaces: "eth0",
+			},
+			B: &v1alpha1.CiliumConfig{
+				EgressMasqueradeInterfaces: "eth0",
+			},
+			Equal: true,
+		},
+		{
+			Name: "DiffEgressMasqueradeInterfaces",
+			A: &v1alpha1.CiliumConfig{
+				EgressMasqueradeInterfaces: "eth0",
+			},
+			B: &v1alpha1.CiliumConfig{
+				EgressMasqueradeInterfaces: "eth1",
+			},
+			Equal: false,
+		},
 	}
 
 	for _, tc := range tests {

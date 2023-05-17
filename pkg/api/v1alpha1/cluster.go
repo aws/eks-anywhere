@@ -678,6 +678,12 @@ func validateCiliumConfig(cilium *CiliumConfig) error {
 		return fmt.Errorf("cilium policyEnforcementMode \"%s\" not supported", cilium.PolicyEnforcementMode)
 	}
 
+	if cilium.EgressMasqueradeInterfaces == "" {
+		return nil
+	}
+
+	// TODO: add more checks for valid interface names
+
 	return nil
 }
 

@@ -230,6 +230,44 @@ func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 	test.AssertContentToFile(t, string(gotManifest), "testdata/manifest_network_policy.yaml")
 }
 
+func TestTemplaterGenerateManifestEgressMasqueradeInterfacesSuccess(t *testing.T) {
+	wantValues := map[string]interface{}{
+		"cni": map[string]interface{}{
+			"chainingMode": "portmap",
+		},
+		"ipam": map[string]interface{}{
+			"mode": "kubernetes",
+		},
+		"identityAllocationMode": "crd",
+		"prometheus": map[string]interface{}{
+			"enabled": true,
+		},
+		"rollOutCiliumPods": true,
+		"tunnel":            "geneve",
+		"image": map[string]interface{}{
+			"repository": "public.ecr.aws/isovalent/cilium",
+			"tag":        "v1.9.11-eksa.1",
+		},
+		"operator": map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": "public.ecr.aws/isovalent/operator",
+				"tag":        "v1.9.11-eksa.1",
+			},
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+		"egressMasqueradeInterfaces": "eth0",
+	}
+
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = "eth0"
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
 func TestTemplaterGenerateManifestError(t *testing.T) {
 	expectedAttempts := 2
 	tt := newtemplaterTest(t)

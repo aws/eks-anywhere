@@ -108,6 +108,7 @@ func TestUpgraderUpgradeSuccessValuesChanged(t *testing.T) {
 
 	// setting policy enforcement mode to something other than the "default" mode
 	tt.newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeNever
+	// tt.newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = "test"
 
 	// Templater and client and already tested individually so we only want to test the flow (order of calls)
 	gomock.InOrder(

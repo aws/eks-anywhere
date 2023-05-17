@@ -18,6 +18,14 @@ const (
 	// PolicyEnforcementComponentName is the ConfigComponentUpdatePlan name for the
 	// PolicyEnforcement configuration component.
 	PolicyEnforcementComponentName = "PolicyEnforcementMode"
+
+	// EgressMasqueradeInterfacesMapKey is the key used in the "cilium-config" ConfigMap to
+	// store the value for the EgressMasqueradeInterfaces.
+	EgressMasqueradeInterfacesMapKey = "egress-masquerade-interfaces"
+
+	// EgressMasqueradeInterfacesComponentName is the ConfigComponentUpdatePlan name for the
+	// egressMasqueradeInterfaces configuration component.
+	EgressMasqueradeInterfacesComponentName = "EgressMasqueradeInterfaces"
 )
 
 // UpgradePlan contains information about a Cilium installation upgrade.
@@ -33,7 +41,7 @@ func (c UpgradePlan) Needed() bool {
 	return c.VersionUpgradeNeeded() || c.ConfigUpdateNeeded()
 }
 
-// VersionUpgradeNeeded determines if a version upgrade is needed or not
+// VersionUpgradeNeeded determines if a version upgrade is needed or notß
 // Returns true if any of the installation components needs an upgrade.
 func (c UpgradePlan) VersionUpgradeNeeded() bool {
 	return c.DaemonSet.Needed() || c.Operator.Needed()
@@ -215,6 +223,27 @@ func configMapUpgradePlan(configMap *corev1.ConfigMap, clusterSpec *cluster.Spec
 	}
 
 	updatePlan.Components = append(updatePlan.Components, policyEnforcementUpdate)
+
+	newEgressMasqueradeInterfaces := clusterSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces
+
+	egressMasqueradeUpdate := ConfigComponentUpdatePlan{
+		Name:     EgressMasqueradeInterfacesComponentName,
+		NewValue: string(newEgressMasqueradeInterfaces),
+	}
+
+	if configMap == nil {
+		updatePlan.UpdateReason = "Cilium config doesn't exist"
+	} else if val, ok := configMap.Data[EgressMasqueradeInterfacesMapKey]; ok && val != "" {
+		egressMasqueradeUpdate.OldValue = val
+		if egressMasqueradeUpdate.OldValue != egressMasqueradeUpdate.NewValue {
+			egressMasqueradeUpdate.UpdateReason = fmt.Sprintf("Egress masquerade interfaces changed: [%s] -> [%s]", egressMasqueradeUpdate.OldValue, egressMasqueradeUpdate.NewValue)
+		}
+	} else if egressMasqueradeUpdate.NewValue != "" {
+		egressMasqueradeUpdate.UpdateReason = "Egress masquerade interfaces is not present in config"
+	}
+
+	updatePlan.Components = append(updatePlan.Components, egressMasqueradeUpdate)
+
 	updatePlan.generateUpdateReasonFromComponents()
 
 	return *updatePlan

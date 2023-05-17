@@ -3673,6 +3673,11 @@ spec:
                     properties:
                       cilium:
                         properties:
+                          egressMasqueradeInterfaces:
+                            description: EgressMasquaradeInterfaces determines which
+                              network interfaces are used for masquerading. Accepted
+                              values are strings.
+                            type: string
                           policyEnforcementMode:
                             description: PolicyEnforcementMode determines communication
                               allowed between pods. Accepted values are default, always,
@@ -6542,7 +6547,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
+        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.16.0-eks-a-v0.0.0-dev-build.7080
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
