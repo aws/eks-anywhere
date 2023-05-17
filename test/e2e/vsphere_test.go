@@ -1697,7 +1697,7 @@ func TestVSphereKubernetes126BottlerocketTo127Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube127,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.Bottlerocket126Template()),
+		provider.WithProviderUpgrade(provider.Bottlerocket127Template()),
 	)
 }
 
