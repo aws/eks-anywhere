@@ -2234,6 +2234,49 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 	tt.Expect(gotResourceSet).To(Equal(wantResourceSet))
 }
 
+func TestKubectlPauseCAPICluster(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := "{\"spec\":{\"paused\":true}}"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", capiClustersResourceType, "test-cluster", "--type=merge", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.PauseCAPICluster(tt.ctx, "test-cluster", tt.cluster.KubeconfigFile)).To(Succeed())
+}
+
+func TestKubectlResumeCAPICluster(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := "{\"spec\":{\"paused\":null}}"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", capiClustersResourceType, "test-cluster", "--type=merge", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.ResumeCAPICluster(tt.ctx, "test-cluster", tt.cluster.KubeconfigFile)).To(Succeed())
+}
+
+func TestKubectlMergePatchResource(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := "{\"spec\":{\"paused\":false}}"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", capiClustersResourceType, "test-cluster", "--type=merge", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.MergePatchResource(tt.ctx, capiClustersResourceType, "test-cluster", patch,
+		tt.cluster.KubeconfigFile, tt.namespace)).To(Succeed())
+}
+
 func TestKubectlGetConfigMap(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)

@@ -172,10 +172,14 @@ func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluste
 	return nil
 }
 
-func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster) error {
+func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster, clusterName string) error {
 	params := []string{"move", "--to-kubeconfig", to.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	if from.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", from.KubeconfigFile)
+	}
+
+	if clusterName != "" {
+		params = append(params, "--filter-cluster", clusterName)
 	}
 
 	_, err := c.Execute(
