@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -73,7 +74,10 @@ func ValidateControlPlaneNodes(ctx context.Context, vc clusterf.StateValidationC
 	errorList := make([]error, 0)
 	for _, node := range cpNodes.Items {
 		if err := validateNodeReady(node, clus.Spec.KubernetesVersion); err != nil {
-			errorList = append(errorList, fmt.Errorf("failed to validate controlplane %s", err))
+			errorList = append(errorList, fmt.Errorf("failed to validate controlplane node ready: %v", err))
+		}
+		if err := validateControlPlaneTaints(clus, node); err != nil {
+			errorList = append(errorList, fmt.Errorf("failed to validate controlplane node taints: %v", err))
 		}
 	}
 	if len(errorList) > 0 {
@@ -104,11 +108,15 @@ func ValidateWorkerNodes(ctx context.Context, vc clusterf.StateValidationConfig)
 			if err := validateNodeReady(node, vc.ClusterSpec.Cluster.Spec.KubernetesVersion); err != nil {
 				errorList = append(errorList, fmt.Errorf("failed to validate worker node ready %v", err))
 			}
+			if err := api.ValidateWorkerNodeTaints(w, node); err != nil {
+				errorList = append(errorList, fmt.Errorf("failed to validate worker node taints %v", err))
+			}
 		}
 		if workerGroupCount != *w.Count {
 			errorList = append(errorList, fmt.Errorf("worker node group %s count does not match expected: %d of %d", w.Name, workerGroupCount, *w.Count))
 		}
 	}
+
 	if len(errorList) > 0 {
 		return apierrors.NewAggregate(errorList)
 	}
@@ -164,6 +172,14 @@ func validateNodeReady(node corev1.Node, kubeVersion v1alpha1.KubernetesVersion)
 		return fmt.Errorf("validating node version: kubernetes version %s does not match expected version %s", kubeletVersion, kubeVersion)
 	}
 	return nil
+}
+
+func validateControlPlaneTaints(cluster *v1alpha1.Cluster, node corev1.Node) error {
+	if cluster.IsSingleNode() {
+		return api.ValidateControlPlaneNoTaints(cluster.Spec.ControlPlaneConfiguration, node)
+	}
+
+	return api.ValidateControlPlaneTaints(cluster.Spec.ControlPlaneConfiguration, node)
 }
 
 func filterWorkerNodes(nodes []corev1.Node, ms []v1beta1.MachineSet, w v1alpha1.WorkerNodeGroupConfiguration) []corev1.Node {

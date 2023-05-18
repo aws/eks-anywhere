@@ -175,16 +175,16 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Forbidden(specPath.Child("managementCluster", new.Spec.ManagementCluster.Name), fmt.Sprintf("field is immutable %v", new.Spec.ManagementCluster)))
 	}
 
-	if !new.Spec.ControlPlaneConfiguration.Endpoint.Equal(old.Spec.ControlPlaneConfiguration.Endpoint) {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("ControlPlaneConfiguration.endpoint"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Endpoint)))
-	}
-
 	if !new.Spec.DatacenterRef.Equal(&old.Spec.DatacenterRef) {
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("datacenterRef"), fmt.Sprintf("field is immutable %v", new.Spec.DatacenterRef)))
+	}
+
+	if !new.Spec.ControlPlaneConfiguration.Endpoint.Equal(old.Spec.ControlPlaneConfiguration.Endpoint, new.Spec.DatacenterRef.Kind) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("ControlPlaneConfiguration.endpoint"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Endpoint)))
 	}
 
 	if !new.Spec.ClusterNetwork.Pods.Equal(&old.Spec.ClusterNetwork.Pods) {
@@ -287,9 +287,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		}
 	}
 
-	if !old.IsSelfManaged() {
-		clusterlog.Info("Cluster config is associated with workload cluster", "name", old.Name)
-
+	if !old.IsSelfManaged() || features.IsActive(features.ExperimentalSelfManagedClusterUpgrade()) {
 		oldAWSIamConfig, newAWSIamConfig := &Ref{}, &Ref{}
 		for _, identityProvider := range new.Spec.IdentityProviderRefs {
 			if identityProvider.Kind == AWSIamConfigKind {

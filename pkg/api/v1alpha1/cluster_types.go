@@ -1,7 +1,10 @@
 package v1alpha1
 
 import (
+	"fmt"
+	"net"
 	"strconv"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +39,9 @@ const (
 
 	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
 	defaultEksaNamespace = "default"
+
+	// ControlEndpointDefaultPort defaults cluster control plane endpoint port if not specified.
+	ControlEndpointDefaultPort = "6443"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -87,13 +93,17 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	if n.Spec.KubernetesVersion != o.Spec.KubernetesVersion {
 		return false
 	}
+
+	if !n.Spec.DatacenterRef.Equal(&o.Spec.DatacenterRef) {
+		return false
+	}
+	if !n.Spec.ControlPlaneConfiguration.Endpoint.Equal(o.Spec.ControlPlaneConfiguration.Endpoint, n.Spec.DatacenterRef.Kind) {
+		return false
+	}
 	if !n.Spec.ControlPlaneConfiguration.Equal(&o.Spec.ControlPlaneConfiguration) {
 		return false
 	}
 	if !WorkerNodeGroupConfigurationsSliceEqual(n.Spec.WorkerNodeGroupConfigurations, o.Spec.WorkerNodeGroupConfigurations) {
-		return false
-	}
-	if !n.Spec.DatacenterRef.Equal(&o.Spec.DatacenterRef) {
 		return false
 	}
 	if !RefSliceEqual(n.Spec.IdentityProviderRefs, o.Spec.IdentityProviderRefs) {
@@ -284,7 +294,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
+	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
 		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels)
 }
 
@@ -293,14 +303,68 @@ type Endpoint struct {
 	Host string `json:"host"`
 }
 
-func (n *Endpoint) Equal(o *Endpoint) bool {
+// Equal compares if expected endpoint and existing endpoint are equal for non CloudStack clusters.
+func (n *Endpoint) Equal(o *Endpoint, kind string) bool {
 	if n == o {
 		return true
 	}
 	if n == nil || o == nil {
 		return false
 	}
+	if kind == CloudStackDatacenterKind {
+		return n.CloudStackEqual(o)
+	}
 	return n.Host == o.Host
+}
+
+// CloudStackEqual makes CloudStack cluster upgrade to new release backward compatible by striping CloudStack cluster existing endpoint default port
+// and comparing if expected endpoint and existing endpoint are equal.
+// Cloudstack CLI used to add default port to cluster object.
+// Now cluster object stays the same with customer input and port is defaulted only in CAPI template.
+func (n *Endpoint) CloudStackEqual(o *Endpoint) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	if n.Host == o.Host {
+		return true
+	}
+	nhost, nport, err := GetControlPlaneHostPort(n.Host, "")
+	if err != nil {
+		return false
+	}
+	ohost, oport, _ := GetControlPlaneHostPort(o.Host, "")
+	if oport == ControlEndpointDefaultPort {
+		switch nport {
+		case ControlEndpointDefaultPort, "":
+			return nhost == ohost
+		default:
+			return false
+		}
+	}
+
+	if nport == ControlEndpointDefaultPort && oport == "" {
+		return nhost == ohost
+	}
+
+	return n.Host == o.Host
+}
+
+// GetControlPlaneHostPort retrieves the ControlPlaneConfiguration host and port split defined in the cluster.Spec.
+func GetControlPlaneHostPort(pHost string, defaultPort string) (string, string, error) {
+	host, port, err := net.SplitHostPort(pHost)
+	if err != nil {
+		if strings.Contains(err.Error(), "missing port") {
+			host = pHost
+			port = defaultPort
+			err = nil
+		} else {
+			return "", "", fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
+		}
+	}
+	return host, port, err
 }
 
 type WorkerNodeGroupConfiguration struct {
@@ -1077,6 +1141,12 @@ func (c *ClusterGenerate) SetSelfManaged() {
 
 func (c *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
 	return c.IsSelfManaged() && s2.IsSelfManaged() || c.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
+}
+
+// IsSingleNode checks if the cluster has only a single node specified between the controlplane and worker nodes.
+func (c *Cluster) IsSingleNode() bool {
+	return c.Spec.ControlPlaneConfiguration.Count == 1 &&
+		len(c.Spec.WorkerNodeGroupConfigurations) <= 0
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {

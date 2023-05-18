@@ -1435,44 +1435,6 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 			want:             false,
 		},
 		{
-			testName: "endpoint diff",
-			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.2.3.4",
-				},
-			},
-			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.2.3.5",
-				},
-			},
-			want: false,
-		},
-		{
-			testName: "one endpoint empty",
-			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "1.2.3.4",
-				},
-			},
-			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: nil,
-			},
-			want: false,
-		},
-		{
-			testName: "both endpoints empty",
-			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{
-					Host: "",
-				},
-			},
-			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Endpoint: &v1alpha1.Endpoint{},
-			},
-			want: true,
-		},
-		{
 			testName: "both taints equal",
 			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
 				Taints: taints1,
@@ -1535,6 +1497,87 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.cluster1CPConfig.Equal(tt.cluster2CPConfig)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestControlPlaneConfigurationEndpointEqual(t *testing.T) {
+	testCases := []struct {
+		testName, cluster1CPHost, cluster2CPHost, clusterDatacenterKind string
+		want                                                            bool
+	}{
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.2.3.4",
+			clusterDatacenterKind: v1alpha1.VSphereDatacenterKind,
+			cluster2CPHost:        "1.2.3.5",
+			want:                  false,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.2.3.4",
+			clusterDatacenterKind: v1alpha1.VSphereDatacenterKind,
+			cluster2CPHost:        "",
+			want:                  false,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "",
+			clusterDatacenterKind: v1alpha1.VSphereDatacenterKind,
+			cluster2CPHost:        "",
+			want:                  true,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.1.1.1:6443",
+			clusterDatacenterKind: v1alpha1.CloudStackDatacenterKind,
+			cluster2CPHost:        "1.1.1.1",
+			want:                  true,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.1.1.1",
+			clusterDatacenterKind: v1alpha1.CloudStackDatacenterKind,
+			cluster2CPHost:        "1.1.1.1:6443",
+			want:                  true,
+		},
+		{
+			testName:              "one default port, one no port",
+			cluster1CPHost:        "1.1.1.1",
+			clusterDatacenterKind: v1alpha1.CloudStackDatacenterKind,
+			cluster2CPHost:        "1.1.1.2",
+			want:                  false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					DatacenterRef: v1alpha1.Ref{
+						Kind: tt.clusterDatacenterKind,
+					},
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Endpoint: &v1alpha1.Endpoint{
+							Host: tt.cluster1CPHost,
+						},
+					},
+				},
+			}
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					DatacenterRef: v1alpha1.Ref{
+						Kind: tt.clusterDatacenterKind,
+					},
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Endpoint: &v1alpha1.Endpoint{
+							Host: tt.cluster2CPHost,
+						},
+					},
+				},
+			}
+
+			g := NewWithT(t)
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
@@ -2640,6 +2683,59 @@ func TestKubeVersionToValidSemver(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("KubeVersionToSemver() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestClusterIsSingleNode(t *testing.T) {
+	testCases := []struct {
+		testName string
+		cluster  *v1alpha1.Cluster
+		want     bool
+	}{
+		{
+			testName: "cluster with single node",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Count: 1,
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			testName: "cluster with cp and worker",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Count: 1,
+					},
+					WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+						{
+							Count: ptr.Int(3),
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "cluster with multiple cp",
+			cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+						Count: 3,
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.IsSingleNode()).To(Equal(tt.want))
 		})
 	}
 }

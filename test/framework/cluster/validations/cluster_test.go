@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -319,7 +320,90 @@ func TestValidateControlPlanes(t *testing.T) {
 					}
 				}),
 			},
-			wantErr: "controlplane node test-node-2 not ready yet.",
+
+			wantErr: "node test-node-2 not ready yet.",
+		},
+		{
+			name: "control plane node with taint match ",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+					Count:  2,
+					Taints: []corev1.Taint{api.ControlPlaneTaint()},
+				}
+			}),
+			nodes: []*corev1.Node{
+				controlPlaneNode(func(node *corev1.Node) {
+					node.Name = "test-node-1"
+					node.Status.Conditions = []corev1.NodeCondition{
+						{
+							Type:   corev1.NodeReady,
+							Status: corev1.ConditionTrue,
+						},
+					}
+				}),
+				controlPlaneNode(func(node *corev1.Node) {
+					node.Name = "test-node-2"
+					node.Status.Conditions = []corev1.NodeCondition{
+						{
+							Type:   corev1.NodeReady,
+							Status: corev1.ConditionTrue,
+						},
+					}
+				}),
+			},
+			wantErr: "",
+		},
+		{
+			name: "control plane single node with taints ",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+					Count:  1,
+					Taints: []corev1.Taint{api.ControlPlaneTaint()},
+				}
+			}),
+			nodes: []*corev1.Node{
+				controlPlaneNode(func(node *corev1.Node) {
+					node.Name = "test-node-1"
+					node.Status.Conditions = []corev1.NodeCondition{
+						{
+							Type:   corev1.NodeReady,
+							Status: corev1.ConditionTrue,
+						},
+					}
+					node.Spec.Taints = append(node.Spec.Taints, api.ControlPlaneTaint())
+				}),
+			},
+			wantErr: "taints on control plane node test-node-1 or corresponding control plane configuration found",
+		},
+		{
+			name: "control plane node with taint does not match ",
+			spec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+					Count: 1,
+					Taints: []corev1.Taint{
+						{
+							Key:    "key1",
+							Value:  "value1",
+							Effect: corev1.TaintEffectNoExecute,
+						},
+					},
+				}
+			}),
+			nodes: []*corev1.Node{
+				controlPlaneNode(func(node *corev1.Node) {
+					node.Name = "test-node-1"
+					node.Status.Conditions = []corev1.NodeCondition{
+						{
+							Type:   corev1.NodeReady,
+							Status: corev1.ConditionTrue,
+						},
+					}
+				}),
+			},
+			wantErr: "failed to validate controlplane node taints: taints on control plane node test-node-1 or corresponding control plane configuration found",
 		},
 	}
 
@@ -480,7 +564,11 @@ func controlPlaneNode(opts ...controlPlaneNodeOpt) *corev1.Node {
 				"node-role.kubernetes.io/control-plane": "",
 			},
 		},
-		Spec: corev1.NodeSpec{},
+		Spec: corev1.NodeSpec{
+			Taints: []corev1.Taint{
+				api.ControlPlaneTaint(),
+			},
+		},
 		Status: corev1.NodeStatus{
 			Conditions: []corev1.NodeCondition{
 				{

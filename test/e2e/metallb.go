@@ -14,7 +14,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -28,10 +27,8 @@ type MetalLBSuite struct {
 	provider          framework.Provider
 }
 
-var versionsToTest = []v1alpha1.KubernetesVersion{v1alpha1.Kube124, v1alpha1.Kube125}
-
 func RunMetalLBDockerTests(t *testing.T) {
-	for _, v := range versionsToTest {
+	for _, v := range KubeVersions {
 		s := new(MetalLBSuite)
 		s.provider = framework.NewDocker(t)
 		s.kubernetesVersion = v
@@ -43,18 +40,6 @@ func kubeVersionNameDiscriminator(version v1alpha1.KubernetesVersion) framework.
 	return func(e *framework.ClusterE2ETest) {
 		e.ClusterName = fmt.Sprintf("%s-%s", e.ClusterName, strings.ReplaceAll(string(version), ".", "-"))
 	}
-}
-
-func (suite *MetalLBSuite) SetupSuite() {
-	t := suite.T()
-	suite.cluster = framework.NewClusterE2ETest(t,
-		suite.provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-		kubeVersionNameDiscriminator(suite.kubernetesVersion),
-	)
 }
 
 func getIPAddressPoolSpec(addresses []string, autoAssign bool) string {

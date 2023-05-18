@@ -9,7 +9,7 @@ const (
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 	K8s127SupportEnvVar             = "K8S_1_27_SUPPORT"
 
-	experimentalSelfManagedClusterUpgradeEnvVar = "EXP_SELF_MANAGED_API_UPGRADE"
+	ExperimentalSelfManagedClusterUpgradeEnvVar = "EXP_SELF_MANAGED_API_UPGRADE"
 	experimentalSelfManagedClusterUpgradeGate   = "ExpSelfManagedAPIUpgrade"
 )
 
@@ -43,7 +43,7 @@ func ExperimentalSelfManagedClusterUpgrade() Feature {
 	return Feature{
 		Name: "[EXPERIMENTAL] Upgrade self-managed clusters through the API",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(
-			experimentalSelfManagedClusterUpgradeEnvVar,
+			ExperimentalSelfManagedClusterUpgradeEnvVar,
 			experimentalSelfManagedClusterUpgradeGate,
 		),
 	}

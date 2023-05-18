@@ -39,7 +39,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return err
 	}
 
-	if !nSpec.ControlPlaneConfiguration.Endpoint.Equal(oSpec.ControlPlaneConfiguration.Endpoint) {
+	if !nSpec.ControlPlaneConfiguration.Endpoint.Equal(oSpec.ControlPlaneConfiguration.Endpoint, nSpec.DatacenterRef.Kind) {
 		return fmt.Errorf("spec.controlPlaneConfiguration.endpoint is immutable")
 	}
 
