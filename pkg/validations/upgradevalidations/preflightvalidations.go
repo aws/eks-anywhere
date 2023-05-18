@@ -121,7 +121,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				return &validations.ValidationResult{
 					Name:        "validate pod disruption budgets",
 					Remediation: "",
-					Err:         ValidatePodDisruptionBudgets(ctx, k, targetCluster),
+					Err:         ValidatePodDisruptionBudgets(ctx, k, u.Opts.WorkloadCluster),
 				}
 			})
 	}
