@@ -2,6 +2,7 @@ package framework
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -26,6 +27,7 @@ const (
 	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey              = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 	TinkerbellCIEnvironment                 = "T_TINKERBELL_CI_ENVIRONMENT"
+	TinkerbellPodCIDR                       = "T_TINKERBELL_POD_CIDR"
 )
 
 var requiredTinkerbellEnvVars = []string{
@@ -139,6 +141,12 @@ func (t *Tinkerbell) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	f := make([]api.ClusterFiller, 0, len(t.clusterFillers)+1)
 	f = append(f, t.clusterFillers...)
 	f = append(f, api.WithControlPlaneEndpointIP(clusterIP))
+
+	// Optional Pod CIDR
+	if podCIDR := os.Getenv(TinkerbellPodCIDR); podCIDR != "" {
+		podCIDR = strings.Trim(podCIDR, `"`)
+		f = append(f, api.WithPodCidr(podCIDR))
+	}
 
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...), api.TinkerbellToConfigFiller(t.fillers...)}
 }
