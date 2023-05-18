@@ -2278,7 +2278,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
 					Id: "test",
 				}
-				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
 			},
 			Expect: true,
 		},
