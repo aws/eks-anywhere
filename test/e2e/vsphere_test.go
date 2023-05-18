@@ -212,8 +212,6 @@ func TestVSphereKubernetes126To127AWSIamAuthUpgrade(t *testing.T) {
 }
 
 // Curated packages
-var KubeVersions = []v1alpha1.KubernetesVersion{v1alpha1.Kube123, v1alpha1.Kube124, v1alpha1.Kube125, v1alpha1.Kube126, v1alpha1.Kube127}
-
 func kubeVersionVSphereOptUbuntu(version v1alpha1.KubernetesVersion) framework.VSphereOpt {
 	switch version {
 	case v1alpha1.Kube123:
