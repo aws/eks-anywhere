@@ -119,7 +119,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
-		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig)
+		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig).
+		WithValidatorClients()
 
 	if cc.timeoutOptions.noTimeouts {
 		factory.WithNoTimeouts()
@@ -142,7 +143,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	)
 
 	validationOpts := &validations.Opts{
-		Kubectl: deps.Kubectl,
+		Kubectl: deps.UnAuthKubectlClient,
 		Spec:    clusterSpec,
 		WorkloadCluster: &types.Cluster{
 			Name:           clusterSpec.Cluster.Name,

@@ -9,17 +9,18 @@ import (
 )
 
 type Opts struct {
-	Kubectl           KubectlClient
-	Spec              *cluster.Spec
-	WorkloadCluster   *types.Cluster
-	ManagementCluster *types.Cluster
-	Provider          providers.Provider
-	TlsValidator      TlsValidator
-	CliConfig         *config.CliConfig
+	Kubectl            KubectlClient
+	Spec               *cluster.Spec
+	WorkloadCluster    *types.Cluster
+	ManagementCluster  *types.Cluster
+	Provider           providers.Provider
+	TLSValidator       TlsValidator
+	CliConfig          *config.CliConfig
+	SkippedValidations map[string]bool
 }
 
 func (o *Opts) SetDefaults() {
-	if o.TlsValidator == nil {
-		o.TlsValidator = crypto.NewTlsValidator()
+	if o.TLSValidator == nil {
+		o.TLSValidator = crypto.NewTlsValidator()
 	}
 }

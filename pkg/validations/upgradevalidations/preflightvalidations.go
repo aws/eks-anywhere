@@ -33,7 +33,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			return &validations.ValidationResult{
 				Name:        "validate certificate for registry mirror",
 				Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
-				Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),
+				Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TLSValidator),
 			}
 		},
 		func() *validations.ValidationResult {
@@ -110,6 +110,18 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 					Name:        "validate management cluster bundle version compatibility",
 					Remediation: fmt.Sprintf("upgrade management cluster %s before upgrading workload cluster %s", u.Opts.Spec.Cluster.ManagedBy(), u.Opts.WorkloadCluster.Name),
 					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+				}
+			})
+	}
+
+	if !u.Opts.SkippedValidations[PDB] {
+		upgradeValidations = append(
+			upgradeValidations,
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate pod disruption budgets",
+					Remediation: "",
+					Err:         ValidatePodDisruptionBudgets(ctx, k, u.Opts.WorkloadCluster),
 				}
 			})
 	}

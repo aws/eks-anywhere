@@ -381,7 +381,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 				WorkloadCluster:   workloadCluster,
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
-				TlsValidator:      tlsValidator,
+				TLSValidator:      tlsValidator,
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
@@ -410,6 +410,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			// provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			kubectl.EXPECT().GetEksaTinkerbellMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(existingMachineConfigSpec, nil).MaxTimes(1)
+			k.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
@@ -1170,7 +1171,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 				WorkloadCluster:   workloadCluster,
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
-				TlsValidator:      tlsValidator,
+				TLSValidator:      tlsValidator,
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
@@ -1194,6 +1195,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
+			k.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
@@ -1412,7 +1414,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				WorkloadCluster:   workloadCluster,
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
-				TlsValidator:      tlsValidator,
+				TLSValidator:      tlsValidator,
 				CliConfig:         cliConfig,
 			}
 
@@ -1430,6 +1432,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 
 			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
+			k.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)

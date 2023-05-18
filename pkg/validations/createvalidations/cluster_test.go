@@ -12,12 +12,19 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 )
 
 const testclustername string = "testcluster"
+
+type UnAuthKubectlClient struct {
+	*executables.Kubectl
+	*kubernetes.UnAuthClient
+}
 
 func TestValidateClusterPresent(t *testing.T) {
 	tests := []struct {
@@ -44,12 +51,13 @@ func TestValidateClusterPresent(t *testing.T) {
 	}
 
 	k, ctx, cluster, e := validations.NewKubectl(t)
+	uk := kubernetes.NewUnAuthClient(k)
 	cluster.Name = testclustername
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
 			fileContent := test.ReadFile(t, tc.getClusterResponse)
 			e.EXPECT().Execute(ctx, []string{"get", capiClustersResourceType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
-			err := createvalidations.ValidateClusterNameIsUnique(ctx, k, cluster, testclustername)
+			err := createvalidations.ValidateClusterNameIsUnique(ctx, UnAuthKubectlClient{k, uk}, cluster, testclustername)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -93,12 +101,13 @@ func TestValidateManagementClusterCRDs(t *testing.T) {
 	}
 
 	k, ctx, cluster, e := validations.NewKubectl(t)
+	uk := kubernetes.NewUnAuthClient(k)
 	cluster.Name = testclustername
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
 			e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetClusterCRD).Times(tc.errGetClusterCRDCount)
 			e.EXPECT().Execute(ctx, []string{"get", "customresourcedefinition", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetEKSAClusterCRD).Times(tc.errGetEKSAClusterCRDCount)
-			err := createvalidations.ValidateManagementCluster(ctx, k, cluster)
+			err := createvalidations.ValidateManagementCluster(ctx, UnAuthKubectlClient{k, uk}, cluster)
 			if tc.wantErr {
 				assert.Error(tt, err, "expected ValidateManagementCluster to return an error", "test", tc.name)
 			} else {
