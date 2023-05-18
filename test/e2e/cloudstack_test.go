@@ -1083,9 +1083,7 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				wc.UpdateClusterConfig(tt.upgradeFiller)
-				wc.ApplyClusterManifest()
-				wc.ValidateClusterState()
+				runCloudStackAPIUpgradeTest(t, wc, tt)
 			})
 		}
 
@@ -1144,8 +1142,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				test.PushWorkloadClusterToGit(wc, tt.upgradeFiller)
-				wc.ValidateClusterState()
+				runCloudStackAPIUpgradeTestWithFlux(t, test, wc, tt)
 			})
 		}
 

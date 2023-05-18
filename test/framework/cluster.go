@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -2005,7 +2006,16 @@ func (e *ClusterE2ETest) CombinedAutoScalerMetricServerTest(autoscalerName strin
 
 // ValidateClusterState runs a set of validations against the cluster to identify an invalid cluster state.
 func (e *ClusterE2ETest) ValidateClusterState() {
-	e.T.Logf("Validating cluster %s", e.ClusterName)
+	validateClusterState(e.T.(*testing.T), e)
+}
+
+// ValidateClusterStateWithT runs a set of validations against the cluster to identify an invalid cluster state and accepts *testing.T as a parameter.
+func (e *ClusterE2ETest) ValidateClusterStateWithT(t *testing.T) {
+	validateClusterState(e.T.(*testing.T), e)
+}
+
+func validateClusterState(t *testing.T, e *ClusterE2ETest) {
+	t.Logf("Validating cluster %s", e.ClusterName)
 	ctx := context.Background()
 	e.buildClusterStateValidationConfig(ctx)
 	clusterStateValidator := newClusterStateValidator(e.clusterStateValidationConfig)
