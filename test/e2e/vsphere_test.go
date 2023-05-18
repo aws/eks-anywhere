@@ -247,8 +247,9 @@ func kubeVersionVSphereOptBottleRocket(version v1alpha1.KubernetesVersion) frame
 }
 
 func TestVSphereCuratedPackagesSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -261,7 +262,9 @@ func TestVSphereCuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 func TestVSphereBottleRocketCuratedPackagesSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -274,8 +277,9 @@ func TestVSphereBottleRocketCuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 func TestVSphereCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -288,8 +292,9 @@ func TestVSphereCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 }
 
 func TestVSphereBottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -302,8 +307,9 @@ func TestVSphereBottleRocketCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 }
 
 func TestVSphereCuratedPackagesHarborSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -316,7 +322,9 @@ func TestVSphereCuratedPackagesHarborSimpleFlow(t *testing.T) {
 }
 
 func TestVSphereBottleRocketCuratedPackagesHarborSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -329,8 +337,9 @@ func TestVSphereBottleRocketCuratedPackagesHarborSimpleFlow(t *testing.T) {
 }
 
 func TestVSphereCuratedPackagesAdotUpdateFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -343,8 +352,9 @@ func TestVSphereCuratedPackagesAdotUpdateFlow(t *testing.T) {
 }
 
 func TestVSphereBottleRocketCuratedPackagesAdotUpdateFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -359,8 +369,9 @@ func TestVSphereBottleRocketCuratedPackagesAdotUpdateFlow(t *testing.T) {
 func TestVSphereUbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
@@ -375,8 +386,9 @@ func TestVSphereUbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 func TestVSphereBottleRocketCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
@@ -389,8 +401,9 @@ func TestVSphereBottleRocketCuratedPackagesClusterAutoscalerSimpleFlow(t *testin
 }
 
 func TestVSphereUbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -403,8 +416,9 @@ func TestVSphereUbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 }
 
 func TestVSphereBottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -417,8 +431,9 @@ func TestVSphereBottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 }
 
 func TestVSphereUbuntuWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		provider := framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version))
 		test := SetupSimpleMultiCluster(t, provider, version)
 		runCuratedPackageRemoteClusterInstallSimpleFlow(test)
@@ -426,8 +441,9 @@ func TestVSphereUbuntuWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 func TestVSphereBottleRocketWorkloadClusterCuratedPackagesSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		provider := framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version))
 		test := SetupSimpleMultiCluster(t, provider, version)
 		runCuratedPackageRemoteClusterInstallSimpleFlow(test)
@@ -435,8 +451,9 @@ func TestVSphereBottleRocketWorkloadClusterCuratedPackagesSimpleFlow(t *testing.
 }
 
 func TestVSphereUbuntuWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		provider := framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version))
 		test := SetupSimpleMultiCluster(t, provider, version)
 		runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
@@ -444,8 +461,9 @@ func TestVSphereUbuntuWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testin
 }
 
 func TestVSphereBottleRocketWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		provider := framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version))
 		test := SetupSimpleMultiCluster(t, provider, version)
 		runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test)
@@ -453,9 +471,10 @@ func TestVSphereBottleRocketWorkloadClusterCuratedPackagesEmissarySimpleFlow(t *
 }
 
 func TestVSphereUbuntuWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
 		framework.CheckCertManagerCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		provider := framework.NewVSphere(t, kubeVersionVSphereOptUbuntu(version))
 		test := SetupSimpleMultiCluster(t, provider, version)
 		runCertManagerRemoteClusterInstallSimpleFlow(test)
@@ -463,9 +482,10 @@ func TestVSphereUbuntuWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *tes
 }
 
 func TestVSphereBottleRocketWorkloadClusterCuratedPackagesCertManagerSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
 		framework.CheckCertManagerCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		provider := framework.NewVSphere(t, kubeVersionVSphereOptBottleRocket(version))
 		test := SetupSimpleMultiCluster(t, provider, version)
 		runCertManagerRemoteClusterInstallSimpleFlow(test)
