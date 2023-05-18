@@ -81,14 +81,18 @@ func buildClusterClient(kubeconfigFileName string) (client.Client, error) {
 }
 
 func buildClusterSpec(ctx context.Context, client client.Client, config *cluster.Config) (*cluster.Spec, error) {
-	clus := &v1alpha1.Cluster{}
-	key := machinerytypes.NamespacedName{Namespace: config.Cluster.Namespace, Name: config.Cluster.Name}
-	if err := client.Get(ctx, key, clus); err != nil {
-		return nil, fmt.Errorf("failed to get cluster to build spec: %s", err)
+	clusterConfig := config.DeepCopy()
+	// The cluster config built by the test does not have certain defaults like the bundle reference,
+	// so fetch that information from the cluster if missing. This is needed inorder to build the cluster spec.
+	if clusterConfig.Cluster.Spec.BundlesRef == nil {
+		clus := &v1alpha1.Cluster{}
+		key := machinerytypes.NamespacedName{Namespace: clusterConfig.Cluster.Namespace, Name: clusterConfig.Cluster.Name}
+		if err := client.Get(ctx, key, clus); err != nil {
+			return nil, fmt.Errorf("failed to get cluster to build spec: %s", err)
+		}
+		clusterConfig.Cluster.Spec.BundlesRef = clus.Spec.BundlesRef
 	}
-	configCp := config.DeepCopy()
-	configCp.Cluster = clus
-	spec, err := cluster.BuildSpecFromConfig(ctx, clientutil.NewKubeClient(client), configCp)
+	spec, err := cluster.BuildSpecFromConfig(ctx, clientutil.NewKubeClient(client), clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build cluster spec from config: %s", err)
 	}

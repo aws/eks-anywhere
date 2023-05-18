@@ -227,6 +227,20 @@ func (c *CloudStack) WithNewCloudStackWorkerNodeGroup(name string, workerNodeGro
 	}
 }
 
+// WithWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
+// a corresponding CloudStackMachineConfig to the cluster config.
+func (c *CloudStack) WithWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.CloudStackMachineConfigFiller) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.CloudStackToConfigFiller(cloudStackMachineConfig(name, fillers...)),
+		api.ClusterToConfigFiller(buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+	)
+}
+
+// WithWorkerNodeGroupConfiguration returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration item to the cluster config.
+func (c *CloudStack) WithWorkerNodeGroupConfiguration(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
+	return api.ClusterToConfigFiller(buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+}
+
 func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfigFiller) api.CloudStackFiller {
 	f := make([]api.CloudStackMachineConfigFiller, 0, len(fillers)+2)
 	// Need to add these because at this point the default fillers that assign these
@@ -255,4 +269,15 @@ func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, worke
 // ClusterStateValidations returns a list of provider specific validations.
 func (c *CloudStack) ClusterStateValidations() []clusterf.StateValidation {
 	return []clusterf.StateValidation{}
+}
+
+// WithRedhat123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
+// as well as the right redhat template for all CloudStackMachineConfigs.
+func (c *CloudStack) WithRedhat123() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube123)),
+		api.CloudStackToConfigFiller(
+			UpdateRedhatTemplate123Var(),
+		),
+	)
 }
