@@ -5,6 +5,8 @@
 package e2e
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -118,8 +120,9 @@ func TestDockerInstallGithubFluxDuringUpgrade(t *testing.T) {
 
 // Curated packages
 func TestDockerCuratedPackagesSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewDocker(t),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -132,8 +135,9 @@ func TestDockerCuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 func TestDockerCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewDocker(t),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -146,8 +150,9 @@ func TestDockerCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 }
 
 func TestDockerCuratedPackagesHarborSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewDocker(t),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -160,8 +165,9 @@ func TestDockerCuratedPackagesHarborSimpleFlow(t *testing.T) {
 }
 
 func TestDockerCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
 			framework.WithPackageConfig(t, packageBundleURI(version),
@@ -173,8 +179,9 @@ func TestDockerCuratedPackagesAdotSimpleFlow(t *testing.T) {
 }
 
 func TestDockerCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
 			framework.WithPackageConfig(t, packageBundleURI(version),
@@ -186,8 +193,9 @@ func TestDockerCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 }
 
 func TestDockerCuratedPackagesDisabled(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
 			framework.WithPackageConfig(t, packageBundleURI(version),

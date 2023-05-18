@@ -6,6 +6,7 @@ package e2e
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -33,7 +34,9 @@ func kubeVersionNutanixOpt(version v1alpha1.KubernetesVersion) framework.Nutanix
 }
 
 func TestNutanixCuratedPackagesSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -46,8 +49,9 @@ func TestNutanixCuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 func TestNutanixCuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -60,8 +64,9 @@ func TestNutanixCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 }
 
 func TestNutanixCuratedPackagesHarborSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -74,8 +79,9 @@ func TestNutanixCuratedPackagesHarborSimpleFlow(t *testing.T) {
 }
 
 func TestNutanixCuratedPackagesAdotUpdateFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),
@@ -90,8 +96,9 @@ func TestNutanixCuratedPackagesAdotUpdateFlow(t *testing.T) {
 func TestNutanixCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
@@ -104,8 +111,9 @@ func TestNutanixCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 }
 
 func TestNutanixCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewNutanix(t, kubeVersionNutanixOpt(version)),
 			framework.WithClusterFiller(api.WithKubernetesVersion(version)),

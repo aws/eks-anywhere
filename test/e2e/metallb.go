@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -29,10 +30,11 @@ type MetalLBSuite struct {
 }
 
 func RunMetalLBDockerTests(t *testing.T) {
-	for _, v := range KubeVersions {
+	for i, v := range KubeVersions {
 		s := new(MetalLBSuite)
 		s.provider = framework.NewDocker(t)
 		s.kubernetesVersion = v
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		suite.Run(t, s)
 	}
 }

@@ -6,6 +6,7 @@ package e2e
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -151,7 +152,9 @@ func kubeVersionTinkerbellOpt(version v1alpha1.KubernetesVersion) framework.Tink
 }
 
 func TestTinkerbellUbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
 			framework.WithClusterSingleNode(version),
@@ -165,7 +168,9 @@ func TestTinkerbellUbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
 }
 
 func TestTinkerbellBottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 			framework.WithClusterSingleNode(version),
@@ -180,7 +185,9 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesFlow(t *testing.T) {
 }
 
 func TestTinkerbellUbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
 			framework.WithClusterSingleNode(version),
@@ -194,7 +201,9 @@ func TestTinkerbellUbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
 }
 
 func TestTinkerbellBottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 			framework.WithClusterSingleNode(version),
@@ -208,7 +217,9 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesEmissaryFlow(t *testing.
 }
 
 func TestTinkerbellUbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
 			framework.WithClusterSingleNode(version),
@@ -222,7 +233,9 @@ func TestTinkerbellUbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
 }
 
 func TestTinkerbellBottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
+		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 			framework.WithClusterSingleNode(version),
@@ -236,8 +249,9 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesHarborFlow(t *testing.T)
 }
 
 func TestTinkerbellUbuntuSingleNodeCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
 			framework.WithClusterSingleNode(version),
@@ -251,8 +265,9 @@ func TestTinkerbellUbuntuSingleNodeCuratedPackagesAdotSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellBottleRocketSingleNodeCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 			framework.WithClusterSingleNode(version),
@@ -266,8 +281,9 @@ func TestTinkerbellBottleRocketSingleNodeCuratedPackagesAdotSimpleFlow(t *testin
 }
 
 func TestTinkerbellUbuntuSingleNodeCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, kubeVersionTinkerbellOpt(version)),
 			framework.WithClusterSingleNode(version),
@@ -281,8 +297,9 @@ func TestTinkerbellUbuntuSingleNodeCuratedPackagesPrometheusSimpleFlow(t *testin
 }
 
 func TestTinkerbellBottleRocketSingleNodeCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	for _, version := range KubeVersions {
+	for i, version := range KubeVersions {
 		framework.CheckCuratedPackagesCredentials(t)
+		os.Setenv(framework.ClusterPrefixVar, fmt.Sprintf("%s-%d", EksaPackagesNamespace, i))
 		test := framework.NewClusterE2ETest(t,
 			framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 			framework.WithClusterSingleNode(version),
