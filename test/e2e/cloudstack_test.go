@@ -1725,7 +1725,6 @@ func TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror(t *testing.T) {
 	runAirgapConfigFlow(test, "10.0.0.1/8")
 }
 
-<<<<<<< HEAD
 // Workload API
 
 func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
@@ -1781,7 +1780,6 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 }
 
 // Workload GitOps API
-
 func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -1837,7 +1835,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
-=======
+
 func TestCloudStackKubernetes124UbuntuAirgappedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1858,5 +1856,4 @@ func TestCloudStackKubernetes124UbuntuAirgappedRegistryMirror(t *testing.T) {
 		framework.WithRegistryMirrorEndpointAndCert(constants.CloudStackProviderName),
 	)
 	runAirgapConfigFlow(test, "10.0.0.1/8")
->>>>>>> 4dc96c99 (Adding k8s 1.24 support for cloudstack provider)
 }
