@@ -364,12 +364,12 @@ func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) 
 	tt.Expect(err.Error()).To(Equal("validating environment variables: CloudStack instance global's managementApiEndpoint xxx is invalid: CloudStack managementApiEndpoint is invalid: #{err}"))
 }
 
-func TestProviderCreateOrUpgradeClusterK8s124(t *testing.T) {
+func TestProviderCreateOrUpgradeClusterK8s125(t *testing.T) {
 	tt := NewWithT(t)
 	setupContext(t)
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	clusterSpec.Cluster.Spec.KubernetesVersion = "1.24"
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.25"
 
 	provider := newProviderWithKubectl(t, nil, clusterSpec.Cluster, nil, nil)
 	if provider == nil {
@@ -378,9 +378,9 @@ func TestProviderCreateOrUpgradeClusterK8s124(t *testing.T) {
 
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, validCloudStackCloudConfig)
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.23"))
+	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.24"))
 	err = provider.SetupAndValidateUpgradeCluster(ctx, nil, clusterSpec, nil)
-	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.23"))
+	tt.Expect(err.Error()).To(Equal("validating K8s version for provider: cloudstack provider does not support K8s version > 1.24"))
 
 	clusterSpec.Cluster.Spec.KubernetesVersion = "abcd"
 	err = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)

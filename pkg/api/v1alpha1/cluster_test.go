@@ -351,8 +351,8 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			testName: "Invalid CloudStack 1.24",
-			fileName: "testdata/cluster_1_24_cloudstack.yaml",
+			testName: "Invalid CloudStack 1.25",
+			fileName: "testdata/cluster_1_25_cloudstack.yaml",
 			wantErr:  true,
 		},
 		{
@@ -3470,19 +3470,19 @@ func TestCloudstackK8sVersion(t *testing.T) {
 			wantErr:    nil,
 		},
 		{
-			testName:   "FailureK8sVersion",
+			testName:   "SuccessK8sVersion",
 			k8sVersion: Kube124,
-			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.23"),
+			wantErr:    nil,
 		},
 		{
 			testName:   "FailureK8sVersion",
 			k8sVersion: Kube125,
-			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.23"),
+			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.24"),
 		},
 		{
 			testName:   "FailureK8sVersion",
 			k8sVersion: Kube126,
-			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.23"),
+			wantErr:    errors.New("cloudstack provider does not support K8s version > 1.24"),
 		},
 		{
 			testName:   "InvalidK8sVersion",

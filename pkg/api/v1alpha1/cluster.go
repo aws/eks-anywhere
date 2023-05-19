@@ -873,11 +873,10 @@ func ValidateCloudStackK8sVersion(version KubernetesVersion) error {
 		return fmt.Errorf("converting kubeVersion %v to semver %v", version, err)
 	}
 
-	kube124Semver, _ := semver.New(string(Kube124) + ".0")
+	kube125Semver, _ := semver.New(string(Kube125) + ".0")
 
-	if kubeVersionSemver.Compare(kube124Semver) != -1 {
-		return errors.New("cloudstack provider does not support K8s version > 1.23")
+	if kubeVersionSemver.Compare(kube125Semver) != -1 {
+		return errors.New("cloudstack provider does not support K8s version > 1.24")
 	}
-
 	return nil
 }
