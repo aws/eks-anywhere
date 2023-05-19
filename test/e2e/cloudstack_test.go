@@ -1835,6 +1835,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
+}
 
 func TestCloudStackKubernetes124UbuntuAirgappedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
