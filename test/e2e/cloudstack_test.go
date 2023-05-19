@@ -1702,7 +1702,7 @@ func TestCloudStackKubernetes124AddRemoveAz(t *testing.T) {
 }
 
 // This test is skipped as registry mirror was not configured for CloudStack
-func TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror(t *testing.T) {
+func TestCloudStackKubernetes123RedhatAirgappedRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t,
@@ -1722,6 +1722,28 @@ func TestCloudStackKubernetes123UbuntuAirgappedRegistryMirror(t *testing.T) {
 		framework.WithRegistryMirrorEndpointAndCert(constants.CloudStackProviderName),
 	)
 
+	runAirgapConfigFlow(test, "10.0.0.1/8")
+}
+
+func TestCloudStackKubernetes124RedhatAirgappedRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t,
+			framework.WithCloudStackRedhat124(),
+			framework.WithCloudStackFillers(
+				framework.RemoveAllCloudStackAzs(),
+				framework.UpdateAddCloudStackAz3(),
+			),
+		),
+		framework.WithClusterFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		// framework.WithClusterFiller(api.WithExternalEtcdTopology(1)), there is a bug that the etcd node download etcd from internet
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithRegistryMirrorEndpointAndCert(constants.CloudStackProviderName),
+	)
 	runAirgapConfigFlow(test, "10.0.0.1/8")
 }
 
@@ -1835,26 +1857,4 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 
 	test.ManagementCluster.StopIfFailed()
 	test.DeleteManagementCluster()
-}
-
-func TestCloudStackKubernetes124UbuntuAirgappedRegistryMirror(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t,
-			framework.WithCloudStackRedhat124(),
-			framework.WithCloudStackFillers(
-				framework.RemoveAllCloudStackAzs(),
-				framework.UpdateAddCloudStackAz3(),
-			),
-		),
-		framework.WithClusterFiller(
-			api.WithStackedEtcdTopology(),
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-		),
-		// framework.WithClusterFiller(api.WithExternalEtcdTopology(1)), there is a bug that the etcd node download etcd from internet
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithRegistryMirrorEndpointAndCert(constants.CloudStackProviderName),
-	)
-	runAirgapConfigFlow(test, "10.0.0.1/8")
 }
