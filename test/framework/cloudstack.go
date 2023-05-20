@@ -28,6 +28,7 @@ const (
 	cloudstackManagementServer3Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_3"
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
 	cloudstackTemplateRedhat123Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_23"
+	cloudstackTemplateRedhat124Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_24"
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
 	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
@@ -56,6 +57,7 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackManagementServer3Var,
 	cloudstackSshAuthorizedKeyVar,
 	cloudstackTemplateRedhat123Var,
+	cloudstackTemplateRedhat124Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
 	cloudStackCidrVar,
@@ -79,6 +81,11 @@ type CloudStackOpt func(*CloudStack)
 // UpdateRedhatTemplate123Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.23.
 func UpdateRedhatTemplate123Var() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// UpdateRedhatTemplate124Var updates the CloudStackTemplate for all machines to the one corresponding to K8s 1.24.
+func UpdateRedhatTemplate124Var() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat124Var, api.WithCloudStackTemplateForAllMachines)
 }
 
 func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
@@ -142,6 +149,15 @@ func WithCloudStackRedhat123() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines),
+		)
+	}
+}
+
+// WithCloudStackRedhat124 returns a function which can be invoked to configure the Cloudstack object to be compatible with K8s 1.24.
+func WithCloudStackRedhat124() CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat124Var, api.WithCloudStackTemplateForAllMachines),
 		)
 	}
 }
@@ -257,6 +273,11 @@ func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfig
 // Redhat123Template returns cloudstack filler for 1.23 Ubuntu.
 func (c *CloudStack) Redhat123Template() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines)
+}
+
+// Redhat124Template returns cloudstack filler for 1.24 Ubuntu.
+func (c *CloudStack) Redhat124Template() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat124Var, api.WithCloudStackTemplateForAllMachines)
 }
 
 func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {

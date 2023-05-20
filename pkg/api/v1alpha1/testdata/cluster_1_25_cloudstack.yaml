@@ -21,7 +21,7 @@ spec:
   datacenterRef:
     kind: CloudStackDatacenterConfig
     name: eksa-unit-test
-  kubernetesVersion: "1.24"
+  kubernetesVersion: "1.25"
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
@@ -57,4 +57,4 @@ spec:
       sshAuthorizedKeys:
         - "mySshAuthorizedKey"
   template:
-    name: "centos7-k8s-124"
+    name: "centos7-k8s-125"
