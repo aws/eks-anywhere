@@ -814,6 +814,22 @@ type ClusterStatus struct {
 	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
 	// +optional
 	Conditions []clusterv1.Condition `json:"conditions,omitempty"`
+
+	// ReconciledGeneration represents the .metadata.generation the last time the
+	// cluster was successfully reconciled. It is the latest generation observed
+	// by the controller.
+	// NOTE: This field was added for internal use and we do not provide guarantees
+	// to its behavior if changed externally. Its meaning and implementation are
+	// subject to change in the future.
+	ReconciledGeneration int64 `json:"reconciledGeneration,omitempty"`
+
+	// ChildrenReconciledGeneration represents the sum of the .metadata.generation
+	// for all the linked objects for the cluster, observed the last time the
+	// cluster was successfully reconciled.
+	// NOTE: This field was added for internal use and we do not provide guarantees
+	// to its behavior if changed externally. Its meaning and implementation are
+	// subject to change in the future.
+	ChildrenReconciledGeneration int64 `json:"childrenReconciledGeneration,omitempty"`
 }
 
 type EksdReleaseRef struct {

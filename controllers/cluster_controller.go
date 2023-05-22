@@ -59,7 +59,7 @@ type ClusterReconciler struct {
 // PackagesClient handles curated packages operations from within the cluster
 // controller.
 type PackagesClient interface {
-	EnableFullLifecycle(ctx context.Context, log logr.Logger, clusterName string, kubeConfig string, chart *v1alpha1.Image, registry *registrymirror.RegistryMirror, options ...curatedpackages.PackageControllerClientOpt) error
+	EnableFullLifecycle(ctx context.Context, log logr.Logger, clusterName, kubeConfig string, chart *v1alpha1.Image, registry *registrymirror.RegistryMirror, options ...curatedpackages.PackageControllerClientOpt) error
 	ReconcileDelete(context.Context, logr.Logger, curatedpackages.KubeDeleter, *anywherev1.Cluster) error
 	Reconcile(context.Context, logr.Logger, client.Client, *anywherev1.Cluster) error
 }
@@ -236,14 +236,29 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}
 
-	if err = r.ensureClusterOwnerReferences(ctx, cluster); err != nil {
+	config, err := r.buildClusterConfig(ctx, cluster)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	return r.reconcile(ctx, log, cluster)
+	if err = r.ensureClusterOwnerReferences(ctx, cluster, config); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	aggregatedGeneration := aggregatedGeneration(config)
+
+	// If there is no difference between the aggregated generation and childrenReconciledGeneration,
+	// and there is no difference in the reconciled generation and .metadata.generation of the cluster,
+	// then return without any further processing.
+	if aggregatedGeneration == cluster.Status.ChildrenReconciledGeneration && cluster.Status.ReconciledGeneration == cluster.Generation {
+		log.Info("Generation and aggregated generation match reconciled generations for cluster and child objects, skipping reconciliation.")
+		return ctrl.Result{}, nil
+	}
+
+	return r.reconcile(ctx, log, cluster, aggregatedGeneration)
 }
 
-func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
+func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, aggregatedGeneration int64) (ctrl.Result, error) {
 	clusterProviderReconciler := r.providerReconcilerRegistry.Get(cluster.Spec.DatacenterRef.Kind)
 
 	var reconcileResult controller.Result
@@ -273,11 +288,23 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 		return reconcileResult.ToCtrlResult(), nil
 	}
 
-	if reconcileResult, err = r.postClusterProviderReconcile(ctx, log, cluster); err != nil {
+	reconcileResult, err = r.postClusterProviderReconcile(ctx, log, cluster)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	return reconcileResult.ToCtrlResult(), nil
+	if reconcileResult.Return() {
+		return reconcileResult.ToCtrlResult(), nil
+	}
+
+	// At the end of the reconciliation, if there have been no requeues or errors, we update the cluster's status.
+	// NOTE: This update must be the last step in the reconciliation process to denote the complete reconciliation.
+	// No other mutating changes or reconciliations must happen in this loop after this step, so all such changes must
+	// be placed above this line.
+	cluster.Status.ReconciledGeneration = cluster.Generation
+	cluster.Status.ChildrenReconciledGeneration = aggregatedGeneration
+
+	return ctrl.Result{}, nil
 }
 
 func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
@@ -384,7 +411,7 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 	return ctrl.Result{}, nil
 }
 
-func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster) error {
+func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywherev1.Cluster) (*cluster.Config, error) {
 	builder := cluster.NewDefaultConfigClientBuilder()
 	config, err := builder.Build(ctx, clientutil.NewKubeClient(r.client), clus)
 	if err != nil {
@@ -392,13 +419,16 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 		if apierrors.IsNotFound(err) && errors.As(err, &notFound) {
 			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Dependent cluster objects don't exist: %s", notFound))
 		}
-		return err
+		return nil, err
 	}
 
-	childObjs := config.ChildObjects()
-	for _, obj := range childObjs {
+	return config, nil
+}
+
+func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *cluster.Config) error {
+	for _, obj := range config.ChildObjects() {
 		numberOfOwnerReferences := len(obj.GetOwnerReferences())
-		if err = controllerutil.SetOwnerReference(clus, obj, r.client.Scheme()); err != nil {
+		if err := controllerutil.SetOwnerReference(clus, obj, r.client.Scheme()); err != nil {
 			return errors.Wrapf(err, "setting cluster owner reference for %s", obj.GetObjectKind())
 		}
 
@@ -407,12 +437,24 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 			continue
 		}
 
-		if err = r.client.Update(ctx, obj); err != nil {
+		if err := r.client.Update(ctx, obj); err != nil {
 			return errors.Wrapf(err, "updating object (%s) with cluster owner reference", obj.GetObjectKind())
 		}
 	}
 
 	return nil
+}
+
+// aggregatedGeneration computes the combined generation of the resources linked
+// by the cluster by summing up the .metadata.generation value for all the child
+// objects of this cluster.
+func aggregatedGeneration(config *cluster.Config) int64 {
+	var aggregatedGeneration int64
+	for _, obj := range config.ChildObjects() {
+		aggregatedGeneration += obj.GetGeneration()
+	}
+
+	return aggregatedGeneration
 }
 
 func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.Cluster) error {
