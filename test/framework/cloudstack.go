@@ -302,3 +302,14 @@ func (c *CloudStack) WithRedhat123() api.ClusterConfigFiller {
 		),
 	)
 }
+
+// WithRedhat124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
+// as well as the right redhat template for all CloudStackMachineConfigs.
+func (c *CloudStack) WithRedhat124() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(anywherev1.Kube124)),
+		api.CloudStackToConfigFiller(
+			UpdateRedhatTemplate124Var(),
+		),
+	)
+}
