@@ -552,8 +552,8 @@ github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
 github.com/aws/etcdadm-bootstrap-provider v1.0.7-rc3 h1:y4xgMDWx3P+lc1hUHI1TDnDZjLDWUZ23EaqroHjWjKc=
 github.com/aws/etcdadm-bootstrap-provider v1.0.7-rc3/go.mod h1:PN7CO02LPlWz02BjsVfIuqQFbTRu51NzN6SKcry5+30=
-github.com/aws/etcdadm-controller v1.0.5 h1:HQiVs464UFxnYdg7bL6b4ErgeFxyoDr5iZH0DLgSNYQ=
-github.com/aws/etcdadm-controller v1.0.5/go.mod h1:YmQm1ngTGoEKP8dutSUiTwPW+mpr0pwr4bPt2Td0Mgo=
+github.com/aws/etcdadm-controller v1.0.6-rc3 h1:hTu0pagWPU467scMtaR2rmaNIgMcFMNeGYZAJvFa8g0=
+github.com/aws/etcdadm-controller v1.0.6-rc3/go.mod h1:60QVQeYClyeV22MpI+SMBDx/dXVf/pZNdyiWDM2OBZc=
 github.com/aws/smithy-go v1.11.2/go.mod h1:3xHYmszWVx2c0kIwQeEVf9uSm4fYZt67FBJnwub1bgM=
 github.com/aws/smithy-go v1.13.2 h1:TBLKyeJfXTrTXRHmsv4qWt9IQGYyWThLYaJWSahTOGE=
 github.com/aws/smithy-go v1.13.2/go.mod h1:Tg+OJXh4MB2R/uN61Ko2f6hTZwB/ZYGOtib8J3gBHzA=
@@ -779,8 +779,9 @@ github.com/docker/cli v23.0.5+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvM
 github.com/docker/distribution v0.0.0-20190905152932-14b96e55d84c/go.mod h1:0+TTO4EOBfRPhZXAeF1Vu+W3hHZ8eLp8PgKVZlcvtFY=
 github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/distribution v2.7.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
-github.com/docker/distribution v2.8.1+incompatible h1:Q50tZOPR6T/hjNsyc9g8/syEs6bk8XXApsHjKukMl68=
 github.com/docker/distribution v2.8.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
+github.com/docker/distribution v2.8.2+incompatible h1:T3de5rq0dB1j30rp0sA2rER+m322EBzniBPB6ZIzuh8=
+github.com/docker/distribution v2.8.2+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker v20.10.7+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker v23.0.2+incompatible h1:q81C2qQ/EhPm8COZMUGOQYh4qLv4Xu6CXELJ3WK/mlU=
