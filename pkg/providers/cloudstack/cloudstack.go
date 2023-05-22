@@ -35,9 +35,9 @@ import (
 )
 
 const (
-	eksaLicense                = "EKSA_LICENSE"
-	etcdTemplateNameKey        = "etcdTemplateName"
-	cpTemplateNameKey          = "controlPlaneTemplateName"
+	eksaLicense         = "EKSA_LICENSE"
+	etcdTemplateNameKey = "etcdTemplateName"
+	cpTemplateNameKey   = "controlPlaneTemplateName"
 )
 
 //go:embed config/template-cp.yaml

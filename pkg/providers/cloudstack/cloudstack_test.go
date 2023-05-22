@@ -2101,7 +2101,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_NameChanged",
+			Name: "Machine_DiskOffering_NameChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2114,7 +2114,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_IDChanged",
+			Name: "Machine_DiskOffering_IDChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2127,7 +2127,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_SizeChanged",
+			Name: "Machine_DiskOffering_SizeChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2141,7 +2141,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_MountPathChanged",
+			Name: "Machine_DiskOffering_MountPathChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2155,7 +2155,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_DeviceChanged",
+			Name: "Machine_DiskOffering_DeviceChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2169,7 +2169,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_FilesystemChanged",
+			Name: "Machine_DiskOffering_FilesystemChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2183,7 +2183,7 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
-			Name: "Machine_ComputeOffering_LabelChanged",
+			Name: "Machine_DiskOffering_LabelChanged",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 					CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -2193,6 +2193,92 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 				}
 				nw.Spec.DiskOffering = old.Spec.DiskOffering.DeepCopy()
 				nw.Spec.DiskOffering.Label = "new_label"
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_DiskOffering_ToNil",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					MountPath:  "test",
+					Device:     "test",
+					Filesystem: "test",
+				}
+				nw.Spec.DiskOffering = nil
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_DiskOffering_ToZeroValue",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+					MountPath:  "test",
+					Device:     "test",
+					Filesystem: "test",
+				}
+				nw.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_DiskOffering_Nil",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.DiskOffering = nil
+				nw.Spec.DiskOffering = nil
+			},
+			Expect: false,
+		},
+		{
+			Name: "Machine_ComputeOffering_NewID",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "test",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_NewName",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Name: "test",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_IDChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "test",
+				}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "changed",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_NameChanged",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Name: "test",
+				}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Name: "changed",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_ComputeOffering_ToZeroValue",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+					Id: "test",
+				}
+				nw.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
 			},
 			Expect: true,
 		},
@@ -2219,6 +2305,17 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 			Expect: true,
 		},
 		{
+			Name: "Machine_UserCustomDetails_ToNil",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "bar",
+				}
+
+				nw.Spec.UserCustomDetails = nil
+			},
+			Expect: true,
+		},
+		{
 			Name: "Machine_UserCustomDetails_Replace",
 			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
 				old.Spec.UserCustomDetails = map[string]string{
@@ -2226,6 +2323,21 @@ func TestNeedNewMachineTemplate(t *testing.T) {
 				}
 
 				nw.Spec.UserCustomDetails = map[string]string{
+					"qux": "baz",
+				}
+			},
+			Expect: true,
+		},
+		{
+			Name: "Machine_UserCustomDetails_ReplaceEmptyValue",
+			ConfigureMachines: func(old, nw *v1alpha1.CloudStackMachineConfig) {
+				old.Spec.UserCustomDetails = map[string]string{
+					"foo": "",
+					"qux": "baz",
+				}
+
+				nw.Spec.UserCustomDetails = map[string]string{
+					"bar": "",
 					"qux": "baz",
 				}
 			},
