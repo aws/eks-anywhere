@@ -25,8 +25,8 @@ func CheckPreflightDaemonSetReady(ciliumDaemonSet, preflightDaemonSet *v1.Daemon
 		return err
 	}
 
-	if ciliumDaemonSet.Status.NumberReady != preflightDaemonSet.Status.NumberReady {
-		return fmt.Errorf("cilium preflight check DS is not ready: %d want and %d ready", ciliumDaemonSet.Status.NumberReady, preflightDaemonSet.Status.NumberReady)
+	if preflightDaemonSet.Status.DesiredNumberScheduled != preflightDaemonSet.Status.NumberReady {
+		return fmt.Errorf("cilium preflight check DS is not ready: %d want and %d ready", preflightDaemonSet.Status.DesiredNumberScheduled, preflightDaemonSet.Status.NumberReady)
 	}
 	return nil
 }
