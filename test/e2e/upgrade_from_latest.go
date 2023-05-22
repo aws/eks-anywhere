@@ -4,8 +4,6 @@
 package e2e
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -66,10 +64,6 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 	test.ManagementCluster.StopIfFailed()
 
 	cluster := test.ManagementCluster.GetEKSACluster()
-	if os.Getenv("MANUAL_TEST_PAUSE") == "true" {
-		test.T.Log("Press enter to continue with the cleanup after you are done with your manual investigation: ")
-		fmt.Scanln()
-	}
 
 	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
@@ -81,12 +75,10 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 		)
 		wc.ApplyClusterManifest()
 		wc.ValidateClusterState()
-		if os.Getenv("MANUAL_TEST_PAUSE") == "true" {
-			test.T.Log("Press enter to continue with the cleanup after you are done with your manual investigation: ")
-			fmt.Scanln()
-		}
+		wc.StopIfFailed()
 		wc.DeleteClusterWithKubectl()
 		wc.ValidateClusterDelete()
+		wc.StopIfFailed()
 	})
 
 	// Create workload cluster with old bundle
@@ -99,8 +91,10 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 		wc.ApplyClusterManifest()
 		wc.WaitForKubeconfig()
 		wc.ValidateClusterState()
+		wc.StopIfFailed()
 		wc.DeleteClusterWithKubectl()
 		wc.ValidateClusterDelete()
+		wc.StopIfFailed()
 	})
 
 	test.DeleteManagementCluster()
