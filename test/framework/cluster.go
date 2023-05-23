@@ -2023,7 +2023,7 @@ func (e *ClusterE2ETest) ValidateClusterState() {
 
 // ValidateClusterStateWithT runs a set of validations against the cluster to identify an invalid cluster state and accepts *testing.T as a parameter.
 func (e *ClusterE2ETest) ValidateClusterStateWithT(t *testing.T) {
-	validateClusterState(e.T.(*testing.T), e)
+	validateClusterState(t, e)
 }
 
 func validateClusterState(t *testing.T, e *ClusterE2ETest) {
