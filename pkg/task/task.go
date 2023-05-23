@@ -47,6 +47,7 @@ type CommandContext struct {
 	Profiler                  *Profiler
 	OriginalError             error
 	ManagementClusterStateDir string
+	ForceCleanup              bool
 }
 
 func (c *CommandContext) SetError(err error) {
