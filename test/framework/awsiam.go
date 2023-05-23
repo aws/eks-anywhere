@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/awsiam"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -130,4 +131,23 @@ func (e *ClusterE2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error)
 
 func (e *ClusterE2ETest) iamAuthKubeconfigFilePath() string {
 	return filepath.Join(e.ClusterName, fmt.Sprintf("%s-aws.kubeconfig", e.ClusterName))
+}
+
+// WithAwsIamEnvVarCheck returns a ClusterE2ETestOpt that checks for the required env vars.
+func WithAwsIamEnvVarCheck() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		checkRequiredEnvVars(e.T, awsIamRequiredEnvVars)
+	}
+}
+
+// WithAwsIamConfig sets aws iam in cluster config.
+func WithAwsIamConfig() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(func(config *cluster.Config) {
+		config.AWSIAMConfigs[defaultClusterName] = api.NewAWSIamConfig(defaultClusterName,
+			api.WithAWSIamAWSRegion("us-west-1"),
+			api.WithAWSIamPartition("aws"),
+			api.WithAWSIamBackendMode("EKSConfigMap"),
+			api.WithAWSIamMapRoles(api.AddAWSIamRole(withArnFromEnv(AWSIamRoleArn), "kubernetes-admin", []string{"system:masters"})),
+		)
+	}, api.ClusterToConfigFiller(api.WithAWSIamIdentityProviderRef(defaultClusterName)))
 }
