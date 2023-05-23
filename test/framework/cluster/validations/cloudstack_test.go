@@ -24,56 +24,6 @@ const (
 	azCredentialsRef = "global"
 )
 
-// type failureDomainOpts func(fd *cloudstackv1.CloudStackFailureDomain)
-
-// func failureDomain(opts ...failureDomainOpts) *cloudstackv1.CloudStackFailureDomain {
-// 	fd := &cloudstackv1.CloudStackFailureDomain{
-// 		TypeMeta: metav1.TypeMeta{
-// 			Kind:       "CloudStackFailureDomain",
-// 			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
-// 		},
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Namespace: constants.EksaSystemNamespace,
-// 			Name:      "test-failure-domain",
-// 		},
-// 		Spec: cloudstackv1.CloudStackFailureDomainSpec{
-// 			Name:    azName1,
-// 			Zone:    cloudstackv1.CloudStackZoneSpec{},
-// 			Account: azAccount,
-// 			Domain:  azDomain,
-// 			ACSEndpoint: corev1.SecretReference{
-// 				Name:      azCredentialsRef,
-// 				Namespace: constants.EksaSystemNamespace,
-// 			},
-// 		},
-// 	}
-
-// 	for _, opt := range opts {
-// 		opt(fd)
-// 	}
-
-// 	return fd
-// }
-
-// type availabilityZoneOpts func(az *v1alpha1.CloudStackAvailabilityZone)
-
-// func availabilityZone(opts ...availabilityZoneOpts) *v1alpha1.CloudStackAvailabilityZone {
-// 	az := &v1alpha1.CloudStackAvailabilityZone{
-// 		Name:                  azName1,
-// 		CredentialsRef:        azCredentialsRef,
-// 		Domain:                azDomain,
-// 		Account:               azAccount,
-// 		ManagementApiEndpoint: "test-api-endpoint",
-// 		Zone:                  v1alpha1.CloudStackZone{},
-// 	}
-
-// 	for _, opt := range opts {
-// 		opt(az)
-// 	}
-
-// 	return az
-// }
-
 func TestValidateAvailabilityZones(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

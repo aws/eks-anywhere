@@ -141,7 +141,7 @@ func cloudStackAPIWorkloadUpgradeTests(wc *framework.WorkloadCluster, cloudstack
 			},
 		},
 		{
-			name: "scale up and down cp and worker node group and availability zones ",
+			name: "scale up and down cp and worker node group ",
 			steps: []cloudStackAPIUpgradeTestStep{
 				cloudStackAPIUpdateTestBaseStep(wc.ClusterE2ETest, cloudstack),
 				{
@@ -154,7 +154,7 @@ func cloudStackAPIWorkloadUpgradeTests(wc *framework.WorkloadCluster, cloudstack
 					),
 				},
 				{
-					name: "scaling down cp and worker node group + remove availability zone",
+					name: "scaling down cp and worker node group",
 					configFiller: api.JoinClusterConfigFillers(
 						api.ClusterToConfigFiller(
 							api.WithControlPlaneCount(1),
