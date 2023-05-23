@@ -4,11 +4,14 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
+	"github.com/aws/eks-anywhere/test/framework/cluster/validations"
 )
 
 const (
@@ -110,6 +113,11 @@ func UpdateAddCloudStackAz1() api.CloudStackFiller {
 
 func RemoveAllCloudStackAzs() api.CloudStackFiller {
 	return api.RemoveCloudStackAzs()
+}
+
+// CloudStackCredentialsAz1 returns the value of the environment variable for cloudstackCredentialsVar.
+func CloudStackCredentialsAz1() string {
+	return os.Getenv(cloudstackCredentialsVar)
 }
 
 func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
@@ -289,7 +297,12 @@ func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, worke
 
 // ClusterStateValidations returns a list of provider specific validations.
 func (c *CloudStack) ClusterStateValidations() []clusterf.StateValidation {
-	return []clusterf.StateValidation{}
+	return []clusterf.StateValidation{
+		clusterf.RetriableStateValidation(
+			retrier.NewWithMaxRetries(60, 5*time.Second),
+			validations.ValidateAvailabilityZones,
+		),
+	}
 }
 
 // WithRedhat123 returns a cluster config filler that sets the kubernetes version of the cluster to 1.23
@@ -312,4 +325,17 @@ func (c *CloudStack) WithRedhat124() api.ClusterConfigFiller {
 			UpdateRedhatTemplate124Var(),
 		),
 	)
+}
+
+// WithRedhatVersion returns a cluster config filler that sets the kubernetes version of the cluster to the k8s
+// version provider, as well as the right redhat template for all CloudStackMachineConfigs.
+func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+	switch version {
+	case anywherev1.Kube123:
+		return c.WithRedhat123()
+	case anywherev1.Kube124:
+		return c.WithRedhat124()
+	default:
+		return nil
+	}
 }

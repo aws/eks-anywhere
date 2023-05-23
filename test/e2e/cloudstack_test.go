@@ -1753,15 +1753,42 @@ func TestCloudStackKubernetes123RedHatAPI(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	).WithClusterConfig(
-		cloudStackAPIClusterBaseChanges(cloudstack),
 		api.ClusterToConfigFiller(
-			api.WithStackedEtcdTopology(),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
 		),
+		cloudstack.WithRedhat123(),
 	)
 
 	test.CreateCluster()
 	// Run mgmt cluster API tests
-	tests := cloudstackAPIManagementClusterUpgradeTests(cloudstack)
+	tests := cloudstackAPIManagementClusterUpgradeTests(test, cloudstack)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			runCloudStackAPIUpgradeTest(t, test, tt)
+		})
+	}
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
+func TestCloudStackKubernetes124RedHatAPI(t *testing.T) {
+	cloudstack := framework.NewCloudStack(t)
+	test := framework.NewClusterE2ETest(
+		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		cloudstack.WithRedhat124(),
+	)
+
+	test.CreateCluster()
+	// Run mgmt cluster API tests
+	tests := cloudstackAPIManagementClusterUpgradeTests(test, cloudstack)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			runCloudStackAPIUpgradeTest(t, test, tt)
@@ -1792,21 +1819,40 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 			framework.WithClusterName(test.NewWorkloadClusterName()),
 			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
-			cloudStackAPIClusterBaseChanges(cloudstack),
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithStackedEtcdTopology(),
+				api.WithControlPlaneCount(1),
+			),
+			cloudstack.WithRedhat123(),
+		),
+	)
+
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
 			),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
 	test.CreateManagementCluster()
+
 	// Create workload clusters
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.ApplyClusterManifest()
 		wc.WaitForKubeconfig()
 		wc.ValidateClusterState()
-		tests := cloudStackAPIWorkloadUpgradeTests(cloudstack)
+
+		tests := cloudStackAPIWorkloadUpgradeTests(wc, cloudstack)
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
@@ -1822,7 +1868,72 @@ func TestCloudStackMulticlusterWorkloadClusterAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestCloudStackKubernetesRedHat123UpgradeFromLatestMinorReleaseAPI(t *testing.T) {
+func TestCloudStackMulticlusterWorkloadClusterWithNewSecretCredentialsAPI(t *testing.T) {
+	cloudstack := framework.NewCloudStack(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, cloudstack, framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+		cloudstack.WithRedhat124(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+
+	test.WithWorkloadClusters(framework.NewClusterE2ETest(
+		t,
+		cloudstack,
+		framework.WithClusterName(test.NewWorkloadClusterName()),
+		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithManagementCluster(managementCluster.ClusterName),
+			api.WithStackedEtcdTopology(),
+			api.WithControlPlaneCount(1),
+		),
+		api.CloudStackToConfigFiller(
+			api.WithCloudStackCredentialsRef("test-creds"),
+		),
+		cloudstack.WithRedhat123(),
+	))
+
+	test.WithWorkloadClusters(framework.NewClusterE2ETest(
+		t,
+		cloudstack,
+		framework.WithClusterName(test.NewWorkloadClusterName()),
+		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithManagementCluster(managementCluster.ClusterName),
+			api.WithStackedEtcdTopology(),
+			api.WithControlPlaneCount(1),
+		),
+		api.CloudStackToConfigFiller(
+			api.WithCloudStackCredentialsRef("test-creds"),
+		),
+		cloudstack.WithRedhat124(),
+	))
+
+	test.CreateManagementCluster()
+	test.ManagementCluster.CreateCloudStackCredentialsSecretFromEnvVar("test-creds", framework.CloudStackCredentialsAz1())
+
+	// Create workload clusters
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
+func TestCloudStackKubernetesRedHat123To124UpgradeFromLatestMinorReleaseAPI(t *testing.T) {
 	release := latestMinorRelease(t)
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
@@ -1887,11 +1998,28 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 			framework.WithClusterName(test.NewWorkloadClusterName()),
 			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 		).WithClusterConfig(
-			cloudStackAPIClusterBaseChanges(cloudstack),
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithExternalEtcdTopology(1),
+				api.WithControlPlaneCount(1),
 			),
+			cloudstack.WithRedhat123(),
+		),
+	)
+
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithStackedEtcdTopology(),
+				api.WithControlPlaneCount(1),
+			),
+			cloudstack.WithRedhat124(),
 		),
 	)
 
@@ -1902,7 +2030,7 @@ func TestCloudStackMulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
 		test.PushWorkloadClusterToGit(wc)
 		wc.WaitForKubeconfig()
 		wc.ValidateClusterState()
-		tests := cloudStackAPIWorkloadUpgradeTests(cloudstack)
+		tests := cloudStackAPIWorkloadUpgradeTests(wc, cloudstack)
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {

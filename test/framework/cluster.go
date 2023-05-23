@@ -21,6 +21,7 @@ import (
 
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
 	rctrl "github.com/tinkerbell/rufio/controllers"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
@@ -35,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -808,10 +810,20 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	}
 }
 
-// UpgradeClusterWithKubectl uses client-side logic to upgrade a cluster.
+// UpgradeClusterWithKubectl uses client-side logic to upgrade a cluster that was created using the CLI.
 func (e *ClusterE2ETest) UpgradeClusterWithKubectl(fillers ...api.ClusterConfigFiller) {
-	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
-	e.parseClusterConfigFromDisk(fullClusterConfigLocation)
+	// The CLI adds the BundlesRef field to the config and writes it to disk.
+	// We want to grab the existing BundlesRef, and update our test ClusterConfig
+	// because updating it with a nil value after previously being set will throw a webhook error.
+	if e.ClusterConfig.Cluster.Spec.BundlesRef == nil {
+		fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
+		e.T.Logf("Parsing cluster config from disk: %s", fullClusterConfigLocation)
+		config, err := cluster.ParseConfigFromFile(fullClusterConfigLocation)
+		if err != nil {
+			e.T.Fatalf("Failed parsing generated cluster config: %s", err)
+		}
+		e.ClusterConfig.Cluster.Spec.BundlesRef = config.Cluster.Spec.BundlesRef
+	}
 	e.UpdateClusterConfig(fillers...)
 	e.ApplyClusterManifest()
 }
@@ -2146,5 +2158,61 @@ func (e *ClusterE2ETest) setFeatureFlagForUnreleasedKubernetesVersion(version v1
 		// Set feature flag for the unreleased k8s version when applicable
 		e.T.Logf("Setting k8s version support feature flag...")
 		os.Setenv(features.K8s127SupportEnvVar, "true")
+	}
+}
+
+// CreateCloudStackCredentialsSecretFromEnvVar parses the cloudstack credentials from an environment variable,
+// builds a new secret object from the credentials in the provided profile and creates it in the cluster.
+func (e *ClusterE2ETest) CreateCloudStackCredentialsSecretFromEnvVar(name string, profileName string) {
+	ctx := context.Background()
+
+	execConfig, err := decoder.ParseCloudStackCredsFromEnv()
+	if err != nil {
+		e.T.Fatalf("error parsing cloudstack credentials from env: %v", err)
+		return
+	}
+
+	var selectedProfile *decoder.CloudStackProfileConfig
+	for _, p := range execConfig.Profiles {
+		if profileName == p.Name {
+			selectedProfile = &p
+			break
+		}
+	}
+
+	if selectedProfile == nil {
+		e.T.Fatalf("error finding profile with the name %s", profileName)
+		return
+	}
+
+	data := map[string][]byte{}
+	data[decoder.APIKeyKey] = []byte(selectedProfile.ApiKey)
+	data[decoder.SecretKeyKey] = []byte(selectedProfile.SecretKey)
+	data[decoder.APIUrlKey] = []byte(selectedProfile.ManagementUrl)
+	data[decoder.VerifySslKey] = []byte(selectedProfile.VerifySsl)
+
+	// Create a new secret with the credentials from the profile, but with a new name.
+	secret := corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Data: data,
+	}
+
+	secretContent, err := yaml.Marshal(secret)
+	if err != nil {
+		e.T.Fatalf("error mashalling credentials secret : %v", err)
+		return
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), secretContent,
+		constants.EksaSystemNamespace)
+	if err != nil {
+		e.T.Fatalf("error applying credentials secret to cluster %s: %v", e.Cluster().Name, err)
+		return
 	}
 }
