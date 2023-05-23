@@ -41,7 +41,7 @@ https://github.com/aws/eks-distro-build-tooling/release
 ** github.com/aws/etcdadm-bootstrap-provider/api/v1beta1; version v1.0.7-rc3 --
 https://github.com/aws/etcdadm-bootstrap-provider
 
-** github.com/aws/etcdadm-controller/api/v1beta1; version v1.0.5 --
+** github.com/aws/etcdadm-controller/api/v1beta1; version v1.0.6-rc3 --
 https://github.com/aws/etcdadm-controller
 
 ** github.com/aws/smithy-go; version v1.13.2 --
@@ -59,7 +59,7 @@ https://github.com/coredns/corefile-migration
 ** github.com/docker/cli/cli/config; version v23.0.5+incompatible --
 https://github.com/docker/cli
 
-** github.com/docker/distribution; version v2.8.1+incompatible --
+** github.com/docker/distribution; version v2.8.2+incompatible --
 https://github.com/distribution/distribution
 
 ** github.com/docker/docker; version v23.0.2+incompatible --
