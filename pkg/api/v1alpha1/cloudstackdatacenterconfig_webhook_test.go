@@ -7,7 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 func TestCloudStackDatacenterDatacenterConfigSetDefaults(t *testing.T) {
@@ -41,26 +40,6 @@ func TestCloudStackDatacenterDatacenterConfigSetDefaults(t *testing.T) {
 	originalDatacenter.Default()
 
 	g.Expect(originalDatacenter).To(Equal(*expectedDatacenter))
-}
-
-func TestCloudStackDatacenterValidateCreateLifecycleApiDisabled(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "false")
-
-	c := cloudstackDatacenterConfig()
-	g := NewWithT(t)
-
-	g.Expect(c.ValidateCreate()).NotTo(Succeed())
-}
-
-func TestCloudStackDatacenterValidateCreateLifecycleApiEnabled(t *testing.T) {
-	features.ClearCache()
-	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-
-	c := cloudstackDatacenterConfig()
-	g := NewWithT(t)
-
-	g.Expect(c.ValidateCreate()).To(Succeed())
 }
 
 func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
