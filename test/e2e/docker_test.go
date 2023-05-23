@@ -800,20 +800,20 @@ func TestDockerKubernetes123to124UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	managementCluster.UpdateClusterConfig(api.ClusterToConfigFiller(
 		api.WithKubernetesVersion(v1alpha1.Kube123),
 	))
+
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-	test.WithWorkloadClusters(
-		framework.NewClusterE2ETest(
-			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube123),
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
+	wc := framework.NewClusterE2ETest(
+		t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
 	)
+	wc.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	wc.UpdateClusterConfig(api.ClusterToConfigFiller(
+		api.WithKubernetesVersion(v1alpha1.Kube123),
+		api.WithManagementCluster(managementCluster.ClusterName),
+		api.WithControlPlaneCount(1),
+		api.WithWorkerNodeCount(1),
+		api.WithStackedEtcdTopology(),
+	))
+	test.WithWorkloadClusters(wc)
 
 	runMulticlusterUpgradeFromReleaseFlowAPI(
 		test,

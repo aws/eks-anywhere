@@ -47,29 +47,55 @@ func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRel
 	test.DeleteCluster()
 }
 
-func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, filler ...api.ClusterConfigFiller) {
+func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, upgradeChanges api.ClusterConfigFiller) {
 	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
+
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
-		wc.ApplyClusterManifest()
-		wc.WaitForKubeconfig()
-		wc.ValidateClusterState()
+		wc.CreateCluster(framework.ExecuteWithEksaRelease(release))
+		wc.ValidateCluster(wc.ClusterConfig.Cluster.Spec.KubernetesVersion)
+		wc.StopIfFailed()
 	})
-	test.ManagementCluster.UpdateClusterConfig(filler...)
+
+	oldCluster := test.ManagementCluster.GetEKSACluster()
+
+	test.ManagementCluster.UpdateClusterConfig(upgradeChanges)
 	test.ManagementCluster.UpgradeCluster()
 	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	test.ManagementCluster.StopIfFailed()
+
 	cluster := test.ManagementCluster.GetEKSACluster()
+
 	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.
 	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
 		wc.UpdateClusterConfig(
+			api.JoinClusterConfigFillers(upgradeChanges),
 			api.ClusterToConfigFiller(
 				api.WithBundlesRef(cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace, cluster.Spec.BundlesRef.APIVersion),
 			),
 		)
 		wc.ApplyClusterManifest()
 		wc.ValidateClusterState()
+		wc.StopIfFailed()
 		wc.DeleteClusterWithKubectl()
 		wc.ValidateClusterDelete()
+		wc.StopIfFailed()
 	})
+
+	// Create workload cluster with old bundle
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.UpdateClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithBundlesRef(oldCluster.Spec.BundlesRef.Name, oldCluster.Spec.BundlesRef.Namespace, oldCluster.Spec.BundlesRef.APIVersion),
+			),
+		)
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		wc.StopIfFailed()
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+		wc.StopIfFailed()
+	})
+
 	test.DeleteManagementCluster()
 }
