@@ -1145,7 +1145,7 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	return nil
 }
 
-// PauseCAPIWorkloadClusters pauses all workload CAPI clusters except the management cluster
+// PauseCAPIWorkloadClusters pauses all workload CAPI clusters except the management cluster.
 func (c *ClusterManager) PauseCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error {
 	clusters, err := c.clusterClient.GetClusters(ctx, managementCluster)
 	if err != nil {
@@ -1164,7 +1164,7 @@ func (c *ClusterManager) PauseCAPIWorkloadClusters(ctx context.Context, manageme
 	return nil
 }
 
-// ResumeCAPIWorkloadClusters resumes all workload CAPI clusters except the management cluster
+// ResumeCAPIWorkloadClusters resumes all workload CAPI clusters except the management cluster.
 func (c *ClusterManager) ResumeCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error {
 	clusters, err := c.clusterClient.GetClusters(ctx, managementCluster)
 	if err != nil {

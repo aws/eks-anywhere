@@ -315,9 +315,8 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			to: &types.Cluster{
 				KubeconfigFile: "to.kubeconfig",
 			},
-			clusterName: "test-cluster",
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig",
-				"--filter-cluster", "test-cluster"},
+			clusterName:  "test-cluster",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig", "--filter-cluster", "test-cluster"},
 		},
 	}
 
