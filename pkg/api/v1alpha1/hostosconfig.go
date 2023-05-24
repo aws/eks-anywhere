@@ -22,7 +22,7 @@ func validateHostOSConfig(config *HostOSConfiguration, osFamily OSFamily) error 
 	}
 
 	for _, certBundle := range config.CertBundles {
-		if err := validateCertBundles(&certBundle); err != nil {
+		if err := validateCertBundles(&certBundle, osFamily); err != nil {
 			return err
 		}
 	}
@@ -60,16 +60,19 @@ func addNTPScheme(server string) string {
 	return fmt.Sprintf("udp://%s", server)
 }
 
-func validateCertBundles(config *certBundle) error {
+func validateCertBundles(config *certBundle, osFamily OSFamily) error {
 	if config == nil {
 		return nil
 	}
 
-	// add what we need to check here
-	if config.Name == "" {
-		return fmt.Errorf("certBundles name cannot be empty")
+	if osFamily != Bottlerocket {
+		return fmt.Errorf("CertBundles can only be used with osFamily: \"%s\"", Bottlerocket)
 	}
-	if err := ValidateTrustedCertBundle(config.Data); err != nil {
+
+	if config.Name == "" {
+		return errors.New("certBundles name cannot be empty")
+	}
+	if err := validateTrustedCertBundle(config.Data); err != nil {
 		return err
 	}
 	return nil
@@ -146,8 +149,8 @@ func validateBottlerocketBootSettingsConfiguration(config *v1beta1.BottlerocketB
 	return nil
 }
 
-// ValidateTrustedCertBundle validates that the cert is valid.
-func ValidateTrustedCertBundle(certBundle string) error {
+// validateTrustedCertBundle validates that the cert is valid.
+func validateTrustedCertBundle(certBundle string) error {
 	var blocks []byte
 	rest := []byte(certBundle)
 

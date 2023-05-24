@@ -293,9 +293,6 @@ func buildTemplateMapCP(
 					etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot.BootKernelParameters != nil {
 					values["etcdBootParameters"] = etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Boot.BootKernelParameters
 				}
-				// if etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.CertBundles != nil {
-				// 	values["etcdCertBundles"] = etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.CertBundles
-				// }
 			}
 		}
 	}

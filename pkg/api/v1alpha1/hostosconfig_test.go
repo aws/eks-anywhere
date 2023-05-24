@@ -264,6 +264,27 @@ OelAabtJKd8B2BUsR7JRIN8=
 			wantErr:  "",
 		},
 		{
+			name: "valid nil certBunldes",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: nil,
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "",
+		},
+		{
+			name: "invalid cert no data",
+			hostOSConfig: &HostOSConfiguration{
+				CertBundles: []certBundle{
+					{
+						Name: "bundle1",
+						Data: "",
+					},
+				},
+			},
+			osFamily: Bottlerocket,
+			wantErr:  "failed to parse certificate PEM",
+		},
+		{
 			name: "invalid cert bundle no name",
 			hostOSConfig: &HostOSConfiguration{
 				CertBundles: []certBundle{

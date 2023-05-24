@@ -35,12 +35,12 @@ spec:
 {{- end }}
 {{- if .certBundles }}
         certBundles:
-          {{- range .certBundles }}
+        {{- range .certBundles }}
         - name: "{{ .Name }}"
           data: |
 {{ .Data | indent 12 }}
-          {{- end }}
-{{- end}}
+        {{- end }}
+{{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
 {{- if .workerNodeGroupTaints }}
