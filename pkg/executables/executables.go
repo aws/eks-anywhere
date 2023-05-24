@@ -88,9 +88,9 @@ func (e *executable) Close(ctx context.Context) error {
 func RedactCreds(cmd string, envMap map[string]string) string {
 	redactedEnvs := []string{}
 	for _, redactedEnvKey := range redactedEnvKeys {
-		if env, found := os.LookupEnv(redactedEnvKey); found {
+		if env, found := os.LookupEnv(redactedEnvKey); found && env != "" {
 			redactedEnvs = append(redactedEnvs, env)
-		} else if env, found := envMap[redactedEnvKey]; found {
+		} else if env, found := envMap[redactedEnvKey]; found && env != "" {
 			redactedEnvs = append(redactedEnvs, env)
 		}
 	}
