@@ -79,7 +79,7 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 	ctx := context.Background()
 	w.T.Logf("Waiting for workload cluster %s kubeconfig to be available", w.ClusterName)
 	err := retrier.Retry(120, 5*time.Second, func() error {
-		return w.writeKubeconfigToDisk(ctx, fmt.Sprintf("%s-kubeconfig", w.ClusterName), w.kubeconfigFilePath())
+		return w.writeKubeconfigToDisk(ctx, fmt.Sprintf("%s-kubeconfig", w.ClusterName), w.KubeconfigFilePath())
 	})
 	if err != nil {
 		w.T.Fatalf("Failed waiting for cluster kubeconfig: %s", err)
@@ -104,6 +104,7 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 // ValidateClusterDelete verifies the cluster has been deleted.
 func (w *WorkloadCluster) ValidateClusterDelete() {
 	ctx := context.Background()
+	w.buildClusterStateValidationConfig(ctx)
 	w.T.Logf("Validating cluster deletion %s", w.ClusterName)
 	clusterStateValidator := newClusterStateValidator(w.clusterStateValidationConfig)
 	clusterStateValidator.WithValidations(
