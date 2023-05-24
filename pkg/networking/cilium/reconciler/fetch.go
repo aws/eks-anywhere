@@ -4,96 +4,13 @@ import (
 	"context"
 
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 )
-
-const (
-	ciliumConfigMapName   = "cilium-config"
-	ciliumConfigNamespace = "kube-system"
-)
-
-func getInstallation(ctx context.Context, client client.Client) (*cilium.Installation, error) {
-	ds, err := getCiliumDaemonSet(ctx, client)
-	if err != nil {
-		return nil, err
-	}
-
-	operator, err := getCiliumDeployment(ctx, client)
-	if err != nil {
-		return nil, err
-	}
-
-	cm, err := getConfigMap(ctx, client, ciliumConfigMapName, ciliumConfigNamespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cilium.Installation{
-		DaemonSet: ds,
-		Operator:  operator,
-		ConfigMap: cm,
-	}, nil
-}
-
-func getCiliumDaemonSet(ctx context.Context, client client.Client) (*appsv1.DaemonSet, error) {
-	return getDaemonSet(ctx, client, cilium.DaemonSetName, "kube-system")
-}
-
-func getPreflightDaemonSet(ctx context.Context, client client.Client) (*appsv1.DaemonSet, error) {
-	return getDaemonSet(ctx, client, cilium.PreflightDaemonSetName, "kube-system")
-}
-
-func getDaemonSet(ctx context.Context, client client.Client, name, namespace string) (*appsv1.DaemonSet, error) {
-	ds := &appsv1.DaemonSet{}
-	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, ds)
-	if apierrors.IsNotFound(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return ds, nil
-}
-
-func getConfigMap(ctx context.Context, client client.Client, name string, namespace string) (*corev1.ConfigMap, error) {
-	c := &corev1.ConfigMap{}
-	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, c)
-	if apierrors.IsNotFound(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
-func getCiliumDeployment(ctx context.Context, client client.Client) (*appsv1.Deployment, error) {
-	return getDeployment(ctx, client, cilium.DeploymentName, "kube-system")
-}
-
-func getPreflightDeployment(ctx context.Context, client client.Client) (*appsv1.Deployment, error) {
-	return getDeployment(ctx, client, cilium.PreflightDeploymentName, "kube-system")
-}
-
-func getDeployment(ctx context.Context, client client.Client, name, namespace string) (*appsv1.Deployment, error) {
-	deployment := &appsv1.Deployment{}
-	err := client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, deployment)
-	if apierrors.IsNotFound(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return deployment, nil
-}
 
 type preflightInstallation struct {
 	daemonSet  *appsv1.DaemonSet
@@ -119,4 +36,35 @@ func getPreflightInstallation(ctx context.Context, client client.Client) (*prefl
 		daemonSet:  ds,
 		deployment: deployment,
 	}, nil
+}
+
+func getPreflightDeployment(ctx context.Context, client client.Client) (*appsv1.Deployment, error) {
+	deployment := &appsv1.Deployment{}
+	key := types.NamespacedName{
+		Name:      cilium.PreflightDeploymentName,
+		Namespace: constants.KubeSystemNamespace,
+	}
+	err := client.Get(ctx, key, deployment)
+	switch {
+	case apierrors.IsNotFound(err):
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
+
+	return deployment, nil
+}
+
+func getPreflightDaemonSet(ctx context.Context, client client.Client) (*appsv1.DaemonSet, error) {
+	ds := &appsv1.DaemonSet{}
+	key := types.NamespacedName{Name: cilium.PreflightDaemonSetName, Namespace: constants.KubeSystemNamespace}
+	err := client.Get(ctx, key, ds)
+	switch {
+	case apierrors.IsNotFound(err):
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
+
+	return ds, nil
 }

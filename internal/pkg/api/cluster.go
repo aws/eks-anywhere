@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -51,6 +52,17 @@ func WithCiliumPolicyEnforcementMode(mode anywherev1.CiliumPolicyEnforcementMode
 			c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}}
 		}
 		c.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = mode
+	}
+}
+
+// WithCiliumSkipUpgrade enables skip upgrade for EKSA Cilium installations.
+func WithCiliumSkipUpgrade() ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		network := c.Spec.ClusterNetwork
+		if network.CNIConfig != nil && network.CNIConfig.Cilium != nil {
+			fmt.Println("Enable ciliun skip upgrade")
+			network.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(true)
+		}
 	}
 }
 

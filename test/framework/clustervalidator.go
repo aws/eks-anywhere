@@ -41,15 +41,15 @@ func (e *ClusterE2ETest) buildClusterStateValidationConfig(ctx context.Context) 
 		e.T.Fatalf("failed to create management cluster client: %s", err)
 	}
 	clusterClient := managementClusterClient
-	if e.managementKubeconfigFilePath() != e.kubeconfigFilePath() {
-		clusterClient, err = buildClusterClient(e.kubeconfigFilePath())
+	if e.managementKubeconfigFilePath() != e.KubeconfigFilePath() {
+		clusterClient, err = buildClusterClient(e.KubeconfigFilePath())
 	}
 	if err != nil {
 		e.T.Fatalf("failed to create cluster client: %s", err)
 	}
 	spec, err := buildClusterSpec(ctx, managementClusterClient, e.ClusterConfig)
 	if err != nil {
-		e.T.Fatalf("failed to build cluster spec with kubeconfig %s: %v", e.kubeconfigFilePath(), err)
+		e.T.Fatalf("failed to build cluster spec with kubeconfig %s: %v", e.KubeconfigFilePath(), err)
 	}
 
 	e.clusterStateValidationConfig = &clusterf.StateValidationConfig{
