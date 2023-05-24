@@ -285,7 +285,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			from:         &types.Cluster{},
 			to:           &types.Cluster{},
 			clusterName:  "",
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", ""},
 		},
 		{
 			testName: "no kubeconfig in 'from' cluster",
@@ -294,7 +294,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 				KubeconfigFile: "to.kubeconfig",
 			},
 			clusterName:  "",
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", ""},
 		},
 		{
 			testName: "with both kubeconfigs",
@@ -305,7 +305,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 				KubeconfigFile: "to.kubeconfig",
 			},
 			clusterName:  "",
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"},
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", "", "--kubeconfig", "from.kubeconfig"},
 		},
 		{
 			testName: "with filter cluster",
@@ -316,7 +316,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 				KubeconfigFile: "to.kubeconfig",
 			},
 			clusterName:  "test-cluster",
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig", "--filter-cluster", "test-cluster"},
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", "test-cluster", "--kubeconfig", "from.kubeconfig"},
 		},
 	}
 

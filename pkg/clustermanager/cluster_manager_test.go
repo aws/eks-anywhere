@@ -235,6 +235,68 @@ func TestClusterManagerPauseCAPIWorkloadClusters(t *testing.T) {
 	}
 }
 
+func TestClusterManagerPauseCAPIWorkloadClustersErrorGetClusters(t *testing.T) {
+	ctx := context.Background()
+	mgmtClusterName := "cluster-name"
+	mgmtCluster := &types.Cluster{
+		Name:           mgmtClusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(nil, errors.New("Error: failed to get clusters"))
+
+	if err := c.PauseCAPIWorkloadClusters(ctx, mgmtCluster); err == nil {
+		t.Error("ClusterManager.PauseCAPIWorkloadClusters() error = nil, wantErr not nil")
+	}
+}
+
+func TestClusterManagerPauseCAPIWorkloadClustersErrorPause(t *testing.T) {
+	ctx := context.Background()
+	mgmtClusterName := "cluster-name"
+	mgmtCluster := &types.Cluster{
+		Name:           mgmtClusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: mgmtClusterName}}}
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(clusters, nil)
+
+	if err := c.PauseCAPIWorkloadClusters(ctx, mgmtCluster); err != nil {
+		t.Errorf("ClusterManager.PauseCAPIWorkloadClusters() error = %v", err)
+	}
+}
+
+func TestClusterManagerResumeCAPIWorkloadClustersErrorGetClusters(t *testing.T) {
+	ctx := context.Background()
+	mgmtClusterName := "cluster-name"
+	mgmtCluster := &types.Cluster{
+		Name:           mgmtClusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(nil, errors.New("Error: failed to get clusters"))
+
+	if err := c.ResumeCAPIWorkloadClusters(ctx, mgmtCluster); err == nil {
+		t.Error("ClusterManager.PauseCAPIWorkloadClusters() error = nil, wantErr not nil")
+	}
+}
+
+func TestClusterManagerResumeCAPIWorkloadClustersErrorResume(t *testing.T) {
+	ctx := context.Background()
+	mgmtClusterName := "cluster-name"
+	mgmtCluster := &types.Cluster{
+		Name:           mgmtClusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: mgmtClusterName}}}
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(clusters, nil)
+
+	if err := c.ResumeCAPIWorkloadClusters(ctx, mgmtCluster); err != nil {
+		t.Errorf("ClusterManager.PauseCAPIWorkloadClusters() error = %v", err)
+	}
+}
+
 func TestClusterManagerResumeCAPIWorkloadClusters(t *testing.T) {
 	ctx := context.Background()
 	mgmtClusterName := "cluster-name"

@@ -42,6 +42,26 @@ func (c *RetrierClient) Apply(ctx context.Context, kubeconfigPath string, obj ru
 	)
 }
 
+// PauseCAPICluster adds a `spec.Paused: true` to the CAPI cluster resource. This will cause all
+// downstream CAPI + provider controllers to skip reconciling on the paused cluster's objects.
+func (c *RetrierClient) PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error {
+	return c.retrier.Retry(
+		func() error {
+			return c.ClusterClient.PauseCAPICluster(ctx, cluster, kubeconfig)
+		},
+	)
+}
+
+// ResumeCAPICluster removes the `spec.Paused` on the CAPI cluster resource. This will cause all
+// downstream CAPI + provider controllers to resume reconciling on the paused cluster's objects.
+func (c *RetrierClient) ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error {
+	return c.retrier.Retry(
+		func() error {
+			return c.ClusterClient.ResumeCAPICluster(ctx, cluster, kubeconfig)
+		},
+	)
+}
+
 // ApplyKubeSpecFromBytesForce creates/updates the objects defined in a yaml manifest against the api server following a client side apply mechanism.
 // It forces the operation, so if api validation failed, it will delete and re-create the object.
 func (c *RetrierClient) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error {

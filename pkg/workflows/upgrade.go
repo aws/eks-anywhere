@@ -576,7 +576,7 @@ func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *
 	}
 	commandContext.ManagementCluster = commandContext.WorkloadCluster
 
-	logger.V(3).Info("Resuming all workload clusters after moving management cluster resources from bootstrap to workload clusters")
+	logger.V(3).Info("Resuming all workload clusters after moving management cluster resources from bootstrap to management clusters")
 	err = commandContext.ClusterManager.ResumeCAPIWorkloadClusters(ctx, commandContext.ManagementCluster)
 	if err != nil {
 		commandContext.SetError(err)
