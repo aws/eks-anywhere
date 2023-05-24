@@ -1,5 +1,12 @@
 skipped_tests:
 # CloudStack
+#Airgapped tests
+- TestCloudStackKubernetes123RedhatAirgappedRegistryMirror
+- TestCloudStackKubernetes124RedhatAirgappedRegistryMirror
+# This test will fail until we the latest minor release version is 15.x as there is a preflight for 1.24
+- TestCloudStackKubernetes124RedhatUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy
+- TestCloudStackKubernetes124ManagementClusterUpgradeFromLatest
+- TestCloudStackKubernetes124UpgradeFromLatestMinorRelease
 - TestCloudStackKubernetes123RedhatProxyConfig
 - TestCloudStackKubernetes124RedhatProxyConfig
 - TestCloudStackKubernetes123AddRemoveAz
