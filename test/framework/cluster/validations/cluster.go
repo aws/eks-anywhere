@@ -139,6 +139,17 @@ func ValidateClusterDoesNotExist(ctx context.Context, vc clusterf.StateValidatio
 // ValidateCilium gets the cilium-config from the cluster and checks that the cilium
 // policy in cluster.Spec matches the enabled policy in the config.
 func ValidateCilium(ctx context.Context, vc clusterf.StateValidationConfig) error {
+	cniConfig := vc.ClusterSpec.Cluster.Spec.ClusterNetwork.CNIConfig
+
+	if cniConfig == nil || cniConfig.Cilium == nil {
+		return errors.New("Cilium configuration missing from cluster spec")
+	}
+
+	if !cniConfig.Cilium.IsManaged() {
+		// It would be nice if we could log something here given we're skipping the validation.
+		return nil
+	}
+
 	clusterClient := vc.ClusterClient
 
 	yaml := vc.ClusterSpec.Cluster

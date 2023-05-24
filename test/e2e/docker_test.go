@@ -5,15 +5,18 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -946,4 +949,168 @@ func TestDockerUpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsGitHubFluxAPI
 			api.WithWorkerNodeGroup("worker-3", api.WithCount(1)),
 		),
 	)
+}
+
+func TestDockerCiliumUpgradeSkip_Create(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(t, provider,
+		framework.WithClusterFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+			api.WithCiliumSkipUpgrade(),
+		),
+	)
+
+	test.ValidateCiliumCLIAvailable()
+
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.ValidateClusterState()
+	test.ValidateEKSACiliumInstalled()
+	test.DeleteCluster()
+}
+
+func TestDockerCiliumSkipUpgrade_Upgrade(t *testing.T) {
+	release, err := framework.GetLatestMinorReleaseFromTestBranch()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ver, _ := semver.New(release.Version)
+	previousRelease, err := framework.GetPreviousMinorReleaseFromVersion(ver)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(t, provider,
+		framework.WithClusterFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+	)
+
+	test.ValidateCiliumCLIAvailable()
+
+	test.GenerateClusterConfig(framework.ExecuteWithEksaRelease(previousRelease))
+	test.CreateCluster(framework.ExecuteWithEksaRelease(previousRelease))
+	test.ReplaceCiliumWithOSSCilium()
+	test.UpgradeClusterWithNewConfig(
+		[]framework.ClusterE2ETestOpt{
+			framework.WithClusterUpgrade(api.WithCiliumSkipUpgrade()),
+		},
+	)
+	test.ValidateClusterState()
+	test.ValidateEKSACiliumNotInstalled()
+	test.DeleteCluster()
+}
+
+func TestDockerCiliumUpgradeSkip_WorkloadCreate(t *testing.T) {
+	provider := framework.NewDocker(t)
+	management := framework.NewClusterE2ETest(t, provider).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+	)
+
+	management.ValidateCiliumCLIAvailable()
+
+	test := framework.NewMulticlusterE2ETest(t, management)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(management.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+				api.WithCiliumSkipUpgrade(),
+			),
+		),
+	)
+
+	test.CreateManagementCluster()
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+
+		client, err := wc.BuildWorkloadClusterClient()
+		if err != nil {
+			wc.T.Fatalf("Error creating workload cluster client: %v", err)
+		}
+
+		framework.AwaitCiliumDaemonSetReady(context.Background(), client, 20, 5*time.Second)
+
+		wc.DeleteClusterWithKubectl()
+	})
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
+func TestDockerCiliumUpgradeSkip_WorkloadUpgrade(t *testing.T) {
+	provider := framework.NewDocker(t)
+	management := framework.NewClusterE2ETest(t, provider).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
+	)
+
+	management.ValidateCiliumCLIAvailable()
+
+	test := framework.NewMulticlusterE2ETest(t, management)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(management.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+
+	test.CreateManagementCluster()
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+
+		client, err := wc.BuildWorkloadClusterClient()
+		if err != nil {
+			wc.T.Fatalf("Error creating workload cluster client: %v", err)
+		}
+
+		// Wait for Cilium to come up.
+		framework.AwaitCiliumDaemonSetReady(context.Background(), client, 20, 5*time.Second)
+
+		// Skip Cilium upgrades and reapply the kubeconfig.
+		wc.UpdateClusterConfig(api.ClusterToConfigFiller(api.WithCiliumSkipUpgrade()))
+		wc.ApplyClusterManifest()
+
+		// Give some time for reconciliation to happen.
+		time.Sleep(15 * time.Second)
+
+		// Validate EKSA Cilium is still installed because we haven't done anything to it yet
+		// and the controller shouldn't have removed it.
+		framework.AwaitCiliumDaemonSetReady(context.Background(), client, 20, 5*time.Second)
+
+		// Introduce a different OSS Cillium, wait for it to come up and validate the controller
+		// doesn't try to override the new Cilium.
+		wc.ReplaceCiliumWithOSSCilium()
+		wc.ValidateClusterState()
+		wc.ValidateEKSACiliumNotInstalled()
+
+		wc.DeleteClusterWithKubectl()
+	})
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
 }
