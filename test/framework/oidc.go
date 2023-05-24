@@ -2,13 +2,16 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/oidc"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
 )
 
@@ -45,6 +48,21 @@ func WithOIDC() ClusterE2ETestOpt {
 			api.WithOIDCIdentityProviderRef(defaultClusterName),
 		)
 	}
+}
+
+// WithOIDCConfig sets oidc in cluster config.
+func WithOIDCConfig() api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(func(config *cluster.Config) {
+		config.OIDCConfigs[defaultClusterName] = api.NewOIDCConfig(defaultClusterName,
+			api.WithOIDCRequiredClaims("kubernetesAccess", "true"),
+			api.WithOIDCGroupsPrefix("s3-oidc:"),
+			api.WithOIDCGroupsClaim("groups"),
+			api.WithOIDCUsernamePrefix("s3-oidc:"),
+			api.WithOIDCUsernameClaim("email"),
+			api.WithStringFromEnvVarOIDCConfig(OIDCIssuerUrlVar, api.WithOIDCIssuerUrl),
+			api.WithStringFromEnvVarOIDCConfig(OIDCClientIdVar, api.WithOIDCClientId),
+		)
+	}, api.ClusterToConfigFiller(api.WithOIDCIdentityProviderRef(defaultClusterName)))
 }
 
 func (e *ClusterE2ETest) ValidateOIDC() {
@@ -91,6 +109,7 @@ func (e *ClusterE2ETest) ValidateOIDC() {
 	e.T.Log("Getting pods with OIDC token")
 	_, err = e.KubectlClient.GetPods(
 		ctx,
+		executables.WithKubeconfig(filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))),
 		executables.WithServer(apiServerUrl),
 		executables.WithToken(jwt),
 		executables.WithSkipTLSVerify(),
@@ -103,6 +122,7 @@ func (e *ClusterE2ETest) ValidateOIDC() {
 	e.T.Log("Getting deployments with OIDC token")
 	_, err = e.KubectlClient.GetDeployments(
 		ctx,
+		executables.WithKubeconfig(filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))),
 		executables.WithServer(apiServerUrl),
 		executables.WithToken(jwt),
 		executables.WithSkipTLSVerify(),
@@ -110,5 +130,12 @@ func (e *ClusterE2ETest) ValidateOIDC() {
 	)
 	if err != nil {
 		e.T.Errorf("Error getting deployments: %v", err)
+	}
+}
+
+// WithOIDCEnvVarCheck returns a ClusterE2ETestOpt that checks for the required env vars.
+func WithOIDCEnvVarCheck() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		checkRequiredEnvVars(e.T, oidcRequiredEnvVars)
 	}
 }
