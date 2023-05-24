@@ -24,7 +24,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
-func TestWorkersSpecUpgradeCluster(t *testing.T) {
+func TestWorkersSpec(t *testing.T) {
 	logger := test.NewNullLogger()
 	ctx := context.Background()
 
