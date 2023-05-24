@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:799ee853ee76967e43ec6c6688aaba07684a64894691453066ce13368e8d6e24
+        imageDigest: sha256:41cc8d39ef9cc996f9ed2aee7e232b7cead7af7dbf58c7f2db78526485608800
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.11.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:8363832d9b303b61b3fc0f51ba311147e86df760b75ac43676ecdd720fbf24ec
+        imageDigest: sha256:d85e1b06b40dcce88b89d604d1c645f53deac381d909375b606d0adf9bc2955a
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.11.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.10-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.11.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:26c01a6f9fff5a023489d7620ccaa456b6e1c84aeca7bccdaeaea554ce59643b
+        imageDigest: sha256:076a884143abe3342af64c258d7062005f09343764d40b8cc2cd37d8302f2c35
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.10-eksa.1
-      version: v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.11.15-eksa.1
+      version: v1.11.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -381,7 +381,7 @@ spec:
       version: v1.0.7-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -390,7 +390,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -401,8 +401,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/metadata.yaml
-      version: v1.0.6-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/metadata.yaml
+      version: v1.0.6-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -907,26 +907,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:799ee853ee76967e43ec6c6688aaba07684a64894691453066ce13368e8d6e24
+        imageDigest: sha256:41cc8d39ef9cc996f9ed2aee7e232b7cead7af7dbf58c7f2db78526485608800
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.11.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:8363832d9b303b61b3fc0f51ba311147e86df760b75ac43676ecdd720fbf24ec
+        imageDigest: sha256:d85e1b06b40dcce88b89d604d1c645f53deac381d909375b606d0adf9bc2955a
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.11.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.10-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.11.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:26c01a6f9fff5a023489d7620ccaa456b6e1c84aeca7bccdaeaea554ce59643b
+        imageDigest: sha256:076a884143abe3342af64c258d7062005f09343764d40b8cc2cd37d8302f2c35
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.10-eksa.1
-      version: v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.11.15-eksa.1
+      version: v1.11.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1176,7 +1176,7 @@ spec:
       version: v1.0.7-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1185,7 +1185,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1196,8 +1196,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/metadata.yaml
-      version: v1.0.6-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/metadata.yaml
+      version: v1.0.6-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -1702,26 +1702,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:799ee853ee76967e43ec6c6688aaba07684a64894691453066ce13368e8d6e24
+        imageDigest: sha256:41cc8d39ef9cc996f9ed2aee7e232b7cead7af7dbf58c7f2db78526485608800
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.11.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:8363832d9b303b61b3fc0f51ba311147e86df760b75ac43676ecdd720fbf24ec
+        imageDigest: sha256:d85e1b06b40dcce88b89d604d1c645f53deac381d909375b606d0adf9bc2955a
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.11.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.10-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.11.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:26c01a6f9fff5a023489d7620ccaa456b6e1c84aeca7bccdaeaea554ce59643b
+        imageDigest: sha256:076a884143abe3342af64c258d7062005f09343764d40b8cc2cd37d8302f2c35
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.10-eksa.1
-      version: v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.11.15-eksa.1
+      version: v1.11.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1944,7 +1944,7 @@ spec:
       version: v1.0.7-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1953,7 +1953,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1964,8 +1964,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/metadata.yaml
-      version: v1.0.6-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/metadata.yaml
+      version: v1.0.6-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -2470,26 +2470,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:799ee853ee76967e43ec6c6688aaba07684a64894691453066ce13368e8d6e24
+        imageDigest: sha256:41cc8d39ef9cc996f9ed2aee7e232b7cead7af7dbf58c7f2db78526485608800
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.11.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:8363832d9b303b61b3fc0f51ba311147e86df760b75ac43676ecdd720fbf24ec
+        imageDigest: sha256:d85e1b06b40dcce88b89d604d1c645f53deac381d909375b606d0adf9bc2955a
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.11.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.10-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.11.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:26c01a6f9fff5a023489d7620ccaa456b6e1c84aeca7bccdaeaea554ce59643b
+        imageDigest: sha256:076a884143abe3342af64c258d7062005f09343764d40b8cc2cd37d8302f2c35
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.10-eksa.1
-      version: v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.11.15-eksa.1
+      version: v1.11.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2712,7 +2712,7 @@ spec:
       version: v1.0.7-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -2721,7 +2721,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2732,8 +2732,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/metadata.yaml
-      version: v1.0.6-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/metadata.yaml
+      version: v1.0.6-rc4+abcdef1
     flux:
       helmController:
         arch:
@@ -3238,26 +3238,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:799ee853ee76967e43ec6c6688aaba07684a64894691453066ce13368e8d6e24
+        imageDigest: sha256:41cc8d39ef9cc996f9ed2aee7e232b7cead7af7dbf58c7f2db78526485608800
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:v1.11.15-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:8363832d9b303b61b3fc0f51ba311147e86df760b75ac43676ecdd720fbf24ec
+        imageDigest: sha256:d85e1b06b40dcce88b89d604d1c645f53deac381d909375b606d0adf9bc2955a
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/cilium:1.11.15-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.12.10-eksa.1/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.11.15-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:26c01a6f9fff5a023489d7620ccaa456b6e1c84aeca7bccdaeaea554ce59643b
+        imageDigest: sha256:076a884143abe3342af64c258d7062005f09343764d40b8cc2cd37d8302f2c35
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.12.10-eksa.1
-      version: v1.12.10-eksa.1
+        uri: public.ecr.aws/isovalent/operator-generic:v1.11.15-eksa.1
+      version: v1.11.15-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3480,7 +3480,7 @@ spec:
       version: v1.0.7-rc3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -3489,7 +3489,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.6-rc4-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3500,8 +3500,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.14.1-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc3/metadata.yaml
-      version: v1.0.6-rc3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.6-rc4/metadata.yaml
+      version: v1.0.6-rc4+abcdef1
     flux:
       helmController:
         arch:
