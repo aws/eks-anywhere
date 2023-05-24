@@ -358,8 +358,7 @@ func (e *ClusterE2ETest) pushStagedChanges(ctx context.Context, commitMessage st
 	return nil
 }
 
-// PushWorkloadClusterToGit builds the workload cluster config file for git and pushing changes to git.
-func (e *ClusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...api.ClusterConfigFiller) {
+func (e *ClusterE2ETest) pushWorkloadClusterToGit(w *WorkloadCluster, opts ...api.ClusterConfigFiller) error {
 	ctx := context.Background()
 	e.initGit(ctx)
 	// Pull remote config using managment cluster
@@ -380,13 +379,15 @@ func (e *ClusterE2ETest) PushWorkloadClusterToGit(w *WorkloadCluster, opts ...ap
 	// Marshall w.ClusterConfig and write it to the repo path
 	e.buildWorkloadClusterConfigFileForGit(w)
 	if err := e.addWorkloadClusterConfigToGit(ctx, w); err != nil {
-		e.T.Fatalf("Error pushing local changes to remote git repo: %v", err)
+		return fmt.Errorf("failed to push local changes to remote git repo: %v", err)
 	}
+
 	e.T.Logf("Successfully pushed version controlled cluster configuration")
+
+	return nil
 }
 
-// DeleteWorkloadClusterFromGit deletes a workload cluster config file and pushes the changes to git.
-func (e *ClusterE2ETest) DeleteWorkloadClusterFromGit(w *WorkloadCluster) {
+func (e *ClusterE2ETest) deleteWorkloadClusterFromGit(w *WorkloadCluster) error {
 	ctx := context.Background()
 	e.initGit(ctx)
 
@@ -397,13 +398,15 @@ func (e *ClusterE2ETest) DeleteWorkloadClusterFromGit(w *WorkloadCluster) {
 
 	e.T.Log("Deleting local cluster directory in git repo")
 	if err := os.Remove(e.workloadClusterConfigGitPath(w)); err != nil {
-		e.T.Fatalf("Error removing local cluster config: %v", err)
+		return fmt.Errorf("failed to remove local cluster config: %v", err)
 	}
 
 	if err := e.deleteWorkloadClusterConfigFromGit(ctx, w); err != nil {
-		w.T.Fatalf("Error pushing local changes to remote git repo: %v", err)
+		return fmt.Errorf("failed to push local changes to remote git repo: %v", err)
 	}
 	w.T.Logf("Successfully deleted version controlled cluster")
+
+	return nil
 }
 
 func (e *ClusterE2ETest) parseClusterConfigFromLocalGitRepo() {
