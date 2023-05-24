@@ -2,9 +2,11 @@ package cloudstack_test
 
 import (
 	"context"
+	"encoding/json"
+	"os"
 	"testing"
-	"time"
 
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,192 +17,605 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
-func TestWorkersSpecNewCluster(t *testing.T) {
-	g := NewWithT(t)
+func TestWorkersSpec(t *testing.T) {
 	logger := test.NewNullLogger()
 	ctx := context.Background()
-	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_multiple_worker_node_groups.yaml")
-	client := test.NewFakeKubeClient()
-	workers, err := cloudstack.WorkersSpec(ctx, logger, client, spec)
 
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(workers).NotTo(BeNil())
-	g.Expect(workers.Groups).To(HaveLen(2))
-	g.Expect(workers.Groups).To(ConsistOf(
-		clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
-			KubeadmConfigTemplate:   kubeadmConfigTemplate(),
-			MachineDeployment:       machineDeployment(),
-			ProviderMachineTemplate: machineTemplate(),
+	spec := test.NewFullClusterSpec(t, "testdata/test_worker_spec.yaml")
+
+	for _, tc := range []struct {
+		Name      string
+		Configure func(*cluster.Spec)
+		Exists    func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]
+		Expect    func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]
+	}{
+		// Create
+		{
+			Name: "Create",
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
 		},
-		clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
-			KubeadmConfigTemplate: kubeadmConfigTemplate(
-				func(kct *bootstrapv1.KubeadmConfigTemplate) {
-					kct.Name = "test-md-1-1"
-				},
-			),
-			MachineDeployment: machineDeployment(
-				func(md *clusterv1.MachineDeployment) {
-					md.Name = "test-md-1"
-					md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
-					md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
-					md.Spec.Replicas = ptr.Int32(2)
-				},
-			),
-			ProviderMachineTemplate: machineTemplate(
-				func(vmt *cloudstackv1.CloudStackMachineTemplate) {
-					vmt.Name = "test-md-1-1"
-				},
-			),
+		{
+			Name: "CreateMultipleWorkerNodeGroups",
+			Configure: func(s *cluster.Spec) {
+				// Re-use the existing worker node group.
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = append(
+					s.Cluster.Spec.WorkerNodeGroupConfigurations,
+					s.Cluster.Spec.WorkerNodeGroupConfigurations[0],
+				)
+				s.Cluster.Spec.WorkerNodeGroupConfigurations[1].Name = "md-1"
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-1-1"
+						}),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Name = "test-md-1"
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-1-1"
+						}),
+					},
+				}
+			},
 		},
-	))
-}
-
-func TestWorkersSpecUpgradeCluster(t *testing.T) {
-	g := NewWithT(t)
-	logger := test.NewNullLogger()
-	ctx := context.Background()
-	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_multiple_worker_node_groups.yaml")
-	oldGroup1 := &clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
-		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
-		MachineDeployment:       machineDeployment(),
-		ProviderMachineTemplate: machineTemplate(),
-	}
-	oldGroup2 := &clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
-		KubeadmConfigTemplate: kubeadmConfigTemplate(
-			func(kct *bootstrapv1.KubeadmConfigTemplate) {
-				kct.Name = "test-md-1-1"
+		{
+			Name: "CreateTaints",
+			Configure: func(s *cluster.Spec) {
+				s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints = []corev1.Taint{
+					{
+						Key:    "test-taint",
+						Value:  "value",
+						Effect: "Effect",
+					},
+				}
 			},
-		),
-		MachineDeployment: machineDeployment(
-			func(md *clusterv1.MachineDeployment) {
-				md.Name = "test-md-1"
-				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
-				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
-				md.Spec.Replicas = ptr.Int32(2)
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{
+								{
+									Key:    "test-taint",
+									Value:  "value",
+									Effect: "Effect",
+								},
+							}
+						}),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {}),
+					},
+				}
 			},
-		),
-		ProviderMachineTemplate: machineTemplate(
-			func(vmt *cloudstackv1.CloudStackMachineTemplate) {
-				vmt.Name = "test-md-1-1"
+		},
+		{
+			Name: "CreateDiskOffering",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.DiskOffering = &anywherev1.CloudStackResourceDiskOffering{
+					CustomSize: 10,
+					MountPath:  "/mnt/sda",
+					Device:     "/dev/sda",
+					Filesystem: "ext3",
+					Label:      "label",
+				}
 			},
-		),
-	}
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment:     machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							spec := &csmt.Spec.Spec.Spec
 
-	// Always make copies before passing to client since it does modifies the api objects
-	// Like for example, the ResourceVersion
-	expectedGroup1 := oldGroup1.DeepCopy()
-	expectedGroup2 := oldGroup2.DeepCopy()
-	objs := make([]kubernetes.Object, 0, 6)
-	objs = append(objs, oldGroup1.Objects()...)
-	objs = append(objs, oldGroup2.Objects()...)
-	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(objs)...)
+							clientutil.AddAnnotation(csmt, "device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "/dev/sda")
+							clientutil.AddAnnotation(csmt, "filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "ext3")
+							clientutil.AddAnnotation(csmt, "label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "label")
+							clientutil.AddAnnotation(csmt, "mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "/mnt/sda")
 
-	computeOffering := anywherev1.CloudStackResourceIdentifier{
-		Name: "m4-medium",
-	}
-
-	// This will cause a change in the cloudstack machine templates, which is immutable
-	spec.CloudStackMachineConfigs["test"].Spec.ComputeOffering = *computeOffering.DeepCopy()
-
-	// This will cause a change in the kubeadmconfigtemplate which we also treat as immutable
-	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints = []corev1.Taint{}
-	spec.Cluster.Spec.WorkerNodeGroupConfigurations[1].Taints = []corev1.Taint{}
-
-	expectedGroup1.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
-	expectedGroup1.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
-	expectedGroup1.KubeadmConfigTemplate.Name = "test-md-0-2"
-	expectedGroup1.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{}
-	expectedGroup1.ProviderMachineTemplate.Name = "test-md-0-2"
-	expectedGroup1.ProviderMachineTemplate.Spec.Spec.Spec.Offering = cloudstackv1.CloudStackResourceIdentifier{
-		ID:   computeOffering.Id,
-		Name: computeOffering.Name,
-	}
-
-	expectedGroup2.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-2"
-	expectedGroup2.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-2"
-	expectedGroup2.KubeadmConfigTemplate.Name = "test-md-1-2"
-	expectedGroup2.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{}
-	expectedGroup2.ProviderMachineTemplate.Name = "test-md-1-2"
-	expectedGroup2.ProviderMachineTemplate.Spec.Spec.Spec.Offering = cloudstackv1.CloudStackResourceIdentifier{
-		ID:   computeOffering.Id,
-		Name: computeOffering.Name,
-	}
-
-	workers, err := cloudstack.WorkersSpec(ctx, logger, client, spec)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(workers).NotTo(BeNil())
-	g.Expect(workers.Groups).To(HaveLen(2))
-	g.Expect(workers.Groups).To(ConsistOf(*expectedGroup1, *expectedGroup2))
-}
-
-func TestWorkersSpecUpgradeClusterNoMachineTemplateChanges(t *testing.T) {
-	g := NewWithT(t)
-	logger := test.NewNullLogger()
-	ctx := context.Background()
-	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_multiple_worker_node_groups.yaml")
-	oldGroup1 := &clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
-		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
-		MachineDeployment:       machineDeployment(),
-		ProviderMachineTemplate: machineTemplate(),
-	}
-	oldGroup2 := &clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
-		KubeadmConfigTemplate: kubeadmConfigTemplate(
-			func(kct *bootstrapv1.KubeadmConfigTemplate) {
-				kct.Name = "test-md-1-1"
+							spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
+								CustomSize: 10,
+								MountPath:  "/mnt/sda",
+								Device:     "/dev/sda",
+								Filesystem: "ext3",
+								Label:      "label",
+							}
+						}),
+					},
+				}
 			},
-		),
-		MachineDeployment: machineDeployment(
-			func(md *clusterv1.MachineDeployment) {
-				md.Name = "test-md-1"
-				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
-				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
-				md.Spec.Replicas = ptr.Int32(2)
+		},
+		{
+			Name: "CreateSymlinks",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.Symlinks = map[string]string{"foo": "bar"}
 			},
-		),
-		ProviderMachineTemplate: machineTemplate(
-			func(vmt *cloudstackv1.CloudStackMachineTemplate) {
-				vmt.Name = "test-md-1-1"
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Spec.Template.Spec.PreKubeadmCommands = append(
+								kct.Spec.Template.Spec.PreKubeadmCommands,
+								"if [ ! -L foo ] ;\n  then\n    mv foo foo-$(tr -dc A-Za-z0-9 \u003c /dev/urandom | head -c 10) ;\n    mkdir -p bar \u0026\u0026 ln -s bar foo ;\n  else echo \"foo already symlnk\" ;\nfi",
+							)
+						}),
+						MachineDeployment: machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							clientutil.AddAnnotation(csmt, "symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "foo:bar")
+						}),
+					},
+				}
 			},
-		),
+		},
+		{
+			Name: "CreateAffinityGroupIDs",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.AffinityGroupIds = []string{"affinity_group_id"}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment:     machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Spec.Spec.Spec.AffinityGroupIDs = []string{"affinity_group_id"}
+						}),
+					},
+				}
+			},
+		},
+		{
+			Name: "CreateUserCustomDetails",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.UserCustomDetails = map[string]string{"qux": "baz"}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment:     machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Spec.Spec.Spec.Details = map[string]string{"qux": "baz"}
+						}),
+					},
+				}
+			},
+		},
+
+		// Upgrade
+		{
+			Name: "UpgradeTaints",
+			Configure: func(s *cluster.Spec) {
+				s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints = []corev1.Taint{
+					{
+						Key:    "change-taint",
+						Value:  "value",
+						Effect: "Effect",
+					},
+				}
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{
+								{
+									Key:    "test-taint",
+									Value:  "value",
+									Effect: "Effect",
+								},
+							}
+						}),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-0-2"
+							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{
+								{
+									Key:    "change-taint",
+									Value:  "value",
+									Effect: "Effect",
+								},
+							}
+						}),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
+		},
+		{
+			Name: "UpgradeComputeOffering",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{
+					Name: "m4-medium",
+				}
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-0-1"
+						}),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-1"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-2"
+							csmt.Spec.Spec.Spec.Offering = cloudstackv1.CloudStackResourceIdentifier{
+								Name: "m4-medium",
+							}
+						}),
+					},
+				}
+			},
+		},
+		{
+			Name: "UpgradeDiskOffering",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.DiskOffering = &anywherev1.CloudStackResourceDiskOffering{
+					CustomSize: 10,
+					MountPath:  "/mnt/sda",
+					Device:     "/dev/sda",
+					Filesystem: "ext3",
+					Label:      "label",
+				}
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-2"
+							csmt.Spec.Spec.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
+								CustomSize: 10,
+								MountPath:  "/mnt/sda",
+								Device:     "/dev/sda",
+								Filesystem: "ext3",
+								Label:      "label",
+							}
+							clientutil.AddAnnotation(csmt, "device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "/dev/sda")
+							clientutil.AddAnnotation(csmt, "filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "ext3")
+							clientutil.AddAnnotation(csmt, "label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "label")
+							clientutil.AddAnnotation(csmt, "mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "/mnt/sda")
+						}),
+					},
+				}
+			},
+		},
+		{
+			Name: "UpgradeSymlinks",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.Symlinks = map[string]string{"foo": "bar"}
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-0-2"
+							kct.Spec.Template.Spec.PreKubeadmCommands = append(
+								kct.Spec.Template.Spec.PreKubeadmCommands,
+								"if [ ! -L foo ] ;\n  then\n    mv foo foo-$(tr -dc A-Za-z0-9 \u003c /dev/urandom | head -c 10) ;\n    mkdir -p bar \u0026\u0026 ln -s bar foo ;\n  else echo \"foo already symlnk\" ;\nfi",
+							)
+						}),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							clientutil.AddAnnotation(csmt, "symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "foo:bar")
+						}),
+					},
+				}
+			},
+		},
+		{
+			Name: "UpgradeAffinityGroups",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.AffinityGroupIds = []string{"changed"}
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate:   kubeadmConfigTemplate(),
+						MachineDeployment:       machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-2"
+							csmt.Spec.Spec.Spec.AffinityGroupIDs = []string{"changed"}
+						}),
+					},
+				}
+			},
+		},
+		{
+			Name: "UpgradeUserCustomDetails",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.UserCustomDetails = map[string]string{"qux": "baz"}
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment:     machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Spec.Spec.Spec.Details = map[string]string{"foo": "bar"}
+						}),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-2"
+							csmt.Spec.Spec.Spec.Details = map[string]string{"qux": "baz"}
+						}),
+					},
+				}
+			},
+		},
+
+		// Remove
+		{
+			Name: "RemoveDiskOffering",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.DiskOffering = nil
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-2"
+							csmt.Spec.Spec.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
+								CustomSize: 10,
+								MountPath:  "/mnt/sda",
+								Device:     "/dev/sda",
+								Filesystem: "ext3",
+								Label:      "label",
+							}
+							clientutil.AddAnnotation(csmt, "device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "/dev/sda")
+							clientutil.AddAnnotation(csmt, "filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "ext3")
+							clientutil.AddAnnotation(csmt, "label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "label")
+							clientutil.AddAnnotation(csmt, "mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "/mnt/sda")
+						}),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-3"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-3"
+						}),
+					},
+				}
+			},
+		},
+		{
+			Name: "RemoveSymlinks",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.Symlinks = nil
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-0-2"
+							kct.Spec.Template.Spec.PreKubeadmCommands = append(
+								kct.Spec.Template.Spec.PreKubeadmCommands,
+								"if [ ! -L foo ] ;\n  then\n    mv foo foo-$(tr -dc A-Za-z0-9 \u003c /dev/urandom | head -c 10) ;\n    mkdir -p bar \u0026\u0026 ln -s bar foo ;\n  else echo \"foo already symlnk\" ;\nfi",
+							)
+						}),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							clientutil.AddAnnotation(csmt, "symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1", "foo:bar")
+						}),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+							kct.Name = "test-md-0-2"
+						}),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(),
+					},
+				}
+			},
+		},
+		{
+			Name: "RemoveAffinityGroups",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.AffinityGroupIds = nil
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment:     machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Spec.Spec.Spec.AffinityGroupIDs = []string{"affinity_group_id"}
+						}),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-2"
+							csmt.Spec.Spec.Spec.AffinityGroupIDs = nil
+						}),
+					},
+				}
+			},
+		},
+		{
+			Name: "RemoveUserCustomDetails",
+			Configure: func(s *cluster.Spec) {
+				s.CloudStackMachineConfigs["test"].Spec.UserCustomDetails = nil
+			},
+			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment:     machineDeployment(),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Spec.Spec.Spec.Details = map[string]string{"foo": "bar"}
+						}),
+					},
+				}
+			},
+			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
+				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
+					{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(),
+						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
+						}),
+						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
+							csmt.Name = "test-md-0-2"
+							csmt.Spec.Spec.Spec.Details = nil
+						}),
+					},
+				}
+			},
+		},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			g := NewWithT(t)
+
+			// Copy the foundational spec already read from disk so we don't pollute tests.
+			spec := spec.DeepCopy()
+
+			if tc.Configure != nil {
+				tc.Configure(spec)
+			}
+
+			// Build a client with all the objects that should already exist in the cluster.
+			var objects []kubernetes.Object
+			if tc.Exists != nil {
+				for _, group := range tc.Exists() {
+					objects = append(objects, group.Objects()...)
+				}
+			}
+			client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(objects)...)
+
+			expect := tc.Expect()
+
+			workers, err := cloudstack.WorkersSpec(ctx, logger, client, spec)
+			g.Expect(err).NotTo(HaveOccurred())
+
+			// Optionally dump expect and got. This proved useful in debugging as the Ginkgo output
+			// gets truncated. Compare the files in your IDE.
+			if os.Getenv("T_DUMP") == "true" {
+				expectGroups, _ := json.MarshalIndent(expect, "", "\t")
+				receivedGroups, _ := json.MarshalIndent(workers.Groups, "", "\t")
+				_ = os.WriteFile("groups_expected.json", expectGroups, 0o666)
+				_ = os.WriteFile("groups_received.json", receivedGroups, 0o666)
+				_ = os.WriteFile("groups_expected_received.diff", []byte(cmp.Diff(expectGroups, receivedGroups)), 0o666)
+			}
+
+			g.Expect(workers).NotTo(BeNil())
+			g.Expect(workers.Groups).To(HaveLen(len(expect)))
+			for _, e := range expect {
+				g.Expect(workers.Groups).To(ContainElement(e))
+			}
+		})
 	}
-
-	// Always make copies before passing to client since it does modifies the api objects
-	// Like for example, the ResourceVersion
-	expectedGroup1 := oldGroup1.DeepCopy()
-	expectedGroup2 := oldGroup2.DeepCopy()
-
-	// This mimics what would happen if the objects were returned by a real api server
-	// It helps make sure that the immutable object comparison is able to deal with these
-	// kind of changes.
-	oldGroup1.ProviderMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
-	oldGroup2.ProviderMachineTemplate.CreationTimestamp = metav1.NewTime(time.Now())
-
-	// This is testing defaults. We don't set ID in our machine templates,
-	// but it's possible that some default logic does. We need to take this into
-	// consideration when checking for equality.
-	oldGroup1.ProviderMachineTemplate.Spec.Spec.Spec.ProviderID = ptr.String("default-id")
-	oldGroup2.ProviderMachineTemplate.Spec.Spec.Spec.ProviderID = ptr.String("default-id")
-
-	client := test.NewFakeKubeClient(
-		oldGroup1.MachineDeployment,
-		oldGroup1.KubeadmConfigTemplate,
-		oldGroup1.ProviderMachineTemplate,
-		oldGroup2.MachineDeployment,
-		oldGroup2.KubeadmConfigTemplate,
-		oldGroup2.ProviderMachineTemplate,
-	)
-
-	workers, err := cloudstack.WorkersSpec(ctx, logger, client, spec)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(workers).NotTo(BeNil())
-	g.Expect(workers.Groups).To(HaveLen(2))
-	g.Expect(workers.Groups).To(ConsistOf(*expectedGroup1, *expectedGroup2))
 }
 
 func TestWorkersSpecErrorFromClient(t *testing.T) {
