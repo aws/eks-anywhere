@@ -56,6 +56,8 @@ skipped_tests:
 - TestTinkerbellUpgrade125MulticlusterWorkloadClusterWorkerScaleupWithAPI
 - TestTinkerbellUpgrade126MulticlusterWorkloadClusterWorkerScaleupWithFluxAPI
 - TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
+- TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleDown
+- TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleup
 # Skipping ETCD tests
 - TestTinkerbellKubernetes126UbuntuExternalEtcdSimpleFlow
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
@@ -67,6 +69,7 @@ skipped_tests:
 - TestTinkerbellKubernetes124RedHatSimpleFlow
 - TestTinkerbellKubernetes125RedHatSimpleFlow
 - TestTinkerbellKubernetes126RedHatSimpleFlow
+- TestTinkerbellKubernetes127RedHatSimpleFlow
 - TestTinkerbellKubernetes123UbuntuSimpleFlow
 - TestTinkerbellKubernetes124UbuntuSimpleFlow
 - TestTinkerbellKubernetes125UbuntuSimpleFlow
@@ -91,10 +94,8 @@ skipped_tests:
 - TestTinkerbellKubernetes127BottleRocketCuratedPackagesPrometheusSimpleFlow
 - TestTinkerbellUbuntuSingleNodeCuratedPackagesFlow
 - TestTinkerbellBottleRocketSingleNodeCuratedPackagesFlow
-- TestTinkerbellUbuntuSingleNodeCuratedPackagesEmissaryFlow
 - TestTinkerbellBottleRocketSingleNodeCuratedPackagesEmissaryFlow
 - TestTinkerbellUbuntuSingleNodeCuratedPackagesHarborFlow
-- TestTinkerbellBottleRocketSingleNodeCuratedPackagesHarborFlow
 - TestTinkerbellUbuntuSingleNodeCuratedPackagesAdotSimpleFlow
 - TestTinkerbellBottleRocketSingleNodeCuratedPackagesAdotSimpleFlow
 - TestTinkerbellUbuntuSingleNodeCuratedPackagesPrometheusSimpleFlow
