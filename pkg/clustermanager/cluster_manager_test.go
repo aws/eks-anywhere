@@ -257,6 +257,24 @@ func TestClusterManagerPauseCAPIWorkloadClustersErrorPause(t *testing.T) {
 		Name:           mgmtClusterName,
 		KubeconfigFile: "mgmt-kubeconfig",
 	}
+	capiClusterName := "capi-cluster"
+	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
+	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(clusters, nil)
+	m.client.EXPECT().PauseCAPICluster(ctx, capiClusterName, mgmtCluster.KubeconfigFile).Return(errors.New("Error pausing cluster"))
+
+	if err := c.PauseCAPIWorkloadClusters(ctx, mgmtCluster); err == nil {
+		t.Error("ClusterManager.PauseCAPIWorkloadClusters() error = nil, wantErr not nil")
+	}
+}
+
+func TestClusterManagerPauseCAPIWorkloadClustersSkipManagement(t *testing.T) {
+	ctx := context.Background()
+	mgmtClusterName := "cluster-name"
+	mgmtCluster := &types.Cluster{
+		Name:           mgmtClusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
 	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: mgmtClusterName}}}
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(clusters, nil)
@@ -277,7 +295,7 @@ func TestClusterManagerResumeCAPIWorkloadClustersErrorGetClusters(t *testing.T) 
 	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(nil, errors.New("Error: failed to get clusters"))
 
 	if err := c.ResumeCAPIWorkloadClusters(ctx, mgmtCluster); err == nil {
-		t.Error("ClusterManager.PauseCAPIWorkloadClusters() error = nil, wantErr not nil")
+		t.Error("ClusterManager.ResumeCAPIWorkloadClusters() error = nil, wantErr not nil")
 	}
 }
 
@@ -288,12 +306,14 @@ func TestClusterManagerResumeCAPIWorkloadClustersErrorResume(t *testing.T) {
 		Name:           mgmtClusterName,
 		KubeconfigFile: "mgmt-kubeconfig",
 	}
-	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: mgmtClusterName}}}
-	c, m := newClusterManager(t)
+	capiClusterName := "capi-cluster"
+	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
+	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(clusters, nil)
+	m.client.EXPECT().ResumeCAPICluster(ctx, capiClusterName, mgmtCluster.KubeconfigFile).Return(errors.New("Error pausing cluster"))
 
-	if err := c.ResumeCAPIWorkloadClusters(ctx, mgmtCluster); err != nil {
-		t.Errorf("ClusterManager.PauseCAPIWorkloadClusters() error = %v", err)
+	if err := c.ResumeCAPIWorkloadClusters(ctx, mgmtCluster); err == nil {
+		t.Error("ClusterManager.ResumeCAPIWorkloadClusters() error = nil, wantErr not nil")
 	}
 }
 
@@ -309,6 +329,22 @@ func TestClusterManagerResumeCAPIWorkloadClusters(t *testing.T) {
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(clusters, nil)
 	m.client.EXPECT().ResumeCAPICluster(ctx, capiClusterName, mgmtCluster.KubeconfigFile).Return(nil)
+
+	if err := c.ResumeCAPIWorkloadClusters(ctx, mgmtCluster); err != nil {
+		t.Errorf("ClusterManager.ResumeCAPIWorkloadClusters() error = %v", err)
+	}
+}
+
+func TestClusterManagerResumeCAPIWorkloadClustersSkipManagement(t *testing.T) {
+	ctx := context.Background()
+	mgmtClusterName := "cluster-name"
+	mgmtCluster := &types.Cluster{
+		Name:           mgmtClusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: mgmtClusterName}}}
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetClusters(ctx, mgmtCluster).Return(clusters, nil)
 
 	if err := c.ResumeCAPIWorkloadClusters(ctx, mgmtCluster); err != nil {
 		t.Errorf("ClusterManager.ResumeCAPIWorkloadClusters() error = %v", err)
