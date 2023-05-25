@@ -33,6 +33,14 @@ spec:
 {{- if .bottlerocketSettings }}
 {{ .bottlerocketSettings | indent 8 }}
 {{- end }}
+{{- if .certBundles }}
+        certBundles:
+        {{- range .certBundles }}
+        - name: "{{ .Name }}"
+          data: |
+{{ .Data | indent 12 }}
+        {{- end }}
+{{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
 {{- if .workerNodeGroupTaints }}
