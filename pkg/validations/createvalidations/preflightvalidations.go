@@ -6,7 +6,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -40,14 +39,6 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 				Name:        "validate authentication for git provider",
 				Remediation: fmt.Sprintf("ensure %s, %s env variable are set and valid", config.EksaGitPrivateKeyTokenEnv, config.EksaGitKnownHostsFileEnv),
 				Err:         validations.ValidateAuthenticationForGitProvider(v.Opts.Spec, v.Opts.CliConfig),
-			}
-		},
-		func() *validations.ValidationResult {
-			return &validations.ValidationResult{
-				Name:        "validate kubernetes version 1.27 support",
-				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s127SupportEnvVar),
-				Err:         validations.ValidateK8s127Support(v.Opts.Spec),
-				Silent:      true,
 			}
 		},
 	}
