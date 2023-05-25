@@ -68,7 +68,7 @@ metadata:
    name: my-cluster-datacenter
 spec:
   datacenter: <span style="color:red">"datacenter1"</span>          <a href="#datacenter-required"># vSphere datacenter name on which to deploy EKS Anywhere (required) </a>
-  disableCSI: false                  <a href="#disablecsi-optional"># Set to true to not have EKS Anywhere install and manage vSphere CSI driver</a>
+  disableCSI: false                  <a href="#disablecsi-optional-deprecated"># Deprecation warning: Click to see more. Set to true to not have EKS Anywhere install and manage vSphere CSI driver</a>
   server: <span style="color:red">"myvsphere.local"</span>          <a href="#server-required"># FQDN or IP address of vCenter server (required) </a>
   network: <span style="color:red">"network1"</span>                <a href="#network-required"># Path to the VM network on which to deploy EKS Anywhere (required) </a>
   insecure: false                    <a href="#insecure-optional"># Set to true if vCenter does not have a valid certificate </a>
@@ -254,7 +254,11 @@ openssl x509 -sha1 -fingerprint -in ca.crt -noout
 If you specify the wrong thumbprint, an error message will be printed with the expected thumbprint. If no valid
 certificate is being used, `insecure` must be set to true.
 
-### disableCSI (optional)
+### disableCSI (optional) [DEPRECATED]
+>**_NOTE:_** Installing CSI through EKS Anywhere is now deprecated as of v0.16.0. This field will be removed starting from 
+> v0.17.0 and setting `disableCSI` to `true` as mentioned below will be the default behavior. You can track this change with this
+> [issue](https://github.com/aws/eks-anywhere/issues/5517).
+
 Set `disableCSI` to `true` if you don't want to have EKS Anywhere install and manage the vSphere CSI driver for you. 
 More details on the driver are [here](https://docs.vmware.com/en/VMware-vSphere-Container-Storage-Plug-in/2.0/vmware-vsphere-csp-getting-started/GUID-C44D8071-85E7-4933-83EA-6797518C1837.html)
 

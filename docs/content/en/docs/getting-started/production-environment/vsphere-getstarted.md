@@ -63,6 +63,8 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    * Add [Optional]({{< relref "/docs/reference/clusterspec/optional/" >}}) configuration settings as needed.
      See [Github provider]({{< relref "/docs/reference/clusterspec/optional/gitops#github-provider" >}}) to see how to identify your Git information.
    * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
+>**_Note:_** Installing CSI as part of vSphere cluster creation is now deprecated as of `v0.16.0`. Please refer to `disableCSI`
+>[documentation]({{< relref "/docs/reference/clusterspec/vsphere#disablecsi-optional-deprecated" >}}) for more information.
 
 1. Set Credential Environment Variables
 
