@@ -467,7 +467,14 @@ func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext 
 		return &CollectDiagnosticsTask{}
 	}
 
-	logger.Info("Moving cluster management from workload to bootstrap cluster")
+	logger.V(3).Info("Pausing workload clusters before moving management cluster resources to bootstrap cluster")
+	err = commandContext.ClusterManager.PauseCAPIWorkloadClusters(ctx, commandContext.WorkloadCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
+	logger.Info("Moving management cluster from workload to bootstrap cluster")
 	err = commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef(), types.WithNodeHealthy())
 	if err != nil {
 		commandContext.SetError(err)
@@ -568,6 +575,14 @@ func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *
 		return &CollectDiagnosticsTask{}
 	}
 	commandContext.ManagementCluster = commandContext.WorkloadCluster
+
+	logger.V(3).Info("Resuming all workload clusters after moving management cluster resources from bootstrap to management clusters")
+	err = commandContext.ClusterManager.ResumeCAPIWorkloadClusters(ctx, commandContext.ManagementCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
 	return &reconcileClusterDefinitions{eksaSpecDiff: true}
 }
 

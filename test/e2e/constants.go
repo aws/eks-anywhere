@@ -45,5 +45,7 @@ const (
 	vsphereResourcePoolVar              = "T_VSPHERE_RESOURCE_POOL"
 )
 
-var EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
-var KubeVersions = []v1alpha1.KubernetesVersion{v1alpha1.Kube123, v1alpha1.Kube124, v1alpha1.Kube125, v1alpha1.Kube126, v1alpha1.Kube127}
+var (
+	EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
+	KubeVersions                    = []v1alpha1.KubernetesVersion{v1alpha1.Kube123, v1alpha1.Kube124, v1alpha1.Kube125, v1alpha1.Kube126, v1alpha1.Kube127}
+)
