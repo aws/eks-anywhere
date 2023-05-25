@@ -843,6 +843,11 @@ func TestDockerKubernetes126to127GithubFluxEnabledUpgradeFromLatestMinorRelease(
 	)
 }
 
+func TestDockerKubernetes126ManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+	provider := framework.NewDocker(t)
+	runTestManagementClusterUpgradeSideEffects(t, provider, "", v1alpha1.Kube126)
+}
+
 func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
@@ -854,10 +859,10 @@ func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
-		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
-		provider.WithWorkerNodeGroup(
-			framework.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithLabel("tier", "frontend")),
+		provider.WithNewWorkerNodeGroup("", framework.WithWorkerNodeGroup("worker-1", api.WithCount(2))),
+		provider.WithNewWorkerNodeGroup("", framework.WithWorkerNodeGroup("worker-2", api.WithCount(1))),
+		provider.WithNewWorkerNodeGroup(
+			"", framework.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithLabel("tier", "frontend")),
 		),
 	)
 
@@ -869,7 +874,7 @@ func TestDockerKubernetes124UpgradeAndRemoveWorkerNodeGroupsAPI(t *testing.T) {
 			api.RemoveWorkerNodeGroup("worker-3"),
 			api.WithWorkerNodeGroup("worker-3", api.WithCount(1), api.WithTaint(framework.NoScheduleTaint())),
 		),
-		provider.WithWorkerNodeGroup(framework.WithWorkerNodeGroup("worker-4", api.WithCount(1))),
+		provider.WithNewWorkerNodeGroup("", framework.WithWorkerNodeGroup("worker-4", api.WithCount(1))),
 	)
 }
 

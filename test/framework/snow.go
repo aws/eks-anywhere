@@ -299,7 +299,7 @@ func (s *Snow) WithBottlerocketStaticIP127() api.ClusterConfigFiller {
 // also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
 func (s *Snow) WithUbuntu123() api.ClusterConfigFiller {
 	s.t.Helper()
-	return s.withKubeVersionAndOS(anywherev1.Kube123, anywherev1.Ubuntu)
+	return s.WithKubeVersionAndOS(anywherev1.Ubuntu, anywherev1.Kube123)
 }
 
 // WithUbuntu124 returns a cluster config filler that sets the kubernetes version of the cluster to 1.24
@@ -307,7 +307,7 @@ func (s *Snow) WithUbuntu123() api.ClusterConfigFiller {
 // also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
 func (s *Snow) WithUbuntu124() api.ClusterConfigFiller {
 	s.t.Helper()
-	return s.withKubeVersionAndOS(anywherev1.Kube124, anywherev1.Ubuntu)
+	return s.WithKubeVersionAndOS(anywherev1.Ubuntu, anywherev1.Kube124)
 }
 
 // WithUbuntu125 returns a cluster config filler that sets the kubernetes version of the cluster to 1.25
@@ -315,7 +315,7 @@ func (s *Snow) WithUbuntu124() api.ClusterConfigFiller {
 // also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
 func (s *Snow) WithUbuntu125() api.ClusterConfigFiller {
 	s.t.Helper()
-	return s.withKubeVersionAndOS(anywherev1.Kube125, anywherev1.Ubuntu)
+	return s.WithKubeVersionAndOS(anywherev1.Ubuntu, anywherev1.Kube125)
 }
 
 // WithUbuntu126 returns a cluster config filler that sets the kubernetes version of the cluster to 1.26
@@ -323,7 +323,7 @@ func (s *Snow) WithUbuntu125() api.ClusterConfigFiller {
 // also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
 func (s *Snow) WithUbuntu126() api.ClusterConfigFiller {
 	s.t.Helper()
-	return s.withKubeVersionAndOS(anywherev1.Kube126, anywherev1.Ubuntu)
+	return s.WithKubeVersionAndOS(anywherev1.Ubuntu, anywherev1.Kube126)
 }
 
 // WithUbuntu127 returns a cluster config filler that sets the kubernetes version of the cluster to 1.27
@@ -331,12 +331,12 @@ func (s *Snow) WithUbuntu126() api.ClusterConfigFiller {
 // also set the AMI ID. Otherwise, it will leave it empty and let CAPAS select one.
 func (s *Snow) WithUbuntu127() api.ClusterConfigFiller {
 	s.t.Helper()
-	return s.withKubeVersionAndOS(anywherev1.Kube127, anywherev1.Ubuntu)
+	return s.WithKubeVersionAndOS(anywherev1.Ubuntu, anywherev1.Kube127)
 }
 
 func (s *Snow) withBottlerocketForKubeVersion(kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
-		s.withKubeVersionAndOS(kubeVersion, anywherev1.Bottlerocket),
+		s.WithKubeVersionAndOS(anywherev1.Bottlerocket, kubeVersion),
 		api.SnowToConfigFiller(api.WithChangeForAllSnowMachines(api.WithSnowContainersVolumeSize(100))),
 	)
 }
@@ -344,14 +344,16 @@ func (s *Snow) withBottlerocketForKubeVersion(kubeVersion anywherev1.KubernetesV
 func (s *Snow) withBottlerocketStaticIPForKubeVersion(kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	poolName := "pool-1"
 	return api.JoinClusterConfigFillers(
-		s.withKubeVersionAndOS(kubeVersion, anywherev1.Bottlerocket),
+		s.WithKubeVersionAndOS(anywherev1.Bottlerocket, kubeVersion),
 		api.SnowToConfigFiller(api.WithChangeForAllSnowMachines(api.WithSnowContainersVolumeSize(100))),
 		api.SnowToConfigFiller(api.WithChangeForAllSnowMachines(api.WithStaticIP(poolName))),
 		api.SnowToConfigFiller(s.withIPPoolFromEnvVar(poolName)),
 	)
 }
 
-func (s *Snow) withKubeVersionAndOS(kubeVersion anywherev1.KubernetesVersion, osFamily anywherev1.OSFamily) api.ClusterConfigFiller {
+// WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the correct AMI ID
+// and devices for the Snow machine configs.
+func (s *Snow) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	envar := fmt.Sprintf("T_SNOW_AMIID_%s_%s", strings.ToUpper(string(osFamily)), strings.ReplaceAll(string(kubeVersion), ".", "_"))
 
 	return api.JoinClusterConfigFillers(
@@ -458,6 +460,14 @@ func (s *Snow) WithWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
 		api.SnowToConfigFiller(snowMachineConfig(name, fillers...)),
+	)
+}
+
+// WithNewWorkerNodeGroup returns a filler that updates/creates the provided worker node group with its corresponding SnowMachineConfig.
+func (s *Snow) WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
+		api.SnowToConfigFiller(snowMachineConfig(name)),
 	)
 }
 

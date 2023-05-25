@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
@@ -71,13 +72,20 @@ func (d *Docker) ClusterConfigUpdates() []api.ClusterConfigFiller {
 	return []api.ClusterConfigFiller{api.ClusterToConfigFiller(f...)}
 }
 
-// WithWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
+// WithNewWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
 // a corresponding DockerMachineConfig to the cluster config.
-func (d *Docker) WithWorkerNodeGroup(workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
+func (d *Docker) WithNewWorkerNodeGroup(machineConfig string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
 	return api.ClusterToConfigFiller(workerNodeGroup.ClusterFiller())
 }
 
 // ClusterStateValidations returns a list of provider specific validations.
 func (d *Docker) ClusterStateValidations() []clusterf.StateValidation {
 	return []clusterf.StateValidation{}
+}
+
+// WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version.
+func (d *Docker) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
+	)
 }

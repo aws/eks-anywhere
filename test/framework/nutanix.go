@@ -166,6 +166,20 @@ func (s *Nutanix) WithProviderUpgrade(fillers ...api.NutanixFiller) ClusterE2ETe
 	}
 }
 
+// WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
+// nutanix machine configs.
+func (s *Nutanix) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+	// TODO: Update tests to use this
+	panic("Not implemented for Nutanix yet")
+}
+
+// WithNewWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
+// a corresponding NutanixMachineConfig to the cluster config.
+func (s *Nutanix) WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
+	// TODO: Implement for Nutanix provider
+	panic("Not implemented for Nutanix yet")
+}
+
 // WithUbuntu123Nutanix returns a NutanixOpt that adds API fillers to use a Ubuntu Nutanix template for k8s 1.23
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu123Nutanix() NutanixOpt {

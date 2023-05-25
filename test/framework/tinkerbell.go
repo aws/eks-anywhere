@@ -153,6 +153,20 @@ func (t *Tinkerbell) CleanupVMs(_ string) error {
 	return nil
 }
 
+// WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
+// tinkerbell machine configs.
+func (t *Tinkerbell) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+	// TODO: Update tests to use this
+	panic("Not implemented for Tinkerbell yet")
+}
+
+// WithNewWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
+// a corresponding TinkerbellMachineConfig to the cluster config.
+func (t *Tinkerbell) WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
+	// TODO: Implement for Tinkerbell provider
+	panic("Not implemented for Tinkerbell yet")
+}
+
 func WithUbuntu123Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
