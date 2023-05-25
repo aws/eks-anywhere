@@ -870,6 +870,96 @@ func TestCmkListOperations(t *testing.T) {
 			wantResultCount:  0,
 		},
 		{
+			testName:         "searchtemplate success on name filter",
+			jsonResponseFile: "testdata/cmk_list_template_singular.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Name),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				_, err := cmk.SearchTemplate(ctx, execConfig.Profiles[0].Name, resourceName)
+				return err
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+			wantResultCount:  1,
+		},
+		{
+			testName:         "searchtemplate success on id filter",
+			jsonResponseFile: "testdata/cmk_list_template_singular.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("id=\"%s\"", resourceID.Id),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				_, err := cmk.SearchTemplate(ctx, execConfig.Profiles[0].Name, resourceID)
+				return err
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+			wantResultCount:  1,
+		},
+		{
+			testName:         "searchtemplate on none results",
+			jsonResponseFile: "testdata/cmk_list_template_none.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Name),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				_, err := cmk.SearchTemplate(ctx, execConfig.Profiles[0].Name, resourceName)
+				return err
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+			wantResultCount:  1,
+		},
+		{
+			testName:         "searchtemplate failure on cmk failure",
+			jsonResponseFile: "testdata/cmk_list_template_none.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Name),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				_, err := cmk.SearchTemplate(ctx, execConfig.Profiles[0].Name, resourceName)
+				return err
+			},
+			cmkResponseError: errors.New("cmk calling return exception"),
+			wantErr:          true,
+			wantResultCount:  1,
+		},
+		{
+			testName:         "searchtemplate no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Name),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				_, err := cmk.SearchTemplate(ctx, execConfig.Profiles[0].Name, resourceName)
+				return err
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+			wantResultCount:  0,
+		},
+		{
+			testName:         "searchtemplate json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Name),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				_, err := cmk.SearchTemplate(ctx, execConfig.Profiles[0].Name, resourceName)
+				return err
+			},
+			cmkResponseError: nil,
+			wantErr:          true,
+			wantResultCount:  0,
+		},
+		{
 			testName:         "listaffinitygroups success on id filter",
 			jsonResponseFile: "testdata/cmk_list_affinitygroup_singular.json",
 			argumentsExecCall: []string{
