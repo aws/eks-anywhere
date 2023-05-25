@@ -8,7 +8,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -113,15 +112,5 @@ func ValidateManagementClusterBundlesVersion(ctx context.Context, k KubectlClien
 		return fmt.Errorf("cannot upgrade workload cluster with bundle spec.number %d while management cluster %s is on older bundle spec.number %d", workload.Bundles.Spec.Number, mgmtCluster.Name, mgmtBundles.Spec.Number)
 	}
 
-	return nil
-}
-
-// ValidateK8s127Support checks if the 1.27 feature flag is set when using k8s 1.27.
-func ValidateK8s127Support(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.K8s127Support()) {
-		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube127 {
-			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube127, features.K8s127SupportEnvVar)
-		}
-	}
 	return nil
 }
