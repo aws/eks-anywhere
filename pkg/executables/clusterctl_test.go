@@ -277,13 +277,15 @@ func TestClusterctlMoveManagement(t *testing.T) {
 		testName     string
 		from         *types.Cluster
 		to           *types.Cluster
+		clusterName  string
 		wantMoveArgs []interface{}
 	}{
 		{
 			testName:     "no kubeconfig",
 			from:         &types.Cluster{},
 			to:           &types.Cluster{},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
+			clusterName:  "",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", ""},
 		},
 		{
 			testName: "no kubeconfig in 'from' cluster",
@@ -291,7 +293,8 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			to: &types.Cluster{
 				KubeconfigFile: "to.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace},
+			clusterName:  "",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", ""},
 		},
 		{
 			testName: "with both kubeconfigs",
@@ -301,7 +304,19 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			to: &types.Cluster{
 				KubeconfigFile: "to.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"},
+			clusterName:  "",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", "", "--kubeconfig", "from.kubeconfig"},
+		},
+		{
+			testName: "with filter cluster",
+			from: &types.Cluster{
+				KubeconfigFile: "from.kubeconfig",
+			},
+			to: &types.Cluster{
+				KubeconfigFile: "to.kubeconfig",
+			},
+			clusterName:  "test-cluster",
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--filter-cluster", "test-cluster", "--kubeconfig", "from.kubeconfig"},
 		},
 	}
 
@@ -310,7 +325,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			tc := newClusterctlTest(t)
 			tc.e.EXPECT().Execute(tc.ctx, tt.wantMoveArgs...)
 
-			if err := tc.clusterctl.MoveManagement(tc.ctx, tt.from, tt.to); err != nil {
+			if err := tc.clusterctl.MoveManagement(tc.ctx, tt.from, tt.to, tt.clusterName); err != nil {
 				t.Fatalf("Clusterctl.MoveManagement() error = %v, want nil", err)
 			}
 		})

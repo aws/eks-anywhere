@@ -172,8 +172,13 @@ func (c *Clusterctl) BackupManagement(ctx context.Context, cluster *types.Cluste
 	return nil
 }
 
-func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster) error {
-	params := []string{"move", "--to-kubeconfig", to.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
+// MoveManagement moves management components `from` cluster `to` cluster
+// If `clusterName` is provided, it filters and moves only the provided cluster.
+func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster, clusterName string) error {
+	params := []string{
+		"move", "--to-kubeconfig", to.KubeconfigFile, "--namespace", constants.EksaSystemNamespace,
+		"--filter-cluster", clusterName,
+	}
 	if from.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", from.KubeconfigFile)
 	}

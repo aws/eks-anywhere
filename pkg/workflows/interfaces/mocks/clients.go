@@ -343,6 +343,20 @@ func (mr *MockClusterManagerMockRecorder) MoveCAPI(arg0, arg1, arg2, arg3, arg4 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCAPI", reflect.TypeOf((*MockClusterManager)(nil).MoveCAPI), varargs...)
 }
 
+// PauseCAPIWorkloadClusters mocks base method.
+func (m *MockClusterManager) PauseCAPIWorkloadClusters(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PauseCAPIWorkloadClusters", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PauseCAPIWorkloadClusters indicates an expected call of PauseCAPIWorkloadClusters.
+func (mr *MockClusterManagerMockRecorder) PauseCAPIWorkloadClusters(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseCAPIWorkloadClusters", reflect.TypeOf((*MockClusterManager)(nil).PauseCAPIWorkloadClusters), arg0, arg1)
+}
+
 // PauseEKSAControllerReconcile mocks base method.
 func (m *MockClusterManager) PauseEKSAControllerReconcile(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
 	m.ctrl.T.Helper()
@@ -355,6 +369,20 @@ func (m *MockClusterManager) PauseEKSAControllerReconcile(arg0 context.Context, 
 func (mr *MockClusterManagerMockRecorder) PauseEKSAControllerReconcile(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).PauseEKSAControllerReconcile), arg0, arg1, arg2, arg3)
+}
+
+// ResumeCAPIWorkloadClusters mocks base method.
+func (m *MockClusterManager) ResumeCAPIWorkloadClusters(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResumeCAPIWorkloadClusters", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResumeCAPIWorkloadClusters indicates an expected call of ResumeCAPIWorkloadClusters.
+func (mr *MockClusterManagerMockRecorder) ResumeCAPIWorkloadClusters(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeCAPIWorkloadClusters", reflect.TypeOf((*MockClusterManager)(nil).ResumeCAPIWorkloadClusters), arg0, arg1)
 }
 
 // ResumeEKSAControllerReconcile mocks base method.

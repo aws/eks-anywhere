@@ -99,7 +99,7 @@ type ClusterManager struct {
 type ClusterClient interface {
 	KubernetesClient
 	BackupManagement(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
-	MoveManagement(ctx context.Context, org, target *types.Cluster) error
+	MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error
 	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -122,6 +122,8 @@ type ClusterClient interface {
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
 	GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
+	PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error
+	ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
@@ -313,8 +315,8 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 		return err
 	}
 
-	logger.V(3).Info("Waiting for all clusters to be ready before move")
-	if err := c.waitForAllClustersReady(ctx, from, c.clusterWaitTimeout.String()); err != nil {
+	logger.V(3).Info("Waiting for management cluster to be ready before move")
+	if err := c.clusterClient.WaitForClusterReady(ctx, from, c.clusterWaitTimeout.String(), clusterName); err != nil {
 		return err
 	}
 
@@ -327,14 +329,14 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 
 	r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 	err := r.Retry(func() error {
-		return c.clusterClient.MoveManagement(ctx, from, to)
+		return c.clusterClient.MoveManagement(ctx, from, to, clusterName)
 	})
 	if err != nil {
 		return fmt.Errorf("moving CAPI management from source to target: %v", err)
 	}
 
-	logger.V(3).Info("Waiting for control planes to be ready after move")
-	err = c.waitForAllControlPlanes(ctx, to, c.controlPlaneWaitAfterMoveTimeout)
+	logger.V(3).Info("Waiting for workload cluster control plane to be ready after move")
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, to, c.controlPlaneWaitAfterMoveTimeout.String(), clusterName)
 	if err != nil {
 		return err
 	}
@@ -1139,6 +1141,44 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
+	}
+	return nil
+}
+
+// PauseCAPIWorkloadClusters pauses all workload CAPI clusters except the management cluster.
+func (c *ClusterManager) PauseCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error {
+	clusters, err := c.clusterClient.GetClusters(ctx, managementCluster)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range clusters {
+		// skip pausing management cluster
+		if w.Metadata.Name == managementCluster.Name {
+			continue
+		}
+		if err = c.clusterClient.PauseCAPICluster(ctx, w.Metadata.Name, managementCluster.KubeconfigFile); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ResumeCAPIWorkloadClusters resumes all workload CAPI clusters except the management cluster.
+func (c *ClusterManager) ResumeCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error {
+	clusters, err := c.clusterClient.GetClusters(ctx, managementCluster)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range clusters {
+		// skip resuming management cluster
+		if w.Metadata.Name == managementCluster.Name {
+			continue
+		}
+		if err = c.clusterClient.ResumeCAPICluster(ctx, w.Metadata.Name, managementCluster.KubeconfigFile); err != nil {
+			return err
+		}
 	}
 	return nil
 }

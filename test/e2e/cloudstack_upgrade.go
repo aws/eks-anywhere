@@ -207,7 +207,6 @@ func cloudStackAPIWorkloadUpgradeTests(wc *framework.WorkloadCluster, cloudstack
 			},
 		},
 	}
-
 }
 
 func runCloudStackAPIUpgradeTest(t *testing.T, test *framework.ClusterE2ETest, ut cloudStackAPIUpgradeTest) {

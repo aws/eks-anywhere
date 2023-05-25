@@ -559,17 +559,31 @@ func (mr *MockClusterClientMockRecorder) ListObjects(arg0, arg1, arg2, arg3, arg
 }
 
 // MoveManagement mocks base method.
-func (m *MockClusterClient) MoveManagement(arg0 context.Context, arg1, arg2 *types.Cluster) error {
+func (m *MockClusterClient) MoveManagement(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MoveManagement", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "MoveManagement", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // MoveManagement indicates an expected call of MoveManagement.
-func (mr *MockClusterClientMockRecorder) MoveManagement(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) MoveManagement(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveManagement", reflect.TypeOf((*MockClusterClient)(nil).MoveManagement), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveManagement", reflect.TypeOf((*MockClusterClient)(nil).MoveManagement), arg0, arg1, arg2, arg3)
+}
+
+// PauseCAPICluster mocks base method.
+func (m *MockClusterClient) PauseCAPICluster(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PauseCAPICluster", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PauseCAPICluster indicates an expected call of PauseCAPICluster.
+func (mr *MockClusterClientMockRecorder) PauseCAPICluster(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseCAPICluster", reflect.TypeOf((*MockClusterClient)(nil).PauseCAPICluster), arg0, arg1, arg2)
 }
 
 // RemoveAnnotationInNamespace mocks base method.
@@ -584,6 +598,20 @@ func (m *MockClusterClient) RemoveAnnotationInNamespace(arg0 context.Context, ar
 func (mr *MockClusterClientMockRecorder) RemoveAnnotationInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).RemoveAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// ResumeCAPICluster mocks base method.
+func (m *MockClusterClient) ResumeCAPICluster(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResumeCAPICluster", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResumeCAPICluster indicates an expected call of ResumeCAPICluster.
+func (mr *MockClusterClientMockRecorder) ResumeCAPICluster(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeCAPICluster", reflect.TypeOf((*MockClusterClient)(nil).ResumeCAPICluster), arg0, arg1, arg2)
 }
 
 // SaveLog mocks base method.
