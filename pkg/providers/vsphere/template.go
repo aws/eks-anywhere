@@ -280,6 +280,10 @@ func buildTemplateMapCP(
 				values["etcdNtpServers"] = etcdMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
 			}
 
+			if etcdMachineSpec.HostOSConfiguration.CertBundles != nil {
+				values["etcdCertBundles"] = etcdMachineSpec.HostOSConfiguration.CertBundles
+			}
+
 			if etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration != nil {
 				if etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel != nil &&
 					etcdMachineSpec.HostOSConfiguration.BottlerocketConfiguration.Kernel.SysctlSettings != nil {
@@ -312,6 +316,10 @@ func buildTemplateMapCP(
 	if controlPlaneMachineSpec.HostOSConfiguration != nil {
 		if controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
 			values["cpNtpServers"] = controlPlaneMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
+
+		if controlPlaneMachineSpec.HostOSConfiguration.CertBundles != nil {
+			values["certBundles"] = controlPlaneMachineSpec.HostOSConfiguration.CertBundles
 		}
 
 		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(controlPlaneMachineSpec.HostOSConfiguration.BottlerocketConfiguration)
@@ -424,6 +432,10 @@ func buildTemplateMapMD(
 	if workerNodeGroupMachineSpec.HostOSConfiguration != nil {
 		if workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration != nil {
 			values["ntpServers"] = workerNodeGroupMachineSpec.HostOSConfiguration.NTPConfiguration.Servers
+		}
+
+		if workerNodeGroupMachineSpec.HostOSConfiguration.CertBundles != nil {
+			values["certBundles"] = workerNodeGroupMachineSpec.HostOSConfiguration.CertBundles
 		}
 
 		brSettings, err := common.GetCAPIBottlerocketSettingsConfig(workerNodeGroupMachineSpec.HostOSConfiguration.BottlerocketConfiguration)

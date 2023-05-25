@@ -120,6 +120,22 @@ spec:
                             type: integer
                         type: object
                     type: object
+                  certBundles:
+                    items:
+                      description: Cert defines additional trusted cert bundles on
+                        the host OS.
+                      properties:
+                        data:
+                          description: Data defines the cert bundle data.
+                          type: string
+                        name:
+                          description: Name defines the cert bundle name.
+                          type: string
+                      required:
+                      - data
+                      - name
+                      type: object
+                    type: array
                   ntpConfiguration:
                     description: NTPConfiguration defines the NTP configuration on
                       the host OS.
