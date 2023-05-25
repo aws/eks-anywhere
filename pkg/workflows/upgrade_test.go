@@ -282,6 +282,7 @@ func (c *upgradeTestSetup) expectPrepareUpgradeWorkload(managementCluster *types
 func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().BackupCAPI(c.ctx, c.managementCluster, c.managementStatePath),
+		c.clusterManager.EXPECT().PauseCAPIWorkloadClusters(c.ctx, c.managementCluster),
 		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.managementCluster, c.bootstrapCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
 		),
@@ -306,6 +307,7 @@ func (c *upgradeTestSetup) expectMoveManagementToWorkload() {
 		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.bootstrapCluster, c.managementCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
 		),
+		c.clusterManager.EXPECT().ResumeCAPIWorkloadClusters(c.ctx, c.managementCluster),
 	)
 }
 

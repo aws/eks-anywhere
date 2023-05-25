@@ -2008,6 +2008,34 @@ func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []co
 	return nil
 }
 
+// PauseCAPICluster adds a `spec.Paused: true` to the CAPI cluster resource. This will cause all
+// downstream CAPI + provider controllers to skip reconciling on the paused cluster's objects.
+func (k *Kubectl) PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error {
+	patch := fmt.Sprintf("{\"spec\":{\"paused\":%t}}", true)
+	return k.MergePatchResource(ctx, capiClustersResourceType, cluster, patch, kubeconfig, constants.EksaSystemNamespace)
+}
+
+// ResumeCAPICluster removes the `spec.Paused` on the CAPI cluster resource. This will cause all
+// downstream CAPI + provider controllers to resume reconciling on the paused cluster's objects
+// `spec.Paused` is set to `null` to drop the field instead of setting it to `false`.
+func (k *Kubectl) ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error {
+	patch := "{\"spec\":{\"paused\":null}}"
+	return k.MergePatchResource(ctx, capiClustersResourceType, cluster, patch, kubeconfig, constants.EksaSystemNamespace)
+}
+
+// MergePatchResource patches named resource using merge patch.
+func (k *Kubectl) MergePatchResource(ctx context.Context, resource, name, patch, kubeconfig, namespace string) error {
+	params := []string{
+		"patch", resource, name, "--type=merge", "-p", patch, "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
 	return k.HasResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
 }

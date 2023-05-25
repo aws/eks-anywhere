@@ -20,6 +20,8 @@ type ClusterManager interface {
 	BackupCAPI(ctx context.Context, cluster *types.Cluster, managementStatePath string) error
 	MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error
 	CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error)
+	PauseCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error
+	ResumeCAPIWorkloadClusters(ctx context.Context, managementCluster *types.Cluster) error
 	RunPostCreateWorkloadCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
 	UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error
