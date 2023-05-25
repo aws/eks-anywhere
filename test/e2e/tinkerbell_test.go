@@ -884,8 +884,8 @@ func TestTinkerbellUpgrade127MulticlusterWorkloadClusterWorkerScaleDown(t *testi
 			t,
 			provider,
 			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-			framework.WithControlPlaneHardware(1),
-			framework.WithWorkerHardware(2),
+			framework.WithControlPlaneHardware(2),
+			framework.WithWorkerHardware(3),
 		),
 		framework.NewClusterE2ETest(
 			t,
