@@ -101,6 +101,8 @@ OS Family - `os:bottlerocket`
 
 EKS Distro Release
 
+1.27 - `eksdRelease:kubernetes-1-27-eks-4`
+
 1.26 - `eksdRelease:kubernetes-1-26-eks-5`
 
 1.25 - `eksdRelease:kubernetes-1-25-eks-10`
@@ -109,7 +111,6 @@ EKS Distro Release
 
 1.23 - `eksdRelease:kubernetes-1-23-eks-19`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-24`
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
@@ -131,9 +132,9 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"
 ```
-4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.22, 1.23, 1.24, 1.25 and 1.26.
+4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.23, 1.24, 1.25, 1.26, and 1.27.
 ```bash
-export KUBEVERSION="1.26"
+export KUBEVERSION="1.27"
 ```
 5. Programmatically retrieve the Bottlerocket version corresponding to this release of EKS-A and Kubernetes version and export it.
    

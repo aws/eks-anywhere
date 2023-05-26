@@ -46,7 +46,7 @@ spec:
     machineGroupRef:
       kind: SnowMachineConfig
       name: my-cluster-machines
-  kubernetesVersion: "1.26"
+  kubernetesVersion: "1.27"
   workerNodeGroupConfigurations:
   - count: 1
     machineGroupRef:
@@ -200,7 +200,7 @@ Refers to the Kubernetes object with Snow specific configuration for your etcd m
 Refers to the Kubernetes object with Snow environment specific configuration. See `SnowDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.26`, `1.25`, `1.24`, `1.23`, `1.22`
+The Kubernetes version you want to use for your cluster. Supported values: `1.27`, `1.26`, `1.25`, `1.24`, `1.23`
 
 ## SnowDatacenterConfig Fields
 
