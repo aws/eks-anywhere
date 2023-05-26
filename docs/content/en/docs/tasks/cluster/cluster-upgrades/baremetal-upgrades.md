@@ -11,16 +11,25 @@ When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere r
 EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
 The upgrade command also upgrades core components of EKS Anywhere and lets the user enjoy the latest features, bug fixes and security patches.
 
+**Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). If an upgrade fails, it is very important not to delete the Docker containers running the KinD bootstrap cluster. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
+
 >**_NOTE:_** Currently only Minor Version Upgrades are support for Bare Metal clusters. No other aspects of the cluster upgrades are currently supported.
 >
 
+### EKS Anywhere Version Upgrades
 
-### Minor Version Upgrades
+We encourage that you stay up to date with the latest EKS Anywhere version, as new features, bug fixes, or security patches might be added in each release. You can find the content, such as supported OS versions and changelog, of each EKS Anywhere version on the [What’s New]({{< relref "../../../reference/changelog/" >}}) page.
+
+Download the [latest or target EKS Anywhere release](https://github.com/aws/eks-anywhere/releases/) and run `eksctl anywhere upgrade cluster` command to upgrade a cluster to a specific EKS Anywhere version.
+
+**Skipping Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.14 directly to v0.16) is NOT allowed.** EKS Anywhere team performs regular upgrade reliability testing for sequential version upgrade (e.g. going from version 0.14 to 0.15, then from version 0.15 to 0.16), but we do not perform testing on non-sequential upgrade path (e.g. going from version 0.14 directly to 0.16). You should not skip minor versions during cluster upgrade. However, you can choose to skip patch versions.
+
+### Kubernetes Minor Version Upgrades
 
 Kubernetes has minor releases [three times per year](https://kubernetes.io/releases/release/) and EKS Distro follows a similar cadence.
 EKS Anywhere will add support for new EKS Distro releases as they are released, and you are advised to upgrade your cluster when possible.
 
-Cluster upgrades are not handled automatically and require administrator action to modify the cluster specification and perform an upgrade.
+Cluster upgrades are not handled automatically and require administrator action to modify the cluster specification and perform an upgrade. This may also require [building a node image or OVA]({{< relref "../../../reference/artifacts/" >}}) for the new Kubernetes version being upgraded to.
 You are advised to upgrade your clusters in development environments first and verify your workloads and controllers are compatible with the new version.
 
 Cluster upgrades are performed using a rolling upgrade process (similar to Kubernetes Deployments).
