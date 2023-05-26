@@ -26,8 +26,8 @@ Therefore, workload clusters are no longer affected by management cluster upgrad
 Due to this change, each cluster must be individually upgraded to enjoy the latest features on all clusters.
 If you have a management cluster running EKS Anywhere version v0.15, you can successfully upgrade to EKS Anywhere version v0.16 and observe no changes to any of its workload clusters.
 
-When triggering a workload cluster upgrade after upgrading the management cluster, please keep in mind that it will not only reflect your changes in the cluster spec, but also any new improvements included in the new EKS Anywhere controller.
-This difference in logic can trigger a machine rollout, even if the updates to the cluster spec didn't require one (for example, scaling down a worker node group).
+When triggering a workload cluster upgrade after upgrading the management cluster, please keep in mind that it will not only apply your changes in the workload cluster spec, but also any new improvements included in the new EKS Anywhere controller that was upgraded on the management cluster.
+The changes in the EKS Anywhere controller can trigger a machine rollout on the workload cluster during upgrade, even if the changes to the workload cluster spec didn't require one (for example, scaling down a worker node group).
 
 {{% /alert %}}
 
@@ -42,7 +42,7 @@ Download the [latest or target EKS Anywhere release](https://github.com/aws/eks-
 {{% alert title="Important" color="warning" %}}
 
 We provide a maximum skew version support of one EKS Anywhere minor version for management and workload clusters.
-This means that we support the management cluster being one EKS Anywhere minor version newer than the workload clusters (such as v0.16 for workload clusters if the management cluster is at v0.17).
+This means that we support the management cluster being one EKS Anywhere minor version newer than the workload clusters (such as v0.15 for workload clusters if the management cluster is at v0.16).
 In the event that you want to upgrade your management cluster to a version that does not satisfy this condition, we recommend upgrading the workload cluster's EKS Anywhere version first, followed by upgrading to your desired EKS Anywhere version for the management cluster.
 
 {{% /alert %}}
