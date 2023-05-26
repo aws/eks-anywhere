@@ -57,7 +57,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
          name: mgmt
       externalEtcdConfiguration:
          count: 1
-      kubernetesVersion: "1.26"
+      kubernetesVersion: "1.27"
       managementCluster:
          name: mgmt
       workerNodeGroupConfigurations:
@@ -219,7 +219,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
      gitOpsRef:
        kind: FluxConfig
        name: mgmt
-     kubernetesVersion: "1.26"
+     kubernetesVersion: "1.27"
      managementCluster:
        name: mgmt
      workerNodeGroupConfigurations:
@@ -297,7 +297,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    Example command output
    ```
    ...
-   kubernetesVersion: "1.26"
+   kubernetesVersion: "1.27"
    managementCluster:
      name: mgmt
    workerNodeGroupConfigurations:

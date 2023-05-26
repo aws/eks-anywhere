@@ -236,7 +236,7 @@ Number of etcd members
 Refers to the Kubernetes object with CloudStack specific configuration for your etcd members. See `CloudStackMachineConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.24`, `1.23`, `1.22`
+The Kubernetes version you want to use for your cluster. Supported values: `1.24`, `1.23`
 
 ### managementCluster (required)
 Identifies the name of the management cluster.
