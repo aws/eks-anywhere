@@ -951,7 +951,7 @@ func TestDockerUpgradeWorkloadClusterScaleAddRemoveWorkerNodeGroupsGitHubFluxAPI
 	)
 }
 
-func TestDockerCiliumUpgradeSkip_Create(t *testing.T) {
+func TestDockerCiliumSkipUpgrade_CLICreate(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(t, provider,
 		framework.WithClusterFiller(
@@ -971,7 +971,7 @@ func TestDockerCiliumUpgradeSkip_Create(t *testing.T) {
 	test.DeleteCluster()
 }
 
-func TestDockerCiliumSkipUpgrade_Upgrade(t *testing.T) {
+func TestDockerCiliumSkipUpgrade_CLIUpgrade(t *testing.T) {
 	release, err := framework.GetLatestMinorReleaseFromTestBranch()
 	if err != nil {
 		t.Fatal(err)
@@ -1007,7 +1007,7 @@ func TestDockerCiliumSkipUpgrade_Upgrade(t *testing.T) {
 	test.DeleteCluster()
 }
 
-func TestDockerCiliumUpgradeSkip_WorkloadCreate(t *testing.T) {
+func TestDockerCiliumSkipUpgrade_ControllerCreate(t *testing.T) {
 	provider := framework.NewDocker(t)
 	management := framework.NewClusterE2ETest(t, provider).WithClusterConfig(
 		api.ClusterToConfigFiller(
@@ -1053,7 +1053,7 @@ func TestDockerCiliumUpgradeSkip_WorkloadCreate(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestDockerCiliumUpgradeSkip_WorkloadUpgrade(t *testing.T) {
+func TestDockerCiliumSkipUpgrade_ControllerUpgrade(t *testing.T) {
 	provider := framework.NewDocker(t)
 	management := framework.NewClusterE2ETest(t, provider).WithClusterConfig(
 		api.ClusterToConfigFiller(

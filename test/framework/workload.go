@@ -104,7 +104,7 @@ func (w *WorkloadCluster) WaitForKubeconfig() {
 // ValidateClusterDelete verifies the cluster has been deleted.
 func (w *WorkloadCluster) ValidateClusterDelete() {
 	ctx := context.Background()
-	w.buildClusterStateValidationConfig(ctx)
+	// w.buildClusterStateValidationConfig(ctx)
 	w.T.Logf("Validating cluster deletion %s", w.ClusterName)
 	clusterStateValidator := newClusterStateValidator(w.clusterStateValidationConfig)
 	clusterStateValidator.WithValidations(
