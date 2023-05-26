@@ -61,6 +61,13 @@ You can find the content of the previous Amazon EKS Anywhere minor versions and 
 ### Will I get notified when there is a new Amazon EKS Anywhere version release?
 You will get notified if you have subscribed as documented on the [Release Alerts]({{< relref "../snsupdates/" >}}) page.
 
+### Can I use different Amazon EKS Anywhere minor versions for my management cluster and workload clusters?
+
+Yes, the management cluster and its workload clusters can be created using different Amazon EKS Anywhere minor versions.
+However, we provide a maximum skew version support of one EKS Anywhere minor version for management and workload clusters.
+This means that we support the management cluster being one EKS Anywhere minor version newer than the workload clusters (such as v0.16 for workload clusters if the management cluster is at v0.17).
+In the event that you want to upgrade your management cluster to a version that does not satisfy this condition, we recommend upgrading the workload cluster's EKS-A version first, followed by upgrading to your desired EKS-A version for the management cluster.
+
 ### Can I skip Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.9 directly to v0.11)?
 
 No. We perform regular upgrade reliability testing for sequential version upgrade (e.g. going from version 0.9 to 0.10, then from version 0.10 to 0.11), but we do not perform testing on non-sequential upgrade path (e.g. going from version 0.9 directly to 0.11). You should _not_ skip minor versions during cluster upgrade. However, you can choose to skip patch versions.
