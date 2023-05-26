@@ -221,6 +221,7 @@ func givenEmptyClusterSpec() *cluster.Spec {
 		s.VersionsBundle.KubeVersion = "1.19"
 		s.VersionsBundle.EksD.Name = eksd119Release
 		s.Cluster.Namespace = "test-namespace"
+		s.VSphereDatacenter = &v1alpha1.VSphereDatacenterConfig{}
 	})
 }
 

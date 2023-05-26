@@ -274,7 +274,17 @@ func (p *vsphereProvider) PostMoveManagementToBootstrap(_ context.Context, _ *ty
 	return nil
 }
 
+// TODO: Remove this field for v0.17.x, adding a warning as of v0.16.0
+func warnIfCSIEnabled(disableCSI bool) {
+	if !disableCSI {
+		// Need to add spacing to make the log message look neat
+		logger.MarkWarning("  Warning: Installing CSI through EKS Anywhere is deprecated. Refer to the official documentation for more details on " +
+			"the disableCSI field in VSphereDatacenterConfig")
+	}
+}
+
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	warnIfCSIEnabled(clusterSpec.VSphereDatacenter.Spec.DisableCSI)
 	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -352,6 +362,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
+	warnIfCSIEnabled(clusterSpec.VSphereDatacenter.Spec.DisableCSI)
 	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
