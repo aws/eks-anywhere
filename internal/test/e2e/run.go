@@ -332,12 +332,13 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	}
 
 	if strings.EqualFold(conf.BranchName, conf.BaremetalBranchName) {
-		runConfs, err = appendNonAirgappedTinkerbellRunConfs(awsSession, testsList, conf, testRunnerConfig, runConfs)
+		tinkerbellIPManager := newE2EIPManager(conf.Logger, os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
+		runConfs, err = appendNonAirgappedTinkerbellRunConfs(awsSession, testsList, conf, testRunnerConfig, runConfs, tinkerbellIPManager)
 		if err != nil {
 			return nil, fmt.Errorf("failed to split Tinkerbell tests: %v", err)
 		}
 
-		runConfs, err = appendAirgappedTinkerbellRunConfs(awsSession, testsList, conf, testRunnerConfig, runConfs)
+		runConfs, err = appendAirgappedTinkerbellRunConfs(awsSession, testsList, conf, testRunnerConfig, runConfs, tinkerbellIPManager)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run airgapped Tinkerbell tests: %v", err)
 		}
@@ -347,7 +348,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 }
 
 //nolint:gocyclo // This legacy function is complex but the team too busy to simplify it
-func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf) ([]instanceRunConf, error) {
+func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf, ipManager *E2EIPManager) ([]instanceRunConf, error) {
 	err := s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), conf.StorageBucket, e2eHardwareCsvFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
@@ -393,8 +394,6 @@ func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList
 
 	hardwareChunks := api.SplitHardware(hardware, maxHardwarePerE2ETest)
 
-	ipman := newE2EIPManager(conf.Logger, os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
-
 	testsInVSphereInstance := make([]string, 0, tinkTestsPerInstance)
 	for i, testName := range tinkerbellTests {
 		testsInVSphereInstance = append(testsInVSphereInstance, testName)
@@ -404,7 +403,7 @@ func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList
 			conf.Logger.V(1).Info("INFO:", "hardwareSize", len(hardware))
 
 			// each tinkerbell test requires 2 floating ip's (cp & tink server)
-			ips := ipman.reserveIPPool(tinkTestsPerInstance * 2)
+			ips := ipManager.reserveIPPool(tinkTestsPerInstance * 2)
 
 			if len(hardwareChunks) > 0 {
 				hardware, hardwareChunks = hardwareChunks[0], hardwareChunks[1:]
@@ -428,7 +427,7 @@ func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList
 	return runConfs, nil
 }
 
-func appendAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf) ([]instanceRunConf, error) {
+func appendAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf, ipManager *E2EIPManager) ([]instanceRunConf, error) {
 	tinkerbellTests := getTinkerbellAirgappedTests(testsList)
 	if len(tinkerbellTests) == 0 {
 		conf.Logger.V(1).Info("No tinkerbell airgapped test to run")
@@ -449,9 +448,8 @@ func appendAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []
 
 	conf.Logger.V(1).Info("INFO:", "totalAirgappedHardware", len(hardware))
 
-	ipman := newE2EIPManager(conf.Logger, os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
-
-	runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(tinkerbellTests, "|"), ipman.reserveIPPool(2), hardware, VSphereTestRunnerType, testRunnerConfig))
+	pool := ipManager.reserveIPPool(len(tinkerbellTests) * 2)
+	runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(tinkerbellTests, "|"), pool, hardware, VSphereTestRunnerType, testRunnerConfig))
 
 	return runConfs, nil
 }
