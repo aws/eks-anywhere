@@ -18,11 +18,12 @@ anywhere generate packages [flags] package
 ### Options
 
 ```
-      --cluster string        Name of cluster for package generation
-  -h, --help                  help for packages
-      --kube-version string   Kubernetes Version of the cluster to be used. Format <major>.<minor>
-      --kubeconfig string     Path to an optional kubeconfig file to use.
-      --registry string       Used to specify an alternative registry for package generation
+      --bundles-override string   Override default Bundles manifest (not recommended)
+      --cluster string            Name of cluster for package generation
+  -h, --help                      help for packages
+      --kube-version string       Kubernetes Version of the cluster to be used. Format <major>.<minor>
+      --kubeconfig string         Path to an optional kubeconfig file to use.
+      --registry string           Used to specify an alternative registry for package generation
 ```
 
 ### Options inherited from parent commands

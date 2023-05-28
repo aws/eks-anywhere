@@ -18,9 +18,10 @@ anywhere get packagebundlecontroller(s) [flags]
 ### Options
 
 ```
-  -h, --help                help for packagebundlecontroller(s)
-      --kubeconfig string   Path to an optional kubeconfig file.
-  -o, --output string       Specifies the output format (valid option: json, yaml)
+      --bundles-override string   Override default Bundles manifest (not recommended)
+  -h, --help                      help for packagebundlecontroller(s)
+      --kubeconfig string         Path to an optional kubeconfig file.
+  -o, --output string             Specifies the output format (valid option: json, yaml)
 ```
 
 ### Options inherited from parent commands

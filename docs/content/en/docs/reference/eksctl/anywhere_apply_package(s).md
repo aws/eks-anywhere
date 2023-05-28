@@ -18,9 +18,10 @@ anywhere apply package(s) [flags]
 ### Options
 
 ```
-  -f, --filename string     Filename that contains curated packages custom resources to apply
-  -h, --help                help for package(s)
-      --kubeconfig string   Path to an optional kubeconfig file to use.
+      --bundles-override string   Override default Bundles manifest (not recommended)
+  -f, --filename string           Filename that contains curated packages custom resources to apply
+  -h, --help                      help for package(s)
+      --kubeconfig string         Path to an optional kubeconfig file to use.
 ```
 
 ### Options inherited from parent commands
