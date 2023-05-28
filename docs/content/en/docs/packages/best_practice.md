@@ -2,6 +2,8 @@
 title: "Configuration best practices"
 linkTitle: "Best practices"
 weight: 15
+aliases:
+    /docs/reference/packagespec/best_practice/
 description: >
   Best practices with curated packages
 ---

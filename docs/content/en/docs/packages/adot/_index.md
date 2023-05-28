@@ -2,6 +2,8 @@
 title: "ADOT Configuration"
 linkTitle: "ADOT"
 weight: 85
+aliases:
+    /docs/reference/packagespec/adot/
 description: >
 ---
 

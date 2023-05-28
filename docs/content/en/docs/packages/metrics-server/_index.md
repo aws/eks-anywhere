@@ -2,6 +2,8 @@
 title: "Metrics Server Configuration"
 linkTitle: "Metrics Server"
 weight: 1500
+aliases:
+    /docs/reference/packagespec/metrics-server/
 description: >
 ---
 

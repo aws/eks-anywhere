@@ -2,6 +2,8 @@
 title: "Credential Provider Package Configuration"
 linkTitle: "Credential Provider"
 weight: 110
+aliases:
+    /docs/reference/packagespec/credential-provider-package/
 description: >
 ---
 

@@ -2,6 +2,8 @@
 title: "Emissary Configuration"
 linkTitle: "Emissary"
 weight: 120
+aliases:
+    /docs/reference/packagespec/emissary/
 description: >
 ---
 

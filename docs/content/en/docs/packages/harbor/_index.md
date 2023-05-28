@@ -2,6 +2,8 @@
 title: "Harbor configuration"
 linkTitle: "Harbor"
 weight: 130
+aliases:
+    /docs/reference/packagespec/harbor/
 description: >
 ---
 

@@ -2,6 +2,8 @@
 title: "Cluster Autoscaler Configuration"
 linkTitle: "Cluster Autoscaler"
 weight: 100
+aliases:
+    /docs/reference/packagespec/cluster-autoscaler/
 description: >
 ---
 

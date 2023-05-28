@@ -3,6 +3,8 @@ title: "EKS Anywhere curated package management"
 linkTitle: "Package management"
 date: 2022-04-12
 weight: 50
+aliases:
+    /docs/reference/packagespec/
 description: >
   Managing curated packages
 ---

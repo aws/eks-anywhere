@@ -2,6 +2,8 @@
 title: "MetalLB Configuration"
 linkTitle: "MetalLB"
 weight: 140
+aliases:
+    /docs/reference/packagespec/metallb/
 description: >
 ---
 

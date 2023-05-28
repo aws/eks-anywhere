@@ -2,6 +2,8 @@
 title: "Preparing Nutanix Cloud Infrastructure for EKS Anywhere"
 linkTitle: "2. Prepare Nutanix"
 weight: 20
+aliases:
+    /docs/reference/nutanix/nutanix-preparation/
 description: >
   Set up a Nutanix cluster to prepare it for EKS Anywhere
 ---

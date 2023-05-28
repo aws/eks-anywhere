@@ -2,6 +2,8 @@
 title: "AWS Distro for OpenTelemetry (ADOT)"
 linkTitle: "Add ADOT"
 weight: 13
+aliases:
+    /docs/reference/packagespec/adot/
 date: 2022-09-21
 description: >
   Install/upgrade/uninstall ADOT

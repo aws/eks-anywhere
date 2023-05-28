@@ -5,6 +5,7 @@ aliases:
     /docs/concepts/packages/artifacts/
     /docs/concepts/packages/cli/
     /docs/concepts/packages/package-controller/
+    /docs/reference/packagespec/packages/
 weight: 1
 ---
 

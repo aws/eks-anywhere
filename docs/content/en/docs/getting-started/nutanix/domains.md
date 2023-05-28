@@ -1,4 +1,7 @@
-
+---
+aliases:
+    /docs/reference/nutanix/domains/
+---
 * Prism Central endpoint (must be accessible to EKS Anywhere clusters)
 * Prism Element Data Services IP and CVM endpoints (for CSI storage connections)
 * public.ecr.aws (for pulling EKS Anywhere container images)

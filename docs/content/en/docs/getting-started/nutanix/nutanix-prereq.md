@@ -2,6 +2,8 @@
 title: "Requirements for EKS Anywhere on Nutanix Cloud Infrastructure"
 linkTitle: "1. Requirements"
 weight: 10
+aliases:
+    /docs/reference/nutanix/nutanix-prereq/
 description: >
   Preparing a Nutanix Cloud Infrastructure provider for EKS Anywhere
 ---

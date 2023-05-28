@@ -2,6 +2,8 @@
 title: "Prometheus Configuration"
 linkTitle: "Prometheus"
 weight: 160
+aliases:
+    /docs/reference/packagespec/prometheus/
 description: >
 ---
 

@@ -2,6 +2,8 @@
 title: "ADOT with AMP and AMG"
 linkTitle: "ADOT with AMP and AMG"
 weight: 2
+aliases:
+    /docs/workshops/packages/adot/adot_amp_amg/
 date: 2022-09-30
 description: >  
 ---

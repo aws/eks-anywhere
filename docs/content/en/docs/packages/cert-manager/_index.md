@@ -2,6 +2,8 @@
 title: "Cert-Manager Configuration"
 linkTitle: "Cert-Manager"
 weight: 90
+aliases:
+    /docs/reference/packagespec/cert-manager/
 description: >
 ---
 

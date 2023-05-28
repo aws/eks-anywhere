@@ -2,6 +2,8 @@
 title: "Cert-Manager"
 linkTitle: "Add Cert-Manager"
 weight: 13
+aliases:
+    /docs/reference/packagespec/cert-manager/
 date: 2022-10-21
 description: >
    Install/update/upgrade/uninstall Cert-Manager
