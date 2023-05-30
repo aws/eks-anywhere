@@ -964,6 +964,95 @@ func TestCloudStackKubernetes124RedhatProxyConfig(t *testing.T) {
 	runProxyConfigFlow(test)
 }
 
+// Proxy config multicluster
+func TestCloudStackKubernetes123RedhatProxyConfigAPI(t *testing.T) {
+	cloudstack := framework.NewCloudStack(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		cloudstack,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		cloudstack.WithRedhat123(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithProxy(framework.CloudstackProxyRequiredEnvVars),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+			cloudstack.WithRedhat123(),
+		),
+	)
+
+	test.CreateManagementCluster()
+
+	// Create workload clusters
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
+func TestCloudStackKubernetes124RedhatProxyConfigAPI(t *testing.T) {
+	cloudstack := framework.NewCloudStack(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		cloudstack,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+		cloudstack.WithRedhat124(),
+	)
+
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			cloudstack,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+			framework.WithProxy(framework.CloudstackProxyRequiredEnvVars),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+			cloudstack.WithRedhat124(),
+		),
+	)
+
+	test.CreateManagementCluster()
+
+	// Create workload clusters
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.ApplyClusterManifest()
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+
+		wc.DeleteClusterWithKubectl()
+		wc.ValidateClusterDelete()
+	})
+
+	test.ManagementCluster.StopIfFailed()
+	test.DeleteManagementCluster()
+}
+
 // Registry mirror
 func TestCloudStackKubernetes123RedhatRegistryMirrorInsecureSkipVerify(t *testing.T) {
 	test := framework.NewClusterE2ETest(
