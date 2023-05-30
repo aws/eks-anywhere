@@ -93,7 +93,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
-	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(uc.timeoutOptions)
+	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(uc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}

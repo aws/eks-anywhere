@@ -22,6 +22,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
+const defaultTinkerbellNodeStartupTimeout = 20 * time.Minute
+
 const timeoutErrorTemplate = "failed to parse timeout %s: %v"
 
 type timeoutOptions struct {
@@ -38,11 +40,13 @@ func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
 	flagSet.StringVar(&t.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWait.String(), "Override the default external etcd wait timeout")
 	flagSet.StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout per machine")
 	flagSet.StringVar(&t.unhealthyMachineTimeout, unhealthyMachineTimeoutFlag, clustermanager.DefaultUnhealthyMachineTimeout.String(), "Override the default unhealthy machine timeout")
-	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, clustermanager.DefaultNodeStartupTimeout.String(), "Override the default node startup timeout")
+	flagSet.StringVar(&t.nodeStartupTimeout, nodeStartupTimeoutFlag, clustermanager.DefaultNodeStartupTimeout.String(), "Override the default node startup timeout (Defaults to 20m for Tinkerbell clusters)")
 	flagSet.BoolVar(&t.noTimeouts, noTimeoutsFlag, false, "Disable timeout for all wait operations")
 }
 
-func buildClusterManagerOpts(t timeoutOptions) (*dependencies.ClusterManagerTimeoutOptions, error) {
+// buildClusterManagerOpts builds options for constructing a ClusterManager from CLI flags.
+// datacenterKind is an API kind such as v1alpha1.TinkerbellDatacenterKind.
+func buildClusterManagerOpts(t timeoutOptions, datacenterKind string) (*dependencies.ClusterManagerTimeoutOptions, error) {
 	cpWaitTimeout, err := time.ParseDuration(t.cpWaitTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(timeoutErrorTemplate, cpWaitTimeoutFlag, err)
@@ -61,6 +65,11 @@ func buildClusterManagerOpts(t timeoutOptions) (*dependencies.ClusterManagerTime
 	unhealthyMachineTimeout, err := time.ParseDuration(t.unhealthyMachineTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(timeoutErrorTemplate, unhealthyMachineTimeoutFlag, err)
+	}
+
+	if t.nodeStartupTimeout == clustermanager.DefaultNodeStartupTimeout.String() &&
+		datacenterKind == v1alpha1.TinkerbellDatacenterKind {
+		t.nodeStartupTimeout = defaultTinkerbellNodeStartupTimeout.String()
 	}
 
 	nodeStartupTimeout, err := time.ParseDuration(t.nodeStartupTimeout)

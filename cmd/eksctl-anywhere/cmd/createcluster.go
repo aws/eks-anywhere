@@ -106,7 +106,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
-	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(cc.timeoutOptions)
+	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(cc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}
