@@ -54,7 +54,7 @@ If you don't have any available hardware that match this requirement in the clus
 
 #### Upgrade Cluster Command for Scale Up/Down
 
-1. **eksctl CLI**: To create a workload cluster with eksctl, run:
+1. **eksctl CLI**: To upgrade a workload cluster with eksctl, run:
     ```bash
     eksctl anywhere upgrade cluster 
     -f cluster.yaml 

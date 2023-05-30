@@ -167,7 +167,7 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
   > 
   >  This also applied to sending upgrade requests to the same workload cluster.
 
-* **eksctl CLI**: To create a workload cluster with eksctl, run:
+* **eksctl CLI**: To upgrade a workload cluster with eksctl, run:
 
   ```bash
   eksctl anywhere upgrade cluster -f cluster.yaml 
