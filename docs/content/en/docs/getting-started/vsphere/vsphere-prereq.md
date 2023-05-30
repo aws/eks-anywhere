@@ -2,6 +2,8 @@
 title: "Requirements for EKS Anywhere on VMware vSphere "
 linkTitle: "1. Requirements"
 weight: 15
+aliases:
+    /docs/reference/vsphere/vsphere-prereq/
 description: >
   VMware vSphere provider requirements for EKS Anywhere
 ---

@@ -2,6 +2,8 @@
 title: "Delete cluster"
 linkTitle: "Delete cluster"
 weight: 90
+aliases:
+    /docs/tasks/cluster/cluster-delete/
 date: 2017-01-05
 description: >
   How to delete an EKS Anywhere cluster

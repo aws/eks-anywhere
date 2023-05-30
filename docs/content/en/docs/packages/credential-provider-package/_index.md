@@ -4,6 +4,7 @@ linkTitle: "Credential Provider"
 weight: 110
 aliases:
     /docs/reference/packagespec/credential-provider-package/
+    /docs/tasks/packages/credential-provider-package/
 description: >
 ---
 

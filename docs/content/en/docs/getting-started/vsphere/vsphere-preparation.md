@@ -2,6 +2,8 @@
 title: "Preparing vSphere for EKS Anywhere"
 linkTitle: "2. Prepare vSphere"
 weight: 15
+aliases:
+    /docs/reference/vsphere/vsphere-preparation/
 description: >
   Set up a vSphere cluster to prepare it for EKS Anywhere
 ---

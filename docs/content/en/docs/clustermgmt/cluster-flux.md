@@ -2,6 +2,8 @@
 title: "Manage cluster with GitOps"
 linkTitle: "Manage with GitOps"
 weight: 65
+aliases:
+    /docs/tasks/cluster/cluster-flux/
 date: 2017-01-05
 description: >
   Use Flux to manage clusters with GitOps

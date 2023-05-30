@@ -4,6 +4,7 @@ linkTitle: "Metrics Server"
 weight: 1500
 aliases:
     /docs/reference/packagespec/metrics-server/
+    /docs/tasks/packages/metrics-server/
 description: >
 ---
 

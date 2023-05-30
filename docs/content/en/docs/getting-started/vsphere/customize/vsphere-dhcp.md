@@ -1,6 +1,8 @@
 ---
 title: "Custom DHCP"
 weight: 40
+aliases:
+    /docs/reference/vsphere/vsphere-dhcp/
 description: >
   Create a custom DHCP configuration for your vSphere deployment
 ---

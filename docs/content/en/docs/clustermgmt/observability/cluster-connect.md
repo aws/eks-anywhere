@@ -2,6 +2,8 @@
 title: "Connect cluster to console"
 linkTitle: "Connect to console"
 weight: 80
+aliases:
+    /docs/reference/baremetal/bare-custom-hookos/
 date: 2017-01-05
 description: >
   Connect a cluster to the EKS console

@@ -2,6 +2,8 @@
 title: "Upgrade vSphere, CloudStack, Nutanix, or Snow cluster"
 linkTitle: "Upgrade vSphere, CloudStack, Nutanix, or Snow cluster"
 weight: 20
+aliases:
+    /docs/tasks/cluster/cluster-upgrades/vsphere-and-cloudstack-upgrades/
 date: 2017-01-05
 description: >
   How to perform a cluster upgrade for vSphere, CloudStack, Nutanix, or Snow cluster

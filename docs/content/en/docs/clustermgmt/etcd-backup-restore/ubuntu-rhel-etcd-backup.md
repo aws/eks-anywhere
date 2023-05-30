@@ -2,6 +2,8 @@
 title: "Ubuntu and RHEL"
 linkTitle: "On Ubuntu and RHEL"
 weight: 11
+aliases:
+    /docs/tasks/etcd-backup-restore/ubuntu-rhel-etcd-backup/
 date: 2021-11-04
 description: >
   How to backup and restore External ETCD on Ubuntu/RHEL OS EKS Anywhere cluster

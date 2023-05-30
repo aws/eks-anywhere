@@ -4,6 +4,7 @@ linkTitle: "Prometheus"
 weight: 160
 aliases:
     /docs/reference/packagespec/prometheus/
+    /docs/tasks/packages/prometheus/
 description: >
 ---
 

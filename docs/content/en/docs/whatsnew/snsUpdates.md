@@ -1,6 +1,8 @@
 ---
 title: "Release Alerts"
 weight: 60
+aliases:
+    /docs/reference/snsupdates/
 description: >
   SNS Alerts for EKS Anywhere releases
 ---

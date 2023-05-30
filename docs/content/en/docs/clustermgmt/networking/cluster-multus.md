@@ -2,6 +2,8 @@
 title: "Multus CNI plugin configuration"
 linkTitle: "Add Multus CNI plugin"
 weight: 70
+aliases:
+    /docs/tasks/cluster/cluster-multus/
 description: >
  EKS Anywhere configuration for Multus CNI plugin
 ---

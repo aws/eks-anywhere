@@ -3,6 +3,8 @@ title: "License cluster"
 linkTitle: "License cluster"
 weight: 20
 date: 2021-12-10
+aliases:
+    /docs/tasks/cluster/cluster-license/
 description: >
   How to license your cluster.
 ---

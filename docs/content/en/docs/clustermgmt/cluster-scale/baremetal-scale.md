@@ -2,6 +2,8 @@
 title: "Scale Bare Metal cluster"
 linkTitle: "Scale Bare Metal cluster"
 weight: 20
+aliases:
+    /docs/tasks/cluster/cluster-scale/baremetal-scale/
 date: 2017-01-05
 description: >
   How to scale your Bare Metal cluster

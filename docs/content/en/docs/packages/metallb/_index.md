@@ -4,6 +4,7 @@ linkTitle: "MetalLB"
 weight: 140
 aliases:
     /docs/reference/packagespec/metallb/
+    /docs/tasks/packages/metallb/
 description: >
 ---
 

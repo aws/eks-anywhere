@@ -2,6 +2,8 @@
 title: "Prometheus with Grafana"
 linkTitle: "Prometheus with Grafana"
 weight: 2
+aliases:
+    /docs/workshops/packages/prometheus/prometheus_grafana/
 date: 2022-12-09
 description: >  
 ---

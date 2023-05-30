@@ -4,6 +4,7 @@ linkTitle: "ADOT"
 weight: 85
 aliases:
     /docs/reference/packagespec/adot/
+    /docs/tasks/packages/adot/
 description: >
 ---
 

@@ -2,6 +2,8 @@
 title: "Secure connectivity with CNI and Network Policy"
 linkTitle: "Secure connectivity with CNI and Network Policy"
 weight: 30
+aliases:
+    /docs/tasks/workload/networking-and-security/
 description: >
   How to validate the setup of Cilium CNI and deploy network policies to secure workload connectivity.
 ---

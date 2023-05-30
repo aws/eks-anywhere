@@ -4,6 +4,7 @@ linkTitle: "Emissary"
 weight: 120
 aliases:
     /docs/reference/packagespec/emissary/
+    /docs/tasks/packages/emissary/
 description: >
 ---
 

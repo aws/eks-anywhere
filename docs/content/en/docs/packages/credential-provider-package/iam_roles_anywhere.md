@@ -2,6 +2,8 @@
 title: "Credential Provider Package with IAM Roles Anywhere"
 linkTitle: "Credential Provider Package with IAM Roles Anywhere"
 weight: 2
+aliases:
+    /docs/workshops/packages/credential-provider-package/iam_roles_anywhere/
 date: 2023-03-31
 description: >
 ---

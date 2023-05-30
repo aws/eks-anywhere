@@ -6,6 +6,7 @@ description: >
   Troubleshooting EKS Anywhere clusters
 aliases:
    - /docs/tasks/troubleshoot/_troubleshooting
+   - /docs/tasks/troubleshoot/troubleshooting/
 ---
 
 This guide covers EKS Anywhere troubleshooting. It is divided into the following sections:

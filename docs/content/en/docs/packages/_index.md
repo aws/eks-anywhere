@@ -5,6 +5,7 @@ date: 2022-04-12
 weight: 50
 aliases:
     /docs/reference/packagespec/
+    /docs/tasks/packages/
 description: >
   Managing curated packages
 ---

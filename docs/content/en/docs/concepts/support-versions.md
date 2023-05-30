@@ -2,6 +2,8 @@
 title: "Versioning"
 linkTitle: "Versioning"
 weight: 30
+aliases:
+    /docs/reference/support/support-versions/
 description: >
   EKS Anywhere and Kubernetes version support policy
 ---

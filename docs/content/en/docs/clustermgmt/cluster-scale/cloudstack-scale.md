@@ -3,6 +3,8 @@ title: "Scale CloudStack cluster"
 linkTitle: "Scale CloudStack cluster"
 weight: 20
 date: 2017-01-05
+aliases:
+    /docs/tasks/cluster/cluster-scale/cloudstack-scale/
 description: >
   How to scale your CloudStack cluster
 ---

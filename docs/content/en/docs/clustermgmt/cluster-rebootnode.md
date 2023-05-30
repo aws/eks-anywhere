@@ -3,6 +3,8 @@
 title: "Reboot nodes"
 linkTitle: "Reboot nodes"
 weight: 85
+aliases:
+    /docs/tasks/cluster-rebootnode/
 date: 2017-01-05
 description: >
   How to properly reboot a node in an EKS Anywhere cluster

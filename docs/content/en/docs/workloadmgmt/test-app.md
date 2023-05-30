@@ -2,6 +2,8 @@
 title: "Deploy test workload"
 linkTitle: "Deploy test workload"
 weight: 11
+aliases:
+    /docs/tasks/workload/test-app/
 date: 2017-01-05
 description: >
   How to deploy a workload to check that your cluster is working properly

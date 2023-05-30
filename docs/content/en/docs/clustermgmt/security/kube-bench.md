@@ -2,6 +2,8 @@
 title: "CIS Self-Assessment Guide"
 linkTitle: "CIS Self-Assessment Guide"
 weight: 60
+aliases:
+    /docs/reference/security/kube-bench/
 description: >
   CIS Benchmark Self-Assessment Guide for EKS Anywhere clusters
 ---

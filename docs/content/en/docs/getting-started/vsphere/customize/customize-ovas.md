@@ -2,6 +2,8 @@
 title: "Custom Ubuntu OVAs"
 linkTitle: "Custom Ubuntu OVAs"
 weight: 30
+aliases:
+    /docs/reference/vsphere/customize-ovas/
 description: >
   Customizing Imported Ubuntu OVAs
 ---

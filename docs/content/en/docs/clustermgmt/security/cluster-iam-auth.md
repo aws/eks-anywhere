@@ -2,6 +2,8 @@
 title: "Authenticate cluster with AWS IAM Authenticator"
 linkTitle: "AWS IAM Authenticator"
 weight: 30
+aliases:
+    /docs/tasks/cluster/cluster-iam-auth/
 date: 2022-01-05
 description: >
   Configure AWS IAM Authenticator to authenticate user access to the cluster

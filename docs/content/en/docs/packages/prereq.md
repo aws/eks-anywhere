@@ -2,6 +2,8 @@
 title: "Prerequisites"
 linkTitle: "Prerequisites"
 weight: 5
+aliases:
+    /docs/tasks/packages/prereq/
 description: >
   Prerequisites for using curated packages
 ---
@@ -29,7 +31,7 @@ Before installing any curated packages for EKS Anywhere, do the following:
 
 To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
 
-### Setup authentication to use curated-packages
+### Set up authentication to use curated packages
 
 When you have been notified that your account has been given access to curated packages, create an IAM user in your account with a policy that only allows ECR read access to the Curated Packages repository; similar to this:
 

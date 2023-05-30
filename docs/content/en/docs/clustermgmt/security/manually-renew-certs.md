@@ -2,6 +2,8 @@
 title: "Certificate rotation"
 linkTitle: "Certificate rotation"
 weight: 31
+aliases:
+    /docs/tasks/cluster/manually-renew-certs/
 date: 2021-11-04
 description: >
   How to renew certificates in etcd and control plane machines

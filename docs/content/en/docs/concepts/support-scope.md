@@ -2,6 +2,9 @@
 title: "Support"
 linkTitle: "Support"
 weight: 40
+aliases:
+    /docs/reference/support/
+    /docs/reference/support/support-scope/
 description: >
   Support scope for EKS Anywhere
 ---

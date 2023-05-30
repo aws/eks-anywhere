@@ -2,6 +2,8 @@
 title: "Manage cluster with Terraform"
 linkTitle: "Manage with Terraform"
 weight: 70
+aliases:
+    /docs/tasks/cluster/cluster-terraform/
 date: 2017-01-05
 description: >
   Use Terraform to manage EKS Anywhere Clusters

@@ -2,6 +2,8 @@
 title: "Security best practices"
 linkTitle: "Security best practices"
 weight: 15
+aliases:
+    /docs/reference/security/
 description: >
   Using security best practices with your EKS Anywhere deployments
 ---

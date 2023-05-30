@@ -1,8 +1,9 @@
-
 ---
 title: "Overview"
 linkTitle: "Overview"
 weight: 10
+aliases:
+    /docs/tasks/cluster-overview/
 date: 2017-01-05
 description: >
   Overview of tools and interfaces for managing EKS Anywhere clusters

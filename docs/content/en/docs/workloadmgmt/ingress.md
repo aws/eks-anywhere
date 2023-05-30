@@ -2,6 +2,8 @@
 title: "Add an ingress controller"
 linkTitle: "Add an ingress controller"
 weight: 30
+aliases:
+    /docs/tasks/workload/ingress/
 date: 2017-01-05
 description: >
   How to deploy an ingress controller for simple host or URL-based HTTP routing into workload running in EKS-A

@@ -2,6 +2,8 @@
 title: "Import OVAs"
 linkTitle: "Import OVAs"
 weight: 10
+aliases:
+    /docs/reference/vsphere/vsphere-ovas/
 description: >
   Importing EKS Anywhere OVAs to vSphere
 ---

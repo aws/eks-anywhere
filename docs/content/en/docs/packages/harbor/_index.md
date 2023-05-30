@@ -4,6 +4,7 @@ linkTitle: "Harbor"
 weight: 130
 aliases:
     /docs/reference/packagespec/harbor/
+    /docs/tasks/packages/harbor/
 description: >
 ---
 

@@ -2,6 +2,8 @@
 title: "Bottlerocket"
 linkTitle: "On Bottlerocket"
 weight: 11
+aliases:
+    /docs/tasks/etcd-backup-restore/bottlerocket-etcd-backup/
 date: 2021-11-04
 description: >
   How to backup and restore External ETCD on Bottlerocket OS

@@ -2,6 +2,8 @@
 title: "Upgrade Bare Metal cluster"
 linkTitle: "Upgrade Bare Metal cluster"
 weight: 20
+aliases:
+    /docs/tasks/cluster/cluster-upgrades/baremetal-upgrades/
 date: 2017-01-05
 description: >
   How to perform a cluster upgrade for Bare Metal cluster

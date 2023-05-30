@@ -2,6 +2,8 @@
 title: "3. Ports and protocols"
 linkTitle: "3. Ports/protocols"
 weight: 16
+aliases:
+    /docs/reference/ports/
 description: >
   Ports used with an EKS Anywhere cluster
 ---

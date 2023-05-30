@@ -3,6 +3,8 @@ title: "Scale vSphere cluster"
 linkTitle: "Scale vSphere cluster"
 weight: 20
 date: 2017-01-05
+aliases:
+    /docs/tasks/cluster/cluster-scale/vsphere-scale/
 description: >
   How to scale your vSphere cluster
 ---

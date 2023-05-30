@@ -2,6 +2,8 @@
 title: "Verify cluster"
 linkTitle: "Verify cluster"
 weight: 11
+aliases:
+    /docs/tasks/cluster/cluster-verify/
 date: 2017-01-05
 description: >
   How to verify an EKS Anywhere cluster is running properly

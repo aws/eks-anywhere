@@ -2,6 +2,8 @@
 title: "Scale Nutanix cluster"
 linkTitle: "Scale Nutanix cluster"
 weight: 20
+aliases:
+    /docs/tasks/cluster/cluster-scale/nutanix-scale/
 date: 2017-01-05
 description: >
   How to scale your Nutanix cluster

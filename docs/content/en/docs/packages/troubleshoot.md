@@ -1,4 +1,3 @@
-
 ---
 title: "Curated packages troubleshooting"
 linkTitle: "Packages troubleshooting"
@@ -7,6 +6,7 @@ description: >
   Troubleshooting specific to curated packages
 aliases:
    - /docs/tasks/troubleshoot/_packages
+   - /docs/tasks/packages/troubleshoot/
 ---
 
 ## General debugging
