@@ -14,7 +14,7 @@ See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/com
 
 ### Manual cluster scaling
 
->**_NOTE:_** If etcd is running on your control plane (the default configuration) you should scale your control plane in odd numbers (3, 5, 7...).
+>**_NOTE:_** If etcd is running on your control plane (the default configuration) you should scale your control plane in odd numbers (3, 5, 7, and so on).
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1
