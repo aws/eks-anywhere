@@ -41,7 +41,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.26"
+  kubernetesVersion: "1.27"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -154,7 +154,7 @@ Optional field to skip deploying the control plane load balancer. Make sure your
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.26`, `1.25`, `1.24`, `1.23`, `1.22`
+The Kubernetes version you want to use for your cluster. Supported values: `1.27`, `1.26`, `1.25`, `1.24`, `1.23`
 
 ### managementCluster
 Identifies the name of the management cluster.
