@@ -66,7 +66,7 @@ You will get notified if you have subscribed as documented on the [Release Alert
 Yes, the management cluster and its workload clusters can be created using different Amazon EKS Anywhere minor versions.
 However, we provide a maximum skew version support of one EKS Anywhere minor version for management and workload clusters.
 This means that we support the management cluster being one EKS Anywhere minor version newer than the workload clusters (such as v0.16 for workload clusters if the management cluster is at v0.17).
-In the event that you want to upgrade your management cluster to a version that does not satisfy this condition, we recommend upgrading the workload cluster's EKS-A version first, followed by upgrading to your desired EKS-A version for the management cluster.
+In the event that you want to upgrade your management cluster to a version that does not satisfy this condition, we recommend upgrading the workload cluster's EKS Anywhere version first, followed by upgrading to your desired EKS Anywhere version for the management cluster.
 
 ### Can I skip Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.9 directly to v0.11)?
 
