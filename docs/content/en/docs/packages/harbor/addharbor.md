@@ -1,7 +1,7 @@
 ---
 title: "Harbor"
 linkTitle: "Add Harbor"
-weight: 13
+weight: 10
 date: 2022-04-12
 description: >
   Install/upgrade/uninstall Harbor
