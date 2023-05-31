@@ -2,14 +2,20 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
 	"github.com/aws/eks-anywhere/test/framework/cluster/validations"
 )
@@ -71,12 +77,15 @@ var requiredCloudStackEnvVars = []string{
 }
 
 type CloudStack struct {
-	t              *testing.T
-	fillers        []api.CloudStackFiller
-	clusterFillers []api.ClusterFiller
-	cidr           string
-	podCidr        string
-	serviceCidr    string
+	t                 *testing.T
+	fillers           []api.CloudStackFiller
+	clusterFillers    []api.ClusterFiller
+	cidr              string
+	podCidr           string
+	serviceCidr       string
+	cmkClient         *executables.Cmk
+	devRelease        *releasev1.EksARelease
+	templatesRegistry *templateRegistry
 }
 
 type CloudStackOpt func(*CloudStack)
@@ -122,8 +131,10 @@ func CloudStackCredentialsAz1() string {
 
 func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	checkRequiredEnvVars(t, requiredCloudStackEnvVars)
+	cmk := buildCmk(t)
 	c := &CloudStack{
-		t: t,
+		t:         t,
+		cmkClient: cmk,
 		fillers: []api.CloudStackFiller{
 			api.RemoveCloudStackAzs(),
 			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
@@ -136,11 +147,10 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	c.cidr = os.Getenv(cloudStackCidrVar)
 	c.podCidr = os.Getenv(podCidrVar)
 	c.serviceCidr = os.Getenv(serviceCidrVar)
-
+	c.templatesRegistry = &templateRegistry{cache: map[string]string{}, generator: c}
 	for _, opt := range opts {
 		opt(c)
 	}
-
 	return c
 }
 
@@ -156,7 +166,7 @@ func WithCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup
 func WithCloudStackRedhat123() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat123Var, api.WithCloudStackTemplateForAllMachines),
+			api.WithCloudStackTemplateForAllMachines(c.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube123)),
 		)
 	}
 }
@@ -165,7 +175,7 @@ func WithCloudStackRedhat123() CloudStackOpt {
 func WithCloudStackRedhat124() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat124Var, api.WithCloudStackTemplateForAllMachines),
+			api.WithCloudStackTemplateForAllMachines(c.templateForDevRelease(anywherev1.RedHat, anywherev1.Kube124)),
 		)
 	}
 }
@@ -338,4 +348,56 @@ func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api
 	default:
 		return nil
 	}
+}
+
+func (c *CloudStack) getDevRelease() *releasev1.EksARelease {
+	c.t.Helper()
+	if c.devRelease == nil {
+		latestRelease, err := getLatestDevRelease()
+		if err != nil {
+			c.t.Fatal(err)
+		}
+		c.devRelease = latestRelease
+	}
+
+	return c.devRelease
+}
+
+func (c *CloudStack) templateForDevRelease(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) string {
+	c.t.Helper()
+	return c.templatesRegistry.templateForRelease(c.t, osFamily, c.getDevRelease(), kubeVersion)
+}
+
+// envVarForTemplate Looks for explicit configuration through an env var: "T_CLOUDSTACK_TEMPLATE_{osFamily}_{eks-d version}"
+// eg: T_CLOUDSTACK_TEMPLATE_REDHAT_KUBERNETES_1_23_EKS_22.
+func (c *CloudStack) envVarForTemplate(osFamily, eksDName string) string {
+	return fmt.Sprintf("T_CLOUDSTACK_TEMPLATE_%s_%s", strings.ToUpper(osFamily), strings.ToUpper(strings.ReplaceAll(eksDName, "-", "_")))
+}
+
+// defaultNameForTemplate looks for a template: "{eks-d version}-{osFamily}"
+// eg: kubernetes-1-23-eks-22-redhat.
+func (c *CloudStack) defaultNameForTemplate(osFamily, eksDName string) string {
+	return filepath.Join(fmt.Sprintf("%s-%s", strings.ToLower(eksDName), strings.ToLower(osFamily)))
+}
+
+// defaultEnvVarForTemplate returns the value of the default template env vars: "T_CLOUDSTACK_TEMPLATE_{osFamily}_{kubeVersion}"
+// eg. T_CLOUDSTACK_TEMPLATE_REDHAT_1_23.
+func (c *CloudStack) defaultEnvVarForTemplate(osFamily string, kubeVersion anywherev1.KubernetesVersion) string {
+	return fmt.Sprintf("T_CLOUDSTACK_TEMPLATE_%s_%s", strings.ToUpper(osFamily), strings.ReplaceAll(string(kubeVersion), ".", "_"))
+}
+
+// searchTemplate returns template name if the given template exists in the datacenter.
+func (c *CloudStack) searchTemplate(ctx context.Context, template string) (string, error) {
+	profile, ok := os.LookupEnv(cloudstackCredentialsVar)
+	if !ok {
+		return "", fmt.Errorf("Required environment variable for CloudStack not set: %s", cloudstackCredentialsVar)
+	}
+	templateResource := v1alpha1.CloudStackResourceIdentifier{
+		Name: template,
+	}
+	template, err := c.cmkClient.SearchTemplate(context.Background(), profile, templateResource)
+	if err != nil {
+		return "", err
+	}
+	return template, nil
 }

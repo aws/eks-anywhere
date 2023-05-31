@@ -70,14 +70,14 @@ var requiredEnvVars = []string{
 }
 
 type VSphere struct {
-	t              *testing.T
-	testsConfig    vsphereConfig
-	fillers        []api.VSphereFiller
-	clusterFillers []api.ClusterFiller
-	cidr           string
-	GovcClient     *executables.Govc
-	devRelease     *releasev1.EksARelease
-	templatesCache map[string]string
+	t                 *testing.T
+	testsConfig       vsphereConfig
+	fillers           []api.VSphereFiller
+	clusterFillers    []api.ClusterFiller
+	cidr              string
+	GovcClient        *executables.Govc
+	devRelease        *releasev1.EksARelease
+	templatesRegistry *templateRegistry
 }
 
 type vsphereConfig struct {
@@ -120,11 +120,10 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 			api.WithTLSInsecure(config.TLSInsecure),
 			api.WithTLSThumbprint(config.TLSThumbprint),
 		},
-		templatesCache: make(map[string]string),
 	}
 
 	v.cidr = os.Getenv(cidrVar)
-
+	v.templatesRegistry = &templateRegistry{cache: map[string]string{}, generator: v}
 	for _, opt := range opts {
 		opt(v)
 	}
@@ -595,76 +594,7 @@ func (v *VSphere) getDevRelease() *releasev1.EksARelease {
 
 func (v *VSphere) templateForDevRelease(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) string {
 	v.t.Helper()
-	return v.templateForRelease(osFamily, v.getDevRelease(), kubeVersion)
-}
-
-// templateForRelease tries to find a suitable template for a particular eks-a release, k8s version and OS family.
-// It follows these steps:
-//
-// 1. Look for explicit configuration through an env var: "T_VSPHERE_TEMPLATE_{osFamily}_{eks-d version}".
-// This should be used for explicit configuration, mostly in local development for overrides.
-//
-// 2. If not present, look for a template if the default templates folder: "/SDDC-Datacenter/vm/Templates/{eks-d version}-{osFamily}"
-// This is what should be used most of the time in CI, the explicit configuration is not present but the right template has already been
-// imported to vSphere.
-//
-// 3. If the template doesn't exist, default to the value of the default template env vars: eg. "T_VSPHERE_TEMPLATE_UBUNTU_1_20".
-// This is a catch all condition. Mostly for edge cases where the bundle has been updated with a new eks-d version, but the
-// the new template hasn't been imported yet. It also preserves backwards compatibility.
-func (v *VSphere) templateForRelease(osFamily anywherev1.OSFamily, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) string {
-	v.t.Helper()
-	osFamilyStr := string(osFamily)
-	versionsBundle := readVersionsBundles(v.t, release, kubeVersion)
-	eksDName := versionsBundle.EksD.Name
-
-	templateEnvVarName := envVarForVSphereTemplate(osFamilyStr, eksDName)
-	cacheKey := templateEnvVarName
-	if template, ok := v.templatesCache[cacheKey]; ok {
-		v.t.Logf("Template for release found in cache, using %s vSphere template.", template)
-		return template
-	}
-
-	template, ok := os.LookupEnv(templateEnvVarName)
-	if ok && template != "" {
-		v.t.Logf("Env var %s is set, using %s vSphere template", templateEnvVarName, template)
-		v.templatesCache[cacheKey] = template
-		return template
-	}
-	v.t.Logf("Env var %s not is set, trying default generated template name", templateEnvVarName)
-
-	// Env var is not set, try default template name
-	folder := v.testsConfig.TemplatesFolder
-	if folder == "" {
-		v.t.Log("vSphere templates folder is not configured, can't continue template search.")
-	} else {
-		template = defaultNameForVSphereTemplate(folder, osFamilyStr, eksDName)
-		foundTemplate, err := v.GovcClient.SearchTemplate(context.Background(), v.testsConfig.Datacenter, template)
-		if err != nil {
-			v.t.Fatalf("Failed checking if default template exists: %v", err)
-		}
-
-		if foundTemplate != "" {
-			v.t.Logf("Default template for release exists, using %s vSphere template.", template)
-			v.templatesCache[cacheKey] = template
-			return template
-		}
-		v.t.Logf("Default template %s for release doesn't exit.", template)
-	}
-
-	// Default template doesn't exist, try legacy generic env var
-	// It is not guaranteed that this template will work for the given release, if they don't match the
-	// same ekd-d release, the test will fail. This is just a catch all last try for cases where the new template
-	// hasn't been imported with its own name but the default one matches the same eks-d release.
-	templateEnvVarName = defaultEnvVarForTemplate(osFamilyStr, kubeVersion)
-	template, ok = os.LookupEnv(templateEnvVarName)
-	if !ok || template == "" {
-		v.t.Fatalf("Env var %s for default template is not set, can't determine which template to use", templateEnvVarName)
-	}
-
-	v.t.Logf("Env var %s is set, using %s vSphere template. There are no guarantees this template will be valid. Cluster validation might fail.", templateEnvVarName, template)
-
-	v.templatesCache[cacheKey] = template
-	return template
+	return v.templatesRegistry.templateForRelease(v.t, osFamily, v.getDevRelease(), kubeVersion)
 }
 
 func RequiredVsphereEnvVars() []string {
@@ -713,32 +643,52 @@ func WithBottlerocketFromRelease(release *releasev1.EksARelease, kubeVersion any
 
 func (v *VSphere) WithBottleRocketForRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	return api.VSphereToConfigFiller(
-		api.WithTemplateForAllMachines(v.templateForRelease(anywherev1.Bottlerocket, release, kubeVersion)),
+		api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, anywherev1.Bottlerocket, v.getDevRelease(), kubeVersion)),
 	)
 }
 
 func optionToSetTemplateForRelease(osFamily anywherev1.OSFamily, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithTemplateForAllMachines(v.templateForRelease(osFamily, release, kubeVersion)),
+			api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, osFamily, v.getDevRelease(), kubeVersion)),
 		)
 	}
 }
 
-func envVarForVSphereTemplate(osFamily, eksDName string) string {
+// envVarForTemplate looks for explicit configuration through an env var: "T_VSPHERE_TEMPLATE_{osFamily}_{eks-d version}"
+// eg: T_VSPHERE_TEMPLATE_REDHAT_KUBERNETES_1_23_EKS_22.
+func (v *VSphere) envVarForTemplate(osFamily, eksDName string) string {
 	return fmt.Sprintf("T_VSPHERE_TEMPLATE_%s_%s", strings.ToUpper(osFamily), strings.ToUpper(strings.ReplaceAll(eksDName, "-", "_")))
 }
 
-func defaultNameForVSphereTemplate(templatesFolder, osFamily, eksDName string) string {
-	return filepath.Join(templatesFolder, fmt.Sprintf("%s-%s", strings.ToLower(eksDName), strings.ToLower(osFamily)))
+// defaultNameForTemplate looks for a template with the name path: "{folder}/{eks-d version}-{osFamily}"
+// eg: /SDDC-Datacenter/vm/Templates/kubernetes-1-23-eks-22-redhat.
+func (v *VSphere) defaultNameForTemplate(osFamily, eksDName string) string {
+	folder := v.testsConfig.TemplatesFolder
+	if folder == "" {
+		v.t.Log("vSphere templates folder is not configured.")
+		return ""
+	}
+	return filepath.Join(folder, fmt.Sprintf("%s-%s", strings.ToLower(eksDName), strings.ToLower(osFamily)))
 }
 
-func defaultEnvVarForTemplate(osFamily string, kubeVersion anywherev1.KubernetesVersion) string {
+// defaultEnvVarForTemplate returns the value of the default template env vars: "T_VSPHERE_TEMPLATE_{osFamily}_{kubeVersion}"
+// eg. T_VSPHERE_TEMPLATE_REDHAT_1_23.
+func (v *VSphere) defaultEnvVarForTemplate(osFamily string, kubeVersion anywherev1.KubernetesVersion) string {
 	if osFamily == "bottlerocket" {
 		// This is only to maintain backwards compatibility with old env var naming
 		osFamily = "br"
 	}
 	return fmt.Sprintf("T_VSPHERE_TEMPLATE_%s_%s", strings.ToUpper(osFamily), strings.ReplaceAll(string(kubeVersion), ".", "_"))
+}
+
+// searchTemplate returns template name if the given template exists in the datacenter.
+func (v *VSphere) searchTemplate(ctx context.Context, template string) (string, error) {
+	foundTemplate, err := v.GovcClient.SearchTemplate(context.Background(), v.testsConfig.Datacenter, template)
+	if err != nil {
+		return "", err
+	}
+	return foundTemplate, nil
 }
 
 func readVersionsBundles(t testing.TB, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) *releasev1.VersionsBundle {
