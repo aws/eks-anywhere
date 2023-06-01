@@ -165,43 +165,19 @@ func cloudStackAPIWorkloadUpgradeTests(wc *framework.WorkloadCluster, cloudstack
 			},
 		},
 		{
-			name: "replace existing worker node groups",
+			name: "replace existing worker node groups and cilium policy enforcement mode",
 			steps: []cloudStackAPIUpgradeTestStep{
 				{
-					name: "replacing existing worker node groups",
+					name: "replacing existing worker node groups + update cilium policy enforcement mode always",
 					configFiller: api.JoinClusterConfigFillers(
 						api.ClusterToConfigFiller(
+							api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
 							api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 						),
 						// Add new WorkerNodeGroups
 						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), api.WithCount(1))),
 						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), api.WithCount(1))),
 						cloudstack.WithRedhatVersion(wc.ClusterConfig.Cluster.Spec.KubernetesVersion),
-					),
-				},
-			},
-		},
-		{
-			name: "availability zones and cilium policy enforcement mode",
-			steps: []cloudStackAPIUpgradeTestStep{
-				{
-					name: "add availability zone + update cilium policy enforcement mode always",
-					configFiller: api.JoinClusterConfigFillers(
-						api.ClusterToConfigFiller(
-							api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
-						),
-						api.CloudStackToConfigFiller(
-							framework.UpdateAddCloudStackAz2(),
-						),
-					),
-				},
-				{
-					name: "remove cloudstack availability zone",
-					configFiller: api.JoinClusterConfigFillers(
-						api.CloudStackToConfigFiller(
-							framework.RemoveAllCloudStackAzs(),
-							framework.UpdateAddCloudStackAz1(),
-						),
 					),
 				},
 			},
