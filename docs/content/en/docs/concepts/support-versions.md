@@ -20,18 +20,18 @@ The end of support date of a Kubernetes version aligns with Amazon EKS in AWS as
 Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are back-ported to the latest EKS Anywhere version (version n).
 The following table shows EKS Anywhere version support for different Kubernetes versions:
 
-| Kubernetes version | Supported EKS Anywhere version | First supported    | End of support   |
-|--------------------|---------------|--------------------|------------------|
-| 1.27               | 0.16 | June 1, 2023       | September 2024   |
-| 1.26               | 0.15 | April 5, 2023	     | July 2024        | 
-| 1.25               | 0.15, 0.14 | February 16, 2023	 | April 2024       | 
-| 1.24               | 0.15, 0.14, 0.13, 0.12 | November 17, 2022	 | January 2024     | 
-| 1.23               | 0.15, 0.14, 0.13, 0.12, 0.11 | August 18, 2022	   | October 2023     | 
-| 1.22               | 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8 | March 31, 2022     | May 2023         | 
+| Kubernetes version | Supported EKS Anywhere version                        | First supported    | End of support   |
+|--------------------|-------------------------------------------------------|--------------------|------------------|
+| 1.27               | 0.16                                                  | June 1, 2023       | September 2024   |
+| 1.26               | 0.16, 0.15                                            | April 5, 2023	     | July 2024        | 
+| 1.25               | 0.16, 0.15, 0.14                                      | February 16, 2023	 | April 2024       | 
+| 1.24               | 0.16, 0.15, 0.14, 0.13, 0.12                          | November 17, 2022	 | January 2024     | 
+| 1.23               | 0.16, 0.15, 0.14, 0.13, 0.12, 0.11                    | August 18, 2022	   | October 2023     | 
+| 1.22               | 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8          | March 31, 2022     | May 2023         | 
 | 1.21               | 0.14, 0.13, 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5 | September 8, 2021  | March 30, 2023   | 
-| 1.20               | 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5 | September 8, 2021  | November 1, 2022 | 
-| 1.19               | Not supported | --                 | --               | 
-| 1.18               | Not supported | --                 | --               | 
+| 1.20               | 0.12, 0.11, 0.10, 0.9, 0.8, 0.7, 0.6, 0.5             | September 8, 2021  | November 1, 2022 | 
+| 1.19               | Not supported                                         | --                 | --               | 
+| 1.18               | Not supported                                         | --                 | --               | 
 
 The following table notes which EKS Anywhere and related Kubernetes versions are currently supported for CVE patches and bug fixes:
 
