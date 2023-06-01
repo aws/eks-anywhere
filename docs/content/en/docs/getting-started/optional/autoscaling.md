@@ -61,6 +61,6 @@ We support three deployment topologies:
 2. Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
 3. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
 
-If your cluster architecture supports management clusters with resources to run additional workloads, you may want to consider using deployment topologies (1) and (2). Instructions for using this topology can be found [here](../../../../packages/cluster-autoscaler/#install-cluster-autoscaler-in-management-cluster).
+If your cluster architecture supports management clusters with resources to run additional workloads, you may want to consider using deployment topologies (1) and (2). Instructions for using this topology can be found [here](../../packages/cluster-autoscaler#install-cluster-autoscaler-in-management-cluster).
 
-If your deployment topology runs small management clusters though, you may want to follow deployment topology (3) and deploy the cluster autoscaler to run in a [workload cluster](../../../../packages/cluster-autoscaler/#install-cluster-autoscaler-in-workload-cluster).
+If your deployment topology runs small management clusters though, you may want to follow deployment topology (3) and deploy the cluster autoscaler to run in a [workload cluster](../../packages/cluster-autoscaler#install-cluster-autoscaler-in-workload-cluster).

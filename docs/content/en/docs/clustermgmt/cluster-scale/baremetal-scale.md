@@ -87,6 +87,7 @@ If you don't have any available hardware that match this requirement in the clus
 
 ### Autoscaling
 
-EKS Anywhere supports autoscaling of worker node groups using the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/) and as a [curated package](../../reference/packagespec/cluster-autoscaler/).
 
-See [here](../../reference/clusterspec/optional/autoscaling/) for details on how to configure your cluster spec to autoscale worker node groups for autoscaling.
+EKS Anywhere supports autoscaling of worker node groups using the [Kubernetes Cluster Autoscaler](https://github.com/kubernetes/autoscaler/) and as a [curated package]({{< relref "../../packages/cluster-autoscaler/" >}}).
+
+See [here](https://github.com/kubernetes/autoscaler/) and as a [curated package]({{< relref "../../getting-started/optional/autoscaling/" >}}) for details on how to configure your cluster spec to autoscale worker node groups for autoscaling.

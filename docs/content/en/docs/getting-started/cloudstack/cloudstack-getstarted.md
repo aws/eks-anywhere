@@ -33,8 +33,8 @@ EKS Anywhere needs to:
 * Be run on an Admin machine that has certain [machine
 requirements]({{< relref "../install" >}}).
 * Have certain
-[resources from your CloudStack deployment]({{< relref "cloudstack-prereq" >}}) available.
-* Have some [preparation ]({{< relref "cloudstack-preparation" >}}) done before creating an EKS Anywhere cluster.
+[resources from your CloudStack deployment]({{< relref "./cloudstack-prereq" >}}) available.
+* Have some [preparation ]({{< relref "./cloudstack-preparation" >}}) done before creating an EKS Anywhere cluster.
 
 Also, see the [Ports and protocols]({{< relref "../ports/" >}}) page for information on ports that need to be accessible from control plane, worker, and Admin machines.
 
@@ -103,7 +103,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be generated.  Detailed package configurations can be found [here]({{< relref "../../packages" >}}).
 
-   If you are going to use packages, set up authentication. These credentials should have [limited capabilities]({{< relref "../../packages/#setup-authentication-to-use-curated-packages" >}}):
+   If you are going to use packages, set up authentication. These credentials should have [limited capabilities]({{< relref "./cloudstack-prereq#setup-authentication-to-use-curated-packages" >}}):
    ```bash
    export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
    export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"

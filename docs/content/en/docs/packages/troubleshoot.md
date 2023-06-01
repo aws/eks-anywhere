@@ -94,7 +94,7 @@ generated-harbor-jobservice-564d6fdc87   0/1     ImagePullBackOff   0          2
 
 If a package pod cannot pull images, you may not have your AWS credentials set up properly. Verify that your credentials are working properly.
 
-Make sure you are authenticated with the AWS CLI. Use the credentials you set up for packages. These credentials should have [limited capabilities]({{< relref "../packages/#setup-authentication-to-use-curated-packages" >}}):
+Make sure you are authenticated with the AWS CLI. Use the credentials you set up for packages. These credentials should have [limited capabilities]({{< relref "../packages/prereq#setup-authentication-to-use-curated-packages" >}}):
 
 ```bash
 export AWS_ACCESS_KEY_ID="your*access*id"
