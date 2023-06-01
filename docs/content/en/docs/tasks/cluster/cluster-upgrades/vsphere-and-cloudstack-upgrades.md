@@ -13,6 +13,21 @@ The upgrade command also upgrades core components of EKS Anywhere and lets the u
 
 **Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). If an upgrade fails, it is very important not to delete the Docker containers running the KinD bootstrap cluster. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
 
+{{% alert title="Important" color="warning" %}}
+
+In `eksctl anywhere` version `v0.13.0`, we introduced the full lifecycle controller to fully manage new workload clusters.
+In this version, the controller rolls out new nodes in the workload cluster whenever the user upgrades the management cluster and its management components.
+
+In `eksctl anywhere` version `v0.16.0`, we changed this behavior to allow users to be explicit when deciding which clusters to upgrade.
+Therefore, workload clusters are no longer affected by management cluster upgrades.
+Due to this change, each cluster must be individually upgraded to enjoy the latest features on all clusters.
+If you have a management cluster running EKS Anywhere version v0.15, you can successfully upgrade to EKS Anywhere version v0.16 and observe no changes to any of its workload clusters.
+
+When triggering a workload cluster upgrade after upgrading the management cluster, please keep in mind that it will not only apply your changes in the workload cluster spec, but also any new improvements included in the new EKS Anywhere controller that was upgraded on the management cluster.
+The changes in the EKS Anywhere controller can trigger a machine rollout on the workload cluster during upgrade, even if the changes to the workload cluster spec didn't require one (for example, scaling down a worker node group).
+
+{{% /alert %}}
+
 ### EKS Anywhere Version Upgrades
 
 We encourage that you stay up to date with the latest EKS Anywhere version, as new features, bug fixes, or security patches might be added in each release. You can find the content, such as supported OS versions and changelog, of each EKS Anywhere version on the [What’s New]({{< relref "../../../reference/changelog/" >}}) page.
@@ -20,6 +35,14 @@ We encourage that you stay up to date with the latest EKS Anywhere version, as n
 Download the [latest or target EKS Anywhere release](https://github.com/aws/eks-anywhere/releases/) and run `eksctl anywhere upgrade cluster` command to upgrade a cluster to a specific EKS Anywhere version.
 
 **Skipping Amazon EKS Anywhere minor versions during cluster upgrade (such as going from v0.14 directly to v0.16) is NOT allowed.** EKS Anywhere team performs regular upgrade reliability testing for sequential version upgrade (e.g. going from version 0.14 to 0.15, then from version 0.15 to 0.16), but we do not perform testing on non-sequential upgrade path (e.g. going from version 0.14 directly to 0.16). You should not skip minor versions during cluster upgrade. However, you can choose to skip patch versions.
+
+{{% alert title="Important" color="warning" %}}
+
+We provide a maximum skew version support of one EKS Anywhere minor version for management and workload clusters.
+This means that we support the management cluster being one EKS Anywhere minor version newer than the workload clusters (such as v0.15 for workload clusters if the management cluster is at v0.16).
+In the event that you want to upgrade your management cluster to a version that does not satisfy this condition, we recommend upgrading the workload cluster's EKS Anywhere version first, followed by upgrading to your desired EKS Anywhere version for the management cluster.
+
+{{% /alert %}}
 
 ### Kubernetes Minor Version Upgrades
 
