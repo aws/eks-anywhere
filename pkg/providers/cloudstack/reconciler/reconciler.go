@@ -6,8 +6,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
@@ -121,6 +123,33 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 	cp, err := cloudstack.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
 	if err != nil {
 		return controller.Result{}, err
+	}
+
+	var auditPolicy *auditv1.Policy
+	for _, file := range cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.Files {
+		if file.Path == "/etc/kubernetes/audit-policy.yaml" {
+			auditPolicy = &auditv1.Policy{}
+			if err := yaml.Unmarshal([]byte(file.Content), auditPolicy); err != nil {
+				return controller.Result{}, err
+			}
+			break
+		}
+	}
+
+	if auditPolicy != nil {
+		templates := make([]string, 0, len(spec.CloudStackMachineConfigs))
+		for _, mc := range spec.CloudStackMachineConfigs {
+			templates = append(templates, mc.Spec.Template.Name)
+		}
+
+		log.Info("Reconciling control plane with audit policy",
+			"auditPolicyVersion", auditPolicy.APIVersion,
+			"clusterKubeVersion", spec.Cluster.Spec.KubernetesVersion,
+			"kcpVersion", cp.KubeadmControlPlane.Spec.Version,
+			"templates", templates,
+			"versionBundleKubeVersion", spec.VersionsBundle.KubeVersion,
+			"eksdRelease", spec.VersionsBundle.EksD.KubeVersion,
+		)
 	}
 
 	return clusters.ReconcileControlPlane(ctx, r.client, &clusters.ControlPlane{
