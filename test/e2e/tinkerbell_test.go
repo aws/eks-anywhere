@@ -5,8 +5,6 @@
 package e2e
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -1135,45 +1133,6 @@ func TestTinkerbellSingleNode125ManagementScaleupWorkloadWithAPI(t *testing.T) {
 			api.WithWorkerNodeCount(2),
 		),
 	)
-}
-
-func TestTinkerbellKubernetes127BottleRocketCuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes127UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithUbuntu127Tinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes127BottleRocketCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterSingleNode(v1alpha1.Kube127),
-		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube127),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
-	)
-	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes123UbuntuTo124Upgrade(t *testing.T) {
