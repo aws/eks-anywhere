@@ -797,22 +797,10 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	}
 }
 
-// UpgradeClusterWithKubectl uses client-side logic to upgrade a cluster that was created using the CLI.
-func (e *ClusterE2ETest) UpgradeClusterWithKubectl(fillers ...api.ClusterConfigFiller) {
-	// The CLI adds the BundlesRef field to the config and writes it to disk.
-	// We want to grab the existing BundlesRef, and update our test ClusterConfig
-	// because updating it with a nil value after previously being set will throw a webhook error.
-	if e.ClusterConfig.Cluster.Spec.BundlesRef == nil {
-		fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
-		e.T.Logf("Parsing cluster config from disk: %s", fullClusterConfigLocation)
-		config, err := cluster.ParseConfigFromFile(fullClusterConfigLocation)
-		if err != nil {
-			e.T.Fatalf("Failed parsing generated cluster config: %s", err)
-		}
-		e.ClusterConfig.Cluster.Spec.BundlesRef = config.Cluster.Spec.BundlesRef
-	}
-	e.UpdateClusterConfig(fillers...)
-	e.ApplyClusterManifest()
+// LoadClusterConfigGeneratedByCLI loads the full cluster config from the file generated when a cluster is created using the CLI.
+func (e *ClusterE2ETest) LoadClusterConfigGeneratedByCLI(fillers ...api.ClusterConfigFiller) {
+	fullClusterConfigLocation := filepath.Join(e.ClusterConfigFolder, e.ClusterName+"-eks-a-cluster.yaml")
+	e.parseClusterConfigFromDisk(fullClusterConfigLocation)
 }
 
 // UpgradeClusterWithNewConfig applies the test options, re-generates the cluster config file and runs the CLI upgrade command.

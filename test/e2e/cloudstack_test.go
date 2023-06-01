@@ -1762,6 +1762,7 @@ func TestCloudStackKubernetes123RedHatAPI(t *testing.T) {
 	)
 
 	test.CreateCluster()
+	test.LoadClusterConfigGeneratedByCLI()
 	// Run mgmt cluster API tests
 	tests := cloudstackAPIManagementClusterUpgradeTests(test, cloudstack)
 	for _, tt := range tests {
@@ -1787,6 +1788,7 @@ func TestCloudStackKubernetes124RedHatAPI(t *testing.T) {
 	)
 
 	test.CreateCluster()
+	test.LoadClusterConfigGeneratedByCLI()
 	// Run mgmt cluster API tests
 	tests := cloudstackAPIManagementClusterUpgradeTests(test, cloudstack)
 	for _, tt := range tests {

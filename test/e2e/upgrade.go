@@ -42,7 +42,9 @@ func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVers
 
 func runUpgradeFlowWithAPI(test *framework.ClusterE2ETest, fillers ...api.ClusterConfigFiller) {
 	test.CreateCluster()
-	test.UpgradeClusterWithKubectl(fillers...)
+	test.LoadClusterConfigGeneratedByCLI()
+	test.UpdateClusterConfig(fillers...)
+	test.ApplyClusterManifest()
 	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -53,7 +55,9 @@ func runUpgradeFlowForBareMetalWithAPI(test *framework.ClusterE2ETest, fillers .
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.UpgradeClusterWithKubectl(fillers...)
+	test.LoadClusterConfigGeneratedByCLI()
+	test.UpdateClusterConfig(fillers...)
+	test.ApplyClusterManifest()
 	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
