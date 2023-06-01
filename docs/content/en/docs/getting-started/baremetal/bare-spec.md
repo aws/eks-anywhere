@@ -286,7 +286,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 
 ### hostOSConfig (optional)
 Optional host OS configurations for the EKS Anywhere Kubernetes nodes.
-More information in the [Host OS Configuration]({{< relref "../optional/#hostOSConfig.md" >}}) section.
+More information in the [Host OS Configuration]({{< relref "../optional/hostOSConfig.md" >}}) section.
 
 ## Advanced Bare Metal cluster configuration
 

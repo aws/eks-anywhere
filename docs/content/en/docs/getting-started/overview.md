@@ -297,7 +297,7 @@ You can now use your target cluster as either:
 
 ### Creating workload clusters (optional)
 
-As described in [Create separate workload clusters]({{< relref "../getting-started/vsphere/#create-separate-workload-clusters" >}}), you can use the cluster you just created as a management cluster to create and manage one or more workload clusters on the same vSphere provider as follows:
+As described in [Create separate workload clusters]({{< relref "../getting-started/vsphere#create-separate-workload-clusters" >}}), you can use the cluster you just created as a management cluster to create and manage one or more workload clusters on the same vSphere provider as follows:
 
 * Use `eksctl` to generate a cluster config file for the new workload cluster.
 * Modify the cluster config with a new cluster name and different vSphere resources.
