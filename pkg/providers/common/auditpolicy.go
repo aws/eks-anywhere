@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
-// GetAuditPolicy returns the audit policy either v1 or v1beta1 depending on kube version.
+// GetAuditPolicy returns the audit policy v1 on kube version < 1.24 or v1beta1 on kube version >= 1.24.
 func GetAuditPolicy(kubeVersion v1alpha1.KubernetesVersion) (string, error) {
 	// appending the ".0" as the patch version to have a valid semver string and use those semvers for comparison
 	kubeVersionSemver, err := semver.New(string(kubeVersion) + ".0")

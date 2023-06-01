@@ -2,7 +2,9 @@ package cloudstack
 
 import (
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"net"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -194,6 +196,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		return nil, err
 	}
 	values["auditPolicy"] = auditPolicy
+	logger.V(7).Info("getting audit policy in control plane template", "kube version: %s,", clusterSpec.Cluster.Spec.KubernetesVersion, "audit policy version: %s.", strings.Split(auditPolicy, "\n")[0])
 
 	fillDiskOffering(values, controlPlaneMachineSpec.DiskOffering, "ControlPlane")
 	fillDiskOffering(values, etcdMachineSpec.DiskOffering, "Etcd")
