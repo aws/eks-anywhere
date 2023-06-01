@@ -5,8 +5,6 @@
 package e2e
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
