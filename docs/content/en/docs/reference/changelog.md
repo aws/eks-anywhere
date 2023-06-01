@@ -13,6 +13,29 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ## Unreleased
 
+## [v0.16.0](https://github.com/aws/eks-anywhere/releases/tag/v0.16.0)
+
+### Added
+- Workload clusters full lifecycle API support for CloudStack provider ([#2754](https://github.com/aws/eks-anywhere/issues/2754))
+- Enable proxy configuration for Bare Metal provider. ([#5925](https://github.com/aws/eks-anywhere/issues/5925))
+- Kubernetes 1.27 support ([#5929](https://github.com/aws/eks-anywhere/pull/5929))
+- Allow users to configure additional BottleRocket settings 
+  - kernel sysctl settings ([#5304](https://github.com/aws/eks-anywhere/pull/5304)) 
+  - boot kernel parameters ([#5359](https://github.com/aws/eks-anywhere/pull/5359)) 
+  - custom trusted cert bundles ([#5625](https://github.com/aws/eks-anywhere/pull/5625))
+
+### Upgraded
+- Management cluster upgrades will only move management cluster’s components to bootstrap cluster and back. ([#5914](https://github.com/aws/eks-anywhere/pull/5914))
+
+### Fixed
+- CloudStack control plane host port is only defaulted in CAPI objects if not provided. ([#5792](https://github.com/aws/eks-anywhere/pull/5792)) ([#5736](https://github.com/aws/eks-anywhere/pull/5736))
+
+### Deprecated
+- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to [documentation](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#disablecsi-optional-deprecated) for more information
+
+### Removed
+- Kuberenets 1.22 support
+
 ## [v0.15.4](https://github.com/aws/eks-anywhere/releases/tag/v0.15.4)
 
 ### Fixed
