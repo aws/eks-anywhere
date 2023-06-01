@@ -17,9 +17,9 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ### Added
 - Workload clusters full lifecycle API support for CloudStack provider ([#2754](https://github.com/aws/eks-anywhere/issues/2754))
-- Enable proxy configuration for Bare Metal provider. ([#5925](https://github.com/aws/eks-anywhere/issues/5925))
+- Enable proxy configuration for Bare Metal provider ([#5925](https://github.com/aws/eks-anywhere/issues/5925))
 - Kubernetes 1.27 support ([#5929](https://github.com/aws/eks-anywhere/pull/5929))
-- Support for upgrades for clusters with pod disruption budgets ([5697](https://github.com/aws/eks-anywhere/pull/5697))
+- Support for upgrades for clusters with pod disruption budgets ([#5697](https://github.com/aws/eks-anywhere/pull/5697))
 - BottleRocket network config uses mac addresses instead of interface names for configuring interfaces for the Bare Metal provider ([#3411](https://github.com/aws/eks-anywhere/issues/3411))
 - Allow users to configure additional BottleRocket settings 
   - kernel sysctl settings ([#5304](https://github.com/aws/eks-anywhere/pull/5304)) 
