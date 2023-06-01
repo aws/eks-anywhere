@@ -188,7 +188,8 @@ func cloudStackAPIWorkloadUpgradeTests(wc *framework.WorkloadCluster, cloudstack
 func runCloudStackAPIUpgradeTest(t *testing.T, test *framework.ClusterE2ETest, ut cloudStackAPIUpgradeTest) {
 	for _, step := range ut.steps {
 		t.Logf("Running API upgrade test: %s", step.name)
-		test.UpgradeClusterWithKubectl(step.configFiller)
+		test.UpdateClusterConfig(step.configFiller)
+		test.ApplyClusterManifest()
 		test.ValidateClusterStateWithT(t)
 	}
 }
