@@ -48,7 +48,7 @@ cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: <minCount>
 cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: <maxCount>
 ```
 
-After deploying the Kubernetes Cluster Autoscaler from upstream or as a [curated package](../../../../packages/cluster-autoscaler/), the deployment will pick up your MachineDeployment and scale the nodes as per your min and max count values.
+After deploying the Kubernetes Cluster Autoscaler from upstream or as a [curated package]({{< relref "../../packages/cluster-autoscaler/" >}}).
 
 ### Cluster Autoscaler Deployment Topologies
 
@@ -61,6 +61,6 @@ We support three deployment topologies:
 2. Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
 3. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
 
-If your cluster architecture supports management clusters with resources to run additional workloads, you may want to consider using deployment topologies (1) and (2). Instructions for using this topology can be found [here](../../packages/cluster-autoscaler#install-cluster-autoscaler-in-management-cluster).
+If your cluster architecture supports management clusters with resources to run additional workloads, you may want to consider using deployment topologies (1) and (2). Instructions for using this topology can be found [here]({{< relref "../../packages/cluster-autoscaler/addclauto#install-cluster-autoscaler-in-management-cluster" >}}).
 
-If your deployment topology runs small management clusters though, you may want to follow deployment topology (3) and deploy the cluster autoscaler to run in a [workload cluster](../../packages/cluster-autoscaler#install-cluster-autoscaler-in-workload-cluster).
+If your deployment topology runs small management clusters though, you may want to follow deployment topology (3) and deploy the cluster autoscaler to run in a [workload cluster]({{< relref "../../packages/cluster-autoscaler/addclauto#install-cluster-autoscaler-in-workload-cluster" >}}).
