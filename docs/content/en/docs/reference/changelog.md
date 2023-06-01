@@ -34,7 +34,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to [documentation](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#disablecsi-optional-deprecated) for more information
 
 ### Removed
-- Kuberenets 1.22 support
+- Kubernetes 1.22 support
 
 ## [v0.15.4](https://github.com/aws/eks-anywhere/releases/tag/v0.15.4)
 
