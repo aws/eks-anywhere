@@ -25,11 +25,12 @@ There are three ways to deploy a Cluster Autoscaler instance:
 1. Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
 1. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
 
-To read more about the tradeoffs of these different approaches, see [here](../../../reference/clusterspec/optional/autoscaling#cluster-autoscaler-deployment-topologies).
+To read more about the tradeoffs of these different approaches, see [here]({{< relref "../../getting-started/optional/autoscaling/" >}}).
+
 ## Install Cluster Autoscaler in management cluster
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here](../../../reference/clusterspec/optional/autoscaling/)
+1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here]({{< relref "../../getting-started/optional/autoscaling/" >}})
 
 1. Generate the package configuration
    ```bash

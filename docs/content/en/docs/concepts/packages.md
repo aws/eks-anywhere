@@ -20,7 +20,7 @@ Amazon EKS Anywhere Curated Packages are Amazon-curated software packages that e
 * *Amazon-tested*: Amazon tests the compatibility of all curated packages including the OSS packages with each new version of EKS Anywhere.
 * *Amazon-supported*: All curated packages including the curated OSS packages are supported under the EKS Anywhere Support Subscription. 
 
-The main components of EKS Anywhere Curated Packages are the [package controller]({{< relref "../packages/overview#package-controller" >}}), the [package build artifacts]({{< relref "../packages/overview#artifacts" >}}) and the [command line interface]({{< relref "../packages/overview#packages-cli" >}}). The package controller will run in a pod in an EKS Anywhere cluster. The package controller will manage the lifecycle of all curated packages.
+The main components of EKS Anywhere Curated Packages are the [package controller]({{< relref "../packages/overview#package-controller" >}}), the [package build artifacts]({{< relref "../packages/overview#curated-packages-artifacts" >}}) and the [command line interface]({{< relref "../packages/overview#packages-cli" >}}). The package controller will run in a pod in an EKS Anywhere cluster. The package controller will manage the lifecycle of all curated packages.
 
 ### Curated packages
 Please check out [curated package list]({{< relref "../packages/packagelist/" >}}) for the complete list of EKS Anywhere curated packages.

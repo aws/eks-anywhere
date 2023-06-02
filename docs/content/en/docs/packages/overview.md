@@ -40,5 +40,5 @@ The Getting started page for each EKS Anywhere provider describes how to install
 
 Please check out [package management]({{< relref "../packages/packages" >}}) for how to install package controller after cluster creation and manage curated packages.
 
-### Curated packages Artifacts
+### Curated packages artifacts
 There are three types of build artifacts for packages: the container images, the helm charts and the package bundle manifests. The container images, helm charts and bundle manifests for all of the packages will be built and stored in EKS Anywhere ECR repository. Each package may have multiple versions specified in the packages bundle. The bundle will reference the helm chart tag in the ECR repository. The helm chart will reference the container images for the package.
