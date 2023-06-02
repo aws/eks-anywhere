@@ -1,7 +1,7 @@
 ---
 title: "Concepts"
 linkTitle: "Concepts"
-weight: 40
+weight: 20
 description: >
   The Concepts section will describe the components and overall architecture of EKS Anywhere.
 ---
