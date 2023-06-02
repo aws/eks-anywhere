@@ -1,19 +1,19 @@
 ---
-title: Install EKS Anywhere
+title: 1. Admin Machine
 weight: 10
 ---
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
-Currently we support creating development clusters locally using Docker and production clusters from providers listed on the [Create production cluster]({{< relref "/docs/getting-started/production-environment" >}}) page.
+Currently we support creating development clusters locally using Docker and production clusters from providers listed on the [providers]({{< relref "/docs/getting-started/chooseprovider/" >}}) page.
 
 Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
 From there, you create the cluster for your chosen provider.
-See [Create cluster workflow]({{< relref "../../concepts/clusterworkflow" >}}) for an overview of the cluster creation process.
+See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of the cluster creation process.
 
 To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.
 
->**_NOTE:_** For Snow provider, the Snow devices will come with a pre-configured Admin AMI which can be used to create an Admin instance with all the necessary binaries, dependencies and artifacts to create an EKS Anywhere cluster. Skip the below steps and see [Create Snow production cluster]({{< relref "../production-environment/snow-getstarted" >}}) to get started with EKS Anywhere on Snow.
+>**_NOTE:_** For Snow provider, the Snow devices will come with a pre-configured Admin AMI which can be used to create an Admin instance with all the necessary binaries, dependencies and artifacts to create an EKS Anywhere cluster. Skip the below steps and see [Create Snow production cluster]({{< relref "../snow" >}}) to get started with EKS Anywhere on Snow.
 
 ### Administrative machine prerequisites
 
@@ -134,27 +134,24 @@ To create a cluster in an airgapped environment, perform the following:
 
    **For the remaining steps, the Admin machine no longer needs to be connected to the internet or the bastion host.**
 
-1. Next, you will need to set up a local registry mirror to host the downloaded EKS Anywhere images. In order to set one up, refer to [Registry Mirror configuration.]({{< relref "/docs/reference/clusterspec/optional/registrymirror.md" >}})
+1. Next, you will need to set up a local registry mirror to host the downloaded EKS Anywhere images. In order to set one up, refer to [Registry Mirror configuration.]({{< relref "../optional/registrymirror.md" >}})
 
 1. Now that you’ve configured your local registry mirror, you will need to import images to the local registry mirror using the following command (be sure to replace <registryUrl> with the url of the local registry mirror you created in step 4):
    ```bash
    eksctl anywhere import images -i images.tar -r <registryUrl> \
       -- bundles ./eks-anywhere-downloads/bundle-release.yaml
    ```
-You are now ready to deploy a cluster by following instructions to [Create local cluster]({{< relref "/docs/getting-started/local-environment/" >}}) or  [Create production cluster.]({{< relref "/docs/getting-started/production-environment/" >}}) See text below for specific provider instructions.
+You are now ready to deploy a cluster by following instructions on the provider you select from the [providers]({{< relref "/docs/getting-started/chooseprovider/" >}}). See text below for specific provider instructions.
 
 ### For Bare Metal (Tinkerbell)
 You will need to have hookOS and its OS artifacts downloaded and served locally from an HTTP file server.
-You will also need to modify the [hookImagesURLPath]({{< relref "../../reference/clusterspec/baremetal/#hookimagesurlpath" >}}) and the [osImageURL]({{< relref "../../reference/clusterspec/baremetal/#osimageurl" >}}) in the cluster configuration files.
-Ensure that structure of the files is set up as described in [hookImagesURLPath.]({{< relref "../../reference/clusterspec/baremetal/#hookimagesurlpath" >}})
+You will also need to modify the [hookImagesURLPath]({{< relref "../baremetal/bare-spec/#hookimagesurlpath" >}}) and the [osImageURL]({{< relref "../baremetal/bare-spec/#osimageurl" >}}) in the cluster configuration files.
+Ensure that structure of the files is set up as described in [hookImagesURLPath.]({{< relref "../baremetal/bare-spec/#hookimagesurlpath" >}})
 
 ### For vSphere
 If you are using the vSphere provider, be sure that the requirements in the
-[Prerequisite checklist]({{< relref "../../reference/vsphere/vsphere-prereq" >}}) have been met.
+[Prerequisite checklist]({{< relref "../vsphere/vsphere-prereq" >}}) have been met.
 
 ## Deploy a cluster
 
-Once you have the tools installed you can deploy a local cluster or production cluster in the next steps.
-
-* [Create local cluster]({{< relref "/docs/getting-started/local-environment" >}})
-* [Create production cluster]({{< relref "/docs/getting-started/production-environment" >}})
+Once you have the tools installed, go to the [EKS Anywhere providers]({{< relref "/docs/getting-started/chooseprovider" >}}) page for instructions on creating a cluster on your chosen provider.

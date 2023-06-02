@@ -1,7 +1,7 @@
 ---
 title: "Compare EKS Anywhere and EKS"
 linkTitle: "Compare EKS Anywhere"
-weight: 4
+weight: 60
 date: 2017-01-05
 description: >
   Comparing Amazon EKS Anywhere features to Amazon EKS

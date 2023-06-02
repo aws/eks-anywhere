@@ -3,6 +3,23 @@ title: "Amazon EKS Anywhere"
 linkTitle: Documentation
 noedit: true
 weight: 10
+aliases:
+    /docs/workshops/
+    /docs/workshops/introduction/
+    /docs/workshops/introduction/benefits-and-usecases/
+    /docs/workshops/introduction/faq/
+    /docs/workshops/introduction/overview/
+    /docs/workshops/packages/
+    /docs/workshops/packages/adot/
+    /docs/workshops/packages/harbor/
+    /docs/workshops/packages/prometheus/
+    /docs/workshops/packages/credential-provider-package/
+    /docs/workshops/provision/
+    /docs/workshops/provision/local_cluster/
+    /docs/workshops/provision/overview/
+    /docs/workshops/provision/prerequisites/
+    /docs/workshops/provision/vSphere-prepeartion/
+    /docs/workshops/provision/vsphere/
 menu:
   main:
     weight: 20
