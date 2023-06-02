@@ -401,3 +401,14 @@ func (c *CloudStack) searchTemplate(ctx context.Context, template string) (strin
 	}
 	return template, nil
 }
+
+// WithKubeVersion returns a cluster config filler that sets the cluster kube version and the right template for all
+// cloudstack machine configs.
+func (c *CloudStack) WithKubeVersion(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+	return api.JoinClusterConfigFillers(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
+		api.CloudStackToConfigFiller(
+			api.WithCloudStackTemplateForAllMachines(c.templateForDevRelease(osFamily, kubeVersion)),
+		),
+	)
+}
