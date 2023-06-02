@@ -12,7 +12,7 @@ To manage that cluster, you can run cluster create and delete commands from an U
 
 Creating a cluster involves downloading EKS Anywhere tools to an Administrative machine, then running the `eksctl anywhere create cluster` command to deploy that cluster to the provider.
 A temporary bootstrap cluster runs on the Administrative machine to direct the target cluster creation.
-For a detailed description, see [Cluster creation workflow]({{< relref "../concepts/clusterworkflow/" >}}).
+For a detailed description, see [Cluster creation workflow]({{< relref "../getting-started/overview/" >}}).
 
 Here’s a diagram that explains the process visually.
 
