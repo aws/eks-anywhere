@@ -305,7 +305,7 @@ As described in [Create separate workload clusters]({{< relref "./vsphere/vspher
 
 ## Creating a Nutanix cluster
 
-The following diagram illustrates the cluster creation process for the Nutanix provider described in the [Nutanix Getting started]({{< relref "../getting-started/production-environment/nutanix-getstarted#create-an-initial-cluster" >}}) guide.
+The following diagram illustrates the cluster creation process for the Nutanix provider described in the [Create Nutanix cluster]({{< relref "../getting-started/nutanix" >}}) guide.
 
 ### Start creating a Nutanix cluster 
 
@@ -318,7 +318,7 @@ Identify the provider (`--provider nutanix`) and the cluster name in the `eksctl
 #### 2. Modify the config file
 
 Modify the generated cluster config file to suit your situation.
-Details about this config file can be found on the [Nutanix Config]({{< relref "../reference/clusterspec/nutanix.md" >}}) page.
+Details about this config file can be found on the [Nutanix Config]({{< relref "../getting-started/nutanix/nutanix-spec/" >}}) page.
 
 #### 3. Launch the cluster creation
 
@@ -419,7 +419,7 @@ The target cluster can now be used as either:
 
 ### Creating workload clusters (optional)
 
-The target cluster acts as a management cluster. One or more workload clusters can be managed by this management cluster as described in [Create separate workload clusters]({{< relref "../getting-started/production-environment/nutanix-getstarted/#create-separate-workload-clusters" >}}):
+The target cluster acts as a management cluster. One or more workload clusters can be managed by this management cluster as described in [Create separate workload clusters]({{< relref "./nutanix/nutanix-getstarted#create-separate-workload-clusters" >}}):
 
 * Use `eksctl` to generate a cluster config file for the new workload cluster.
 * Modify the cluster config with a new cluster name and different Nutanix resources.
