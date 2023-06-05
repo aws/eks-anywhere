@@ -12,14 +12,14 @@ description: >
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
 Currently, Bare Metal, CloudStack, Nutanix, Snow, and VMware vSphere are the recommended providers for supported EKS Anywhere clusters.
 Docker is available as an unsupported provider.
-We step through the cluster creation workflow for Bare Metal and vSphere providers here.
+We step through the cluster creation workflow for Bare Metal, vSphere, and Nutanix providers, here.
 
 
 ## Management and workload clusters
 
 EKS Anywhere offers two cluster deployment topology options:
 
-* **Standalone cluster**: If want only a single EKS Anywhere cluster, you can deploy a self-managed, standalone cluster.
+* **Standalone cluster**: If you want only a single EKS Anywhere cluster, you can deploy a self-managed, standalone cluster.
 This type of cluster contains all Cluster API (CAPI) management components needed to manage itself, including managing its own upgrades.
 It can also run workloads.
 
@@ -33,7 +33,7 @@ For further details about the different cluster topologies, see [Architecture]({
 Some assets need to be in place before you can create an EKS Anywhere cluster.
 You need to have an Administrative machine that includes the tools required to create the cluster.
 Next, you need get the software tools and artifacts used to build the cluster.
-Then you also need to prepare the provider, such as a vCenter environment or a set of Bare Metal machines, on which to create the resulting cluster. 
+Then you also need to prepare the provider, such as a vCenter environment, a Prism Central environment, or a set of Bare Metal machines, on which to create the resulting cluster. 
 
 ### Administrative machine
 
@@ -68,7 +68,7 @@ Like Cluster API, EKS Anywhere runs a [kind](https://kind.sigs.k8s.io/) cluster 
 However, instead of using CAPI directly with the `clusterctl` command to manage the workload cluster, you use the `eksctl anywhere` command which abstracts that process for you, including calling `clusterctl` under the covers.
 
 With your Administrative machine in place, you need to prepare your [provider]({{< relref "../getting-started/chooseprovider/" >}}) for EKS Anywhere.
-The following sections describe how to create a Bare Metal or vSphere cluster.
+The following sections describe how to create a Bare Metal, vSphere or Nutanix cluster.
 
 ## Creating a Bare Metal cluster
 The following diagram illustrates what happens when you start the cluster creation process for a Bare Metal provider, as described in the [Bare Metal Getting started]({{< relref "../getting-started/baremetal" >}}) guide.
@@ -334,7 +334,7 @@ First, the cluster creation process runs a series of commands to validate the Nu
 * Checks that the Nutanix environment is available.
 * Authenticates the Nutanix provider to the Nutanix environment using the supplied Prism Central endpoint information and credentials.
 
-For each of the `NutanixMachineConfig` objects following validations are performed: 
+For each of the `NutanixMachineConfig` objects, the following validations are performed: 
 * Validates the provided resource configuration (CPU, memory, storage)
 * Validates the Nutanix subnet
 * Validates the Nutanix Prism Element cluster
@@ -347,7 +347,7 @@ If all validations pass, you will see this message:
 ✅ Nutanix Provider setup is valid
 ```
 
-During the bootstrap cluster creation, following messages will be shown:
+During bootstrap cluster creation, the following messages will be shown:
 
 ```
 Creating new bootstrap cluster
@@ -356,7 +356,7 @@ Installing cluster-api providers on bootstrap cluster
 Provider specific post-setup
 ```
 
-Next, the Nutanix provider will create the machines on the Nutanix environment.
+Next, the Nutanix provider will create the machines in the Nutanix environment.
 
 ### Continuing cluster creation
 
@@ -366,7 +366,7 @@ The following diagram illustrates the activities that occur next:
 
 #### 1. CAPI management
 
-Cluster API (CAPI) management will orchestrate the creation of the target cluster on the Nutanix environment.
+Cluster API (CAPI) management will orchestrate the creation of the target cluster in the Nutanix environment.
 
 ```
 Creating new workload cluster
@@ -386,7 +386,7 @@ Installing networking on workload cluster
 
 #### 4. Moving cluster management to target cluster
 
-CAPI components are installed on the target cluster. Next, the cluster management is moved from bootstrap cluster to target cluster.
+CAPI components are installed on the target cluster. Next, cluster management is moved from the bootstrap cluster to the target cluster.
 
 ```
 Creating EKS-A namespace
@@ -408,7 +408,7 @@ Writing cluster config file
 ```
 
 #### 5. Delete bootstrap cluster
-The bootstrap cluster is no longer needed and is deleted since the target cluster is up and running:
+The bootstrap cluster is no longer needed and is deleted when the target cluster is up and running:
 
 ![Delete EKS Anywhere bootstrap cluster](/images/eksa-delete.png)
 
