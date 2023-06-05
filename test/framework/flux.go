@@ -118,34 +118,6 @@ func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	}
 }
 
-func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
-	return func(e *ClusterE2ETest) {
-		gitOpsConfigName := fluxConfigName()
-		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
-		e.ClusterConfig.GitOpsConfig = api.NewGitOpsConfig(gitOpsConfigName,
-			api.WithPersonalFluxRepository(true),
-			api.WithStringFromEnvVarGitOpsConfig(GitRepositoryVar, api.WithFluxRepository),
-			api.WithStringFromEnvVarGitOpsConfig(GithubUserVar, api.WithFluxOwner),
-			api.WithFluxNamespace("default"),
-			api.WithFluxConfigurationPath("path2"),
-			api.WithFluxBranch("main"),
-		)
-		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(gitOpsConfigName, v1alpha1.GitOpsConfigKind),
-		)
-		// apply the rest of the opts passed into the function
-		for _, opt := range opts {
-			opt(e.ClusterConfig.GitOpsConfig)
-		}
-		// Adding Job ID suffix to repo name
-		// e2e test jobs have Job Id with a ":", replacing with "-"
-		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
-		withFluxLegacyRepositorySuffix(jobID)(e.ClusterConfig.GitOpsConfig)
-		// Setting GitRepo cleanup since GitOps configured
-		e.T.Cleanup(e.CleanUpGithubRepo)
-	}
-}
-
 // WithFluxGithubConfig returns ClusterConfigFiller that adds FluxConfig using the Github provider to the cluster config.
 func WithFluxGithubConfig(opts ...api.FluxConfigOpt) api.ClusterConfigFiller {
 	fluxConfigName := fluxConfigName()
@@ -207,13 +179,6 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 				}
 			},
 		)
-	}
-}
-
-func withFluxLegacyRepositorySuffix(suffix string) api.GitOpsConfigOpt {
-	return func(c *v1alpha1.GitOpsConfig) {
-		repository := c.Spec.Flux.Github.Repository
-		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
 	}
 }
 

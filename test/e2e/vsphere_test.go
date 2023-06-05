@@ -523,18 +523,6 @@ func TestVSphereDownloadArtifacts(t *testing.T) {
 }
 
 // Flux
-func TestVSphereKubernetes127FluxLegacy(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu127()),
-		framework.WithFluxLegacy(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
 func TestVSphereKubernetes127GithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
@@ -551,18 +539,6 @@ func TestVSphereKubernetes127GitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu127()),
 		framework.WithFluxGit(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes127BottleRocketFluxLegacy(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket127()),
-		framework.WithFluxLegacy(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -593,51 +569,6 @@ func TestVSphereKubernetes127BottleRocketGitFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes127ThreeReplicasThreeWorkersFluxLegacy(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithFluxLegacy(),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes127GitopsOptionsFluxLegacy(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu127()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithFluxLegacy(
-			api.WithFluxBranch(fluxUserProvidedBranch),
-			api.WithFluxNamespace(fluxUserProvidedNamespace),
-			api.WithFluxConfigurationPath(fluxUserProvidedPath),
-		),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes126To127FluxUpgradeLegacy(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu126())
-	test := framework.NewClusterE2ETest(t,
-		provider,
-		framework.WithFluxLegacy(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFlowWithFlux(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.Ubuntu127Template()),
-	)
 }
 
 func TestVSphereKubernetes126To127GitFluxUpgrade(t *testing.T) {
@@ -755,46 +686,6 @@ func TestVSphereKubernetes127MulticlusterWorkloadCluster(t *testing.T) {
 		),
 	)
 	runWorkloadClusterFlow(test)
-}
-
-func TestVSphereUpgradeMulticlusterWorkloadClusterWithFluxLegacy(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu126())
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxLegacy(),
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube126),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxLegacy(),
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube126),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
-		),
-	)
-	runWorkloadClusterFlowWithGitOps(
-		test,
-		framework.WithClusterUpgradeGit(
-			api.WithKubernetesVersion(v1alpha1.Kube127),
-			api.WithControlPlaneCount(3),
-			api.WithWorkerNodeCount(3),
-		),
-		provider.WithProviderUpgradeGit(
-			provider.Ubuntu126Template(),
-		),
-	)
 }
 
 func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
@@ -1494,45 +1385,6 @@ func TestVSphereKubernetes126UbuntuTo127MultipleFieldsUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes126UbuntuTo127WithFluxLegacyUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu126())
-	test := framework.NewClusterE2ETest(t,
-		provider,
-		framework.WithFluxLegacy(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFlowWithFlux(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.Ubuntu127Template()),
-	)
-}
-
-func TestVSphereKubernetes126UbuntuTo127DifferentNamespaceWithFluxLegacyUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu126(),
-		framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)),
-	)
-	test := framework.NewClusterE2ETest(t,
-		provider,
-		framework.WithFluxLegacy(api.WithGitOpsNamespace(clusterNamespace)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFlowWithFlux(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.Ubuntu127Template()),
-	)
-}
-
 func TestVSphereKubernetes127UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu127())
 	test := framework.NewClusterE2ETest(
@@ -1604,44 +1456,6 @@ func TestVSphereKubernetes126BottlerocketTo127MultipleFieldsUpgrade(t *testing.T
 			// Uncomment the network field once upgrade starts working with it
 			// api.WithNetwork(vsphereNetwork2UpdateVar),
 		),
-	)
-}
-
-func TestVSphereKubernetes126BottlerocketTo127WithFluxLegacyUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket126())
-	test := framework.NewClusterE2ETest(t,
-		provider,
-		framework.WithFluxLegacy(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFlowWithFlux(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.Bottlerocket127Template()),
-	)
-}
-
-func TestVSphereKubernetes126BottlerocketTo127DifferentNamespaceWithFluxLegacyUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket126(),
-		framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
-	test := framework.NewClusterE2ETest(t,
-		provider,
-		framework.WithFluxLegacy(api.WithGitOpsNamespace(clusterNamespace)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube126)),
-		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runUpgradeFlowWithFlux(
-		test,
-		v1alpha1.Kube127,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		provider.WithProviderUpgrade(provider.Bottlerocket127Template()),
 	)
 }
 
