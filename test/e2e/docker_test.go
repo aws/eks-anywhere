@@ -53,15 +53,6 @@ func TestDockerKubernetesLabels(t *testing.T) {
 }
 
 // Flux
-func TestDockerKubernetes127FluxLegacy(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithFluxLegacy(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runFluxFlow(test)
-}
-
 func TestDockerKubernetes127GithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -76,21 +67,6 @@ func TestDockerKubernetes127GitFlux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runFluxFlow(test)
-}
-
-func TestDockerKubernetes127GitopsOptionsFluxLegacy(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithFluxLegacy(
-			api.WithFluxBranch(fluxUserProvidedBranch),
-			api.WithFluxNamespace(fluxUserProvidedNamespace),
-			api.WithFluxConfigurationPath(fluxUserProvidedPath),
-		),
 	)
 	runFluxFlow(test)
 }
@@ -261,41 +237,6 @@ func TestDockerKubernetes127AWSIamAuth(t *testing.T) {
 }
 
 // Flux
-func TestDockerUpgradeWorkloadClusterWithFluxLegacy(t *testing.T) {
-	provider := framework.NewDocker(t)
-	test := framework.NewMulticlusterE2ETest(
-		t,
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxLegacy(),
-			framework.WithClusterFiller(
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-			),
-		),
-		framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFluxLegacy(),
-			framework.WithClusterFiller(
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-			),
-		),
-	)
-	runWorkloadClusterFlowWithGitOps(
-		test,
-		framework.WithClusterUpgradeGit(
-			api.WithControlPlaneCount(2),
-			api.WithWorkerNodeCount(2),
-		),
-		// Needed in order to replace the DockerDatacenterConfig namespace field with the value specified
-		// compared to when it was initially created without it.
-		provider.WithProviderUpgradeGit(),
-	)
-}
-
 func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
