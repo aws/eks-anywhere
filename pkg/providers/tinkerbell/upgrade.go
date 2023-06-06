@@ -68,16 +68,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	// If we've been given a CSV with additional hardware for the cluster, validate it and
 	// write it to the catalogue so it can be used for further processing.
 	if p.hardwareCSVIsProvided() {
-		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
-
-		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
-		if err != nil {
-			return err
-		}
-
-		machineValidator := hardware.NewDefaultMachineValidator()
-
-		if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
+		if err := p.readCSVToCatalogue(); err != nil {
 			return err
 		}
 	}
@@ -283,7 +274,7 @@ func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types
 }
 
 func (p *Provider) hardwareCSVIsProvided() bool {
-	return p.hardwareCSVFile != ""
+	return p.config.HardwareFile != ""
 }
 
 func (p *Provider) isScaleUpDown(oldCluster *v1alpha1.Cluster, newCluster *v1alpha1.Cluster) bool {

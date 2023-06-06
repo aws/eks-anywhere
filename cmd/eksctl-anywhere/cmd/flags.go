@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -18,14 +19,22 @@ const (
 )
 
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {
-	var err error
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		if err != nil {
+		if err := viper.BindPFlag(flag.Name, flag); err != nil {
 			return
 		}
-		err = viper.BindPFlag(flag.Name, flag)
+		viper.AutomaticEnv()
+		// Environment variables can't have dashes in them, so bind them to their equivalent
+		// keys with underscores, e.g. --hardware-csv to HARDWARE_CSV
+		viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+		// viper.AutomaticEnv() needs help with dashes in flag names.
+		if !flag.Changed && viper.IsSet(flag.Name) {
+			val := viper.Get(flag.Name)
+			cmd.Flags().Set(flag.Name, fmt.Sprintf("%v", val))
+		}
 	})
-	return err
+
+	return nil
 }
 
 func applyClusterOptionFlags(flagSet *pflag.FlagSet, clusterOpt *clusterOptions) {

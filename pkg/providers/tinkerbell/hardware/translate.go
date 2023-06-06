@@ -23,9 +23,9 @@ type MachineValidator interface {
 
 // TranslateAll reads entries 1 at a time from reader and writes them to writer. When reader returns io.EOF,
 // TranslateAll returns nil. Failure to return io.EOF from reader will result in an infinite loop.
-func TranslateAll(reader MachineReader, writer MachineWriter, validator MachineValidator) error {
+func TranslateAll(reader MachineReader, writer MachineWriter, validator MachineValidator, modifiers ...func(Machine) Machine) error {
 	for {
-		err := Translate(reader, writer, validator)
+		err := Translate(reader, writer, validator, modifiers...)
 		if err == io.EOF {
 			return nil
 		}
@@ -38,7 +38,7 @@ func TranslateAll(reader MachineReader, writer MachineWriter, validator MachineV
 
 // Translate reads 1 entry from reader and writes it to writer. When reader returns io.EOF Translate
 // returns io.EOF to the caller.
-func Translate(reader MachineReader, writer MachineWriter, validator MachineValidator) error {
+func Translate(reader MachineReader, writer MachineWriter, validator MachineValidator, modifiers ...func(Machine) Machine) error {
 	machine, err := reader.Read()
 	if err == io.EOF {
 		return err
@@ -48,6 +48,9 @@ func Translate(reader MachineReader, writer MachineWriter, validator MachineVali
 		return fmt.Errorf("read: invalid hardware: %v", err)
 	}
 
+	for _, modify := range modifiers {
+		machine = modify(machine)
+	}
 	if err := validator.Validate(machine); err != nil {
 		return err
 	}

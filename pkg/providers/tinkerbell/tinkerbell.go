@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufio"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/rufiounreleased"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -55,9 +56,8 @@ type Provider struct {
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
 
-	hardwareCSVFile string
-	catalogue       *hardware.Catalogue
-	tinkerbellIP    string
+	catalogue *hardware.Catalogue
+	config    Config
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
@@ -67,6 +67,13 @@ type Provider struct {
 	forceCleanup bool
 	skipIpCheck  bool
 	retrier      *retrier.Retrier
+}
+
+// Config for the Tinkerbell provider.
+type Config struct {
+	HardwareFile string
+	IP           string
+	Rufio        rufio.Config
 }
 
 type ProviderKubectlClient interface {
@@ -103,15 +110,14 @@ func NewProvider(
 	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
 	clusterConfig *v1alpha1.Cluster,
-	hardwareCSVPath string,
 	writer filewriter.FileWriter,
 	docker stack.Docker,
 	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
-	tinkerbellIP string,
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
+	config Config,
 ) (*Provider, error) {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -141,8 +147,8 @@ func NewProvider(
 		// cluster's create and upgrade that too for the kind cluster.
 		// GenerateNoProxyList is getting used by all the cluster operations.
 		// Thus moving adding tinkerbell Local IP to here.
-		if !slices.SliceContains(proxyConfig.NoProxy, tinkerbellIP) {
-			proxyConfig.NoProxy = append(proxyConfig.NoProxy, tinkerbellIP)
+		if !slices.SliceContains(proxyConfig.NoProxy, config.IP) {
+			proxyConfig.NoProxy = append(proxyConfig.NoProxy, config.IP)
 		}
 	} else {
 		proxyConfig = nil
@@ -159,11 +165,10 @@ func NewProvider(
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
-			tinkerbellIP:                tinkerbellIP,
+			tinkerbellIP:                config.IP,
 			now:                         now,
 		},
-		writer:          writer,
-		hardwareCSVFile: hardwareCSVPath,
+		writer: writer,
 		// TODO(chrisdoherty4) Inject the catalogue dependency so we can dynamically construcft the
 		// indexing capabilities.
 		catalogue: hardware.NewCatalogue(
@@ -172,9 +177,9 @@ func NewProvider(
 			hardware.WithBMCNameIndex(),
 			hardware.WithSecretNameIndex(),
 		),
-		tinkerbellIP: tinkerbellIP,
-		netClient:    &networkutils.DefaultNetClient{},
-		retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		config:    config,
+		netClient: &networkutils.DefaultNetClient{},
+		retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.

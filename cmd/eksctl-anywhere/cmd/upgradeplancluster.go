@@ -18,6 +18,7 @@ import (
 	fluxupgrader "github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -78,7 +79,8 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster, nil).
-		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
+		WithTinkerbellConfig(tinkerbell.Config{HardwareFile: uc.hardwareCSVPath, IP: uc.tinkerbellBootstrapIP}).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.forceClean).
 		WithGitOpsFlux(newClusterSpec.Cluster, newClusterSpec.FluxConfig, nil).
 		WithCAPIManager().
 		Build(ctx)

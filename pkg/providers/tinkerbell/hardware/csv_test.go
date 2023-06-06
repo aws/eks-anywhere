@@ -147,7 +147,7 @@ func TestCSVReaderWithMissingRequiredColumns(t *testing.T) {
 func TestCSVBuildHardwareYamlFromCSV(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	hardwareYaml, err := hardware.BuildHardwareYAML("./testdata/hardware.csv")
+	hardwareYaml, err := hardware.BuildHardwareYAML("./testdata/hardware.csv", "")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(hardwareYaml).To(gomega.Equal([]byte(`apiVersion: tinkerbell.org/v1alpha1
 kind: Hardware

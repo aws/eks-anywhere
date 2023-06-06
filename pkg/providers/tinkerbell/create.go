@@ -31,7 +31,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 	err := p.stackInstaller.Install(
 		ctx,
 		clusterSpec.VersionsBundle.Tinkerbell,
-		p.tinkerbellIP,
+		p.config.IP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnDocker(),
@@ -223,16 +223,32 @@ func (p *Provider) getHardwareFromManagementCluster(ctx context.Context, cluster
 func (p *Provider) readCSVToCatalogue() error {
 	// Create a catalogue writer used to write hardware to the catalogue.
 	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
-
 	machineValidator := hardware.NewDefaultMachineValidator()
-
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
 	// and submits it to the clsuter.
-	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
+	machs, err := hardware.NewNormalizedCSVReaderFromFile(p.config.HardwareFile)
 	if err != nil {
 		return err
 	}
 
-	return hardware.TranslateAll(machines, catalogueWriter, machineValidator)
+	var mods = []func(hardware.Machine) hardware.Machine{}
+	// If webhook secrets have been defined, we create a modifier that will update all
+	// machine.BMCPassword values. This modifier will run as a part of hardware.TranslateAll().
+	if p.config.Rufio.WebhookSecret != "" {
+		mods = append(mods, func(m hardware.Machine) hardware.Machine {
+			m.BMCPassword = p.config.Rufio.WebhookSecret
+			if m.BMCUsername == "" {
+				// We update the BMCUsername so that validations pass.
+				// When the secret != "" the webhook functionality will be used.
+				// With this the BMCUsername is not relevant for any BMC machines,
+				// hence the statically define name.
+				m.BMCUsername = "rufio"
+			}
+
+			return m
+		})
+	}
+
+	return hardware.TranslateAll(machs, catalogueWriter, machineValidator, mods...)
 }

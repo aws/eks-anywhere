@@ -6,19 +6,22 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 type hardwareOptions struct {
 	csvPath    string
 	outputPath string
+	config     tinkerbell.Config
 }
 
 var hOpts = &hardwareOptions{}
 
 var generateHardwareCmd = &cobra.Command{
-	Use:   "hardware",
-	Short: "Generate hardware files",
+	Use:     "hardware",
+	Short:   "Generate hardware files",
+	PreRunE: bindFlagsToViper,
 	Long: `
 Generate Kubernetes hardware YAML manifests for each Hardware entry in the source.
 `,
@@ -41,10 +44,15 @@ func init() {
 	if err := generateHardwareCmd.MarkFlagRequired(TinkerbellHardwareCSVFlagName); err != nil {
 		panic(err)
 	}
+
+	generateHardwareCmd.Flags().StringVar(&hOpts.config.Rufio.WebhookSecret, "webhook-secrets", "", "Comma separated list of secrets for use with the bare metal webhook provider")
+	markFlagHidden(generateHardwareCmd.Flags(), "webhook-secrets")
+	generateHardwareCmd.Flags().StringVar(&hOpts.config.Rufio.WebhookURL, "webhook-url", "", "URL for the bare metal webhook consumer")
+	markFlagHidden(generateHardwareCmd.Flags(), "webhook-url")
 }
 
 func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string) error {
-	hardwareYaml, err := hardware.BuildHardwareYAML(hOpts.csvPath)
+	hardwareYaml, err := hardware.BuildHardwareYAML(hOpts.csvPath, hOpts.config.Rufio.WebhookSecret)
 	if err != nil {
 		return fmt.Errorf("building hardware yaml from csv: %v", err)
 	}
