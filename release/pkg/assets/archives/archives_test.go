@@ -151,7 +151,7 @@ func TestGenerateArchiveAssets(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 
-			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig)
+			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig, 0)
 			if err != nil {
 				t.Fatalf("Error getting previous EKS-A dev release number: %v\n", err)
 			}

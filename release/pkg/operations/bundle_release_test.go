@@ -111,7 +111,7 @@ func TestGenerateBundleManifest(t *testing.T) {
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 			releaseConfig.CliRepoBranchName = tt.cliRepoBranchName
 
-			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig)
+			releaseVersion, err := filereader.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion, releaseConfig, 0)
 			if err != nil {
 				t.Fatalf("Error getting previous EKS-A dev release number: %v\n", err)
 			}
