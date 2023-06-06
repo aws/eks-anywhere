@@ -9,6 +9,8 @@ skipped_tests:
 - TestCloudStackKubernetes124UpgradeFromLatestMinorRelease
 - TestCloudStackKubernetes123RedhatProxyConfig
 - TestCloudStackKubernetes124RedhatProxyConfig
+- TestCloudStackKubernetes123RedhatProxyConfigAPI
+- TestCloudStackKubernetes124RedhatProxyConfigAPI
 - TestCloudStackKubernetes123AddRemoveAz
 - TestCloudStackKubernetes124AddRemoveAz
 - TestCloudStackKubernetes123MultiEndpointSimpleFlow
