@@ -30,7 +30,9 @@ func bindFlagsToViper(cmd *cobra.Command, args []string) error {
 		// viper.AutomaticEnv() needs help with dashes in flag names.
 		if !flag.Changed && viper.IsSet(flag.Name) {
 			val := viper.Get(flag.Name)
-			cmd.Flags().Set(flag.Name, fmt.Sprintf("%v", val))
+			if err := cmd.Flags().Set(flag.Name, fmt.Sprintf("%v", val)); err != nil {
+				return
+			}
 		}
 	})
 

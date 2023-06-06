@@ -107,7 +107,7 @@ func BuildHardwareYAML(path string, webhookSecret string) ([]byte, error) {
 	// Have to do it here since the hardware.TranslateAll call below does a validation before writing to the catalogue,
 	// so updating the catalogueWriter is not an option.
 	// If webhook secrets have been defined, update all machine bmc_passwords to use the webhook secret.
-	var mods = []func(Machine) Machine{}
+	mods := []func(Machine) Machine{}
 	if webhookSecret != "" {
 		mods = append(mods, func(m Machine) Machine {
 			m.BMCPassword = webhookSecret
