@@ -232,7 +232,7 @@ func (p *Provider) readCSVToCatalogue() error {
 		return err
 	}
 
-	var mods = []func(hardware.Machine) hardware.Machine{}
+	mods := []func(hardware.Machine) hardware.Machine{}
 	// If webhook secrets have been defined, we create a modifier that will update all
 	// machine.BMCPassword values. This modifier will run as a part of hardware.TranslateAll().
 	if p.config.Rufio.WebhookSecret != "" {
