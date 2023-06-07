@@ -35,7 +35,7 @@ For information on how to configure a Emissary Ingress curated package for EKS A
       namespace: default
     spec:
       port: 8080
-      protocol: HTTPS
+      protocol: HTTP
       securityModel: XFP
       hostBinding:
         namespace:
@@ -56,26 +56,37 @@ For information on how to configure a Emissary Ingress curated package for EKS A
     EOF
     ```
 
-5. Create a Mapping on your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /backend/ path to the Hello EKS Anywhere Service. This hostname IP is the IP found from the LoadBalancer resource deployed by MetalLB for you.
+5. Create a Mapping, and Host for your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /backend/ path to the Hello EKS Anywhere Service.
 
     ```bash
     kubectl apply -f - <<EOF
+    apiVersion: getambassador.io/v3alpha1
+    kind: Host
+    metadata:
+      name: hello-host
+    spec:
+      hostname: hello.example.com
+      mappingSelector:
+        matchLabels:
+          examplehost: host
     ---
-    apiVersion: getambassador.io/v2
+    apiVersion: getambassador.io/v3alpha1
     kind: Mapping
     metadata:
       name: hello-backend
+      labels:
+        examplehost: host 
     spec:
       prefix: /backend/
       service: hello-eks-a
-      hostname: "195.16.99.65"
+      hostname: hello.example.com
     EOF
     ```  
  
 6. Store the Emissary-ingress load balancer IP address to a local environment variable. You will use this variable to test accessing your service.
 
     ```bash
-    export EMISSARY_LB_ENDPOINT=$(kubectl get svc ambassador -o "go-template={{range .status.loadBalancer.ingress}}{{or .ip .hostname}}{{end}}")
+    export EMISSARY_LB_ENDPOINT=$(kubectl get svc emissary-$CLUSTER_NAME -o "go-template={{range .status.loadBalancer.ingress}}{{or .ip .hostname}}{{end}}")
     ```   
  
 7. Test the configuration by accessing the service through the Emissary-ingress load balancer.
