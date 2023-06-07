@@ -21,11 +21,11 @@ Currently the only way to manage EKS Anywhere CloudStack cluster is by using CLI
 
 ## Overview of Solution
 
-The EKS-A controller running in management cluster fully manages workload clusters, including reconciling EKS-A CRDs and installing the CNI in the workload cluster. The CloudStack cluster reconciling flow is similar to [vsphere reconciler](images/cluster_reconcile.png) which watches resources (eg. CAPI objects) and use an event handler to enqueue reconcile requests in response to those events.
+The EKS-A controller running in management cluster fully manages workload clusters, including reconciling EKS-A CRDs and installing the CNI in the workload cluster. Though with different machine provider, the CloudStack cluster reconciling process watches and reconciles the same CAPI objects and eksa cluster object as vsphere, the reconciliation flow is similar to [vsphere reconciler](images/cluster_reconcile.png) which watches resources and use an event handler to enqueue reconcile requests in response to those events.
 
 In order to maintain same level of validations logic we currently run in CLI, we'll import validations into data validation and run time validation.
 * Data validation: Kubernetes offers validation webhook for CRDs which runs data validation before accepted by kube-api server. Data validations should be light and fast.
-* Run time validation: some validations require calling the CloudStack API, which is too heavy for the webhook. We will implement those validations in a separate datacenter reconciler. This flow is similar to [vSphere datacenter reconciler](https://github.com/aws/eks-anywhere/blob/main/designs/full-cluster-lifecycle-api.md?plain=1#L82)
+* Run time validation: some validations require calling the CloudStack API, like if provided availability zone/account exits, which is too heavy for the webhook. We will implement those validations in a separate datacenter reconciler, and block the reconciliation process on failure, which is similar to [vSphere datacenter reconciler](https://github.com/aws/eks-anywhere/blob/main/designs/full-cluster-lifecycle-api.md?plain=1#L82)
 
 ### Defaults
 
@@ -42,14 +42,14 @@ In order to better sort out data validation and run time validation, we’ll reo
 * Extract data validation from ValidateClusterMachineConfigs (https://github.com/aws/eks-anywhere/blob/main/pkg/providers/cloudstack/validator.go#L127) and called from webhook.
 * We have immutable fields validation in both webhook ([validateImmutableFieldsCloudStackMachineConfig](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/api/v1alpha1/cloudstackmachineconfig_webhook.go#L86) and provider [validateMachineConfigImmutability](https://github.com/aws/eks-anywhere/blob/01cd1e7c3da0c6d87b2d85c4ac6e61f409091e9d/pkg/providers/cloudstack/cloudstack.go#L162)). There’re some gaps between two places so we’ll need to decide the final immutable fields.
   * affinity group
-  * [disk offering](https://github.com/aws/eks-anywhere/issues/5319)
+  * [disk offering](https://github.com/aws/eks-anywhere/issues/5319) (can be modified from CAPI v1.4)
 * We have [k8s version](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/providers/cloudstack/cloudstack.go#L1371) limitation due to capc version. This lightweight validation can be done in cluster webhook.
 
 ### Runtime Validation
 
 #### Datacenter Reconciler
 
-We’ll have CloudStackDatacenterReconciler to validate and update corresponding status and failure message.
+We’ll have CloudStackDatacenterReconciler to validate provided datacenter spec and update corresponding status and failure message. Any validation failure in this step would stop further reconciliation like cni/control plane node/worker node until customer can provide valid datacenter information.
 
 #### How to read credential
 
