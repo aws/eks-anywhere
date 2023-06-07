@@ -151,11 +151,17 @@ var releaseCmd = &cobra.Command{
 		releaseConfig.ReleaseClients = releaseClients
 
 		if devRelease {
-			releaseVersion, err = filereader.GetCurrentEksADevReleaseVersion(releaseVersion, releaseConfig)
+			buildNumber, err := filereader.GetNextEksADevBuildNumber(releaseVersion, releaseConfig)
 			if err != nil {
 				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
 				os.Exit(1)
 			}
+			releaseVersion, err = filereader.GetCurrentEksADevReleaseVersion(releaseVersion, releaseConfig, buildNumber)
+			if err != nil {
+				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
+				os.Exit(1)
+			}
+			releaseConfig.BundleNumber = buildNumber
 			releaseConfig.ReleaseVersion = releaseVersion
 		}
 		releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
