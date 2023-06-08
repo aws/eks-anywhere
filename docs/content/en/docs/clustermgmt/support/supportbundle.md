@@ -5,7 +5,7 @@ weight: 30
 description: >
     Using the Support Bundle with your EKS Anywhere Cluster
 aliases:
-   - /docs/tasks/troubleshoot/_supportbundle
+   - /docs/tasks/troubleshoot/supportbundle
 ---
 
 This guide covers the use of the EKS Anywhere Support Bundle for troubleshooting and support.
