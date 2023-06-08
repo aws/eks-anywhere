@@ -9,8 +9,8 @@
 For example, when the user creates/updates EKS Anywhere workload cluster with the API, the user may do some of the following:
 
 1. Check the status of their cluster by looking at the Conditions of the CAPI cluster and the related machine deployments.
-2. Or get the CAPI Machine objects with  k get machines -A to check that the machines specified in the `Cluster` spec are created and that the phases transition from Provisioning to Running, are using the correct k8s versions, etc and check the controller logs if something does not look right.
-3. Or focus on watching logs in the controllers such as the eksa-controller-manager to monitor the reconciliation process. If there is an error in the logs here, this may give the user a hint to what the issue is, or where to dive deeper into the logs of other pods. For example, if CAPI control plane is not ready indefinitely, the user may then check the capi-kubeadm-control-plane-controller-manager or capi-kubeadm-bootstrap-controller-manager for details. This could also cause some confusion because controllers WILL have logs of transient errors.
+2. Or get the CAPI Machine objects with `k get machines -A` to check that the machines specified in the `Cluster` spec are created and that the phases transition from `Provisioning` to `Running`, are using the correct k8s versions, etc and check the controller logs if something does not look right.
+3. Or focus on watching logs in the controllers such as the `eksa-controller-manager` to monitor the reconciliation process. If there is an error in the logs here, this may give the user a hint to what the issue is, or where to dive deeper into the logs of other pods. For example, if CAPI control plane is not ready indefinitely, the user may then check the   `capi-kubeadm-control-plane-controller-manager` or `capi-kubeadm-bootstrap-controller-manager` for details. This could also cause some confusion because controllers WILL have logs of transient errors.
 
 ## Tenets
 1. Independent: independent interface that abstracts the internal system details from the user
