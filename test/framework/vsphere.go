@@ -643,14 +643,14 @@ func WithBottlerocketFromRelease(release *releasev1.EksARelease, kubeVersion any
 
 func (v *VSphere) WithBottleRocketForRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	return api.VSphereToConfigFiller(
-		api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, anywherev1.Bottlerocket, v.getDevRelease(), kubeVersion)),
+		api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, anywherev1.Bottlerocket, release, kubeVersion)),
 	)
 }
 
 func optionToSetTemplateForRelease(osFamily anywherev1.OSFamily, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, osFamily, v.getDevRelease(), kubeVersion)),
+			api.WithTemplateForAllMachines(v.templatesRegistry.templateForRelease(v.t, osFamily, release, kubeVersion)),
 		)
 	}
 }
