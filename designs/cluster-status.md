@@ -4,9 +4,7 @@
 
 **Problem:** The Full Cluster Lifecycle API allows users to manage (creating, updating and deleting) EKS Anywhere clusters with a native Kubernetes experience we want users to have. However, it is unclear and somewhat arduous to assess the state of cluster managed in this way, unlike when using the CLI to manage workload clusters where the state of any operation is made known through the run CLI run logs and the user is notified through success and failure logs.
 
-**Context**
-
-Currently, users must engage with Kubernetes resources that are not native to EKS Anywhere API to assess or debug a the state of a cluster. Additionally, there are multiple ways to do this, which can be inefficient, confusing and overall a bad user experience, depending on how it is done.
+**Context:** Currently, users must engage with Kubernetes resources that are not native to EKS Anywhere API to assess or debug a the state of a cluster. Additionally, there are multiple ways to do this, which can be inefficient, confusing and overall a bad user experience, depending on how it is done.
 
 For example, when the user creates/updates EKS Anywhere workload cluster with the API, the user may do some of the following:
 
@@ -209,7 +207,7 @@ Lastly, we can safely deprecate the `EksdReleaseRef` field from the `Cluster` st
 
 In these examples, the `Cluster` spec submitted is configured with 1 Control Plane and 1 Worker Node replica unless otherwise specified.
 
-**`Cluster` spec invalid**
+**Cluster spec invalid**
 
 ```
   status:
@@ -229,6 +227,11 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       reason: "WaitingForDefaultCNIConfigured"
       status: "False"
       Type: "DefaultCNIConfigured"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Scaling up control plane to 1 replicas (actual 0)"
+      reason: "ScalingUp"
+      status: "False"
+      Type: "ControlPlaneReady"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
       message: "Scaling up control plane to 1 replicas (actual 0)"
       reason: "ScalingUp"
@@ -258,6 +261,11 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       message: "Scaling up control plane to 1 replicas (actual 0)"
       reason: "ScalingUp"
       status: "False"
+      Type: "ControlPlaneReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Scaling up control plane to 1 replicas (actual 0)"
+      reason: "ScalingUp"
+      status: "False"
       Type: "Ready"
 ```
 
@@ -280,13 +288,18 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       status: "True"
       Type: "DefaultCNIConfigured"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
-      message: "Scaling up control plane to 2 replicas (actual 1)"
+      message: "Scaling up control plane and workers to 2 replicas (actual 1)"
+      reason: "ScalingUp"
+      status: "False"
+      Type: "ControlPlaneReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Scaling up control plane and workers to 2 replicas (actual 1)"
       reason: "ScalingUp"
       status: "False"
       Type: "Ready"
 ```
 
-**`Cluster` is ready**
+**Cluster is ready**
 
 ```
   status:
@@ -306,8 +319,12 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       Type: "DefaultCNIConfigured"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
       status: "True"
+      Type: "ControlPlaneReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
+      status: "True"
       Type: "Ready"
-```
+```  
+
 
 **Rolling upgrade in progress (upgraded to 3 CP and 2 Worker Nodes)**
 
@@ -328,11 +345,17 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       status: "True"
       Type: "DefaultCNIConfigured"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
-      message: "Scaling up control plane to 5 replicas (actual 2)"
+      message: "Scaling up control plane to 3 replicas (actual 2)"
+      reason: "ScalingUp"
+      status: "False"
+      Type: "ControlPlaneReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Scaling up control plane to 3 replicas (actual 2)"
       reason: "ScalingUp"
       status: "False"
       Type: "Ready"
 ```
+
 
 ## Alternative Solution
 
