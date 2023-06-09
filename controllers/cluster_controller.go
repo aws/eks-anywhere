@@ -177,35 +177,25 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 		Complete(r)
 }
 
-// Reconcile reconciles a cluster object.
-// +kubebuilder:rbac:groups="",resources=events;secrets;secrets/status;configmaps;configmaps/status;namespaces;namespaces/status;services;services/status,verbs=get;list;watch;
-// +kubebuilder:rbac:groups="",resources=node,verbs=*
-// +kubebuilder:rbac:groups="",resources=node/status,verbs=patch
-// +kubebuilder:rbac:groups="",resources=serviceaccounts;endpoints;persistentvolumes,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=delete;
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=gitopsconfigs;clusters;snowmachineconfigs;snowdatacenterconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;snowmachineconfigs/status;snowippools/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;tinkerbelldatacenterconfigs/status;tinkerbellmachineconfigs/status;cloudstackdatacenterconfigs/status;cloudstackmachineconfigs/status;bundles/status;awsiamconfigs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=oidcconfigs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch;update
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=create;patch;update
+// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=configmaps,verbs=get;list;patch;update;watch;create
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;gitopsconfigs;snowmachineconfigs;snowdatacenterconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;awsiamconfigs;oidcconfigs;awsiamconfigs;fluxconfigs,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;snowmachineconfigs/status;snowippools/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;tinkerbelldatacenterconfigs/status;tinkerbellmachineconfigs/status;cloudstackdatacenterconfigs/status;cloudstackmachineconfigs/status;awsiamconfigs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=bundles,verbs=get;list;watch
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/finalizers;snowmachineconfigs/finalizers;snowippools/finalizers;vspheredatacenterconfigs/finalizers;vspheremachineconfigs/finalizers;cloudstackdatacenterconfigs/finalizers;cloudstackmachineconfigs/finalizers;dockerdatacenterconfigs/finalizers;bundles/finalizers;awsiamconfigs/finalizers;tinkerbelldatacenterconfigs/finalizers;tinkerbellmachineconfigs/finalizers,verbs=update
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=fluxconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets/status,verbs=get;list;watch;create;update;patch
-// +kubebuilder:rbac:groups=apps,resources=daemonsets;daemonsets/status;deployments,verbs=get;list;watch
-// +kubebuilder:rbac:groups=bmc.tinkerbell.org,resources=machines;machines/status,verbs=get;list;watch
-// +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigtemplates;kubeadmconfigtemplates/status,verbs=create;get;list;patch;update;watch
-// +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=*,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigtemplates,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=clusterctl.cluster.x-k8s.io,resources=providers,verbs=get;list;watch
-// +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=*,verbs=create;get;list;patch;update;watch
+// +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,namespace=eksa-system,resources=*,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create;get;list;update;watch;delete
 // +kubebuilder:rbac:groups=distro.eks.amazonaws.com,resources=releases,verbs=get;list;watch
 // +kubebuilder:rbac:groups=etcdcluster.cluster.x-k8s.io,resources=*,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;awssnowippools;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates;tinkerbellclusters;tinkerbellmachinetemplates;cloudstackclusters;cloudstackmachinetemplates;nutanixclusters;nutanixmachinetemplates,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=cloudstackclusters/status;cloudstackmachinetemplates/status;dockerclusters/status;dockermachinetemplates/status;nutanixclusters/status;nutanixmachinetemplates/status;vsphereclusters/status;vspheremachinetemplates/status,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=packages.eks.amazonaws.com,resources=packages,verbs=create;delete;get;list;patch;update;watch;
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterroles/status;clusterrolebindings;clusterrolebindings/status;rolebindings;rolebindings/status,verbs=get;list;watch
-// +kubebuilder:rbac:groups=test,resources=test,verbs=get;list;watch;create;update;patch;delete;kill
-// +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
+
+// Reconcile reconciles a cluster object.
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
 	// Fetch the Cluster objects
