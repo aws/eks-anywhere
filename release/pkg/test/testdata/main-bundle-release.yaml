@@ -412,7 +412,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -421,7 +421,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -430,7 +430,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -439,8 +439,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -1207,7 +1207,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1216,7 +1216,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -1225,7 +1225,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1234,8 +1234,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -1975,7 +1975,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1984,7 +1984,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -1993,7 +1993,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -2002,8 +2002,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -2743,7 +2743,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -2752,7 +2752,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -2761,7 +2761,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -2770,8 +2770,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -3511,7 +3511,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -3520,7 +3520,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -3529,7 +3529,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -3538,8 +3538,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
