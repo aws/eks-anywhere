@@ -29,6 +29,9 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
   - kernel sysctl settings ([#5304](https://github.com/aws/eks-anywhere/pull/5304)) 
   - boot kernel parameters ([#5359](https://github.com/aws/eks-anywhere/pull/5359)) 
   - custom trusted cert bundles ([#5625](https://github.com/aws/eks-anywhere/pull/5625))
+- Add support for IRSA on Nutanix ([#5698](https://github.com/aws/eks-anywhere/pull/5698))
+- Add support for aws-iam-authenticator on Nutanix ([#5698](https://github.com/aws/eks-anywhere/pull/5698))
+- Enable proxy configuration for Nutanix ([#5779](https://github.com/aws/eks-anywhere/pull/5779))
 
 ### Upgraded
 - Management cluster upgrades will only move management cluster’s components to bootstrap cluster and back. ([#5914](https://github.com/aws/eks-anywhere/pull/5914))
