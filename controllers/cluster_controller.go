@@ -30,8 +30,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	"github.com/aws/eks-anywhere/pkg/networking/cilium"
-	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -462,18 +460,23 @@ func (r *ClusterReconciler) reconcileClusterCondtions(ctx context.Context, log l
 		return ctrl.Result{}, errors.Wrap(err, "building cluster Spec for conditions reconcile")
 	}
 
-	conditionChecker := clusters.NewConditionChecker(
-		updateControlPlaneInitializedCondition,
-		updateControlPlaneReadyCondition,
-		updateWorkersReadyCondition,
+	conditionFetcher := clusters.NewConditionFetcher(
+		clusters.CheckControlPlaneInitializedCondition,
+		clusters.CheckControlPlaneReadyCondition,
+		clusters.CheckWorkersReadyCondition,
 	)
 
 	log.Info("Checking cluster conditions")
-	err = conditionChecker.Run(ctx, r.client, clusterSpec)
+	resultConditions, err := conditionFetcher.RunAll(ctx, r.client, clusterSpec)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(err, "checking cluster conditions")
 	}
 
+	clusters.SetAllConditions(cluster, resultConditions)
+
+	// The rest of the condtion checks after this point will require using a client that is connected
+	// to the target Kubernetes cluster. That will not be available until the control plane is initialized,
+	// so return early if it is not.
 	if !conditions.IsTrue(clusterSpec.Cluster, clusterv1.ControlPlaneInitializedCondition) {
 		return ctrl.Result{RequeueAfter: defaultRequeueTime}, nil
 	}
@@ -483,15 +486,15 @@ func (r *ClusterReconciler) reconcileClusterCondtions(ctx context.Context, log l
 		return ctrl.Result{}, errors.Wrap(err, "retrieving target cluster client")
 	}
 
-	log.Info("Checking CNI conditions on cluster")
-	// Checking the CNI condition requires the client connected to the target Kubernestes cluster, not the management cluster,
-	conditionChecker = clusters.NewConditionChecker(
-		updateDefaultCNIConfigured,
+	conditionFetcher = clusters.NewConditionFetcher(
+		clusters.CheckDefaultCNIConfigured,
 	)
-	err = conditionChecker.Run(ctx, clusterClient, clusterSpec)
+	resultConditions, err = conditionFetcher.RunAll(ctx, clusterClient, clusterSpec)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(err, "checking cluster conditions")
 	}
+
+	clusters.SetAllConditions(cluster, resultConditions)
 
 	if !conditions.IsTrue(cluster, clusterv1.ReadyCondition) {
 		return ctrl.Result{RequeueAfter: defaultRequeueTime}, nil
@@ -556,165 +559,4 @@ func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.
 	}
 	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
 	return nil
-}
-
-// updateControlPlaneInitializedCondition updates the ControlPlaneInitialized condition if it hasn't already been set.
-// This condition should be set only once.
-func updateControlPlaneInitializedCondition(ctx context.Context, client client.Client, clusterSpec *anywherecluster.Spec) error {
-	// Return early if the ControlPlaneInitializedCondition is already "True"
-	if conditions.IsTrue(clusterSpec.Cluster, clusterv1.ControlPlaneInitializedCondition) {
-		return nil
-	}
-	// We can simply mirror this condition from the CAPI cluster
-	condition, err := getConditionFromCAPICluster(ctx, client, clusterSpec.Cluster, clusterv1.ControlPlaneInitializedCondition)
-	if err != nil {
-		return err
-	}
-
-	conditions.Set(clusterSpec.Cluster, condition)
-	return nil
-}
-
-// updateControlPlaneReadyCondition updates the ControlPlaneReady condition based on the CAPI cluster condition
-// and also the conditions on the control plane machines. The condition is marked "True", once all the
-// requested control plane machines are ready.
-func updateControlPlaneReadyCondition(ctx context.Context, client client.Client, clusterSpec *anywherecluster.Spec) error {
-	capiClusterCondition, err := getConditionFromCAPICluster(ctx, client, clusterSpec.Cluster, clusterv1.ControlPlaneReadyCondition)
-	if err != nil {
-		return err
-	}
-
-	// If the CAPICluster ControlPlaneReadyCondition is not "True", then we can assume that the control plane isn't ready and
-	// Mirror the condition to the Cluster status. By checking the CAPI cluster first, we can capture all the exisitng reasons
-	// that this may not be true first.
-	if capiClusterCondition.Status != "True" {
-		conditions.Set(clusterSpec.Cluster, capiClusterCondition)
-		return nil
-	}
-
-	// We want to ensure that the condition of the current cluster matches the input Cluster after checking with the CAPI cluster,
-	// so, we do some further checks againts the Cluster machines to check if the expected control plane nodes have been actually rolled out
-	// and ready.
-	machines, err := controller.GetMachines(ctx, client, clusterSpec.Cluster)
-	if err != nil {
-		return err
-	}
-
-	cpMachines := controller.ControlPlaneMachines(machines)
-
-	expected := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count
-	ready := countMachinesReady(cpMachines,
-		controller.WithNodeRef(),
-		controller.WithK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion),
-		controller.WithConditionReady(),
-		controller.WithNodeHealthy(),
-	)
-
-	if ready != expected {
-		conditions.MarkFalse(clusterSpec.Cluster, clusterv1.ControlPlaneReadyCondition, anywherev1.WaitingForControlPlaneNodesReadyReason, clusterv1.ConditionSeverityInfo, "Watiing for expected control plane nodes: %d replicas (ready %d)", expected, ready)
-		return nil
-	}
-
-	conditions.MarkTrue(clusterSpec.Cluster, clusterv1.ControlPlaneReadyCondition)
-	return nil
-}
-
-// updateDefault updates the WorkersReadyConditon condition based on the CAPI cluster condition
-// and also the conditions on the worker machines. The condition is marked "True", once all the
-// requested worker machines are ready.
-func updateWorkersReadyCondition(ctx context.Context, client client.Client, clusterSpec *anywherecluster.Spec) error {
-	machines, err := controller.GetMachines(ctx, client, clusterSpec.Cluster)
-	if err != nil {
-		return err
-	}
-
-	workerMachines := controller.WorkerNodeMachines(machines)
-	expected := 0
-	for _, md := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		expected += *md.Count
-	}
-
-	ready := countMachinesReady(workerMachines,
-		controller.WithNodeRef(),
-		controller.WithK8sVersion(clusterSpec.Cluster.Spec.KubernetesVersion),
-		controller.WithConditionReady(),
-		controller.WithNodeHealthy(),
-	)
-
-	if ready != expected {
-		conditions.MarkFalse(clusterSpec.Cluster, anywherev1.WorkersReadyConditon, anywherev1.WaitingForWorkersReadyReason, clusterv1.ConditionSeverityInfo, "Waiting for expected workers nodes: %d replicas (ready %d)", expected, ready)
-		return nil
-	}
-
-	conditions.MarkTrue(clusterSpec.Cluster, anywherev1.WorkersReadyConditon)
-	return nil
-}
-
-// updateDefaultCNIConfigured updates the DefaultCNIConfigured condition. The condition is marked "True" if
-// the requested CNI is installed. client is connected to the target Kubernestes cluster, not the management cluster.
-func updateDefaultCNIConfigured(ctx context.Context, client client.Client, clusterSpec *anywherecluster.Spec) error {
-	installation, err := cilium.GetInstallation(ctx, client)
-	if err != nil {
-		return err
-	}
-
-	clus := clusterSpec.Cluster
-	ciliumCfg := clus.Spec.ClusterNetwork.CNIConfig.Cilium
-
-	// If EKSA cilium is not installed and  EKS-A is responsible for the Cilium installation,
-	// mark the DefaultCNIConfiguredCondition condition as "False".
-	if !installation.Installed() && ciliumCfg.IsManaged() {
-		conditions.MarkFalse(clus, anywherev1.DefaultCNIConfiguredCondition, anywherev1.WaitingForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityInfo, "Waiting for default CNI to be configured")
-		return nil
-	}
-
-	// If EKSA cilium is not installed and  EKS-A is not responsible for the Cilium installation,
-	// Provided that cilium was installed before via checking a marker indicating this is an upgrade process
-	// mark the DefaultCNIConfiguredCondition condition as "False" with a reason that default cni configuration was skipped.
-	if !installation.Installed() && !ciliumCfg.IsManaged() && ciliumreconciler.CiliumWasInstalled(ctx, clus) {
-		conditions.MarkFalse(clus, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkippedDefaultCNIConfigurationReason, clusterv1.ConditionSeverityInfo, "Skipped default CNI configuration")
-		return nil
-	}
-
-	conditions.MarkTrue(clus, anywherev1.DefaultCNIConfiguredCondition)
-	return nil
-}
-
-// getConditionFromCAPICluster checks the condition on the CAPI cluster for the provided condition.
-// If False, it mirrors the corresponding condition on the Cluster status.
-// It returns a bool indicating that the condition was "True" or not
-func getConditionFromCAPICluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster, clusterCondtion clusterv1.ConditionType) (*clusterv1.Condition, error) {
-	noCAPIClusterCondition := conditions.FalseCondition(clusterCondtion, anywherev1.WaitingForCAPIClusterReason, clusterv1.ConditionSeverityInfo, "Waiting for CAPI cluster to be initialized")
-	capiCluster, err := controller.GetCAPICluster(ctx, client, cluster)
-	if err != nil {
-		return noCAPIClusterCondition, err
-	}
-
-	if capiCluster == nil {
-		return noCAPIClusterCondition, nil
-	}
-
-	condition := conditions.Get(capiCluster, clusterCondtion)
-	if condition == nil {
-		return conditions.FalseCondition(clusterCondtion, anywherev1.WaitingForCAPIClusterConditionReason, clusterv1.ConditionSeverityInfo, "Waiting for CAPI cluster to report %s condition", clusterCondtion), nil
-	}
-
-	return condition, nil
-}
-
-func countMachinesReady(machines []clusterv1.Machine, checkers ...controller.NodeReadyChecker) int {
-	ready := 0
-	for _, m := range machines {
-		passed := true
-		for _, checker := range checkers {
-			if !checker(m.Status) {
-				passed = false
-				break
-			}
-		}
-		if passed {
-			ready += 1
-		}
-	}
-	return ready
 }
