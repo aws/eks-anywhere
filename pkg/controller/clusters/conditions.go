@@ -25,11 +25,6 @@ type ConditionChecker func(ctx context.Context, client client.Client, clusterSpe
 // ConditionFetcher is composed of a set of ConditionChecker.
 type ConditionFetcher []ConditionChecker
 
-// Register registers checks with c.
-func (cf *ConditionFetcher) Register(checkers ...ConditionChecker) {
-	*cf = append(*cf, checkers...)
-}
-
 type conditionCheckerResult struct {
 	condition *clusterv1.Condition
 	err       error
@@ -90,9 +85,9 @@ func (cf *ConditionFetcher) RunAll(ctx context.Context, client client.Client, cl
 
 // NewConditionFetcher creates a ConditionFetcher and any checkers passed will be registered.
 func NewConditionFetcher(checkers ...ConditionChecker) *ConditionFetcher {
-	var v ConditionFetcher
-	v.Register(checkers...)
-	return &v
+	var cf ConditionFetcher
+	cf = append(cf, checkers...)
+	return &cf
 }
 
 // SetAllConditions sets all the given conditions on the provided Cluster.
