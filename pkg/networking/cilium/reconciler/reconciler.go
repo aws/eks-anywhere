@@ -68,7 +68,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	// To accommodate upgrades of cluster cerated prior to introducing markers, we check for
 	// an existing installation and try to mark the cluster as having already had EKS-A
 	// Cilium installed.
-	if !ciliumWasInstalled(ctx, spec.Cluster) && installation.Installed() {
+	if !CiliumWasInstalled(ctx, spec.Cluster) && installation.Installed() {
 		logger.Info(fmt.Sprintf(
 			"Cilium installed but missing %v annotation; applying annotation",
 			EKSACiliumInstalledAnnotation,
@@ -79,7 +79,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	ciliumCfg := spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium
 
 	if !installation.Installed() &&
-		(ciliumCfg.IsManaged() || !ciliumWasInstalled(ctx, spec.Cluster)) {
+		(ciliumCfg.IsManaged() || !CiliumWasInstalled(ctx, spec.Cluster)) {
 		if err := r.install(ctx, logger, client, spec); err != nil {
 			return controller.Result{}, err
 		}

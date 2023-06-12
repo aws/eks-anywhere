@@ -11,8 +11,8 @@ import (
 // EKS-A Cilium installed irrespective of whether its still installed.
 const EKSACiliumInstalledAnnotation = "anywhere.eks.amazonaws.com/eksa-cilium"
 
-// ciliumWasInstalled checks cluster for the EKSACiliumInstalledAnnotation.
-func ciliumWasInstalled(ctx context.Context, cluster *v1alpha1.Cluster) bool {
+// CiliumWasInstalled checks cluster for the EKSACiliumInstalledAnnotation.
+func CiliumWasInstalled(ctx context.Context, cluster *v1alpha1.Cluster) bool {
 	if cluster.Annotations == nil {
 		return false
 	}

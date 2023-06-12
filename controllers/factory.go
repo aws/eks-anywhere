@@ -115,6 +115,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, o
 		f.reconcilers.ClusterReconciler = NewClusterReconciler(
 			f.manager.GetClient(),
 			f.registry,
+			f.tracker,
 			f.awsIamConfigReconciler,
 			clusters.NewClusterValidator(f.manager.GetClient()),
 			f.packageControllerClient,
