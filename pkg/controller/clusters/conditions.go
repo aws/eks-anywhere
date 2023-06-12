@@ -212,21 +212,18 @@ func CheckDefaultCNIConfigured(ctx context.Context, client client.Client, cluste
 	clus := clusterSpec.Cluster
 	ciliumCfg := clus.Spec.ClusterNetwork.CNIConfig.Cilium
 
-	// If EKSA cilium is not installed and  EKS-A is responsible for the Cilium installation,
-	// mark the DefaultCNIConfiguredCondition condition as "False".
-	if !installation.Installed() && ciliumCfg.IsManaged() {
-		return conditions.FalseCondition(
-			anywherev1.DefaultCNIConfiguredCondition,
-			anywherev1.WaitingForDefaultCNIConfiguredReason,
-			clusterv1.ConditionSeverityInfo,
-			"Waiting for default CNI to be configured",
-		), nil
+	if installation.Installed() {
+		return conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition), nil
 	}
 
-	// If EKSA cilium is not installed and  EKS-A is not responsible for the Cilium installation,
-	// Provided that cilium was installed before via checking a marker indicating this is an upgrade process
-	// mark the DefaultCNIConfiguredCondition condition as "False" with a reason that default cni configuration was skipped.
-	if !installation.Installed() && !ciliumCfg.IsManaged() && ciliumreconciler.CiliumWasInstalled(ctx, clus) {
+	// If EKSA cilium is not installed and
+	// EKS-A is configured to skip installations of cilum during upgrades,
+	// We want to ensure that the condtion is populated during creating as waiting, because it is still needed to
+	// successfully create a cluster.
+	//
+	// Afterwards, want to mark that the condition is marked as skiping ciliium configuration during upgrade,
+	// provided that cilium was installed before by checking an annotation,
+	if !ciliumCfg.IsManaged() && ciliumreconciler.CiliumWasInstalled(ctx, clus) {
 		return conditions.FalseCondition(
 			anywherev1.DefaultCNIConfiguredCondition,
 			anywherev1.SkippedDefaultCNIConfigurationReason,
@@ -235,7 +232,15 @@ func CheckDefaultCNIConfigured(ctx context.Context, client client.Client, cluste
 		), nil
 	}
 
-	return conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition), nil
+	//
+	// Otherwise, EKS-A cilium is suppose to be installed, and we want to indicate that with a condition.
+	return conditions.FalseCondition(
+		anywherev1.DefaultCNIConfiguredCondition,
+		anywherev1.WaitingForDefaultCNIConfiguredReason,
+		clusterv1.ConditionSeverityInfo,
+		"Waiting for default CNI to be configured",
+	), nil
+
 }
 
 // getConditionFromCAPICluster checks the condition on the CAPI cluster for the provided condition.
