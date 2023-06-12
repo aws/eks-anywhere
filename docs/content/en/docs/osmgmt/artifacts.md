@@ -757,7 +757,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    ```json
    {
       "ami_filter_name": "ubuntu/images/*ubuntu-focal-20.04-amd64-server-*",
-      "ami_filter_owners": "679593333241",
+      "ami_filter_owners": "099720109477",
       "ami_regions": "us-east-2",
       "aws_region": "us-east-2",
       "ansible_extra_vars": "@/home/image-builder/eks-anywhere-build-tooling/projects/kubernetes-sigs/image-builder/packer/ami/ansible_extra_vars.yaml",
@@ -774,7 +774,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    Regular expression to filter a source AMI. (default: `ubuntu/images/*ubuntu-focal-20.04-amd64-server-*`).
 
    ##### **ami_filter_owners**
-   AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc. (default: `679593333241` - the AWS Marketplace AWS account ID).
+   AWS account ID or AWS owner alias such as 'amazon', 'aws-marketplace', etc. (default: `099720109477` - the [Ubuntu AWS Account ID publishing EC2 AMIs outside of Marketplace](https://ubuntu.com/server/docs/cloud-images/amazon-ec2)).
 
    ##### **ami_regions**
    A list of AWS regions to copy the AMI to. (default: `us-west-2`).
