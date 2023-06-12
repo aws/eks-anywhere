@@ -48,8 +48,8 @@ func (cf *ConditionFetcher) run(ctx context.Context, client client.Client, clust
 	wg.Add(numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		go func() {
+			defer wg.Done()
 			for checker := range checkers {
-				defer wg.Done()
 				condition, err := checker(ctx, client, clusterSpec)
 				results <- conditionCheckerResult{
 					condition,
