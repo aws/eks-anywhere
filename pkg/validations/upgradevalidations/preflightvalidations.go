@@ -74,7 +74,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 			return &validations.ValidationResult{
 				Name:        "upgrade cluster kubernetes version increment",
 				Remediation: "ensure that the cluster kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19)",
-				Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Cluster.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
+				Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Cluster, u.Opts.WorkloadCluster, u.Opts.ManagementCluster, k),
 			}
 		},
 		func() *validations.ValidationResult {
