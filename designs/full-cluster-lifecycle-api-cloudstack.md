@@ -31,7 +31,7 @@ In order to maintain same level of validations logic we currently run in CLI, we
 
 As part of the CLI logic, we set default values to some spec if they're missing from what customers provide, like [datacenter availability zone](https://github.com/aws/eks-anywhere/blob/ed4425dadb19600b4eb446d29b81f5c2441c16f6/pkg/api/v1alpha1/cloudstackdatacenterconfig_types.go#L216), which can be leveraged in mutation webhook. 
 
-We don't want to modify the spec that customers have already specified. [Control lPlane Host Port](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator.go#L211) could be missing from what customers provide in control plane host, and the reconciler would set a default port when generating CAPI objects. 
+We don't want to modify the spec that customers have already specified. [Control Plane Host Port](https://github.com/aws/eks-anywhere/blob/3c1fd0ff732641ed02137213863942403f59c320/pkg/providers/cloudstack/validator.go#L211) could be missing from what customers provide in control plane host, and the reconciler would set a default port when generating CAPI objects. 
 
 CloudStack machine config doesn’t have default values at this stage.
 
