@@ -17,7 +17,7 @@ Currently the only way to manage EKS Anywhere CloudStack cluster is by using CLI
 
 #### Limitation
 
-* We currently only supports k8s version < 1.24 on CloudStack due to current capc version.
+* We currently only supports k8s version < 1.24 on CloudStack due to current CAPC version.
 
 ## Overview of Solution
 
