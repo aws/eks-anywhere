@@ -21,7 +21,7 @@ Currently the only way to manage EKS Anywhere CloudStack cluster is by using CLI
 
 ## Overview of Solution
 
-The EKS-A controller running in management cluster fully manages workload clusters, including reconciling EKS-A CRDs and installing the CNI in the workload cluster. Though with different machine provider, the CloudStack cluster reconciling process watches and reconciles the same CAPI objects and eksa cluster object as vsphere, the reconciliation flow is similar to [vsphere reconciler](images/cluster_reconcile.png) which watches resources and use an event handler to enqueue reconcile requests in response to those events.
+The EKS-A controller running in management cluster fully manages workload clusters, including reconciling EKS-A CRDs and installing the CNI in the workload cluster. Though with different machine provider, the CloudStack cluster reconciling process watches and reconciles the same CAPI objects and EKS-A cluster object as vSphere, the reconciliation flow is similar to [vSphere reconciler](images/cluster_reconcile.png) which watches resources and use an event handler to enqueue reconcile requests in response to those events.
 
 In order to maintain same level of validations logic we currently run in CLI, we'll import validations into data validation and run time validation.
 * Data validation: Kubernetes offers validation webhook for CRDs which runs data validation before accepted by kube-api server. Data validations should be light and fast.
