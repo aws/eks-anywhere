@@ -3676,7 +3676,7 @@ spec:
                           egressMasqueradeInterfaces:
                             description: EgressMasquaradeInterfaces determines which
                               network interfaces are used for masquerading. Accepted
-                              values are strings.
+                              values are a valid interface name or interface prefix.
                             type: string
                           policyEnforcementMode:
                             description: PolicyEnforcementMode determines communication
@@ -6547,7 +6547,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.16.0-eks-a-v0.0.0-dev-build.7080
+        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

@@ -69,7 +69,7 @@ spec:
                           egressMasqueradeInterfaces:
                             description: EgressMasquaradeInterfaces determines which
                               network interfaces are used for masquerading. Accepted
-                              values are strings.
+                              values are a valid interface name or interface prefix.
                             type: string
                           policyEnforcementMode:
                             description: PolicyEnforcementMode determines communication

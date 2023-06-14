@@ -772,7 +772,8 @@ type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
 
-	// EgressMasquaradeInterfaces determines which network interfaces are used for masquerading. Accepted values are valid interface names or interface prefix.
+	// EgressMasquaradeInterfaces determines which network interfaces are used for masquerading. Accepted values are a valid interface name or interface prefix.
+	// +optional
 	EgressMasqueradeInterfaces string `json:"egressMasqueradeInterfaces,omitempty"`
 
 	// SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can

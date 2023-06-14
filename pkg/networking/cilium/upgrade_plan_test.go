@@ -453,6 +453,52 @@ func TestBuildUpgradePlan(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "EgressMasqueradeInterfaces not present in config",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMap("default", "", func(cm *corev1.ConfigMap) {
+					cm.Data = nil
+				}),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundle.Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						EgressMasqueradeInterfaces: "new",
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					UpdateReason: "Cilium enable-policy field is not present in config - Egress masquerade interfaces field is not present in config but is configured in cluster spec",
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:         cilium.PolicyEnforcementComponentName,
+							OldValue:     "",
+							NewValue:     "default",
+							UpdateReason: "Cilium enable-policy field is not present in config",
+						},
+						{
+							Name:         cilium.EgressMasqueradeInterfacesComponentName,
+							OldValue:     "",
+							NewValue:     "new",
+							UpdateReason: "Egress masquerade interfaces field is not present in config but is configured in cluster spec",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

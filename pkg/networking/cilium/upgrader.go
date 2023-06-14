@@ -171,11 +171,11 @@ func ciliumHelmChartValuesChanged(currentSpec, newSpec *cluster.Spec) bool {
 		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode {
 			return true
 		}
+		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces != currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces {
+			return true
+		}
 	}
 	// we can add comparisons for more values here as we start accepting them from cluster spec
-	if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces != currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces {
-		return true
-	}
 
 	return false
 }

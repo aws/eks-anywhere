@@ -41,7 +41,7 @@ func (c UpgradePlan) Needed() bool {
 	return c.VersionUpgradeNeeded() || c.ConfigUpdateNeeded()
 }
 
-// VersionUpgradeNeeded determines if a version upgrade is needed or notß
+// VersionUpgradeNeeded determines if a version upgrade is needed or not
 // Returns true if any of the installation components needs an upgrade.
 func (c UpgradePlan) VersionUpgradeNeeded() bool {
 	return c.DaemonSet.Needed() || c.Operator.Needed()
@@ -228,7 +228,7 @@ func configMapUpgradePlan(configMap *corev1.ConfigMap, clusterSpec *cluster.Spec
 
 	egressMasqueradeUpdate := ConfigComponentUpdatePlan{
 		Name:     EgressMasqueradeInterfacesComponentName,
-		NewValue: string(newEgressMasqueradeInterfaces),
+		NewValue: newEgressMasqueradeInterfaces,
 	}
 
 	if configMap == nil {
@@ -239,7 +239,7 @@ func configMapUpgradePlan(configMap *corev1.ConfigMap, clusterSpec *cluster.Spec
 			egressMasqueradeUpdate.UpdateReason = fmt.Sprintf("Egress masquerade interfaces changed: [%s] -> [%s]", egressMasqueradeUpdate.OldValue, egressMasqueradeUpdate.NewValue)
 		}
 	} else if egressMasqueradeUpdate.NewValue != "" {
-		egressMasqueradeUpdate.UpdateReason = "Egress masquerade interfaces is not present in config"
+		egressMasqueradeUpdate.UpdateReason = "Egress masquerade interfaces field is not present in config but is configured in cluster spec"
 	}
 
 	updatePlan.Components = append(updatePlan.Components, egressMasqueradeUpdate)
