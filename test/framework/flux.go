@@ -361,12 +361,6 @@ func (e *ClusterE2ETest) deleteWorkloadClusterFromGit(w *WorkloadCluster) error 
 		e.T.Errorf("Pulling remote configuration: %v", err)
 	}
 
-	// e.T.Log("Deleting local cluster directory in git repo")
-	// p := filepath.Dir(e.workloadClusterConfigGitPath(w))
-	// if err := os.RemoveAll(p); err != nil {
-	// 	return fmt.Errorf("failed to remove local cluster config: %v", err)
-	// }
-
 	if err := e.deleteWorkloadClusterConfigFromGit(ctx, w); err != nil {
 		return fmt.Errorf("failed to push local changes to remote git repo: %v", err)
 	}
