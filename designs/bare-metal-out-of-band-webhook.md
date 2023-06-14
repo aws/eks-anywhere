@@ -235,8 +235,8 @@ To create the signature payload we will use the following process. This is a hig
 1. Create a string by concatenating the body and the timestamp header using RFC3339: `2006-01-02T15:04:05Z07:00` separated by a newline character: `\n`
 2. HMAC sign (SHA256) this string using the provided secret
 3. Make a hex encoded string of the HMAC signature
-4. Prepend the algorithm type to the signature (sha256=)
-5. Store the string signature in the header (“X-Rufio-Signature”)
+4. Prepend the algorithm type and an equal sign to the signature (`sha256=`)
+5. Store the string signature in the header (`X-Rufio-Signature`)
 
 Examples:
 
