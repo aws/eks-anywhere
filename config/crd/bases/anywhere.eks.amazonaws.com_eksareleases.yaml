@@ -1,0 +1,89 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: eksareleases.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: EKSARelease
+    listKind: EKSAReleaseList
+    plural: eksareleases
+    singular: eksarelease
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Cluster is the Schema for the clusters API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EKSAReleaseSpec defines the desired state of EKSARelease.
+            properties:
+              bundleManifestUrl:
+                description: Manifest url to parse bundle information from for this
+                  EKS-A release
+                type: string
+              bundlesRef:
+                description: Reference to a bundle in the cluster
+                properties:
+                  apiVersion:
+                    description: APIVersion refers to the Bundles APIVersion
+                    type: string
+                  name:
+                    description: Name refers to the name of the Bundles object in
+                      the cluster
+                    type: string
+                  namespace:
+                    description: Namespace refers to the Bundles's namespace
+                    type: string
+                required:
+                - apiVersion
+                - name
+                - namespace
+                type: object
+              date:
+                type: string
+              gitCommit:
+                description: Git commit the component is built from, before any patches
+                type: string
+              version:
+                description: EKS-A release version
+                type: string
+            required:
+            - bundleManifestUrl
+            - bundlesRef
+            - date
+            - gitCommit
+            - version
+            type: object
+          status:
+            description: EKSAReleaseStatus defines the observed state of EKSARelease.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

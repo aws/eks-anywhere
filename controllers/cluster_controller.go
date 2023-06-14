@@ -78,6 +78,9 @@ type AWSIamConfigReconciler interface {
 // ClusterValidator runs cluster level preflight validations before it goes to provider reconciler.
 type ClusterValidator interface {
 	ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
+	ValidateManagementClusterEksaVersion(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
+	ValidateManagementWorkloadSkew(ctx context.Context, log logr.Logger, mgmtCluster *anywherev1.Cluster) error
+	ValidateEksaVersionExists(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
 }
 
 // ClusterReconcilerOption allows to configure the ClusterReconciler.
@@ -236,6 +239,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}
 
+	if cluster.Spec.EksaVersion == nil {
+		if err = r.setEksaVersion(ctx, cluster); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	config, err := r.buildClusterConfig(ctx, cluster)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -316,8 +325,23 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 			return result, nil
 		}
 	}
+
+	if err := r.clusterValidator.ValidateEksaVersionExists(ctx, log, cluster); err != nil {
+		cluster.Status.FailureMessage = ptr.String(err.Error())
+		return controller.Result{}, err
+	}
+
 	if cluster.IsManaged() {
 		if err := r.clusterValidator.ValidateManagementClusterName(ctx, log, cluster); err != nil {
+			cluster.Status.FailureMessage = ptr.String(err.Error())
+			return controller.Result{}, err
+		}
+		if err := r.clusterValidator.ValidateManagementClusterEksaVersion(ctx, log, cluster); err != nil {
+			cluster.Status.FailureMessage = ptr.String(err.Error())
+			return controller.Result{}, err
+		}
+	} else {
+		if err := r.clusterValidator.ValidateManagementWorkloadSkew(ctx, log, cluster); err != nil {
 			cluster.Status.FailureMessage = ptr.String(err.Error())
 			return controller.Result{}, err
 		}
@@ -466,5 +490,17 @@ func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.
 		return err
 	}
 	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
+	return nil
+}
+
+func (r *ClusterReconciler) setEksaVersion(ctx context.Context, clus *anywherev1.Cluster) error {
+	mgmtCluster := &anywherev1.Cluster{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			clus.Status.FailureMessage = ptr.String(fmt.Sprintf("Management cluster %s does not exist", clus.Spec.ManagementCluster.Name))
+		}
+		return err
+	}
+	clus.Spec.EksaVersion = mgmtCluster.Spec.EksaVersion
 	return nil
 }

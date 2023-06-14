@@ -216,6 +216,34 @@ func (m *MockClusterValidator) EXPECT() *MockClusterValidatorMockRecorder {
 	return m.recorder
 }
 
+// ValidateEksaVersionExists mocks base method.
+func (m *MockClusterValidator) ValidateEksaVersionExists(ctx context.Context, log logr.Logger, cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateEksaVersionExists", ctx, log, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateEksaVersionExists indicates an expected call of ValidateEksaVersionExists.
+func (mr *MockClusterValidatorMockRecorder) ValidateEksaVersionExists(ctx, log, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEksaVersionExists", reflect.TypeOf((*MockClusterValidator)(nil).ValidateEksaVersionExists), ctx, log, cluster)
+}
+
+// ValidateManagementClusterEksaVersion mocks base method.
+func (m *MockClusterValidator) ValidateManagementClusterEksaVersion(ctx context.Context, log logr.Logger, cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateManagementClusterEksaVersion", ctx, log, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateManagementClusterEksaVersion indicates an expected call of ValidateManagementClusterEksaVersion.
+func (mr *MockClusterValidatorMockRecorder) ValidateManagementClusterEksaVersion(ctx, log, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateManagementClusterEksaVersion", reflect.TypeOf((*MockClusterValidator)(nil).ValidateManagementClusterEksaVersion), ctx, log, cluster)
+}
+
 // ValidateManagementClusterName mocks base method.
 func (m *MockClusterValidator) ValidateManagementClusterName(ctx context.Context, log logr.Logger, cluster *v1alpha1.Cluster) error {
 	m.ctrl.T.Helper()
@@ -228,4 +256,18 @@ func (m *MockClusterValidator) ValidateManagementClusterName(ctx context.Context
 func (mr *MockClusterValidatorMockRecorder) ValidateManagementClusterName(ctx, log, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateManagementClusterName", reflect.TypeOf((*MockClusterValidator)(nil).ValidateManagementClusterName), ctx, log, cluster)
+}
+
+// ValidateManagementWorkloadSkew mocks base method.
+func (m *MockClusterValidator) ValidateManagementWorkloadSkew(ctx context.Context, log logr.Logger, mgmtCluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateManagementWorkloadSkew", ctx, log, mgmtCluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateManagementWorkloadSkew indicates an expected call of ValidateManagementWorkloadSkew.
+func (mr *MockClusterValidatorMockRecorder) ValidateManagementWorkloadSkew(ctx, log, mgmtCluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateManagementWorkloadSkew", reflect.TypeOf((*MockClusterValidator)(nil).ValidateManagementWorkloadSkew), ctx, log, mgmtCluster)
 }

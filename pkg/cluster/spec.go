@@ -8,6 +8,7 @@ import (
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -19,6 +20,7 @@ type Spec struct {
 	OIDCConfig        *eksav1alpha1.OIDCConfig
 	AWSIamConfig      *eksav1alpha1.AWSIamConfig
 	ManagementCluster *types.Cluster // TODO(g-gaston): cleanup, this doesn't belong here
+	EKSARelease       *eksav1alpha1.EKSARelease
 }
 
 func (s *Spec) DeepCopy() *Spec {
@@ -32,6 +34,7 @@ func (s *Spec) DeepCopy() *Spec {
 		},
 		eksdRelease: s.eksdRelease.DeepCopy(),
 		Bundles:     s.Bundles.DeepCopy(),
+		EKSARelease: s.EKSARelease.DeepCopy(),
 	}
 }
 
@@ -75,7 +78,7 @@ type VersionedRepository struct {
 }
 
 // NewSpec builds a new [Spec].
-func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha1.Release) (*Spec, error) {
+func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha1.Release, eksaRelease *eksav1alpha1.EKSARelease) (*Spec, error) {
 	s := &Spec{}
 
 	versionsBundle, err := GetVersionsBundle(config.Cluster, bundles)
@@ -95,6 +98,7 @@ func NewSpec(config *Config, bundles *v1alpha1.Bundles, eksdRelease *eksdv1alpha
 		KubeDistro:     kubeDistro,
 	}
 	s.eksdRelease = eksdRelease
+	s.EKSARelease = eksaRelease
 
 	// Get first aws iam config if it exists
 	// Config supports multiple configs because Cluster references a slice
@@ -223,6 +227,16 @@ func BundlesRefDefaulter() Defaulter {
 	return func(c *Config) error {
 		if c.Cluster.Spec.BundlesRef == nil {
 			c.Cluster.Spec.BundlesRef = &eksav1alpha1.BundlesRef{}
+		}
+		return nil
+	}
+}
+
+func EksaVersionDefaulter() Defaulter {
+	return func(c *Config) error {
+		if c.Cluster.Spec.EksaVersion == nil {
+			version := eksav1alpha1.EksaVersion(version.Get().GitVersion)
+			c.Cluster.Spec.EksaVersion = &version
 		}
 		return nil
 	}

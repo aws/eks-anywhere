@@ -91,6 +91,13 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Err:         ValidateImmutableFields(ctx, k, targetCluster, u.Opts.Spec, u.Opts.Provider),
 			}
 		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate eksaVersion skew is one minor version",
+				Remediation: fmt.Sprintf("ensure eksaVersion upgrades are sequential by minor version"),
+				Err:         validations.ValidateEKSAVersionSkew(ctx, k, u.Opts.WorkloadCluster, u.Opts.Spec),
+			}
+		},
 	}
 
 	if u.Opts.Spec.Cluster.IsManaged() {
@@ -102,7 +109,25 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 					Remediation: fmt.Sprintf("upgrade management cluster %s before upgrading workload cluster %s", u.Opts.Spec.Cluster.ManagedBy(), u.Opts.WorkloadCluster.Name),
 					Err:         validations.ValidateManagementClusterBundlesVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
 				}
-			})
+			},
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate management cluster eksaVersion compatibility",
+					Remediation: fmt.Sprintf("upgrade management cluster %s before upgrading workload cluster %s", u.Opts.Spec.Cluster.ManagedBy(), u.Opts.WorkloadCluster.Name),
+					Err:         validations.ValidateManagementClusterEksaVersion(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+				}
+			},
+		)
+	} else {
+		upgradeValidations = append(upgradeValidations,
+			func() *validations.ValidationResult {
+				return &validations.ValidationResult{
+					Name:        "validate management cluster eksaVersion skew against workload clusters",
+					Remediation: fmt.Sprintf("upgrade workload clusters before upgrading management cluster %s", u.Opts.WorkloadCluster.Name),
+					Err:         validations.ValidateManagementWorkloadSkew(ctx, k, u.Opts.WorkloadCluster, u.Opts.Spec),
+				}
+			},
+		)
 	}
 
 	if !u.Opts.SkippedValidations[PDB] {

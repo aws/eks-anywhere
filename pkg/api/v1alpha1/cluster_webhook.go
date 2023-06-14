@@ -16,6 +16,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 // log is for logging in this package.
@@ -93,7 +95,9 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
 
-	allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
+	//allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
+
+	allErrs = append(allErrs, validateEksaVersionCluster(r, oldCluster)...)
 
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
@@ -118,6 +122,50 @@ func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	return allErrs
+}
+
+func validateEksaVersionCluster(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	eksaVersionPath := field.NewPath("spec").Child("EksaVersion")
+	bundlesRefPath := field.NewPath("spec").Child("BundlesRef")
+
+	if old.Spec.EksaVersion != nil && new.Spec.EksaVersion == nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.EksaVersion)))
+	}
+
+	if new.Spec.BundlesRef != nil && !old.Spec.BundlesRef.Equal(new.Spec.BundlesRef) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field is deprecated and cannot be changed except for nullification. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	parsedClusterVersion, err := semver.New(string(*old.Spec.EksaVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, old.Spec.EksaVersion, fmt.Sprintf("field is invalid")))
+	}
+
+	parsedUpgradeVersion, err := semver.New(string(*new.Spec.EksaVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("field is invalid")))
+	}
+
+	majorVersionDifference := math.Abs(float64(parsedUpgradeVersion.Major) - float64(parsedClusterVersion.Major))
+	minorVersionDifference := float64(parsedUpgradeVersion.Minor) - float64(parsedClusterVersion.Minor)
+	supportedMinorVersionIncrement := float64(1)
+
+	if majorVersionDifference > 0 || !(minorVersionDifference <= supportedMinorVersionIncrement && minorVersionDifference >= 0) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(eksaVersionPath, new.Spec.EksaVersion, fmt.Sprintf("field can only have a skew of one minor version: %v", old.Spec.EksaVersion)))
 	}
 
 	return allErrs

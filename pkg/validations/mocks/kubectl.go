@@ -100,6 +100,21 @@ func (mr *MockKubectlClientMockRecorder) GetEksaCluster(ctx, cluster, clusterNam
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaCluster), ctx, cluster, clusterName)
 }
 
+// GetEksaClusters mocks base method.
+func (m *MockKubectlClient) GetEksaClusters(ctx context.Context, cluster *types.Cluster) ([]v1alpha1.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaClusters", ctx, cluster)
+	ret0, _ := ret[0].([]v1alpha1.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaClusters indicates an expected call of GetEksaClusters.
+func (mr *MockKubectlClientMockRecorder) GetEksaClusters(ctx, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaClusters", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaClusters), ctx, cluster)
+}
+
 // GetEksaFluxConfig mocks base method.
 func (m *MockKubectlClient) GetEksaFluxConfig(ctx context.Context, fluxConfigName, kubeconfigFile, namespace string) (*v1alpha1.FluxConfig, error) {
 	m.ctrl.T.Helper()

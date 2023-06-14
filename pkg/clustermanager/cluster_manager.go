@@ -1129,7 +1129,10 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
 		return err
 	}
-	return c.ApplyBundles(ctx, clusterSpec, cluster)
+	if err = c.ApplyBundles(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	return c.ApplyReleases(ctx, clusterSpec, cluster)
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
@@ -1141,6 +1144,19 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
+	}
+	return nil
+}
+
+func (c *ClusterManager) ApplyReleases(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	releaseObj, err := yaml.Marshal(clusterSpec.EKSARelease)
+	if err != nil {
+		return fmt.Errorf("outputting release yaml: %v", err)
+	}
+	logger.V(1).Info("Applying EKSARelease to cluster")
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, releaseObj)
+	if err != nil {
+		return fmt.Errorf("applying release spec: %v", err)
 	}
 	return nil
 }

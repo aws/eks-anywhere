@@ -422,7 +422,7 @@ unit-test: ## Run unit tests
 unit-test: $(SETUP_ENVTEST) 
 unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(UNIT_TEST_PACKAGES) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(UNIT_TEST_PACKAGES) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS) -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=v0.0.0-dev"
 
 
 # unit-test-patch is a convenience target that restricts test runs to modified

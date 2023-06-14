@@ -1518,6 +1518,26 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	return response, nil
 }
 
+func (k *Kubectl) GetEksaClusters(ctx context.Context, cluster *types.Cluster) ([]v1alpha1.Cluster, error) {
+	params := []string{"get", eksaClusterResourceType, "-A", "--kubeconfig", cluster.KubeconfigFile}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting eksa clusters: %v", err)
+	}
+
+	response := &[]v1alpha1.Cluster{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing get eksa clusters response: %v", err)
+	}
+
+	if response == nil {
+		return nil, fmt.Errorf("unable to get eksa clusters")
+	}
+
+	return *response, nil
+}
+
 func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error) {
 	params := []string{
 		"get", eksaVSphereMachineResourceType, "-o", "json", "--kubeconfig",

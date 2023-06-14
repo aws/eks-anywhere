@@ -7,12 +7,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 var clusterDefaults = []func(*Cluster) error{
 	setRegistryMirrorConfigDefaults,
 	setWorkerNodeGroupDefaults,
 	setCNIConfigDefault,
+	setEksaVersionDefault,
 }
 
 func setClusterDefaults(cluster *Cluster) error {
@@ -77,5 +79,15 @@ func setCNIConfigDefault(cluster *Cluster) error {
 	}
 
 	cluster.Spec.ClusterNetwork.CNI = ""
+	return nil
+}
+
+func setEksaVersionDefault(cluster *Cluster) error {
+	if cluster.Spec.EksaVersion != nil {
+		return nil
+	}
+
+	version := EksaVersion(version.Get().GitVersion)
+	cluster.Spec.EksaVersion = &version
 	return nil
 }

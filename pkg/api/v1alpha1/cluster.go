@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 const (
@@ -203,6 +204,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateControlPlaneLabels,
 	validatePackageControllerConfiguration,
 	validateCloudStackK8sVersion,
+	validateEksaVersion,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -878,5 +880,31 @@ func ValidateCloudStackK8sVersion(version KubernetesVersion) error {
 	if kubeVersionSemver.Compare(kube125Semver) != -1 {
 		return errors.New("cloudstack provider does not support K8s version > 1.24")
 	}
+	return nil
+}
+
+func validateEksaVersion(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.BundlesRef != nil && clusterConfig.Spec.EksaVersion == nil {
+		return fmt.Errorf("clusters should use eksaVersion instead of bundlesRef")
+	}
+
+	if clusterConfig.Spec.BundlesRef != nil && clusterConfig.Spec.EksaVersion != nil {
+		return fmt.Errorf("Cannot pass both bundlesRef and eksaVersion. Clusters should use eksaVersion instead of bundlesRef")
+	}
+
+	manifestVersion, err := semver.New(string(*clusterConfig.Spec.EksaVersion))
+	if err != nil {
+		return fmt.Errorf("parsing cluster version: %v", err)
+	}
+
+	cliVersion, err := semver.New(version.Get().GitVersion)
+	if err != nil {
+		return fmt.Errorf("parsing cli version: %v", err)
+	}
+
+	if !manifestVersion.Equal(cliVersion) {
+		return fmt.Errorf("specified eksaVersion %v does not match CLI's version %v", manifestVersion, cliVersion)
+	}
+
 	return nil
 }

@@ -40,6 +40,20 @@ func NewReader(filereader FileReader, opts ...ReaderOpt) *Reader {
 	return r
 }
 
+func (r *Reader) ReadReleaseForVersion(version string) (*releasev1.EksARelease, error) {
+	rls, err := releases.ReadReleasesFromURL(r, r.releasesManifestURL)
+	if err != nil {
+		return nil, err
+	}
+
+	release, err := releases.ReleaseForVersion(rls, version)
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
+}
+
 func (r *Reader) ReadBundlesForVersion(version string) (*releasev1.Bundles, error) {
 	rls, err := releases.ReadReleasesFromURL(r, r.releasesManifestURL)
 	if err != nil {

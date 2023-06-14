@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -31,6 +32,20 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
 	if err != nil {
 		return nil, err
+	}
+
+	eksaRelease := v1alpha1.EKSARelease{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      cluster.EKSAReleaseName(),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: v1alpha1.EKSAReleaseSpec{
+			BundlesRef: v1alpha1.BundlesRef{
+				APIVersion: v1alpha1release.GroupVersion.String(),
+				Name:       bundles.Name,
+				Namespace:  bundles.Namespace,
+			},
+		},
 	}
 
 	var fluxConfig *v1alpha1.FluxConfig
@@ -84,7 +99,7 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 		}
 	}
 
-	return NewSpec(config, bundles, eksd)
+	return NewSpec(config, bundles, eksd, &eksaRelease)
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
@@ -212,6 +227,14 @@ func BuildSpec(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*
 // BuildSpecFromConfig constructs a cluster.Spec for an eks-a cluster config by retrieving all dependencies objects from the cluster using a kubernetes client.
 func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*Spec, error) {
 	bundlesName, bundlesNamespace := bundlesNamespacedKey(config.Cluster)
+	eksaRelease := &v1alpha1.EKSARelease{}
+	if config.Cluster.Spec.EksaVersion != nil {
+		if err := client.Get(ctx, config.Cluster.EKSAReleaseName(), constants.EksaSystemNamespace, eksaRelease); err != nil {
+			return nil, err
+		}
+		bundlesName = eksaRelease.Spec.BundlesRef.Name
+		bundlesNamespace = eksaRelease.Spec.BundlesRef.Namespace
+	}
 	bundles := &v1alpha1release.Bundles{}
 	if err := client.Get(ctx, bundlesName, bundlesNamespace, bundles); err != nil {
 		return nil, err
@@ -229,5 +252,5 @@ func BuildSpecFromConfig(ctx context.Context, client Client, config *Config) (*S
 		return nil, err
 	}
 
-	return NewSpec(config, bundles, eksdRelease)
+	return NewSpec(config, bundles, eksdRelease, eksaRelease)
 }

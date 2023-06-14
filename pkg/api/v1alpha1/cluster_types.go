@@ -63,8 +63,15 @@ type ClusterSpec struct {
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
 	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
 	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
-	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
+	// Deprecated: Use EksaVersion instead.
+	BundlesRef  *BundlesRef  `json:"bundlesRef,omitempty"`
+	EksaVersion *EksaVersion `json:"eksaVersion,omitempty"`
 }
+
+type EksaVersion string
+
+// DevEksaVersion can be used in tests
+var DevEksaVersion EksaVersion = "v0.0.0"
 
 // HasAWSIamConfig checks if AWSIamConfig is configured for the cluster.
 func (c *Cluster) HasAWSIamConfig() bool {
@@ -131,6 +138,9 @@ func (n *Cluster) Equal(o *Cluster) bool {
 		return false
 	}
 	if !n.Spec.BundlesRef.Equal(o.Spec.BundlesRef) {
+		return false
+	}
+	if n.Spec.EksaVersion != o.Spec.EksaVersion {
 		return false
 	}
 
@@ -1233,6 +1243,12 @@ func (c *Cluster) IsManaged() bool {
 
 func (c *Cluster) ManagedBy() string {
 	return c.Spec.ManagementCluster.Name
+}
+
+func (c *Cluster) EKSAReleaseName() string {
+	name := "eksa-"
+	version := string(*c.Spec.EksaVersion)
+	return name + strings.ReplaceAll(version, ".", "-")
 }
 
 // +kubebuilder:object:root=true
