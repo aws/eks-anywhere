@@ -109,7 +109,7 @@ aws ecr get-login-password |docker login --username AWS --password-stdin 7837946
 
 Verify you can pull an image
 ```bash
-docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.0.0-9ded128b4606165b41aca52271abe7fa44fa7109
+docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.5.1-bf70150bcdfe3a5383ec8ad9cd7eea801a0cb074
 ```
 If the image downloads successfully, it worked!
 

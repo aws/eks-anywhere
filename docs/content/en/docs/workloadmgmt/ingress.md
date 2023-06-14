@@ -56,19 +56,10 @@ For information on how to configure a Emissary Ingress curated package for EKS A
     EOF
     ```
 
-5. Create a Mapping, and Host for your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /backend/ path to the Hello EKS Anywhere Service.
+5. Create a Mapping, and Host for your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /hello/ path to the Hello EKS Anywhere Service. The name of your hello-eks-anywhere service will be the same as the package name.
 
     ```bash
     kubectl apply -f - <<EOF
-    apiVersion: getambassador.io/v3alpha1
-    kind: Host
-    metadata:
-      name: hello-host
-    spec:
-      hostname: hello.example.com
-      mappingSelector:
-        matchLabels:
-          examplehost: host
     ---
     apiVersion: getambassador.io/v3alpha1
     kind: Mapping
@@ -77,54 +68,52 @@ For information on how to configure a Emissary Ingress curated package for EKS A
       labels:
         examplehost: host 
     spec:
-      prefix: /backend/
+      prefix: /hello/
       service: hello-eks-a
-      hostname: hello.example.com
+      hostname: "*"
     EOF
     ```  
  
-6. Store the Emissary-ingress load balancer IP address to a local environment variable. You will use this variable to test accessing your service.
+6. Store the Emissary-ingress load balancer IP address to a local environment variable. You will use this variable to test accessing your service. You can find this if you're using a setup with MetalLB by finding the namespace you launched your emissary service in, and finding the external IP from the service.
 
     ```bash
-    export EMISSARY_LB_ENDPOINT=$(kubectl get svc emissary-$CLUSTER_NAME -o "go-template={{range .status.loadBalancer.ingress}}{{or .ip .hostname}}{{end}}")
+    emissary-cluster        LoadBalancer   10.100.71.222   195.16.99.64   80:31794/TCP,443:31200/TCP
+
+    export EMISSARY_LB_ENDPOINT=195.16.99.64
     ```   
  
-7. Test the configuration by accessing the service through the Emissary-ingress load balancer.
+1. Test the configuration by accessing the service through the Emissary-ingress load balancer.
 
     ```bash
-    curl -Lk http://$EMISSARY_LB_ENDPOINT/backend/
-    ```   
+    curl -Lk http://$EMISSARY_LB_ENDPOINT/hello/
+    ```    
+    ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 
-   NOTE: URL base path will need to match what is specified in the prefix exactly, including the trailing '/'
- 
+    Thank you for using
 
+    ███████╗██╗  ██╗███████╗
+    ██╔════╝██║ ██╔╝██╔════╝
+    █████╗  █████╔╝ ███████╗
+    ██╔══╝  ██╔═██╗ ╚════██║
+    ███████╗██║  ██╗███████║
+    ╚══════╝╚═╝  ╚═╝╚══════╝
 
-   You should see something like this in the output
-
-   ```
-   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
-
-   Thank you for using
-
-   ███████╗██╗  ██╗███████╗                                             
-   ██╔════╝██║ ██╔╝██╔════╝                                             
-   █████╗  █████╔╝ ███████╗                                             
-   ██╔══╝  ██╔═██╗ ╚════██║                                             
-   ███████╗██║  ██╗███████║                                             
-   ╚══════╝╚═╝  ╚═╝╚══════╝                                             
-                                                                     
     █████╗ ███╗   ██╗██╗   ██╗██╗    ██╗██╗  ██╗███████╗██████╗ ███████╗
-   ██╔══██╗████╗  ██║╚██╗ ██╔╝██║    ██║██║  ██║██╔════╝██╔══██╗██╔════╝
-   ███████║██╔██╗ ██║ ╚████╔╝ ██║ █╗ ██║███████║█████╗  ██████╔╝█████╗  
-   ██╔══██║██║╚██╗██║  ╚██╔╝  ██║███╗██║██╔══██║██╔══╝  ██╔══██╗██╔══╝  
-   ██║  ██║██║ ╚████║   ██║   ╚███╔███╔╝██║  ██║███████╗██║  ██║███████╗
-   ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝
-                                                                     
-   You have successfully deployed the hello-eks-a pod hello-eks-a-c5b9bc9d8-fx2fr
+    ██╔══██╗████╗  ██║╚██╗ ██╔╝██║    ██║██║  ██║██╔════╝██╔══██╗██╔════╝
+    ███████║██╔██╗ ██║ ╚████╔╝ ██║ █╗ ██║███████║█████╗  ██████╔╝█████╗
+    ██╔══██║██║╚██╗██║  ╚██╔╝  ██║███╗██║██╔══██║██╔══╝  ██╔══██╗██╔══╝
+    ██║  ██║██║ ╚████║   ██║   ╚███╔███╔╝██║  ██║███████╗██║  ██║███████╗
+    ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝
 
-   For more information check out
-   https://anywhere.eks.amazonaws.com
+    You have successfully deployed the hello-eks-a pod hello-eks-anywhere-95fb65657-vk9rz
 
-   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
+    For more information check out
+    https://anywhere.eks.amazonaws.com
+
+    Amazon EKS Anywhere
+    Run EKS in your datacenter
+    version: v0.1.2-11d92fc1e01c17601e81c7c29ea4a3db232068a8
+
+    ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 
    ```
