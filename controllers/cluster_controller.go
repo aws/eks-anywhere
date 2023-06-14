@@ -179,8 +179,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch;update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;delete
-// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=patch;update
-// +kubebuilder:rbac:groups="",namespace=eksa-system,resources=configmaps,verbs=get;list;patch;update;watch;create
+// +kubebuilder:rbac:groups="",namespace=eksa-packages,resources=secrets,verbs=patch;update
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=create;delete
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=list
 // +kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets,verbs=get;list;watch;create;update;patch;delete
@@ -192,13 +191,13 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinedeployments,verbs=list;watch;get;patch;update;create;delete
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=clusters,verbs=list;watch;get;patch;update;create;delete
 // +kubebuilder:rbac:groups=clusterctl.cluster.x-k8s.io,resources=providers,verbs=get;list;watch
-// +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,namespace=eksa-system,resources=*,verbs=create;get;list;patch;update;watch
-// +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubeadmcontrolplanes,verbs=list;get;watch
+// +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=kubeadmcontrolplanes,verbs=list;get;watch;patch;update;create;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create;get;list;update;watch;delete
 // +kubebuilder:rbac:groups=distro.eks.amazonaws.com,resources=releases,verbs=get;list;watch
 // +kubebuilder:rbac:groups=etcdcluster.cluster.x-k8s.io,resources=*,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awssnowclusters;awssnowmachinetemplates;awssnowippools;vsphereclusters;vspheremachinetemplates;dockerclusters;dockermachinetemplates;tinkerbellclusters;tinkerbellmachinetemplates;cloudstackclusters;cloudstackmachinetemplates;nutanixclusters;nutanixmachinetemplates,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=packages.eks.amazonaws.com,resources=packages,verbs=create;delete;get;list;patch;update;watch;
+// +kubebuilder:rbac:groups=packages.eks.amazonaws.com,resources=packages,verbs=create;delete;get;list;patch;update;watch
+// +kubebuilder:rbac:groups=packages.eks.amazonaws.com,namespace=eksa-packages,resources=packagebundlecontrollers,verbs=delete
 
 // Reconcile reconciles a cluster object.
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {

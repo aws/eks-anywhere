@@ -6023,32 +6023,16 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - configmaps
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - secrets
   verbs:
   - patch
   - update
 - apiGroups:
-  - controlplane.cluster.x-k8s.io
+  - packages.eks.amazonaws.com
   resources:
-  - '*'
+  - packagebundlecontrollers
   verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -6216,8 +6200,12 @@ rules:
   resources:
   - kubeadmcontrolplanes
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - coordination.k8s.io

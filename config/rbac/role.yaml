@@ -166,8 +166,12 @@ rules:
   resources:
   - kubeadmcontrolplanes
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - coordination.k8s.io
@@ -242,19 +246,8 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: manager-role
-  namespace: eksa-system
+  namespace: eksa-packages
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
 - apiGroups:
   - ""
   resources:
@@ -263,13 +256,8 @@ rules:
   - patch
   - update
 - apiGroups:
-  - controlplane.cluster.x-k8s.io
+  - packages.eks.amazonaws.com
   resources:
-  - '*'
+  - packagebundlecontrollers
   verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - delete
