@@ -561,6 +561,10 @@ func (n *CiliumConfig) Equal(o *CiliumConfig) bool {
 		return false
 	}
 
+	if n.EgressMasqueradeInterfaces != o.EgressMasqueradeInterfaces {
+		return false
+	}
+
 	oSkipUpgradeIsFalse := o.SkipUpgrade == nil || !*o.SkipUpgrade
 	nSkipUpgradeIsFalse := n.SkipUpgrade == nil || !*n.SkipUpgrade
 
@@ -767,6 +771,10 @@ type CNIConfig struct {
 type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
+
+	// EgressMasquaradeInterfaces determines which network interfaces are used for masquerading. Accepted values are a valid interface name or interface prefix.
+	// +optional
+	EgressMasqueradeInterfaces string `json:"egressMasqueradeInterfaces,omitempty"`
 
 	// SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
 	// be used when operators wish to self manage the Cilium installation.

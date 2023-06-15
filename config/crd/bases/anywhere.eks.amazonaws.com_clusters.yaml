@@ -66,6 +66,11 @@ spec:
                     properties:
                       cilium:
                         properties:
+                          egressMasqueradeInterfaces:
+                            description: EgressMasquaradeInterfaces determines which
+                              network interfaces are used for masquerading. Accepted
+                              values are a valid interface name or interface prefix.
+                            type: string
                           policyEnforcementMode:
                             description: PolicyEnforcementMode determines communication
                               allowed between pods. Accepted values are default, always,

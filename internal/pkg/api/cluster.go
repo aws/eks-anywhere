@@ -55,6 +55,16 @@ func WithCiliumPolicyEnforcementMode(mode anywherev1.CiliumPolicyEnforcementMode
 	}
 }
 
+// WithCiliumEgressMasqueradeInterfaces sets the egressMasqueradeInterfaces with the provided interface option to use.
+func WithCiliumEgressMasqueradeInterfaces(interfaceName string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ClusterNetwork.CNIConfig == nil {
+			c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}}
+		}
+		c.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = interfaceName
+	}
+}
+
 // WithCiliumSkipUpgrade enables skip upgrade for EKSA Cilium installations.
 func WithCiliumSkipUpgrade() ClusterFiller {
 	return func(c *anywherev1.Cluster) {
