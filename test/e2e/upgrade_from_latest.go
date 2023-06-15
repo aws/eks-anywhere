@@ -117,3 +117,51 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 
 	test.DeleteManagementCluster()
 }
+
+func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.MulticlusterE2ETest, release *releasev1.EksARelease, upgradeChanges api.ClusterConfigFiller) {
+	test.CreateManagementCluster(framework.ExecuteWithEksaRelease(release))
+
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		wc.CreateCluster(framework.ExecuteWithEksaRelease(release))
+		wc.ValidateCluster(wc.ClusterConfig.Cluster.Spec.KubernetesVersion)
+		wc.StopIfFailed()
+	})
+
+	oldCluster := test.ManagementCluster.GetEKSACluster()
+
+	test.ManagementCluster.UpdateClusterConfig(upgradeChanges)
+	test.ManagementCluster.UpgradeCluster()
+	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
+	test.ManagementCluster.StopIfFailed()
+
+	cluster := test.ManagementCluster.GetEKSACluster()
+
+	// Upgrade bundle workload clusters now because they still have the old versions of the bundle.
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		test.PushWorkloadClusterToGit(wc,
+			api.JoinClusterConfigFillers(upgradeChanges),
+			api.ClusterToConfigFiller(
+				api.WithBundlesRef(cluster.Spec.BundlesRef.Name, cluster.Spec.BundlesRef.Namespace, cluster.Spec.BundlesRef.APIVersion),
+			),
+		)
+
+		wc.ValidateClusterState()
+		test.DeleteWorkloadClusterFromGit(wc)
+		wc.ValidateClusterDelete()
+	})
+
+	// Create workload cluster with old bundle
+	test.RunConcurrentlyInWorkloadClusters(func(wc *framework.WorkloadCluster) {
+		test.PushWorkloadClusterToGit(wc,
+			api.ClusterToConfigFiller(
+				api.WithBundlesRef(oldCluster.Spec.BundlesRef.Name, oldCluster.Spec.BundlesRef.Namespace, oldCluster.Spec.BundlesRef.APIVersion),
+			),
+		)
+		wc.WaitForKubeconfig()
+		wc.ValidateClusterState()
+		test.DeleteWorkloadClusterFromGit(wc)
+		wc.ValidateClusterDelete()
+	})
+
+	test.DeleteManagementCluster()
+}

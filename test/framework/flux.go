@@ -295,7 +295,7 @@ func (e *ClusterE2ETest) addWorkloadClusterConfigToGit(ctx context.Context, w *W
 }
 
 func (e *ClusterE2ETest) deleteWorkloadClusterConfigFromGit(ctx context.Context, w *WorkloadCluster) error {
-	p := e.workloadClusterConfigPath(w)
+	p := filepath.Dir(e.workloadClusterConfigPath(w))
 	g := e.GitClient
 	if err := g.Remove(p); err != nil {
 		return fmt.Errorf("removing cluster config at path %s: %v", p, err)
@@ -359,11 +359,6 @@ func (e *ClusterE2ETest) deleteWorkloadClusterFromGit(w *WorkloadCluster) error 
 	err := e.pullRemoteConfig(ctx)
 	if err != nil {
 		e.T.Errorf("Pulling remote configuration: %v", err)
-	}
-
-	e.T.Log("Deleting local cluster directory in git repo")
-	if err := os.Remove(e.workloadClusterConfigGitPath(w)); err != nil {
-		return fmt.Errorf("failed to remove local cluster config: %v", err)
 	}
 
 	if err := e.deleteWorkloadClusterConfigFromGit(ctx, w); err != nil {
