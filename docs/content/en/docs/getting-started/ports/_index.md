@@ -65,6 +65,7 @@ On the Admin machine for a Bare Metal provider, the following ports need to be a
 |----------|-----------|------------|-------------------------|------------------------------ |
 | UDP      | Inbound   | 67         | Boots DHCP              | All nodes, for network boot   |
 | UDP      | Inbound   | 69         | Boots TFTP              | All nodes, for network boot   |
+| UDP      | Inbound   | 514        | Boots Syslog            | All nodes, for provisioning logs |
 | TCP      | Inbound   | 80         | Boots HTTP              | All nodes, for network boot   |
 | TCP      | Inbound   | 42113      | Tink-server gRPC        | All nodes, talk to Tinkerbell |
 | TCP      | Inbound   | 50061      | Hegel HTTP              | All nodes, talk to Tinkerbell |
