@@ -197,7 +197,9 @@ Conditions provide a mechanism for high-level status reporting from the controll
 * `ControlPlaneInitialized` - reports the first control plane has been initialized and the cluster’s API server is contactable via the available kubeconfig generated in the management cluster as a secret. Once this condition is marked true, it’s value never changes.
 * `ControlPlaneReady` -  reports that the condition of the current state of the specified control plane machines vs the desired state in the Cluster spec. e.g. replicasReady vs replicas,
 * `DefaultCNIConfigured` - reports that the CNI has been successfully configured. If an EKS Anywhere managed CNI solution is not configured and the `Cluster` spec is configured to skip EKS Anywhere's default CNI upgrades, this condition will be marked as “False” with the reason “UsingCustomCNI”.
-* `Ready` - reports a summary of the operation state of the EKS Anywhere cluster, showing the condition of the current state of the all specified machines vs the desired state in `Cluster` spec e.g. replicasReady vs replicas
+* `WorkersReady` - reports that the condition of the current state of the specified worker machines vs the desired state in the Cluster spec spec e.g. replicasReady vs replicas
+* `Ready` - reports a summary of other conditions, indicating an overall operational state of the EKS Anywhere cluster. It will be marked “True” once the current state of the cluster has fully reached the desired state specified in the `Cluster` spec.
+
 
 **Cleanup unnecessary fields**
 
@@ -233,6 +235,11 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       status: "False"
       Type: "ControlPlaneReady"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Workers expected not ready yet, 1 replicas (actual 0)"
+      reason: "ScalingUp"
+      status: "False"
+      Type: "WorkersReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
       message: "Scaling up control plane to 1 replicas (actual 0)"
       reason: "ScalingUp"
       status: "False"
@@ -263,6 +270,11 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       status: "False"
       Type: "ControlPlaneReady"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Workers expected not ready yet, 1 replicas (actual 0)"
+      reason: "ScalingUp"
+      status: "False"
+      Type: "WorkersReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
       message: "Scaling up control plane to 1 replicas (actual 0)"
       reason: "ScalingUp"
       status: "False"
@@ -288,10 +300,15 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       status: "True"
       Type: "DefaultCNIConfigured"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
-      message: "Scaling up control plane and workers to 2 replicas (actual 1)"
+      message: "Scaling up control plane, 1 replicas (actual 0)"
       reason: "ScalingUp"
       status: "False"
       Type: "ControlPlaneReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Workers expected not ready yet, 1 replicas (actual 0)"
+      reason: "ScalingUp"
+      status: "False"
+      Type: "WorkersReady"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
       message: "Scaling up control plane and workers to 2 replicas (actual 1)"
       reason: "ScalingUp"
@@ -322,8 +339,11 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       Type: "ControlPlaneReady"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
       status: "True"
+      Type: "WorkersReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
+      status: "True"
       Type: "Ready"
-```  
+ ```     
 
 
 **Rolling upgrade in progress (upgraded to 3 CP and 2 Worker Nodes)**
@@ -350,11 +370,17 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
       status: "False"
       Type: "ControlPlaneReady"
     - lastTransitionTime: "2023-06-05T21:58:57Z"
+      message: "Workers expected not ready yet, 2 replicas (actual 1)"
+      reason: "ScalingUp"
+      status: "False"
+      Type: "WorkersReady"
+    - lastTransitionTime: "2023-06-05T21:58:57Z"
       message: "Scaling up control plane to 3 replicas (actual 2)"
       reason: "ScalingUp"
       status: "False"
       Type: "Ready"
 ```
+
 
 
 ## Alternative Solution
