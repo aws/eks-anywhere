@@ -830,6 +830,10 @@ type ClusterStatus struct {
 	// to its behavior if changed externally. Its meaning and implementation are
 	// subject to change in the future.
 	ChildrenReconciledGeneration int64 `json:"childrenReconciledGeneration,omitempty"`
+
+	// ObservedGeneration is the latest generation observed by the controller
+	// set everytime the status is updated.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 type EksdReleaseRef struct {

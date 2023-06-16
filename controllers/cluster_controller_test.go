@@ -16,6 +16,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -24,6 +26,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -101,9 +104,17 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+			},
 		},
 	}
 
@@ -196,6 +207,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			config, bundles := baseTestVsphereCluster()
 
 			config.Cluster.Generation = tt.clusterGeneration
+			config.Cluster.Status.ObservedGeneration = tt.clusterGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
 			config.Cluster.Status.ChildrenReconciledGeneration = tt.childReconciledGeneration
@@ -259,6 +271,254 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 	}
 }
 
+func TestClusterReconcilerReconcileStatus(t *testing.T) {
+	testCases := []struct {
+		testName                string
+		controlPlaneCount       int
+		workerNodeGroupCount    int
+		skipCNIUpgrade          bool
+		kcpStatus               controlplanev1.KubeadmControlPlaneStatus
+		machineDeploymentStatus clusterv1.MachineDeploymentStatus
+		result                  ctrl.Result
+		wantErr                 string
+		wantConditions          []anywherev1.Condition
+	}{
+		{
+			testName:                "update status error",
+			kcpStatus:               controlplanev1.KubeadmControlPlaneStatus{},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			result:                  ctrl.Result{},
+			wantErr:                 "updating controlplane status",
+			wantConditions:          []anywherev1.Condition{},
+		},
+		{
+			testName: "not ready, first control plane instance not available",
+			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
+				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.AvailableCondition,
+						Status: apiv1.ConditionStatus("False"),
+					},
+				},
+			},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			controlPlaneCount:       1,
+			workerNodeGroupCount:    1,
+			result:                  ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
+			wantConditions: []anywherev1.Condition{
+				*conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.WaitingForControlPlaneInitializedReason, clusterv1.ConditionSeverityInfo, anywherev1.FirstControlPlaneUnavailableMessage),
+				*conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.WaitingForControlPlaneInitializedReason, clusterv1.ConditionSeverityInfo, anywherev1.FirstControlPlaneUnavailableMessage),
+				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.WaitingForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityInfo, "Waiting for default CNI to be configured"),
+				*conditions.FalseCondition(anywherev1.WorkersReadyConditon, anywherev1.WaitingForWorkersReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, 1 expected (0 ready)"),
+				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.WaitingForControlPlaneInitializedReason, clusterv1.ConditionSeverityInfo, anywherev1.FirstControlPlaneUnavailableMessage),
+			},
+			wantErr: "",
+		},
+
+		{
+			testName: "not ready, control plane initialize",
+			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
+				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.AvailableCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: apiv1.ConditionStatus("False"),
+					},
+				},
+			},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			controlPlaneCount:       1,
+			workerNodeGroupCount:    1,
+			skipCNIUpgrade:          true,
+			result:                  ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
+			wantConditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.WaitingForControlPlaneReadyReason, clusterv1.ConditionSeverityInfo, "Control plane nodes not ready yet, 1 expected (0 ready)"),
+				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.WaitingForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityInfo, "Waiting for default CNI to be configured"),
+				*conditions.FalseCondition(anywherev1.WorkersReadyConditon, anywherev1.WaitingForWorkersReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, 1 expected (0 ready)"),
+				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.WaitingForControlPlaneReadyReason, clusterv1.ConditionSeverityInfo, "Control plane nodes not ready yet, 1 expected (0 ready)"),
+			},
+			wantErr: "",
+		},
+		{
+			testName: "not ready, control plane ready",
+			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.AvailableCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+				},
+			},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			controlPlaneCount:       1,
+			workerNodeGroupCount:    1,
+			result:                  ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
+			wantConditions: []anywherev1.Condition{
+				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.WaitingForWorkersReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, 1 expected (0 ready)"),
+				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
+				*conditions.FalseCondition(anywherev1.WorkersReadyConditon, anywherev1.WaitingForWorkersReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, 1 expected (0 ready)"),
+				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+			},
+			wantErr: "",
+		},
+		{
+			testName: "not ready, control plane ready, skip upgrades for default cni",
+			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.AvailableCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+				},
+			},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			skipCNIUpgrade:          true,
+			controlPlaneCount:       1,
+			workerNodeGroupCount:    1,
+			result:                  ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
+			wantConditions: []anywherev1.Condition{
+				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.WaitingForWorkersReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, 1 expected (0 ready)"),
+				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
+				*conditions.FalseCondition(anywherev1.WorkersReadyConditon, anywherev1.WaitingForWorkersReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, 1 expected (0 ready)"),
+				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+			},
+			wantErr: "",
+		},
+		{
+			testName: "ready",
+			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+				Conditions: clusterv1.Conditions{
+					{
+						Type:   controlplanev1.AvailableCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: apiv1.ConditionStatus("True"),
+					},
+				},
+			},
+			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
+				ReadyReplicas:   1,
+				Replicas:        1,
+				UpdatedReplicas: 1,
+			},
+			controlPlaneCount:    1,
+			workerNodeGroupCount: 1,
+			result:               ctrl.Result{},
+			wantConditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
+				*conditions.TrueCondition(anywherev1.WorkersReadyConditon),
+				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+			},
+			wantErr: "",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			config, bundles := baseTestVsphereCluster()
+
+			config.Cluster.Generation = 2
+			config.Cluster.Status.ObservedGeneration = 1
+			config.Cluster.Status.ReconciledGeneration = 1
+			config.Cluster.Status.ChildrenReconciledGeneration = 3
+
+			config.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(tt.skipCNIUpgrade)
+			config.Cluster.Spec.ControlPlaneConfiguration.Count = tt.controlPlaneCount
+			config.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(tt.workerNodeGroupCount),
+				},
+			}
+
+			g := NewWithT(t)
+			ctx := context.Background()
+
+			objs := make([]runtime.Object, 0, 7)
+			objs = append(objs, config.Cluster, bundles)
+			for _, o := range config.ChildObjects() {
+				objs = append(objs, o)
+			}
+
+			kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				k := controller.CAPIKubeadmControlPlaneKey(config.Cluster)
+				kcp.Name = k.Name
+				kcp.Namespace = k.Namespace
+				kcp.Status = tt.kcpStatus
+			})
+
+			md1 := test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				md.ObjectMeta.Labels = map[string]string{
+					clusterv1.ClusterNameLabel: config.Cluster.Name,
+				}
+				md.Status = tt.machineDeploymentStatus
+			})
+
+			objs = append(objs, kcp, md1)
+
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+			mockCtrl := gomock.NewController(t)
+			providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+			iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+			clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+			registry := newRegistryMock(providerReconciler)
+			mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+			iam.EXPECT().EnsureCASecret(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(config.Cluster)).Return(controller.Result{}, nil)
+			iam.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(config.Cluster)).Return(controller.Result{}, nil)
+			providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1)
+
+			r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs)
+
+			result, err := r.Reconcile(ctx, clusterRequest(config.Cluster))
+			if tt.wantErr != "" {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			} else {
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(result).To(Equal(tt.result))
+
+				api := envtest.NewAPIExpecter(t, client)
+				c := envtest.CloneNameNamespace(config.Cluster)
+				api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+					g.Expect(c.Status.ObservedGeneration).To(
+						Equal(c.Generation), "status generation should have been updated to the metadata generation's value",
+					)
+				})
+
+				api.ShouldEventuallyMatch(ctx, c, func(g Gomega) {
+					g.Expect(c.Status.Conditions).To(conditions.MatchConditions(tt.wantConditions))
+				})
+			}
+		})
+	}
+}
+
 func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
@@ -271,9 +531,17 @@ func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t 
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+			},
 		},
 	}
 
@@ -341,6 +609,11 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -370,6 +643,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 		Spec: anywherev1.ClusterSpec{
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
+			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
 			},
 			RegistryMirrorConfiguration: &anywherev1.RegistryMirrorConfiguration{
 				Authenticate: true,
@@ -571,6 +849,11 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
 			},
@@ -608,6 +891,11 @@ func TestClusterReconcilerDontDeletePackagesOnSelfManaged(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
+			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
 			},
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
@@ -649,6 +937,11 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 				BundlesRef: &anywherev1.BundlesRef{
 					Name:      "my-bundles-ref",
 					Namespace: "my-namespace",
+				},
+				ClusterNetwork: anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{},
+					},
 				},
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
@@ -695,6 +988,11 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				BundlesRef: &anywherev1.BundlesRef{
 					Name:      "my-bundles-ref",
 					Namespace: "my-namespace",
+				},
+				ClusterNetwork: anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{},
+					},
 				},
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
@@ -902,6 +1200,11 @@ func vsphereCluster() *anywherev1.Cluster {
 			Namespace: namespace,
 		},
 		Spec: anywherev1.ClusterSpec{
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 			DatacenterRef: anywherev1.Ref{
 				Kind: "VSphereDatacenterConfig",
 				Name: "datacenter",
@@ -931,6 +1234,9 @@ func vsphereCluster() *anywherev1.Cluster {
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+			},
 		},
 	}
 }

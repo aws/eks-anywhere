@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -165,4 +166,48 @@ func CAPICluster(opts ...CAPIClusterOpt) *clusterv1.Cluster {
 	}
 
 	return c
+}
+
+// KubeadmControlPlaneOpt represents an function where a kubeadmcontrolplane is passed as an argument.
+type KubeadmControlPlaneOpt func(kcp *controlplanev1.KubeadmControlPlane)
+
+// KubeadmControlPlane returns a kubeadm controlplane which can be configured by passing in opts arguments.
+func KubeadmControlPlane(opts ...KubeadmControlPlaneOpt) *controlplanev1.KubeadmControlPlane {
+	kcp := &controlplanev1.KubeadmControlPlane{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "KubeadmControlPlane",
+			APIVersion: controlplanev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(kcp)
+	}
+
+	return kcp
+}
+
+// MachineDeploymentOpt represents an function where a kubeadmcontrolplane is passed as an argument.
+type MachineDeploymentOpt func(md *clusterv1.MachineDeployment)
+
+// MachineDeployment returns a machinedeployment which can be configured by passing in opts arguments.
+func MachineDeployment(opts ...MachineDeploymentOpt) *clusterv1.MachineDeployment {
+	md := &clusterv1.MachineDeployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "MachineDeployment",
+			APIVersion: clusterv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(md)
+	}
+
+	return md
 }

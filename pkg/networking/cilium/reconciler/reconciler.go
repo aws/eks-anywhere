@@ -7,9 +7,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -89,12 +92,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 			EKSACiliumInstalledAnnotation,
 		))
 		markCiliumInstalled(ctx, spec.Cluster)
-
+		conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
 		return controller.Result{}, nil
 	}
 
 	if !ciliumCfg.IsManaged() {
 		logger.Info("Cilium configured as unmanaged, skipping upgrade")
+		conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 		return controller.Result{}, nil
 	}
 
