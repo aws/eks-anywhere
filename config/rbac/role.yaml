@@ -119,6 +119,13 @@ rules:
   - list
   - watch
 - apiGroups:
+  - bmc.tinkerbell.org
+  resources:
+  - machines
+  verbs:
+  - list
+  - watch
+- apiGroups:
   - bootstrap.cluster.x-k8s.io
   resources:
   - kubeadmconfigtemplates
@@ -238,6 +245,13 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - tinkerbell.org
+  resources:
+  - hardware
+  verbs:
+  - list
   - watch
 
 ---
