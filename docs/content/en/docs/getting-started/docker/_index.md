@@ -117,7 +117,7 @@ sudo chmod +x /usr/local/bin/kubectl
          name: mgmt
       workerNodeGroupConfigurations:
          - count: 1
-            name: md-0
+           name: md-0
    ---
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: DockerDatacenterConfig
