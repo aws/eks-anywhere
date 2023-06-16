@@ -56,7 +56,7 @@ Error: EKS Anywhere does not support Docker desktop versions between 4.3.0 and 4
 ```
 Error: EKS Anywhere requires Docker desktop to be configured to use CGroups v1. Please  set `deprecatedCgroupv1:true` in your `~/Library/Group\\ Containers/group.com.docker/settings.json` file
 ```
-Ensure you are running Docker Desktop 4.4.2 or newer and have set `"deprecatedCgroupv1": true` in your settings.json file
+Ensure you are running Docker Desktop 4.4.2 or newer and, if you are running EKS Anywhere v0.15 or earlier, have set `"deprecatedCgroupv1": true` in your settings.json file
 ```
 % defaults read /Applications/Docker.app/Contents/Info.plist CFBundleShortVersionString
 4.42
