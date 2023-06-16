@@ -11,11 +11,11 @@ const (
 
 	// ControlPlaneInitializedCondition reports that all the control plane nodes are
 	// in a fully ready and running state.
-	ControlPlaneReadyCondition = "ControlPlaneReady"
+	ControlPlaneReadyCondition ConditionType = "ControlPlaneReady"
 
 	// ControlPlaneInitializedCondition reports that the first control plane instance has been initialized
 	// and so the control plane is available and an API server instance is ready for processing requests.
-	ControlPlaneInitializedCondition = "ControlPlaneInitialized"
+	ControlPlaneInitializedCondition ConditionType = "ControlPlaneInitialized"
 
 	// WaitingForControlPlaneInitializedReason used when cluster is waiting for control plane to be initialized.
 	WaitingForControlPlaneInitializedReason = "WaitingForControlPlaneInitialized"

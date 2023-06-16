@@ -38,13 +38,13 @@ func UpdateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *co
 		return nil
 	}
 
-	con, err := checkKubeadmControlPlaneError(cluster, anywherev1.ControlPlaneInitializedCondition, kcp, controlplanev1.AvailableCondition)
+	kcpCondition, err := checkKubeadmControlPlaneError(cluster, anywherev1.ControlPlaneInitializedCondition, kcp, controlplanev1.AvailableCondition)
 	if err != nil {
 		return err
 	}
 
-	if con != nil {
-		conditions.MarkFalse(cluster, anywherev1.ControlPlaneInitializedCondition, con.Reason, con.Severity, con.Message)
+	if kcpCondition != nil {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneInitializedCondition, kcpCondition.Reason, kcpCondition.Severity, kcpCondition.Message)
 		return nil
 	}
 
@@ -75,20 +75,19 @@ func UpdateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 		return fmt.Errorf("expected reference to kubeadmcontrolplane, but got nil instead ")
 	}
 
-	statusUpToDate := kcp.Status.ObservedGeneration == kcp.ObjectMeta.Generation
 	// We make sure to check that the status is up to date before using it
+	statusUpToDate := kcp.Status.ObservedGeneration == kcp.ObjectMeta.Generation
 	if !statusUpToDate {
 		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.PendingUpdateReason, clusterv1.ConditionSeverityInfo, "")
 		return nil
 	}
 
-	con, err := checkKubeadmControlPlaneError(cluster, anywherev1.ControlPlaneReadyCondition, kcp, clusterv1.ReadyCondition)
+	kcpCondition, err := checkKubeadmControlPlaneError(cluster, anywherev1.ControlPlaneReadyCondition, kcp, clusterv1.ReadyCondition)
 	if err != nil {
 		return err
 	}
-
-	if con != nil {
-		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, con.Reason, con.Severity, con.Message)
+	if kcpCondition != nil {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, kcpCondition.Reason, kcpCondition.Severity, kcpCondition.Message)
 		return nil
 	}
 

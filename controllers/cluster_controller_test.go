@@ -314,7 +314,6 @@ func TestClusterReconcilerReconcileStatus(t *testing.T) {
 			},
 			wantErr: "",
 		},
-
 		{
 			testName: "not ready, control plane initialize",
 			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{

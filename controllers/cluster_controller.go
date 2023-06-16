@@ -385,10 +385,10 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 
 func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
 	// An EKS-A Cluster managed by the CLI is deleted after the cluster finalizer is removed, leaving the CAPI cluster behind. In this case, we do not want to update
-	// the status. If we do, patching will through a 404 NotFound error when trying to update the status of the already deleted
+	// the status. If we do, patching will throw a 404 NotFound error when trying to update the status of the already deleted
 	// Cluster object.
 	if !cluster.DeletionTimestamp.IsZero() && metav1.HasAnnotation(cluster.ObjectMeta, anywherev1.ManagedByCLIAnnotation) {
-		log.Info("Clusters is managed by CLI has been deleted but CAPI cluster may remain, skipping updating cluster status")
+		log.Info("Cluster managed by CLI has been deleted but CAPI cluster may remain, skipping updating cluster status")
 		return nil
 	}
 
