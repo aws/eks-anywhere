@@ -49,6 +49,47 @@ Ensure you are running Docker 20.x.x for example:
 Docker version 20.10.6, build 370c289
 ```
 
+### Minimum requirements for docker version have not been met on Mac OS
+```
+Error: EKS Anywhere does not support Docker desktop versions between 4.3.0 and 4.4.1 on macOS
+```
+```
+Error: EKS Anywhere requires Docker desktop to be configured to use CGroups v1. Please  set `deprecatedCgroupv1:true` in your `~/Library/Group\\ Containers/group.com.docker/settings.json` file
+```
+Ensure you are running Docker Desktop 4.4.2 or newer and have set `"deprecatedCgroupv1": true` in your settings.json file
+```
+% defaults read /Applications/Docker.app/Contents/Info.plist CFBundleShortVersionString
+4.42
+% docker info --format '{{json .CgroupVersion}}' 
+"1"
+```
+
+### For EKS Anywhere v0.15 and earlier, cgroups v2 is not supported in Ubuntu 21.10+ and 22.04
+```
+ERROR: failed to create cluster: could not find a log line that matches "Reached target .*Multi-User System.*|detected cgroup v1"
+```
+For EKS Anywhere v0.15 and earlier, it is recommended to use Ubuntu 20.04 for the Administrative Machine. This is because the EKS Anywhere Bootstrap cluster for those versions requires _cgroups v1_. Since Ubuntu 21.10 _cgroups v2_ is enabled by default. You can use Ubuntu 21.10 and 22.04 for the Administrative machine if you configure Ubuntu to use _cgroups v1_ instead.
+
+To verify cgroups version
+```
+% docker info | grep Cgroup
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 2
+```
+To use _cgroups v1_ you need to _sudo_ and edit _/etc/default/grub_ to set _GRUB_CMDLINE_LINUX_ to "systemd.unified_cgroup_hierarchy=0" and reboot.
+```
+%sudo <editor> /etc/default/grub
+GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"
+sudo update-grub
+sudo reboot now
+```
+Then verify you are using _cgroups v1_.
+```
+% docker info | grep Cgroup
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 1
+```
+
 ### ECR access denied
 
 ```
