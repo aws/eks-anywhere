@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -101,9 +102,17 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+			},
 		},
 	}
 
@@ -196,6 +205,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			config, bundles := baseTestVsphereCluster()
 
 			config.Cluster.Generation = tt.clusterGeneration
+			config.Cluster.Status.ObservedGeneration = tt.clusterGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
 			config.Cluster.Status.ChildrenReconciledGeneration = tt.childReconciledGeneration
@@ -271,9 +281,17 @@ func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t 
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+			},
 		},
 	}
 
@@ -341,6 +359,11 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -370,6 +393,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 		Spec: anywherev1.ClusterSpec{
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
+			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
 			},
 			RegistryMirrorConfiguration: &anywherev1.RegistryMirrorConfiguration{
 				Authenticate: true,
@@ -571,6 +599,11 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
 			},
@@ -608,6 +641,11 @@ func TestClusterReconcilerDontDeletePackagesOnSelfManaged(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
+			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
 			},
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
@@ -649,6 +687,11 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 				BundlesRef: &anywherev1.BundlesRef{
 					Name:      "my-bundles-ref",
 					Namespace: "my-namespace",
+				},
+				ClusterNetwork: anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{},
+					},
 				},
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
@@ -695,6 +738,11 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				BundlesRef: &anywherev1.BundlesRef{
 					Name:      "my-bundles-ref",
 					Namespace: "my-namespace",
+				},
+				ClusterNetwork: anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{},
+					},
 				},
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
@@ -902,6 +950,11 @@ func vsphereCluster() *anywherev1.Cluster {
 			Namespace: namespace,
 		},
 		Spec: anywherev1.ClusterSpec{
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 			DatacenterRef: anywherev1.Ref{
 				Kind: "VSphereDatacenterConfig",
 				Name: "datacenter",
@@ -931,6 +984,9 @@ func vsphereCluster() *anywherev1.Cluster {
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				*conditions.TrueCondition(anywherev1.ReadyCondition),
+			},
 		},
 	}
 }

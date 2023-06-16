@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,7 +37,7 @@ import (
 )
 
 const (
-	defaultRequeueTime = time.Minute
+	defaultRequeueTime = 10 * time.Second
 	// ClusterFinalizerName is the finalizer added to clusters to handle deletion.
 	ClusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
@@ -178,6 +180,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 }
 
 // Reconcile reconciles a cluster object.
+// nolint:gocyclo //TODO: Reduce high cycomatic complexity.
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;snowmachineconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=oidcconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
@@ -192,7 +195,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=delete;
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=bmc.tinkerbell.org,resources=machines;machines/status,verbs=get;list;watch
-func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
+func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
 	// Fetch the Cluster object
 	cluster := &anywherev1.Cluster{}
@@ -211,9 +214,32 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	}
 
 	defer func() {
-		// Always attempt to patch the object and status after each reconciliation.
-		if err := patchHelper.Patch(ctx, cluster); err != nil {
+		err := r.updateStatus(ctx, log, cluster)
+		if err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
+		}
+
+		args := make([]string, 0, len(cluster.Status.Conditions))
+		for _, condition := range cluster.Status.Conditions {
+			args = append(args, fmt.Sprintf("(%s=%s %s)", condition.Type, condition.Status, condition.Reason))
+		}
+
+		log.Info("Current conditions", "conditions", strings.Join(args, ", "))
+
+		// Always attempt to patch the object and status after each reconciliation.
+		patchOpts := []patch.Option{}
+
+		// Patch ObservedGeneration only if the reconciliation completed without error
+		if reterr == nil {
+			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
+		}
+		if err := patchCluster(ctx, patchHelper, cluster, patchOpts...); err != nil {
+			reterr = kerrors.NewAggregate([]error{reterr, err})
+		}
+
+		// Only requeue if we are not already re-queueing and the Cluster ready condition is false
+		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && conditions.IsFalse(cluster, anywherev1.ReadyCondition) {
+			result = ctrl.Result{RequeueAfter: defaultRequeueTime}
 		}
 	}()
 
@@ -357,6 +383,54 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 	return controller.Result{}, nil
 }
 
+func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
+	// An EKS-A Cluster managed by the CLI is deleted after the cluster finalizer is removed, leaving the CAPI cluster behind. In this case, we do not want to update
+	// the status. If we do, patching will throw a 404 NotFound error when trying to update the status of the already deleted
+	// Cluster object.
+	if !cluster.DeletionTimestamp.IsZero() && metav1.HasAnnotation(cluster.ObjectMeta, anywherev1.ManagedByCLIAnnotation) {
+		log.Info("Cluster managed by CLI has been deleted but CAPI cluster may remain, skipping updating cluster status")
+		return nil
+	}
+
+	// ObservedGeneration represents the last observed generation, and consequently represents that the current status is up to date.
+	// Then if observedGeneration is equal to generation AND the Cluster's "Ready" condition is "True", then we can skip another status update
+	if cluster.Status.ObservedGeneration == cluster.Generation && conditions.IsTrue(cluster, anywherev1.ReadyCondition) {
+		log.Info("Generation matches observedGeneration and the cluster is ready, skipping status update")
+		return nil
+	}
+
+	log.Info("Updating cluster status")
+	defer func() {
+		// Always update the readyCondition by summarizing the state of other conditions.
+		conditions.SetSummary(cluster,
+			conditions.WithConditions(
+				anywherev1.ControlPlaneReadyCondition,
+				anywherev1.WorkersReadyConditon,
+			),
+		)
+	}()
+
+	if err := r.updateControlPlaneStatus(ctx, log, cluster); err != nil {
+		return errors.Wrap(err, "updating controlplane status")
+	}
+
+	return nil
+}
+
+func (r *ClusterReconciler) updateControlPlaneStatus(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
+	log.Info("Updating control plane status")
+	kcp, err := controller.GetKubeadmControlPlane(ctx, r.client, cluster)
+	if err != nil {
+		return errors.Wrapf(err, "getting kubeadmcontrolplane")
+	}
+
+	if err = clusters.UpdateControlPlaneInitializedCondition(cluster, kcp); err != nil {
+		return errors.Wrap(err, "updating control plane initialized condition")
+	}
+
+	return nil
+}
+
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
 	if cluster.IsSelfManaged() {
 		return ctrl.Result{}, errors.New("deleting self-managed clusters is not supported")
@@ -443,6 +517,23 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 	}
 
 	return nil
+}
+
+func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywherev1.Cluster, patchOpts ...patch.Option) error {
+	// Patch the object, ignoring conflicts on the conditions owned by this controller.
+	options := append([]patch.Option{
+		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+			// Add each condition her that the controller should ignored conflicts for.
+			anywherev1.ReadyCondition,
+			anywherev1.ControlPlaneInitializedCondition,
+			anywherev1.ControlPlaneReadyCondition,
+			anywherev1.WorkersReadyConditon,
+			anywherev1.DefaultCNIConfiguredCondition,
+		}},
+	}, patchOpts...)
+
+	// Always attempt to patch the object and status after each reconciliation.
+	return patchHelper.Patch(ctx, cluster, options...)
 }
 
 // aggregatedGeneration computes the combined generation of the resources linked

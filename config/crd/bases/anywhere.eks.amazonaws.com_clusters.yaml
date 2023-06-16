@@ -550,6 +550,11 @@ spec:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
                 type: string
+              observedGeneration:
+                description: ObservedGeneration is the latest generation observed
+                  by the controller.
+                format: int64
+                type: integer
               reconciledGeneration:
                 description: 'ReconciledGeneration represents the .metadata.generation
                   the last time the cluster was successfully reconciled. It is the
