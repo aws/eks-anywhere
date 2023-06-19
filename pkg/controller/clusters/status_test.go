@@ -1,17 +1,22 @@
 package clusters_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 )
 
@@ -124,10 +129,24 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
 			cluster := test.NewClusterSpec().Cluster
-			cluster.Status.Conditions = tt.conditions
+			cluster.Name = "test-cluster"
+			cluster.Namespace = constants.EksaSystemNamespace
 
-			clusters.UpdateControlPlaneInitializedCondition(cluster, tt.kcp)
+			cluster.Status.Conditions = tt.conditions
+			objs := []runtime.Object{}
+
+			var client client.Client
+			if tt.kcp != nil {
+				tt.kcp.Name = cluster.Name
+				tt.kcp.Namespace = cluster.Namespace
+				objs = append(objs, tt.kcp)
+			}
+
+			client = fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+			clusters.UpdateControlPlaneStatus(ctx, client, cluster)
 
 			condition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 			g.Expect(condition).ToNot(BeNil())

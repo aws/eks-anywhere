@@ -393,7 +393,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 
 	log.Info("Updating cluster status")
 
-	if err := r.updateControlPlaneStatus(ctx, log, cluster); err != nil {
+	if err := clusters.UpdateControlPlaneStatus(ctx, r.client, cluster); err != nil {
 		return errors.Wrap(err, "updating controlplane status")
 	}
 
@@ -405,18 +405,6 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 			anywherev1.WorkersReadyConditon,
 		),
 	)
-
-	return nil
-}
-
-func (r *ClusterReconciler) updateControlPlaneStatus(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
-	log.Info("Updating control plane status")
-	kcp, err := controller.GetKubeadmControlPlane(ctx, r.client, cluster)
-	if err != nil {
-		return errors.Wrapf(err, "getting kubeadmcontrolplane")
-	}
-
-	clusters.UpdateControlPlaneInitializedCondition(cluster, kcp)
 
 	return nil
 }
