@@ -15,6 +15,8 @@ The upgrade command also upgrades core components of EKS Anywhere and lets the u
 
 **Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). If an upgrade fails, it is very important not to delete the Docker containers running the KinD bootstrap cluster. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
 
+**Please make sure to have sufficient available DHCP addresses from VMs counts and maxSurge config. To create, each VM needs 1 IP. To upgrade/scale, cp/works needs 1 extra ip, each external etcd needs 1 extra ip, plus max surge. The ips in use are already taken, please free up required ips before starting the upgrade process. For example, if you need to create a cluster with 1 control plane node, 2 worker node and 3 external etcd, you'll need at least 1+2+3=6 ips. To upgrade the same cluster with maxSurge set to 2, you'll need 1+3+2=6 extra ips.
+
 {{% alert title="Important" color="warning" %}}
 
 In `eksctl anywhere` version `v0.13.0`, we introduced the full lifecycle controller to fully manage new workload clusters.
