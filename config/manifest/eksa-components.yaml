@@ -2999,6 +2999,7 @@ spec:
                               type: string
                           type: object
                         driver:
+                          description: This field has been deprecated
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -3121,6 +3122,7 @@ spec:
                               type: string
                           type: object
                         syncer:
+                          description: This field has been deprecated
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -3155,12 +3157,10 @@ spec:
                       - clusterAPIController
                       - clusterTemplate
                       - components
-                      - driver
                       - kubeProxy
                       - kubeVip
                       - manager
                       - metadata
-                      - syncer
                       - version
                       type: object
                   required:
