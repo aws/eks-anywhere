@@ -31,7 +31,6 @@ func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 		"cluster-api-provider-vsphere": r.BundleArtifactsTable["cluster-api-provider-vsphere"],
 		"kube-rbac-proxy":              r.BundleArtifactsTable["kube-rbac-proxy"],
 		"kube-vip":                     r.BundleArtifactsTable["kube-vip"],
-		"vsphere-csi-driver":           r.BundleArtifactsTable["vsphere-csi-driver"],
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(vsphereBundleArtifacts)
 
@@ -114,8 +113,6 @@ func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 		KubeProxy:            bundleImageArtifacts["kube-rbac-proxy"],
 		Manager:              bundleImageArtifacts["cloud-provider-vsphere"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
-		Driver:               bundleImageArtifacts["vsphere-csi-driver"],
-		Syncer:               bundleImageArtifacts["vsphere-csi-syncer"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
