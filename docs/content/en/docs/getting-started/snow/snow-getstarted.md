@@ -18,6 +18,8 @@ EKS Anywhere on Snow needs:
 * Certain pre-steps to complete before interacting with a Snowball device. See [Actions to complete before ordering a Snowball Edge device for Amazon EKS Anywhere](https://docs.aws.amazon.com/snowball/latest/developer-guide/eksa-gettingstarted.html).
 * EKS Anywhere enabled Snowball devices. See [Ordering a Snowball Edge device for use with Amazon EKS Anywhere](https://docs.aws.amazon.com/snowball/latest/developer-guide/order-sbe.html) for ordering experience through the AWS Snow Family console.
 * To be run on an Admin instance in a Snowball Edge device. See [Configuring and starting Amazon EKS Anywhere on Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/eksa-configuration.html) for setting up the devices, launching the Admin instance, fetching and copying the device credentials to the Admin instance for `eksctl` CLI to consume.
+* Please make sure to have sufficient available DHCP addresses from VMs counts and maxSurge config. To create, each VM needs 1 IP. To upgrade/scale, cp/works needs 1 extra ip, each external etcd needs 1 extra ip, plus max surge. The ips in use are already taken, please free up required ips before starting the upgrade process.
+  For example, if you need to create a cluster with 1 control plane node, 2 worker node and 3 external etcd, you'll need at least 1+2+3=6 ips. To upgrade the same cluster with maxSurge set to 2, you'll need 1+3+2=6 extra ips.
 
 Also, see the [Ports and protocols]({{< relref "../ports/" >}}) page for information on ports that need to be accessible from control plane, worker, and Admin machines.
 
