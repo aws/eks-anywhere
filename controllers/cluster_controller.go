@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -37,7 +36,7 @@ import (
 )
 
 const (
-	defaultRequeueTime = 10 * time.Second
+	defaultRequeueTime = time.Minute
 	// ClusterFinalizerName is the finalizer added to clusters to handle deletion.
 	ClusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
@@ -180,7 +179,8 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 }
 
 // Reconcile reconciles a cluster object.
-// nolint:gocyclo //TODO: Reduce high cycomatic complexity.
+// nolint:gocyclo
+// TODO: Reduce high cycomatic complexity. https://github.com/aws/eks-anywhere-internal/issues/1449
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;snowmachineconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=oidcconfigs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
@@ -219,15 +219,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 
-		args := make([]string, 0, len(cluster.Status.Conditions))
-		for _, condition := range cluster.Status.Conditions {
-			args = append(args, fmt.Sprintf("(%s=%s %s)", condition.Type, condition.Status, condition.Reason))
-		}
-
-		log.Info("Current conditions", "conditions", strings.Join(args, ", "))
-
 		// Always attempt to patch the object and status after each reconciliation.
 		patchOpts := []patch.Option{}
+
+		// We want the observedGeneration to indicate, that the status shown is up-to-date given the desired spec of the same generation.
+		// However, if there is an error while updating the status, we may a partial status update, In this case,
+		// a partially updated status is not considered up to date, so we should not update the observedGeneration
 
 		// Patch ObservedGeneration only if the reconciliation completed without error
 		if reterr == nil {
@@ -237,9 +234,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 
-		// Only requeue if we are not already re-queueing and the Cluster ready condition is false
+		// Only requeue if we are not already re-queueing and the Cluster ready condition is false.
+		// We do this to be able to update the status continuously until the cluster becomes ready,
+		// since there might be changes in state of the world that don't trigger reconciliation requests
+
 		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && conditions.IsFalse(cluster, anywherev1.ReadyCondition) {
-			result = ctrl.Result{RequeueAfter: defaultRequeueTime}
+			result = ctrl.Result{RequeueAfter: 10 * time.Second}
 		}
 	}()
 
@@ -384,35 +384,27 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 }
 
 func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
-	// An EKS-A Cluster managed by the CLI is deleted after the cluster finalizer is removed, leaving the CAPI cluster behind. In this case, we do not want to update
-	// the status. If we do, patching will throw a 404 NotFound error when trying to update the status of the already deleted
-	// Cluster object.
-	if !cluster.DeletionTimestamp.IsZero() && metav1.HasAnnotation(cluster.ObjectMeta, anywherev1.ManagedByCLIAnnotation) {
-		log.Info("Cluster managed by CLI has been deleted but CAPI cluster may remain, skipping updating cluster status")
-		return nil
-	}
-
-	// ObservedGeneration represents the last observed generation, and consequently represents that the current status is up to date.
-	// Then if observedGeneration is equal to generation AND the Cluster's "Ready" condition is "True", then we can skip another status update
-	if cluster.Status.ObservedGeneration == cluster.Generation && conditions.IsTrue(cluster, anywherev1.ReadyCondition) {
-		log.Info("Generation matches observedGeneration and the cluster is ready, skipping status update")
+	// When EKS-A cluster is fully deleted, we do not need to update the status. Without this check
+	// the subsequent patch operations would fail if the status is updated after it is fully deleted.
+	if !cluster.DeletionTimestamp.IsZero() && len(cluster.GetFinalizers()) == 0 {
+		log.Info("Cluster is fully deleted, skipping cluster status update")
 		return nil
 	}
 
 	log.Info("Updating cluster status")
-	defer func() {
-		// Always update the readyCondition by summarizing the state of other conditions.
-		conditions.SetSummary(cluster,
-			conditions.WithConditions(
-				anywherev1.ControlPlaneReadyCondition,
-				anywherev1.WorkersReadyConditon,
-			),
-		)
-	}()
 
 	if err := r.updateControlPlaneStatus(ctx, log, cluster); err != nil {
 		return errors.Wrap(err, "updating controlplane status")
 	}
+
+	// Always update the readyCondition by summarizing the state of other conditions.
+	conditions.SetSummary(cluster,
+		conditions.WithConditions(
+			anywherev1.ControlPlaneInitializedCondition,
+			anywherev1.ControlPlaneReadyCondition,
+			anywherev1.WorkersReadyConditon,
+		),
+	)
 
 	return nil
 }
@@ -424,9 +416,7 @@ func (r *ClusterReconciler) updateControlPlaneStatus(ctx context.Context, log lo
 		return errors.Wrapf(err, "getting kubeadmcontrolplane")
 	}
 
-	if err = clusters.UpdateControlPlaneInitializedCondition(cluster, kcp); err != nil {
-		return errors.Wrap(err, "updating control plane initialized condition")
-	}
+	clusters.UpdateControlPlaneInitializedCondition(cluster, kcp)
 
 	return nil
 }

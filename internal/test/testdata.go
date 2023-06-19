@@ -189,3 +189,25 @@ func KubeadmControlPlane(opts ...KubeadmControlPlaneOpt) *controlplanev1.Kubeadm
 
 	return kcp
 }
+
+// MachineDeploymentOpt represents an function where a kubeadmcontrolplane is passed as an argument.
+type MachineDeploymentOpt func(md *clusterv1.MachineDeployment)
+
+// MachineDeployment returns a machinedeployment which can be configured by passing in opts arguments.
+func MachineDeployment(opts ...MachineDeploymentOpt) *clusterv1.MachineDeployment {
+	md := &clusterv1.MachineDeployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "MachineDeployment",
+			APIVersion: clusterv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(md)
+	}
+
+	return md
+}

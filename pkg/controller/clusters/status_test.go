@@ -23,7 +23,6 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 		kcp           *controlplanev1.KubeadmControlPlane
 		conditions    []anywherev1.Condition
 		wantCondition *anywherev1.Condition
-		wantErr       string
 	}{
 		{
 			name:       "kcp is nil",
@@ -33,10 +32,9 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 				Type:     "ControlPlaneInitialized",
 				Status:   "False",
 				Severity: clusterv1.ConditionSeverityInfo,
-				Reason:   anywherev1.WaitingForControlPlaneInitializedReason,
+				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
 				Message:  anywherev1.FirstControlPlaneUnavailableMessage,
 			},
-			wantErr: "",
 		},
 		{
 			name: "control plane already initialized",
@@ -51,16 +49,23 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 				Type:   anywherev1.ControlPlaneInitializedCondition,
 				Status: "True",
 			},
-			wantErr: "",
 		},
 		{
-			name:          "kcp missing available condition ",
-			kcp:           test.KubeadmControlPlane(),
-			wantCondition: nil,
-			wantErr:       "unable to read condition",
+			name: "kcp status outdated, generations do not match",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.ObjectMeta.Generation = 1
+				kcp.Status.ObservedGeneration = 0
+			}),
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.ControlPlaneInitializedCondition,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityInfo,
+				Reason:   anywherev1.OutdatedInformationReason,
+				Message:  "",
+			},
 		},
 		{
-			name: "kcp available condition with error",
+			name: "kcp not available, condition error",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Status.Conditions = []clusterv1.Condition{
 					{
@@ -79,10 +84,9 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 				Reason:   "TestReason",
 				Message:  "test message",
 			},
-			wantErr: "",
 		},
 		{
-			name: "kcp  available condtion false",
+			name: "kcp not availabe yet",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Status.Conditions = clusterv1.Conditions{
 					{
@@ -96,13 +100,12 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 				Type:     anywherev1.ControlPlaneInitializedCondition,
 				Status:   "False",
 				Severity: clusterv1.ConditionSeverityInfo,
-				Reason:   anywherev1.WaitingForControlPlaneInitializedReason,
+				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
 				Message:  anywherev1.FirstControlPlaneUnavailableMessage,
 			},
-			wantErr: "",
 		},
 		{
-			name: "kcp available condition true",
+			name: "kcp available",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Status.Conditions = clusterv1.Conditions{
 					{
@@ -116,7 +119,6 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 				Type:   anywherev1.ControlPlaneInitializedCondition,
 				Status: "True",
 			},
-			wantErr: "",
 		},
 	}
 
@@ -125,19 +127,13 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 			cluster := test.NewClusterSpec().Cluster
 			cluster.Status.Conditions = tt.conditions
 
-			err := clusters.UpdateControlPlaneInitializedCondition(cluster, tt.kcp)
+			clusters.UpdateControlPlaneInitializedCondition(cluster, tt.kcp)
 
-			if tt.wantErr != "" {
-				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
-			} else {
-				g.Expect(err).To(BeNil())
+			condition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
+			g.Expect(condition).ToNot(BeNil())
 
-				condition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
-				g.Expect(condition).ToNot(BeNil())
-
-				condition.LastTransitionTime = v1.Time{}
-				g.Expect(condition).To(Equal(tt.wantCondition))
-			}
+			condition.LastTransitionTime = v1.Time{}
+			g.Expect(condition).To(Equal(tt.wantCondition))
 		})
 	}
 }
