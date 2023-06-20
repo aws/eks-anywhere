@@ -15,11 +15,6 @@ The upgrade command also upgrades core components of EKS Anywhere and lets the u
 
 **Upgrades should never be run from ephemeral nodes (short-lived systems that spin up and down on a regular basis). It is highly recommended to run the `upgrade` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. If an upgrade fails, it is very important not to delete the Docker containers running the KinD bootstrap cluster. During an upgrade, the bootstrap cluster contains critical EKS Anywhere components. If it is deleted after a failed upgrade, they cannot be recovered.**
 
-*Please make sure to have sufficient available IP addresses in your DHCP pool from VMs counts and maxSurge config. For create operation, each VM needs 1 IP. For upgrade and scale operation, control plane and works need just 1 extra IP (total not per node) due to rolling upgrade strategy. Each external ETCD needs 1 extra IP address (ex: 3 ETCD nodes would require 3 more IP addresses) because etcdadm-controller needs to create all new ETCD machines before removing the old machines. You would also need additional IPs equal to the number used for maxSurge. After calculating the required IPs, please make sure your environment has enough available IPs before upgrade operation.
-  Example 1, to create a cluster with 1 control plane node, 2 worker node and 3 unstacked ETCD nodes, you'll need at least 6 (1+2+3) available IPs. To upgrade the same cluster with default maxSurge (0), you'll need 1 (1+0+0) additional available IPs.
-  Example 2, to upgrade a cluster with 1 control plane node, 2 worker node and 3 stacked (external) ETCD nodes, you'll need at least 4 (1+3+0) additional available IPs.
-  Example 3, to upgrade a cluster with 1 control plane node, 2 worker node and 3 stacked (external) ETCD nodes, with maxSurge set to 2, you'll need at least 6 (1+3+2) additional available IPs.
-
 {{% alert title="Important" color="warning" %}}
 
 In `eksctl anywhere` version `v0.13.0`, we introduced the full lifecycle controller to fully manage new workload clusters.
@@ -34,6 +29,14 @@ When triggering a workload cluster upgrade after upgrading the management cluste
 The changes in the EKS Anywhere controller can trigger a machine rollout on the workload cluster during upgrade, even if the changes to the workload cluster spec didn't require one (for example, scaling down a worker node group).
 
 {{% /alert %}}
+
+### Prepare DHCP IP addresses pool
+
+Please make sure to have sufficient available IP addresses in your DHCP pool to cover the new machines. The number of necessary IPs can be calculated from the machine counts and [maxSurge config]({{< ref "./baremetal-upgrades.md/#upgraderolloutstrategyrollingupdatemaxsurge" >}}). For create operation, each machine needs 1 IP. For upgrade operation, control plane and workers need just 1 extra IP (total, not per node) due to rolling upgrade strategy. Each external ETCD machine needs 1 extra IP address (ex: 3 ETCD nodes would require 3 more IP addresses) because EKS-A needs to create all the new ETCD machines before removing any old ones. You would also need additional IPs to be equal to the number used for maxSurge. After calculating the required IPs, please make sure your environment has enough available IPs before the upgrade operation.
+
+* Example 1, to create a cluster with 3 control plane node, 2 worker nodes and 3 stacked ETCD nodes, you'll need at least 8 (3+2+3) available IPs. To upgrade the same cluster with default maxSurge (0), you'll need 1 (1+0+0) additional available IPs.
+* Example 2, to upgrade a cluster with 1 control plane node, 2 worker nodes and 3 unstacked (external) ETCD nodes, with default maxSurge (0), you will need at least 4 (1+3+0) additional available IPs.
+* Example 3, to upgrade a cluster with 1 control plane node, 2 worker nodes and 3 unstacked (external) ETCD nodes, with maxSurge set to 2, you'll need at least 6 (1+3+2) additional available IPs.
 
 ### EKS Anywhere Version Upgrades
 

@@ -18,10 +18,7 @@ To prepare a VMware vSphere environment to run EKS Anywhere, you need the follow
 * A vSphere 7+ environment running vCenter
 * Capacity to deploy 6-10 VMs
 * [DHCP service]({{< relref "customize/vsphere-dhcp/" >}}) running in vSphere environment in the primary VM network for your workload cluster
-  * Please make sure to have sufficient available IP addresses in your DHCP pool from VMs counts and maxSurge config. For create operation, each VM needs 1 IP. For upgrade and scale operation, control plane and works need just 1 extra IP (total not per node) due to rolling upgrade strategy. Each external ETCD needs 1 extra IP address (ex: 3 ETCD nodes would require 3 more IP addresses) because etcdadm-controller needs to create all new ETCD machines before removing the old machines. You would also need additional IPs equal to the number used for maxSurge. After calculating the required IPs, please make sure your environment has enough available IPs before upgrade operation.
-    Example 1, to create a cluster with 1 control plane node, 2 worker node and 3 unstacked ETCD nodes, you'll need at least 6 (1+2+3) available IPs. To upgrade the same cluster with default maxSurge (0), you'll need 1 (1+0+0) additional available IPs.
-    Example 2, to upgrade a cluster with 1 control plane node, 2 worker node and 3 stacked (external) ETCD nodes, you'll need at least 4 (1+3+0) additional available IPs.
-    Example 3, to upgrade a cluster with 1 control plane node, 2 worker node and 3 stacked (external) ETCD nodes, with maxSurge set to 2, you'll need at least 6 (1+3+2) additional available IPs.
+  * [Prepare DHCP IP addresses pool]({{< ref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-DHCP-IP-addresses-pool" >}})
 * One network in vSphere to use for the cluster. EKS Anywhere clusters need access to vCenter through the network to enable self-managing and storage capabilities.
 * An [OVA]({{< relref "customize/vsphere-ovas/" >}}) imported into vSphere and converted into a template for the workload VMs
 * User credentials to create VMs and attach networks, etc
