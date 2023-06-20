@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -81,7 +82,7 @@ func PullLatestBundle(ctx context.Context, log logr.Logger, artifact string) ([]
 }
 
 func PushBundle(ctx context.Context, ref, fileName string, fileContent []byte) error {
-	registry, err := content.NewRegistry(content.RegistryOptions{})
+	registry, err := content.NewRegistry(content.RegistryOptions{Insecure: ctx.Value(types.InsecureRegistry).(bool)})
 	if err != nil {
 		return fmt.Errorf("creating registry: %w", err)
 	}
