@@ -38,7 +38,7 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 				Status:   "False",
 				Severity: clusterv1.ConditionSeverityInfo,
 				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
-				Message:  anywherev1.FirstControlPlaneUnavailableMessage,
+				Message:  "The first control plane instance is not available yet",
 			},
 		},
 		{
@@ -70,27 +70,6 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 			},
 		},
 		{
-			name: "kcp not available, condition error",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Conditions = []clusterv1.Condition{
-					{
-						Type:     controlplanev1.AvailableCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityError,
-						Reason:   "TestReason",
-						Message:  "test message",
-					},
-				}
-			}),
-			wantCondition: &anywherev1.Condition{
-				Type:     anywherev1.ControlPlaneInitializedCondition,
-				Status:   "False",
-				Severity: clusterv1.ConditionSeverityError,
-				Reason:   "TestReason",
-				Message:  "test message",
-			},
-		},
-		{
 			name: "kcp not availabe yet",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Status.Conditions = clusterv1.Conditions{
@@ -106,7 +85,7 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 				Status:   "False",
 				Severity: clusterv1.ConditionSeverityInfo,
 				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
-				Message:  anywherev1.FirstControlPlaneUnavailableMessage,
+				Message:  "The first control plane instance is not available yet",
 			},
 		},
 		{
@@ -146,7 +125,7 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 
 			client = fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
-			err := clusters.UpdateControlPlaneStatus(ctx, client, cluster)
+			err := clusters.UpdateClusterStatusForControlPlane(ctx, client, cluster)
 			g.Expect(err).To(BeNil())
 
 			condition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)

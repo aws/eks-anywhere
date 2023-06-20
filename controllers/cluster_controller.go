@@ -223,7 +223,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		patchOpts := []patch.Option{}
 
 		// We want the observedGeneration to indicate, that the status shown is up-to-date given the desired spec of the same generation.
-		// However, if there is an error while updating the status, we may a partial status update, In this case,
+		// However, if there is an error while updating the status, we may get a partial status update, In this case,
 		// a partially updated status is not considered up to date, so we should not update the observedGeneration
 
 		// Patch ObservedGeneration only if the reconciliation completed without error
@@ -393,7 +393,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 
 	log.Info("Updating cluster status")
 
-	if err := clusters.UpdateControlPlaneStatus(ctx, r.client, cluster); err != nil {
+	if err := clusters.UpdateClusterStatusForControlPlane(ctx, r.client, cluster); err != nil {
 		return errors.Wrap(err, "updating controlplane status")
 	}
 
