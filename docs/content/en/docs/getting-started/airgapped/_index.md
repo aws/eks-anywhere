@@ -44,7 +44,7 @@ To create a cluster in an airgapped environment, perform the following:
 1. Now that you’ve configured your local registry mirror, you will need to import images to the local registry mirror using the following command (be sure to replace <registryUrl> with the url of the local registry mirror you created in step 4):
    ```bash
    eksctl anywhere import images -i images.tar -r <registryUrl> \
-      -- bundles ./eks-anywhere-downloads/bundle-release.yaml
+      --bundles ./eks-anywhere-downloads/bundle-release.yaml
    ```
 You are now ready to deploy a cluster by selecting your provider from the [EKS Anywhere providers]({{< relref "/docs/getting-started/chooseprovider" >}}) page and following those instructions.
 

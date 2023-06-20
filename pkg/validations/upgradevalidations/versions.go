@@ -3,43 +3,23 @@ package upgradevalidations
 import (
 	"context"
 	"fmt"
-	"math"
 
-	"k8s.io/apimachinery/pkg/util/version"
-
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/logger"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-const supportedMinorVersionIncrement = 1
+// ValidateServerVersionSkew validates Kubernetes version skew between upgrades for the CLI.
+func ValidateServerVersionSkew(ctx context.Context, newCluster *anywherev1.Cluster, cluster *types.Cluster, mgmtCluster *types.Cluster, kubectl validations.KubectlClient) error {
+	managementCluster := cluster
+	if !cluster.ExistingManagement {
+		managementCluster = mgmtCluster
+	}
 
-func ValidateServerVersionSkew(ctx context.Context, compareVersion v1alpha1.KubernetesVersion, cluster *types.Cluster, kubectl validations.KubectlClient) error {
-	versions, err := kubectl.Version(ctx, cluster)
+	eksaCluster, err := kubectl.GetEksaCluster(ctx, managementCluster, newCluster.Name)
 	if err != nil {
-		return fmt.Errorf("fetching cluster version: %v", err)
+		return fmt.Errorf("fetching old cluster: %v", err)
 	}
 
-	parsedInputVersion, err := version.ParseGeneric(string(compareVersion))
-	if err != nil {
-		return fmt.Errorf("parsing comparison version: %v", err)
-	}
-
-	parsedServerVersion, err := version.ParseSemantic(versions.ServerVersion.GitVersion)
-	if err != nil {
-		return fmt.Errorf("parsing cluster version: %v", err)
-	}
-
-	logger.V(3).Info("calculating version differences", "inputVersion", parsedInputVersion, "clusterVersion", parsedServerVersion)
-	majorVersionDifference := math.Abs(float64(parsedInputVersion.Major()) - float64(parsedServerVersion.Major()))
-	minorVersionDifference := float64(parsedInputVersion.Minor()) - float64(parsedServerVersion.Minor())
-	logger.V(3).Info("calculated version differences", "majorVersionDifference", majorVersionDifference, "minorVersionDifference", minorVersionDifference)
-
-	if majorVersionDifference > 0 || !(minorVersionDifference <= supportedMinorVersionIncrement && minorVersionDifference >= 0) {
-		msg := fmt.Sprintf("WARNING: version difference between upgrade version (%d.%d) and server version (%d.%d) do not meet the supported version increment of +%d",
-			parsedInputVersion.Major(), parsedInputVersion.Minor(), parsedServerVersion.Major(), parsedServerVersion.Minor(), supportedMinorVersionIncrement)
-		return fmt.Errorf(msg)
-	}
-	return nil
+	return anywherev1.ValidateKubernetesVersionSkew(newCluster, eksaCluster).ToAggregate()
 }

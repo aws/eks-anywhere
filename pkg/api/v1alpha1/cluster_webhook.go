@@ -21,6 +21,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -94,6 +95,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
 
 	allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
+
+	allErrs = append(allErrs, ValidateKubernetesVersionSkew(r, oldCluster)...)
 
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
@@ -340,4 +343,42 @@ func (r *Cluster) ValidateDelete() error {
 	clusterlog.Info("validate delete", "name", r.Name)
 
 	return nil
+}
+
+// ValidateKubernetesVersionSkew validates Kubernetes version skew between upgrades.
+func ValidateKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+
+	path := field.NewPath("spec")
+
+	oldVersion := old.Spec.KubernetesVersion
+	newVersion := new.Spec.KubernetesVersion
+
+	parsedOldVersion, err := version.ParseGeneric(string(oldVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, new.Spec.KubernetesVersion, fmt.Sprintf("parsing cluster version: %v", err.Error())))
+		return allErrs
+	}
+
+	parsedNewVersion, err := version.ParseGeneric(string(newVersion))
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, new.Spec.KubernetesVersion, fmt.Sprintf("parsing comparison version: %v", err.Error())))
+		return allErrs
+	}
+
+	if parsedNewVersion.Minor() == parsedOldVersion.Minor() && parsedNewVersion.Major() == parsedOldVersion.Major() {
+		return allErrs
+	}
+
+	if err := ValidateVersionSkew(parsedOldVersion, parsedNewVersion); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(path, new.Spec.KubernetesVersion, err.Error()))
+	}
+
+	return allErrs
 }

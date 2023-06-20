@@ -177,6 +177,30 @@ func TestUpgraderUpgradeSuccessValuesChangedUpgradeFromNilCiliumConfigSpec(t *te
 	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec, []string{})).To(BeNil(), "upgrader.Upgrade() should succeed and return nil ChangeDiff")
 }
 
+func TestUpgraderUpgradeSuccessEgressMasqueradeInterfacesValueChanged(t *testing.T) {
+	tt := newUpgraderTest(t)
+	tt.currentSpec.VersionsBundle.Cilium.Version = "v1.0.0"
+	tt.newSpec.VersionsBundle.Cilium.Version = "v1.0.0"
+
+	// setting egress masquerade interfaces to something other than ""
+	tt.newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = "test"
+
+	// Templater and client and already tested individually so we only want to test the flow (order of calls)
+	gomock.InOrder(
+		tt.expectTemplatePreFlight(),
+		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
+		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
+		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.expectTemplateManifest(),
+		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
+		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),
+		tt.client.EXPECT().WaitForCiliumDeployment(tt.ctx, tt.cluster),
+	)
+
+	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec, []string{})).To(BeNil(), "upgrader.Upgrade() should succeed and return nil ChangeDiff")
+}
+
 func TestUpgraderRunPostControlPlaneUpgradeSetup(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.client.EXPECT().RolloutRestartCiliumDaemonSet(tt.ctx, tt.cluster)

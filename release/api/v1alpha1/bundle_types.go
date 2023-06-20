@@ -193,8 +193,10 @@ type VSphereBundle struct {
 	KubeProxy            Image    `json:"kubeProxy"`
 	Manager              Image    `json:"manager"`
 	KubeVip              Image    `json:"kubeVip"`
-	Driver               Image    `json:"driver"`
-	Syncer               Image    `json:"syncer"`
+	// This field has been deprecated
+	Driver               Image    `json:"driver,omitempty"`
+	// This field has been deprecated
+	Syncer               Image    `json:"syncer,omitempty"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`

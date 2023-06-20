@@ -13,11 +13,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 )
 
 const testclustername string = "testcluster"
+
+type UnAuthKubectlClient struct {
+	*executables.Kubectl
+	*kubernetes.UnAuthClient
+}
 
 func TestValidateClusterPresent(t *testing.T) {
 	tests := []struct {

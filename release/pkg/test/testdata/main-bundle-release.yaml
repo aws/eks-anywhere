@@ -412,7 +412,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -421,7 +421,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -430,7 +430,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -439,8 +439,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -755,15 +755,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/infrastructure-components.yaml
-      driver:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-driver image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-driver
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
+      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -793,15 +785,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.23.4-eks-d-1-23-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/metadata.yaml
-      syncer:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-syncer image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-syncer
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
+      syncer: {}
       version: v1.6.1+abcdef1
   - bootstrap:
       components:
@@ -1207,7 +1191,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1216,7 +1200,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -1225,7 +1209,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1234,8 +1218,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -1550,15 +1534,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/infrastructure-components.yaml
-      driver:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-driver image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-driver
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
+      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -1588,15 +1564,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.24.4-eks-d-1-24-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/metadata.yaml
-      syncer:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-syncer image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-syncer
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
+      syncer: {}
       version: v1.6.1+abcdef1
   - bootstrap:
       components:
@@ -1975,7 +1943,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1984,7 +1952,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -1993,7 +1961,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -2002,8 +1970,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -2318,15 +2286,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/infrastructure-components.yaml
-      driver:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-driver image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-driver
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
+      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -2356,15 +2316,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.25.1-eks-d-1-25-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/metadata.yaml
-      syncer:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-syncer image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-syncer
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
+      syncer: {}
       version: v1.6.1+abcdef1
   - bootstrap:
       components:
@@ -2743,7 +2695,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -2752,7 +2704,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -2761,7 +2713,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -2770,8 +2722,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -3086,15 +3038,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/infrastructure-components.yaml
-      driver:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-driver image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-driver
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
+      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -3124,15 +3068,7 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.26.0-eks-d-1-26-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/metadata.yaml
-      syncer:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-syncer image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-syncer
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
+      syncer: {}
       version: v1.6.1+abcdef1
   - bootstrap:
       components:
@@ -3511,7 +3447,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.33.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.34.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -3520,7 +3456,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -3529,7 +3465,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.0.0-rc.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -3538,8 +3474,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.3-eks-a-v0.0.0-dev-build.1
-      version: v2.0.0-rc.3+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.0.0-rc.5-eks-a-v0.0.0-dev-build.1
+      version: v2.0.0-rc.5+abcdef1
     haproxy:
       image:
         arch:
@@ -3854,15 +3790,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/infrastructure-components.yaml
-      driver:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-driver image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-driver
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
+      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -3892,14 +3820,6 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.26.0-eks-d-1-27-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.6.1/metadata.yaml
-      syncer:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for vsphere-csi-syncer image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: vsphere-csi-syncer
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
+      syncer: {}
       version: v1.6.1+abcdef1
 status: {}

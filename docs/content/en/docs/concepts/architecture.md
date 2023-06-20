@@ -73,21 +73,19 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 
 | Features   | Supported | 
 |------------|-----------|
-| Create/update/delete a workload cluster on... ||
+| Create/upgrade/delete a workload cluster on... ||
 | <ul><li>VMware via CLI</li>  | Y |
 | <ul><li>CloudStack via CLI</li> | Y |
 | <ul><li>Bare Metal via CLI</li> | Y |
+| <ul><li>Snow via CLI</li> | Y |
+| <ul><li>Nutanix via CLI</li> | Y |
 | <ul><li>Docker via CLI (non-production only)</li> | Y |
-| Update a workload cluster on... ||
+| Create/upgrade/delete a workload cluster on...
 | <ul><li>VMware via GitOps/Terraform</li> | Y |
 | <ul><li>CloudStack via GitOps/Terraform</li> | Y |
-| <ul><li>Bare Metal via GitOps/Terraform</li> | N |
-| <ul><li>Docker via CLI (non-production only)</li> | Y |
-| Create/delete a workload cluster on...
-| <ul><li>VMware via GitOps/Terraform</li> | Y |
-| <ul><li>CloudStack via GitOps/Terraform</li> | N |
-| <ul><li>Bare Metal via GitOps/Terraform</li> | N |
+| <ul><li>Bare Metal via GitOps/Terraform</li> | Y |
+| <ul><li>Snow via GitOps/Terraform</li> | Y |
+| <ul><li>Nutanix via GitOps/Terraform</li> | Y |
 | <ul><li>Docker via GitOps/Terraform (non-production only)</li> | Y |
 | Install a curated package on the management cluster | Y ||
 | Install a curated package on the workload cluster from the management cluster | Y |
-| Install a curated package on the management cluster during a workload cluster creation | N |
