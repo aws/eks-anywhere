@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -45,6 +47,26 @@ type vsphereClusterReconcilerTest struct {
 	govcClient *vspheremocks.MockProviderGovcClient
 	reconciler *controllers.ClusterReconciler
 	client     client.Client
+}
+
+func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlplanev1.KubeadmControlPlane {
+	k := controller.CAPIKubeadmControlPlaneKey(cluster)
+	return test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+		kcp.Name = k.Name
+		kcp.Namespace = k.Namespace
+		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:   controlplanev1.AvailableCondition,
+					Status: apiv1.ConditionStatus("True"),
+				},
+				{
+					Type:   clusterv1.ReadyCondition,
+					Status: apiv1.ConditionStatus("True"),
+				},
+			},
+		}
+	})
 }
 
 func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsphereClusterReconcilerTest {
@@ -101,18 +123,25 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
 		},
 	}
 
+	kcp := testKubeadmControlPlaneFromCluster(selfManagedCluster)
+
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp).Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
 	providerReconciler.EXPECT().ReconcileWorkerNodes(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 
@@ -196,6 +225,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			config, bundles := baseTestVsphereCluster()
 
 			config.Cluster.Generation = tt.clusterGeneration
+			config.Cluster.Status.ObservedGeneration = tt.clusterGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
 			config.Cluster.Status.ReconciledGeneration = tt.reconciledGeneration
 			config.Cluster.Status.ChildrenReconciledGeneration = tt.childReconciledGeneration
@@ -221,6 +251,9 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
 			}
+
+			kcp := testKubeadmControlPlaneFromCluster(config.Cluster)
+			objs = append(objs, kcp)
 
 			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 			mockCtrl := gomock.NewController(t)
@@ -271,18 +304,25 @@ func TestClusterReconcilerReconcileSelfManagedClusterWithExperimentalUpgrades(t 
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
 		},
 	}
 
+	kcp := testKubeadmControlPlaneFromCluster(selfManagedCluster)
+
 	controller := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(controller)
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster).Build()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp).Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
 	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 
@@ -306,8 +346,10 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	// Mark as paused
 	cluster.PauseReconcile()
 
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
+
 	c := fake.NewClientBuilder().WithRuntimeObjects(
-		managementCluster, cluster, capiCluster,
+		managementCluster, cluster, capiCluster, kcp,
 	).Build()
 
 	ctrl := gomock.NewController(t)
@@ -341,6 +383,11 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 		},
 		Status: anywherev1.ClusterStatus{
 			ReconciledGeneration: 1,
@@ -370,6 +417,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 		Spec: anywherev1.ClusterSpec{
 			BundlesRef: &anywherev1.BundlesRef{
 				Name: "my-bundles-ref",
+			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
 			},
 			RegistryMirrorConfiguration: &anywherev1.RegistryMirrorConfiguration{
 				Authenticate: true,
@@ -441,6 +493,7 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
 	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
 
 	// Mark cluster for deletion
 	now := metav1.Now()
@@ -453,7 +506,7 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	c := fake.NewClientBuilder().WithRuntimeObjects(
-		managementCluster, cluster, capiCluster,
+		managementCluster, cluster, capiCluster, kcp,
 	).Build()
 
 	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil)
@@ -571,6 +624,11 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
 			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
 			},
@@ -608,6 +666,11 @@ func TestClusterReconcilerDontDeletePackagesOnSelfManaged(t *testing.T) {
 			BundlesRef: &anywherev1.BundlesRef{
 				Name:      "my-bundles-ref",
 				Namespace: "my-namespace",
+			},
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
 			},
 			ManagementCluster: anywherev1.ManagementCluster{
 				Name: "",
@@ -649,6 +712,11 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 				BundlesRef: &anywherev1.BundlesRef{
 					Name:      "my-bundles-ref",
 					Namespace: "my-namespace",
+				},
+				ClusterNetwork: anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{},
+					},
 				},
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
@@ -695,6 +763,11 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 				BundlesRef: &anywherev1.BundlesRef{
 					Name:      "my-bundles-ref",
 					Namespace: "my-namespace",
+				},
+				ClusterNetwork: anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{},
+					},
 				},
 				ManagementCluster: anywherev1.ManagementCluster{
 					Name: "my-management-cluster",
@@ -902,6 +975,11 @@ func vsphereCluster() *anywherev1.Cluster {
 			Namespace: namespace,
 		},
 		Spec: anywherev1.ClusterSpec{
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
 			DatacenterRef: anywherev1.Ref{
 				Kind: "VSphereDatacenterConfig",
 				Name: "datacenter",

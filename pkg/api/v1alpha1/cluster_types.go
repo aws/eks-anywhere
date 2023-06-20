@@ -821,7 +821,7 @@ type ClusterStatus struct {
 	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
 	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
 	// +optional
-	Conditions []clusterv1.Condition `json:"conditions,omitempty"`
+	Conditions []Condition `json:"conditions,omitempty"`
 
 	// ReconciledGeneration represents the .metadata.generation the last time the
 	// cluster was successfully reconciled. It is the latest generation observed
@@ -838,6 +838,9 @@ type ClusterStatus struct {
 	// to its behavior if changed externally. Its meaning and implementation are
 	// subject to change in the future.
 	ChildrenReconciledGeneration int64 `json:"childrenReconciledGeneration,omitempty"`
+
+	// ObservedGeneration is the latest generation observed by the controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 type EksdReleaseRef struct {
