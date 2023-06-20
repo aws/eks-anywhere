@@ -146,7 +146,8 @@ func TestUpdateControlPlaneInitializedCondition(t *testing.T) {
 
 			client = fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
-			clusters.UpdateControlPlaneStatus(ctx, client, cluster)
+			err := clusters.UpdateControlPlaneStatus(ctx, client, cluster)
+			g.Expect(err).To(BeNil())
 
 			condition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 			g.Expect(condition).ToNot(BeNil())

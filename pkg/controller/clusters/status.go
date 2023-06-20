@@ -3,6 +3,7 @@ package clusters
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -10,7 +11,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller"
-	"github.com/pkg/errors"
 )
 
 // UpdateControlPlaneStatus checks the current state of the Cluster's control plane and updates the
