@@ -18,7 +18,7 @@ To prepare a Nutanix environment to run EKS Anywhere, you need the following:
 * A Nutanix environment running AOS 5.20.4+ with AHV and Prism Central 2022.1+
 * Capacity to deploy 6-10 VMs
 * DHCP service or Nutanix IPAM running in your environment in the primary VM network for your workload cluster
-* One network in AOS to use for the cluster. EKS Anywhere clusters need access to Prism Central through the network to enable self-managing and storage capabilities.
+* [Prepare DHCP IP addresses pool]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-dhcp-ip-addresses-pool" >}})
 * A VM image imported into the Prism Image Service for the workload VMs
 * User credentials to create VMs and attach networks, etc
 * One IP address routable from cluster but excluded from DHCP/IPAM offering. 
