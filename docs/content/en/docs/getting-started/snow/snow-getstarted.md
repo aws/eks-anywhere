@@ -18,6 +18,7 @@ EKS Anywhere on Snow needs:
 * Certain pre-steps to complete before interacting with a Snowball device. See [Actions to complete before ordering a Snowball Edge device for Amazon EKS Anywhere](https://docs.aws.amazon.com/snowball/latest/developer-guide/eksa-gettingstarted.html).
 * EKS Anywhere enabled Snowball devices. See [Ordering a Snowball Edge device for use with Amazon EKS Anywhere](https://docs.aws.amazon.com/snowball/latest/developer-guide/order-sbe.html) for ordering experience through the AWS Snow Family console.
 * To be run on an Admin instance in a Snowball Edge device. See [Configuring and starting Amazon EKS Anywhere on Snowball Edge devices](https://docs.aws.amazon.com/snowball/latest/developer-guide/eksa-configuration.html) for setting up the devices, launching the Admin instance, fetching and copying the device credentials to the Admin instance for `eksctl` CLI to consume.
+* [Prepare DHCP IP addresses pool]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-dhcp-ip-addresses-pool" >}})
 
 Also, see the [Ports and protocols]({{< relref "../ports/" >}}) page for information on ports that need to be accessible from control plane, worker, and Admin machines.
 
