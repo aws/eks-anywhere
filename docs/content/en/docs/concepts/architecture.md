@@ -80,14 +80,7 @@ The EKS Anywhere Curated Packages feature recommends deploying certain packages 
 | <ul><li>Snow via CLI</li> | Y |
 | <ul><li>Nutanix via CLI</li> | Y |
 | <ul><li>Docker via CLI (non-production only)</li> | Y |
-| Upgrade a workload cluster on... ||
-| <ul><li>VMware via GitOps/Terraform</li> | Y |
-| <ul><li>CloudStack via GitOps/Terraform</li> | Y |
-| <ul><li>Bare Metal via GitOps/Terraform</li> | Y |
-| <ul><li>Snow via GitOps/Terraform</li> | Y |
-| <ul><li>Nutanix via GitOps/Terraform</li> | Y |
-| <ul><li>Docker via GitOps/Terraform (non-production only)</li> | Y |
-| Create/delete a workload cluster on...
+| Create/upgrade/delete a workload cluster on...
 | <ul><li>VMware via GitOps/Terraform</li> | Y |
 | <ul><li>CloudStack via GitOps/Terraform</li> | Y |
 | <ul><li>Bare Metal via GitOps/Terraform</li> | Y |
