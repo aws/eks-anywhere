@@ -250,3 +250,44 @@ func TestNutanixMachineConfigDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateNutanixMachineConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		fileName    string
+		expectedErr string
+	}{
+		{
+			name:        "invalid-machineconfig-addtional-categories-key",
+			fileName:    "testdata/nutanix/invalid-machineconfig-addtional-categories-key.yaml",
+			expectedErr: "NutanixMachineConfig: missing category key",
+		},
+		{
+			name:        "invalid-machineconfig-addtional-categories-value",
+			fileName:    "testdata/nutanix/invalid-machineconfig-addtional-categories-value.yaml",
+			expectedErr: "NutanixMachineConfig: missing category value",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			conf, err := GetNutanixMachineConfigs(test.fileName)
+			if err != nil {
+				t.Fatalf("GetNutanixMachineConfigs returned error")
+			}
+			if conf == nil {
+				t.Fatalf("GetNutanixMachineConfigs returned conf without defaults")
+			}
+
+			nutanixMachineConfig := conf["eksa-unit-test"]
+			if nutanixMachineConfig == nil {
+				t.Fatalf("Invalid yaml found")
+			}
+			err = nutanixMachineConfig.Validate()
+			if err == nil {
+				t.Fatalf("validate should have failed")
+			}
+			assert.Contains(t, err.Error(), test.expectedErr, "expected error", test.expectedErr, "got error", err)
+		})
+	}
+}

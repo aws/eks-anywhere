@@ -1,0 +1,195 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixCluster
+metadata:
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
+spec:
+  prismCentral:
+    address: "prism.nutanix.com"
+    port: 9440
+    insecure: false
+    credentialRef:
+      name: "capx-eksa-unit-test"
+      kind: Secret
+  controlPlaneEndpoint:
+    host: "test-ip"
+    port: 6443
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "eksa-unit-test"
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
+spec:
+  clusterNetwork:
+    services:
+      cidrBlocks: [10.96.0.0/12]
+    pods:
+      cidrBlocks: [192.168.0.0/16]
+    serviceDomain: "cluster.local"
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: "eksa-unit-test"
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: NutanixCluster
+    name: "eksa-unit-test"
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: "eksa-unit-test"
+  namespace: "eksa-system"
+spec:
+  replicas: 3
+  version: "v1.19.8-eks-1-19-4"
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: NutanixMachineTemplate
+      name: "<no value>"
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      imageRepository: "public.ecr.aws/eks-distro/kubernetes"
+      apiServer:
+        certSANs:
+          - localhost
+          - 127.0.0.1
+          - 0.0.0.0
+      controllerManager:
+        extraArgs:
+          enable-hostpath-provisioner: "true"
+      dns:
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.0-eks-1-19-4
+      etcd:
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+    files:
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+            - name: kube-vip
+              image: 
+              imagePullPolicy: IfNotPresent
+              args:
+                - manager
+              env:
+                - name: vip_arp
+                  value: "true"
+                - name: address
+                  value: "test-ip"
+                - name: port
+                  value: "6443"
+                - name: vip_cidr
+                  value: "32"
+                - name: cp_enable
+                  value: "true"
+                - name: cp_namespace
+                  value: kube-system
+                - name: vip_ddns
+                  value: "false"
+                - name: vip_leaderelection
+                  value: "true"
+                - name: vip_leaseduration
+                  value: "15"
+                - name: vip_renewdeadline
+                  value: "10"
+                - name: vip_retryperiod
+                  value: "2"
+                - name: svc_enable
+                  value: "false"
+                - name: lb_enable
+                  value: "false"
+              securityContext:
+                capabilities:
+                  add:
+                    - NET_ADMIN
+                    - SYS_TIME
+                    - NET_RAW
+              volumeMounts:
+                - mountPath: /etc/kubernetes/admin.conf
+                  name: kubeconfig
+              resources: {}
+          hostNetwork: true
+          volumes:
+            - name: kubeconfig
+              hostPath:
+                type: FileOrCreate
+                path: /etc/kubernetes/admin.conf
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+          # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+          #cgroup-driver: cgroupfs
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        name: "{{ ds.meta_data.hostname }}"
+    users:
+      - name: "mySshUsername"
+        lockPassword: false
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        sshAuthorizedKeys:
+          - "mySshAuthorizedKey"
+    preKubeadmCommands:
+      - hostnamectl set-hostname "{{ ds.meta_data.hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >> /etc/hosts
+    postKubeadmCommands:
+      - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
+    useExperimentalRetryJoin: true
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "<no value>"
+  namespace: "eksa-system"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://eksa-unit-test-m1"
+      vcpusPerSocket: 1
+      vcpuSockets: 4
+      memorySize: 8Gi
+      systemDiskSize: 40Gi
+      image:
+        type: name
+        name: "prism-image"
+
+      cluster:
+        type: name
+        name: "prism-cluster"
+      subnet:
+        - type: name
+          name: "prism-subnet"
+      additionalCategories:
+        - key:   "key1"
+          value: "value1"
+        - key:   "key2"
+          value: "value2"
+---

@@ -37,6 +37,23 @@ spec:
           spec:
             description: NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig.
             properties:
+              additionalCategories:
+                description: additionalCategories is a list of optional categories
+                  to be added to the VM. Categories must be created in Prism Central
+                  before they can be used.
+                items:
+                  description: NutanixCategoryIdentifier holds the identity of a Nutanix
+                    Prism Central category.
+                  properties:
+                    key:
+                      description: key is the Key of the category in the Prism Central.
+                      type: string
+                    value:
+                      description: value is the category value linked to the key in
+                        the Prism Central.
+                      type: string
+                  type: object
+                type: array
               cluster:
                 description: cluster is to identify the cluster (the Prism Element
                   under management of the Prism Central), in which the Machine's VM

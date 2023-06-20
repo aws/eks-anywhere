@@ -79,6 +79,13 @@ spec:
         uuid: "{{.projectUUID}}"
 {{ end }}
 {{ end }}
+{{- if .additionalCategories}}
+      additionalCategories:
+{{- range .additionalCategories}}
+        - key:   "{{ .Key }}"
+          value: "{{ .Value }}"
+{{- end }}
+{{- end }}
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate

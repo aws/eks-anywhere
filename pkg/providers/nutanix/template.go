@@ -246,6 +246,10 @@ func buildTemplateMapCP(
 		values["noProxy"] = generateNoProxyList(clusterSpec)
 	}
 
+	if len(controlPlaneMachineSpec.AdditionalCategories) > 0 {
+		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
+	}
+
 	return values, nil
 }
 
@@ -316,6 +320,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
 		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
 		values["noProxy"] = generateNoProxyList(clusterSpec)
+	}
+
+	if len(workerNodeGroupMachineSpec.AdditionalCategories) > 0 {
+		values["additionalCategories"] = workerNodeGroupMachineSpec.AdditionalCategories
 	}
 
 	return values, nil
