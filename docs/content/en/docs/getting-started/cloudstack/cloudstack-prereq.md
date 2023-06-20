@@ -22,8 +22,8 @@ To prepare a CloudStack environment to run EKS Anywhere, you need the following:
 * One shared network in CloudStack to use for the cluster. EKS Anywhere clusters need access to CloudStack through the network to enable self-managing and storage capabilities.
 * A Red Hat Enterprise Linux qcow2 image built using the `image-builder` tool as described in [artifacts]({{< relref "../../osmgmt/artifacts/" >}}).
 * User credentials (CloudStack API key and Secret key) to create VMs and attach networks in CloudStack.
-* Please make sure to have sufficient available DHCP addresses from VMs counts and maxSurge config. To create, each VM needs 1 IP. To upgrade/scale, cp/works needs 1 extra ip, each external etcd needs 1 extra ip, plus max surge. The ips in use are already taken, please free up required ips before starting the upgrade process.
-  For example, if you need to create a cluster with 1 control plane node, 2 worker node and 3 external etcd, you'll need at least 1+2+3=6 ips. To upgrade the same cluster with maxSurge set to 2, you'll need 1+3+2=6 extra ips.
+* Please make sure to have sufficient available IP addresses in your DHCP pool from VMs counts and maxSurge config. For create operation, each VM needs 1 IP. For upgrade and scale operation, control plane/works needs 1 extra IP, each external ETCD needs 1 extra IP, plus IPs equal to the number used for maxSurge. After calculating the required IPs, please make sure your environment has enough available IPs before upgrade operation.
+  For example, if you need to create a cluster with 1 control plane node, 2 worker node and 3 external ETCD nodes, you'll need at least 6 (1+2+3) IPs available. To upgrade the same cluster with maxSurge set to 2, you'll need 6 (1+3+2) available IPs.
 * One IP address routable from the cluster but excluded from DHCP offering. This IP address is to be used as the Control Plane Endpoint IP. Below are some suggestions to ensure that this IP address is never handed out by your DHCP server. You may need to contact your network engineer.
 
     * Pick an IP address reachable from the cluster subnet which is excluded from DHCP range OR
