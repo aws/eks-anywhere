@@ -100,11 +100,9 @@ func (vb *VersionsBundle) CloudStackImages() []Image {
 func (vb *VersionsBundle) VsphereImages() []Image {
 	return []Image{
 		vb.VSphere.ClusterAPIController,
-		vb.VSphere.Driver,
 		vb.VSphere.KubeProxy,
 		vb.VSphere.KubeVip,
 		vb.VSphere.Manager,
-		vb.VSphere.Syncer,
 	}
 }
 
