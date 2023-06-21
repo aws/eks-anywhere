@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -180,7 +179,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Status:   "False",
 				Reason:   anywherev1.ScalingUpReason,
 				Severity: clusterv1.ConditionSeverityInfo,
-				Message:  "Scaling up control plane nodes",
+				Message:  "Scaling up control plane nodes, 3 expected (1 actual)",
 			},
 		},
 		{
@@ -243,6 +242,35 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			},
 		},
 		{
+			name: "control plane nodes provisioning in progress",
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+				kcp.Status.Replicas = 3
+				kcp.Status.ReadyReplicas = 2
+				kcp.Status.UpdatedReplicas = 3
+
+				kcp.Status.Conditions = []clusterv1.Condition{
+					{
+						Type:   clusterv1.ReadyCondition,
+						Status: "True",
+					},
+				}
+			}),
+			controlPlaneCount: 3,
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.ControlPlaneReadyCondition,
+				Status:   "False",
+				Reason:   anywherev1.NodesNotReadyReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Control plane nodes not ready yet",
+			},
+		},
+		{
 			name: "control plane ready",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Status.Replicas = 3
@@ -296,16 +324,11 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			condition := conditions.Get(cluster, tt.wantCondition.Type)
 			g.Expect(condition).ToNot(BeNil())
 
-			wantMessage := tt.wantCondition.Message
-			message := condition.Message
-
-			// Clear these out for easier comparison
-			condition.LastTransitionTime = v1.Time{}
-			condition.Message = ""
-			tt.wantCondition.Message = ""
-
-			g.Expect(condition).To(Equal(tt.wantCondition))
-			g.Expect(message).To(ContainSubstring(wantMessage))
+			g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
+			g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
+			g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))
+			g.Expect(condition.Reason).To(Equal(tt.wantCondition.Reason))
+			g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
 		})
 	}
 }

@@ -72,9 +72,12 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	}
 
 	readyReplicas := int(kcp.Status.ReadyReplicas)
-	if readyReplicas == expected {
-		conditions.MarkTrue(cluster, anywherev1.ControlPlaneReadyCondition)
+	if readyReplicas != expected {
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.NodesNotReadyReason, clusterv1.ConditionSeverityInfo, "Control plane nodes not ready yet, %d expected (%d ready)", expected, readyReplicas)
+		return
 	}
+
+	conditions.MarkTrue(cluster, anywherev1.ControlPlaneReadyCondition)
 }
 
 // updateControlPlaneInitializedCondition updates the ControlPlaneInitialized condition if it hasn't already been set.

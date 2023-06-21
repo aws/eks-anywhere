@@ -30,6 +30,8 @@ const (
 )
 
 const (
+	// NodesNotReadyReason reports the Cluster has some nodes that are not ready.
+	NodesNotReadyReason = "NodesNotReady"
 
 	// ScalingUpReason reports the Cluster is increasing the number of replicas for a set of nodes.
 	ScalingUpReason = "ScalingUp"
