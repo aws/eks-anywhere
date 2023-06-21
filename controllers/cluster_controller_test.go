@@ -54,7 +54,12 @@ func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlpla
 	return test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = k.Name
 		kcp.Namespace = k.Namespace
+		expectedReplicas := int32(cluster.Spec.ControlPlaneConfiguration.Count)
+
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
+			Replicas:        expectedReplicas,
+			UpdatedReplicas: expectedReplicas,
+			ReadyReplicas:   expectedReplicas,
 			Conditions: clusterv1.Conditions{
 				{
 					Type:   controlplanev1.AvailableCondition,

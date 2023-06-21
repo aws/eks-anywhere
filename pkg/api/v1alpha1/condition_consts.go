@@ -28,3 +28,16 @@ const (
 	// DefaultCNIConfiguredCondition reports the default cni cluster has been configured successfully.
 	DefaultCNIConfiguredCondition ConditionType = "DefaultCNIConfigured"
 )
+
+const (
+
+	// ScalingUpReason reports the Cluster is increasing the number of replicas for a set of nodes.
+	ScalingUpReason = "ScalingUp"
+
+	// ScalingDownReason reports the Cluster is decreasing the number of replicas for a set of nodes.
+	ScalingDownReason = "ScalingDown"
+
+	// RollingUpgradeInProgress reports the Cluster is executing a rolling upgrading to align the nodes to
+	// a new desired machine spec.
+	RollingUpgradeInProgress = "RollingUpgradeInProgress"
+)
