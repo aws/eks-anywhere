@@ -15,6 +15,10 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
    * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster. The only exception is the `kubectl create namespace` command below, which should be run with `kubeconfig` pointing to the workload cluster.
    {{% /alert %}}
 
+{{% alert title="Note" color="primary" %}}
+Operators can also leverage Ingress support provided by Isovalent that uses the standard Kubernetes Ingress resource definition, with an ingressClassName of cilium. This can be used for path-based routing and for TLS termination. (https://docs.cilium.io/en/stable/network/servicemesh/ingress/)
+{{% /alert %}}
+
 ## Install
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
