@@ -126,7 +126,7 @@ For next steps on leveraging Network Policy, we encourage you to explore:
 
 ## Additional Cilium Features
 
-Many advanced features of Cilium are not yet enabled as part of EKS Anywhere, including:  
+Some advanced features of Cilium are not enabled as part of EKS Anywhere, including:
 
 * Hubble observability (https://docs.isovalent.com/operations-guide/features/network-visibility/index.html)
 * DNS-aware and HTTP-Aware Network Policy (https://docs.isovalent.com/quick-start/policy_lifecycle.html)
