@@ -584,7 +584,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           imageToDisk:
             arch:
             - amd64
@@ -593,7 +593,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           kexec:
             arch:
             - amd64
@@ -602,7 +602,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           ociToDisk:
             arch:
             - amd64
@@ -611,7 +611,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           reboot:
             arch:
             - amd64
@@ -620,7 +620,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: reboot
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
@@ -629,7 +629,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
         boots:
           arch:
           - amd64
@@ -1363,7 +1363,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           imageToDisk:
             arch:
             - amd64
@@ -1372,7 +1372,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           kexec:
             arch:
             - amd64
@@ -1381,7 +1381,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           ociToDisk:
             arch:
             - amd64
@@ -1390,7 +1390,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           reboot:
             arch:
             - amd64
@@ -1399,7 +1399,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: reboot
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
@@ -1408,7 +1408,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
         boots:
           arch:
           - amd64
@@ -2115,7 +2115,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           imageToDisk:
             arch:
             - amd64
@@ -2124,7 +2124,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           kexec:
             arch:
             - amd64
@@ -2133,7 +2133,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           ociToDisk:
             arch:
             - amd64
@@ -2142,7 +2142,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           reboot:
             arch:
             - amd64
@@ -2151,7 +2151,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: reboot
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
@@ -2160,7 +2160,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
         boots:
           arch:
           - amd64
@@ -2867,7 +2867,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           imageToDisk:
             arch:
             - amd64
@@ -2876,7 +2876,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           kexec:
             arch:
             - amd64
@@ -2885,7 +2885,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           ociToDisk:
             arch:
             - amd64
@@ -2894,7 +2894,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           reboot:
             arch:
             - amd64
@@ -2903,7 +2903,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: reboot
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
@@ -2912,7 +2912,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
         boots:
           arch:
           - amd64
@@ -3619,7 +3619,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/cexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           imageToDisk:
             arch:
             - amd64
@@ -3628,7 +3628,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/image2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           kexec:
             arch:
             - amd64
@@ -3637,7 +3637,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/kexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           ociToDisk:
             arch:
             - amd64
@@ -3646,7 +3646,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           reboot:
             arch:
             - amd64
@@ -3655,7 +3655,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: reboot
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
@@ -3664,7 +3664,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.0.0-dev-build.1
         boots:
           arch:
           - amd64
