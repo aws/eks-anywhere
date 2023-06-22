@@ -88,6 +88,28 @@ func SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereData
 		return fmt.Errorf("failed setting env %s: %v", config.EksavSpherePasswordKey, err)
 	}
 
+	vsphereCPUsername := secret.Data["usernameCP"]
+	vsphereCPPassword := secret.Data["passwordCP"]
+
+	if err := os.Setenv(config.EksavSphereCPUsernameKey, string(vsphereCPUsername)); err != nil {
+		return fmt.Errorf("failed setting env %s: %v", config.EksavSphereCPUsernameKey, err)
+	}
+
+	if err := os.Setenv(config.EksavSphereCPPasswordKey, string(vsphereCPPassword)); err != nil {
+		return fmt.Errorf("failed setting env %s: %v", config.EksavSphereCPPasswordKey, err)
+	}
+
+	vsphereCSIUsername := secret.Data["usernameCSI"]
+	vsphereCSIPassword := secret.Data["passwordCSI"]
+
+	if err := os.Setenv(config.EksavSphereCSIUsernameKey, string(vsphereCSIUsername)); err != nil {
+		return fmt.Errorf("failed setting env %s: %v", config.EksavSphereCSIUsernameKey, err)
+	}
+
+	if err := os.Setenv(config.EksavSphereCSIPasswordKey, string(vsphereCSIPassword)); err != nil {
+		return fmt.Errorf("failed setting env %s: %v", config.EksavSphereCSIPasswordKey, err)
+	}
+
 	if err := vsphere.SetupEnvVars(vsphereDatacenter); err != nil {
 		return fmt.Errorf("failed setting env vars: %v", err)
 	}
