@@ -11,6 +11,7 @@ description: >
 
 While you are free to use any Ingress Controller you like with your EKS Anywhere cluster, AWS currently only supports Emissary Ingress.
 For information on how to configure a Emissary Ingress curated package for EKS Anywhere, see the [Add Emissary Ingress]({{< relref "../packages/emissary" >}}) page.
+You may also reference the official [emissary documentation](https://www.getambassador.io/docs/emissary) for further configuration details.
 
 ## Setting up Emissary-ingress for Ingress Controller
 
