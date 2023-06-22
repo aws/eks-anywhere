@@ -7,7 +7,7 @@ import (
 )
 
 // Default is the logic for a default for a type O. It should return a value of O
-// wether it updates it or not. When there is an error, return the zero value of O
+// whether it updates it or not. When there is an error, return the zero value of O
 // and the error.
 type Default[O any] func(ctx context.Context, obj O) (O, error)
 

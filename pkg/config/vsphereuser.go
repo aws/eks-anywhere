@@ -15,10 +15,10 @@ const (
 )
 
 type VSphereUserConfig struct {
-	EksaVsphereUsername    string
-	EksaVspherePassword    string
-	EksaVsphereCPUsername  string
-	EksaVsphereCPPassword  string
+	EksaVsphereUsername   string
+	EksaVspherePassword   string
+	EksaVsphereCPUsername string
+	EksaVsphereCPPassword string
 }
 
 //go:embed static/globalPrivs.json

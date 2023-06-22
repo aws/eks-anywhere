@@ -17,3 +17,8 @@ type CliConfig struct {
 	GitPrivateKeyFile   string
 	GitKnownHostsFile   string
 }
+
+// CreateCliConfig is the config we use for create specific configurations.
+type CreateCliConfig struct {
+	SkipCPIPCheck bool
+}
