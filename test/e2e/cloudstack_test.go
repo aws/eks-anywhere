@@ -661,63 +661,13 @@ func TestCloudStackUpgradeKubernetes124MulticlusterWorkloadClusterWithGithubFlux
 }
 
 func TestCloudStackKubernetes123WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
-	runTestCloudstackManagementClusterUpgradeSideEffects(t, anywherev1.RedHat, anywherev1.Kube123)
+	cloudstack := framework.NewCloudStack(t)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube123)
 }
 
 func TestCloudStackKubernetes124WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
-	runTestCloudstackManagementClusterUpgradeSideEffects(t, anywherev1.RedHat, anywherev1.Kube124)
-}
-
-func runTestCloudstackManagementClusterUpgradeSideEffects(t *testing.T, osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) {
-	latestRelease := latestMinorRelease(t)
-
 	cloudstack := framework.NewCloudStack(t)
-	managementCluster := framework.NewClusterE2ETest(t, cloudstack, framework.PersistentCluster())
-	managementCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
-	managementCluster.UpdateClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithControlPlaneCount(1),
-			api.WithWorkerNodeCount(1),
-			api.WithEtcdCountIfExternal(1),
-		),
-		cloudstack.WithKubeVersion(osFamily, kubeVersion),
-	)
-
-	test := framework.NewMulticlusterE2ETest(t, managementCluster)
-
-	workloadCluster := framework.NewClusterE2ETest(t, cloudstack,
-		framework.WithClusterName(test.NewWorkloadClusterName()),
-	)
-	workloadCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
-	workloadCluster.UpdateClusterConfig(
-		api.ClusterToConfigFiller(
-			api.WithManagementCluster(managementCluster.ClusterName),
-			api.WithControlPlaneCount(2),
-			api.WithControlPlaneLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
-			api.RemoveAllWorkerNodeGroups(),
-			api.WithWorkerNodeGroup("workers-0",
-				api.WithCount(3),
-				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
-			),
-			api.WithEtcdCountIfExternal(3),
-			api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways),
-		),
-		cloudstack.WithWorkerNodeGroup("workers-0",
-			framework.WithWorkerNodeGroup("workers-0",
-				api.WithCount(2),
-				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
-			),
-		),
-		framework.WithOIDCClusterConfig(t),
-		cloudstack.WithKubeVersion(osFamily, kubeVersion),
-	)
-
-	test.WithWorkloadClusters(workloadCluster)
-
-	runFlowUpgradeManagementClusterCheckForSideEffects(test,
-		framework.NewEKSAReleasePackagedBinary(latestRelease),
-		newEKSAPackagedBinaryForLocalBinary(t),
-	)
+	runTestManagementClusterUpgradeSideEffects(t, cloudstack, anywherev1.RedHat, anywherev1.Kube124)
 }
 
 // OIDC

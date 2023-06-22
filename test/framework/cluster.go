@@ -318,6 +318,8 @@ type Provider interface {
 	CleanupVMs(clusterName string) error
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	ClusterStateValidations() []clusterf.StateValidation
+	WithKubeVersionAndOS(osFamily v1alpha1.OSFamily, kubeVersion v1alpha1.KubernetesVersion) api.ClusterConfigFiller
+	WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
@@ -564,9 +566,9 @@ func (e *ClusterE2ETest) baseClusterConfigUpdates(opts ...CommandOpt) []api.Clus
 
 	// If we are persisting an existing cluster, set the control plane endpoint back to the original, since
 	// it is immutable
-	if e.PersistentCluster && e.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
+	if e.ClusterConfig.Cluster.Spec.DatacenterRef.Kind != v1alpha1.DockerDatacenterKind && e.PersistentCluster && e.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
 		endpoint := e.ClusterConfig.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-		e.T.Logf("Resseting CP endpoint for persistent cluster to %s", endpoint)
+		e.T.Logf("Resetting CP endpoint for persistent cluster to %s", endpoint)
 		configFillers = append(configFillers,
 			api.ClusterToConfigFiller(api.WithControlPlaneEndpointIP(endpoint)),
 		)

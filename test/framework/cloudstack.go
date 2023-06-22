@@ -261,11 +261,11 @@ func (c *CloudStack) WithNewCloudStackWorkerNodeGroup(name string, workerNodeGro
 	}
 }
 
-// WithWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
+// WithNewWorkerNodeGroup returns an api.ClusterFiller that adds a new workerNodeGroupConfiguration and
 // a corresponding CloudStackMachineConfig to the cluster config.
-func (c *CloudStack) WithWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.CloudStackMachineConfigFiller) api.ClusterConfigFiller {
+func (c *CloudStack) WithNewWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
-		api.CloudStackToConfigFiller(cloudStackMachineConfig(name, fillers...)),
+		api.CloudStackToConfigFiller(cloudStackMachineConfig(name)),
 		api.ClusterToConfigFiller(buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup)),
 	)
 }
@@ -402,9 +402,9 @@ func (c *CloudStack) searchTemplate(ctx context.Context, template string) (strin
 	return template, nil
 }
 
-// WithKubeVersion returns a cluster config filler that sets the cluster kube version and the right template for all
+// WithKubeVersionAndOS returns a cluster config filler that sets the cluster kube version and the right template for all
 // cloudstack machine configs.
-func (c *CloudStack) WithKubeVersion(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
+func (c *CloudStack) WithKubeVersionAndOS(osFamily anywherev1.OSFamily, kubeVersion anywherev1.KubernetesVersion) api.ClusterConfigFiller {
 	return api.JoinClusterConfigFillers(
 		api.ClusterToConfigFiller(api.WithKubernetesVersion(kubeVersion)),
 		api.CloudStackToConfigFiller(

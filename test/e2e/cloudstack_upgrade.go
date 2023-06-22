@@ -37,8 +37,8 @@ func cloudStackAPIUpdateTestBaseStep(e *framework.ClusterE2ETest, cloudstack *fr
 				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 			),
 			// Add new WorkerNodeGroups
-			cloudstack.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), api.WithCount(1))),
-			cloudstack.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), api.WithCount(1))),
+			cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-0", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), api.WithCount(1))),
+			cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-1", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), api.WithCount(1))),
 			cloudstack.WithRedhatVersion(e.ClusterConfig.Cluster.Spec.KubernetesVersion),
 		),
 	}
@@ -64,8 +64,8 @@ func cloudstackAPIManagementClusterUpgradeTests(e *framework.ClusterE2ETest, clo
 						api.ClusterToConfigFiller(
 							api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 						),
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), api.WithCount(1))),
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-0", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-1", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), api.WithCount(1))),
 						cloudstack.WithRedhatVersion(e.ClusterConfig.Cluster.Spec.KubernetesVersion),
 					),
 				},
@@ -100,8 +100,8 @@ func cloudstackAPIManagementClusterUpgradeTests(e *framework.ClusterE2ETest, clo
 							api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 						),
 						// Add new WorkerNodeGroups
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), api.WithCount(1))),
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-2", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-3", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), api.WithCount(1))),
 						cloudstack.WithRedhatVersion(e.ClusterConfig.Cluster.Spec.KubernetesVersion),
 					),
 				},
@@ -133,8 +133,8 @@ func cloudStackAPIWorkloadUpgradeTests(wc *framework.WorkloadCluster, cloudstack
 							api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 							api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 						),
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), api.WithCount(1))),
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-0", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-0", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-1", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-1", clusterName), api.WithCount(1))),
 						cloudstack.WithRedhatVersion(wc.ClusterConfig.Cluster.Spec.KubernetesVersion),
 					),
 				},
@@ -175,8 +175,8 @@ func cloudStackAPIWorkloadUpgradeTests(wc *framework.WorkloadCluster, cloudstack
 							api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 						),
 						// Add new WorkerNodeGroups
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), api.WithCount(1))),
-						cloudstack.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-2", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-2", clusterName), api.WithCount(1))),
+						cloudstack.WithNewWorkerNodeGroup(clusterPrefix("md-3", clusterName), framework.WithWorkerNodeGroup(clusterPrefix("md-3", clusterName), api.WithCount(1))),
 						cloudstack.WithRedhatVersion(wc.ClusterConfig.Cluster.Spec.KubernetesVersion),
 					),
 				},
