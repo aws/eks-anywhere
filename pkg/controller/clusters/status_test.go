@@ -17,6 +17,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const controlPlaneInitalizationInProgressReason = "The first control plane instance is not available yet"
@@ -242,7 +243,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			},
 		},
 		{
-			name: "control plane nodes provisioning in progress",
+			name: "control plane nodes not ready yet",
 			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 				kcp.Status.Replicas = 3
 				kcp.Status.ReadyReplicas = 2
@@ -319,6 +320,359 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			client = fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
 			err := clusters.UpdateClusterStatusForControlPlane(ctx, client, cluster)
+			g.Expect(err).To(BeNil())
+
+			condition := conditions.Get(cluster, tt.wantCondition.Type)
+			g.Expect(condition).ToNot(BeNil())
+
+			g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
+			g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
+			g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))
+			g.Expect(condition.Reason).To(Equal(tt.wantCondition.Reason))
+			g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
+		})
+	}
+}
+
+func TestUpdateWorkersReadyCondition(t *testing.T) {
+	cluster := test.NewClusterSpec().Cluster
+	clusterName := "test-cluster"
+	g := NewWithT(t)
+
+	tests := []struct {
+		name                          string
+		machineDeployments            []clusterv1.MachineDeployment
+		workerNodeGroupConfigurations []anywherev1.WorkerNodeGroupConfiguration
+		conditions                    []anywherev1.Condition
+		wantCondition                 *anywherev1.Condition
+		wantErr                       string
+	}{
+		{
+			name:                          "workers not ready, control plane not initialized",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{},
+			machineDeployments:            []clusterv1.MachineDeployment{},
+			conditions: []anywherev1.Condition{
+				{
+					Type:     anywherev1.ControlPlaneInitializedCondition,
+					Status:   "False",
+					Severity: clusterv1.ConditionSeverityInfo,
+					Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
+					Message:  controlPlaneInitalizationInProgressReason,
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyConditon,
+				Status:   "False",
+				Reason:   anywherev1.ControlPlaneNotInitializedReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+			},
+		},
+		{
+			name: "workers not ready, outdated information, one group",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Generation = 1
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.ObservedGeneration = 0
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyConditon,
+				Status:   "False",
+				Reason:   anywherev1.OutdatedInformationReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+			},
+		},
+		{
+			name: "workers not ready, outdated information, two groups",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					Count: ptr.Int(1),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Generation = 1
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.ObservedGeneration = 0
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Generation = 1
+					md.Status.ObservedGeneration = 1
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyConditon,
+				Status:   "False",
+				Reason:   anywherev1.OutdatedInformationReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+			},
+		},
+		{
+			name: "workers not ready, nodes not up to date ",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					Count: ptr.Int(2),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 2
+					md.Status.ReadyReplicas = 2
+					md.Status.UpdatedReplicas = 1
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyConditon,
+				Status:   "False",
+				Reason:   anywherev1.RollingUpgradeInProgress,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Worker nodes not up-to-date yet",
+			},
+		},
+		{
+			name: "workers not ready, scaling up",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					Count: ptr.Int(2),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 0
+					md.Status.ReadyReplicas = 0
+					md.Status.UpdatedReplicas = 0
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 2
+					md.Status.ReadyReplicas = 2
+					md.Status.UpdatedReplicas = 2
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyConditon,
+				Status:   "False",
+				Reason:   anywherev1.ScalingUpReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Scaling up worker nodes",
+			},
+		},
+		{
+			name: "workers not ready, scaling down",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(2),
+				},
+				{
+					Count: ptr.Int(1),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 2
+					md.Status.ReadyReplicas = 2
+					md.Status.UpdatedReplicas = 2
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 2
+					md.Status.ReadyReplicas = 2
+					md.Status.UpdatedReplicas = 2
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyConditon,
+				Status:   "False",
+				Reason:   anywherev1.ScalingDownReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Scaling down worker nodes",
+			},
+		},
+		{
+			name: "workers not ready, nodes not ready yet",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					Count: ptr.Int(2),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.ReadyReplicas = 1
+					md.Status.Replicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.ReadyReplicas = 0
+					md.Status.Replicas = 2
+					md.Status.UpdatedReplicas = 2
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.WorkersReadyConditon,
+				Status:   "False",
+				Reason:   anywherev1.NodesNotReadyReason,
+				Severity: clusterv1.ConditionSeverityInfo,
+				Message:  "Worker nodes not ready yet",
+			},
+		},
+
+		{
+			name: "workers ready",
+			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+				},
+				{
+					Count: ptr.Int(2),
+				},
+			},
+			machineDeployments: []clusterv1.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-0"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 1
+					md.Status.ReadyReplicas = 1
+					md.Status.UpdatedReplicas = 1
+				}),
+				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+					md.ObjectMeta.Name = "md-1"
+					md.ObjectMeta.Labels = map[string]string{
+						clusterv1.ClusterNameLabel: clusterName,
+					}
+					md.Status.Replicas = 2
+					md.Status.ReadyReplicas = 2
+					md.Status.UpdatedReplicas = 2
+				}),
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneInitializedCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.WorkersReadyConditon,
+				Status: "True",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			cluster.Name = clusterName
+			cluster.Namespace = constants.EksaSystemNamespace
+			cluster.Spec.WorkerNodeGroupConfigurations = tt.workerNodeGroupConfigurations
+			cluster.Status.Conditions = tt.conditions
+
+			objs := []runtime.Object{}
+
+			var client client.Client
+			for _, md := range tt.machineDeployments {
+				objs = append(objs, md.DeepCopy())
+			}
+
+			client = fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+
+			err := clusters.UpdateClusterStatusForWorkers(ctx, client, cluster)
 			g.Expect(err).To(BeNil())
 
 			condition := conditions.Get(cluster, tt.wantCondition.Type)

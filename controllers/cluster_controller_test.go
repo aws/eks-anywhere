@@ -74,6 +74,20 @@ func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlpla
 	})
 }
 
+func machineDeploymentsFromCluster(cluster *anywherev1.Cluster) []clusterv1.MachineDeployment {
+	return []clusterv1.MachineDeployment{
+		*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			md.ObjectMeta.Name = "md-0"
+			md.ObjectMeta.Labels = map[string]string{
+				clusterv1.ClusterNameLabel: cluster.Name,
+			}
+			md.Status.Replicas = 1
+			md.Status.ReadyReplicas = 1
+			md.Status.UpdatedReplicas = 1
+		}),
+	}
+}
+
 func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsphereClusterReconcilerTest {
 	ctrl := gomock.NewController(t)
 	govcClient := vspheremocks.NewMockProviderGovcClient(ctrl)
@@ -248,17 +262,23 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 				awsIAM.Generation = tt.awsIAMGeneration
 			}
 
+			kcp := testKubeadmControlPlaneFromCluster(config.Cluster)
+			machineDeployments := machineDeploymentsFromCluster(config.Cluster)
+
 			g := NewWithT(t)
 			ctx := context.Background()
 
-			objs := make([]runtime.Object, 0, 7)
+			objs := make([]runtime.Object, 0, 7+len(machineDeployments))
 			objs = append(objs, config.Cluster, bundles)
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)
 			}
 
-			kcp := testKubeadmControlPlaneFromCluster(config.Cluster)
 			objs = append(objs, kcp)
+
+			for _, obj := range machineDeployments {
+				objs = append(objs, obj.DeepCopy())
+			}
 
 			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 			mockCtrl := gomock.NewController(t)
@@ -347,15 +367,19 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	cluster := vsphereCluster()
 	cluster.SetManagedBy(managementCluster.Name)
 	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
+	machineDeployments := machineDeploymentsFromCluster(cluster)
+
+	objs := make([]runtime.Object, 0, 5)
+	objs = append(objs, managementCluster, cluster, capiCluster, kcp)
+	for _, md := range machineDeployments {
+		objs = append(objs, md.DeepCopy())
+	}
 
 	// Mark as paused
 	cluster.PauseReconcile()
 
-	kcp := testKubeadmControlPlaneFromCluster(cluster)
-
-	c := fake.NewClientBuilder().WithRuntimeObjects(
-		managementCluster, cluster, capiCluster, kcp,
-	).Build()
+	c := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
 	ctrl := gomock.NewController(t)
 	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
@@ -499,6 +523,13 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	controllerutil.AddFinalizer(cluster, controllers.ClusterFinalizerName)
 	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
 	kcp := testKubeadmControlPlaneFromCluster(cluster)
+	machineDeployments := machineDeploymentsFromCluster(cluster)
+
+	objs := make([]runtime.Object, 0, 5)
+	objs = append(objs, managementCluster, cluster, capiCluster, kcp)
+	for _, md := range machineDeployments {
+		objs = append(objs, md.DeepCopy())
+	}
 
 	// Mark cluster for deletion
 	now := metav1.Now()
@@ -510,9 +541,7 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 	controller := gomock.NewController(t)
 	iam := mocks.NewMockAWSIamConfigReconciler(controller)
 	clusterValidator := mocks.NewMockClusterValidator(controller)
-	c := fake.NewClientBuilder().WithRuntimeObjects(
-		managementCluster, cluster, capiCluster, kcp,
-	).Build()
+	c := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
 	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))

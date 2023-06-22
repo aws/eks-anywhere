@@ -404,7 +404,11 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 	log.Info("Updating cluster status")
 
 	if err := clusters.UpdateClusterStatusForControlPlane(ctx, r.client, cluster); err != nil {
-		return errors.Wrap(err, "updating controlplane status")
+		return errors.Wrap(err, "updating status for control plane")
+	}
+
+	if err := clusters.UpdateClusterStatusForWorkers(ctx, r.client, cluster); err != nil {
+		return errors.Wrap(err, "updating status for workers")
 	}
 
 	// Always update the readyCondition by summarizing the state of other conditions.

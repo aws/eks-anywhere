@@ -91,3 +91,14 @@ func GetMachineDeployment(ctx context.Context, client client.Client, machineDepl
 	}
 	return machineDeployment, nil
 }
+
+// GetMachineDeployments reads all of cluster-api MachineDeployment for an eks-a cluster using a kube client.
+func GetMachineDeployments(ctx context.Context, c client.Client, cluster *anywherev1.Cluster) ([]clusterv1.MachineDeployment, error) {
+	machineDeployments := &clusterv1.MachineDeploymentList{}
+
+	err := c.List(ctx, machineDeployments, client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name}, client.InNamespace(constants.EksaSystemNamespace))
+	if err != nil {
+		return nil, err
+	}
+	return machineDeployments.Items, nil
+}
