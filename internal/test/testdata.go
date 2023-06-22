@@ -209,5 +209,5 @@ func MachineDeployment(opts ...MachineDeploymentOpt) *clusterv1.MachineDeploymen
 		opt(md)
 	}
 
-	return md
+	return md.DeepCopy()
 }

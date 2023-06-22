@@ -27,6 +27,18 @@ func UpdateClusterStatusForControlPlane(ctx context.Context, client client.Clien
 	return nil
 }
 
+// UpdateClusterStatusForWorkers checks the current state of the Cluster's workers and updates the
+// Cluster status information.
+func UpdateClusterStatusForWorkers(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+	machineDeployments, err := controller.GetMachineDeployments(ctx, client, cluster)
+	if err != nil {
+		return errors.Wrap(err, "getting machine deployments")
+	}
+
+	updateWorkersReadyCondition(cluster, machineDeployments)
+	return nil
+}
+
 // updateControlPlaneReadyCondition updates the ControlPlaneReady condition, after checking the state of the control plane
 // in the cluster.
 func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane) {
@@ -108,6 +120,70 @@ func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *co
 	}
 
 	conditions.MarkTrue(cluster, anywherev1.ControlPlaneInitializedCondition)
+}
+
+// updateWorkersReadyCondition updates the WorkersReadyConditon condition after checking the state of the worker node groups
+// in the cluster.
+func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments []clusterv1.MachineDeployment) {
+	initializedCondition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
+	if initializedCondition.Status != "True" {
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, initializedCondition.Reason, initializedCondition.Severity, initializedCondition.Message)
+		return
+	}
+
+	// TODO: Here we should update the status based on the DefaultCNIConfigured condition. When it's false and skipUpgrades
+	// is not enabled for the CNI, WorkersReady should be marked false with the corresponding reason from the
+	// DefaultCNIConfigured condition.
+
+	totalExpected := 0
+	for _, wng := range cluster.Spec.WorkerNodeGroupConfigurations {
+		totalExpected += *wng.Count
+	}
+
+	// First, we need aggregate the number of nodes across worker node groups  to be able to assess the condition of the workers
+	// as a whole.
+	totalReadyReplicas := 0
+	totalUpdatedReplicas := 0
+	totalReplicas := 0
+
+	for _, md := range machineDeployments {
+		// We make sure to check that the status is up to date before using the information from the machine deployment status.
+		if md.Status.ObservedGeneration != md.ObjectMeta.Generation {
+			conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.OutdatedInformationReason, clusterv1.ConditionSeverityInfo, "worker node group %s status not up to date yet", md.Name)
+			return
+		}
+
+		totalReadyReplicas += int(md.Status.ReadyReplicas)
+		totalUpdatedReplicas += int(md.Status.UpdatedReplicas)
+		totalReplicas += int(md.Status.Replicas)
+	}
+
+	// There may be worker nodes that are not up to date yet in the case of a rolling upgrade,
+	// so reflect that on the conditon with an appropriate message.
+	totalOutdated := totalReplicas - totalUpdatedReplicas
+	if totalOutdated > 0 {
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.RollingUpgradeInProgress, clusterv1.ConditionSeverityInfo, "Worker nodes not up-to-date yet, %d rolling (%d up to date)", totalReplicas, totalUpdatedReplicas)
+		return
+	}
+
+	// If the number of worker nodes replicas need to be scaled up.
+	if totalReplicas < totalExpected {
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, %d expected (%d actual)", totalExpected, totalReplicas)
+		return
+	}
+
+	// If the number of worker nodes replicas need to be scaled down.
+	if totalReplicas > totalExpected {
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.ScalingDownReason, clusterv1.ConditionSeverityInfo, "Scaling down worker nodes, %d expected (%d actual)", totalExpected, totalReplicas)
+		return
+	}
+
+	if totalReadyReplicas != totalExpected {
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.NodesNotReadyReason, clusterv1.ConditionSeverityInfo, "Worker nodes not ready yet, %d expected (%d ready)", totalExpected, totalReadyReplicas)
+		return
+	}
+
+	conditions.MarkTrue(cluster, anywherev1.WorkersReadyConditon)
 }
 
 // controlPlaneInitializationInProgressCondition returns a new "False" condition for the ControlPlaneInitializationInProgress reason.
