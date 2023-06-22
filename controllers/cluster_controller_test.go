@@ -268,7 +268,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 			g := NewWithT(t)
 			ctx := context.Background()
 
-			objs := make([]runtime.Object, 0, 8)
+			objs := make([]runtime.Object, 0, 7+len(machineDeployments))
 			objs = append(objs, config.Cluster, bundles)
 			for _, o := range config.ChildObjects() {
 				objs = append(objs, o)

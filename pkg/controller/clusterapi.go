@@ -97,10 +97,6 @@ func GetMachineDeployments(ctx context.Context, c client.Client, cluster *anywhe
 	machineDeployments := &clusterv1.MachineDeploymentList{}
 
 	err := c.List(ctx, machineDeployments, client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name}, client.InNamespace(constants.EksaSystemNamespace))
-	if apierrors.IsNotFound(err) {
-		return nil, nil
-	}
-
 	if err != nil {
 		return nil, err
 	}

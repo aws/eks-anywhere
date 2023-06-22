@@ -348,7 +348,7 @@ func TestUpdateWorkersReadyCondition(t *testing.T) {
 		wantErr                       string
 	}{
 		{
-			name:                          "workers not ready, control plane not initialized yet",
+			name:                          "workers not ready, control plane not initialized",
 			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{},
 			machineDeployments:            []clusterv1.MachineDeployment{},
 			conditions: []anywherev1.Condition{
@@ -363,7 +363,7 @@ func TestUpdateWorkersReadyCondition(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.WorkersReadyConditon,
 				Status:   "False",
-				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
+				Reason:   anywherev1.ControlPlaneNotInitializedReason,
 				Severity: clusterv1.ConditionSeverityInfo,
 			},
 		},

@@ -21,6 +21,9 @@ const (
 	// ControlPlaneInitializationInProgressReason reports that the control plane initilization is in progress.
 	ControlPlaneInitializationInProgressReason = "ControlPlaneInitializationInProgress"
 
+	// ControlPlaneNotInitializedReason reports that the control plane is not initialized.
+	ControlPlaneNotInitializedReason = "ControlPlaneNotInitialized"
+
 	// WorkersReadyConditon reports the status on the worker nodes, indicating all those worker nodes
 	// are the right version and are ready, not including the old nodes.
 	WorkersReadyConditon ConditionType = "WorkersReady"

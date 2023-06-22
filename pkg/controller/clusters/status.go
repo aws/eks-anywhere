@@ -127,13 +127,9 @@ func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *co
 func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments []clusterv1.MachineDeployment) {
 	initializedCondition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
-		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, initializedCondition.Reason, initializedCondition.Severity, initializedCondition.Message)
+		conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, "")
 		return
 	}
-
-	// TODO: Here we should update the status based on the DefaultCNIConfigured condition. When it's false and skipUpgrades
-	// is not enabled for the CNI, WorkersReady should be marked false with the corresponding reason from the
-	// DefaultCNIConfigured condition.
 
 	totalExpected := 0
 	for _, wng := range cluster.Spec.WorkerNodeGroupConfigurations {
@@ -149,7 +145,7 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	for _, md := range machineDeployments {
 		// We make sure to check that the status is up to date before using the information from the machine deployment status.
 		if md.Status.ObservedGeneration != md.ObjectMeta.Generation {
-			conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.OutdatedInformationReason, clusterv1.ConditionSeverityInfo, "worker node group %s status not up to date yet", md.Name)
+			conditions.MarkFalse(cluster, anywherev1.WorkersReadyConditon, anywherev1.OutdatedInformationReason, clusterv1.ConditionSeverityInfo, "Worker node group %s status not up to date yet", md.Name)
 			return
 		}
 
