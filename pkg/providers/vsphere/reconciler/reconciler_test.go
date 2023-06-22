@@ -3,6 +3,7 @@ package reconciler_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -143,6 +145,23 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
 	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
 	tt.Expect(tt.cluster.Status.FailureMessage).To(HaveValue(ContainSubstring("validating vCenter setup for VSphereMachineConfig")))
+}
+
+func TestSetupEnvVars(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	err := reconciler.SetupEnvVars(context.Background(), tt.datacenterConfig, tt.client)
+	tt.Expect(os.Getenv(config.EksavSphereUsernameKey)).To(Equal("user"))
+	tt.Expect(os.Getenv(config.EksavSpherePasswordKey)).To(Equal("pass"))
+
+	tt.Expect(os.Getenv(config.EksavSphereCPUsernameKey)).To(Equal("userCP"))
+	tt.Expect(os.Getenv(config.EksavSphereCPPasswordKey)).To(Equal("passCP"))
+
+	tt.Expect(os.Getenv(config.EksavSphereCSIUsernameKey)).To(Equal("userCSI"))
+	tt.Expect(os.Getenv(config.EksavSphereCSIPasswordKey)).To(Equal("passCSI"))
+
+	tt.Expect(err).To(BeNil())
 }
 
 func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
@@ -640,8 +659,12 @@ func createSecret() *corev1.Secret {
 			APIVersion: "v1",
 		},
 		Data: map[string][]byte{
-			"username": []byte("test"),
-			"password": []byte("test"),
+			"username":    []byte("user"),
+			"password":    []byte("pass"),
+			"usernameCP":  []byte("userCP"),
+			"passwordCP":  []byte("passCP"),
+			"usernameCSI": []byte("userCSI"),
+			"passwordCSI": []byte("passCSI"),
 		},
 	}
 }
