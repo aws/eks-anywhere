@@ -162,9 +162,9 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	return cliConfig
 }
 
-func buildCreateCliConfig(skipIPCheck bool) *config.CreateCliConfig {
-	createCliConfig := &config.CreateCliConfig{}
-	createCliConfig.SkipCPIPCheck = skipIPCheck
+func buildCreateCliConfig(clusterOptions *createClusterOptions) config.CreateClusterCLIConfig {
+	createCliConfig := config.CreateClusterCLIConfig{}
+	createCliConfig.SkipCPIPCheck = clusterOptions.skipIpCheck
 
 	return createCliConfig
 }

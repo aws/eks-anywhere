@@ -2812,7 +2812,7 @@ func TestClusterIsSingleNode(t *testing.T) {
 	}
 }
 
-func TestClusterSetSkipIPCheck(t *testing.T) {
+func TestClusterDisableControlPlaneIPCheck(t *testing.T) {
 	tests := []struct {
 		name    string
 		want    bool
@@ -2827,16 +2827,15 @@ func TestClusterSetSkipIPCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.cluster.DisableControlPlaneIPCheck()
-			got := tt.cluster.SkipControlPlaneIPCheck()
-
+			got := tt.cluster.ControlPlaneIPCheckDisabled()
 			if got != tt.want {
-				t.Errorf("SetSkipIPCheck() %v = %v, want %v", tt.name, got, tt.want)
+				t.Errorf("DisableControlPlaneIPCheck() %v = %v, want %v", tt.name, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestCluster_IsSkipIPCheck(t *testing.T) {
+func TestClusterControlPlaneIPCheckDisabled(t *testing.T) {
 	tests := []struct {
 		name    string
 		cluster *v1alpha1.Cluster
@@ -2846,9 +2845,7 @@ func TestCluster_IsSkipIPCheck(t *testing.T) {
 			name: "annotation exists",
 			want: true,
 			cluster: baseCluster(func(c *v1alpha1.Cluster) {
-				c.Annotations = map[string]string{
-					c.SkipIPCheckAnnotation(): "true",
-				}
+				c.DisableControlPlaneIPCheck()
 			}),
 		},
 		{
@@ -2861,8 +2858,8 @@ func TestCluster_IsSkipIPCheck(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.cluster.SkipControlPlaneIPCheck(); got != tt.want {
-				t.Errorf("Cluster.IsSkipIPCheck() = %v, want %v", got, tt.want)
+			if got := tt.cluster.ControlPlaneIPCheckDisabled(); got != tt.want {
+				t.Errorf("ControlPlaneIPCheckDisabled() = %v, want %v", got, tt.want)
 			}
 		})
 	}

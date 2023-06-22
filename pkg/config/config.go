@@ -18,7 +18,7 @@ type CliConfig struct {
 	GitKnownHostsFile   string
 }
 
-// CreateCliConfig is the config we use for create specific configurations.
-type CreateCliConfig struct {
+// CreateClusterCLIConfig is the config we use for create cluster specific configurations.
+type CreateClusterCLIConfig struct {
 	SkipCPIPCheck bool
 }

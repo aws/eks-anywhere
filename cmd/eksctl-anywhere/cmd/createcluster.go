@@ -106,7 +106,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
-	createCLIConfig := buildCreateCliConfig(cc.skipIpCheck)
+	createCLIConfig := buildCreateCliConfig(cc)
 
 	clusterManagerTimeoutOpts, err := buildClusterManagerOpts(cc.timeoutOptions, clusterSpec.Cluster.Spec.DatacenterRef.Kind)
 	if err != nil {
@@ -135,7 +135,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	defer close(ctx, deps)
 
-	_, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec)
+	clusterSpec, err = deps.CreateClusterDefaulter.Run(ctx, clusterSpec)
 	if err != nil {
 		return err
 	}

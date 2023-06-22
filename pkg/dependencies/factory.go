@@ -93,7 +93,7 @@ type Dependencies struct {
 	ManifestReader              *manifests.Reader
 	closers                     []types.Closer
 	CliConfig                   *cliconfig.CliConfig
-	CreateCliConfig             *cliconfig.CreateCliConfig
+	CreateCliConfig             *cliconfig.CreateClusterCLIConfig
 	PackageInstaller            interfaces.PackageInstaller
 	BundleRegistry              curatedpackages.BundleRegistry
 	PackageControllerClient     *curatedpackages.PackageControllerClient
@@ -1008,7 +1008,7 @@ func (f *Factory) WithCliConfig(cliConfig *cliconfig.CliConfig) *Factory {
 }
 
 // WithCreateClusterDefaulter builds a create cluster defaulter that builds defaulter dependencies specific to the create cluster command. The defaulter is then run once the factory is built in the create cluster command.
-func (f *Factory) WithCreateClusterDefaulter(createCliConfig *cliconfig.CreateCliConfig) *Factory {
+func (f *Factory) WithCreateClusterDefaulter(createCliConfig cliconfig.CreateClusterCLIConfig) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		controlPlaneIPCheckAnnotationDefaulter := cluster.NewControlPlaneIPCheckAnnotationDefaulter(createCliConfig.SkipCPIPCheck)
 

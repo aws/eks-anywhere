@@ -37,7 +37,7 @@ func NewIPValidator(opts ...IPValidatorOpt) *IPValidator {
 // ValidateControlPlaneIPUniqueness checks whether or not the control plane endpoint defined
 // in the cluster spec is available.
 func (v *IPValidator) ValidateControlPlaneIPUniqueness(cluster *v1alpha1.Cluster) error {
-	if cluster.SkipControlPlaneIPCheck() {
+	if cluster.ControlPlaneIPCheckDisabled() {
 		return nil
 	}
 

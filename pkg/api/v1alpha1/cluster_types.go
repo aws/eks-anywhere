@@ -1167,17 +1167,12 @@ func (c *Cluster) DisableControlPlaneIPCheck() {
 	c.Annotations[skipIPCheckAnnotation] = "true"
 }
 
-// SkipControlPlaneIPCheck checks it the `skip-ip-check` annotation is set on the Cluster object.
-func (c *Cluster) SkipControlPlaneIPCheck() bool {
+// ControlPlaneIPCheckDisabled checks it the `skip-ip-check` annotation is set on the Cluster object.
+func (c *Cluster) ControlPlaneIPCheckDisabled() bool {
 	if s, ok := c.Annotations[skipIPCheckAnnotation]; ok {
 		return s == "true"
 	}
 	return false
-}
-
-// SkipIPCheckAnnotation returns the `skip-ip-check` annotation as a string.
-func (c *Cluster) SkipIPCheckAnnotation() string {
-	return skipIPCheckAnnotation
 }
 
 func (c *Cluster) ResourceType() string {
