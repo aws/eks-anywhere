@@ -2786,7 +2786,7 @@ func TestVSphereUpgradeKubernetes123to124UbuntuWorkloadClusterAPI(t *testing.T) 
 	)
 }
 
-func TestVSphereCiliumDisableCSIUbuntuAPI(t *testing.T) {
+func TestVSphereCiliumUbuntuAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -2825,10 +2825,8 @@ func TestVSphereCiliumDisableCSIUbuntuAPI(t *testing.T) {
 			api.ClusterToConfigFiller(
 				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
 			),
-			api.VSphereToConfigFiller(api.WithDisableCSI(true)),
 		)
 		wc.ApplyClusterManifest()
-		wc.DeleteWorkloadVsphereCSI()
 		wc.ValidateClusterState()
 		wc.DeleteClusterWithKubectl()
 		wc.ValidateClusterDelete()
@@ -2922,7 +2920,7 @@ func TestVSphereUpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
 	)
 }
 
-func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuGitHubFluxAPI(t *testing.T) {
+func TestVSphereUpgradeKubernetesCiliumUbuntuGitHubFluxAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
@@ -2962,10 +2960,8 @@ func TestVSphereUpgradeKubernetesCiliumDisableCSIUbuntuGitHubFluxAPI(t *testing.
 			api.ClusterToConfigFiller(
 				api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways),
 			),
-			api.VSphereToConfigFiller(api.WithDisableCSI(true)),
 			vsphere.WithUbuntu124(),
 		)
-		wc.DeleteWorkloadVsphereCSI()
 		wc.ValidateClusterState()
 		test.DeleteWorkloadClusterFromGit(wc)
 		wc.ValidateClusterDelete()
