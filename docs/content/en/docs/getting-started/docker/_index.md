@@ -186,12 +186,8 @@ sudo chmod +x /usr/local/bin/kubectl
    ```
 
    You can now use the cluster like you would any Kubernetes cluster.
-   Deploy the test application with:
 
-   ```bash
-   kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
-   ```
-1. Deploy an application. You can now use the cluster like you would any Kubernetes cluster. To deploy a test application run the following command.
+1. The following command will deploy a test application:
    
    ```bash
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
