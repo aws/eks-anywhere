@@ -21,7 +21,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ### Added
 - Document to mention changes regarding modular upgrades ([#5932](https://github.com/aws/eks-anywhere/pull/5932))
-- Document to for kernel, boot and trusted cert bundle settings ([5965](https://github.com/aws/eks-anywhere/pull/5965))
+- Document kernel, boot, and trusted cert bundle settings ([5965](https://github.com/aws/eks-anywhere/pull/5965))
 
 ### Updated
 - Document of Emissary Curated Package ([#5859](https://github.com/aws/eks-anywhere/issues/5859))
