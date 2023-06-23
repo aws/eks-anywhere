@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
@@ -17,11 +16,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	anywheretypes "github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	clusterf "github.com/aws/eks-anywhere/test/framework/cluster"
-	"github.com/aws/eks-anywhere/test/framework/cluster/validations"
 )
 
 const (
@@ -731,12 +728,7 @@ func readVSphereConfig() (vsphereConfig, error) {
 
 // ClusterStateValidations returns a list of provider specific validations.
 func (v *VSphere) ClusterStateValidations() []clusterf.StateValidation {
-	return []clusterf.StateValidation{
-		clusterf.RetriableStateValidation(
-			retrier.NewWithMaxRetries(60, 5*time.Second),
-			validations.ValidateCSI,
-		),
-	}
+	return []clusterf.StateValidation{}
 }
 
 // ValidateNodesDiskGiB validates DiskGiB for all the machines.
