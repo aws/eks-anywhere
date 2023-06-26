@@ -2288,7 +2288,7 @@ func TestVSphereKubernetes124UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes126ManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+func TestVSphereKubernetes126WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewVSphere(t)
 	runTestManagementClusterUpgradeSideEffects(t, provider, v1alpha1.Ubuntu, v1alpha1.Kube126)
 }
