@@ -230,7 +230,7 @@ func TestValidateDeviceIsUnlockedNotFoundInClientMapError(t *testing.T) {
 
 func TestValidateDeviceSoftware(t *testing.T) {
 	g := newConfigManagerTest(t)
-	g.aws.EXPECT().SnowballDeviceSoftwareVersion(g.ctx).Return("102", nil).Times(2)
+	g.aws.EXPECT().SnowballDeviceSoftwareVersion(g.ctx).Return("1012", nil).Times(2)
 	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
 }
@@ -260,4 +260,11 @@ func TestValidateDeviceSoftwareNotFoundInClientMapError(t *testing.T) {
 	g.machineConfig.Spec.Devices = []string{"device-not-exist"}
 	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
 	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
+}
+
+func TestValidateDeviceSoftwareConvertToIntegerError(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.aws.EXPECT().SnowballDeviceSoftwareVersion(g.ctx).Return("version", nil)
+	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("invalid syntax")))
 }
