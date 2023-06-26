@@ -63,8 +63,6 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
    * Add [Optional]({{< relref "../optional/" >}}) configuration settings as needed.
      See [Github provider]({{< relref "../optional/gitops#github-provider" >}}) to see how to identify your Git information.
    * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
->**_Note:_** Installing CSI as part of vSphere cluster creation is now deprecated as of `v0.16.0`. Please refer to `disableCSI`
->[documentation]({{< relref "/docs/getting-started/vsphere/vsphere-spec#disablecsi-optional-deprecated" >}}) for more information.
 
 1. Set Credential Environment Variables
 
@@ -240,7 +238,15 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    To add more workload clusters, go through the same steps for creating the initial workload, copying the config file to a new name (such as `eksa-w02-cluster.yaml`), modifying resource names, and running the create cluster command again.
 
-## Next steps:
+## Next steps
 * See the [Cluster management]({{< relref "../../clustermgmt" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
 
 * See the [Package management]({{< relref "../../packages" >}}) section for more information on post-creation curated packages installation.
+
+## vSphere CSI Driver Deprecation
+
+EKS Anywhere versions prior to `v0.16.0` supported the installation and management of the vSphere CSI Driver in EKS-A clusters. The vSphere CSI Driver integrates with the Cloud Native Storage (CNS) component in vCenter for the purpose of volume provisioning via vSAN, attaching and detaching the volume to VMs, mounting, formatting, and unmounting volumes from the pod within the node VM, etc. The CSI management components in EKS-A included a Kubernetes CSI controller Deployment, a node-driver-registrar DaemonSet, a default Storage Class, and a number of related Secrets and RBAC entities.
+
+In EKS-A version `v0.16.0`, the CSI driver feature was deprecated and has been completely removed in version `v0.17.0`. However, customers can self-manage this deployment to leverage the storage options provided by vSphere in a Kubernetes-native way.
+
+If you have created a cluster using an EKS-A version prior to `v0.16.0` and are now upgrading it using EKS-A version `v0.16.0` and above, follow the additional steps mentioned in the [vSphere upgrade steps]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades#performing-a-cluster-upgrade" >}}) for proper cleanup of unmanaged vSphere CSI resources.

@@ -340,12 +340,6 @@ func (v *Validator) validateVsphereUserPrivs(ctx context.Context, vSphereCluster
 		markPrivsValidationPass(passed, vuc.EksaVsphereCPUsername)
 	}
 
-	if len(vuc.EksaVsphereCSIUsername) > 0 && vuc.EksaVsphereCSIUsername != vuc.EksaVsphereUsername {
-		if passed, err = v.validateCSIUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
-			return err
-		}
-		markPrivsValidationPass(passed, vuc.EksaVsphereCSIUsername)
-	}
 	return nil
 }
 
@@ -439,72 +433,6 @@ func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *conf
 		host,
 		vuc.EksaVsphereUsername,
 		vuc.EksaVspherePassword,
-		spec.VSphereDatacenter.Spec.Insecure,
-		datacenter,
-	)
-	if err != nil {
-		return false, err
-	}
-
-	return v.validatePrivs(ctx, requiredPrivAssociations, vsc)
-}
-
-func (v *Validator) validateCSIUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) (bool, error) {
-	requiredPrivAssociations := []PrivAssociation{
-		{ // CNS-SEARCH-AND-SPBM role
-			objectType:   govmomi.VSphereTypeFolder,
-			privsContent: config.VSphereCnsSearchAndSpbmPrivsFile,
-			path:         vsphereRootPath,
-		},
-	}
-
-	machineConfigs, err := v.collectSpecMachineConfigs(ctx, spec)
-	if err != nil {
-		return false, err
-	}
-
-	var pas []PrivAssociation
-	seen := map[string]interface{}{}
-	for _, mc := range machineConfigs {
-		if _, ok := seen[mc.Spec.Datastore]; !ok {
-			requiredPrivAssociations = append(
-				requiredPrivAssociations,
-				// CNS-Datastore role
-				PrivAssociation{
-					objectType:   govmomi.VSphereTypeDatastore,
-					privsContent: config.VSphereCnsDatastorePrivsFile,
-					path:         mc.Spec.Datastore,
-				},
-				// CNS-HOST-CONFIG-STORAGE role
-				PrivAssociation{
-					objectType:   govmomi.VSphereTypeDatastore,
-					privsContent: config.VSphereCnsHostConfigStorageFile,
-					path:         mc.Spec.Datastore,
-				},
-			)
-			seen[mc.Spec.Datastore] = 1
-		}
-		if _, ok := seen[mc.Spec.Folder]; !ok {
-			// CNS-VM role
-			requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
-				objectType:   govmomi.VSphereTypeFolder,
-				privsContent: config.VSphereCnsVmPrivsFile,
-				path:         mc.Spec.Folder,
-			})
-			seen[mc.Spec.Folder] = 1
-		}
-
-		requiredPrivAssociations = append(requiredPrivAssociations, pas...)
-	}
-
-	host := spec.VSphereDatacenter.Spec.Server
-	datacenter := spec.VSphereDatacenter.Spec.Datacenter
-
-	vsc, err := v.vSphereClientBuilder.Build(
-		ctx,
-		host,
-		vuc.EksaVsphereCSIUsername,
-		vuc.EksaVsphereCSIPassword,
 		spec.VSphereDatacenter.Spec.Insecure,
 		datacenter,
 	)

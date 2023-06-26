@@ -607,11 +607,6 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 			clusterconfigFile: "cluster_full_oidc.yaml",
 			wantCPFile:        "testdata/expected_results_full_oidc_cp.yaml",
 		},
-		{
-			testName:          "minimal_disable_csi",
-			clusterconfigFile: "cluster_minimal_disable_csi.yaml",
-			wantCPFile:        "testdata/expected_results_minimal_disable_csi_cp.yaml",
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -1311,75 +1306,6 @@ func TestName(t *testing.T) {
 	}
 }
 
-func TestProviderInstallStorageClass(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-
-	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
-	ipValidator := mocks.NewMockIPValidator(ctrl)
-
-	var content []byte
-	kubectl.EXPECT().
-		ApplyKubeSpecFromBytes(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _ *types.Cluster, ctnt []byte) error {
-			content = ctnt
-			return nil
-		})
-
-	provider := newProviderWithKubectl(
-		t,
-		datacenterConfig,
-		clusterConfig,
-		kubectl,
-		ipValidator,
-	)
-
-	err := provider.InstallStorageClass(context.Background(), &types.Cluster{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	test.AssertContentToFile(t, string(content), "testdata/TestProviderInstallStorageClass_expect.yaml")
-}
-
-func TestProviderInstallStorageClassDisableCSI(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
-	ipValidator := mocks.NewMockIPValidator(ctrl)
-
-	datacenterConfig.Spec.DisableCSI = true
-
-	provider := newProviderWithKubectl(
-		t,
-		datacenterConfig,
-		clusterConfig,
-		kubectl,
-		ipValidator,
-	)
-
-	err := provider.InstallStorageClass(context.Background(), &types.Cluster{})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-// TestVSphereProviderInstallStorageClassInterface ensures the vSphere provider implements an
-// anonymous interface specified by the cluster manager. Its purely for protective purposes
-// until we switch to new workflows when the cluster manager storage class installation behavior
-// will be removed in favor of workflow hooks.
-func TestVSphereProviderInstallStorageClassInterface(t *testing.T) {
-	_, ok := (interface{}(&vsphereProvider{})).(interface {
-		InstallStorageClass(context.Context, *types.Cluster) error
-	})
-
-	if !ok {
-		t.Fatalf("Provider does not implement InstallStorageClass")
-	}
-}
-
 func TestSetupAndValidateCreateCluster(t *testing.T) {
 	ctx := context.Background()
 	provider := givenProvider(t)
@@ -1864,8 +1790,6 @@ func TestProviderBootstrapSetup(t *testing.T) {
 		"clusterName":               clusterConfig.Name,
 		"vspherePassword":           expectedVSphereUsername,
 		"vsphereUsername":           expectedVSpherePassword,
-		"eksaCSIUsername":           expectedVSphereUsername,
-		"eksaCSIPassword":           expectedVSpherePassword,
 		"eksaCloudProviderUsername": expectedVSphereUsername,
 		"eksaCloudProviderPassword": expectedVSpherePassword,
 		"vsphereServer":             datacenterConfig.Spec.Server,
@@ -1907,8 +1831,6 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 		"clusterName":               clusterConfig.Name,
 		"vspherePassword":           expectedVSphereUsername,
 		"vsphereUsername":           expectedVSpherePassword,
-		"eksaCSIUsername":           expectedVSphereUsername,
-		"eksaCSIPassword":           expectedVSpherePassword,
 		"eksaCloudProviderUsername": expectedVSphereUsername,
 		"eksaCloudProviderPassword": expectedVSpherePassword,
 		"eksaLicense":               "",
@@ -2833,12 +2755,6 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 					KubeVip: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
 					},
-					Driver: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b",
-					},
-					Syncer: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b",
-					},
 					Metadata: releasev1alpha1.Manifest{
 						URI: "Metadata.yaml",
 					},
@@ -3125,22 +3041,10 @@ func TestVsphereProviderRunPostControlPlaneUpgrade(t *testing.T) {
 func TestProviderUpgradeNeeded(t *testing.T) {
 	testCases := []struct {
 		testName               string
-		newSyncer, oldSyncer   string
-		newDriver, oldDriver   string
 		newManager, oldManager string
 		newKubeVip, oldKubeVip string
 		want                   bool
 	}{
-		{
-			testName:  "different syncer",
-			newSyncer: "a", oldSyncer: "b",
-			want: true,
-		},
-		{
-			testName:  "different driver",
-			newDriver: "a", oldDriver: "b",
-			want: true,
-		},
 		{
 			testName:   "different manager",
 			newManager: "a", oldManager: "b",
@@ -3157,15 +3061,11 @@ func TestProviderUpgradeNeeded(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			provider := givenProvider(t)
 			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.VSphere.Syncer.ImageDigest = tt.oldSyncer
-				s.VersionsBundle.VSphere.Driver.ImageDigest = tt.oldDriver
 				s.VersionsBundle.VSphere.Manager.ImageDigest = tt.oldManager
 				s.VersionsBundle.VSphere.KubeVip.ImageDigest = tt.oldKubeVip
 			})
 
 			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.VSphere.Syncer.ImageDigest = tt.newSyncer
-				s.VersionsBundle.VSphere.Driver.ImageDigest = tt.newDriver
 				s.VersionsBundle.VSphere.Manager.ImageDigest = tt.newManager
 				s.VersionsBundle.VSphere.KubeVip.ImageDigest = tt.newKubeVip
 			})
@@ -3458,7 +3358,7 @@ func TestValidateMachineConfigsNameUniquenessError(t *testing.T) {
 	thenErrorExpected(t, fmt.Sprintf("control plane VSphereMachineConfig %s already exists", tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name), err)
 }
 
-func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
+func TestProviderGenerateCAPISpecForCreateCloudProviderCredentials(t *testing.T) {
 	tests := []struct {
 		testName   string
 		wantCPFile string
@@ -3468,21 +3368,6 @@ func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 			testName:   "specify cloud provider credentials",
 			wantCPFile: "testdata/expected_results_main_cp_cloud_provider_credentials.yaml",
 			envMap:     map[string]string{config.EksavSphereCPUsernameKey: "EksavSphereCPUsername", config.EksavSphereCPPasswordKey: "EksavSphereCPPassword"},
-		},
-		{
-			testName:   "specify CSI credentials",
-			wantCPFile: "testdata/expected_results_main_cp_csi_driver_credentials.yaml",
-			envMap:     map[string]string{config.EksavSphereCSIUsernameKey: "EksavSphereCSIUsername", config.EksavSphereCSIPasswordKey: "EksavSphereCSIPassword"},
-		},
-		{
-			testName:   "specify cloud provider and CSI credentials",
-			wantCPFile: "testdata/expected_results_main_cp_cloud_provder_and_csi_driver_credentials.yaml",
-			envMap: map[string]string{
-				config.EksavSphereCSIUsernameKey: "EksavSphereCSIUsername",
-				config.EksavSphereCSIPasswordKey: "EksavSphereCSIPassword",
-				config.EksavSphereCPUsernameKey:  "EksavSphereCPUsername",
-				config.EksavSphereCPPasswordKey:  "EksavSphereCPPassword",
-			},
 		},
 	}
 	for _, tt := range tests {

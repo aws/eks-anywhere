@@ -244,12 +244,6 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 	}
 
-	err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-
 	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Creating EKS-A namespace")
 		err = commandContext.ClusterManager.CreateEKSANamespace(ctx, workloadCluster)

@@ -310,20 +310,6 @@ func (mr *MockClusterManagerMockRecorder) InstallNetworking(arg0, arg1, arg2, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallNetworking", reflect.TypeOf((*MockClusterManager)(nil).InstallNetworking), arg0, arg1, arg2, arg3)
 }
 
-// InstallStorageClass mocks base method.
-func (m *MockClusterManager) InstallStorageClass(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallStorageClass", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InstallStorageClass indicates an expected call of InstallStorageClass.
-func (mr *MockClusterManagerMockRecorder) InstallStorageClass(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallStorageClass", reflect.TypeOf((*MockClusterManager)(nil).InstallStorageClass), arg0, arg1, arg2)
-}
-
 // MoveCAPI mocks base method.
 func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 string, arg4 *cluster.Spec, arg5 ...types.NodeReadyChecker) error {
 	m.ctrl.T.Helper()
