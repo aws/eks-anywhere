@@ -17,6 +17,15 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 
 ## Unreleased
 
+## [0.16.1](https://github.com/aws/eks-anywhere/releases/tag/v0.16.1)
+
+### Added
+- Document to mention changes regarding modular upgrades ([#5932](https://github.com/aws/eks-anywhere/pull/5932))
+- Document kernel, boot, and trusted cert bundle settings ([5965](https://github.com/aws/eks-anywhere/pull/5965))
+
+### Updated
+- Document of Emissary Curated Package ([#5859](https://github.com/aws/eks-anywhere/issues/5859))
+
 ## [v0.16.0](https://github.com/aws/eks-anywhere/releases/tag/v0.16.0)
 
 ### Added
