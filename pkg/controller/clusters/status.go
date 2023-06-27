@@ -39,7 +39,7 @@ func UpdateClusterStatusForWorkers(ctx context.Context, client client.Client, cl
 	return nil
 }
 
-// UpdateClusterStatusForCNI sets the Cluster status condition for a self managed cluster. The CNI reconciler
+// UpdateClusterStatusForCNI updates the Cluster status for the default cni before the control plane is ready. The CNI reconciler
 // handles the rest of the logic for determining the condition and updating the status based on the current state of the cluster.
 func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster) {
 	if !conditions.IsTrue(cluster, anywherev1.ControlPlaneReadyCondition) {
@@ -47,6 +47,8 @@ func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster)
 		return
 	}
 
+	// Self managed clusters do not use the CNI reconciler, so this status would never get resolved.
+	// TODO: Remove after self-managed clusters are created with the controller in the CLI
 	if cluster.IsSelfManaged() {
 		ciliumCfg := cluster.Spec.ClusterNetwork.CNIConfig.Cilium
 		// Though it may be installed initially to successfully create the cluster,

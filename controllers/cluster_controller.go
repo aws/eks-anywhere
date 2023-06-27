@@ -411,8 +411,6 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 		return errors.Wrap(err, "updating status for workers")
 	}
 
-	// Self managed clusters do not use the CNI reconciler, so this status would never get resolved.
-	// TODO: Remove after self-managed clusters are created with the controller in the CLI
 	clusters.UpdateClusterStatusForCNI(ctx, cluster)
 
 	// Always update the readyCondition by summarizing the state of other conditions.
