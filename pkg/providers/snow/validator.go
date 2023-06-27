@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -13,7 +14,7 @@ import (
 
 const (
 	defaultAwsSshKeyName       = "eksa-default"
-	snowballMinSoftwareVersion = "102"
+	snowballMinSoftwareVersion = 102
 	minimumVCPU                = 2
 )
 
@@ -193,8 +194,14 @@ func (v *Validator) ValidateDeviceSoftware(ctx context.Context, m *v1alpha1.Snow
 		if err != nil {
 			return fmt.Errorf("checking software version for device [%s]: %v", ip, err)
 		}
-		if version < snowballMinSoftwareVersion {
-			return fmt.Errorf("the software version installed [%s] on device [%s] is below the minimum supported version [%s]", version, ip, snowballMinSoftwareVersion)
+
+		versionInt, err := strconv.Atoi(version)
+		if err != nil {
+			return fmt.Errorf("checking software version for device [%s]: %v", ip, err)
+		}
+
+		if versionInt < snowballMinSoftwareVersion {
+			return fmt.Errorf("the software version installed [%s] on device [%s] is below the minimum supported version [%d]", version, ip, snowballMinSoftwareVersion)
 		}
 	}
 
