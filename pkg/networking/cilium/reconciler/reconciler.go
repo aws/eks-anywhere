@@ -110,17 +110,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 
 	if upgradeInfo.VersionUpgradeNeeded() {
 		logger.Info("Cilium upgrade needed", "reason", upgradeInfo.Reason())
-		result, err := r.upgrade(ctx, logger, client, installation, spec)
-		if err != nil {
+		if result, err := r.upgrade(ctx, logger, client, installation, spec); err != nil {
 			return controller.Result{}, err
-		}
-
-		// When there is no error but a requeue has been returned, then a version upgrade is in progress
-		if !result.Result.IsZero() {
+		} else if result.Return() {
 			conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
-		}
-
-		if result.Return() {
 			return result, nil
 		}
 
