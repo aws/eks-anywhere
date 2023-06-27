@@ -196,7 +196,7 @@ Conditions provide a mechanism for high-level status reporting from the controll
 
 * `ControlPlaneInitialized` - reports the first control plane has been initialized and the cluster’s API server is contactable via the available kubeconfig generated in the management cluster as a secret. Once this condition is marked true, it’s value never changes.
 * `ControlPlaneReady` -  reports that the condition of the current state of the specified control plane machines vs the desired state in the Cluster spec. e.g. replicasReady vs replicas,
-* `DefaultCNIConfigured` - reports that the CNI has been successfully configured. If an EKS Anywhere managed CNI solution is not configured and the `Cluster` spec is configured to skip EKS Anywhere's default CNI upgrades, this condition will be marked as “False” with the reason “UsingCustomCNI”.
+* `DefaultCNIConfigured` - reports that the CNI has been successfully configured. If an EKS Anywhere managed CNI solution is not configured and the `Cluster` spec is configured to skip EKS Anywhere's default CNI upgrades, this condition will be marked as “False” with the reason `SkipUpgradesForDefaultCNIConfigured`.
 * `WorkersReady` - reports that the condition of the current state of the specified worker machines vs the desired state in the Cluster spec spec e.g. replicasReady vs replicas
 * `Ready` - reports a summary of other conditions, indicating an overall operational state of the EKS Anywhere cluster. It will be marked “True” once the current state of the cluster has fully reached the desired state specified in the `Cluster` spec.
 
