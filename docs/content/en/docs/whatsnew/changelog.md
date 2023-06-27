@@ -11,8 +11,7 @@ description: >
 {{% alert title="Warnings" color="warning" %}}
 * EKS Anywhere releases `v0.15.0` - `v0.15.2` have an issue with Tinkerbell provider where BMC/IPMI calls time out for certain hardware.<br>
 Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
-* Installing CSI as part of VSphere cluster creation is now deprecated as of `v0.16.0`. Please refer to `disableCSI`
-[documentation]({{< relref "/docs/getting-started/vsphere/vsphere-spec#disablecsi-optional-deprecated" >}}) for more information.
+* Installing CSI as part of VSphere cluster creation was deprecated in version `v0.16.0` and has been removed in `v0.17.0`. Please refer to the [deprecation section]({{< relref "../getting-started/vsphere/vsphere-getstarted/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
 {{% /alert %}}
 
 ## Unreleased
@@ -40,7 +39,7 @@ Please upgrade to `v0.15.3` if you are using Tinkerbell (Bare Metal) provider.
 - CloudStack control plane host port is only defaulted in CAPI objects if not provided. ([#5792](https://github.com/aws/eks-anywhere/pull/5792)) ([#5736](https://github.com/aws/eks-anywhere/pull/5736))
 
 ### Deprecated
-- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to [documentation](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#disablecsi-optional-deprecated) for more information
+- Add warning to deprecate disableCSI through CLI ([#5918](https://github.com/aws/eks-anywhere/pull/5918)). Refer to the [deprecation section]({{< relref "../getting-started/vsphere/vsphere-getstarted/#vsphere-csi-driver-deprecation" >}}) in the vSphere provider documentation for more information.
 
 ### Removed
 - Kubernetes 1.22 support

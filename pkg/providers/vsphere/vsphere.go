@@ -58,9 +58,6 @@ var defaultClusterConfigMD string
 //go:embed config/secret.yaml
 var defaultSecretObject string
 
-//go:embed config/defaultStorageClass.yaml
-var defaultStorageClass []byte
-
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -75,7 +72,6 @@ type vsphereProvider struct {
 	writer                filewriter.FileWriter
 	templateBuilder       *VsphereTemplateBuilder
 	skipIPCheck           bool
-	csiEnabled            bool
 	Retrier               *retrier.Retrier
 	validator             *Validator
 	defaulter             *Defaulter
@@ -179,7 +175,6 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, cl
 			now,
 		),
 		skipIPCheck: skipIpCheck,
-		csiEnabled:  !datacenterConfig.Spec.DisableCSI,
 		Retrier:     retrier,
 		validator:   v,
 		defaulter:   NewDefaulter(providerGovcClient),
@@ -274,17 +269,7 @@ func (p *vsphereProvider) PostMoveManagementToBootstrap(_ context.Context, _ *ty
 	return nil
 }
 
-// TODO: Remove this field for v0.17.x, adding a warning as of v0.16.0
-func warnIfCSIEnabled(disableCSI bool) {
-	if !disableCSI {
-		// Need to add spacing to make the log message look neat
-		logger.MarkWarning("  Warning: Installing CSI through EKS Anywhere is deprecated. Refer to the official documentation for more details on " +
-			"the disableCSI field in VSphereDatacenterConfig")
-	}
-}
-
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	warnIfCSIEnabled(clusterSpec.VSphereDatacenter.Spec.DisableCSI)
 	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -362,7 +347,6 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
-	warnIfCSIEnabled(clusterSpec.VSphereDatacenter.Spec.DisableCSI)
 	if err := p.validator.validateUpgradeRolloutStrategy(clusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -825,14 +809,6 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) InstallStorageClass(ctx context.Context, cluster *types.Cluster) error {
-	if !p.csiEnabled {
-		return nil
-	}
-
-	return p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, defaultStorageClass)
-}
-
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
@@ -845,8 +821,6 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 		"vsphereUsername":           os.Getenv(vSphereUsernameKey),
 		"eksaCloudProviderUsername": vuc.EksaVsphereCPUsername,
 		"eksaCloudProviderPassword": vuc.EksaVsphereCPPassword,
-		"eksaCSIUsername":           vuc.EksaVsphereCSIUsername,
-		"eksaCSIPassword":           vuc.EksaVsphereCSIPassword,
 		"eksaLicense":               os.Getenv(eksaLicense),
 		"eksaSystemNamespace":       constants.EksaSystemNamespace,
 		"vsphereCredentialsName":    constants.VSphereCredentialsName,
@@ -1103,16 +1077,10 @@ func cpiResourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-cpi", clusterSpec.Cluster.Name)
 }
 
-func csiResourceSetName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-csi", clusterSpec.Cluster.Name)
-}
-
 func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
 	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
 
-	if newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
-		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
-		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
+	if newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
 		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest {
 		return true, nil
 	}
@@ -1151,13 +1119,6 @@ func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, k
 
 func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 	return nil
-}
-
-// GetDefaultStorageClass returns a copy of default storage class.
-func GetDefaultStorageClass() []byte {
-	exportedStorageClass := make([]byte, len(defaultStorageClass))
-	copy(exportedStorageClass, defaultStorageClass)
-	return exportedStorageClass
 }
 
 // PreCoreComponentsUpgrade staisfies the Provider interface.

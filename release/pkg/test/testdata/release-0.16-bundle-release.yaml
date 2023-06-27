@@ -755,7 +755,6 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/infrastructure-components.yaml
-      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -785,7 +784,6 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.23.4-eks-d-1-23-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/metadata.yaml
-      syncer: {}
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -1534,7 +1532,6 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/infrastructure-components.yaml
-      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -1564,7 +1561,6 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.24.4-eks-d-1-24-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/metadata.yaml
-      syncer: {}
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -2286,7 +2282,6 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/infrastructure-components.yaml
-      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -2316,7 +2311,6 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.25.1-eks-d-1-25-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/metadata.yaml
-      syncer: {}
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -3038,7 +3032,6 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/infrastructure-components.yaml
-      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -3068,7 +3061,6 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.26.0-eks-d-1-26-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/metadata.yaml
-      syncer: {}
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -3790,7 +3782,6 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/cluster-template.yaml
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/infrastructure-components.yaml
-      driver: {}
       kubeProxy:
         arch:
         - amd64
@@ -3820,6 +3811,5 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.26.0-eks-d-1-27-eks-a-v0.0.0-dev-release-0.16-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.16-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.3.1/metadata.yaml
-      syncer: {}
       version: v1.3.1+abcdef1
 status: {}

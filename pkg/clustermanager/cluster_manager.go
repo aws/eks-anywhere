@@ -684,10 +684,6 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		}
 	}
 
-	if err = c.InstallStorageClass(ctx, workloadCluster, provider); err != nil {
-		return fmt.Errorf("installing storage class during upgrade: %v", err)
-	}
-
 	return nil
 }
 
@@ -776,26 +772,6 @@ func getProviderNamespaces(providerDeployments map[string][]string) []string {
 		namespaces = append(namespaces, namespace)
 	}
 	return namespaces
-}
-
-func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error {
-	// Historically, vSphere has been the only provider wanting to install a storage class. The new
-	// workflow hook capability enables inverting the provider relationship so only the vSphere
-	// provider contains storage class installation code.
-	//
-	// To maintain backward compatibility, we're checking for an anonymous interface implemented
-	// on the vSphere provider only to determine if the provider wants to install a storage class.
-	// This code should be deleted when we convert completely to new workflows.
-	installer, ok := provider.(interface {
-		InstallStorageClass(context.Context, *types.Cluster) error
-	})
-	if ok {
-		logger.Info("Installing storage class on cluster")
-		if err := installer.InstallStorageClass(ctx, cluster); err != nil {
-			return fmt.Errorf("installing storage class: %v", err)
-		}
-	}
-	return nil
 }
 
 func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {

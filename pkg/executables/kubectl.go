@@ -20,7 +20,6 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -2343,15 +2342,6 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 		return nil, err
 	}
 
-	return obj, nil
-}
-
-// GetStorageClass returns the cluster-scoped storageclass on the cluster.
-func (k *Kubectl) GetStorageClass(ctx context.Context, name, kubeconfig string) (*storagev1.StorageClass, error) {
-	obj := &storagev1.StorageClass{}
-	if err := k.GetClusterObject(ctx, "storageclass", name, kubeconfig, obj); err != nil {
-		return nil, err
-	}
 	return obj, nil
 }
 

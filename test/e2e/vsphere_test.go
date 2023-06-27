@@ -1171,23 +1171,6 @@ func TestVSphereKubernetes127BottleRocketWorkloadClusterCuratedPackagesCertManag
 	runCertManagerRemoteClusterInstallSimpleFlow(test)
 }
 
-// Disable CSI
-func TestVSphereKubernetes127DisableCSIUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithUbuntu127(),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube127)),
-	)
-	runVSphereDisableCSIUpgradeFlow(
-		test,
-		v1alpha1.Kube127,
-		provider,
-	)
-}
-
 // Download artifacts
 func TestVSphereDownloadArtifacts(t *testing.T) {
 	test := framework.NewClusterE2ETest(

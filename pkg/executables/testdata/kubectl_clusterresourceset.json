@@ -10,11 +10,11 @@
         "resources": [
             {
                 "kind": "Secret",
-                "name": "vsphere-csi-controller"
+                "name": "vsphere-cloud-controller-manager"
             },
             {
                 "kind": "ConfigMap",
-                "name": "vsphere-csi-controller-role"
+                "name": "vsphere-cloud-controller-manager-role"
             }  
         ],
         "strategy": "ApplyOnce"

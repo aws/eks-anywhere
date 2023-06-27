@@ -70,7 +70,6 @@ metadata:
    name: my-cluster-datacenter
 spec:
   datacenter: <span style="color:red">"datacenter1"</span>          <a href="#datacenter-required"># vSphere datacenter name on which to deploy EKS Anywhere (required) </a>
-  disableCSI: false                  <a href="#disablecsi-optional-deprecated"># Deprecation warning: Click to see more. Set to true to not have EKS Anywhere install and manage vSphere CSI driver</a>
   server: <span style="color:red">"myvsphere.local"</span>          <a href="#server-required"># FQDN or IP address of vCenter server (required) </a>
   network: <span style="color:red">"network1"</span>                <a href="#network-required"># Path to the VM network on which to deploy EKS Anywhere (required) </a>
   insecure: false                    <a href="#insecure-optional"># Set to true if vCenter does not have a valid certificate </a>
@@ -256,36 +255,6 @@ openssl x509 -sha1 -fingerprint -in ca.crt -noout
 If you specify the wrong thumbprint, an error message will be printed with the expected thumbprint. If no valid
 certificate is being used, `insecure` must be set to true.
 
-### disableCSI (optional) [DEPRECATED]
->**_NOTE:_** Installing CSI through EKS Anywhere is now deprecated as of v0.16.0. This field will be removed starting from 
-> v0.17.0 and setting `disableCSI` to `true` as mentioned below will be the default behavior. You can track this change with this
-> [issue](https://github.com/aws/eks-anywhere/issues/5517).
-
-Set `disableCSI` to `true` if you don't want to have EKS Anywhere install and manage the vSphere CSI driver for you. 
-More details on the driver are [here](https://docs.vmware.com/en/VMware-vSphere-Container-Storage-Plug-in/2.0/vmware-vsphere-csp-getting-started/GUID-C44D8071-85E7-4933-83EA-6797518C1837.html)
-
->**_NOTE:_** If you upgrade a cluster and disable the vSphere CSI driver after it has already been installed by EKS Anywhere, 
-> you will need to remove the resources manually from the cluster. Delete the `DaemonSet` and `Deployment` first, as they 
-> rely on the other resources. This should be done after setting `disableCSI` to `true` and running `upgrade cluster`.
-> 
-> These are the resources you would need to delete:
-> * `vsphere-csi-controller-role` (kind: ClusterRole)
-> * `vsphere-csi-controller-binding` (kind: ClusterRoleBinding)
-> * `csi.vsphere.vmware.com` (kind: CSIDriver)
-> 
-> These are the resources you would need to delete
-> in the `kube-system` namespace:
-> * `vsphere-csi-controller` (kind: ServiceAccount)
-> * `csi-vsphere-config` (kind: Secret)
-> * `vsphere-csi-node` (kind: DaemonSet)
-> * `vsphere-csi-controller` (kind: Deployment)
-> 
-> These are the resources you would need to delete
-> in the `eksa-system` namespace from the management cluster.
-> * `<cluster-name>-csi` (kind: ClusterResourceSet)
-> 
-> **_Note:_** If your cluster is self-managed, you would delete `<cluster-name>-csi` (kind: ClusterResourceSet) from the same cluster.
-
 ## VSphereMachineConfig Fields
 
 ### memoryMiB (optional)
@@ -378,16 +347,10 @@ Optional host OS configurations for the EKS Anywhere Kubernetes nodes.
 More information in the [Host OS Configuration]({{< relref "../optional/hostOSConfig.md" >}}) section.
 
 ## Optional VSphere Credentials 
-Use the following environment variables to configure Cloud Provider and CSI Driver with different credentials.
+Use the following environment variables to configure the Cloud Provider with different credentials.
 
 ### EKSA_VSPHERE_CP_USERNAME
 Username for Cloud Provider (Default: $EKSA_VSPHERE_USERNAME).
 
 ### EKSA_VSPHERE_CP_PASSWORD
 Password for Cloud Provider (Default: $EKSA_VSPHERE_PASSWORD).
-
-### EKSA_VSPHERE_CSI_USERNAME
-Username for CSI Driver (Default: $EKSA_VSPHERE_USERNAME).
-
-### EKSA_VSPHERE_CSI_PASSWORD
-Password for CSI Driver (Default: $EKSA_VSPHERE_PASSWORD).
