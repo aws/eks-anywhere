@@ -22,7 +22,7 @@ const (
 	ControlPlaneInitializationInProgressReason = "ControlPlaneInitializationInProgress"
 
 	// ControlPlaneNotReadyReason reports that the control plane is not ready.
-	ControlPlaneNotReadyReason = "ControlPlaneNotReadyReason"
+	ControlPlaneNotReadyReason = "ControlPlaneNotReady"
 
 	// ControlPlaneNotInitializedReason reports that the control plane is not initialized.
 	ControlPlaneNotInitializedReason = "ControlPlaneNotInitialized"
