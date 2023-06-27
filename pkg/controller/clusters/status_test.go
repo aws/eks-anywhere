@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -334,7 +335,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 	}
 }
 
-func TestUpdateWorkersReadyCondition(t *testing.T) {
+func TesUpdateClusterStatusForWorkers(t *testing.T) {
 	cluster := test.NewClusterSpec().Cluster
 	clusterName := "test-cluster"
 	g := NewWithT(t)
@@ -683,6 +684,97 @@ func TestUpdateWorkersReadyCondition(t *testing.T) {
 			g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))
 			g.Expect(condition.Reason).To(Equal(tt.wantCondition.Reason))
 			g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
+		})
+	}
+}
+
+func TestUpdateClusterStatusForCNI(t *testing.T) {
+	g := NewWithT(t)
+
+	tests := []struct {
+		name          string
+		spec          *cluster.Spec
+		conditions    []anywherev1.Condition
+		wantCondition *anywherev1.Condition
+		skipUpgrade   *bool
+		wantErr       string
+	}{
+		{
+			name:        "control plane is not ready",
+			skipUpgrade: ptr.Bool(false),
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "False",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.DefaultCNIConfiguredCondition,
+				Reason:   anywherev1.ControlPlaneNotReadyReason,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityInfo,
+			},
+		},
+		{
+			name:        "cilium is unmanaged",
+			skipUpgrade: ptr.Bool(true),
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:     anywherev1.DefaultCNIConfiguredCondition,
+				Reason:   anywherev1.SkipUpgradesForDefaultCNIConfiguredReason,
+				Status:   "False",
+				Severity: clusterv1.ConditionSeverityWarning,
+			},
+		},
+		{
+			name:        "cilium is managed",
+			skipUpgrade: ptr.Bool(false),
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ControlPlaneReadyCondition,
+					Status: "True",
+				},
+			},
+			wantCondition: &anywherev1.Condition{
+				Type:   anywherev1.DefaultCNIConfiguredCondition,
+				Status: "True",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "management-cluster"
+				s.Cluster.Spec.ClusterNetwork = anywherev1.ClusterNetwork{
+					CNIConfig: &anywherev1.CNIConfig{
+						Cilium: &anywherev1.CiliumConfig{
+							SkipUpgrade: tt.skipUpgrade,
+						},
+					},
+				}
+
+				s.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+				s.Cluster.Status.Conditions = tt.conditions
+			})
+
+			clusters.UpdateClusterStatusForCNI(ctx, spec.Cluster)
+
+			if tt.wantCondition != nil {
+				condition := conditions.Get(spec.Cluster, tt.wantCondition.Type)
+				g.Expect(condition).ToNot(BeNil())
+				g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
+				g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
+				g.Expect(condition.Status).To(Equal(tt.wantCondition.Status))
+				g.Expect(condition.Reason).To(Equal(tt.wantCondition.Reason))
+				g.Expect(condition.Message).To(ContainSubstring(tt.wantCondition.Message))
+			}
 		})
 	}
 }

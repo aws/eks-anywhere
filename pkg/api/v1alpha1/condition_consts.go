@@ -21,15 +21,15 @@ const (
 	// ControlPlaneInitializationInProgressReason reports that the control plane initilization is in progress.
 	ControlPlaneInitializationInProgressReason = "ControlPlaneInitializationInProgress"
 
+	// ControlPlaneNotReadyReason reports that the control plane is not ready.
+	ControlPlaneNotReadyReason = "ControlPlaneNotReadyReason"
+
 	// ControlPlaneNotInitializedReason reports that the control plane is not initialized.
 	ControlPlaneNotInitializedReason = "ControlPlaneNotInitialized"
 
 	// WorkersReadyConditon reports the status on the worker nodes, indicating all those worker nodes
 	// are the right version and are ready, not including the old nodes.
 	WorkersReadyConditon ConditionType = "WorkersReady"
-
-	// DefaultCNIConfiguredCondition reports the default cni cluster has been configured successfully.
-	DefaultCNIConfiguredCondition ConditionType = "DefaultCNIConfigured"
 )
 
 const (
@@ -45,4 +45,17 @@ const (
 	// RollingUpgradeInProgress reports the Cluster is executing a rolling upgrading to align the nodes to
 	// a new desired machine spec.
 	RollingUpgradeInProgress = "RollingUpgradeInProgress"
+)
+
+const (
+	// DefaultCNIConfiguredCondition reports the default cni cluster has been configured successfully.
+	DefaultCNIConfiguredCondition ConditionType = "DefaultCNIConfigured"
+
+	// DefaultCNIUpgradeInProgressReason used when cluster is upgrading the default CNI.
+	DefaultCNIUpgradeInProgressReason = "DefaultCNIUpgradeInProgressReason"
+
+	// SkipUpgradesForDefaultCNIConfiguredReason used to indicate the custer has been configured to skip
+	// upgrades for the default cni. The default cni may still be installed, for example to successfully
+	// create a cluster.
+	SkipUpgradesForDefaultCNIConfiguredReason = "SkipUpgradesForDefaultCNIConfigured"
 )

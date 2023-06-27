@@ -39,6 +39,28 @@ func UpdateClusterStatusForWorkers(ctx context.Context, client client.Client, cl
 	return nil
 }
 
+// UpdateClusterStatusForCNI sets the Cluster status condition for a self managed cluster. The CNI reconciler
+// handles the rest of the logic for determining the condition and updating the status based on the current state of the cluster.
+func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster) {
+	if !conditions.IsTrue(cluster, anywherev1.ControlPlaneReadyCondition) {
+		conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
+		return
+	}
+
+	if cluster.IsSelfManaged() {
+		ciliumCfg := cluster.Spec.ClusterNetwork.CNIConfig.Cilium
+		// Though it may be installed initially to successfully create the cluster,
+		// if the CNI is configured to skip upgrades, we mark the condition as "False"
+		if !ciliumCfg.IsManaged() {
+			conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
+			return
+		}
+
+		// Otherwise, since the control plane is fully ready we can assume the CNI has been configured.
+		conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+	}
+}
+
 // updateControlPlaneReadyCondition updates the ControlPlaneReady condition, after checking the state of the control plane
 // in the cluster.
 func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane) {
