@@ -188,7 +188,9 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
   >   kubectl apply -f updated-hardware.yaml
   >   ```
   >
-  > *  If you want to upgrade multiple workload clusters, make sure that the spare hardware that is available for new nodes to rollout has labels unique to the workload cluster you are trying to upgrade. For instance, for an EKSA cluster named `eksa-workload1`, the hardware that is assigned for this cluster should have labels that are only going to be used for this cluster like `type=eksa-workload1-cp` and `type=eksa-workload1-worker`. Another workload cluster named `eksa-workload2` can have labels like `type=eksa-workload2-cp` and `type=eksa-workload2-worker`. Please note that even though labels can be arbitrary, they need to be unique for each workload cluster. Not specifying unique cluster labels can cause cluster upgrades to behave in unexpected ways which may lead to unsuccessful upgrades and unstable clusters.
+  > *  If you want to update multiple workload clusters, you should update them one by one, and make sure its completely up and running successfully by checking tinkerbell machines, before attempting to update the next workload cluster. Attempting to update multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
+  > 
+  >  This also applied to sending upgrade requests to the same workload cluster.
 
 * **eksctl CLI**: To upgrade a workload cluster with eksctl, run:
 
