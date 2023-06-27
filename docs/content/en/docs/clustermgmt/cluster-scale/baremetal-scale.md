@@ -81,9 +81,7 @@ If you don't have any available hardware that match this requirement in the clus
    >   eksctl anywhere generate hardware -z updated-hardware.csv > updated-hardware.yaml
    >   kubectl apply -f updated-hardware.yaml
    >   ```
-   > *  If you want to scale up multiple workload clusters, you should scale them up one by one. Make sure each is completely up and running successfully by checking Tinkerbell machines, before attempting to scale the next workload cluster. Attempting to scale up multiple workload clusters without letting the requests complete successfully can cause hardware race conditions. In a situation where sufficient hardware is not provisioned, the creation would fail at the CAPT level.
-   >
-   >  This also applied to sending scaling requests to the same workload cluster. 
+   > *  For scaling multiple workload clusters, it is essential that the hardware that will be used for scaling up clusters has labels and selectors that are unique to the target workload cluster. For instance, for an EKSA cluster named `eksa-workload1`, the hardware that is assigned for this cluster should have labels that are only going to be used for this cluster like `type=eksa-workload1-cp` and `type=eksa-workload1-worker`. Another workload cluster named `eksa-workload2` can have labels like `type=eksa-workload2-cp` and `type=eksa-workload2-worker`. Please note that even though labels can be arbitrary, they need to be unique for each workload cluster. Not specifying unique cluster labels can cause cluster upgrades to behave in unexpected ways which may lead to unsuccessful upgrades and unstable clusters.
 
 ### Autoscaling
 
