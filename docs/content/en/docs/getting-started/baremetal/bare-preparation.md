@@ -30,6 +30,8 @@ This file will be used:
 * When you generate the hardware file to be included in the cluster creation process described in the Create Bare Metal production cluster Getting Started guide.
 * To provide information that is passed to each machine from the Tinkerbell DHCP server when the machine is initially network booted.
 
+**NOTE**:While using kubectl, GitOps and Terraform for workload cluster creation, please make sure to refer [this]({{< relref "./baremetal-getstarted/#create-separate-workload-clusters" >}}) section.
+
 The following is an example of an EKS Anywhere Bare Metal hardware CSV file:
 
 ```
