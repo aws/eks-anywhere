@@ -47,6 +47,31 @@ func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	v.set(false, "agent")
 	v.set(false, "operator", "enabled")
 
+	tolerationsList := []map[string]string{
+		{
+			"key":    "node.kubernetes.io/not-ready",
+			"effect": "NoSchedule",
+		},
+		{
+			"key":    "node-role.kubernetes.io/master",
+			"effect": "NoSchedule",
+		},
+		{
+			"key":    "node-role.kubernetes.io/control-plane",
+			"effect": "NoSchedule",
+		},
+		{
+			"key":    "node.cloudprovider.kubernetes.io/uninitialized",
+			"effect": "NoSchedule",
+			"value":  "true",
+		},
+		{
+			"key":      "CriticalAddonsOnly",
+			"operator": "Exists",
+		},
+	}
+	v.set(tolerationsList, "preflight", "tolerations")
+
 	uri, version := getChartUriAndVersion(spec)
 
 	kubeVersion, err := getKubeVersionString(spec)
