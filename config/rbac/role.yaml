@@ -260,7 +260,7 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: manager-role
-  namespace: eksa-packages
+  namespace: eksa-system
 rules:
 - apiGroups:
   - ""
@@ -269,6 +269,14 @@ rules:
   verbs:
   - patch
   - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - eksareleases
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - packages.eks.amazonaws.com
   resources:

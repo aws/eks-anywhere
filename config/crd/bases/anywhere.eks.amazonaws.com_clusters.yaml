@@ -37,8 +37,9 @@ spec:
             description: ClusterSpec defines the desired state of Cluster.
             properties:
               bundlesRef:
-                description: BundlesRef contains a reference to the Bundles containing
-                  the desired dependencies for the cluster
+                description: 'BundlesRef contains a reference to the Bundles containing
+                  the desired dependencies for the cluster. DEPRECATED: Use EksaVersion
+                  instead.'
                 properties:
                   apiVersion:
                     description: APIVersion refers to the Bundles APIVersion
@@ -211,6 +212,10 @@ spec:
                   name:
                     type: string
                 type: object
+              eksaVersion:
+                description: EksaVersion is the semver identifying the release of
+                  eks-a used to populate the cluster components.
+                type: string
               externalEtcdConfiguration:
                 description: ExternalEtcdConfiguration defines the configuration options
                   for using unstacked etcd topology.

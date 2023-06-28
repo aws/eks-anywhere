@@ -24,6 +24,9 @@ type ClusterSpecOpt func(*cluster.Spec)
 //go:embed testdata
 var configFS embed.FS
 
+// DevEksaVersion can be used in tests.
+var DevEksaVersion v1alpha1.EksaVersion = "v0.0.0-dev"
+
 func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 	s := &cluster.Spec{}
 	s.Config = &cluster.Config{

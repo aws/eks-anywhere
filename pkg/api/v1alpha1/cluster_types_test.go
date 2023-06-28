@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -1319,6 +1320,57 @@ func TestClusterEqualManagement(t *testing.T) {
 					ManagementCluster: v1alpha1.ManagementCluster{
 						Name: tt.cluster2Management,
 					},
+				},
+			}
+
+			g := NewWithT(t)
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterEqualEksaVersion(t *testing.T) {
+	ver := v1alpha1.EksaVersion("v1.0.0")
+	testCases := []struct {
+		testName           string
+		version1, version2 *v1alpha1.EksaVersion
+		want               bool
+	}{
+		{
+			testName: "both nil",
+			version1: nil,
+			version2: nil,
+			want:     true,
+		},
+		{
+			testName: "one nil, one exists",
+			version1: &test.DevEksaVersion,
+			version2: nil,
+			want:     false,
+		},
+		{
+			testName: "both exist, same",
+			version1: &test.DevEksaVersion,
+			version2: &test.DevEksaVersion,
+			want:     true,
+		},
+		{
+			testName: "both exist, diff",
+			version1: &test.DevEksaVersion,
+			version2: &ver,
+			want:     false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					EksaVersion: tt.version1,
+				},
+			}
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					EksaVersion: tt.version2,
 				},
 			}
 
