@@ -62,8 +62,24 @@ type ClusterSpec struct {
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
 	Packages                    *PackageConfiguration        `json:"packages,omitempty"`
-	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
-	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
+	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
+	// DEPRECATED: Use EksaVersion instead.
+	BundlesRef  *BundlesRef  `json:"bundlesRef,omitempty"`
+	EksaVersion *EksaVersion `json:"eksaVersion,omitempty"`
+}
+
+// EksaVersion is the semver identifying the release of eks-a used to populate the cluster components.
+type EksaVersion string
+
+// Equal checks if two EksaVersions are equal.
+func (n *EksaVersion) Equal(o *EksaVersion) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return *n == *o
 }
 
 // HasAWSIamConfig checks if AWSIamConfig is configured for the cluster.
@@ -131,6 +147,9 @@ func (n *Cluster) Equal(o *Cluster) bool {
 		return false
 	}
 	if !n.Spec.BundlesRef.Equal(o.Spec.BundlesRef) {
+		return false
+	}
+	if !n.Spec.EksaVersion.Equal(o.Spec.EksaVersion) {
 		return false
 	}
 
@@ -1238,10 +1257,12 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 	return config
 }
 
+// IsManaged returns true if the Cluster is not self managed.
 func (c *Cluster) IsManaged() bool {
 	return !c.IsSelfManaged()
 }
 
+// ManagedBy returns the Cluster's management cluster's name.
 func (c *Cluster) ManagedBy() string {
 	return c.Spec.ManagementCluster.Name
 }
