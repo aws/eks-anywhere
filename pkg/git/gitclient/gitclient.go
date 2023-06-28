@@ -4,17 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 
 	gogit "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
+	gogitconfig "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -214,7 +216,7 @@ func (g *GitClient) Branch(name string) error {
 
 	localBranchRef := plumbing.NewBranchReferenceName(name)
 
-	branchOpts := &config.Branch{
+	branchOpts := &gogitconfig.Branch{
 		Name:   name,
 		Remote: gogit.DefaultRemoteName,
 		Merge:  localBranchRef,
@@ -268,11 +270,23 @@ func (g *GitClient) Branch(name string) error {
 
 func (g *GitClient) ValidateRemoteExists(ctx context.Context) error {
 	logger.V(3).Info("Validating git setup", "repoUrl", g.RepoUrl)
-	remote := g.Client.NewRemote(g.RepoUrl, gogit.DefaultRemoteName)
-	// Check if we are able to make a connection to the remote by attempting to list refs
-	_, err := g.Client.ListWithContext(ctx, remote, g.Auth)
-	if err != nil {
-		return fmt.Errorf("connecting with remote %v for repository: %v", gogit.DefaultRemoteName, err)
+
+	repositoryURL, _ := url.Parse(g.RepoUrl)
+	if strings.Contains(repositoryURL.Hostname(), "git-codecommit") && strings.Contains(repositoryURL.Hostname(), "amazonaws.com") {
+		logger.V(6).Info("Validating codecommit url")
+		if repositoryURL.User == nil || repositoryURL.User.Username() == "" {
+			return fmt.Errorf("invalid AWS CodeCommit url: ssh key id should be specified in the url")
+		}
+		if repositoryURL.User.Username() == config.DefaultSSHAuthUser {
+			return fmt.Errorf("invalid AWS CodeCommit url: ssh username should be the SSH key ID for the provided private key")
+		}
+	} else {
+		remote := g.Client.NewRemote(g.RepoUrl, gogit.DefaultRemoteName)
+		// Check if we are able to make a connection to the remote by attempting to list refs
+		_, err := g.Client.ListWithContext(ctx, remote, g.Auth)
+		if err != nil {
+			return fmt.Errorf("connecting with remote %v for repository: %v", gogit.DefaultRemoteName, err)
+		}
 	}
 	return nil
 }
@@ -319,7 +333,7 @@ type GoGit interface {
 	Commit(m string, sig *object.Signature, w *gogit.Worktree) (plumbing.Hash, error)
 	CommitObject(r *gogit.Repository, h plumbing.Hash) (*object.Commit, error)
 	Create(r *gogit.Repository, url string) (*gogit.Remote, error)
-	CreateBranch(r *gogit.Repository, config *config.Branch) error
+	CreateBranch(r *gogit.Repository, config *gogitconfig.Branch) error
 	Head(r *gogit.Repository) (*plumbing.Reference, error)
 	NewRemote(url, remoteName string) *gogit.Remote
 	Init(dir string) (*gogit.Repository, error)
@@ -393,7 +407,7 @@ func (gg *goGit) Init(dir string) (*gogit.Repository, error) {
 }
 
 func (ggc *goGit) NewRemote(url, remoteName string) *gogit.Remote {
-	return gogit.NewRemote(memory.NewStorage(), &config.RemoteConfig{
+	return gogit.NewRemote(memory.NewStorage(), &gogitconfig.RemoteConfig{
 		Name: remoteName,
 		URLs: []string{url},
 	})
@@ -404,13 +418,13 @@ func (gg *goGit) Checkout(worktree *gogit.Worktree, opts *gogit.CheckoutOptions)
 }
 
 func (gg *goGit) Create(r *gogit.Repository, url string) (*gogit.Remote, error) {
-	return r.CreateRemote(&config.RemoteConfig{
+	return r.CreateRemote(&gogitconfig.RemoteConfig{
 		Name: gogit.DefaultRemoteName,
 		URLs: []string{url},
 	})
 }
 
-func (gg *goGit) CreateBranch(repo *gogit.Repository, config *config.Branch) error {
+func (gg *goGit) CreateBranch(repo *gogit.Repository, config *gogitconfig.Branch) error {
 	return repo.CreateBranch(config)
 }
 

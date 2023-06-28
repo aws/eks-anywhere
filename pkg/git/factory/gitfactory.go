@@ -3,6 +3,7 @@ package gitfactory
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -60,11 +61,19 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		if err = os.Setenv(config.SshKnownHostsEnv, gitKnownHosts); err != nil {
 			return nil, fmt.Errorf("unable to set %s: %v", config.SshKnownHostsEnv, err)
 		}
-		gitAuth, err = getSshAuthFromPrivateKey(privateKeyFile, privateKeyPassphrase)
+		repoUrl = fluxConfig.Spec.Git.RepositoryUrl
+		parsedRepoURL, err := url.Parse(repoUrl)
 		if err != nil {
 			return nil, err
 		}
-		repoUrl = fluxConfig.Spec.Git.RepositoryUrl
+		user := config.DefaultSSHAuthUser
+		if strings.Contains(parsedRepoURL.Hostname(), "git-codecommit") && strings.Contains(parsedRepoURL.Hostname(), "amazonaws.com") {
+			user = parsedRepoURL.User.Username()
+		}
+		gitAuth, err = getSSHAuthFromPrivateKey(privateKeyFile, privateKeyPassphrase, user)
+		if err != nil {
+			return nil, err
+		}
 		repo = path.Base(strings.TrimSuffix(repoUrl, filepath.Ext(repoUrl)))
 	default:
 		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
@@ -124,14 +133,14 @@ func WithRepositoryDirectory(repoDir string) GitToolsOpt {
 	}
 }
 
-func getSshAuthFromPrivateKey(privateKeyFile string, passphrase string) (gogitssh.AuthMethod, error) {
+func getSSHAuthFromPrivateKey(privateKeyFile string, passphrase string, user string) (gogitssh.AuthMethod, error) {
 	signer, err := getSignerFromPrivateKeyFile(privateKeyFile, passphrase)
 	if err != nil {
 		return nil, err
 	}
 	return &gogitssh.PublicKeys{
 		Signer: signer,
-		User:   "git",
+		User:   user,
 	}, nil
 }
 
