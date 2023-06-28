@@ -15,6 +15,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -44,6 +46,7 @@ func TestReconcilerReconcileInstall(t *testing.T) {
 	tt.expectDaemonSetSemanticallyEqual(ds)
 	tt.expectOperatorSemanticallyEqual(operator)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("True", "", "", ""))
 }
 
 func TestReconcilerReconcileInstallErrorGeneratingManifest(t *testing.T) {
@@ -76,6 +79,7 @@ func TestReconcilerReconcileAlreadyUpToDate(t *testing.T) {
 	tt.expectDaemonSetSemanticallyEqual(ds)
 	tt.expectOperatorSemanticallyEqual(operator)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("True", "", "", ""))
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
@@ -100,6 +104,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflight(t *testing.T) {
 	tt.expectDSToNotExist(preflightDS.Name, preflightDS.Namespace)
 	tt.expectDeploymentToNotExist(preflightDeployment.Name, preflightDeployment.Namespace)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("True", "", "", ""))
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplater(t *testing.T) {
@@ -155,6 +160,7 @@ func TestReconcilerReconcileUpgradeButCiliumDaemonSetNotReady(t *testing.T) {
 	)
 
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.DefaultCNIUpgradeInProgressReason, v1beta1.ConditionSeverityInfo, "Cilium version upgrade needed"))
 }
 
 func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDaemonSetNotAvailable(t *testing.T) {
@@ -176,6 +182,7 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDaemonSetNotAvailab
 		Equal(controller.ResultWithRequeue(10 * time.Second)),
 	)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.DefaultCNIUpgradeInProgressReason, v1beta1.ConditionSeverityInfo, "Cilium version upgrade needed"))
 }
 
 func TestReconcilerReconcileUpgradeErrorGeneratingPreflight(t *testing.T) {
@@ -218,6 +225,7 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDeploymentNotAvaila
 		Equal(controller.ResultWithRequeue(10 * time.Second)),
 	)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.DefaultCNIUpgradeInProgressReason, v1beta1.ConditionSeverityInfo, "Cilium version upgrade needed"))
 }
 
 func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightNotReady(t *testing.T) {
@@ -240,6 +248,7 @@ func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightNotReady(t *testing
 		Equal(controller.ResultWithRequeue(10 * time.Second)),
 	)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.DefaultCNIUpgradeInProgressReason, v1beta1.ConditionSeverityInfo, "Cilium version upgrade needed"))
 }
 
 func TestReconcilerReconcileUpgradePreflightDaemonSetNotReady(t *testing.T) {
@@ -259,6 +268,7 @@ func TestReconcilerReconcileUpgradePreflightDaemonSetNotReady(t *testing.T) {
 		Equal(controller.ResultWithRequeue(10 * time.Second)),
 	)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.DefaultCNIUpgradeInProgressReason, v1beta1.ConditionSeverityInfo, "Cilium version upgrade needed"))
 }
 
 func TestReconcilerReconcileUpgradePreflightDeploymentSetNotReady(t *testing.T) {
@@ -280,6 +290,7 @@ func TestReconcilerReconcileUpgradePreflightDeploymentSetNotReady(t *testing.T) 
 		Equal(controller.ResultWithRequeue(10 * time.Second)),
 	)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.DefaultCNIUpgradeInProgressReason, v1beta1.ConditionSeverityInfo, "Cilium version upgrade needed"))
 }
 
 func TestReconcilerReconcileUpgradeInvalidCiliumInstalledVersion(t *testing.T) {
@@ -396,6 +407,7 @@ func TestReconcilerReconcileUpgradePreflightReady(t *testing.T) {
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
 	)
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("True", "", "", ""))
 }
 
 func TestReconcilerReconcileUpdateConfigConfigMapEnablePolicyChange(t *testing.T) {
@@ -424,6 +436,7 @@ func TestReconcilerReconcileUpdateConfigConfigMapEnablePolicyChange(t *testing.T
 	tt.Expect(tt.reconciler.Reconcile(tt.ctx, test.NewNullLogger(), tt.client, tt.spec)).To(
 		Equal(controller.Result{}),
 	)
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("True", "", "", ""))
 }
 
 func TestReconcilerReconcileSkipUpgradeWithoutCiliumInstalled(t *testing.T) {
@@ -450,6 +463,7 @@ func TestReconcilerReconcileSkipUpgradeWithoutCiliumInstalled(t *testing.T) {
 	tt.expectDaemonSetSemanticallyEqual(ds)
 	tt.expectOperatorSemanticallyEqual(operator)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("True", "", "", ""))
 }
 
 func TestReconcilerReconcileSkipUpgradeWithCiliumInstalled(t *testing.T) {
@@ -472,6 +486,7 @@ func TestReconcilerReconcileSkipUpgradeWithCiliumInstalled(t *testing.T) {
 	tt.expectDaemonSetSemanticallyEqual(ds)
 	tt.expectOperatorSemanticallyEqual(operator)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, v1beta1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"))
 }
 
 func TestReconcilerReconcileSkipUpgradeWithAnnotationWithoutCilium(t *testing.T) {
@@ -491,6 +506,7 @@ func TestReconcilerReconcileSkipUpgradeWithAnnotationWithoutCilium(t *testing.T)
 		Equal(controller.Result{}),
 	)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, v1beta1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"))
 }
 
 func TestReconcilerReconcileSkipUpgradeWithAnnotationWithCilium(t *testing.T) {
@@ -522,6 +538,7 @@ func TestReconcilerReconcileSkipUpgradeWithAnnotationWithCilium(t *testing.T) {
 	tt.expectDaemonSetSemanticallyEqual(ds)
 	tt.expectOperatorSemanticallyEqual(operator)
 	tt.expectCiliumInstalledAnnotation()
+	tt.expectDefaultCNIConfigured(defaultCNIConfiguredCondition("False", anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, v1beta1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"))
 }
 
 type reconcileTest struct {
@@ -691,6 +708,13 @@ func (tt *reconcileTest) expectOperatorSemanticallyEqual(wantOperator *appsv1.De
 	)
 }
 
+func (tt *reconcileTest) expectDefaultCNIConfigured(wantCondition *anywherev1.Condition) {
+	tt.t.Helper()
+	condition := conditions.Get(tt.spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
+	tt.Expect(condition).ToNot(BeNil(), "missing defaultcniconfigured condition")
+	tt.Expect(condition).To(conditions.HaveSameStateOf(wantCondition))
+}
+
 func (tt *reconcileTest) expectCiliumInstalledAnnotation() {
 	tt.t.Helper()
 
@@ -822,5 +846,15 @@ func simpleConfigMap(name, enablePolicy string) *corev1.ConfigMap {
 		Data: map[string]string{
 			"enable-policy": enablePolicy,
 		},
+	}
+}
+
+func defaultCNIConfiguredCondition(status corev1.ConditionStatus, reason string, severity v1beta1.ConditionSeverity, message string) *anywherev1.Condition {
+	return &anywherev1.Condition{
+		Type:     anywherev1.DefaultCNIConfiguredCondition,
+		Status:   status,
+		Severity: severity,
+		Reason:   reason,
+		Message:  message,
 	}
 }

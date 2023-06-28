@@ -7,9 +7,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -43,7 +46,9 @@ func New(templater Templater) *Reconciler {
 // Reconcile takes the Cilium CNI in a cluster to the desired state defined in a cluster Spec.
 // It uses a controller.Result to indicate when requeues are needed. client is connected to the
 // target Kubernetes cluster, not the management cluster.
-func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {
+// nolint:gocyclo
+// TODO: reduce cyclomatic complexity - https://github.com/aws/eks-anywhere-internal/issues/1461
+func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (res controller.Result, reterr error) {
 	installation, err := cilium.GetInstallation(ctx, client)
 	if err != nil {
 		return controller.Result{}, err
@@ -65,7 +70,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	// equivilent to a typical create scenario where we must install a CNI to satisfy cluster
 	// create success criteria.
 
-	// To accommodate upgrades of cluster cerated prior to introducing markers, we check for
+	// To accommodate upgrades of cluster created prior to introducing markers, we check for
 	// an existing installation and try to mark the cluster as having already had EKS-A
 	// Cilium installed.
 	if !ciliumWasInstalled(ctx, spec.Cluster) && installation.Installed() {
@@ -88,13 +93,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 			"Applying %v annotation to Cluster object",
 			EKSACiliumInstalledAnnotation,
 		))
-		markCiliumInstalled(ctx, spec.Cluster)
 
+		markCiliumInstalled(ctx, spec.Cluster)
+		conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
 		return controller.Result{}, nil
 	}
 
 	if !ciliumCfg.IsManaged() {
 		logger.Info("Cilium configured as unmanaged, skipping upgrade")
+		conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 		return controller.Result{}, nil
 	}
 
@@ -103,12 +110,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 
 	if upgradeInfo.VersionUpgradeNeeded() {
 		logger.Info("Cilium upgrade needed", "reason", upgradeInfo.Reason())
-
 		if result, err := r.upgrade(ctx, logger, client, installation, spec); err != nil {
 			return controller.Result{}, err
 		} else if result.Return() {
+			conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
 			return result, nil
 		}
+
 	} else if upgradeInfo.ConfigUpdateNeeded() {
 		logger.Info("Cilium config update needed", "reason", upgradeInfo.Reason())
 		if err := r.updateConfig(ctx, client, spec); err != nil {
@@ -117,6 +125,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	} else {
 		logger.Info("Cilium is already up to date")
 	}
+
+	// Upgrade process has run its course, and so we can now mark that the default cni has been configured.
+	conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
 
 	return r.deletePreflightIfExists(ctx, client, spec)
 }
