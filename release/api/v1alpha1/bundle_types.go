@@ -196,6 +196,10 @@ type VSphereBundle struct {
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
+	// This field has been deprecated
+	Driver               *Image    `json:"driver,omitempty"`
+	// This field has been deprecated
+	Syncer               *Image    `json:"syncer,omitempty"`
 }
 
 type DockerBundle struct {
