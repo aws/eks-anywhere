@@ -149,7 +149,7 @@ spec:
 ### repositoryUrl (required)
 * __Description__: The URL of an existing repository where EKS Anywhere will store your cluster configuration and sync it to the cluster. For private repositories, the SSH URL will be of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`
 * __Type__: string
-* __Value__: The `repositoryUrl` value is of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`. This may differ from the default SSH URL given by your provider. 
+* __Value__: The `repositoryUrl` value is of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`. This may differ from the default SSH URL given by your provider. Consider these differences between github and CodeCommit URLs:
   * The github.com user interface provides an SSH URL containing a `:` before the repository owner, rather than a `/`. Make sure to replace this `:` with a `/`, if present. 
   * The CodeCommit SSH URL must include SSH-KEY-ID in format `ssh://<SSH-Key-ID>@git-codecommit.<region>.amazonaws.com/v1/repos/<repository>`.
 
