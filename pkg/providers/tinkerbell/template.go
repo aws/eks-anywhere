@@ -1,16 +1,19 @@
 package tinkerbell
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/yaml"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -540,28 +543,37 @@ func buildTemplateMapMD(
 	return values, nil
 }
 
-func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
-	var outSpec []unstructured.Unstructured
-	resources := strings.Split(string(inputSpec), "---")
-	for _, resource := range resources {
-		if resource == "" {
-			continue
+// omitTinkerbellMachineTemplate removes TinkerbellMachineTemplate API objects from yml. yml is
+// typically an EKSA cluster configuration.
+func omitTinkerbellMachineTemplate(yml []byte) ([]byte, error) {
+	var filtered []unstructured.Unstructured
+
+	r := yamlutil.NewYAMLReader(bufio.NewReader(bytes.NewReader(yml)))
+	for {
+		d, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
 		}
 
 		var m map[string]interface{}
-		if err := yaml.Unmarshal([]byte(resource), &m); err != nil {
-			continue
+		if err := yamlutil.Unmarshal(d, &m); err != nil {
+			return nil, err
 		}
-
 		var u unstructured.Unstructured
 		u.SetUnstructuredContent(m)
 
-		// Omit TinkerbellMachineTemplate kind from deployment yaml
-		if u.GetKind() != "" && u.GetKind() != TinkerbellMachineTemplateKind {
-			outSpec = append(outSpec, u)
+		// Omit TinkerbellMachineTemplate kind.
+		if u.GetKind() == TinkerbellMachineTemplateKind {
+			continue
 		}
+
+		filtered = append(filtered, u)
 	}
-	return unstructuredutil.UnstructuredToYaml(outSpec)
+
+	return unstructuredutil.UnstructuredToYaml(filtered)
 }
 
 func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) (map[string]interface{}, error) {
