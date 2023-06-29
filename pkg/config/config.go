@@ -10,7 +10,6 @@ const (
 	AwsAccessKeyIdEnv         = "AWS_ACCESS_KEY_ID"
 	AwsSecretAccessKeyEnv     = "AWS_SECRET_ACCESS_KEY"
 	EksaRegionEnv             = "EKSA_AWS_REGION"
-	DefaultSSHAuthUser        = "git"
 )
 
 type CliConfig struct {

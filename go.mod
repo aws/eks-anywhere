@@ -19,7 +19,7 @@ require (
 	github.com/aws/smithy-go v1.13.2
 	github.com/docker/cli v23.0.5+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
 	github.com/gocarina/gocsv v0.0.0-20220304222734-caabc5f00d30
 	github.com/golang/mock v1.6.0
@@ -28,7 +28,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.1.3
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
-	github.com/onsi/gomega v1.27.8
+	github.com/onsi/gomega v1.27.5
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1

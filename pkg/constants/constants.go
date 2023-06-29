@@ -77,6 +77,10 @@ const (
 
 	BottlerocketDefaultUser = "ec2-user"
 	UbuntuDefaultUser       = "capv"
+
+	DefaultSSHAuthUser = "git"
+	CodeCommitSubHost  = "git-codecommit"
+	AWSSubHost         = "amazonaws.com"
 )
 
 type Operation int

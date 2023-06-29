@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -16,7 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 
-	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -271,13 +270,16 @@ func (g *GitClient) Branch(name string) error {
 func (g *GitClient) ValidateRemoteExists(ctx context.Context) error {
 	logger.V(3).Info("Validating git setup", "repoUrl", g.RepoUrl)
 
-	repositoryURL, _ := url.Parse(g.RepoUrl)
-	if strings.Contains(repositoryURL.Hostname(), "git-codecommit") && strings.Contains(repositoryURL.Hostname(), "amazonaws.com") {
+	isCodecommit, codeCommitUser, err := git.IsCodeCommitURL(g.RepoUrl)
+	if err != nil {
+		return err
+	}
+	if isCodecommit {
 		logger.V(6).Info("Validating codecommit url")
-		if repositoryURL.User == nil || repositoryURL.User.Username() == "" {
+		if codeCommitUser == nil || codeCommitUser.Username() == "" {
 			return fmt.Errorf("invalid AWS CodeCommit url: ssh key id should be specified in the url")
 		}
-		if repositoryURL.User.Username() == config.DefaultSSHAuthUser {
+		if codeCommitUser.Username() == constants.DefaultSSHAuthUser {
 			return fmt.Errorf("invalid AWS CodeCommit url: ssh username should be the SSH key ID for the provided private key")
 		}
 	} else {
