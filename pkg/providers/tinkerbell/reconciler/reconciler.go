@@ -355,10 +355,10 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 	// We need a new reader each time so that the catalogue gets recreated.
 	kubeReader := hardware.NewKubeReader(r.client)
 	if err := kubeReader.LoadHardware(ctx); err != nil {
-		log.Error(err, "Hardware validation failure")
+		log.Error(err, "Loading hardware failure")
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
-		return controller.ResultWithReturn(), nil
+		return controller.Result{}, err
 	}
 
 	var v tinkerbell.ClusterSpecValidator
@@ -411,7 +411,7 @@ func (r *Reconciler) ValidateHardware(ctx context.Context, log logr.Logger, tink
 		failureMessage := fmt.Errorf("hardware validation failure: %v", err).Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 
-		return controller.ResultWithReturn(), nil
+		return controller.Result{}, err
 	}
 
 	return controller.Result{}, nil
@@ -428,7 +428,7 @@ func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger,
 		failureMessage := err.Error()
 		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 
-		return controller.ResultWithReturn(), nil
+		return controller.Result{}, err
 	}
 
 	for _, rm := range kubeReader.GetCatalogue().AllBMCs() {
@@ -437,7 +437,7 @@ func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger,
 			failureMessage := err.Error()
 			clusterSpec.Cluster.Status.FailureMessage = &failureMessage
 
-			return controller.ResultWithReturn(), nil
+			return controller.Result{}, err
 		}
 	}
 
