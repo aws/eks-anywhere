@@ -232,11 +232,12 @@ It warrants an explanation for the API model that we’re using. In the industry
 
 To create the signature payload we will use the following process. This is a high level walk through, we will provide very details steps during the implementation phase.
 
-1. Create a string by concatenating the body and the timestamp header using RFC3339: `2006-01-02T15:04:05Z07:00` separated by a newline character: `\n`
-2. HMAC sign (SHA256) this string using the provided secret
-3. Make a hex encoded string of the HMAC signature
-4. Prepend the algorithm type and an equal sign to the signature (`sha256=`)
-5. Store the string signature in the header (`X-Rufio-Signature`)
+1. Create the timestamp header using RFC3339: '`X-Rufio-Timestamp: 2006-01-02T15:04:05Z07:00`'
+2. Create a string by concatenating the HTTP request body and the timestamp header. There should not be any characters/delimiters in between concatenated strings.
+3. HMAC sign (SHA256/SHA512) this string using the provided secret.
+4. Hex encoded the HMAC signature (depending on the tool/language you use to HMAC sign this step could be redundant).
+5. Prepend the algorithm type and an equal sign to the hex encoded HMAC signature (`sha256=`).
+6. Store the signature in the signature header: '`X-Rufio-Signature: sha256=3ac3355...c9846`'
 
 Examples:
 
