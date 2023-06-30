@@ -25,16 +25,16 @@ There are three ways to deploy a Cluster Autoscaler instance:
 1. [RECOMMENDED] Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
 1. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
 
-To read more about the tradeoffs of these different approaches, see [here]({{< relref "../../getting-started/optional/autoscaling/" >}}).
+To read more about the tradeoffs of these different approaches, see [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}}).
 
 ## Install Cluster Autoscaler in management cluster [RECOMMENDED]
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [here]({{< relref "../../getting-started/optional/autoscaling/" >}})
+1. Ensure you have configured at least one WorkerNodeGroup in your cluster to support autoscaling as outlined [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}})
 
     Cluster autoscaler only works on node groups with an autoscalingConfiguration set:
 
-    *Note: Here, the `<cluster-name>` value represents the name of the management or workload cluster you would like to autoscale.*
+    **Note**: Here, the `<cluster-name>` value represents the name of the management or workload cluster you would like to autoscale.*
 
     ```yaml
     apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -53,7 +53,7 @@ To read more about the tradeoffs of these different approaches, see [here]({{< r
           count: 1
           name: md-0
     ```
-    See more details [here]({{< relref "../../getting-started/optional/autoscaling/" >}}).
+    See [Autoscaling configuration]({{< relref "../../getting-started/optional/autoscaling/" >}}) for details.
 
 1. Generate the package configuration
    ```bash
@@ -107,7 +107,7 @@ To read more about the tradeoffs of these different approaches, see [here]({{< r
    kubectl scale deployment hpa-busybox-test --replicas 100
    ```
    You must continue scaling pods until the deployment has pods in a pending state.
-   This is when cluster autoscaler will begin autoscale your machine deployment.
+   This is when cluster autoscaler will begin to autoscale your machine deployment.
    This process may take a few minutes.
 
 ## Update
