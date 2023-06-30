@@ -514,8 +514,8 @@ func TestReconcilerValidateHardwareCountNewClusterFail(t *testing.T) {
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
-	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
-	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(err).ToNot(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
 	tt.cleanup()
 }
@@ -533,8 +533,8 @@ func TestReconcilerValidateHardwareCountRollingUpdateFail(t *testing.T) {
 	tt.Expect(err).NotTo(HaveOccurred())
 	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
 
-	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
-	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(err).ToNot(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector"))
 	tt.cleanup()
 }
@@ -553,8 +553,8 @@ func TestReconcilerValidateHardwareScalingUpdateFail(t *testing.T) {
 	tt.Expect(op).To(Equal(reconciler.NoChange))
 	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
 
-	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
-	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}), "result should stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"worker\"}': have 0, require 1"))
 	tt.cleanup()
 }
@@ -571,8 +571,8 @@ func TestReconcilerValidateHardwareNoHardware(t *testing.T) {
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
-	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
-	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector '{\"type\":\"cp\"}': have 0, require 1"))
 	tt.cleanup()
 }
@@ -629,8 +629,8 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
-	tt.Expect(err).To(BeNil(), "error should be nil to prevent requeue")
-	tt.Expect(result).To(Equal(controller.Result{Result: &reconcile.Result{}}), "result should stop reconciliation")
+	tt.Expect(err).ToNot(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}), "result should not stop reconciliation")
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("bmc connection failure"))
 	tt.cleanup()
 }
