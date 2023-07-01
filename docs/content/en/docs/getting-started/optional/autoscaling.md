@@ -57,10 +57,10 @@ The Kubernetes Cluster Autoscaler can only scale a single cluster per deployment
 This means that each cluster you want to scale will need its own cluster autoscaler deployment.
 
 We support three deployment topologies:
-1. Cluster Autoscaler deployed in the management cluster to autoscale the management cluster itself
-2. Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
+1. [RECOMMENDED] Cluster Autoscaler deployed in the management cluster to autoscale the management cluster itself
+2. [RECOMMENDED] Cluster Autoscaler deployed in the management cluster to autoscale a remote workload cluster
 3. Cluster Autoscaler deployed in the workload cluster to autoscale the workload cluster itself
 
-If your cluster architecture supports management clusters with resources to run additional workloads, you may want to consider using deployment topologies (1) and (2). Instructions for using this topology can be found [here]({{< relref "../../packages/cluster-autoscaler/addclauto#install-cluster-autoscaler-in-management-cluster" >}}).
+If your cluster architecture supports management clusters with resources to run additional workloads, you may want to consider using deployment topologies (1) and (2). Instructions for using this topology can be found on the [Cluster Autoscaler]({{< relref "../../packages/cluster-autoscaler/addclauto#install-cluster-autoscaler-in-management-cluster-recommended" >}}) page.
 
 If your deployment topology runs small management clusters though, you may want to follow deployment topology (3) and deploy the cluster autoscaler to run in a [workload cluster]({{< relref "../../packages/cluster-autoscaler/addclauto#install-cluster-autoscaler-in-workload-cluster" >}}).
