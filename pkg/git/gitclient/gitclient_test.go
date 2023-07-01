@@ -13,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/golang/mock/gomock"
-	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gitclient"
@@ -335,56 +334,6 @@ func TestGoGitValidateRemoteExists(t *testing.T) {
 			err := g.ValidateRemoteExists(ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Clone() error = %v, wantErr = %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestValidateCodeCommitUrl(t *testing.T) {
-	tests := []struct {
-		name    string
-		url     string
-		wantErr string
-	}{
-		{
-			"valid url",
-			"ssh://TESTSSHKEYID@git-codecommit.us-west-1.amazonaws.com/v1/repos/test-repo",
-			"",
-		},
-		{
-			"no ssh key id",
-			"ssh://git-codecommit.us-west-1.amazonaws.com/v1/repos/test-repo",
-			"invalid AWS CodeCommit url: ssh key id should be specified in the url",
-		},
-		{
-			"no ssh key id",
-			"ssh://@git-codecommit.us-west-1.amazonaws.com/v1/repos/test-repo",
-			"invalid AWS CodeCommit url: ssh key id should be specified in the url",
-		},
-		{
-			"wrong ssh key id",
-			"ssh://git@git-codecommit.us-west-1.amazonaws.com/v1/repos/test-repo",
-			"invalid AWS CodeCommit url: ssh username should be the SSH key ID for the provided private key",
-		},
-		{
-			"invalid url",
-			"://git@git-codecommit.us-west-1.amazonaws.com/v1/repos/test-repo",
-			"parsing repository URL",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			ctx, client := newGoGitMock(t)
-			gitClient := &gitclient.GitClient{
-				RepoUrl: tt.url,
-				Client:  client,
-			}
-			err := gitClient.ValidateRemoteExists(ctx)
-			if tt.wantErr == "" {
-				g.Expect(err).To(BeNil())
-			} else {
-				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 		})
 	}

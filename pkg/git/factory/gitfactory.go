@@ -15,11 +15,11 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gitclient"
 	"github.com/aws/eks-anywhere/pkg/git/gogithub"
+	"github.com/aws/eks-anywhere/pkg/git/providers/codecommit"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 )
 
@@ -61,14 +61,14 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		if err = os.Setenv(config.SshKnownHostsEnv, gitKnownHosts); err != nil {
 			return nil, fmt.Errorf("unable to set %s: %v", config.SshKnownHostsEnv, err)
 		}
-		user := constants.DefaultSSHAuthUser
+		user := codecommit.DefaultSSHAuthUser
 		repoUrl = fluxConfig.Spec.Git.RepositoryUrl
-		isCodecommit, codeCommitUser, err := git.IsCodeCommitURL(repoUrl)
+		codeCommitUserName, err := codecommit.IsCodeCommitURL(repoUrl)
 		if err != nil {
 			return nil, err
 		}
-		if isCodecommit {
-			user = codeCommitUser.Username()
+		if codeCommitUserName != "" {
+			user = codeCommitUserName
 		}
 		gitAuth, err = getSSHAuthFromPrivateKey(privateKeyFile, privateKeyPassphrase, user)
 		if err != nil {
