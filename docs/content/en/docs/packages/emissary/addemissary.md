@@ -16,7 +16,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
    {{% /alert %}}
 
 {{% alert title="Note" color="primary" %}}
-Operators can also leverage Ingress support provided by Isovalent that uses the standard Kubernetes Ingress resource definition, with an ingressClassName of cilium. This can be used for path-based routing and for TLS termination. (https://docs.cilium.io/en/stable/network/servicemesh/ingress/)
+Operators can also leverage Ingress support provided by Isovalent that uses the standard Kubernetes Ingress resource definition, with an ingressClassName of cilium. This can be used for path-based routing and for TLS termination. See [Kubernetes Ingress Support](https://docs.cilium.io/en/stable/network/servicemesh/ingress/) for details
 {{% /alert %}}
 
 ## Install
