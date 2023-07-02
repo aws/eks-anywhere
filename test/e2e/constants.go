@@ -32,17 +32,19 @@ const (
 	fluxUserProvidedNamespace = "testns"
 	fluxUserProvidedPath      = "test/testerson"
 
-	vsphereCpVmNumCpuUpdateVar          = 4
-	vsphereCpVmMemoryUpdate             = 16384
-	vsphereCpDiskGiBUpdateVar           = 40
-	vsphereWlVmNumCpuUpdateVar          = 4
-	vsphereWlVmMemoryUpdate             = 16384
-	vsphereWlDiskGiBUpdate              = 40
-	vsphereFolderUpdateVar              = "/SDDC-Datacenter/vm/capv/e2eUpdate"
-	vsphereNetwork2UpdateVar            = "/SDDC-Datacenter/network/sddc-cgw-network-2"
-	vsphereNetwork3UpdateVar            = "/SDDC-Datacenter/network/sddc-cgw-network-3"
-	vsphereInvalidResourcePoolUpdateVar = "*/Resources/INVALID-ResourcePool"
-	vsphereResourcePoolVar              = "T_VSPHERE_RESOURCE_POOL"
+	vsphereCpVmNumCpuUpdateVar             = 4
+	vsphereCpVmMemoryUpdate                = 16384
+	vsphereCpDiskGiBUpdateVar              = 40
+	vsphereWlVmNumCpuUpdateVar             = 4
+	vsphereWlVmMemoryUpdate                = 16384
+	vsphereWlDiskGiBUpdate                 = 40
+	vsphereFolderUpdateVar                 = "/SDDC-Datacenter/vm/capv/e2eUpdate"
+	vsphereNetwork2UpdateVar               = "/SDDC-Datacenter/network/sddc-cgw-network-2"
+	vsphereNetwork3UpdateVar               = "/SDDC-Datacenter/network/sddc-cgw-network-3"
+	vsphereInvalidResourcePoolUpdateVar    = "*/Resources/INVALID-ResourcePool"
+	vsphereResourcePoolVar                 = "T_VSPHERE_RESOURCE_POOL"
+	TinkerbellHardwareCountFile            = "tinkerbell_hardware_count.yaml"
+	tinkerbellTestsHardwareCountIdentifier = "TinkerbellTestsHardwareCount"
 )
 
 var (
