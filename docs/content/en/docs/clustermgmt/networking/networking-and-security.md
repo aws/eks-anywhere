@@ -128,10 +128,10 @@ For next steps on leveraging Network Policy, we encourage you to explore:
 
 Many advanced features of Cilium are not yet enabled as part of EKS Anywhere, including:  
 
-* Hubble observability (https://docs.isovalent.com/operations-guide/features/network-visibility/index.html)
-* DNS-aware and HTTP-Aware Network Policy (https://docs.isovalent.com/quick-start/policy_lifecycle.html)
-* Multi-cluster Routing (https://docs.isovalent.com/operations-guide/features/cluster-mesh/index.html)
-* Transparent Encryption (https://docs.cilium.io/en/v1.13/security/network/encryption/)
-* Advanced Load-balancing (https://docs.isovalent.com/operations-guide/features/cilium-standalone-gateway.html)
+* [Hubble observability](https://docs.isovalent.com/operations-guide/features/network-visibility/index.html)
+* [DNS-aware and HTTP-Aware Network Policy](https://docs.isovalent.com/quick-start/policy_lifecycle.html)
+* [Multi-cluster Routing](https://docs.isovalent.com/operations-guide/features/cluster-mesh/index.html)
+* [Transparent Encryption](https://docs.cilium.io/en/v1.13/security/network/encryption/)
+* [Advanced Load-balancing](https://docs.isovalent.com/operations-guide/features/cilium-standalone-gateway.html)
 
 Please contact the EKS Anywhere team if you are interested in leveraging these advanced features along with EKS Anywhere.
