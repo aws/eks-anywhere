@@ -14,8 +14,8 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
    * Starting at `eksctl anywhere` version `v0.12.0`, packages on workload clusters are remotely managed by the management cluster.
    * While following this guide to install packages on a workload cluster, please make sure the `kubeconfig` is pointing to the management cluster that was used to create the workload cluster. The only exception is the `kubectl create namespace` command below, which should be run with `kubeconfig` pointing to the workload cluster.
    * Operators can also integrate with Isovalent's for 3rd party BGP support. Isovalent can integrate with:
-   - Bird (https://docs.cilium.io/en/v1.13/network/bird/)
-   - Kube-Router (https://docs.cilium.io/en/v1.13/network/kube-router/)
+   - [Bird](https://docs.cilium.io/en/v1.13/network/bird/)
+   - [Kube-Router](https://docs.cilium.io/en/v1.13/network/kube-router/)
    {{% /alert %}}
 
 ## Install
