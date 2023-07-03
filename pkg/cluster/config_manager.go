@@ -136,7 +136,7 @@ func (c *ConfigManager) unmarshal(yamlManifest []byte) (*parsed, error) {
 		}
 
 		if k.APIVersion == "" {
-			return nil, fmt.Errorf("apiVersion not set for kind: %s", k.Kind)
+			return nil, fmt.Errorf("apiVersion not set for Kind: %s", k.Kind)
 		}
 
 		var obj APIObject

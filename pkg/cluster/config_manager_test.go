@@ -223,7 +223,7 @@ func TestConfigManagerMissingAPIVersion(t *testing.T) {
 	g.Expect(err).To(BeNil())
 
 	_, err = c.Parse(yamlManifest)
-	g.Expect(err).To(MatchError(ContainSubstring("apiVersion not set for kind")))
+	g.Expect(err).To(MatchError(ContainSubstring("apiVersion not set for Kind")))
 }
 
 func TestConfigManagerSetDefaultsSuccess(t *testing.T) {
